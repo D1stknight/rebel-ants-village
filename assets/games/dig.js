@@ -17,7 +17,8 @@
 // always winnable in 3, 3, 7, 3, 7 and 11 digs (never fewer for 1-5, so beach 4 has a dig over the best way). The
 // camera sits a little farther back and aims nearer: the near rope sat under the hint bar.
 // Oct 17 (Miguel: "its not using the digging animation"): with the Rebel's games pack each dig is the pack's dig
-// (game_dig) beside the square, a shovel through both hands while it lasts; without one, the old quick chop.
+// (game_dig) beside the square, a shovel through both hands while it lasts; without one, the old quick chop. The
+// village's grass and flowers under the beach step aside while it is played (they poked up through the sand squares).
 (function () {
   const LEVELS = [
     { n: 6, chests: 1, digs: 6 },
@@ -69,6 +70,26 @@
       const shovel = new B.TransformNode('digShovel', scene); ctx.add(shovel); shovel.parent = null; shovel.setEnabled(false);
       { const h = B.MeshBuilder.CreateCylinder('digShovelHandle', { height: 1.7, diameter: .07, tessellation: 8 }, scene); h.material = mat('shovelWood', [.45, .28, .14], [.06, .04, .02]); h.parent = shovel; h.position.y = .25; h.isPickable = false;
         const bl = B.MeshBuilder.CreateBox('digShovelBlade', { width: .36, height: .44, depth: .04 }, scene); bl.material = mat('shovelIron', [.3, .3, .32], [.04, .04, .05]); bl.parent = shovel; bl.position.y = -.82; bl.isPickable = false; }
+      // the village's grass and flowers on the beach and its rope step aside while it is played (thin instances, put back
+      // after; as under the Rice Planting paddy)
+      let unclear = null;
+      function clearGrass(n) {
+        unclear?.(); unclear = null;
+        const half = n * CELL / 2 + .9, inv = B.Matrix.Invert(ctx.frame.getWorldMatrix()), m0 = inv.m, saved = [];
+        for (const m of scene.meshes) {
+          if (!/^terrain(Grass|Flower)/.test(m.name) || !m.thinInstanceCount) continue;
+          const buf = m._thinInstanceDataStorage?.matrixData; if (!buf) continue;
+          let orig = null;
+          for (let i = 0; i < m.thinInstanceCount; i++) {
+            const x = buf[i * 16 + 12], y = buf[i * 16 + 13], z = buf[i * 16 + 14];
+            const lx = x * m0[0] + y * m0[4] + z * m0[8] + m0[12] - AT[0], lz = x * m0[2] + y * m0[6] + z * m0[10] + m0[14] - AT[1];
+            if (Math.abs(lx) > half || Math.abs(lz) > half) continue;
+            if (!orig) orig = buf.slice(); for (let k = 0; k < 12; k++) buf[i * 16 + k] = 0;
+          }
+          if (orig) { m.thinInstanceSetBuffer('matrix', buf, 16, true); saved.push({ m, orig }); }
+        }
+        unclear = () => saved.forEach(({ m, orig }) => { try { if (!m.isDisposed()) m.thinInstanceSetBuffer('matrix', orig, 16, true); } catch (e) {} });
+      }
       const UP = new V3(0, 1, 0);
       function poseShovel() {
         const r = ctx.player.bone('RightHand'), l = ctx.player.bone('LeftHand'); if (!r || !l) { shovel.setEnabled(false); return; }
@@ -80,7 +101,7 @@
       const dist = (a, b) => Math.abs(a % board.n - b % board.n) + Math.abs(Math.floor(a / board.n) - Math.floor(b / board.n));
       function build(k) {
         if (board) board.nodes.forEach(n => { try { n.dispose(); } catch (e) {} });
-        const L = LV[k], n = L.n, rocks = new Set(L.rocks || []);
+        const L = LV[k], n = L.n, rocks = new Set(L.rocks || []); clearGrass(n);
         const free = [...Array(n * n).keys()].filter(i => !rocks.has(i)), chests = [];
         while (chests.length < L.chests) { const c = free[Math.floor(Math.random() * free.length)]; if (!chests.includes(c)) chests.push(c); }
         board = { k, n, rocks, chests, found: new Set(), dug: new Map(), digs: L.digs, nodes: [], sel: Math.floor(n / 2) * n + Math.floor(n / 2) };
@@ -159,7 +180,7 @@
         },
         restart, // the HUD's Restart button
         _test: { st, dig, choose, moveSel, dist, get board() { return board; }, LV },
-        dispose() { pick.remove(); pads.remove(); sel.dispose(); try { shovel.dispose(); } catch (e) {} if (board) board.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
+        dispose() { pick.remove(); pads.remove(); sel.dispose(); unclear?.(); try { shovel.dispose(); } catch (e) {} if (board) board.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };
     }
   };
