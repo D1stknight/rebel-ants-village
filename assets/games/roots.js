@@ -14,7 +14,18 @@
       const st = { phase: 'intro', wait: 1.4, el: 0, score: 0, cut: 0, cracks: 0, combo: 0, best: 0, next: 1, roots: [], turn: 0 };
       const nodes = [], keep = n => { ctx.add(n); nodes.push(n); if (n.isPickable !== undefined) n.isPickable = false; return n; };
       const mat = (k, c, em, o = {}) => ctx.mat('rs_' + k, n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(...c); m.specularColor = new B.Color3(.06, .06, .06); if (em) m.emissiveColor = new B.Color3(...em); if (o.alpha != null) m.alpha = o.alpha; if (o.add) { m.disableLighting = true; m.alphaMode = B.Engine.ALPHA_ADD; m.backFaceCulling = false; } return m; });
-      const rootM = mat('root', [.28, .17, .1], [.05, .03, .02]), goldM = mat('rootGold', [.8, .6, .22], [.32, .22, .05]), tipM = mat('tip', [0, 0, 0], [.75, 1, .55], { alpha: .9, add: true });
+      const tipM = mat('tip', [0, 0, 0], [.75, 1, .55], { alpha: .9, add: true });
+      // bark (Oct 17, Miguel: "we need these roots to look more realistic and a lot better"): a grain texture, dark brown,
+      // or gilded for the thorned roots
+      const barkM = (k, base, em) => ctx.mat('rs_' + k, n => {
+        const t = new B.DynamicTexture('rsBark_' + k, { width: 128, height: 256 }, scene, true), g = t.getContext(); let r = 7;
+        const rnd = () => (r = (Math.imul(r, 1103515245) + 12345) >>> 0) / 4294967296;
+        g.fillStyle = base; g.fillRect(0, 0, 128, 256);
+        for (let i = 0; i < 64; i++) { const x0 = rnd() * 128, dark = .35 + rnd() * .4; g.strokeStyle = `rgba(0,0,0,${dark.toFixed(2)})`; g.lineWidth = 1 + rnd() * 3; g.beginPath(); g.moveTo(x0, 0); for (let y = 0; y <= 256; y += 16) g.lineTo(x0 + Math.sin(y / 28 + i) * 4, y); g.stroke(); }
+        for (let i = 0; i < 46; i++) { g.fillStyle = `rgba(255,235,200,${(.08 + rnd() * .12).toFixed(2)})`; g.fillRect(rnd() * 128, rnd() * 256, 2 + rnd() * 7, 1 + rnd() * 2); }
+        t.update(); t.uScale = 2; t.vScale = 4;
+        const m = new B.StandardMaterial(n, scene); m.diffuseTexture = t; m.specularColor = new B.Color3(.08, .07, .06); m.emissiveColor = new B.Color3(...em); return m; });
+      const rootM = barkM('bark', '#5a3a22', [.1, .06, .03]), goldM = barkM('barkGold', '#b98a34', [.3, .2, .05]);
       // the seal: a stone disc with its rune drawn on, a gold strike ring round it, four lane marks
       const tex = new B.DynamicTexture('rsSealTex', { width: 512, height: 512 }, scene, true), x = tex.getContext();
       const drawSeal = cracks => {
@@ -33,18 +44,35 @@
       const ring2 = keep(B.MeshBuilder.CreateTorus('rsRing2', { diameter: RING[0] * 2, thickness: .06, tessellation: 56 }, scene)); ring2.position.y = .08; ring2.material = ring.material;
       const laneM = mat('lane', [0, 0, 0], [.5, .42, .25], { alpha: .22, add: true });
       DIRS.forEach(([dx, dz], d) => { const l = keep(B.MeshBuilder.CreatePlane('rsLane' + d, { width: 1.4, height: START - SEAL }, scene)); l.rotation.set(Math.PI / 2, Math.atan2(dx, dz), 0); l.position.set(dx * (SEAL + START) / 2, .05, dz * (SEAL + START) / 2); l.material = laneM; });
-      // a root: a chain of knobbly segments from its lane's far end to the tip, the tip a green glow
+      // a root: one bark tube from its lane's far end to the tip, thick at the base and thin at the tip, bending side to side
+      // and bulging in and out of the ground as it creeps; three rootlets off its sides; the tip a green glow
+      const NP = 18, rad = i => .1 + .36 * Math.pow(1 - i / (NP - 1), 1.3);
       function makeRoot(d, gold) {
-        const root = keep(new B.TransformNode('rsRoot', scene)), [dx, dz] = DIRS[d], segs = [];
-        for (let i = 0; i < 14; i++) { const s = B.MeshBuilder.CreateCylinder('rsSeg', { height: .9, diameterTop: .32, diameterBottom: .4, tessellation: 7 }, scene); s.material = gold ? goldM : rootM; s.parent = root; s.rotation.set(Math.PI / 2, Math.atan2(dx, dz), 0); s.isPickable = false; s.setEnabled(false); segs.push(s); }
-        const tip = B.MeshBuilder.CreateSphere('rsTip', { diameter: .62, segments: 8 }, scene); tip.material = tipM; tip.parent = root; tip.isPickable = false;
-        if (gold) for (let i = 0; i < 4; i++) { const t = B.MeshBuilder.CreateCylinder('rsThorn', { height: .4, diameterTop: 0, diameterBottom: .14, tessellation: 5 }, scene); t.material = goldM; t.parent = tip; t.rotation.z = i * Math.PI / 2; t.position.set(Math.cos(i * Math.PI / 2) * .32, Math.sin(i * Math.PI / 2) * .32, 0); t.isPickable = false; }
-        return { root, segs, tip, d, gold, hp: gold ? 2 : 1, r: START, v: 0, back: 0, wob: Math.random() * 6 };
+        const root = keep(new B.TransformNode('rsRoot', scene)), path = Array.from({ length: NP }, (_, i) => new V3(0, 0, i * .2));
+        const tube = B.MeshBuilder.CreateTube('rsRootTube', { path, radiusFunction: rad, tessellation: 10, updatable: true, cap: B.Mesh.CAP_END }, scene); tube.material = gold ? goldM : rootM; tube.parent = root; tube.isPickable = false; tube.setEnabled(false);
+        const lets = [5, 9, 13].map((k, j) => { const c = B.MeshBuilder.CreateCylinder('rsRootlet', { height: 1, diameterTop: .015, diameterBottom: .11, tessellation: 6 }, scene); c.material = tube.material; c.parent = root; c.isPickable = false; c.setEnabled(false); return { c, k, s: j % 2 ? 1 : -1 }; });
+        const tip = B.MeshBuilder.CreateSphere('rsTip', { diameter: .46, segments: 8 }, scene); tip.material = tipM; tip.parent = root; tip.isPickable = false;
+        if (gold) for (let i = 0; i < 4; i++) { const t = B.MeshBuilder.CreateCylinder('rsThorn', { height: .4, diameterTop: 0, diameterBottom: .14, tessellation: 5 }, scene); t.material = goldM; t.parent = tip; t.rotation.z = i * Math.PI / 2; t.position.set(Math.cos(i * Math.PI / 2) * .26, Math.sin(i * Math.PI / 2) * .26, 0); t.isPickable = false; }
+        return { root, tube, path, lets, tip, d, gold, hp: gold ? 2 : 1, r: START, v: 0, back: 0, wob: Math.random() * 6 };
       }
       function layRoot(R, t) {
-        const [dx, dz] = DIRS[R.d], nx = -dz, nz = dx, len = START - R.r, n = Math.min(R.segs.length, Math.ceil(len / .8));
-        R.segs.forEach((s, i) => { const on = i < n; s.setEnabled(on); if (!on) return; const u = R.r + (i + .5) * .8, w = Math.sin(u * 1.3 + R.wob) * .35; s.position.set(dx * u + nx * w, .25, dz * u + nz * w); });
-        const w = Math.sin(R.r * 1.3 + R.wob) * .35; R.tip.position.set(dx * R.r + nx * w, .3 + .08 * Math.sin(t * 8 + R.wob), dz * R.r + nz * w);
+        const [dx, dz] = DIRS[R.d], nx = -dz, nz = dx, len = START - R.r;
+        if (len < .4) { R.tube.setEnabled(false); R.lets.forEach(l => l.c.setEnabled(false)); }
+        else {
+          // the path from the far end (i = 0) to the tip: sideways bends, ups and downs through the soil
+          for (let i = 0; i < NP; i++) {
+            const u = START - len * i / (NP - 1), w = Math.sin(u * 1.3 + R.wob) * .35 + Math.sin(u * 3.1 + R.wob * 2) * .08;
+            R.path[i].set(dx * u + nx * w, .14 + .1 * Math.sin(u * 2.2 + R.wob) * (1 - i / NP), dz * u + nz * w);
+          }
+          B.MeshBuilder.CreateTube(null, { path: R.path, radiusFunction: rad, instance: R.tube }); R.tube.setEnabled(true); R.tube.refreshBoundingInfo();
+          for (const l of R.lets) { // a rootlet: out to one side and down into the soil from its point on the root
+            const P = R.path[l.k], on = len > 2 + l.k * .25; l.c.setEnabled(on); if (!on) continue;
+            const L = .8 + .25 * Math.sin(l.k + R.wob), ox = nx * l.s * .7 - dx * .45, oz = nz * l.s * .7 - dz * .45;
+            l.c.scaling.y = L; l.c.position.set(P.x + ox * L * .5, P.y - .08, P.z + oz * L * .5);
+            l.c.rotationQuaternion = B.Quaternion.FromUnitVectorsToRef(V3.Up(), new V3(ox, -.25, oz).normalize(), l.c.rotationQuaternion || new B.Quaternion());
+          }
+        }
+        const w = Math.sin(R.r * 1.3 + R.wob) * .35 + Math.sin(R.r * 3.1 + R.wob * 2) * .08; R.tip.position.set(dx * R.r + nx * w, .26 + .08 * Math.sin(t * 8 + R.wob), dz * R.r + nz * w);
       }
       const camP = [0, 23, -11.5], camT = [0, 0, .6];
       ctx.look(camP, camT, .82);
