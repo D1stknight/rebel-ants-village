@@ -844,7 +844,9 @@ const NPC_PACK = ['talking', 'talking2', 'waving', 'wave_short', 'bow', 'pointin
 // v2.24 the Rebels' games pack (Miguel's Mixamo moves for the village games), uploaded here with the same button
 const GAMES_PACK = ['fishing_cast', 'fishing_idle', 'digging', 'plant', 'throw_object', 'goalie_throw', 'axe_combo', 'cheering', 'pushing', 'push', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam',
   // v2.30 Miguel's second set (games-pack-moves-2.zip)
-  'goalkeeper_catch', 'dribble', 'throwing', 'center_block', 'melee_down', 'pulling_rope', 'shield_idle', 'shield_block', 'shield_impact', 'shield_hit', 'swimming'].map((c) => `mixamo/gm_${c}.npz`);
+  'goalkeeper_catch', 'dribble', 'throwing', 'center_block', 'melee_down', 'pulling_rope', 'shield_idle', 'shield_block', 'shield_impact', 'shield_hit', 'swimming',
+  // v2.31 the sneak walk (Silent Steps)
+  'sneak_walk'].map((c) => `mixamo/gm_${c}.npz`);
 // the moves of a pack made before v2.30 (no move list stored with it)
 const GAMES_V1 = ['game_cast', 'game_reel', 'game_fish_wait', 'game_dig', 'game_plant', 'game_pick_up', 'game_throw', 'game_throw_far', 'game_chop', 'game_cheer', 'game_push', 'game_push_walk', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam'];
 let workerPoll = null, workerSetup = null, workerBuilding = false, workerInfo = null, packUploaded = new Set();

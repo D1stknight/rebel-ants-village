@@ -32,7 +32,8 @@
   "file": "mixamo/gm_plant.npz",
   "t0": 2.43,
   "t1": 5.73,
-  "pack": "games"
+  "pack": "games",
+  "loop": true
  },
  {
   "name": "game_pick_up",
@@ -81,35 +82,40 @@
   "file": "mixamo/gm_push.npz",
   "t0": 2.83,
   "t1": 4.5,
-  "pack": "games"
+  "pack": "games",
+  "loop": true
  },
  {
   "name": "dance_wave",
   "file": "mixamo/gm_dance_wave.npz",
-  "t0": 3.1,
-  "t1": 4.7,
-  "pack": "games"
+  "t0": 3.9,
+  "t1": 9.37,
+  "pack": "games",
+  "loop": true
  },
  {
   "name": "dance_tut",
   "file": "mixamo/gm_dance_tut.npz",
-  "t0": 6.8,
-  "t1": 8.4,
-  "pack": "games"
+  "t0": 1.7,
+  "t1": 7.0,
+  "pack": "games",
+  "loop": true
  },
  {
   "name": "dance_house",
   "file": "mixamo/gm_dance_house.npz",
-  "t0": 3.6,
-  "t1": 5.2,
-  "pack": "games"
+  "t0": 6.67,
+  "t1": 11.07,
+  "pack": "games",
+  "loop": true
  },
  {
   "name": "dance_gangnam",
   "file": "mixamo/gm_dance_gangnam.npz",
-  "t0": 4.8,
-  "t1": 7.2,
-  "pack": "games"
+  "t0": 7.83,
+  "t1": 11.17,
+  "pack": "games",
+  "loop": true
  },
  {
   "name": "game_shoot",
@@ -198,5 +204,13 @@
   "t1": 4.5,
   "grounded": false,
   "pack": "games"
+ },
+ {
+  "name": "game_sneak",
+  "file": "mixamo/gm_sneak_walk.npz",
+  "t0": 0.0,
+  "t1": 0.87,
+  "pack": "games",
+  "loop": true
  }
 ]

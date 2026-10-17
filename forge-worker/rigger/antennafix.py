@@ -137,6 +137,8 @@ def bags(act):
 tracks = [t for t in arm.animation_data.nla_tracks]
 muted = {t.name: t.mute for t in tracks}
 for t in tracks: t.mute = True
+GAME_LOOPS = {'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam', 'game_sneak', 'game_swim', 'game_dribble',
+              'game_shield_idle', 'game_push_walk', 'game_fish_wait', 'game_plant'}
 n_clips = 0
 for t in tracks:
     if not t.strips: continue
@@ -144,7 +146,9 @@ for t in tracks:
     try: arm.animation_data.action_slot = act.slots[0]
     except Exception: pass
     f0, f1 = [int(round(x)) for x in act.frame_range]; frames = list(range(f0, f1 + 1))
-    loop = act.name in ('idle', 'walk', 'run', 'fight_idle')
+    # v2.31 the games pack's loops too (the dances, the sneak and push walks, the dribble ...): two passes, so the stalk
+    # sways into the loop the way it sways out of it (the dances' antennas jumped 8-32 degrees at the seam)
+    loop = act.name in ('idle', 'walk', 'run', 'fight_idle') or act.name in GAME_LOOPS
     # head pose (armature space) per frame
     HM = []
     for fr in frames:

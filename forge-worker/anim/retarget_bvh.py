@@ -114,6 +114,17 @@ for clip in CLIPS:
         u = np.linspace(0, 1, nf)
         for a in (0, 1): tgt[:, a] -= tgt[0, a] - Hrest[P + 'Hips'][a] + u * (tgt[-1, a] - tgt[0, a])
     L = Rrest[P + 'Hips'].inv().apply(tgt - Hrest[P + 'Hips'])
+    # v2.31 loops (clip 'loop': true, the four dances): no jump where the clip runs back into its start. Each bone's turn
+    # from its last pose to its first, and the hips' move, are spread over the clip, a growing share every frame (the
+    # frame after the last is the first), so the seam closes and the motion in between keeps its shape (the 1.6 s dance
+    # cuts jumped 13-23 cm at the seam, every loop)
+    if clip.get('loop') and nf > 2:
+        u = np.arange(nf) / nf
+        for n in names:
+            a = Q[n]; D = (Rot.from_quat(a[0, [1, 2, 3, 0]]) * Rot.from_quat(a[-1, [1, 2, 3, 0]]).inv()).as_rotvec()
+            for fi in range(nf):
+                x = (Rot.from_rotvec(D * u[fi]) * Rot.from_quat(a[fi, [1, 2, 3, 0]])).as_quat(); a[fi] = [x[3], x[0], x[1], x[2]]
+        L = L + np.outer(u, L[0] - L[-1])
     for n in names:
         a = Q[n]
         for fi in range(1, nf):
@@ -155,6 +166,7 @@ for clip in CLIPS:
         ok_ = delta > -0.10
         if ok_.sum() >= 2: delta = np.interp(np.arange(nf), np.nonzero(ok_)[0], delta[ok_])
     k_ = np.ones(5) / 5; ds = np.convolve(np.pad(delta, 2, mode='edge'), k_, mode='valid')
+    if clip.get('loop') and nf > 2: ds = ds + np.arange(nf) / nf * (ds[0] - ds[-1])   # v2.31 the floor shift loops too
     cb = act.layers[0].strips[0].channelbag(act.slots[0])
     Rh = Rrest[P + 'Hips']; dl = Rh.inv().apply(np.c_[np.zeros(nf), np.zeros(nf), ds])
     for ci in range(3):
