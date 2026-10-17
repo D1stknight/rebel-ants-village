@@ -54287,8 +54287,8 @@
         "id": "hub-shell-game",
         "type": "shells",
         "title": "Mini Ant Shell Game",
-        "rounds": 6,
-        "lives": 2,
+        "rounds": 20,
+        "lives": 3,
         "pass": 60,
         "points": 40
       }
