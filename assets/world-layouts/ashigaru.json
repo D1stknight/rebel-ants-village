@@ -47676,8 +47676,8 @@
             "why": "Four pieces take three cuts: four minutes a cut. One cut and five cuts make six cuts: 24 minutes."
           }
         ],
-        "ask": 6,
-        "pass": 5,
+        "ask": 10,
+        "pass": 8,
         "points": 50,
         "questOn": "pass",
         "bell": 660

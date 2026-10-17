@@ -55167,10 +55167,32 @@
             ],
             "right": 0,
             "why": "The Buke hold the canyon village with its canals and palisades."
+          },
+          {
+            "q": "Whetstones and bamboo practice swords for the swordmasters by the still ponds. Which village?",
+            "a": [
+              "Kenshi",
+              "Samurai",
+              "Ronin",
+              "Bushi"
+            ],
+            "right": 0,
+            "why": "The Kenshi train among bamboo groves, still ponds and raked-stone clearings."
+          },
+          {
+            "q": "Bells and saffron robes for the warrior monks of the temple mountain. Where does it go?",
+            "a": [
+              "Sohei",
+              "Yamabushi",
+              "Shogun",
+              "Kenshi"
+            ],
+            "right": 0,
+            "why": "The Sohei: stone steps, autumn maples and the great temple bell."
           }
         ],
-        "ask": 8,
-        "pass": 7,
+        "ask": 10,
+        "pass": 9,
         "points": 50
       }
     }
