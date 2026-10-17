@@ -1,7 +1,9 @@
 // The Raking Path (Oct 15, Sohei training yard): the old monk's test. Rake every square of sand in one unbroken line,
 // starting where the rake stands, never crossing a raked square and never touching the rocks. Move with the arrows /
 // WASD or click the next square; step back onto the last square (or press U) to lift the rake, R starts again.
-// Levels 5 x 5 to 8 x 8, the last ones with only one or two ways through. A level opens when the one before is done.
+// Levels 5 x 5 to 9 x 9, the later ones with only one to six ways through. A level opens when the one before is done.
+// Oct 17: How to play (the rules in a few lines) and Restart beside Quit; Restart and R now start the level as it was
+// picked (the steps-back count too, which R used to keep adding to).
 // def: { at: [x, z] (board middle, frame coordinates), size: board width (m), player: [x, z, yaw], cam, look, levels, pass, points }
 (function () {
   const LEVELS = [
@@ -9,12 +11,25 @@
     { rows: ['..S.#.', '..#...', '......', '......', '....#.', '#.....'] },
     { rows: ['#......', '.......', '..S.##.', '.......', '.......', '..##...', '...#...'] },
     { rows: ['.......', '.......', '##....#', '...#...', '..S....', '#...#..', '.......'] },
-    { rows: ['..S..#..', '.#......', '......#.', '.#......', '.......#', '#.##....', '........', '........'] }
+    { rows: ['..S..#..', '.#......', '......#.', '.#......', '.......#', '#.##....', '........', '........'] },
+    // levels 6-10 (scratchpad rake/gen10.mjs, ways counted exactly by rake/verify10.mjs), ordered by how long a solver searches
+    { rows: ['........', '....#...', '.....#..', '........', '#...#.#.', '#..#....', '..S#....', '....#...'], ways: 3 },
+    { rows: ['........', '......#.', '#.#.....', '........', '....##..', '........', '.#...S##', '........'], ways: 1 },
+    { rows: ['S.......', '..##....', '........', '..###...', '........', '.......#', '##......', '........'], ways: 6 },
+    { rows: ['#..#...#', '.....#..', '#.......', '...S....', '......#.', '........', '.....#..', '..#.....'], ways: 3 },
+    { rows: ['....#....', '..##.....', '.......#.', '.#..#....', '....#....', '.........', '......#..', '..S.#..#.', '.........'], ways: 4 }
   ];
-  const SCORE = [20, 40, 70, 100, 130];
+  const WAYS = [1, 1, 2, 2, 2]; // ways through levels 1-5
+  const SCORE = [20, 40, 70, 100, 130, 160, 190, 220, 260, 300];
   const D = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
   const G = {
     title: 'The Raking Path',
+    howTo: { lines: [
+      'Rake every square of sand in one unbroken line, starting where the rake stands (the small stone ring).',
+      'The line moves one square at a time (up, down, left or right). It may never cross a square already raked, and never touch a rock.',
+      'Move with the arrows / W A S D, or click the next square. Stepping back the way you came (or U) takes back the last square.',
+      'R (or Restart) smooths the sand and starts again.',
+      'Tip: a square with only one free neighbour is a dead end, so the line has to finish there. Plan the route to end on it.'] },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, AT = def.at || [0, 0], W = def.size || 7.2;
@@ -99,14 +114,15 @@
         return true;
       }
       function undo() { if (st.phase !== 'play' || bd.path.length < 2) return false; bd.path.pop(); bd.undos++; const a = bd.path[bd.path.length - 1], b = bd.path[bd.path.length - 2]; if (b) bd.rakeYaw = Math.atan2(a[0] - b[0], -(a[1] - b[1])); ctx.note(262, 'bell'); paint(); info(); return true; }
-      function restart() { if (st.phase !== 'play') return; bd.path.length = 1; bd.undos++; paint(); info(); H.msg('Smooth sand again', 700); }
+      // R and Restart beside Quit: the level as it was picked (smooth sand, the rake at the start, no steps back)
+      function restart() { if (st.phase !== 'play' || !bd) return; build(bd.k); H.msg('Smooth sand again', 700); }
       // the picker
       const hud = document.getElementById('gameHud'), pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(380px,90vw);background:rgba(30,22,12,.94);border:1px solid rgba(216,179,92,.7);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 380) + 'px,92vw);background:rgba(30,22,12,.94);border:1px solid rgba(216,179,92,.7);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
       pick.innerHTML = `<div style="font:700 13px/1.2 Georgia,serif;letter-spacing:.14em;text-transform:uppercase;color:#d8b35c;margin-bottom:10px">The Raking Path</div><div style="margin-bottom:12px;color:#bbb">Rake every square of sand in one unbroken line. Never cross your own line; never touch a rock.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo, n = L.rows.length; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:10px 4px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${done ? 'rgba(216,179,92,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? `Level ${k + 1}<div style="font:12px Georgia,serif;color:#c9b88a">${n} × ${n}</div>` : '🔒'}${done ? ' ✓' : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 2},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo, n = L.rows.length; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:10px 4px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${done ? 'rgba(216,179,92,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? `Level ${k + 1}<div style="font:12px Georgia,serif;color:#c9b88a">${n} × ${n}</div>` : '🔒'}${done ? ' ✓' : ''}</button>`; }).join('')}</div>`;
       pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); });
-      function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); H.msg(`Level ${k + 1}`, 900, k >= 2 ? 'only one or two ways through' : ''); }
+      function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); const w = LV[k].ways ?? WAYS[k]; H.msg(`Level ${k + 1}`, 900, k >= 2 && w ? (w === 1 ? 'only one way through' : `only ${w} ways through`) : ''); }
       hud.appendChild(pick);
       const P0 = def.player || [AT[0] - W / 2 - 1.5, AT[1] - 1.5, Math.PI / 2]; ctx.player.place(P0[0], P0[1], P0[2]);
       const cam = def.cam || [AT[0], 7.6, AT[1] - W * .62 - 2.4], look = def.look || [AT[0], 0, AT[1] + .1];
@@ -126,7 +142,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return;
           const dir = { arrowup: 'up', w: 'up', arrowdown: 'down', s: 'down', arrowleft: 'left', a: 'left', arrowright: 'right', d: 'right' }[k];
           if (dir) step(...D[dir]); else if (k === 'u' || k === 'backspace') undo(); else if (k === 'r') restart();
@@ -137,6 +153,7 @@
           const p = ctx.toLocal(hit.pickedPoint), x = Math.round((p.x - AT[0]) / bd.C + (bd.n - 1) / 2), y = Math.round((bd.n - 1) / 2 - (p.z - AT[1]) / bd.C);
           const [hx, hy] = bd.path[bd.path.length - 1]; if (Math.abs(x - hx) + Math.abs(y - hy) === 1) step(x - hx, y - hy);
         },
+        restart,
         _test: { st, choose, step, undo, restart, posOf: (x, y) => posOf(x, y), get bd() { return bd; } },
         dispose() { pick.remove(); if (bd) bd.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };
