@@ -2,7 +2,8 @@
 // emblem. Turn two at a time: a pair stays face up, two that differ turn back. Find every pair. Levels: 4 x 3, 4 x 4,
 // 5 x 4, 6 x 5 (the same emblems in two colourings), 6 x 6 with at most 22 misses. Click a tablet (or move the ring
 // with the arrows and press Space).
-// Oct 17: How to play (the rules in a few lines) and Restart (the level dealt afresh, every tablet face down, no misses).
+// Oct 17: How to play (the rules + a pair and a miss on a 4 x 3, howto/memory.png) and Restart (the level dealt afresh,
+// every tablet face down, no misses).
 // def: { at: [x, z] (the board's middle, frame coordinates), gap: tablet spacing (m), player: [x, z, yaw], cam, look, levels, pass, points }
 (function () {
   // Oct 17 (Miguel: "give it more levels"): up to 8 x 8 (32 pairs, the emblems in three colourings), a cap on misses
@@ -28,10 +29,13 @@
     title: 'Emblem Match',
     howTo: { lines: [
       'The tablets lie face down, and every emblem is carved on exactly two of them.',
-      'Turn two tablets: the same emblem twice stays face up, two that differ turn back over (a miss).',
-      'Find every pair. Fewer misses score more; from level 5 each board allows only so many misses (shown at the top).',
-      'Click a tablet to turn it (or move the gold ring with the arrows and press Space).',
-      'Tip: from level 4 each emblem also comes in a second colouring (and from level 7 a third), and only the same emblem in the same colours makes a pair.'] },
+      'Turn two tablets: the same emblem twice stays face up (a pair); two that differ turn back over (a miss).',
+      'Find every pair. Fewer misses score more. From level 5 each board allows only so many misses (shown at the top): one more ends the game.',
+      'From level 4 an emblem also comes in a second colouring (and from level 7 a third): only the same emblem in the same colours makes a pair.',
+      'Click a tablet to turn it, or move the gold ring with the arrows (or WASD) and press Space.',
+      'Restart deals the board afresh, every tablet face down.',
+      'Tip: turn a tablet you have not seen first. If its twin is one you have already seen, go straight to it; if not, you have learnt two tablets.'],
+      img: 'howto/memory.png', caption: 'Two Samurai tablets found: a pair stays up. Ronin, then Wokou: they differ and turn back. Below: the same emblem in other colours is not a pair.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, AT = def.at || [0, 0], GAP = def.gap || 1.05;
