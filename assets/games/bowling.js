@@ -123,7 +123,7 @@
       const shaft = B.MeshBuilder.CreatePlane('bowlAimShaft', { width: .09, height: 2.2 }, ctx.scene); shaft.rotation.x = Math.PI / 2; shaft.position.set(0, 0, -1.1); shaft.parent = arrow; shaft.material = arrowMat; shaft.isPickable = false;
       const head = B.MeshBuilder.CreateDisc('bowlAimHead', { radius: .22, tessellation: 3 }, ctx.scene); head.rotation.set(Math.PI / 2, 0, Math.PI / 2); head.position.set(0, 0, -2.3); head.parent = arrow; head.material = arrowMat; head.isPickable = false;
       ctx.add(shaft); ctx.add(head);
-      const state = { phase: 'intro', t: 0, off: 0, ang: 0, power: 0, spin: 0, rolls: [], frame: 0, k: 0, wait: 0, keys: {}, camP: null, camT: null, release: 0, gutterShown: false, frameRolls: [], crashIn: 0 };
+      const state = { relPos: null, phase: 'intro', t: 0, off: 0, ang: 0, power: 0, spin: 0, rolls: [], frame: 0, k: 0, wait: 0, keys: {}, camP: null, camT: null, release: 0, gutterShown: false, frameRolls: [], crashIn: 0 };
       const Y = new V3(0, 1, 0), qTmp = new B.Quaternion();
       function syncPins() {
         for (let i = 0; i < sim.pins.length; i++) {
@@ -148,6 +148,7 @@
         }
         ballNode.setEnabled(b.st !== 'gone');
         ballNode.position.set(b.x, b.y, b.z);
+        if (state.relPos) { const u = state.phase === 'roll' ? Math.min(1, state.t / .18) : 1; if (u >= 1) state.relPos = null; else ballNode.position = V3.Lerp(state.relPos, ballNode.position, u * u * (3 - 2 * u)); }
         const sp = Math.hypot(b.vx, b.vz);
         if (sp > .01 && dtRot > 0) { const axis = V3.Cross(Y, new V3(b.vx, 0, b.vz)).normalize(); const dq = B.Quaternion.RotationAxis(axis, sp * dtRot / BALL_R); ballNode.rotationQuaternion = dq.multiply(ballNode.rotationQuaternion); }
       }
@@ -172,9 +173,12 @@
         else if (state.phase === 'power') { state.phase = 'spin'; state.t = 0; H.hint('<kbd>Space</kbd> or click: set the spin (the middle rolls straight)'); }
         else if (state.phase === 'spin') {
           state.phase = 'throw'; state.t = 0; H.meter(null); H.hint(''); arrow.setEnabled(false);
-          // the games pack's low reach (bend forward, the hand down by the floor in front at 0.7 s) is the delivery; the ball
-          // leaves the hand at its lowest point. Without the pack, a punch stands in.
-          if (ctx.player.has?.('game_pick_up')) { ctx.player.clip('game_pick_up', { hold: true }); state.release = .66; }
+          // the games pack's throwing move (Oct 17, Miguel: "throwing which is the same motion as bowling") is the
+          // delivery: a step, the backswing and the low swing forward, the ball leaving the hand 1.03 s in as it sweeps
+          // forward fastest (measured on the clip); a pack without it reaches low (the pick-up, the hand by the floor at
+          // 0.66 s); without a pack a punch stands in
+          if (ctx.player.has?.('game_bowl')) { ctx.player.clip('game_bowl', { hold: true }); state.release = 1.03; }
+          else if (ctx.player.has?.('game_pick_up')) { ctx.player.clip('game_pick_up', { hold: true }); state.release = .66; }
           else { ctx.player.clip('cross_punch'); state.release = .32; }
         }
       }
@@ -239,6 +243,7 @@
             camTo([L.x + state.off + 1.9, 5.6, L.foul + 7.4], [L.x + state.off * .3, 0, L.head + 2.5], dt);
             if ((state.release -= dt) <= 0) {
               const speed = 6.5 + 6 * state.power, spin = Math.abs(state.spin) < .12 ? 0 : state.spin;
+              state.relPos = ballNode.position.clone(); // where the hand lets go: the ball drops from there onto the lane
               sim.roll(L.x + state.off, state.ang, speed, spin); state.phase = 'roll'; state.t = 0; ctx.sound('bowlroll');
             }
           }
