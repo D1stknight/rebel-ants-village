@@ -7,6 +7,15 @@
 // Oct 17 (Miguel: the puzzles need a how-to with an example, every board a Restart): howTo (the rules + two stakes that
 // pin a chest, howto/dig.png) and inst.restart (the same beach and digs, the chests buried again elsewhere: the old stakes
 // would give them away).
+// Oct 17 (Miguel: "make this one 10"): beaches 7-10, all 10 x 10 (all the room the west beach has: two big boulders
+// stand 9-10 m off the spot, and at 11 x 11 one would sit on the sand), three chests and then four, with 7 to 12 rocks.
+// Each limit is checked by an exact search over every placement of the chests (scratchpad lv/dig; no square dug twice,
+// stakes as in the game): it found a way of digging that always finds every chest within 10, 10, 16 and 16 digs, so
+// every beach can always be won, and the first beach of each chest count gets one dig more (11, 10, 17, 16). A careful
+// player (the old sandbox bot: dig where the worst stake leaves the fewest places) can need 12, 12, 17 and 17, but
+// finishes 99.9%, 98.3%, 100% and over 99.9% of the placements in time. The same search on the first six beaches:
+// always winnable in 3, 3, 7, 3, 7 and 11 digs (never fewer for 1-5, so beach 4 has a dig over the best way). The
+// camera sits a little farther back and aims nearer: the near rope sat under the hint bar.
 (function () {
   const LEVELS = [
     { n: 6, chests: 1, digs: 6 },
@@ -14,7 +23,12 @@
     { n: 8, chests: 2, digs: 9 },
     { n: 8, chests: 1, digs: 4 },
     { n: 10, chests: 2, digs: 8, rocks: [23, 24, 45, 66, 67, 74] },
-    { n: 9, chests: 3, digs: 11, rocks: [12, 30, 41, 50, 68] }
+    { n: 9, chests: 3, digs: 11, rocks: [12, 30, 41, 50, 68] },
+    // Oct 17: 10 x 10 (all the room the west beach has), three chests then four (scratchpad lv/dig)
+    { n: 10, chests: 3, digs: 11, rocks: [31, 32, 43, 57, 61, 65, 75] },
+    { n: 10, chests: 3, digs: 10, rocks: [16, 22, 31, 42, 44, 46, 48, 62, 65, 68, 75] },
+    { n: 10, chests: 4, digs: 17, rocks: [46, 52, 65, 71, 72, 74, 77, 86] },
+    { n: 10, chests: 4, digs: 16, rocks: [14, 17, 25, 31, 33, 45, 48, 51, 62, 65, 73, 75] }
   ];
   const G = {
     title: 'The Buried Chest',
@@ -64,7 +78,9 @@
         for (let y = 0; y < n; y++) for (const xx of [-1, n]) { const p = new V3(AT[0] + (xx - (n - 1) / 2 + (xx < 0 ? .5 : -.5)) * CELL, 0, AT[1] + ((n - 1) / 2 - y) * CELL); const r = put(sRope, p, .55); r.rotation.y = Math.PI / 2; }
         sel.setEnabled(true); moveSel(0, 0);
         const sp = posOf(board.sel); ctx.player.place(AT[0] - CELL * (n / 2 + 1.2), AT[1] - CELL * (n / 2 + .8), Math.PI / 4);
-        const span = n * CELL; st.cam = [AT[0], span * 1.15 + 3.5, AT[1] - span * .62 - 1.8]; st.at = [AT[0], 0, AT[1] + .4];
+        // a little farther and aimed 16% of the beach nearer: the near rope clears the hint bar (it sat under it at every
+        // size) and the far stakes stay under the title bar (scratchpad lv/cam: y 54 .. 435 of 540 for 6 x 6 .. 12 x 12)
+        const span = n * CELL; st.cam = [AT[0], span * 1.2 + 3.6, AT[1] - span * .8 - 2.3]; st.at = [AT[0], 0, AT[1] - span * .16];
         info();
       }
       const info = () => H.info(board ? `Beach ${board.k + 1} / ${LV.length} · chests ${board.found.size} / ${board.chests.length} · digs left ${board.digs}` : 'Pick a beach');
@@ -92,9 +108,9 @@
       function restart() { if (st.phase !== 'play') return; build(board.k); H.msg('A new beach', 700, 'the chests are buried elsewhere'); }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(390px,90vw);background:rgba(16,12,8,.94);border:1px solid rgba(216,179,92,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 390) + 'px,92vw);background:rgba(16,12,8,.94);border:1px solid rgba(216,179,92,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:700 13px/1.2 Georgia,serif;letter-spacing:.14em;text-transform:uppercase;color:#d8b35c;margin-bottom:10px">The Buried Chest</div><div style="margin-bottom:12px;color:#bbb">Each dig tells how many squares away the nearest chest is (no diagonals).</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${done ? 'rgba(216,179,92,.25)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px Georgia,serif;opacity:.75">${L.chests} chest${L.chests > 1 ? 's' : ''} · ${L.digs} digs</div>` : '🔒'}${done ? ' ✓' : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 3},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${done ? 'rgba(216,179,92,.25)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px Georgia,serif;opacity:.75">${L.chests} chest${L.chests > 1 ? 's' : ''} · ${L.digs} digs</div>` : '🔒'}${done ? ' ✓' : ''}</button>`; }).join('')}</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'grid'; H.msg(`Beach ${k + 1}`, 900, k === 3 ? 'no dig to waste' : k >= 4 ? 'a hard one' : ''); }
       const pads = document.createElement('div');
