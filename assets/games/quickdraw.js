@@ -61,7 +61,7 @@
       hud.appendChild(flash);
       const doFlash = (col, a = .5) => { flash.style.transition = 'none'; flash.style.background = col; flash.style.opacity = String(a); void flash.offsetWidth; flash.style.transition = 'opacity .45s'; flash.style.opacity = '0'; };
       // the Rebel: across the floor, facing the shadow, the lent katana at the hip
-      const HOME = [AT[0], AT[1] + GAP / 2], PAST = [AT[0] + 1.1, AT[1] - GAP / 2 - 1.2]; // the dash goes past the duelist's right
+      const HOME = [AT[0], AT[1] + GAP / 2], PAST = [AT[0] + 1.1, AT[1] - GAP / 2 - .5]; // the dash goes past the duelist's right (and stays in the picture)
       ctx.player.place(HOME[0], HOME[1], Math.PI);
       const st = { phase: 'pick', round: 0, wins: 0, losses: 0, t: 0, best: null, times: [], sword: null, wait: 1.6, leaf: null, signalAt: 0, decoyDone: false, level: 0, dash: null };
       ctx.player.weapon('sword', def.sword || 'stormbringer_blade').then(w => { if (!w || st.phase === 'done') return; st.sword = w; ctx.player.clip('sword_idle', { loop: true }); });
