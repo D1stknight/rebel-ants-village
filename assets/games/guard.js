@@ -3,12 +3,15 @@
 // little off still blocks (10); the wrong side or too late is a hit. Twenty arrows, quicker as they come; three hits and
 // the wall breaks. A Forge Rebel guards with a lent katana and its own block move.
 // def: { arrows: 20, hits: 3, from: [[x, y, z], [x, y, z]] (frame coords of the left / right bastion), sword, pass, points }
+// Oct 17 (Miguel: "the game was too fast ... a few more levels ... we need a shield for the character"): three waves
+// (the first slow: an arrow takes 2 s, the last 1.2 s), a breath between them, the timing a little kinder; a round
+// shield rides the Rebel's left forearm.
 (function () {
   const G = {
     title: 'Shield Wall',
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
-      const N = def.arrows || 20, MAXH = def.hits || 3;
+      const N = def.arrows || 24, MAXH = def.hits || 3, WAVES = def.waves || 3, PER = Math.ceil(N / WAVES);
       const FROM = (def.from || [[-14, 4.5, 7], [14, 4.5, 7]]).map(p => new V3(...p));
       const SIDE = [new V3(-.75, 2.2, .35), new V3(.75, 2.2, .35)];
       const mat = (k, c, em) => ctx.mat(k, n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(...c); m.specularColor = new B.Color3(.1, .1, .1); if (em) m.emissiveColor = new B.Color3(...em); return m; });
@@ -33,9 +36,19 @@
       hud.append(ringEl, coreEl, pads);
       // ── state ──
       const st = { k: 0, score: 0, hits: 0, blocks: 0, clean: 0, combo: 0, phase: 'intro', wait: 1.6, cur: null, flying: [], sword: null };
-      const info = () => H.info(`Arrow ${Math.min(st.k + 1, N)} / ${N} · ${'♥'.repeat(Math.max(0, MAXH - st.hits))}`);
+      const info = () => H.info(`Wave ${Math.min(WAVES, Math.floor(st.k / PER) + 1)} / ${WAVES} · arrow ${Math.min(st.k + 1, N)} / ${N} · ${'♥'.repeat(Math.max(0, MAXH - st.hits))}`);
+      // the shield: a round targe with a rim and a boss, on the left forearm, facing out from the body
+      const shield = new B.TransformNode('guardShield', scene); ctx.add(shield);
+      { const wood = mat('shieldWood', [.36, .2, .12]), rim = mat('shieldRim', [.55, .5, .42], [.05, .05, .04]);
+        const disc = B.MeshBuilder.CreateCylinder('guardShieldDisc', { height: .06, diameter: .95, tessellation: 24 }, scene); disc.material = wood; disc.parent = shield; disc.rotation.x = Math.PI / 2; disc.isPickable = false;
+        const ring = B.MeshBuilder.CreateTorus('guardShieldRim', { diameter: .95, thickness: .06, tessellation: 24 }, scene); ring.material = rim; ring.parent = shield; ring.rotation.x = Math.PI / 2; ring.isPickable = false;
+        const boss = B.MeshBuilder.CreateSphere('guardShieldBoss', { diameter: .2, segments: 8 }, scene); boss.material = rim; boss.parent = shield; boss.position.z = .05; boss.scaling.z = .5; boss.isPickable = false; }
+      const shieldOnArm = () => { const h = ctx.player.bone('LeftHand'), f = ctx.player.bone('LeftForeArm'), c = ctx.player.bone('Spine2') || ctx.player.bone('Spine1'); if (!h || !f) { shield.setEnabled(false); return; }
+        shield.setEnabled(true); const lh = ctx.toLocal(h), lf = ctx.toLocal(f), mid = V3.Lerp(lf, lh, .6), body = c ? ctx.toLocal(c) : new V3(0, mid.y, 0);
+        const out = mid.subtract(body); out.y = 0; if (out.lengthSquared() < 1e-4) out.set(-1, 0, 0); out.normalize();
+        shield.position.copyFrom(mid.add(out.scale(.12))); shield.rotation.set(0, Math.atan2(out.x, out.z), 0); };
       function launch() {
-        const lvl = st.k / Math.max(1, N - 1), side = Math.random() < .5 ? 0 : 1, T = 1.6 - .6 * lvl;
+        const wave = Math.floor(st.k / PER), lvl = Math.min(1, (st.k % PER) / Math.max(1, PER - 1) * .5 + wave / Math.max(1, WAVES - 1) * .5), side = Math.random() < .5 ? 0 : 1, T = 2 - .8 * lvl;
         st.cur = { side, t: 0, T, n: arrowMesh(), judged: false };
         info();
       }
@@ -54,14 +67,15 @@
         }
         if (st.sword && kind !== 'hit' && kind !== 'wrong') ctx.player.clip('sword_block', { hold: true, speed: 1.6 });
         st.stanceIn = kind === 'hit' || kind === 'wrong' ? 1.1 : .65; // then back to the guard
-        st.cur = null; st.k++; st.wait = .35 + Math.random() * .4;
+        st.cur = null; st.k++; st.wait = .45 + Math.random() * .4;
+        if (st.k < N && st.k % PER === 0 && st.hits < MAXH) { st.wait = 2.2; H.msg(`Wave ${st.k / PER + 1}`, 1500, 'they shoot faster now'); }
         if (st.k >= N || st.hits >= MAXH) { st.phase = 'end'; st.wait = 1.1; }
       }
       function guard(side) {
         const c = st.cur; if (st.phase !== 'play' || !c || c.judged) return;
         const off = Math.abs(c.t - c.T);
         if (side !== c.side) return judge('wrong');
-        if (off <= .07) judge('clean'); else if (off <= .2) judge('block'); else if (c.t < c.T) { H.msg('Too soon', 500); }
+        if (off <= .09) judge('clean'); else if (off <= .24) judge('block'); else if (c.t < c.T) { H.msg('Too soon', 500); }
       }
       ctx.player.place(0, 0, 0);
       const cam = def.cam || [0, 3.4, -4.6], at = def.at || [0, 2.2, 3];
@@ -72,7 +86,7 @@
       ctx.player.weapon('sword', def.sword || 'eclipse_edge').then(w => { if (!w || st.phase === 'done') return; st.sword = w; ctx.player.clip('sword_idle', { loop: true }); });
       const inst = {
         update(dt) {
-          ctx.look(cam, at);
+          ctx.look(cam, at); shieldOnArm();
           if (st.stanceIn > 0 && (st.stanceIn -= dt) <= 0 && st.sword) ctx.player.clip('sword_idle', { loop: true });
           if (st.phase === 'intro' && (st.wait -= dt) <= 0) st.phase = 'play';
           if (st.phase === 'play') {
@@ -82,7 +96,7 @@
               c.t += dt; const u = Math.min(1.15, c.t / c.T), a = FROM[c.side], b = SIDE[c.side];
               const p = V3.Lerp(a, b, u); p.y += Math.sin(Math.min(1, u) * Math.PI) * 1.2;
               c.n.position.copyFrom(p); const d = b.subtract(a).normalize(); c.n.rotation.y = Math.atan2(d.x, d.z); c.n.rotation.x = -Math.asin(Math.max(-1, Math.min(1, d.y))) + (u - .5) * .8;
-              if (!c.judged && c.t > c.T + .22) judge('hit');
+              if (!c.judged && c.t > c.T + .26) judge('hit');
             }
           }
           for (let i = st.flying.length - 1; i >= 0; i--) { const f = st.flying[i]; f.t += dt; f.v.y -= 9.8 * dt; f.n.position.addInPlace(f.v.scale(dt)); f.n.rotation.z += f.spin * dt; if (f.t > 1.2) { f.n.dispose(); st.flying.splice(i, 1); } }

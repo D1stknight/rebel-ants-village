@@ -30479,7 +30479,7 @@
         "id": "buke-shield-wall",
         "type": "guard",
         "title": "Shield Wall",
-        "arrows": 20,
+        "arrows": 24,
         "hits": 3,
         "from": [
           [

@@ -46382,8 +46382,8 @@
         "id": "ashi-log-split",
         "type": "chop",
         "title": "Log Split",
-        "logs": 10,
-        "seconds": 40,
+        "logs": 12,
+        "seconds": 60,
         "block": [
           0,
           1.5
