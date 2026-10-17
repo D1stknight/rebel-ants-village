@@ -5,6 +5,8 @@
 // playerAt: [x, z], cam, at, pass, points }
 // Oct 17 (Miguel: the puzzles need a how-to, every board a Restart): howTo (the rules in a few lines) and inst.restart
 // (the dials and tries back, a NEW code on the lock: the old one's beads would give it away).
+// Oct 17 (Miguel: "it should mark at least 1 in the right place ... highlight them in a different color or lock them in,
+// but just 1"): the first try with a gold bead locks one of its right marks in: that seal turns gold and stays.
 (function () {
   const MARKS = [{ s: '⚓︎', n: 'anchor', c: '#9fb8d8' }, { s: '☠︎', n: 'skull', c: '#e8e2d0' }, { s: '✦︎', n: 'star', c: '#ffd45e' },
     { s: '⚔︎', n: 'swords', c: '#d8d8e8' }, { s: '♒︎', n: 'waves', c: '#6fd0d8' }, { s: '☸︎', n: 'wheel', c: '#e0a060' }];
@@ -14,6 +16,7 @@
       lines: ['Open the strongbox. Its code is four seals, each one of six sea marks, and no mark is used twice.',
         'Set the four dials, then press Try the lock (or Enter). Click a dial to pick it and click it again to turn it; or ← → pick a dial and ↑ ↓ turn it (1-4 turn that dial).',
         'After each try: a gold bead for every mark in the right place, a silver bead for every right mark in the wrong place. The beads never say which mark is which.',
+        'The first time a try has a mark in its right place, the lock gives one away: that seal turns gold and locks in (just one).',
         'You have eight tries, and the fewer you need, the more it pays.',
         'Tip: between tries, change only one or two dials and watch how the beads change.']
     },
@@ -38,30 +41,40 @@
       const hud = document.getElementById('gameHud'), box = document.createElement('div');
       box.style.cssText = 'position:absolute;right:14px;top:70px;width:min(300px,calc(100vw - 28px));background:rgba(14,12,10,.93);border:1px solid rgba(216,179,92,.7);border-radius:12px;padding:12px;pointer-events:auto;font:14px/1.3 Georgia,serif;color:#eadfc6';
       hud.appendChild(box);
-      const st = { set: [0, 1, 2, 3], sel: 0, tries: [], phase: 'intro', wait: 1.2, open: 0 };
+      const st = { set: [0, 1, 2, 3], sel: 0, tries: [], phase: 'intro', wait: 1.2, open: 0, locked: -1 };
+      // the locked-in seal glows gold on the box
+      const lockGlow = (k, on) => { const m = dials[k]?.material; if (m) m.emissiveColor = on ? new B.Color3(.62, .45, .08) : new B.Color3(.18, .14, .06); };
       const feedback = (g) => { let gold = 0, silver = 0; g.forEach((v, i) => { if (code[i] === v) gold++; else if (code.includes(v)) silver++; }); return { gold, silver }; };
       const beads = (f) => '<span style="letter-spacing:2px">' + '<span style="color:#ffd45e">●</span>'.repeat(f.gold) + '<span style="color:#c8ccd6">●</span>'.repeat(f.silver) + '<span style="color:#3a352c">●</span>'.repeat(4 - f.gold - f.silver) + '</span>';
       function draw() {
-        const sym = (v, i) => `<button type="button" data-d="${i}" style="width:54px;height:58px;border-radius:9px;border:2px solid ${i === st.sel ? '#ffd45e' : 'rgba(216,179,92,.45)'};background:rgba(255,255,255,.05);color:${MARKS[v].c};font:30px/1 serif;cursor:pointer">${MARKS[v].s}</button>`;
+        const sym = (v, i) => i === st.locked
+          ? `<button type="button" data-d="${i}" title="Locked in: the right mark" style="position:relative;width:54px;height:58px;border-radius:9px;border:2px solid #ffd45e;background:linear-gradient(#a8801f,#5c430d);color:#fff3c4;font:30px/1 serif;cursor:default;box-shadow:0 0 10px rgba(255,212,94,.55)">${MARKS[v].s}<span style="position:absolute;right:3px;top:2px;font:11px/1 sans-serif">🔒</span></button>`
+          : `<button type="button" data-d="${i}" style="width:54px;height:58px;border-radius:9px;border:2px solid ${i === st.sel ? '#ffd45e' : 'rgba(216,179,92,.45)'};background:rgba(255,255,255,.05);color:${MARKS[v].c};font:30px/1 serif;cursor:pointer">${MARKS[v].s}</button>`;
         box.innerHTML = `<div style="font:700 11.5px/1.2 Georgia,serif;letter-spacing:.14em;text-transform:uppercase;color:#d8b35c;margin-bottom:8px">The Broker's Strongbox</div>`
           + `<div style="display:flex;gap:6px;justify-content:center">${st.set.map(sym).join('')}</div>`
           + `<div style="display:flex;gap:6px;margin:8px 0 10px"><button type="button" data-a="try" style="flex:1;padding:8px;border-radius:8px;border:1px solid #d8b35c;background:rgba(255,216,119,.12);color:#ffe9b0;font:700 14px Georgia,serif;cursor:pointer">Try the lock (Enter)</button></div>`
-          + `<div style="font-size:12px;color:#b9ab8c;margin-bottom:4px">Tries ${st.tries.length} / ${TRIES} · gold: right place · silver: wrong place</div>`
+          + `<div style="font-size:12px;color:#b9ab8c;margin-bottom:4px">Tries ${st.tries.length} / ${TRIES} · gold: right place · silver: wrong place${st.locked >= 0 ? ' · 🔒 locked in' : ''}</div>`
           + st.tries.map((t, i) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 4px;border-top:1px solid rgba(216,179,92,.15)"><span style="color:#8d826a;width:18px">${i + 1}</span><span style="font:20px/1 serif;letter-spacing:6px">${t.g.map(v => `<span style="color:${MARKS[v].c}">${MARKS[v].s}</span>`).join('')}</span>${beads(t.f)}</div>`).join('');
-        box.querySelectorAll('button[data-d]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); const i = +b.dataset.d; if (st.sel === i) cycle(1); else { st.sel = i; draw(); } });
+        box.querySelectorAll('button[data-d]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); const i = +b.dataset.d; if (i === st.locked) H.msg('That seal is locked in', 900, 'it is the right mark'); else if (st.sel === i) cycle(1); else { st.sel = i; draw(); } });
         box.querySelector('button[data-a="try"]').onclick = (e) => { e.stopPropagation(); e.currentTarget.blur(); tryLock(); };
       }
-      function cycle(d) { if (st.phase !== 'play') return; st.set[st.sel] = (st.set[st.sel] + d + 6) % 6; ctx.note(440 + st.set[st.sel] * 40, 'bell'); draw(); }
+      function cycle(d) { if (st.phase !== 'play') return; if (st.sel === st.locked) { H.msg('That seal is locked in', 900, 'it is the right mark'); return; } st.set[st.sel] = (st.set[st.sel] + d + 6) % 6; ctx.note(440 + st.set[st.sel] * 40, 'bell'); draw(); }
       function tryLock() {
         if (st.phase !== 'play') return;
         if (new Set(st.set).size < 4) { H.msg('Each mark only once', 900); return; }
         const g = st.set.slice(), f = feedback(g); st.tries.push({ g, f }); ctx.sound('thock');
         if (f.gold === 4) { st.phase = 'open'; st.wait = 2.2; ctx.sound('gamewin'); H.msg('Click. It opens!', 1500); }
         else if (st.tries.length >= TRIES) { st.phase = 'fail'; st.wait = 1.8; H.msg('The lock holds', 1400, 'the code was ' + code.map(v => MARKS[v].s).join(' ')); }
+        else if (f.gold && st.locked < 0) {
+          // one of the right marks gives itself away (one only, picked at random among this try's)
+          const right = g.map((v, i) => v === code[i] ? i : -1).filter(i => i >= 0), k = right[Math.floor(Math.random() * right.length)];
+          st.locked = k; lockGlow(k, true); if (st.sel === k) st.sel = (k + 1) % 4; ctx.note(880, 'bell');
+          H.msg(`${f.gold} gold · ${f.silver} silver`, 2200, `the ${MARKS[code[k]].n} seal locks in`);
+        }
         else H.msg(`${f.gold} gold · ${f.silver} silver`, 1000);
         draw(); H.info(`Try ${Math.min(st.tries.length + 1, TRIES)} / ${TRIES}`);
       }
-      function restart() { if (st.phase !== 'play') return; deal(); st.set = [0, 1, 2, 3]; st.sel = 0; st.tries = []; draw(); H.info(`Try 1 / ${TRIES}`); H.msg('A new code', 1200, 'the Broker reset the lock'); }
+      function restart() { if (st.phase !== 'play') return; deal(); if (st.locked >= 0) lockGlow(st.locked, false); st.locked = -1; st.set = [0, 1, 2, 3]; st.sel = 0; st.tries = []; draw(); H.info(`Try 1 / ${TRIES}`); H.msg('A new code', 1200, 'the Broker reset the lock'); }
       const PA = def.playerAt || [BOX[0] + Math.sin(FACE) * 2.2, BOX[2] + Math.cos(FACE) * 2.2];
       ctx.player.place(PA[0], PA[1], FACE + Math.PI);
       const cam = def.cam || [BOX[0] + Math.sin(FACE) * 3.4 - Math.cos(FACE) * 1.2, BOX[1] + 2.6, BOX[2] + Math.cos(FACE) * 3.4 + Math.sin(FACE) * 1.2], at = def.at || [BOX[0], BOX[1] + SH * .6, BOX[2]];
@@ -84,8 +97,8 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (k === 'arrowleft' || k === 'a') { st.sel = (st.sel + 3) % 4; draw(); }
-          else if (k === 'arrowright' || k === 'd') { st.sel = (st.sel + 1) % 4; draw(); }
+          if (k === 'arrowleft' || k === 'a') { st.sel = (st.sel + 3) % 4; if (st.sel === st.locked) st.sel = (st.sel + 3) % 4; draw(); }
+          else if (k === 'arrowright' || k === 'd') { st.sel = (st.sel + 1) % 4; if (st.sel === st.locked) st.sel = (st.sel + 1) % 4; draw(); }
           else if (k === 'arrowup' || k === 'w') cycle(1); else if (k === 'arrowdown' || k === 's') cycle(-1);
           else if (k === 'enter' || k === ' ') tryLock();
           else { const n = parseInt(k, 10); if (n >= 1 && n <= 4) { st.sel = n - 1; cycle(1); } }
