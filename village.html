@@ -18676,6 +18676,7 @@ function updateSmallVillageAntPopulation(dt) {
     const forcedLocomotion = selectedAnimationName && isSmallAntLocomotionAnimationName(selectedAnimationName);
     const canMoveForAnimation = !selectedAnimationName || forcedLocomotion;
     if (NPCManager.paused || meta.dialogueOpen || beingDragged || pauseForAdminEdit) {
+      if (meta.dialogueOpen && charMesh) turnNPCToward(root, Math.atan2(charMesh.position.x - root.position.x, charMesh.position.z - root.position.z), Math.min(dt, .05) * 1.7); // faces you while you talk
       updateSmallAntAnimationState(root, false, selectedAnimationName);
       counterSmallAntVisualRootMotion(root);
       updateSmallAntAccentPlacement(root, true);
@@ -18900,6 +18901,9 @@ function updateNPCPopulation(dt) {
       if (villageOnKitDeck(root.position.x, root.position.z)) { const y = getNPCGroundHeightAt(root.position.x, root.position.z); if (Number.isFinite(y) && Math.abs(y - root.position.y) > .03) root.position.y = y; }
     }
     if (meta.dialogueOpen) {
+      // the one you talk to turns to face you (Oct 17, Miguel: "have all the characters turn towards you when you interact
+      // with them in any village"); a 'still' quest place turns back to its watch afterwards (returnNPCToBaseRotation)
+      if (charMesh) turnNPCToward(root, Math.atan2(charMesh.position.x - root.position.x, charMesh.position.z - root.position.z), Math.min(dt, .05) * 1.7);
       updateNPCAnimationState(root, false, now);
       return;
     }
