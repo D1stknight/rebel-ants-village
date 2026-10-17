@@ -10967,6 +10967,36 @@ function buildMiniGameCtx(def, src, frame) {
     sound(name) { if (name) MoonTaleSounds.fx(name); },     // a short effect over the music
     note(f, kind) { MoonTaleSounds.ping(f, kind); },         // one pitched note: 'bell', 'lantern' or 'fire'
     npc(id) { return getNPCById(id); },                      // a village NPC's root (riddle-givers, opponents)
+    // a forged NPC model of the game's own (Oct 17, Miguel: the Quick Draw opponent "should look a lot better, maybe you
+    // should use an NPC"): a fresh copy of the NPC library's approved model for the first key that has one ('kenshi_villager'),
+    // under the game; null when none is approved, it fails to load or the game ended meanwhile (the game keeps its own
+    // stand-in). { key, root, play(clip, { loop, speed }), bone(name) }; it starts in its idle loop
+    async npcModel(keys) {
+      try { await npcForgedReady; } catch (e) {}
+      const k = [].concat(keys || []).find(x => NPC_FORGED[x]?.modelUrl); if (!k) return null;
+      const api = await ctx.model(NPC_FORGED[k].modelUrl, { scale: NPC_FORGED[k].modelScale || 1.9, name: k, opaque: true });
+      if (api) { api.key = k; api.play('idle', { loop: true }); }
+      return api;
+    },
+    // any GLB as a fresh copy under the game (the Hub's mini ant): scale, or size = the longest side in metres; null when it
+    // fails or the game ended meanwhile. { root, groups, play(clip, { loop, speed }), bone(name) }
+    async model(url, o = {}) {
+      let res; try { res = await BABYLON.SceneLoader.ImportMeshAsync('', '', url, scene); } catch (e) { console.warn('game model', url, e?.message || e); return null; }
+      const nodes = [...(res.transformNodes || []), ...(res.meshes || [])], set = new Set(nodes);
+      if (!MiniGames.on || MiniGames.ctx !== ctx) { res.animationGroups.forEach(g => g.dispose()); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); return null; }
+      const holder = new BABYLON.TransformNode('miniGameModel_' + (o.name || 'm'), scene); holder.parent = frame;
+      nodes.forEach(n => { if (!n.parent || !set.has(n.parent)) n.parent = holder; });
+      (res.meshes || []).forEach(m => { m.isPickable = false; m.alwaysSelectAsActiveMesh = true; if (o.opaque) makeNPCMaterialOpaque(m.material); }); // skinned bounds stay in the bind pose
+      if (o.size) { const { min, max } = holder.getHierarchyBoundingVectors(true), big = Math.max(max.x - min.x, max.y - min.y, max.z - min.z) || 1; holder.scaling.setAll(o.size / big); }
+      else holder.scaling.setAll(o.scale || 1);
+      const groups = res.animationGroups || []; groups.forEach(g => { g.stop(); g.enableBlending = true; g.blendingSpeed = .2; });
+      ctx.add(holder); MiniGames.objs.push({ dispose() { groups.forEach(g => g.dispose()); }, isDisposed: () => false });
+      const find = n => groups.find(g => g.name.toLowerCase() === String(n).toLowerCase()) || groups.find(g => g.name.toLowerCase().endsWith(String(n).toLowerCase()));
+      let cur = null;
+      return { root: holder, groups,
+        play(name, p = {}) { const g = find(name); if (!g) return null; if (cur === g && g.isPlaying && p.loop) { g.speedRatio = p.speed || 1; return g; } if (cur && cur !== g) cur.stop(); cur = g; g.start(!!p.loop, p.speed || 1, g.from, g.to, false); return g; },
+        bone(name) { return nodes.find(n => n.name === name) || nodes.find(n => n.name.endsWith(name)) || null; } };
+    },
     music(name, loops) { if (name) MoonTaleSounds.play(name, loops); }, stopMusic() { MoonTaleSounds.stop(.3); },
     audio() { return MoonTaleSounds.mix(); },                // a music bus of the game's own (Web Audio), or null
     sfx(name, opts) { try { (MiniGames.sfx ||= window.RebelWeapon?.sfx?.({ scene, clip: () => null, kind: 'bow', volume: () => (WeatherManager.interactionAudioEnabled ? WeatherManager.masterVolume * WeatherManager.interactionVolume * 1.4 : 0) }))?.play?.(name, opts); } catch (e) {} },

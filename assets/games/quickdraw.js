@@ -2,7 +2,11 @@
 // the instant it touches the floor, draw (Space, Enter or a click). Draw before it lands and you lose the round; draw
 // after the shadow and you lose it too. Some leaves are caught by a draft just above the floor and fly off: hold.
 // First to three rounds; the shadow gets quicker every round (0.42 s down to 0.24 s).
-// def: { at: [x, z] (the middle between the duelists, frame coordinates), gap: m, cam, look, reflex: [s per round], pass, points }
+// The opponent (Oct 17, Miguel: "the opponent should look a lot better, maybe you should use an NPC as the opponent?"):
+// the Kenshi villager from the NPC library steps in for the shadow once its model has loaded, a katana in its right hand;
+// it strikes when it wins a round and bows when it is beaten. The shadow stays while it loads, or where none is approved.
+// def: { at: [x, z] (the middle between the duelists, frame coordinates), gap: m, cam, look, reflex: [s per round], pass, points,
+//   opponentModel: NPC library keys (['kenshi_villager']), opponentYaw }
 (function () {
   const REFLEX = [.42, .36, .31, .27, .24];
   const G = {
@@ -27,6 +31,21 @@
       const hilt = B.MeshBuilder.CreateBox('qdHilt', { width: .06, height: .3, depth: .06 }, scene); hilt.parent = blade; hilt.position.y = -.12; hilt.material = M.shade; hilt.isPickable = false; ctx.add(hilt);
       sh.rotation.y = 0; // faces +z, toward the Rebel
       const shadowMeshes = sh.getChildMeshes(false);
+      // the NPC duelist (see the top): its model under the shadow's node (it carries the place and the lunge)
+      let duelist = null;
+      ctx.npcModel?.(def.opponentModel || ['kenshi_villager']).then(n => {
+        if (!n || st.phase === 'done') return;
+        duelist = n; shadowMeshes.forEach(m => m.setEnabled(false));
+        n.root.parent = sh; n.root.position.set(0, 0, 0); n.root.rotation.y = def.opponentYaw ?? 0;
+        // the katana: blade, guard and grip in the right fist (the hand bone runs along the fingers; the blade along its z)
+        const hand = n.bone('mixamorig_RightHand');
+        if (hand) {
+          const k = new B.TransformNode('qdNpcKatana', scene); k.parent = hand; ctx.add(k);
+          const inv = 1 / Math.max(1e-4, hand.absoluteScaling?.x || 1); k.scaling.setAll(inv); k.position.set(0, .05 * inv, 0); k.rotation.set(Math.PI / 2, 0, 0);
+          const kb = (nm, w, h, d, m, y) => { const b = B.MeshBuilder.CreateBox(nm, { width: w, height: h, depth: d }, scene); b.parent = k; b.position.y = y; b.material = m; b.isPickable = false; ctx.add(b); return b; };
+          kb('qdNpcBlade', .035, 1.05, .08, M.steel, .62); kb('qdNpcGuard', .16, .025, .16, M.shade, .08); kb('qdNpcGrip', .05, .3, .05, M.shade, -.07);
+        }
+      });
       const leaf = keep(B.MeshBuilder.CreateDisc('qdLeaf', { radius: .09, tessellation: 7 }, scene)); leaf.material = M.leaf; leaf.isPickable = false; leaf.scaling.set(1.6, 1, 1);
       const slash = keep(B.MeshBuilder.CreatePlane('qdSlash', { width: 1.9, height: .05 }, scene)); slash.material = M.slash; slash.isPickable = false; slash.setEnabled(false);
       const hud = document.getElementById('gameHud'), flash = document.createElement('div');
@@ -46,6 +65,7 @@
         st.round++; st.phase = 'wait'; st.signalAt = 0; st.drawn = false; st.reflex = Math.max(.18, (RF[Math.min(st.round - 1, RF.length - 1)] || .25) + (Math.random() - .5) * .04);
         st.decoy = st.round > 1 && Math.random() < .55; st.leaf = { x: (Math.random() - .5) * 1.2, y: 3.4, vy: .55 + Math.random() * .35, sway: Math.random() * 6, decoy: st.decoy, lift: 0 };
         sh.position.set(AT[0], FLOOR, AT[1] - GAP / 2); blade.rotation.set(2.1, 0, -.35); shadowMeshes.forEach(m => m.visibility = 1); slash.setEnabled(false);
+        duelist?.play('idle', { loop: true });
         H.info(`Round ${st.round} · first to three`); H.msg(`Round ${st.round}`, 900);
         if (st.sword) ctx.player.clip('sword_idle', { loop: true });
       }
@@ -61,8 +81,8 @@
       }
       // the draw is fast (Miguel, Oct 17: the moves were too slow for a duel decided in a quarter second)
       function playerCut() { if (st.sword) ctx.player.clip(Math.random() < .5 ? 'sword_power_slash' : 'sword_down_slash', { hold: true, speed: 1.8 }); else ctx.player.clip('jab', { speed: 1.6 }); ctx.sound('thock'); }
-      function cutShadow() { slash.setEnabled(true); slash.position.set(AT[0], 1.9, AT[1] - GAP / 2 + .35); slash.rotation.set(0, 0, -.5); st.dissolve = 1; }
-      function shadowStrike() { st.lunge = 1; blade.rotation.set(1.57, 0, 0); ctx.sound('thock'); }
+      function cutShadow() { slash.setEnabled(true); slash.position.set(AT[0], 1.9, AT[1] - GAP / 2 + .35); slash.rotation.set(0, 0, -.5); st.dissolve = 1; duelist?.play('bow', { speed: 1.3 }); }
+      function shadowStrike() { st.lunge = 1; blade.rotation.set(1.57, 0, 0); ctx.sound('thock'); duelist?.play('pointing', { speed: 2.6 }); }
       const score = () => H.score(`${st.wins} – ${st.losses}`);
       return {
         update(dt) {
@@ -89,7 +109,7 @@
         },
         key(e, down) { if (!down || e.repeat) return; if (e.key === ' ' || e.key === 'Enter') draw(); },
         pointer(evt) { if (evt.type === B.PointerEventTypes.POINTERDOWN) draw(); },
-        _test: { st, draw, newRound, get leafY() { return st.leaf?.y; } },
+        _test: { st, draw, newRound, get leafY() { return st.leaf?.y; }, get duelist() { return duelist; } },
         dispose() { flash.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };
     }
