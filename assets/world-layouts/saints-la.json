@@ -27027,7 +27027,11 @@
           6
         ],
         "side": 3,
-        "seconds": 60
+        "seconds": 60,
+        "hide": [
+          "sl_streetlight",
+          "sl_planter"
+        ]
       }
     }
   },
