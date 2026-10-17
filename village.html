@@ -4011,6 +4011,9 @@ const MoonTaleSounds = (() => {
     // the 3-point contest: a swish through the net, a clang off the rim, a bounce on the court
     swish: { fx:t0 => noise(t0, .35, .16, 'highpass', 2600) },
     clang: { fx:t0 => { tone(540, t0, .5, .14, [[1, 1, 1], [2.76, .5, .5], [5.4, .25, .3]]); noise(t0, .05, .2, 'bandpass', 2200, 2); } },
+    // a hammer on hot steel on the anvil: the strike's crack, the anvil's bright ring (its partials out of tune, as a
+    // block of iron rings), a thud of the stump; each blow a little higher or lower
+    anvil: { fx:t0 => { const f = 1180 * (.95 + Math.random() * .1); tone(f, t0, 1.2, .1, [[1, 1, 1], [2.43, .55, .7], [4.07, .3, .45], [5.93, .16, .3]]); noise(t0, .035, .4, 'highpass', 3200); noise(t0, .11, .28, 'bandpass', 1500, 1.4); tone(120, t0, .18, .16, [[1, 1, 1], [2, .3, .5]]); } },
     bounce: { fx:t0 => { tone(92, t0, .22, .3, [[1, 1, 1]]); noise(t0, .08, .2, 'lowpass', 500); } },
     funk: { len:16, fx:t0 => { // 8 bars at 0.25 s an eighth: a slap bassline, brass stabs on the off-beats, hi-hats, a snare on 2 and 4
       const E = .25, bass = ['C3', 'C3', 'G3', 'A3', 'F3', 'F3', 'G3', 'G3'], riff = [0, 3, 4, 6];
