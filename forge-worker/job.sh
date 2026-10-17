@@ -21,6 +21,8 @@ NPC="${FORGE_NPC:-}"; MOVES="$FW/anim/clips.json"
 # get their wrist from the hand length (landmarks); Rebel villagers (unset) are rigged exactly as before.
 # v2.25 they wear the Rebel gloves too (Miguel: their own sculpted hands came out too big and could not move); the
 # glove takes the sculpted hand's colour and a set share of the height (handswap)
+# v2.28 bare arms (Chumpz in shorts): normalize keeps the vertex colours, landmarks moves the wrist up to where the arm's
+# colour turns into the sculpted hand's (the hand-length wrist left the palm on the arm beside the glove)
 SPECIES="${FORGE_NPC_SPECIES:-}"
 if [ -n "$NPC" ]; then
   MOVES="$FW/anim/clips_npc.json"
