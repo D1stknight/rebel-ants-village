@@ -1,10 +1,16 @@
 // The Temple Abacus (Oct 15, Sohei): fill the grid so every row and column holds each number once. Heavy lines mark
 // cages; the small sign in a cage's corner is its sum (+), difference (−), product (×) or quotient (÷) of the numbers
-// inside, in any order (a lone number is given). Seven tablets from 4 x 4 to the 7 x 7 Master's Abacus, each with one
+// inside, in any order (a lone number is given). Ten tablets from 4 x 4 to the 9 x 9 Grand Abacus, each with one
 // answer (checked by a solver; the last ones need "what if" reasoning). N pencil notes, U undo, H hint (no clean bonus).
 // Score: the tablet x 20, +10 without a hint. def: { levels, pass, points }
 // Oct 17: How to play (the rules + a solved 4 x 4 with its cages, howto/kenken.png) and Restart (the tablet afresh:
 // only the given numbers, no notes, undo, hints or time).
+// Oct 17 (Miguel: "you can do 10 tablets not 7"): 8 The Thousand Steps (8 x 8, no given square), 9 The Monks' Ledger
+// and 10 The Grand Abacus (9 x 9). Made by the generator of scratchpad games6/kenken (copied to lv/kenken/gen.mjs with
+// its random numbers fixed: the plain multiply lost precision and dealt the same four tablets over and over); each has
+// one answer (countSolutions, run to 3) and needs 27, 41 and 63 "what ifs" after the plain rules (grade, lv/kenken/
+// kk.mjs; The Master's Abacus: 22). The picker takes 5 columns on wide screens; the cage clues are drawn bigger on
+// the 8 x 8 and 9 x 9.
 (function () {
   const LEVELS = [
     { name: "The Novice's Beads", n: 4, s: '1342412332142431', cages: [[[15,14],'/',3],[[0,1,5],'+',5],[[11,10,9],'+',7],[[6,2],'*',8],[[4,8],'*',12],[[3,7],'*',6],[[13,12],'/',2]] },
@@ -13,7 +19,10 @@
     { name: "The Bell Tower", n: 6, s: '412536563421356214241365635142124653', cages: [[[0,1,7],'+',11],[[32,33,31],'+',12],[[12,13,6],'+',13],[[16,22],'/',6],[[20,19,18],'+',7],[[26,27],'-',4],[[11,17,10],'*',8],[[4,5],'*',18],[[30,24],'+',7],[[25],'=',3],[[15,21,14],'+',11],[[28,34],'+',9],[[3,2],'*',10],[[9,8],'-',1],[[35,29,23],'*',30]] },
     { name: "The Abbot's Tally", n: 6, s: '632451456123215364124635361542543216', cages: [[[23,22,29],'*',30],[[14,20],'+',9],[[1,0],'*',18],[[8,7,9,10],'+',14],[[13,19],'*',2],[[11,17,16],'+',13],[[25,26],'/',6],[[12,6],'/',2],[[30,31,32],'*',60],[[24,18],'-',2],[[35,34,28],'*',24],[[4,5],'/',5],[[33,27],'*',10],[[15,21],'-',3],[[3,2],'+',6]] },
     { name: "Evening Abacus", n: 6, s: '254163312654463512536421621345145236', cages: [[[34,33,35],'+',11],[[1,7,6],'+',9],[[2,8],'+',6],[[26,20,27],'*',18],[[21,22],'/',2],[[28,29,23],'+',10],[[15,16,10],'*',25],[[19,18],'-',2],[[0],'=',2],[[32,31],'-',1],[[17,11,5],'+',9],[[14,13,12],'+',13],[[3,4,9],'+',13],[[30,24,25],'+',9]] },
-    { name: "The Master's Abacus", n: 7, s: '6325471754132621365475264713147326546571323712654', cages: [[[6,13,20],'+',14],[[25,32],'*',14],[[42,35],'+',7],[[37,44],'/',5],[[18,19,17],'+',15],[[1,2],'+',5],[[0,7],'+',13],[[43,36],'+',13],[[23,30],'+',13],[[33,34],'-',1],[[24,31],'+',7],[[47,48],'-',1],[[28,29],'/',4],[[45,46,38,39],'*',84],[[26,27],'/',3],[[11,10],'/',3],[[14,15,16],'*',6],[[40,41],'*',6],[[4,5,12,3],'+',18],[[9,8],'*',20],[[21,22],'-',3]] }
+    { name: "The Master's Abacus", n: 7, s: '6325471754132621365475264713147326546571323712654', cages: [[[6,13,20],'+',14],[[25,32],'*',14],[[42,35],'+',7],[[37,44],'/',5],[[18,19,17],'+',15],[[1,2],'+',5],[[0,7],'+',13],[[43,36],'+',13],[[23,30],'+',13],[[33,34],'-',1],[[24,31],'+',7],[[47,48],'-',1],[[28,29],'/',4],[[45,46,38,39],'*',84],[[26,27],'/',3],[[11,10],'/',3],[[14,15,16],'*',6],[[40,41],'*',6],[[4,5,12,3],'+',18],[[9,8],'*',20],[[21,22],'-',3]] },
+    { name: "The Thousand Steps", n: 8, s: '7562381457132468237846514836172561857243325481768421653716475382', cages: [[[47,55,54],'*',126],[[26,27,25],'+',17],[[29,30],'*',14],[[38,37,46,36],'+',20],[[3,11],'*',6],[[52,60],'*',30],[[9,10],'+',8],[[44,43],'*',32],[[18,17,16,19],'+',20],[[56,48,57,49],'*',192],[[13,21],'*',24],[[35,34],'-',3],[[62,63,61],'*',48],[[23,31,39,15],'+',17],[[7,6,14,22],'+',16],[[45,53],'+',6],[[59,58],'+',11],[[33,41],'-',1],[[28,20,12],'+',7],[[0,8,1,2],'+',23],[[5,4],'+',11],[[24,32,40],'*',72],[[50,42,51],'+',8]] },
+    { name: "The Monks' Ledger", n: 9, s: '572631948893564127437195682269418573716852439945783261684329715351247896128976354', cages: [[[67,66,58],'*',16],[[16,25],'/',4],[[32,23,31],'+',14],[[35,44,53],'+',13],[[0,1],'+',12],[[80,79,78],'*',60],[[18,27,9,19],'+',17],[[57,48,49],'+',18],[[64,63],'+',8],[[59,50,51],'+',14],[[24,15],'+',7],[[33,34],'+',12],[[70,61],'*',9],[[41,42],'/',2],[[29,28,37],'+',16],[[40,39],'*',40],[[12,13],'+',11],[[7,8],'+',12],[[47,38],'-',1],[[68,77],'+',13],[[46,45,36],'+',20],[[4,3,2],'*',36],[[5,14,6],'*',36],[[43,52],'*',18],[[65,56],'/',4],[[54,55],'-',2],[[21,22,20],'*',63],[[76,75,74],'*',504],[[26,17],'+',9],[[69,60],'*',56],[[11,10],'/',3],[[71,62],'-',1],[[73,72],'/',2],[[30],'=',4]] },
+    { name: "The Grand Abacus", n: 9, s: '138492567741238695264953178379516284892364751685127349527841936916785423453679812', cages: [[[22,13],'-',2],[[3,4,12],'*',72],[[1,0],'/',3],[[65,64,74,66],'+',17],[[55,54],'+',7],[[25,34,16],'+',24],[[63,72,73],'*',180],[[15,14],'-',2],[[80,71,70,79],'+',8],[[51,50,49,60],'*',378],[[39,38],'+',5],[[46,45,47],'*',240],[[5,6],'-',3],[[61,52],'-',1],[[21,30,29,20],'*',1620],[[28,19,27],'*',126],[[40,31,41],'+',11],[[23,24],'/',3],[[62,53,44],'*',54],[[36,37],'+',17],[[18,9],'*',14],[[8,7],'+',13],[[43,42,33,32],'+',20],[[77,78,69],'*',288],[[48,57],'/',8],[[11,2,10],'+',13],[[68,59,67,58],'+',18],[[75,76],'+',13],[[17,26,35],'+',17],[[56],'=',7]] }
   ];
   const OPS = { '+': '+', '-': '−', '*': '×', '/': '÷', '=': '' };
   const G = {
@@ -74,7 +83,7 @@
         for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) { const i = r * N + c, x = M + c * C, y = M + r * C;
           if (c + 1 < N && bd.cageOf[i] !== bd.cageOf[i + 1]) { g.moveTo(x + C, y); g.lineTo(x + C, y + C); } if (r + 1 < N && bd.cageOf[i] !== bd.cageOf[i + N]) { g.moveTo(x, y + C); g.lineTo(x + C, y + C); } }
         g.rect(M, M, TEX - 2 * M, TEX - 2 * M); g.stroke();
-        g.textAlign = 'left'; g.textBaseline = 'top'; g.font = `bold ${Math.round(C * .2)}px system-ui, sans-serif`;
+        g.textAlign = 'left'; g.textBaseline = 'top'; g.font = `bold ${Math.round(C * (N >= 8 ? .25 : .2))}px system-ui, sans-serif`; // bigger clues on the 8 x 8 / 9 x 9
         bd.cages.forEach(cg => { if (cg.op === '=') return; const r = Math.floor(cg.top / N), c = cg.top % N, ok = cageOk(cg); g.fillStyle = ok === false ? '#c01818' : ok ? '#2f7a2a' : '#3a1e08'; g.fillText(`${cg.t}${OPS[cg.op]}`, M + c * C + C * .08, M + r * C + C * .06); });
         tex.update();
       }
@@ -104,9 +113,9 @@
         if (bd.k + 1 > solvedUpTo) { solvedUpTo = bd.k + 1; try { localStorage.setItem(KEY, String(solvedUpTo)); } catch (e) {} } }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(400px,92vw);background:rgba(26,14,4,.95);border:1px solid rgba(240,170,70,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 400) + 'px,92vw);background:rgba(26,14,4,.95);border:1px solid rgba(240,170,70,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#f3b45a;margin-bottom:10px">The Temple Abacus</div><div style="margin-bottom:12px;color:#bbb">Each number once per row and column; every cage makes its sign.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#f3b45a' : '#444'};background:${ok ? 'rgba(243,180,90,.2)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${L.n}×${L.n}</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 4},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#f3b45a' : '#444'};background:${ok ? 'rgba(243,180,90,.2)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${L.n}×${L.n}</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       const pads = document.createElement('div');
       pads.style.cssText = 'position:absolute;bottom:62px;right:14px;display:none;grid-template-columns:repeat(4,42px);gap:5px;pointer-events:auto';
