@@ -16,11 +16,14 @@
   const G = {
     title: 'The Misty Stones',
     howTo: { lines: [
-      'Only some stepping stones hold. The safe path glows for a moment, stone by stone, from the near ledge to the far one.',
-      'Then the mist closes in: walk it from memory. W or ↑ steps ahead, A D or ← → step aside, S or ↓ steps back, or click the next stone.',
-      'The path goes one stone at a time, ahead or to the side, never on a slant.',
-      'A wrong stone sinks you back to the start and the path shows once more; three falls and the mist wins.',
-      'Tip: say the path to yourself as it glows, like "ahead, ahead, left, ahead".'] },
+      'Only some stepping stones hold. The safe path glows for a moment, stone by stone, from the near ledge to the far one; then the mist closes in.',
+      'Walk it from memory: W or ↑ steps ahead, A D or ← → step aside, S or ↓ steps back, or click (tap) the next stone.',
+      'From the ledge, W steps onto the stone in front of you (A and D move you along the ledge first), or click any stone of the first row.',
+      'The path goes one stone at a time, ahead or to the side: never on a slant and never back toward the ledge. Stepping back onto the stone you came from is safe.',
+      'A wrong stone sinks you back to the start and the path shows once more; three falls and the mist wins. Restart puts you back on the ledge, no falls, the same path shown again.',
+      'Every fall you are spared is worth 5 more points.',
+      'Tip: say the path to yourself as it glows, like "ahead, ahead, left, ahead".'],
+      img: 'howto/stones.png', caption: 'Level 1\'s size: the path glows 1 to 8, and the keys walk it (W ahead, A and D aside). A step onto any other stone, like the crossed one, sinks.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, AT = def.at || [0, 1.5], P = def.pitch || 1.5;
