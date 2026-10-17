@@ -15,7 +15,9 @@
       const kindItem = ['ball', 'coconut', 'spear', 'cannon'].includes(def.item) ? def.item : 'coconut';
       // with the Rebel's games pack a coconut gets a real overhand throw and a spear the long throw: the move starts at its
       // wind-up (from, s) and the throw leaves the hand at its release (rel, s later)
-      const PACK = { coconut: { clip: 'game_throw', from: .55, rel: .32, hand: 'RightHand' }, spear: { clip: 'game_throw_far', from: .95, rel: .38 } }[kindItem], usePack = !!(PACK && ctx.player.has?.(PACK.clip));
+      // (Oct 17, Miguel: "we need the animations that go with it": the free throw takes the same overhand throw, the ball
+      // in the right hand until it leaves; no basketball shot in the pack yet)
+      const PACK = { coconut: { clip: 'game_throw', from: .55, rel: .32, hand: 'RightHand' }, ball: { clip: 'game_throw', from: .55, rel: .32, hand: 'RightHand' }, spear: { clip: 'game_throw_far', from: .95, rel: .38 } }[kindItem], usePack = !!(PACK && ctx.player.has?.(PACK.clip));
       const ITEM = { ball: { r: .18, angle: 54, clip: 'jump', sound: 'thock' }, coconut: { r: .18, angle: 42, clip: 'cross_punch', sound: 'thock' }, spear: { r: .05, angle: 14, clip: 'jab', sound: 'whoosh' }, cannon: { r: .13, angle: 9, clip: null, sound: 'boom' } }[kindItem];
       const seaY = window._newTerrain?.seaY, WATER = def.water ?? (seaY != null ? seaY - ctx.toWorld(0, 0, 0).y : -3);
       const SHOTS = def.shots || 10, GR = 9.8, ANG = (def.angle || ITEM.angle) * Math.PI / 180;
