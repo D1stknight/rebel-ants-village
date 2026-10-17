@@ -370,8 +370,10 @@
     });
     T.scroll_sam = scrollTex('scroll_sam', 7, 4); T.scroll_sam2 = scrollTex('scroll_sam2', 23, 3);
     // the arcade's four games (Hub Rebel Arcade): attract screens, cabinet marquees, neon signs over each game's row
-    const GAMES = { fw: ['FACTION WARS', '#ff3b5c', '#3bd5ff'], raid: ['THE RAID', '#b25aff', '#ffcf3b'], tunnel: ['ANT TUNNEL', '#3bffb0', '#ff8a3b'], shuffle: ['EGG SHUFFLE', '#ffd43b', '#ff3b8d'] };
-    const neonText = (c, txt, x, y, size, col) => { c.font = `900 ${size}px Arial Black, Arial, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
+    const GAMES = { fw: ['FACTION WARS', '#ff3b5c', '#3bd5ff'], raid: ['THE RAID', '#b25aff', '#ffcf3b'], tunnel: ['ANT TUNNEL', '#3bffb0', '#ff8a3b'], shuffle: ['EGG SHUFFLE', '#ffd43b', '#ff3b8d'],
+      descent: ['HIVE DESCENT', '#ff3399', '#3bd5ff'], bounty: ['BOUNTY HUNTERS', '#a78bfa', '#ffcf3b'], gp: ['GRAND PRIX', '#ffd166', '#ff3b5c'], siege: ['THE SIEGE', '#e8a04a', '#3bffb0'] };
+    const neonText = (c, txt, x, y, size, col, maxW) => { c.font = `900 ${size}px Arial Black, Arial, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
+      if (maxW) { const w = c.measureText(txt).width + size * .3; if (w > maxW) { size = Math.floor(size * maxW / w); c.font = `900 ${size}px Arial Black, Arial, sans-serif`; } } // long titles shrink to fit
       c.shadowColor = col; c.shadowBlur = size * .5; c.strokeStyle = col; c.lineWidth = size * .14; c.strokeText(txt, x, y); c.shadowBlur = size * .25; c.fillStyle = '#ffffff'; c.fillText(txt, x, y); c.shadowBlur = 0; };
     for (const [g, [title, a, b]] of Object.entries(GAMES)) {
       T['scr_' + g] = cv('scr_' + g, 256, 200, (c, W, H) => {
@@ -379,11 +381,28 @@
         if (g === 'fw') { c.fillStyle = '#123018'; c.fillRect(0, 120, W, 80); for (let k = 0; k < 7; k++) { c.fillStyle = a; c.fillRect(18 + k * 14, 128 + (k % 2) * 10, 8, 14); c.fillStyle = b; c.fillRect(W - 26 - k * 14, 128 + (k % 2) * 10, 8, 14); } c.fillStyle = '#ffffff'; c.fillRect(W / 2 - 2, 100, 4, 60); }
         else if (g === 'raid') { c.fillStyle = '#1c1430'; for (let k = 0; k < 5; k++) c.fillRect(10 + k * 50, 70, 40, 120); c.fillStyle = '#ffb030'; for (let k = 0; k < 5; k++) { c.beginPath(); c.arc(30 + k * 50, 86, 6, 0, 7); c.fill(); } c.fillStyle = a; c.fillRect(110, 150, 36, 30); }
         else if (g === 'tunnel') { c.strokeStyle = '#2a6a4a'; c.lineWidth = 14; c.beginPath(); c.moveTo(10, 180); for (let k = 0; k < 6; k++) c.lineTo(20 + k * 45, k % 2 ? 70 : 170); c.stroke(); c.strokeStyle = a; c.lineWidth = 3; c.stroke(); for (let k = 0; k < 9; k++) { c.fillStyle = k % 3 ? '#ffe066' : '#8af'; c.fillRect(r() * W, 60 + r() * 130, 5, 5); } }
-        else { for (let k = 0; k < 5; k++) { c.fillStyle = k === 2 ? a : '#f2ead8'; c.beginPath(); c.ellipse(30 + k * 49, 140, 18, 24, 0, 0, 7); c.fill(); } c.fillStyle = b; c.beginPath(); c.moveTo(128, 70); c.lineTo(118, 100); c.lineTo(138, 100); c.fill(); }
-        neonText(c, title, W / 2, 34, title.length > 9 ? 26 : 32, a); c.font = 'bold 14px monospace'; c.fillStyle = b; c.textAlign = 'center'; c.fillText('PRESS O TO PLAY', W / 2, H - 10);
+        else if (g === 'shuffle') { for (let k = 0; k < 5; k++) { c.fillStyle = k === 2 ? a : '#f2ead8'; c.beginPath(); c.ellipse(30 + k * 49, 140, 18, 24, 0, 0, 7); c.fill(); } c.fillStyle = b; c.beginPath(); c.moveTo(128, 70); c.lineTo(118, 100); c.lineTo(138, 100); c.fill(); }
+        else if (g === 'descent') { // floor after floor down to the queen
+          for (let k = 0; k < 4; k++) { c.fillStyle = k % 2 ? '#24102c' : '#160a20'; c.fillRect(0, 58 + k * 29, W, 29); c.fillStyle = b; c.fillRect(k % 2 ? 26 : 130, 84 + k * 29, 100, 3); c.font = 'bold 12px monospace'; c.textAlign = 'left'; c.fillText('B' + (k + 1), 6, 76 + k * 29); }
+          c.fillStyle = '#f2ead8'; c.beginPath(); c.arc(70, 78, 5, 0, 7); c.fill();
+          c.fillStyle = a; c.beginPath(); c.ellipse(200, 160, 16, 9, 0, 0, 7); c.fill(); c.beginPath(); c.moveTo(186, 150); c.lineTo(190, 138); c.lineTo(195, 147); c.lineTo(200, 136); c.lineTo(205, 147); c.lineTo(210, 138); c.lineTo(214, 150); c.fill(); }
+        else if (g === 'bounty') { // a wanted poster under the sights
+          c.fillStyle = '#d9c08c'; c.fillRect(78, 54, 100, 120); c.fillStyle = '#3a2410'; c.font = '900 17px Arial Black, Arial, sans-serif'; c.textAlign = 'center'; c.fillText('WANTED', 128, 72);
+          c.beginPath(); c.ellipse(128, 118, 22, 28, 0, 0, 7); c.fill(); c.beginPath(); c.arc(128, 84, 12, 0, 7); c.fill(); c.fillText('$5000', 128, 166);
+          c.strokeStyle = a; c.lineWidth = 3; c.beginPath(); c.arc(128, 118, 34, 0, 7); c.stroke(); for (const [x0, y0, x1, y1] of [[84, 118, 106, 118], [150, 118, 172, 118], [128, 74, 128, 96], [128, 140, 128, 162]]) { c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke(); } }
+        else if (g === 'gp') { // the oval with the karts on it
+          c.fillStyle = '#123a1c'; c.fillRect(0, 54, W, 124); c.strokeStyle = '#555a66'; c.lineWidth = 22; c.beginPath(); c.ellipse(128, 116, 96, 42, 0, 0, 7); c.stroke();
+          c.strokeStyle = '#f2ead8'; c.lineWidth = 2; c.setLineDash([8, 8]); c.stroke(); c.setLineDash([]);
+          for (let i = 0; i < 6; i++) for (let j = 0; j < 2; j++) { c.fillStyle = (i + j) % 2 ? '#f2ead8' : '#05040c'; c.fillRect(120 + j * 8, 64 + i * 4, 8, 4); }
+          for (const [x, y, col] of [[60, 146, b], [180, 82, '#3bd5ff'], [212, 120, a]]) { c.fillStyle = col; c.fillRect(x - 7, y - 4, 14, 8); } }
+        else if (g === 'siege') { // the wall, the gate, the spiders coming
+          c.fillStyle = '#5c5a62'; c.fillRect(0, 78, W, 48); for (let k = 0; k < 9; k++) c.fillRect(4 + k * 29, 66, 16, 14); c.fillStyle = '#05040c'; c.beginPath(); c.moveTo(110, 126); c.lineTo(110, 102); c.arc(128, 102, 18, Math.PI, 0); c.lineTo(146, 126); c.fill();
+          c.fillStyle = a; for (let k = 0; k < 6; k++) c.fillRect(14 + k * 44, 70, 6, 6);
+          c.strokeStyle = '#7a1420'; c.fillStyle = '#7a1420'; c.lineWidth = 2; for (const [x, y] of [[40, 156], [96, 166], [168, 152], [222, 164]]) { c.beginPath(); c.ellipse(x, y, 9, 6, 0, 0, 7); c.fill(); for (const t of [-1, 1]) for (let l = 0; l < 3; l++) { c.beginPath(); c.moveTo(x, y); c.lineTo(x + t * 15, y - 6 + l * 6); c.stroke(); } } }
+        neonText(c, title, W / 2, 34, title.length > 9 ? 26 : 32, a, W - 8); c.font = 'bold 14px monospace'; c.fillStyle = b; c.textAlign = 'center'; c.fillText('PRESS O TO PLAY', W / 2, H - 10);
       });
-      T['mq_' + g] = cv('mq_' + g, 512, 128, (c, W, H) => { const gr = c.createLinearGradient(0, 0, W, 0); gr.addColorStop(0, '#120a24'); gr.addColorStop(.5, '#24103e'); gr.addColorStop(1, '#120a24'); c.fillStyle = gr; c.fillRect(0, 0, W, H); neonText(c, title, W / 2, H / 2 + 4, title.length > 9 ? 56 : 66, a); });
-      T['sign_' + g] = cv('sign_' + g, 1024, 192, (c, W, H) => { c.clearRect(0, 0, W, H); neonText(c, title, W / 2, H / 2 + 6, 120, a); });
+      T['mq_' + g] = cv('mq_' + g, 512, 128, (c, W, H) => { const gr = c.createLinearGradient(0, 0, W, 0); gr.addColorStop(0, '#120a24'); gr.addColorStop(.5, '#24103e'); gr.addColorStop(1, '#120a24'); c.fillStyle = gr; c.fillRect(0, 0, W, H); neonText(c, title, W / 2, H / 2 + 4, title.length > 9 ? 56 : 66, a, W - 16); });
+      T['sign_' + g] = cv('sign_' + g, 1024, 192, (c, W, H) => { c.clearRect(0, 0, W, H); neonText(c, title, W / 2, H / 2 + 6, 120, a, W - 24); });
     }
     T.runner = cv('runner', 128, 512, (c, W, H) => { c.fillStyle = '#6e1414'; c.fillRect(0, 0, W, H); c.fillStyle = '#c9a452'; c.fillRect(8, 0, 8, H); c.fillRect(W - 16, 0, 8, H); c.fillStyle = 'rgba(201,164,82,.55)'; for (let y = 32; y < H; y += 64) { c.beginPath(); c.moveTo(W / 2, y - 18); c.lineTo(W / 2 + 18, y); c.lineTo(W / 2, y + 18); c.lineTo(W / 2 - 18, y); c.fill(); } });
     T.sign_prizes = cv('sign_prizes', 512, 128, (c, W, H) => { c.clearRect(0, 0, W, H); neonText(c, 'PRIZES', W / 2, H / 2 + 4, 76, '#ffd43b'); });
@@ -871,7 +890,7 @@
     lantern_violet: { col: [.55, .2, .9], em: [.5, .16, .9] }, lantern_cyan: { col: [.15, .75, .9], em: [.1, .7, .9] },
     emblem_rebel: { img: 'assets/brand/icon-512.png', self: true }, books_dim: { tex: 'books' }, runner: { tex: 'runner' }, map_table: { tex: 'war_map' },
     sign_prizes: { tex: 'sign_prizes', self: true, alphaTex: true }, sign_claw: { tex: 'sign_claw', self: true },
-    ...Object.fromEntries(['fw', 'raid', 'tunnel', 'shuffle'].flatMap(g => [['scr_' + g, { tex: 'scr_' + g, self: true }], ['mq_' + g, { tex: 'mq_' + g, self: true }], ['sign_' + g, { tex: 'sign_' + g, self: true, alphaTex: true }]])),
+    ...Object.fromEntries(['fw', 'raid', 'tunnel', 'shuffle', 'descent', 'bounty', 'gp', 'siege'].flatMap(g => [['scr_' + g, { tex: 'scr_' + g, self: true }], ['mq_' + g, { tex: 'mq_' + g, self: true }], ['sign_' + g, { tex: 'sign_' + g, self: true, alphaTex: true }]])),
     wisteria: { col: [.6, .42, .86], em: [.1, .05, .16] }, wisteria_pale: { col: [.82, .72, .96], em: [.12, .1, .16] }, brass: { col: [.72, .55, .24], spec: [.8, .7, .4], power: 50 }, paper: { col: [.94, .91, .84] },
     fusuma_cranes: { tex: 'fusuma_cranes' }, byobu_pine: { tex: 'byobu_pine' }, pebbles_white: { tex: 'pebbles_white' }, drawers: { tex: 'drawers' }, valley_view: { tex: 'valley_view', self: true },
     dome_stars: { tex: 'dome_stars', em: [.16, .1, .2] }, council_map: { tex: 'council_map', em: [.2, .16, .08] },
@@ -3749,7 +3768,7 @@
   // ({ box: [x0, z0, x1, z1] } | { circle: [x, z, r] }), spawn [x, z, facing], exit [x, z] (walk into it to leave),
   // hemi { i, c, g } fill light, lights [{ p: [x, y, z], c, i, r }] point lights.
   const SD = { HX: 20, HY: 16, H: 9, CX: 13.5, CY: [-10.5, -3.5, 3.5, 10.5], ZN: 12.6, DW: 7, DH: 5.8, AW: 10, AD: 1.9, AZ: 8.4, DZ: .8 };
-  const AR = { HX: 22, HY: 20, H: 12, DW: 7, DH: 6, CABS: [-12.6, -10.2, -7.8, -5.4, 5.4, 7.8, 10.2, 12.6], COLS: [-12, -4, 4, 12] };
+  const AR = { HX: 22, HY: 20, H: 12, DW: 7, DH: 6, CABS: [-12.6, -10.2, -7.8, -5.4, 5.4, 7.8, 10.2, 12.6], COLS: [-12, -4, 4, 12], ISL: 10.5, ICABS: [-3.6, -1.2, 1.2, 3.6] };
   const LB = { HX: 18, HY: 22, H: 11, DW: 6, DH: 5.6, BAYS: [-19.8, -15.4, -11, -6.6, -2.2, 2.2, 6.6, 11, 15.4, 19.8], SHELF: [-19.8, -11, -2.2, 6.6, 15.4] };
   // Samurai rooms: Library (SL: the moon window in the back wall, the garden behind it), Forge (SF), Ancestor Hall (SA)
   const SL = { HX: 13, HY: 11, H: 8, DW: 3.6, DH: 3.6, WIN: { r: 2.6, z: 3.9 }, CUB: { y0: -9.6, y1: 9.6, z0: .5, rows: 8, cell: .6, d: .9 }, DESKS: [[-5, -1.6], [0, -1.6], [5, -1.6], [-5, 3], [0, 3], [5, 3]] };
@@ -3892,7 +3911,8 @@
         { p: [0, 5.5, 15], c: [1, .86, .64], i: .55, r: 15 }, { p: [0, 7, 0], c: [.92, .66, 1], i: .6, r: 18 }],
       blockers: [{ box: [-AR.HX, -14.1, -20.3, -3.9] }, { box: [-AR.HX, 3.9, -20.3, 14.1] }, { box: [20.3, -14.1, AR.HX, -3.9] }, { box: [20.3, 3.9, AR.HX, 14.1] },
         { box: [-8.6, -AR.HY, 8.6, -17.15] }, { circle: [-6.5, -16.2, .75] }, { circle: [6.5, -16.2, .75] }, ...AR.COLS.flatMap(z => [{ circle: [-15.5, z, .65] }, { circle: [15.5, z, .65] }]),
-        { box: [-7, -12.1, -2, -10.9] }, { box: [2, -12.1, 7, -10.9] }, { box: [11.6, 13.6, 18.4, AR.HY] }, { box: [-16.3, 13.9, -13.7, 16.5] }, { circle: [7.6, 17.6, .9] }, { box: [-AR.HX, -15.85, -20.3, -14.15] }]
+        { box: [-7, -12.1, -2, -10.9] }, { box: [2, -12.1, 7, -10.9] }, { box: [11.6, 13.6, 18.4, AR.HY] }, { box: [-16.3, 13.9, -13.7, 16.5] }, { circle: [7.6, 17.6, .9] }, { box: [-AR.HX, -15.85, -20.3, -14.15] },
+        ...[-1, 1].map(s => ({ box: [s * AR.ISL - 1.7, -4.6, s * AR.ISL + 1.7, 4.6] }))]
     },
     room_sam_library: {
       bounds: [-SL.HX, SL.HX, -SL.HY, SL.HY + .2], spawn: [0, 6.4, Math.PI], exit: [0, SL.HY + .3], ceil: SL.H,
@@ -4622,6 +4642,15 @@
         }
       }
       cabinet(M, -HX, -15, 1, null, 'lacquer_black', 'lacquer_black'); // the Dark Cabinet: no light, no sound (a Hub secret wakes it at night)
+      // the playground's newer games on two islands either side of the emblem, back to back: Hive Descent and Bounty Hunters face
+      // the middle, the Grand Prix and the Siege the side aisles (the walls are under the NFT frames, which would take the O press)
+      for (const s of [-1, 1]) {
+        const cx = s * AR.ISL, faces = [[-s, s < 0 ? 'descent' : 'bounty'], [s, s < 0 ? 'gp' : 'siege']];
+        for (const [f, g] of faces) { const [body, neon] = { descent: ['paint_black', 'neon_pink'], bounty: ['paint_black', 'neon_purple'], gp: ['paint_white', 'neon_gold'], siege: ['darkwood', 'neon_gold'] }[g]; for (const y of AR.ICABS) cabinet(M, cx, y, f, g, body, neon); }
+        M.block('lacquer_black', cx, 0, 3.3, .24, 4.6, .85); for (const z of [3.3, 4.1]) M.block('neon_cyan', cx, 0, z, .28, 4.64, .05); // the sign board on the spine
+        for (const [f, g] of faces) { const xf = cx + f * .125, A = f > 0 ? [-2, 2] : [2, -2]; M.quad('sign_' + g, [[xf, A[0], 3.35], [xf, A[1], 3.35], [xf, A[1], 4.1], [xf, A[0], 4.1]]); }
+        for (const y of [-4.42, 4.42]) M.block('lacquer_black', cx, y, 0, 2.86, .1, 3.3); // end panels
+      }
       // back wall: the stage, the big screen's black backing and its red torii, neon trim; front wall: the door, the emblem over it
       M.block('arcade_wall', 0, -HY - T / 2, 0, 2 * HX + 2 * T, T, H + .4); M.block('lacquer_black', 0, -HY + .06, 0, 2 * HX, .12, 2.4); M.block('neon_cyan', 0, -HY + .14, 2.4, 2 * HX, .06, .07);
       M.block('lacquer_black', 0, -HY + 1.4, 0, 17.2, 2.8, .6); M.block('neon_pink', 0, -HY + 2.82, .52, 17.2, .05, .06);

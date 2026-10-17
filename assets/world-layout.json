@@ -44579,6 +44579,390 @@
           },
           {
             "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_descent_l0",
+            "linkName": "Hive Descent",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/descent",
+            "description": "DESCEND THROUGH 10 FLOORS · FACE THE QUEEN · WIN OR DIE",
+            "enabled": true,
+            "position": {
+              "x": -9.8,
+              "y": 2.6,
+              "z": -3.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_descent_l1",
+            "linkName": "Hive Descent",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/descent",
+            "description": "DESCEND THROUGH 10 FLOORS · FACE THE QUEEN · WIN OR DIE",
+            "enabled": true,
+            "position": {
+              "x": -9.8,
+              "y": 2.6,
+              "z": -1.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_descent_l2",
+            "linkName": "Hive Descent",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/descent",
+            "description": "DESCEND THROUGH 10 FLOORS · FACE THE QUEEN · WIN OR DIE",
+            "enabled": true,
+            "position": {
+              "x": -9.8,
+              "y": 2.6,
+              "z": 1.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_descent_l3",
+            "linkName": "Hive Descent",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/descent",
+            "description": "DESCEND THROUGH 10 FLOORS · FACE THE QUEEN · WIN OR DIE",
+            "enabled": true,
+            "position": {
+              "x": -9.8,
+              "y": 2.6,
+              "z": 3.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_gp_l0",
+            "linkName": "Rebel Grand Prix",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/grand-prix",
+            "description": "KART RACING · FIVE CUPS, FIFTEEN TRACKS, EIGHT ANTS ON THE GRID · DRIFT · BOX · WASP",
+            "enabled": true,
+            "position": {
+              "x": -11.2,
+              "y": 2.6,
+              "z": -3.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_gp_l1",
+            "linkName": "Rebel Grand Prix",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/grand-prix",
+            "description": "KART RACING · FIVE CUPS, FIFTEEN TRACKS, EIGHT ANTS ON THE GRID · DRIFT · BOX · WASP",
+            "enabled": true,
+            "position": {
+              "x": -11.2,
+              "y": 2.6,
+              "z": -1.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_gp_l2",
+            "linkName": "Rebel Grand Prix",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/grand-prix",
+            "description": "KART RACING · FIVE CUPS, FIFTEEN TRACKS, EIGHT ANTS ON THE GRID · DRIFT · BOX · WASP",
+            "enabled": true,
+            "position": {
+              "x": -11.2,
+              "y": 2.6,
+              "z": 1.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_gp_l3",
+            "linkName": "Rebel Grand Prix",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/grand-prix",
+            "description": "KART RACING · FIVE CUPS, FIFTEEN TRACKS, EIGHT ANTS ON THE GRID · DRIFT · BOX · WASP",
+            "enabled": true,
+            "position": {
+              "x": -11.2,
+              "y": 2.6,
+              "z": 3.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_bounty_r0",
+            "linkName": "Bounty Hunters",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/bounty",
+            "description": "RUN · GUN · TAKE THE HEAD · FOUR BOARDS OF CORRUPTED HIVE, FOUR WANTED BOSSES",
+            "enabled": true,
+            "position": {
+              "x": 9.8,
+              "y": 2.6,
+              "z": -3.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_bounty_r1",
+            "linkName": "Bounty Hunters",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/bounty",
+            "description": "RUN · GUN · TAKE THE HEAD · FOUR BOARDS OF CORRUPTED HIVE, FOUR WANTED BOSSES",
+            "enabled": true,
+            "position": {
+              "x": 9.8,
+              "y": 2.6,
+              "z": -1.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_bounty_r2",
+            "linkName": "Bounty Hunters",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/bounty",
+            "description": "RUN · GUN · TAKE THE HEAD · FOUR BOARDS OF CORRUPTED HIVE, FOUR WANTED BOSSES",
+            "enabled": true,
+            "position": {
+              "x": 9.8,
+              "y": 2.6,
+              "z": 1.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_bounty_r3",
+            "linkName": "Bounty Hunters",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/bounty",
+            "description": "RUN · GUN · TAKE THE HEAD · FOUR BOARDS OF CORRUPTED HIVE, FOUR WANTED BOSSES",
+            "enabled": true,
+            "position": {
+              "x": 9.8,
+              "y": 2.6,
+              "z": 3.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_siege_r0",
+            "linkName": "The Siege",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/siege",
+            "description": "HOLD THE GATE · TWELVE WAVES OF THE SPIDER HORDE, ONE WALL, ELEVEN DEFENDERS · SEE YOU ON THE BATTLEMENTS",
+            "enabled": true,
+            "position": {
+              "x": 11.2,
+              "y": 2.6,
+              "z": -3.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_siege_r1",
+            "linkName": "The Siege",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/siege",
+            "description": "HOLD THE GATE · TWELVE WAVES OF THE SPIDER HORDE, ONE WALL, ELEVEN DEFENDERS · SEE YOU ON THE BATTLEMENTS",
+            "enabled": true,
+            "position": {
+              "x": 11.2,
+              "y": 2.6,
+              "z": -1.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_siege_r2",
+            "linkName": "The Siege",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/siege",
+            "description": "HOLD THE GATE · TWELVE WAVES OF THE SPIDER HORDE, ONE WALL, ELEVEN DEFENDERS · SEE YOU ON THE BATTLEMENTS",
+            "enabled": true,
+            "position": {
+              "x": 11.2,
+              "y": 2.6,
+              "z": 1.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_siege_r3",
+            "linkName": "The Siege",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/siege",
+            "description": "HOLD THE GATE · TWELVE WAVES OF THE SPIDER HORDE, ONE WALL, ELEVEN DEFENDERS · SEE YOU ON THE BATTLEMENTS",
+            "enabled": true,
+            "position": {
+              "x": 11.2,
+              "y": 2.6,
+              "z": 3.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
             "hotspotId": "hotspot_rebel_arcade_kit_dark_cabinet",
             "linkName": "Dark Cabinet",
             "actionType": "showInfo",
