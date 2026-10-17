@@ -10231,6 +10231,15 @@ function normalizeQuestSpotConfig(cfg = {}) {
     sound: cfg.sound ? String(cfg.sound) : null,
     // lines shown one after another while a hold lasts
     holdLines: Array.isArray(cfg.holdLines) ? cfg.holdLines.map(String) : null,
+    // the Rebel acts the hold out (HoldShow): moves through it, a yaw to turn to, a prop (a fishing rod cast holdCast m out,
+    // a fish on at holdBite of the hold)
+    holdMoves: Array.isArray(cfg.holdMoves) ? cfg.holdMoves.filter(m => m?.clip).map(m => ({ clip:String(m.clip), at:Number(m.at) || 0, loop:m.loop === true, hold:m.hold === true, speed:Number(m.speed) || 0, pull:Number(m.pull) || 0 })) : null,
+    holdFace: cfg.holdFace === 'spot' ? 'spot' : cfg.holdFace != null && Number.isFinite(Number(cfg.holdFace)) ? Number(cfg.holdFace) : null,
+    holdProp: cfg.holdProp ? String(cfg.holdProp) : null,
+    holdDoneMove: cfg.holdDoneMove ? String(cfg.holdDoneMove) : null,
+    holdTake: Array.isArray(cfg.holdTake) ? cfg.holdTake.map(String) : null,
+    holdCast: Number(cfg.holdCast) || 0,
+    holdBite: Number(cfg.holdBite) || 0,
     // a sound when the spot is used (after a hold's own sound: the splash of a catch)
     doneSound: cfg.doneSound ? String(cfg.doneSound) : null,
     // a lightning bolt from the sky when the spot is used (strikeTaleBolt): an NPC id (its orb) or [x, y, z] in the spot's frame
@@ -10520,6 +10529,7 @@ function getMiniAntWhisper() {
 function completeQuestSpot(root) {
   const cfg0 = root.metadata.spotConfig;
   const cfg = cfg0.miniAnt ? { ...cfg0, text:`${cfg0.text ? cfg0.text + ' ' : ''}${getMiniAntWhisper()}` } : cfg0;
+  if (HoldShow.hold && HoldShow.hold === QuestSpotRuntime.hold) endHoldShow(true);
   QuestSpotRuntime.hold = null;
   if ((cfg.action === 'light' || cfg.action === 'ring') && !cfg.sound && !cfg.doneSound) playInteractionAudio(cfg.action === 'ring' ? 'templeBell' : 'collectiblePickup');
   if ((cfg.piece || cfg.donePiece || cfg.questId) && !(ProgressionState.spotsUsed || []).includes(cfg.spotId)) { (ProgressionState.spotsUsed ||= []).push(cfg.spotId); saveProgressionState(); }
@@ -10658,6 +10668,7 @@ function tryUseNearbyQuestSpot() {
   if (cfg.action === 'hold') {
     QuestSpotRuntime.hold = { root, startedAt: performance.now(), x: charMesh.position.x, z: charMesh.position.z, line: 0 };
     if (cfg.sound) MoonTaleSounds.play(cfg.sound);
+    startHoldShow(QuestSpotRuntime.hold, cfg);
     return true;
   }
   if (cfg.action === 'race') {
@@ -10847,7 +10858,7 @@ async function startMiniGame(def, src) {
   if (impl?.moves && !GamesPack.slots) { const t = loadGamesPack(); await Promise.race([t, new Promise(r => setTimeout(r, 3500))]); }
   RebelGames.HUD.loading(false);
   if (!impl || !walkMode || adminMode) { MiniGames.busy = false; if (!impl) showToast('The game did not load (slow connection?). Press O to try again.', 6000); return true; }
-  closeSkillBar(); closeDanceOff(); QuestSpotRuntime.hold = null;
+  closeSkillBar(); closeDanceOff(); QuestSpotRuntime.hold = null; endHoldShow(false);
   moveForward = moveBackward = turnLeft = turnRight = runKey = false; charMesh._vel = 0;
   _camOcc.dist = null; setPlayerCameraFade(1);
   const guide = scene.getTransformNodeByName?.('questTargetAutoGuide');
@@ -11415,6 +11426,186 @@ function questSpotCheerTick(hc, state) {
   else if (npc) playNPCPartyMove(npc); // forged NPCs dance with their own clips
 }
 
+// A hold the Rebel acts out (Miguel, Test Night 3, on the Big Catch: "i wish we could have the character really look like he
+// is fishing and catching something"). spotConfig.holdMoves [{ clip, at, loop, hold, speed, pull }] = moves through the hold
+// (at = its fraction of holdSeconds; Forge rigs: the games pack's game_cast / game_fish_wait / game_reel; pull = how hard the
+// fish pulls the rod while it plays), holdFace = the yaw in the spot's frame the Rebel turns to ('spot': toward the spot),
+// holdProp 'rod' = a rod in the hands, cast holdCast m out to a float on the water; at holdBite of the hold the float goes
+// under and the line fights, the rod bending with it; 'shovel' = a spade in both hands, sand flying where it bites (the
+// Treasure Map's X); holdTake = kit material keys of the spot's own piece the Rebel takes up for the show (the X's stuck
+// shovel: hidden while the shovel is in the hands, back if the hold stops). The show ends with the hold however it ends:
+// done (holdDoneMove, else a cheer), moved, a game starting.
+const HoldShow = { hold:null, hc:null, nodes:[], obs:null, move:-1, tryAt:0, mats:null, rod:null, shovel:null, taken:[] };
+window._holdShow = HoldShow; // tests
+const HOLD_CAST_RELEASE = 1.45, HOLD_CAST_LEN = 2.7, HOLD_CAST_FLY = .9; // game_cast: the rod comes forward 1.45 s in (Pier Fishing)
+function holdShowMats() {
+  if (HoldShow.mats && HoldShow.mats.rod.getScene?.() === scene && !HoldShow.mats.rod.isDisposed?.()) return HoldShow.mats;
+  const m = (n, c, e) => { const x = new BABYLON.StandardMaterial(n, scene); x.diffuseColor = new BABYLON.Color3(...c); x.specularColor = new BABYLON.Color3(.15, .15, .15); if (e) x.emissiveColor = new BABYLON.Color3(...e); x.metadata = { perfKeepLive:true }; return x; };
+  const ring = m('holdRing', [.9, .95, 1], [.6, .7, .8]); ring.disableLighting = true; ring.alpha = .7;
+  const iron = m('holdIron', [.42, .43, .46], [.05, .05, .06]); iron.specularColor = new BABYLON.Color3(.5, .5, .5);
+  return HoldShow.mats = { rod:m('holdRod', [.42, .28, .14], [.06, .04, .02]), reel:m('holdReel', [.2, .2, .22], [.04, .04, .04]), red:m('holdBobRed', [.9, .15, .12], [.35, .05, .04]), white:m('holdBobWhite', [.95, .95, .92], [.3, .3, .3]), ring, iron, sand:m('holdSand', [.86, .74, .52], [.18, .15, .1]) };
+}
+function startHoldShow(hold, hc) {
+  endHoldShow(false);
+  if (!hc.holdMoves && !hc.holdProp && hc.holdFace == null) return;
+  HoldShow.hold = hold; HoldShow.hc = hc; HoldShow.move = -1; HoldShow.tryAt = 0;
+  const ry = hold.root.rotationQuaternion ? hold.root.rotationQuaternion.toEulerAngles().y : hold.root.rotation.y || 0;
+  if (hc.holdFace === 'spot' && charMesh) { const dx = hold.root.position.x - charMesh.position.x, dz = hold.root.position.z - charMesh.position.z; if (Math.hypot(dx, dz) > .4) charMesh.rotation.y = Math.atan2(dx, dz); }
+  else if (hc.holdFace != null && charMesh) charMesh.rotation.y = ry + hc.holdFace;
+  if (hc.holdMoves && window.forgeRigBundleInfo && !GamesPack.slots) loadGamesPack();
+  if (hc.holdProp === 'rod') buildHoldRod(hc);
+  if (hc.holdProp === 'shovel') buildHoldShovel();
+  if (hc.holdProp && hc.holdTake?.length) { const keys = new Set(hc.holdTake.map(k => 'samKit_' + k)); HoldShow.taken = (hold.root.metadata?._piece?.getChildMeshes(false) || []).filter(c => c.isEnabled() && keys.has(c.material?.name)); HoldShow.taken.forEach(c => c.setEnabled(false)); }
+  HoldShow.obs = scene.onBeforeRenderObservable.add(tickHoldShow);
+}
+function endHoldShow(done) {
+  if (HoldShow.obs) { scene.onBeforeRenderObservable.remove(HoldShow.obs); HoldShow.obs = null; }
+  const had = HoldShow.hold, hc = HoldShow.hc; HoldShow.hold = null; HoldShow.hc = null;
+  HoldShow.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); HoldShow.nodes = []; HoldShow.rod = null; HoldShow.shovel = null;
+  HoldShow.taken.forEach(c => { if (!c.isDisposed()) c.setEnabled(true); }); HoldShow.taken = []; // put back (a done spot swaps to its done piece anyway)
+  // the show's move ends: its done move (a cheer for a catch, a pick-up for a find), else back to standing
+  if (had && HoldShow.move >= 0 && animState >= 3 && !(done && playMiniGameClip(hc?.holdDoneMove || 'game_cheer'))) {
+    const g = animGroups[animState]; if (g?.isPlaying) g.stop(); animState = -1; switchAnim(0, true);
+  }
+  HoldShow.move = -1;
+}
+function buildHoldRod(hc) {
+  const M = holdShowMats(), keep = n => { n.isPickable = false; HoldShow.nodes.push(n); return n; };
+  const R = HoldShow.rod = { path:[], cast:hc.holdCast || 14, bite:hc.holdBite || .2, rings:[], ringAt:0, released:null, land:null };
+  for (let i = 0; i < 9; i++) R.path.push(new BABYLON.Vector3(0, i * .4, 0)); // set every frame
+  R.rad = i => .034 - .024 * i / 8;
+  R.tube = keep(BABYLON.MeshBuilder.CreateTube('holdRod', { path:R.path, radiusFunction:R.rad, tessellation:8, updatable:true, cap:BABYLON.Mesh.CAP_ALL }, scene)); R.tube.material = M.rod;
+  R.reel = keep(BABYLON.MeshBuilder.CreateCylinder('holdReel', { diameter:.15, height:.07, tessellation:14 }, scene)); R.reel.material = M.reel;
+  R.bob = keep(new BABYLON.TransformNode('holdBob', scene));
+  const top = keep(BABYLON.MeshBuilder.CreateSphere('holdBobTop', { diameter:.24, segments:8, slice:.5 }, scene)); top.material = M.red; top.parent = R.bob;
+  const bot = keep(BABYLON.MeshBuilder.CreateSphere('holdBobBot', { diameter:.24, segments:8, slice:.5 }, scene)); bot.material = M.white; bot.rotation.x = Math.PI; bot.parent = R.bob;
+  R.bob.setEnabled(false);
+  [R.tube, R.reel].forEach(m => { m.alwaysSelectAsActiveMesh = true; });
+}
+function tickHoldShow() {
+  const hold = HoldShow.hold;
+  if (!hold || QuestSpotRuntime.hold !== hold || !charMesh) { endHoldShow(false); return; }
+  const hc = hold.root.metadata.spotConfig, held = (performance.now() - hold.startedAt) / 1000, u = Math.min(1, held / hc.holdSeconds);
+  // the move for this part of the hold (tried again while the games pack is still on its way)
+  const moves = hc.holdMoves; let k = -1;
+  if (moves?.length) moves.forEach((m, i) => { if (u >= m.at) k = i; });
+  if (k >= 0 && k !== HoldShow.move && window.forgeRigBundleInfo && performance.now() >= HoldShow.tryAt) {
+    const m = moves[k];
+    if (playMiniGameClip(m.clip, { loop:m.loop, hold:m.hold, speed:m.speed || undefined })) HoldShow.move = k;
+    else HoldShow.tryAt = performance.now() + 400;
+  }
+  if (HoldShow.rod) poseHoldRod(hc, held, k >= 0 ? moves[k].pull || 0 : 0);
+  if (HoldShow.shovel) poseHoldShovel();
+}
+// the spade: a wooden shaft through both hands (the higher one at its top), a T grip, an iron blade past the lower hand,
+// facing the way the Rebel faces; sand thrown up whenever the blade is down in the ground
+function buildHoldShovel() {
+  const M = holdShowMats(), keep = n => { n.isPickable = false; n.alwaysSelectAsActiveMesh = true; HoldShow.nodes.push(n); return n; };
+  const S = HoldShow.shovel = { sand:[], sandAt:0 };
+  S.shaft = keep(BABYLON.MeshBuilder.CreateCylinder('holdShovelShaft', { height:1, diameter:.055, tessellation:8 }, scene)); S.shaft.material = M.rod;
+  S.grip = keep(BABYLON.MeshBuilder.CreateBox('holdShovelGrip', { width:.22, height:.06, depth:.06 }, scene)); S.grip.material = M.reel;
+  S.blade = keep(BABYLON.MeshBuilder.CreateBox('holdShovelBlade', { width:.3, height:.38, depth:.03 }, scene)); S.blade.material = M.iron;
+  S.grain = keep(BABYLON.MeshBuilder.CreateSphere('holdSandGrain', { diameter:.12, segments:4 }, scene)); S.grain.material = M.sand; S.grain.isVisible = false;
+}
+function poseHoldShovel() {
+  const S = HoldShow.shovel, V3 = BABYLON.Vector3, yaw = charMesh.rotation.y, p0 = charMesh.position;
+  const f = new V3(Math.sin(yaw), 0, Math.cos(yaw)), r = new V3(Math.cos(yaw), 0, -Math.sin(yaw));
+  const rh = getPlayerBoneWorld('RightHand'), lh = getPlayerBoneWorld('LeftHand');
+  let top, low;
+  if (rh && lh && V3.Distance(rh, lh) > .12) { [top, low] = rh.y >= lh.y ? [rh, lh] : [lh, rh]; }
+  else { top = p0.add(r.scale(.25)).add(new V3(0, 1.55, 0)).add(f.scale(.35)); low = top.add(new V3(0, -.55, 0)).add(f.scale(.35)); }
+  const ax = low.subtract(top).normalize(), a = top.subtract(ax.scale(.22)), b = low.add(ax.scale(.62)), len = V3.Distance(a, b);
+  const q = S.shaft.rotationQuaternion || (S.shaft.rotationQuaternion = new BABYLON.Quaternion());
+  BABYLON.Quaternion.FromUnitVectorsToRef(V3.Up(), ax.scale(-1), q);
+  S.shaft.position.copyFrom(V3.Lerp(a, b, .5)); S.shaft.scaling.set(1, len, 1);
+  // the grip across the top, the blade below the shaft, its face across the Rebel's way
+  const X = r.subtract(ax.scale(V3.Dot(r, ax))).normalize(), Y = ax.scale(-1), Z = V3.Cross(X, Y);
+  for (const m of [S.grip, S.blade]) { m.rotationQuaternion = m.rotationQuaternion || new BABYLON.Quaternion(); BABYLON.Quaternion.RotationQuaternionFromAxisToRef(X, Y, Z, m.rotationQuaternion); }
+  S.grip.position.copyFrom(a); S.blade.position.copyFrom(b.add(ax.scale(.17)));
+  // sand where the blade bites
+  const t = performance.now() / 1000, tip = b.add(ax.scale(.36)), dt = engine.getDeltaTime() / 1000;
+  if (tip.y < p0.y + .3 && t >= S.sandAt) {
+    S.sandAt = t + .22;
+    for (let k = 0; k < 6; k++) { const g = S.grain.createInstance('holdSand'); g.isPickable = false; HoldShow.nodes.push(g); g.position.copyFrom(tip); g.position.y = Math.max(tip.y, p0.y + .05);
+      S.sand.push({ g, v: f.scale(-.6 - Math.random()).add(r.scale((Math.random() - .5) * 1.6)).add(new V3(0, 2.2 + Math.random() * 1.6, 0)), t: 0 }); }
+  }
+  for (let i = S.sand.length - 1; i >= 0; i--) {
+    const s = S.sand[i]; s.t += dt; s.v.y -= 9.8 * dt; s.g.position.addInPlace(s.v.scale(dt)); s.g.scaling.setAll(Math.max(.05, 1 - s.t * .9));
+    if (s.t > 1 || s.g.position.y < p0.y - .1) { s.g.dispose(); S.sand.splice(i, 1); const j = HoldShow.nodes.indexOf(s.g); if (j >= 0) HoldShow.nodes.splice(j, 1); }
+  }
+}
+function poseHoldRod(hc, held, pull) {
+  const R = HoldShow.rod, V3 = BABYLON.Vector3, yaw = charMesh.rotation.y, t = held;
+  const f = new V3(Math.sin(yaw), 0, Math.cos(yaw)), r = new V3(Math.cos(yaw), 0, -Math.sin(yaw)), up = V3.Up(), p0 = charMesh.position;
+  const NT = window._newTerrain, seaY = Number.isFinite(NT?.seaY) ? NT.seaY : Number.isFinite(NT?.recipe?.sea?.y) ? NT.recipe.sea.y : p0.y - 2;
+  const biteT = R.bite * hc.holdSeconds, bitten = t >= biteT, fight = Math.max(0, Math.min(1, (t - biteT) / Math.max(1, hc.holdSeconds - biteT)));
+  // the hands: the right through the cast, both while it waits, the left while the right winds the reel (Rebels with the
+  // games pack); without its moves the rod is held out from the right side
+  const rh = HoldShow.move >= 0 ? getPlayerBoneWorld('RightHand') : null, lh = rh ? getPlayerBoneWorld('LeftHand') : null;
+  const grip = rh && lh ? (t < HOLD_CAST_LEN ? rh : bitten && /reel/.test(hc.holdMoves?.[HoldShow.move]?.clip || '') ? lh : V3.Lerp(rh, lh, .5))
+    : p0.add(r.scale(.55)).add(up.scale(1.5)).add(f.scale(.4));
+  // the rod's lean from upright: back over the shoulder in the wind-up, whipped out at the release, then out over the water;
+  // a fish on pulls the tip down and jerks it
+  const REST = .95, jerk = pull * (.1 * Math.sin(t * 7.3) + .07 * Math.sin(t * 13.1));
+  let pitch = REST;
+  if (t < HOLD_CAST_RELEASE) pitch = REST - (REST + .55) * Math.sin(t / HOLD_CAST_RELEASE * Math.PI / 2);
+  else if (t < HOLD_CAST_RELEASE + .25) pitch = -.55 + (REST + .85) * (t - HOLD_CAST_RELEASE) / .25;
+  else if (t < HOLD_CAST_LEN) pitch = REST + .3 * (1 - (t - HOLD_CAST_RELEASE - .25) / (HOLD_CAST_LEN - HOLD_CAST_RELEASE - .25));
+  else if (bitten) pitch = REST - .35 + .3 * (1 - pull) + jerk; // held up against the pull
+  else pitch = REST + .03 * Math.sin(t * 2);
+  const d = up.scale(Math.cos(pitch)).add(f.scale(Math.sin(pitch))).normalize();
+  // where the line goes: the float on the water, or (a fish on) the point it enters the water, the fish running side to side
+  // and coming in as it is reeled
+  const tipAt = grip.add(d.scale(2.9));
+  if (t >= HOLD_CAST_RELEASE && !R.released) { R.released = tipAt.clone(); R.land = new V3(p0.x + f.x * R.cast, seaY + .06, p0.z + f.z * R.cast); }
+  let end = null;
+  if (R.land) {
+    if (!bitten) {
+      const k = Math.min(1, (t - HOLD_CAST_RELEASE) / HOLD_CAST_FLY);
+      end = k < 1 ? V3.Lerp(R.released, R.land, k).add(up.scale(Math.sin(Math.PI * k) * 3.2)) : R.land.add(up.scale(.04 * Math.sin(t * 3)));
+      R.bob.setEnabled(true); R.bob.position.copyFrom(end);
+    } else {
+      const sink = Math.min(1, (t - biteT) / .35);
+      R.bob.position.set(R.land.x, seaY + .06 - .35 * sink, R.land.z); R.bob.setEnabled(sink < 1);
+      if (!R.bit) { R.bit = true; holdRing(R, R.land, seaY, 1.6); }
+      const dist = R.cast * (1 - .78 * Math.pow(fight, 1.3)) + 1.2 * pull * Math.sin(t * .8);
+      end = new V3(p0.x + f.x * dist + r.x * (2.6 * Math.sin(t * .9) + .7 * Math.sin(t * 2.3)) * (1 - .6 * fight), seaY - .02, p0.z + f.z * dist + r.z * (2.6 * Math.sin(t * .9) + .7 * Math.sin(t * 2.3)) * (1 - .6 * fight));
+      if (t >= R.ringAt) { R.ringAt = t + .45 + Math.random() * .4; holdRing(R, end, seaY, .7 + pull * .6); }
+    }
+  }
+  // the rod bends toward the line: harder the harder the fish pulls
+  const bend = bitten ? .55 + .7 * pull + jerk : end && t > HOLD_CAST_LEN ? .12 : 0;
+  let bd = end ? end.subtract(tipAt) : up.scale(-1); bd = bd.subtract(d.scale(V3.Dot(bd, d))); if (bd.length() < 1e-4) bd = up.scale(-1); bd.normalize();
+  const seg = 3.2 / 8; let p = grip.subtract(d.scale(.3));
+  for (let i = 0; i < 9; i++) { R.path[i].copyFrom(p); const s = i / 8, dir = d.add(bd.scale(bend * s * 1.25)).normalize(); p = p.add(dir.scale(seg)); }
+  BABYLON.MeshBuilder.CreateTube(null, { path:R.path, radiusFunction:R.rad, instance:R.tube });
+  const tip = R.path[8];
+  // the reel under the rod, a hand's width up from the grip, spinning while it is wound
+  const n = up.subtract(d.scale(V3.Dot(up, d))).normalize();
+  R.reel.position.copyFrom(grip.add(d.scale(.12)).subtract(n.scale(.09)));
+  const q = R.reel.rotationQuaternion || (R.reel.rotationQuaternion = new BABYLON.Quaternion());
+  BABYLON.Quaternion.FromUnitVectorsToRef(V3.Up(), r, q);
+  if (bitten && /reel/.test(hc.holdMoves?.[HoldShow.move]?.clip || '')) q.multiplyInPlace(BABYLON.Quaternion.RotationAxis(V3.Up(), t * 14));
+  // the line: slack with a sag while the float sits, taut with a fish on
+  if (end) {
+    const sagAt = V3.Lerp(tip, end, .5); sagAt.y = Math.min(tip.y, end.y) - (bitten ? .05 : .3 + V3.Distance(tip, end) * .02);
+    const pts = [tip, V3.Lerp(tip, sagAt, .5), sagAt, V3.Lerp(sagAt, end, .5), end];
+    R.line = BABYLON.MeshBuilder.CreateLines('holdLine', { points:pts, updatable:true, instance:R.line || undefined }, scene);
+    if (!R.lineKept) { R.lineKept = true; R.line.color = new BABYLON.Color3(.95, .95, .9); R.line.isPickable = false; R.line.alwaysSelectAsActiveMesh = true; HoldShow.nodes.push(R.line); }
+  }
+  // rings spreading where the line cuts the water
+  for (let i = R.rings.length - 1; i >= 0; i--) {
+    const g = R.rings[i]; g.t += engine.getDeltaTime() / 1000;
+    const k = g.t / 1.2; g.m.scaling.setAll(1 + k * 2.5 * g.big); g.m.visibility = Math.max(0, 1 - k);
+    if (k >= 1) { g.m.dispose(); R.rings.splice(i, 1); const j = HoldShow.nodes.indexOf(g.m); if (j >= 0) HoldShow.nodes.splice(j, 1); }
+  }
+}
+function holdRing(R, at, seaY, big) {
+  const m = BABYLON.MeshBuilder.CreateTorus('holdRing', { diameter:.5, thickness:.04, tessellation:24 }, scene);
+  m.material = holdShowMats().ring; m.isPickable = false; m.position.set(at.x, seaY + .03, at.z);
+  HoldShow.nodes.push(m); R.rings.push({ m, t:0, big });
+}
+
 // The dance-off (spotConfig.dance { notes, need, every, lead, title, winText, loseText }): the spot's song plays and an arrow
 // comes down the lane every `every` seconds; press it (arrow keys, W A S D or the pads) as it reaches the ring. A good
 // press makes your Rebel dance (cartwheel, jump, front flip, backflip; apes kick and jump) and the crowd cheers; `need`
@@ -11585,7 +11776,7 @@ function updateQuestSpots() {
   if (hold) {
     const moved = !charMesh || Math.hypot(charMesh.position.x - hold.x, charMesh.position.z - hold.z) > .6;
     const hc = hold.root.metadata.spotConfig, held = (performance.now() - hold.startedAt) / 1000;
-    if (moved || hold.root.isDisposed?.() || !walkMode) { QuestSpotRuntime.hold = null; if (hc.sound) MoonTaleSounds.stop(); showToast('You moved. Try again and stay still.'); }
+    if (moved || hold.root.isDisposed?.() || !walkMode) { QuestSpotRuntime.hold = null; endHoldShow(false); if (hc.sound) MoonTaleSounds.stop(); showToast('You moved. Try again and stay still.'); }
     else if (held >= hc.holdSeconds) completeQuestSpot(hold.root);
     // lines one after another through the hold (Kokeshi Flower Moon's chant)
     else if (hc.holdLines?.length && hold.line < hc.holdLines.length && held >= (hold.line + 1) * hc.holdSeconds / (hc.holdLines.length + 1)) showToast(hc.holdLines[hold.line++], 6000);

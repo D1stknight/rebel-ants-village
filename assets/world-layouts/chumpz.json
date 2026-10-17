@@ -42575,7 +42575,42 @@
         0,
         2.8
       ],
-      "text": "With one last heave the big one flops onto the pier: a giant golden snapper, longer than you are tall. Pengu drops his hat."
+      "text": "With one last heave the big one flops onto the pier: a giant golden snapper, longer than you are tall. Pengu drops his hat.",
+      "holdMoves": [
+        {
+          "clip": "game_cast",
+          "at": 0,
+          "hold": true
+        },
+        {
+          "clip": "game_fish_wait",
+          "at": 0.135,
+          "loop": true
+        },
+        {
+          "clip": "game_reel",
+          "at": 0.16,
+          "loop": true,
+          "pull": 0.6
+        },
+        {
+          "clip": "game_fish_wait",
+          "at": 0.33,
+          "loop": true,
+          "pull": 1
+        },
+        {
+          "clip": "game_reel",
+          "at": 0.62,
+          "loop": true,
+          "pull": 0.75,
+          "speed": 1.35
+        }
+      ],
+      "holdFace": 3.1416,
+      "holdProp": "rod",
+      "holdCast": 15,
+      "holdBite": 0.16
     }
   },
   {
@@ -42849,7 +42884,21 @@
         "Clunk! Wood!"
       ],
       "doneSound": "wish",
-      "text": "An old sea chest, and inside it, wrapped in a flag: the Golden Coconut, the Chumpz Cove party trophy, lost since before the bar had a roof."
+      "text": "An old sea chest, and inside it, wrapped in a flag: the Golden Coconut, the Chumpz Cove party trophy, lost since before the bar had a roof.",
+      "holdMoves": [
+        {
+          "clip": "game_dig",
+          "at": 0,
+          "loop": true
+        }
+      ],
+      "holdProp": "shovel",
+      "holdFace": "spot",
+      "holdDoneMove": "game_pick_up",
+      "holdTake": [
+        "darkwood",
+        "metal"
+      ]
     }
   },
   {
