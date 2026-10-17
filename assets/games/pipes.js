@@ -45,12 +45,15 @@
   const G = {
     title: 'The Canal Gates',
     howTo: { lines: [
-      'Every canal stone carries a piece of channel: a straight, a bend, a T, a cross, or a basin where a channel ends. A click turns a stone a quarter turn.',
-      'Water runs from the spout in the middle through every channel that lines up with the channel on the next stone.',
-      'The board is done when the water reaches every stone and no channel runs out into the dirt: the orange marks show the leaks.',
-      'Click a stone to turn it (or move the gold frame with the arrows and press Space). R starts the board again. Few turns earn a bonus.',
-      'H (or the Hint button) turns the next stone the water needs into place: three hints a board, and no few-turns bonus after one.',
-      'Tip: start at the edges and corners. A channel there can only point inwards, which settles the stone.'] },
+      'Turn the canal stones until the water from the spout reaches every stone and no channel leaks.',
+      'Every stone carries a piece of channel: a straight, a bend, a T, a cross, or a basin where a channel ends.',
+      'Water runs from the spout (the tall stone in the middle) through every channel that lines up with a channel on the next stone.',
+      'A wet channel that runs into the dirt at the edge, or into the side of a stone with no channel there, leaks: the orange marks. Dark channels are still dry.',
+      'Click (or tap) a stone to turn it a quarter turn clockwise. Or move the gold frame with the arrows / W A S D (or the pads) and press Space.',
+      'H (or the Hint button) turns the next stone the water needs into place: three hints a board. R (or ⟲, or Restart) starts the board again.',
+      'Turns are counted: finish within a tenth of the fewest (the result tells it) with no hint for 10 more points.',
+      'Tip: start at the edges and corners. A channel there can only point inwards, which settles the stone.'],
+      img: 'howto/pipes.png', caption: 'One click from done: the framed T leaks into the dirt, and the five stones past it are dry. One more quarter turn waters all 16.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, CELL = def.cell || 1.2, AT = def.at || [0, 0];
