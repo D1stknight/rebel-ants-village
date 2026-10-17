@@ -7,6 +7,12 @@
 // Score: the board x 20, +10 without a hint. def: { levels, pass, points }
 // Oct 17 (Miguel: the puzzles need a how-to, every board a Restart): howTo (the rules in a few lines) and inst.restart
 // (the same board bare again, the undo list empty, the clock from 0; hints still count: they cost the bonus).
+// Oct 17 (Miguel: "all board games need to be 10 or 15 with the image example ... the Sacred Rope is missing the image
+// example"): three more after the Master's Rope, an 11 x 11 and two 12 x 12 ropes with more turns, fewer 0s and more
+// 2s and 3s (scratchpad agents/lvA/loop: gen.mjs LOGIC=1 WIGGLE=5, a number goes while propagation + one-line what-ifs
+// still tie the whole rope, so it is the only answer): 32, 40 and 50 what-ifs (the Master's Rope 25), and 29, 42 and 51
+// by a second grader written apart from it (logic.py; the Master's Rope 22). Each has one answer by a SAT model of the
+// rules (sat.py; all ten pass). How to play shows a solved 5 x 5 (howto/loop.png).
 (function () {
   const LEVELS = [
     { name: "The First Knot", r: 5, c: 5, clues: '0..0.1...00....2.002.....', loop: '000000110001010010011000011111000000010100001010010001100001' },
@@ -15,17 +21,22 @@
     { name: "The Still Water", r: 7, c: 7, clues: '..02.2......1.0.1...1..1.......20.10.1..0...3..1.', loop: '0000100000101100000000000000000000000010000011000001111100001100000100010001000100010001000100010000100100100001' },
     { name: "The Raked Garden", r: 8, c: 8, clues: '..0....1...0.01...11....0..2..1..11...0.....00..02....01...1.1..', loop: '000000000000000100000000001101100000100000000000000000000100000001111111000000000000000011000000011001011001001000001001000001001000001010000001' },
     { name: "The Duelist's Ring", r: 10, c: 10, clues: '......011..0.0.0........00..11.0...0.....011...002....0...0...3.0...0...3.........3..00.01....1.1...', loop: '0000000000000000011000000000000001000000000010100100000100000010000000001000000000100000000010000000000111111100000000000000000010100000000101000011001010000101100010001000000100100000001000100000010010000000100010000001' },
-    { name: "The Master's Rope", r: 10, c: 10, clues: '.1..00...02.3.....0.1.0.2210.......1.....0.0.1131.....3.....1.0.12..0010......0...13.2.3...11.3..10.', loop: '1000000000001000000001011000000000011000000000010000001111000000110000000000100000011101000001101100111110000011000000000111100000001000010000010000001000100000001001000100000010000010000100000010001001001010010000100000' }
+    { name: "The Master's Rope", r: 10, c: 10, clues: '.1..00...02.3.....0.1.0.2210.......1.....0.0.1131.....3.....1.0.12..0010......0...13.2.3...11.3..10.', loop: '1000000000001000000001011000000000011000000000010000001111000000110000000000100000011101000001101100111110000011000000000111100000001000010000010000001000100000001001000100000010000010000100000010001001001010010000100000' },
+    // Oct 17: 11 x 11 and two 12 x 12, 32 / 40 / 50 trials, 29 / 42 / 51 what-ifs (scratchpad agents/lvA/loop)
+    { name: "The Teal Mist", r: 11, c: 11, clues: '1.21..2.322..11...1....32....0.0...2.10...0..310.....0......2....30...2...3..1..3..31....1.0....100.......3.0............', loop: '001111010111100000010010111010000010110000000110000000001001100001000010101010101001001101101010000000000000000000000100000000000000001000111101100000110001011001000001000100000001010000000001001010100010001001011101010111101000000000011000000000011000000000000000' },
+    { name: "The Moon Gate", r: 12, c: 12, clues: '1.0.3..0.....1.1.........2.1..300....2222.........3...01.....11.2.1..0..1.1...10.3.3......0.......313..01.0.31..2.......2.22...3.1.03...2212.2..', loop: '000010000000100001100000000010100000011100100000111000011000111001001000000010001011011001000101001010000001001000001101100000010010111000011110111101111110000011000000011001001000001100011000000100011010000000011100010001000101010000100001100110111010000000101110110000001110111001011000011101000001000110000010' },
+    { name: "The Grandmaster's Knot", r: 12, c: 12, clues: '.....1.1...21.3....0.1.3.1..3..11...1..21..0..1..31..2.1...2...2.1.1..32.222...1.1.3323.0..3...3..1.0.......0........13........0.1........0...32', loop: '111111111110001000000001000101100111001010100111010101001000000000000011000100000011000001100001101000010001000000000110000000000010000000000001000000000010100000000001010110000000011010110101000100100100000111101100110011110110011100111101001100111110001110100000000001001000000000001100000000001010000000000110' }
   ];
   const G = {
     title: 'The Sacred Rope',
     howTo: {
-      lines: ['Lay one closed rope along the lines between the dots: a single loop with no loose ends that never crosses or touches itself.',
-        'A number says how many of the four sides of its square the rope runs along. Squares without a number can have any.',
-        'Click a line to lay rope, right click to cross it out (Tab swaps the two); drag from dot to dot to lay a long run.',
-        'Click inside a numbered square to fill in its last sides once they are sure. A number turns red when it can no longer be right; a dot turns red where three ropes meet.',
-        'U undoes; H shows one right line, but costs the clean bonus. Tip: start with the 0s: cross out all four of their sides, then look at the 3s.']
-    },
+      lines: ['Tie one closed rope along the lines between the dots: a single loop with no loose ends and no branches, that never crosses or touches itself.',
+        'A number says how many of the four sides of its square the rope runs along. A square without a number can have any, and the rope need not pass every dot.',
+        'Click (or tap) a line to lay rope; right click crosses it out (Tab or the brush button swaps rope / cross). Drag from dot to dot to lay a long run.',
+        'Click inside a numbered square to fill in its last sides once they are sure. Arrows move the gold ring from dot to dot, Shift + arrow lays rope from it, Alt + arrow crosses out.',
+        'A number turns red when it can no longer be right, a dot turns red where three ropes meet. U undoes, H shows one right line (no clean bonus then), Restart starts the board again.',
+        'Tip: start with the 0s and cross out all four of their sides. A 3 in a corner of the board has the rope on both of its outer sides.'],
+      img: 'howto/loop.png', caption: 'A solved 5 x 5 board: one closed rope and every number met. The ringed 0 has all four sides crossed out.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsRopeProgress:' + (def.id || 'loop');
@@ -115,10 +126,10 @@
         if (bd.k + 1 > solvedUpTo) { solvedUpTo = bd.k + 1; try { localStorage.setItem(KEY, String(solvedUpTo)); } catch (e) {} } return true; }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,92vw);background:rgba(10,20,20,.95);border:1px solid rgba(120,200,190,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 420) + 'px,92vw);background:rgba(10,20,20,.95);border:1px solid rgba(120,200,190,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8fd8cc;margin-bottom:10px">The Sacred Rope</div><div style="margin-bottom:12px;color:#bbb">Tie one closed rope along the lines. Each number counts the sides of its square the rope runs along.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#8fd8cc' : '#444'};background:${ok ? 'rgba(143,216,204,.18)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}${ok ? ' ✓' : ''}<div style="font:500 11px system-ui;color:#a8c9c2">${L.r} × ${L.c}</div>` : `${k + 1}<div style="font:500 11px system-ui">locked</div>`}</button>`; }).join('')}</div>`
-          + `<div style="margin-top:10px;font-size:12px;color:#899">Keys 1-${LV.length} pick a board</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 4},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#8fd8cc' : '#444'};background:${ok ? 'rgba(143,216,204,.18)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}${ok ? ' ✓' : ''}<div style="font:500 11px system-ui;color:#a8c9c2">${L.r} × ${L.c}</div>` : `${k + 1}<div style="font:500 11px system-ui">locked</div>`}</button>`; }).join('')}</div>`
+          + `<div style="margin-top:10px;font-size:12px;color:#899">Keys ${LV.length > 9 ? '1-9 and 0' : '1-' + LV.length} pick a board</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       const pads = document.createElement('div');
       pads.style.cssText = 'position:absolute;bottom:62px;right:14px;display:none;gap:6px;pointer-events:auto';
