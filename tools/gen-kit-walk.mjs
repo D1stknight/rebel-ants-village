@@ -29,6 +29,15 @@ for (const t of types) {
 // with the floor level it stands at; floors only where the room's own decks are not (they own stages, stairs, galleries)
 // and no higher than 2.6 m
 const deckAt = (d, x, z) => { if (d.circle) { const [cx, cz, r] = d.circle; return (x - cx) ** 2 + (z - cz) ** 2 <= r * r; } const [x0, z0, x1, z1] = d.box; return x >= x0 && x <= x1 && z >= z0 && z <= z1; };
+// a room deck's floor height at (x, z) as the room walks it (village.html getInteriorDeckY): flat, or a ramp / stair whose tread
+// k stands at (k + 1) risers from y0 at the box's low edge (flip: from the high edge)
+const deckH = (d, x, z) => {
+  if (!deckAt(d, x, z)) return null;
+  if (!Number.isFinite(d.y0)) return d.y;
+  const [x0, z0, x1, z1] = d.box; let t = d.axis === 'x' ? (x - x0) / (x1 - x0) : (z - z0) / (z1 - z0); if (d.flip) t = 1 - t;
+  if (d.steps) t = Math.min(d.steps, Math.floor(t * d.steps) + 1) / d.steps;
+  return d.y0 + (d.y1 - d.y0) * t;
+};
 if (!only.length || only.some(t => t.startsWith('room_'))) {
   out.rooms = only.length ? (old.rooms || {}) : {};
   for (const [t, spec] of Object.entries(K.rooms)) {
@@ -36,12 +45,38 @@ if (!only.length || only.some(t => t.startsWith('room_'))) {
     const parts = K.walkRoomParts(t), tri = K.walkTriangles(parts), decksOwn = spec.decks || [];
     // the signature is of the room's own builder (what the village can read back from its built template), not its parts
     const sig = K.walkTriangles(Object.fromEntries(Object.entries(parts).filter(([k]) => !k.includes('#')))).sig;
-    const r = WG.fromTriangles(tri.tris, { seeds: [[spec.spawn[0], spec.spawn[1], spec.spawn[3] || 0]], stepUp: .45, inflate: 0, minFloor: .12, maxFloor: 2.6, skipFloor: (x, z) => decksOwn.some(d => deckAt(d, x, z)) });
+    const ownDecks = (x, z) => { // the room's decks within .25 m of (x, z): each one's top at its nearest point
+      const out = [];
+      for (const d of decksOwn) {
+        let top = null;
+        if (d.circle) { const [cx, cz, r] = d.circle; if (Math.hypot(x - cx, z - cz) <= r + .25) top = d.y; }
+        else { const [x0, z0, x1, z1] = d.box, px = Math.min(x1, Math.max(x0, x)), pz = Math.min(z1, Math.max(z0, z)); if (Math.hypot(x - px, z - pz) <= .25) top = deckH(d, px, pz); }
+        if (top != null) out.push({ top, under: !!d.under });
+      }
+      return out;
+    };
+    const r = WG.fromTriangles(tri.tris, { seeds: [[spec.spawn[0], spec.spawn[1], spec.spawn[3] || 0]], stepUp: .45, inflate: 0, minFloor: .12, maxFloor: 2.6, wallFrom: .45, skipFloor: (x, z) => decksOwn.some(d => deckAt(d, x, z)), floorsAt: (x, z) => decksOwn.map(d => deckH(d, x, z)).filter(y => y != null), ownDecks });
     if (!r) { delete out.rooms[t]; continue; }
-    // a room that lists its walk zones (tunnels, ledges) keeps the generated walls too (boulders, sacks, stairs inside the
-    // zones), except any within 1.4 m of its spawn or exit: the zones already hold the body there
-    const near = ([x0, z0, x1, z1], [px, pz]) => Math.hypot(Math.max(x0 - px, 0, px - x1), Math.max(z0 - pz, 0, pz - z1)) < 1.4;
-    out.rooms[t] = { sig, decks: r.decks, walls: spec.walk ? r.blockers.filter(b => !near(b, spec.spawn) && !near(b, spec.exit)) : r.blockers };
+    // a room that lists its walk zones (tunnels, ledges) keeps none of the generated walls: the zones were laid out for
+    // the room's body (.85 m round) and the generator walks a thin one (.2 m), so its walls round boulders, roots and sacks
+    // closed passages the zones keep open (the Hub tunnels' seal chamber, the Buke tunnels' side galleries)
+    // and none along the room's own walls (within .4 m of its bounds: the wainscot, a skirting): the bounds hold the body
+    // there already, and a second, thicker edge took the space a stair or a stage end needs (the Ashigaru dojo's beam)
+    const [bx0, bx1, bz0, bz1] = spec.bounds, atBounds = ([x0, z0, x1, z1]) => x1 <= bx0 + .4 || x0 >= bx1 - .4 || z1 <= bz0 + .4 || z0 >= bz1 - .4;
+    // nor over a thing the room's own blockers already hold (half or more inside one that holds a body standing at that
+    // floor): a square box round a round altar closed the corners left to walk past it (the Sohei dojo's altar platform);
+    // a blocker for the floors above only (minY over the floor) holds nothing there (the Kenshi duel hall's rack)
+    const covered = ([x0, z0, x1, z1, lev]) => (spec.blockers || []).some(b => {
+      if ((b.minY != null && lev < b.minY) || (b.maxY != null && lev > b.maxY)) return false;
+      let n = 0, inside = 0;
+      for (let a = 0; a <= 4; a++) for (let c = 0; c <= 4; c++) {
+        const x = x0 + (x1 - x0) * a / 4, z = z0 + (z1 - z0) * c / 4; n++;
+        if (b.circle) { const [cx, cz, r] = b.circle; if (Math.hypot(x - cx, z - cz) <= r + .1) inside++; }
+        else if (b.box) { const [u0, v0, u1, v1] = b.box; if (x >= u0 - .1 && x <= u1 + .1 && z >= v0 - .1 && z <= v1 + .1) inside++; }
+      }
+      return inside / n >= .5;
+    });
+    out.rooms[t] = { sig, decks: r.decks, walls: spec.walk ? [] : r.blockers.filter(b => !atBounds(b) && !covered(b)) };
     nd += r.decks.length; nb += r.blockers.length;
   }
   out.rooms = Object.fromEntries(Object.entries(out.rooms).sort(([a], [b]) => a < b ? -1 : 1));
