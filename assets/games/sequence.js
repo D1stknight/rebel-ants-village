@@ -2,6 +2,8 @@
 // longer each round (Sohei Bell Song, Yamabushi Spirit Lanterns, Bushi Signal Fires). Click an item or press its number.
 // A wrong one costs a life and the tune plays again; the score is the longest tune played back.
 // Oct 17: How to play (the rules) and Restart (this round's tune plays again from its first note; lives and score stay).
+// Oct 17 (Miguel: every board game needs an image example and fuller rules): howTo with howto/sequence.png (a tune played
+// back, one note longer, a wrong bell; scratchpad agents/htC/sequence/draw.py + check.py).
 // def: { style: 'bell' | 'lantern' | 'fire', items: [[x, z, y?], ...] in the spot's frame (local +z ahead of the Rebel),
 //        notes: [Hz, ...] (one per item; defaults per style), start: 3 (first tune), max: 10, lives: 3,
 //        cam: [x, y, z], at: [x, y, z] (frame coordinates), fov, pass (tune length to clear it), points,
@@ -16,11 +18,13 @@
   const G = {
     title: 'Sequence',
     howTo: { lines: [
-      'Watch and listen: the bells, lanterns or fires play a short tune, one at a time.',
-      'Then play it back in the same order: click each one or press its number, shown above it.',
-      'Every tune you play back right comes again one note longer.',
-      'A wrong one costs a heart and the tune plays again; with no hearts left the game ends. Your score is the longest tune you played back.',
-      'Tip: say the numbers to yourself as they play (2, 4, 1...) and keep them in groups of three.'] },
+      'Play back the tune. The bells (Bell Song), spirit lanterns (Spirit Lanterns) or signal fires (Signal Fires) play a short tune, lighting up one at a time, a note each.',
+      'Watch and listen until "Your turn", then play it back in the same order: click (or tap) each one, or press its number, shown above it (1 on the left).',
+      'The first tune has three notes. Every tune you play back right comes again one note longer, and a little quicker.',
+      'A wrong one costs a heart (the info line shows them) and the same tune plays again: play it back from its first note. Three hearts; with none left the game ends.',
+      'Your score is the longest tune you played back; about ten notes clears the game. Restart plays this tune again from its first note (your hearts and score stay).',
+      'Tip: say the numbers to yourself as they play (4, 2, 3...) and keep them in groups of three.'],
+      img: 'howto/sequence.png', caption: "Bell Song: round 1's tune 4 2 3 played back, so round 2 adds a note (4 2 3 1); a wrong bell costs a heart and the tune plays again." },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const S = STYLE[def.style] || STYLE.bell, style = STYLE[def.style] ? def.style : 'bell';
