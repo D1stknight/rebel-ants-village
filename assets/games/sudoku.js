@@ -29,10 +29,13 @@
     title: "The Ancestor's Grid",
     howTo: { lines: [
       'Fill every empty square so that each row, each column and each box (inside the thick lines) holds every number once: 1 to 4, 1 to 6 or 1 to 9, as big as the grid.',
-      'Click a square (or move with the arrows / W A S D), then type its number or press its button. The dark numbers are carved in and never change; a clash turns red.',
-      'N switches pencil notes on and off, for the numbers a square might still hold. 0 or Backspace rubs out, U undoes.',
-      'H shows a mistake, or fills one square for you (no clean bonus then).',
-      'Tip: find a square where only one number is left, or a number that fits in only one square of its row, column or box.'] },
+      'Click (or tap) a square, or move the gold square with the arrows / W A S D, then type its number or press its button. The dark carved numbers never change.',
+      'The gold square\'s row, column and box are shaded, and squares with its number turn blue. A clash (the same number twice in a row, column or box) turns red.',
+      'N (or the ✎ button) switches pencil notes on and off: a number typed then goes in small, for what the square might still hold. A number written in a square rubs that note out of its row, column and box.',
+      '0, Backspace or ⌫ rubs a square out; U (or ↶) undoes. Restart lays the grid out again as it was carved.',
+      'H (or Hint) points out a mistake, or fills one square for you; a grid solved with no hint pays 10 more points.',
+      'Tip: find a square where only one number is left, or a number that fits in only one square of its row, column or box.'],
+      img: 'howto/sudoku.png', caption: 'A 4 x 4 grid part way through: the gold square can only be 3 (its row holds 1 and 2, its column 4 and 2). The noted square might still be 1 or 4.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsGridProgress:' + (def.id || 'sudoku');
