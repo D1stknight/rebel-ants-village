@@ -88,8 +88,8 @@
         st.power = U.pingPong(st.t, .7); H.meter(null);
         const d = REACH[0] + (REACH[1] - REACH[0]) * st.power, x = (Math.random() - .5) * 2.4;
         st.land = new V3(x, WY, d); hint('');
-        if (PACK) { st.phase = 'windup'; st.t = 0; st.castT = 0; swingTo = 1; play('game_cast', { hold: true }); return; } // the float goes at the release
-        st.phase = 'fly'; st.t = 0; bob.setEnabled(true); ctx.player.clip('cross_punch');
+        if (PACK) { st.phase = 'windup'; st.t = 0; st.castT = 0; swingTo = 0; play('game_cast', { hold: true }); return; } // the float goes at the release
+        st.phase = 'windup'; st.t = 0; st.castT = -1; st.windT = .35; // without the pack: a quick lift back, then the cast
       }
       function pickFish() {
         const far = st.power, w = FISH.map(f => { if (f.gold && far < .72) return 0; const near = 1 - Math.abs(far - f.far); return Math.max(.02, near * near) * (f.gold ? .45 : f.boot ? .5 : 1); });
@@ -119,6 +119,10 @@
           // the cast move: the rod swings with the hands, the float leaves at the release, back to holding at its end
           if (st.castT >= 0) { st.castT += dt; if (st.castT >= CAST_LEN) { st.castT = -1; swingTo = 0; if (st.phase === 'wait' || st.phase === 'bite' || st.phase === 'fly') play('game_fish_wait', { loop: true }); } }
           if (st.phase === 'windup' && st.castT >= CAST_RELEASE) { st.phase = 'fly'; st.t = 0; bob.setEnabled(true); }
+          if (st.phase === 'windup' && !PACK && (st.windT -= dt) <= 0) { st.phase = 'fly'; st.t = 0; bob.setEnabled(true); ctx.player.clip('cross_punch'); }
+          // the wind-up lifts the rod up and back over the shoulder, then the cast whips it out over the water (Miguel, Oct 17:
+          // the rod went down first)
+          if (st.phase === 'windup') setRod(rodRest - (rodRest + .55) * Math.sin(Math.min(1, PACK ? st.castT / CAST_RELEASE : 1 - st.windT / .35) * Math.PI / 2));
           swing += Math.max(-dt * 2.5, Math.min(dt * 4, swingTo - swing));
           for (let k = rings.length - 1; k >= 0; k--) { const r = rings[k]; r.t += dt; const s = 1 + r.t * (r.big ? 7 : 4); r.r.scaling.set(s, 1, s); r.r.material.alpha = Math.max(0, .7 - r.t * .8); if (r.t > .9) { r.r.dispose(); rings.splice(k, 1); } }
           if (st.catchAnim) { const c = st.catchAnim; c.t += dt; const u = Math.min(1, c.t / .8), e = u * u * (3 - 2 * u); const to = new V3(.2, 2.2, 1.6); c.n.position = V3.Lerp(c.from, to, e); c.n.position.y += Math.sin(u * Math.PI) * 1.2; c.n.rotation.z = Math.sin(c.t * 9) * .4 * (1 - u * .6); c.n.rotation.y = Math.PI / 2; if (c.t > 2.1) { c.n.dispose(); st.catchAnim = null; } }
