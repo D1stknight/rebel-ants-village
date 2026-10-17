@@ -93,11 +93,14 @@
         else { H.msg('Out of time', 1800); ctx.finish({ time: t, finished: false, passed: false, kicker: 'Out of time', extra: `Seen ${st.caught} ${st.caught === 1 ? 'time' : 'times'}. Watch the light on the ground: it is all they can see. ${lines}` }); }
       }
       ctx.player.hold(true); ctx.walkLight?.(def.walkLight ?? .3); // the Rebel's own glow would read as lantern light
-      ctx.player.walkAs?.('game_sneak'); // the sneak walk (games pack), else the Rebel's own walk
+      // the sneak walk (games pack), else the Rebel's own walk; a pack that comes in after the start (a slow download) is
+      // picked up then
+      let sneaking = !!ctx.player.walkAs?.('game_sneak');
       H.title(def.title || 'Silent Steps'); H.score('0.0'); H.info(`${guards.length} watchmen · gold ${gold} s`);
       H.hint(`${def.text ? def.text + ' · ' : ''}Keep out of the lantern light · walk (running makes them look) · blue rings are posts`);
       return {
         update(dt) {
+          if (!sneaking && st.phase !== 'done' && ctx.player.has?.('game_sneak')) sneaking = !!ctx.player.walkAs?.('game_sneak');
           const t = performance.now() / 1000, p = ctx.player.world();
           goalRing.scaling.setAll(1 + .05 * Math.sin(t * 4));
           const n = next(); beam.setEnabled(st.phase !== 'done'); beam.position.set(n.x, (n.y ?? 0) + 4.6, n.z); beam.material = n === goal ? goalM : postM;
