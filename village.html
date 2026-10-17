@@ -11053,9 +11053,21 @@ function buildMiniGameCtx(def, src, frame) {
       },
       // whether this Rebel can play a move by that name (its rig's clips, a lent weapon's, the games pack's)
       has(name) { return !!window.forgeRigBundleInfo && miniGameClipSlot(name) != null && !!animGroups[miniGameClipSlot(name)]; },
+      // how far into its clip the move by that name is now (seconds; null when it is not playing): a ball or a stone can
+      // follow the move's own timing (the dribble's bounces, the jump shot's release)
+      clipTime(name) { const slot = miniGameClipSlot(name), g = slot != null ? animGroups[slot] : null, a = g?.isPlaying && g.animatables?.[0]; return a ? Math.max(0, (a.masterFrame - g.from) / 60) : null; },
       idle() { if (animState !== 0) { const g = animGroups[animState]; if (g?.isPlaying) g.stop(); animState = -1; switchAnim(0, true); } },
       // where a bone is drawn now (world), e.g. 'RightHand'; null without a rig
       bone(name) { return getPlayerBoneWorld(name); },
+      // a prop held in a fist (frame coords): the grip point, the axis through the fist toward the thumb (a haft runs
+      // along it) and the knuckles' way (an axe's edge, a hammer's face); from the finger bones, so it is the same for
+      // every Forge rig; null without them
+      grip(side = 'Right') {
+        const w = n => getPlayerBoneWorld(side + n), h = w('Hand'), i1 = w('HandIndex1'), p1 = w('HandPinky1'), m1 = w('HandMiddle1') || i1; if (!h || !i1 || !p1) return null;
+        const H = ctx.toLocal(h), I = ctx.toLocal(i1), P = ctx.toLocal(p1), M = ctx.toLocal(m1), fing = M.subtract(H).normalize(), up = I.subtract(P).normalize();
+        const palm = BABYLON.Vector3.Cross(fing, up).normalize().scale(side === 'Left' ? -1 : 1), len = BABYLON.Vector3.Distance(H, M);
+        return { p: BABYLON.Vector3.Center(I, P).add(fing.scale(len * .45)).add(palm.scale(len * .35)), up, edge: fing.subtract(up.scale(BABYLON.Vector3.Dot(fing, up))).normalize(), palm };
+      },
       // a bow or a katana in hand with its moves (Promise of { kind, H, onRelease(fn) } or null)
       weapon(kind, weaponId) { return lendGameWeapon(kind, weaponId); },
       // roam games: where the player is (world), stand somewhere in the village (world x, z, facing yaw), hold the walk
