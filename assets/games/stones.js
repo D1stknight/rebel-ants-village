@@ -3,6 +3,8 @@
 // S / ↓ back, or click the next stone). A wrong stone sinks you back to the start and the path shows once more; three
 // falls and the mist wins. Three levels, longer paths and fewer looks; a level opens when the one before is crossed.
 // Oct 17: How to play (the rules) and Restart (back on the ledge, the same path shown again, no falls).
+// Oct 17: a step off the field's side (A on the left column, D on the right) or S on the first stone is a bump: it
+// used to hop onto a stone that is not there, and the fall after it stopped the game ("The game hit a snag").
 // def: { at: [x, z] (the field's near middle, frame coordinates; rows run along +z), pitch: m between stones, levels, cam, look, pass, points }
 (function () {
   // Oct 17 (Miguel: "make it 10 levels"): wider and longer fields, the path shown quicker and twisting more
@@ -65,7 +67,7 @@
         if (st.phase !== 'play' || st.hop > 0) return;
         const cur = lv.pos < 0 ? null : lv.path[lv.pos];
         const adj = cur ? Math.abs(cur[0] - c) + Math.abs(cur[1] - r) === 1 : r === 0;
-        if (!adj) { ctx.sound('thock'); return; }
+        if (!adj || !lv.stones[r]?.[c]) { ctx.sound('thock'); return; } // off the field's side, or back off the first stone: no stone there
         if (cur && lv.pos > 0 && lv.path[lv.pos - 1][0] === c && lv.path[lv.pos - 1][1] === r) { hopTo(stonePos(c, r)); lv.pos--; return; } // back along the path
         const p = stonePos(c, r); hopTo(p);
         if (lv.path[lv.pos + 1] && lv.path[lv.pos + 1][0] === c && lv.path[lv.pos + 1][1] === r) { lv.pos++; lv.stones[r][c].material = M.walked; ctx.note(523 + lv.pos * 25, 'bell');
