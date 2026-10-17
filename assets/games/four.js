@@ -3,6 +3,7 @@
 // Four opponents: Banana Band (plays for fun and misses things), Pengu (sees a move or two ahead), Peely (six moves
 // ahead) and Big Chain (twelve or more, the cove's champion). Beat one to meet the next; you always drop first.
 // Score: the opponent x 20 for a win (+10 winning with 12 bananas or fewer). def: { pass, points }
+// Oct 17: How to play (the rules) and Restart (an empty rack: a new game against the same ape, you drop first).
 (function () {
   const OPP = [
     { name: 'Banana Band', depth: 0, see: .55, noise: 0, ms: 0, says: 'just here for the music' },
@@ -41,6 +42,12 @@
     return best; }
   const G = {
     title: 'Banana Drop',
+    howTo: { lines: [
+      'Drop bananas into the rack: each one falls to the lowest free hole of its column.',
+      'Four of your bananas in a line, across, up or slanted, wins; the ape drops coconuts and tries to do the same.',
+      'Click a column to drop (or ← → and Space, or the keys 1-7). You always drop first.',
+      'Beat an ape to meet the next one; win with 12 bananas or fewer for +10.',
+      'Tip: the middle column is part of the most lines of four, and when the ape has three in a line, block the fourth hole.'] },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def, KEY = 'rebelAntsDropProgress:' + (def.id || 'four');
       let beaten = 0; try { beaten = Math.max(0, Math.min(OPP.length, Number(localStorage.getItem(KEY)) || 0)); } catch (e) {}
@@ -98,6 +105,8 @@
           + `<div style="margin-top:10px;font-size:12px;color:#998">Keys 1-${OPP.length} pick an opponent</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       function choose(k) { if (st.phase !== 'pick' || k > beaten || k >= OPP.length) return; pick.remove(); st.phase = 'play'; build(k); H.msg(OPP[k].name, 1000, 'you drop first'); }
+      // Restart (the button beside Quit): an empty rack, a new game against the same ape, you drop first
+      function restart() { if (st.phase !== 'play' || !g) return; build(g.k); st.think = 0; H.msg(g.opp.name, 1000, 'a new game: you drop first'); }
       hud.append(pick); drawPick();
       const cam = [0, Y0R + W / 2 + .5, -5.6], at = [0, Y0R + W / 2, 0];
       ctx.player.place(0, -7.4, 0); // behind the camera, out of the picture
@@ -127,6 +136,7 @@
           if (evt.type === T.POINTERMOVE) { const c = colAt(); if (c !== g.hover && c != null) { g.hover = c; draw(); } }
           else if (evt.type === T.POINTERDOWN) { const c = colAt(); if (c != null) { g.hover = c; playerDrop(c); } }
         },
+        restart,
         _test: { st, choose, playerDrop, chooseMove, winAt, evalBoard, get g() { return g; }, OPP, paint: () => { st.dirty = false; paint(); }, unlock(k) { beaten = k; drawPick(); } },
         dispose() { pick.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { rackM.dispose(); tex.dispose(); } catch (e) {} }
       };

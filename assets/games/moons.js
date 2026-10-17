@@ -4,6 +4,7 @@
 // the big ones need "what if this were a moon?" reasoning). Click a square for a moon, again for a sun, again to clear
 // (right click the other way), drag to paint; arrows move, M / S place, 0 clears. The numbers beside each line count
 // the moons and suns still to place. H hint (no clean bonus). Score: the board x 20, +10 without a hint.
+// Oct 17: How to play (the rules in a few lines) and Restart (the board as picked: the givens only, no undo, hints or time).
 // def: { levels, pass, points }
 (function () {
   const LEVELS = [
@@ -17,6 +18,13 @@
   ];
   const G = {
     title: 'Moons and Suns',
+    howTo: { lines: [
+      'Fill every square with a moon or a sun. The lighter squares with a gold edge are given and cannot change.',
+      'Never three of the same side by side in a row or a column.',
+      'Every row and every column holds as many moons as suns, and no two rows (or two columns) may be exactly alike.',
+      'The numbers beside each row and under each column count the moons (silver) and suns (gold) still to place there.',
+      'Click a square for a moon, again for a sun, again to clear (right click goes the other way); drag to paint. M / S place, 0 clears, U undoes, H gives a hint with its reason.',
+      'Tip: two alike side by side need the other kind at both ends, and a square between two alike takes the other kind.'] },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsMoonsProgress:' + (def.id || 'moons');
@@ -91,6 +99,8 @@
       function place(v) { if (st.phase !== 'play') return; const rec = []; if (bd.giv[bd.cur] !== -1) { H.msg('A given square', 700); return; } setCell(bd.cur, v, rec); commit(rec); }
       function undo() { if (st.phase !== 'play') return; const rec = bd.undo.pop(); if (!rec) return; for (let j = rec.length - 1; j >= 0; j--) bd.g[rec[j][0]] = rec[j][1]; ctx.note(330, 'lantern'); draw(); info(); }
       function restart() { if (st.phase !== 'play') return; const rec = []; for (let i = 0; i < bd.N; i++) setCell(i, -1, rec); commit(rec); }
+      // the HUD's Restart: the board as it was picked (the givens only; no undo, hints or time either)
+      function startOver() { if (st.phase !== 'play' || !bd) return; st.drag = null; build(bd.k); H.msg('Start again', 900); }
       // a square the line rules settle from what is on the board now (pairs, gaps, full counts), with the reason
       function ruleStep() { const { g, n, h, lines } = bd, nm = v => v ? 'suns' : 'moons', one = v => v ? 'sun' : 'moon';
         for (const Ln of lines) for (let k = 0; k + 1 < n; k++) { const a = g[Ln[k]]; if (a === -1 || a !== g[Ln[k + 1]]) continue;
@@ -141,7 +151,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return; const n = bd.n, r = Math.floor(bd.cur / n), c = bd.cur % n;
           const dirs = { arrowup: [-1, 0], arrowdown: [1, 0], arrowleft: [0, -1], arrowright: [0, 1] };
           if (k in dirs) { const [dr, dc] = dirs[k], nr = r + dr, nc = c + dc; if (nr >= 0 && nc >= 0 && nr < n && nc < n) { bd.cur = nr * n + nc; draw(); } }
@@ -155,7 +165,8 @@
           else if (evt.type === T.POINTERMOVE && st.drag) { const i = at2(); if (i != null) dragTo(i); }
           else if (evt.type === T.POINTERUP) st.drag = null;
         },
-        _test: { st, choose, tap, dragTo, place, undo, hint, restart, faults, ruleStep, get bd() { return bd; }, LV, draw: () => { st.dirty = false; paint(); }, end() { st.drag = null; }, unlock(k) { solvedUpTo = k; drawPick(); } },
+        restart: startOver,
+        _test: { st, choose, tap, dragTo, place, undo, hint, restart, startOver, faults, ruleStep, get bd() { return bd; }, LV, draw: () => { st.dirty = false; paint(); }, end() { st.drag = null; }, unlock(k) { solvedUpTo = k; drawPick(); } },
         dispose() { pick.remove(); pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); } catch (e) {} }
       };
     }

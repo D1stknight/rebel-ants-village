@@ -3,6 +3,7 @@
 // arrows or a click on a free square in its line slide it; one slide of a car, however far, is one move. U undoes, R
 // starts again. Seven lots from 5 to 30 moves (the fewest moves found by a solver); each opens when the one before
 // is done. Score: the lot x 20, +10 in the fewest moves.
+// Oct 17: How to play (the rules) and Restart beside Quit (the same as R: every car back where the lot started).
 // def: { at: [x, z] (frame coords of the lot's middle), cell: 1.4, levels: [{ cars: [{ x, y, len, h }], best }], pass, points }
 (function () {
   const LEVELS = [
@@ -17,6 +18,12 @@
   const N = 6, PAINT = ['sl_car_blue', 'sl_car_gold', 'sl_car_red', 'sl_car_black', 'sl_car_white'];
   const G = {
     title: 'Valet Parking',
+    howTo: { lines: [
+      'Get the purple lowrider out through the gap in the curb on the right.',
+      'Cars only roll forward and back along their own line; they never turn.',
+      'Click a car (or press Tab to step through them), then click a glowing dot or use the arrow keys to roll it.',
+      'Moving a car counts as one move however far it rolls (more slides of the same car in a row still count once); the fewest moves earn +10. U undoes.',
+      'Tip: start from the lowrider: which car blocks its way out, and which cars block that one?'] },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, CELL = def.cell || 1.4, AT = def.at || [0, 0];
@@ -41,7 +48,7 @@
       function grid(skip) { const g = new Int8Array(N * N).fill(-1); board.cars.forEach((c, k) => { if (k === skip) return; for (let i = 0; i < c.len; i++) { const x = c.h ? c.x + i : c.x, y = c.h ? c.y : c.y + i; g[y * N + x] = k; } }); return g; }
       function placeCar(c, k) { const p = carCenter(c); c.node.position.set(p.x, .09, p.z); c.node.rotation.y = c.h ? 0 : Math.PI / 2; const s = .35; c.node.scaling.set((c.len * CELL * .9) / 7.6, s, s); }
       function build(k) {
-        if (board) board.cars.forEach(c => { try { c.node.dispose(); } catch (e) {} });
+        if (board) { board.cars.forEach(c => { try { c.node.dispose(); } catch (e) {} }); board.dots.forEach(d => d.dispose()); } // a restart leaves no old dots behind
         board = { k, cars: LV[k].cars.map(c => ({ ...c })), sel: 0, moves: 0, hist: [], lastCar: -1, dots: [] };
         board.cars.forEach((c, i) => { c.node = ctx.kit(i === 0 ? 'sl_car_purple' : PAINT[(i * 3 + k) % PAINT.length]); c.node.getChildMeshes(false).forEach(m => { m.isPickable = true; m.metadata = { ...(m.metadata || {}), valetCar: i }; }); placeCar(c, i); });
         ctx.player.place(AT[0] - CELL * 4.3, AT[1] - CELL * 3.6, Math.PI / 4);
@@ -62,7 +69,7 @@
       }
       function step(dx, dy) { if (!board) return; const c = board.cars[board.sel]; if (c.h ? dy : dx) return; slide(board.sel, (c.h ? c.x : c.y) + (c.h ? dx : dy)); }
       function undo() { if (st.phase !== 'play' || st.anim || !board.hist.length) return; const h = board.hist.pop(), c = board.cars[h.i]; if (c.h) c.x = h.from; else c.y = h.from; board.moves = h.moves; board.lastCar = h.last; placeCar(c, h.i); select(h.i); info(); }
-      function restart() { if (st.phase !== 'play' || st.anim) return; build(board.k); H.msg('Again', 600); }
+      function restart() { if (st.phase !== 'play') return; st.anim = null; build(board.k); H.msg('Again', 600); } // a car still rolling is parked back too
       function done() { const c = board.cars[0]; return c.x + c.len - 1 === N - 1; }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
@@ -95,7 +102,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (k === 'arrowup' || k === 'w') step(0, -1); else if (k === 'arrowdown' || k === 's') step(0, 1); else if (k === 'arrowleft' || k === 'a') step(-1, 0); else if (k === 'arrowright' || k === 'd') step(1, 0);
           else if (k === 'tab') { e.preventDefault?.(); select((board.sel + 1) % board.cars.length); } else if (k === 'u' || k === 'z' || k === 'backspace') undo(); else if (k === 'r') restart();
         },
@@ -106,6 +113,7 @@
           const l = ctx.toLocal(hit.pickedPoint), x = Math.round((l.x - AT[0]) / CELL + (N - 1) / 2), y = Math.round((N - 1) / 2 - (l.z - AT[1]) / CELL), c = board.cars[board.sel];
           if (c.h && y === c.y) { const p = x > c.x ? x - c.len + 1 : x; slide(board.sel, p); } else if (!c.h && x === c.x) { const p = y > c.y ? y - c.len + 1 : y; slide(board.sel, p); }
         },
+        restart,
         _test: { st, slide, select, step, undo, choose, reach, get board() { return board; }, LV, N },
         dispose() { pick.remove(); pads.remove(); if (board) { board.cars.forEach(c => { try { c.node.dispose(); } catch (e) {} }); board.dots.forEach(d => { try { d.dispose(); } catch (e) {} }); } nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };

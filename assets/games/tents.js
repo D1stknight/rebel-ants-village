@@ -4,6 +4,7 @@
 // (checked by a solver; the big ones need "what if a tent stood here?" reasoning). Squares beside no tree are grass
 // from the start. Click marks with the brush (Tab switches tent / grass, right click the other), drag paints, a click
 // on a line's number fills it when it is sure. H hint (no clean bonus). Score: the camp x 20, +10 without a hint.
+// Oct 17: How to play (the rules in a few lines) and Restart (the camp as picked: no marks, undo, hints or time).
 // def: { levels, pass, points }
 (function () {
   const LEVELS = [
@@ -17,6 +18,13 @@
   ];
   const G = {
     title: 'The War Camp',
+    howTo: { lines: [
+      'Every tree needs its own tent, pitched right beside it: above, below, left or right of it.',
+      'Tents never touch each other, not even at a corner (touching tents are outlined red). The numbers beside each row and under each column count its tents.',
+      'Squares beside no tree can never hold a tent: they are grass from the start (the paler ones).',
+      'Click a square to mark it with the brush: Tab (or the button) switches tent / grass, right click marks the other, drag paints. Click a line\'s number to fill the rest of it once it is sure.',
+      'U undoes, H fixes one square (no clean bonus then).',
+      'Tip: a line whose count is already met is all grass, and so is every square around a tent, corners too.'] },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsCampProgress:' + (def.id || 'tents');
@@ -89,7 +97,9 @@
         const v = s === need ? 1 : s + u === need ? 2 : 0; if (!v) { H.msg('Not sure yet', 900, `${need - s} more tent${need - s === 1 ? '' : 's'} among ${u} squares`); return false; }
         for (let b = 0; b < n; b++) { const i = kind ? b * n + a : a * n + b; if (bd.open[i] && !bd.mark[i]) setMark(i, v, rec); } commit(rec); return true; }
       function undo() { if (st.phase !== 'play') return; const rec = bd.undo.pop(); if (!rec) return; for (let j = rec.length - 1; j >= 0; j--) bd.mark[rec[j][0]] = rec[j][1]; ctx.note(330, 'lantern'); draw(); info(); }
-      function restart() { if (st.phase !== 'play') return; const rec = []; for (let i = 0; i < bd.mark.length; i++) if (bd.mark[i]) setMark(i, 0, rec); commit(rec); }
+      // Restart (the button beside Quit): the camp as it was picked (no marks, undo, hints or time), kept in the same
+      // board object (the tests hold it); only while it is being played
+      function restart() { if (st.phase !== 'play' || !bd) return; const b = bd; build(b.k); bd = Object.assign(b, bd); st.drag = null; H.msg('Start again', 900); }
       function hint() {
         if (st.phase !== 'play') return; const N2 = bd.n * bd.n;
         let i = -1; for (let j = 0; j < N2; j++) if (bd.mark[j] && (bd.mark[j] === 2) !== !!bd.sol[j]) { i = j; break; }
@@ -136,7 +146,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return; const n = bd.n, x = bd.cur % n, y = Math.floor(bd.cur / n);
           if (k === 'arrowup' || k === 'w') { bd.cur = ((y - 1 + n) % n) * n + x; draw(); } else if (k === 'arrowdown' || k === 's') { bd.cur = ((y + 1) % n) * n + x; draw(); }
           else if (k === 'arrowleft' || k === 'a') { bd.cur = y * n + (x - 1 + n) % n; draw(); } else if (k === 'arrowright' || k === 'd') { bd.cur = y * n + (x + 1) % n; draw(); }
@@ -152,6 +162,7 @@
           else if (evt.type === T.POINTERMOVE && st.drag) { const hit = cellAt(); if (hit && hit.i != null) dragTo(hit.i); }
           else if (evt.type === T.POINTERUP) st.drag = null;
         },
+        restart,
         _test: { st, choose, press, dragTo, fillLine, undo, hint, restart, toggleMode, touching, get bd() { return bd; }, LV, draw: () => { st.dirty = false; paint(); }, end() { st.drag = null; }, unlock(k) { solvedUpTo = k; drawPick(); } },
         dispose() { pick.remove(); pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); } catch (e) {} }
       };

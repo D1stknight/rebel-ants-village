@@ -4,6 +4,7 @@
 // lantern (or, in mark mode, a dot for "no lantern here"); U undoes, H fixes one square (no clean bonus then).
 // Seven courtyards from 5 x 5 to 10 x 10, each with one answer (checked by a solver). Score: the courtyard x 20, +10
 // without a hint.
+// Oct 17: How to play (the rules + a solved 5 x 5, howto/akari.png) and Restart (the courtyard as picked, all clear).
 // def: { levels: [{ g: 'grid row by row: . open, # wall, 0-4 numbered wall', sol: [lantern squares] }], pass, points }
 (function () {
   const LEVELS = [
@@ -17,6 +18,14 @@
   ];
   const G = {
     title: "The Watchman's Lanterns",
+    howTo: { lines: [
+      'Light every open square of the courtyard by setting paper lanterns on it.',
+      'A lantern lights its whole row and column, until a wall stops the light.',
+      'No lantern may shine on another: two lanterns in one row or column need a wall between them.',
+      'A number on a wall is how many lanterns stand right beside it (above, below, left, right). A 0 means none.',
+      'Click a square for a lantern, again to take it away. Tab (or the button) switches to dots for "no lantern here". U undoes, H fixes one square.',
+      'Tip: start at the numbers. A 4, a 0, or a 3 against the edge settles its neighbours at once.'],
+      img: 'howto/akari.png', caption: 'A solved 5 x 5 courtyard: every square lit, no lantern sees another, each number has its count.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsLanternsProgress:' + (def.id || 'akari');
@@ -109,7 +118,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (k === 'u' || k === 'z' || k === 'backspace') undo(); else if (k === 'h') hint(); else if (k === 'tab' || k === 'm') { e.preventDefault?.(); toggleMode(); }
         },
         pointer(evt) {
@@ -118,6 +127,8 @@
           const l = ctx.toLocal(hit.pickedPoint), N = bd.N, c = Math.floor((l.x + S / 2) / S * N), r = Math.floor((S / 2 - l.z) / S * N);
           if (c >= 0 && c < N && r >= 0 && r < N) tap(r * N + c);
         },
+        // Restart: the same courtyard as it was picked (no lanterns, marks, undo or hints); only while it is being played
+        restart() { if (st.phase !== 'play' || !bd) return; build(bd.k); H.msg('Start again', 900); },
         _test: { st, choose, set, tap, undo, hint, toggleMode, state, get bd() { return bd; }, LV },
         dispose() { pick.remove(); pads.remove(); if (bd) bd.inst.forEach(a => a.forEach(m => { try { m.dispose(); } catch (e) {} })); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); } catch (e) {} }
       };

@@ -5,6 +5,8 @@
 // click to cross it out (Tab swaps), drag from dot to dot to lay a run, click inside a square to settle its sides when
 // they are sure; arrows move the dot cursor, Shift + arrow lays rope from it. H hint (no clean bonus).
 // Score: the board x 20, +10 without a hint. def: { levels, pass, points }
+// Oct 17 (Miguel: the puzzles need a how-to, every board a Restart): howTo (the rules in a few lines) and inst.restart
+// (the same board bare again, the undo list empty, the clock from 0; hints still count: they cost the bonus).
 (function () {
   const LEVELS = [
     { name: "The First Knot", r: 5, c: 5, clues: '0..0.1...00....2.002.....', loop: '000000110001010010011000011111000000010100001010010001100001' },
@@ -17,6 +19,13 @@
   ];
   const G = {
     title: 'The Sacred Rope',
+    howTo: {
+      lines: ['Lay one closed rope along the lines between the dots: a single loop with no loose ends that never crosses or touches itself.',
+        'A number says how many of the four sides of its square the rope runs along. Squares without a number can have any.',
+        'Click a line to lay rope, right click to cross it out (Tab swaps the two); drag from dot to dot to lay a long run.',
+        'Click inside a numbered square to fill in its last sides once they are sure. A number turns red when it can no longer be right; a dot turns red where three ropes meet.',
+        'U undoes; H shows one right line, but costs the clean bonus. Tip: start with the 0s: cross out all four of their sides, then look at the 3s.']
+    },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsRopeProgress:' + (def.id || 'loop');
@@ -86,7 +95,7 @@
         const v = on === k ? 2 : on + u === k ? 1 : 0; if (!v) { H.msg('Not sure yet', 900, `${k - on} more side${k - on === 1 ? '' : 's'} among ${u}`); return false; }
         const rec = []; for (const e of bd.cellE[i]) if (!bd.s[e]) setEdge(e, v, rec); commit(rec); return true; }
       function undo() { if (st.phase !== 'play') return; const rec = bd.undo.pop(); if (!rec) return; for (let j = rec.length - 1; j >= 0; j--) bd.s[rec[j][0]] = rec[j][1]; ctx.note(330, 'lantern'); draw(); info(); }
-      function restart() { if (st.phase !== 'play') return; const rec = []; for (let e = 0; e < bd.EN; e++) if (bd.s[e]) setEdge(e, 0, rec); commit(rec); }
+      function restart() { if (st.phase !== 'play') return; bd.s.fill(0); bd.undo.length = 0; bd.time = 0; bd.cur = 0; bd.flash = null; st.drag = null; st.warned = ''; draw(); info(); H.msg('Start again', 900); }
       function hint() {
         if (st.phase !== 'play') return;
         let e = -1; for (let x = 0; x < bd.EN; x++) if (bd.s[x] && (bd.s[x] === 1) !== !!bd.sol[x]) { e = x; break; }
@@ -140,7 +149,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return; const C1 = bd.C + 1, r = Math.floor(bd.cur / C1), c = bd.cur % C1;
           const dirs = { arrowup: [-1, 0], w: [-1, 0], arrowdown: [1, 0], s: [1, 0], arrowleft: [0, -1], a: [0, -1], arrowright: [0, 1], d: [0, 1] };
           if (k in dirs) { const [dr, dc] = dirs[k], nr = r + dr, nc = c + dc; if (nr < 0 || nc < 0 || nr > bd.R || nc > bd.C) return; const nv = nr * C1 + nc;
@@ -156,6 +165,7 @@
           else if (evt.type === T.POINTERMOVE && st.drag) { const hit = at2(); if (hit && hit.v != null) dragToV(hit.v); }
           else if (evt.type === T.POINTERUP) st.drag = null;
         },
+        restart, // the HUD's Restart button
         _test: { st, choose, press, dragToV, settle, undo, hint, restart, toggleMode, closedRing, edgeBetween, get bd() { return bd; }, LV, draw: () => { st.dirty = false; paint(); }, end() { st.drag = null; }, unlock(k) { solvedUpTo = k; drawPick(); } },
         dispose() { pick.remove(); pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); } catch (e) {} }
       };

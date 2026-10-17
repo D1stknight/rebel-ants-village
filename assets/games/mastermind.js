@@ -5,6 +5,9 @@
 // Six codes, from 3 flags of 4 colours to 5 flags of 8 colours with repeats; the par is what a careful tactician
 // needs. Score: the code x 20, +10 within the par without a hint.
 // def: { levels: [{ pegs, colours, tries, repeats, par }], pass, points }
+// Oct 17 (Miguel: the puzzles need a how-to with an example, every board a Restart): howTo (the rules + a code broken
+// in four guesses, howto/mastermind.png) and inst.restart (the same code level, tries back, a NEW secret code: the old
+// one's pegs would give it away).
 (function () {
   const LEVELS = [
     { pegs: 3, colours: 4, tries: 8, repeats: false, par: 4 },
@@ -21,6 +24,14 @@
   function score(code, guess) { let b = 0, w = 0; const cc = {}, gc = {}; code.forEach((c, i) => { if (c === guess[i]) b++; else { cc[c] = (cc[c] || 0) + 1; gc[guess[i]] = (gc[guess[i]] || 0) + 1; } }); for (const k in gc) w += Math.min(gc[k], cc[k] || 0); return [b, w]; }
   const G = {
     title: "The Spy's Code",
+    howTo: {
+      lines: ['Break the spy\'s secret code: a row of coloured flags. The info line says how many flags and colours there are, and whether a colour can repeat.',
+        'Fill the guess row: click a colour (or press its number) for each flag in turn. Backspace takes one back, ← → pick a flag to change; Enter or Signal sends the guess.',
+        'Each guess gets pegs: a black peg for every flag of the right colour in the right place, a white peg for every other flag of a right colour in the wrong place. They never say which flag is which.',
+        'Break the code before the tries run out. Within the par and without a hint scores a bonus; H shows one flag of the code.',
+        'Tip: change only one or two flags between guesses: how the pegs change tells you about those flags.'],
+      img: 'howto/mastermind.png', caption: 'A code of 4 flags broken on the fourth guess.'
+    },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsCodeProgress:' + (def.id || 'mastermind');
@@ -87,6 +98,7 @@
       }
       function hint() { if (st.phase !== 'play') return; const free = [...Array(bd.P).keys()].filter(i => !bd.known.has(i)); if (free.length <= 1) { H.msg('No more hints for this code', 1000); return; }
         const i = free[Math.floor(Math.random() * free.length)]; bd.known.set(i, bd.code[i]); bd.cur[i] = bd.code[i]; bd.hints++; H.msg(`Flag ${i + 1} is ${FLAGS[bd.code[i]].n}`, 1300); draw(); info(); }
+      function restart() { if (st.phase !== 'play' || !bd) return; build(bd.k); H.msg('A new code', 1200, 'the spy changed the signal'); }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
       pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(400px,90vw);background:rgba(10,14,28,.95);border:1px solid rgba(120,150,230,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
@@ -116,7 +128,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return;
           if (/^[1-8]$/.test(k)) put(+k - 1); else if (k === 'backspace' || k === 'delete') back(); else if (k === 'enter' || k === ' ') send(); else if (k === 'h') hint();
           else if (k === 'arrowleft' || k === 'a') { bd.slot = (bd.slot - 1 + bd.P) % bd.P; draw(); } else if (k === 'arrowright' || k === 'd') { bd.slot = (bd.slot + 1) % bd.P; draw(); }
@@ -127,6 +139,7 @@
           const uv = hit.getTextureCoordinates(); if (!uv) return; const px = uv.x * TEX, py = (1 - uv.y) * TEX, r = bd.rows.length, y = geo.top + (bd.tries - 1 - r) * geo.rowH;
           if (py >= y && py <= y + geo.rowH) { const i = Math.floor((px - geo.x0) / geo.cell); if (i >= 0 && i < bd.P) { bd.slot = i; draw(); } }
         },
+        restart, // the HUD's Restart button
         _test: { st, choose, put, back, send, hint, score, get bd() { return bd; }, LV, draw },
         dispose() { pick.remove(); pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); } catch (e) {} }
       };

@@ -5,6 +5,8 @@
 // big ones need "what if the route ran here?" reasoning). Click between two squares to lay the route, right click to
 // cross it out (Tab swaps), drag across the squares to lay a run; arrows move the cursor, Shift + arrow lays route from
 // it. H hint (no clean bonus). Score: the chart x 20, +10 without a hint. def: { levels, pass, points }
+// Oct 17: How to play (the rules + a solved 6 x 6, howto/pearls.png) and Restart (the chart as picked: no route,
+// crosses, undo, hints or time).
 (function () {
   const LEVELS = [
     { name: "The Oyster Bed", r: 6, c: 6, pearls: 'b...w....b.......w.b.......w........', loop: '111110110010000011010011001000100001110101000101010010011000' },
@@ -17,6 +19,14 @@
   ];
   const G = {
     title: 'The Pearl Route',
+    howTo: { lines: [
+      'Draw one closed route (a loop) through the middle of the squares that passes every pearl. It never branches or crosses itself, and it need not visit every square.',
+      'On a black pearl the route turns, and on both sides it runs straight on through the next square.',
+      'On a white pearl the route runs straight through, and turns in the square just before or just after it (or both).',
+      'Click between two squares to lay a piece of route, right click to cross that border out (Tab swaps them); drag across squares to lay a run. Arrows move the cursor, Shift + arrow lays route from it.',
+      'U undoes, H fixes one piece (no clean bonus then). A pearl whose rule is broken gets a red ring.',
+      'Tip: a black pearl on the edge, or one square in from it, must head away from that edge.'],
+      img: 'howto/pearls.png', caption: 'A solved 6 x 6 chart: one loop, turning on each black pearl, straight through each white one.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsPearlsProgress:' + (def.id || 'pearls');
@@ -107,7 +117,9 @@
         d.lastC = i; bd.cur = i; let ch = false; for (const e of path) if (setEdge(e, d.want, d.rec)) ch = true;
         if (ch) { if (!bd.undo.includes(d.rec)) bd.undo.push(d.rec); ctx.note(d.want === 1 ? 520 : 700, 'lantern'); info(); check(); } draw(); }
       function undo() { if (st.phase !== 'play') return; const rec = bd.undo.pop(); if (!rec) return; for (let j = rec.length - 1; j >= 0; j--) bd.s[rec[j][0]] = rec[j][1]; ctx.note(330, 'lantern'); draw(); info(); }
-      function restart() { if (st.phase !== 'play') return; const rec = []; for (let e = 0; e < bd.EN; e++) if (bd.s[e]) setEdge(e, 0, rec); commit(rec); }
+      // Restart (the button beside Quit): the chart as it was picked (no route or crosses; no undo, hints or time), kept
+      // in the same board object (the tests hold it); only while it is being played
+      function restart() { if (st.phase !== 'play' || !bd) return; const b = bd; build(b.k); bd = Object.assign(b, bd); st.drag = null; H.msg('Start again', 900); }
       function hint() {
         if (st.phase !== 'play') return;
         let e = -1; for (let x = 0; x < bd.EN; x++) if (bd.s[x] && (bd.s[x] === 1) !== !!bd.sol[x]) { e = x; break; }
@@ -164,7 +176,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return; const C = bd.C, r = Math.floor(bd.cur / C), c = bd.cur % C;
           const dirs = { arrowup: [-1, 0], w: [-1, 0], arrowdown: [1, 0], s: [1, 0], arrowleft: [0, -1], a: [0, -1], arrowright: [0, 1], d: [0, 1] };
           if (k in dirs) { const [dr, dc] = dirs[k], nr = r + dr, nc = c + dc; if (nr < 0 || nc < 0 || nr >= bd.R || nc >= C) return; const ni = nr * C + nc;
@@ -180,6 +192,7 @@
           else if (evt.type === T.POINTERMOVE && st.drag) { const hit = at2(); if (hit && hit.cell != null) dragToCell(hit.cell); }
           else if (evt.type === T.POINTERUP) st.drag = null;
         },
+        restart,
         _test: { st, choose, press, dragToCell, undo, hint, restart, toggleMode, closedRoute, edgeBetween, pearlState, get bd() { return bd; }, LV, draw: () => { st.dirty = false; paint(); }, end() { st.drag = null; }, unlock(k) { solvedUpTo = k; drawPick(); } },
         dispose() { pick.remove(); pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); } catch (e) {} }
       };

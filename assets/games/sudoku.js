@@ -3,6 +3,8 @@
 // N writes small pencil notes instead, 0 / Backspace rubs out, U undoes, H shows a mistake or one square (no clean
 // bonus then). Seven grids: a 4 x 4, two 6 x 6, four 9 x 9; the last ones need pairs and pointing, not just singles
 // (each has one answer, checked by a solver). Score: the grid x 20, +10 without a hint.
+// Oct 17: How to play (the rules in a few lines) and Restart (the grid as picked: only the carved numbers, no notes,
+// undo, hints or time).
 // def: { levels: [{ g: 'givens, 0 = empty', s: 'solution' }], pass, points }
 (function () {
   const LEVELS = [
@@ -17,6 +19,12 @@
   const BOX = { 4: [2, 2], 6: [2, 3], 9: [3, 3] };
   const G = {
     title: "The Ancestor's Grid",
+    howTo: { lines: [
+      'Fill every empty square so that each row, each column and each box (inside the thick lines) holds every number once: 1 to 4, 1 to 6 or 1 to 9, as big as the grid.',
+      'Click a square (or move with the arrows / W A S D), then type its number or press its button. The dark numbers are carved in and never change; a clash turns red.',
+      'N switches pencil notes on and off, for the numbers a square might still hold. 0 or Backspace rubs out, U undoes.',
+      'H shows a mistake, or fills one square for you (no clean bonus then).',
+      'Tip: find a square where only one number is left, or a number that fits in only one square of its row, column or box.'] },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsGridProgress:' + (def.id || 'sudoku');
@@ -121,7 +129,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return;
           if (/^[1-9]$/.test(k) && +k <= board.N) write(+k);
           else if (k === '0' || k === 'backspace' || k === 'delete') write(0);
@@ -134,6 +142,9 @@
           const l = ctx.toLocal(hit.pickedPoint), N = board.N, S = board.S, c = Math.floor((l.x + S / 2) / S * N), r = Math.floor((S / 2 - l.z) / S * N);
           if (c >= 0 && c < N && r >= 0 && r < N) { select(r * N + c); draw(); }
         },
+        // Restart: the grid as it was picked (only the carved numbers; no notes, undo, hints or time, notes off); only
+        // while it is being played
+        restart() { if (st.phase !== 'play' || !board) return; build(board.k); drawPads(board.N); H.msg('Start again', 900); },
         _test: { st, choose, setCell, write, undo, hint, select, moveSel, toggleNotes, conflicts, get board() { return board; }, LV },
         dispose() { pick.remove(); pads.remove(); built.forEach(n => { try { n.dispose(); } catch (e) {} }); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); } catch (e) {} }
       };

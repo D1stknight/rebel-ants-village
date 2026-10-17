@@ -4,6 +4,8 @@
 // win; dig a spirit and it rises. The first dig is always safe, and every graveyard can be cleared by reasoning
 // alone (each is checked by a solver before you play, no guessing needed). Seven graveyards from 6 x 6 to 16 x 16.
 // H shows one plot you can be sure of (no clean bonus then). Score: the graveyard x 20, +10 without a hint.
+// Oct 17: How to play (the rules + a graveyard read part way, howto/graves.png) and Restart (a fresh graveyard of
+// the same size: the spirits are laid again after the first dig, so that dig is safe again).
 // def: { levels: [{ n, spirits }], pass, points }
 (function () {
   const LEVELS = [{ n: 6, spirits: 5 }, { n: 8, spirits: 10 }, { n: 9, spirits: 14 }, { n: 10, spirits: 20 }, { n: 12, spirits: 30 }, { n: 14, spirits: 42 }, { n: 16, spirits: 56 }];
@@ -25,6 +27,14 @@
   }
   const G = {
     title: 'The Restless Graves',
+    howTo: { lines: [
+      'Some plots hide restless spirits. Dig every quiet plot without waking one.',
+      'Click a plot to dig it. A dug plot shows how many spirits lie in the eight plots around it; a blank one has none, and the plots around it open by themselves.',
+      'When you are sure a plot hides a spirit, set a candle on it: Tab (or the button) switches between digging and candles, F sets one on the plot in the gold frame.',
+      'Click a number whose candles are all set to dig every other plot around it at once.',
+      'The first dig is always safe, and no graveyard ever needs a guess. H shows one quiet plot (no clean bonus then).',
+      'Tip: a number with exactly that many hidden plots beside it has a spirit in every one of them.'],
+      img: 'howto/graves.png', caption: 'Part way through: the 1 touches one hidden plot, so that plot holds a spirit; a candle marks it.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsGravesProgress:' + (def.id || 'graves');
@@ -116,7 +126,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return; const n = bd.n, x = bd.cur % n, y = Math.floor(bd.cur / n);
           if (k === 'arrowup' || k === 'w') { bd.cur = ((y - 1 + n) % n) * n + x; draw(); } else if (k === 'arrowdown' || k === 's') { bd.cur = ((y + 1) % n) * n + x; draw(); }
           else if (k === 'arrowleft' || k === 'a') { bd.cur = y * n + (x - 1 + n) % n; draw(); } else if (k === 'arrowright' || k === 'd') { bd.cur = y * n + (x + 1) % n; draw(); }
@@ -128,6 +138,9 @@
           const l = ctx.toLocal(hit.pickedPoint), n = bd.n, c = Math.floor((l.x + S / 2) / S * n), r = Math.floor((S / 2 - l.z) / S * n);
           if (c >= 0 && c < n && r >= 0 && r < n) { bd.cur = r * n + c; act(bd.cur); }
         },
+        // Restart: a fresh graveyard of the same size (no plots dug, no candles, hints or time); the spirits are laid
+        // again after the first dig, so that dig is safe again; only while it is being played
+        restart() { if (st.phase !== 'play' || !bd) return; build(bd.k); H.msg('Start again', 900); },
         _test: { st, choose, dig, flag, hint, toggleMode, deduce, get bd() { return bd; }, LV, count },
         dispose() { pick.remove(); pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); } catch (e) {} }
       };

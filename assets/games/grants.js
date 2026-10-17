@@ -4,6 +4,8 @@
 // family colour, ones that break the rule show red. Seven maps from 5 x 5 to the 14 x 14 Shogun's Domain, each with
 // one answer (checked by a solver; the big ones need "what if this grant lay here?" reasoning). H hint (no clean
 // bonus). Score: the map x 20, +10 without a hint. def: { levels, pass, points }
+// Oct 17 (Miguel: the puzzles need a how-to, every board a Restart): howTo (the rules in a few lines) and inst.restart
+// (the same map with no grants, the clock from 0; hints still count: they cost the bonus).
 (function () {
   const LEVELS = [
     { name: "The Paddy", n: 5, clues: [[1,5],[7,6],[13,6],[15,5],[23,3]], sol: [[0,0,5,1],[0,1,5,1],[0,2,2,3],[2,2,2,3],[4,2,1,3]] },
@@ -17,6 +19,13 @@
   const FAM = ['#9b6fc8', '#d9a83a', '#4fa3a0', '#c8607a', '#6f8fd0', '#8fb04a', '#d07a3c', '#b07ab8', '#5f9f70', '#c99a6a'];
   const G = {
     title: 'The Land Grants',
+    howTo: {
+      lines: ['Share the whole map out in rectangles called grants. Every grant must hold exactly one seal, and the seal\'s number is the grant\'s size in fields.',
+        'So a 6 can be 1 x 6, 2 x 3, 3 x 2 or 6 x 1 fields. Every field must end up in exactly one grant.',
+        'Drag from one corner of a grant to the opposite corner to draw it; click a grant to take it back. Keys: arrows move, Space at each corner, Del removes.',
+        'A grant that keeps the rule glows in colour; one that breaks it shows red. U undoes, Clear empties the map, H lays one right grant (no clean bonus then).',
+        'Tip: start with the seals that can only fit one way, like a big number pressed against the edge or between other seals.']
+    },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsGrantsProgress:' + (def.id || 'grants');
@@ -76,6 +85,7 @@
       function release(a, b) { // a click (same cell) on a grant takes it back; on open ground it makes a 1 x 1 grant
         const n = bd.n; if (a === b) { if (rectAt(Math.floor(a / n), a % n)) return remove(Math.floor(a / n), a % n); return place(rectOf(a, a)); } return place(rectOf(a, b)); }
       function undo() { if (st.phase !== 'play') return; const s = bd.undo.pop(); if (!s) return; bd.rects = s; ctx.note(330, 'lantern'); draw(); info(); }
+      function restart() { if (st.phase !== 'play' || !bd) return; const h = bd.hints; st.drag = null; build(bd.k); bd.hints = h; info(); H.msg('Start again', 900); }
       function clearAll() { if (st.phase !== 'play' || !bd.rects.length) return; bd.undo.push(snap()); bd.rects = []; draw(); info(); }
       function cands(j) { // every grant of clue j's size holding it and no other seal (for the hint)
         const n = bd.n, [i, a] = bd.L.clues[j], r = Math.floor(i / n), c = i % n, out = [];
@@ -122,7 +132,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return; const n = bd.n, x = bd.cur % n, y = Math.floor(bd.cur / n);
           if (k === 'arrowup' || k === 'w') { bd.cur = ((y - 1 + n) % n) * n + x; draw(); } else if (k === 'arrowdown' || k === 's') { bd.cur = ((y + 1) % n) * n + x; draw(); }
           else if (k === 'arrowleft' || k === 'a') { bd.cur = y * n + (x - 1 + n) % n; draw(); } else if (k === 'arrowright' || k === 'd') { bd.cur = y * n + (x + 1) % n; draw(); }
@@ -136,6 +146,7 @@
           else if (evt.type === T.POINTERMOVE && st.drag) { const i = cellAt(); if (i < 0 || i === st.drag.b) return; st.drag.b = i; bd.cur = i; st.drag.prev = st.drag.a === i ? null : { ...rectOf(st.drag.a, i), id: 0 }; draw(); }
           else if (evt.type === T.POINTERUP && st.drag) { const { a, b } = st.drag; st.drag = null; release(a, b); }
         },
+        restart, // the HUD's Restart button
         _test: { st, choose, release, remove, undo, hint, clearAll, valid, cands, get bd() { return bd; }, LV, draw, unlock(k) { solvedUpTo = k; drawPick(); } },
         dispose() { pick.remove(); pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); } catch (e) {} }
       };

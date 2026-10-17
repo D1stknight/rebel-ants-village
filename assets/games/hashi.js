@@ -5,6 +5,8 @@
 // then). Seven ponds from 5 stones to 28, each with one answer (checked by a solver). Score: the pond x 20, +10
 // without a hint.
 // def: { levels: [{ n (grid), isl: [[x, y, number]], sol: [[a, b, planks]] }], pass, points }
+// Oct 17 (Miguel: the puzzles need a how-to with an example, every board a Restart): howTo (the rules + a bridged
+// 8-stone pond, howto/hashi.png) and inst.restart (the same pond with no planks; hints still count: they cost the bonus).
 (function () {
   const LEVELS = [
     { n: 5, isl: [[2,2,3],[0,2,5],[2,4,1],[0,4,1],[0,0,2]], sol: [[0,2,1],[1,0,2],[1,3,1],[4,1,2]] },
@@ -25,6 +27,14 @@
   }
   const G = {
     title: 'The Garden Bridges',
+    howTo: {
+      lines: ['Join all the stepping stones with plank bridges. The number on a stone is how many planks touch it.',
+        'Planks run straight along a row or column to the next stone: never on a slant, and never across another plank. Two stones can share one plank or two.',
+        'In the end every stone must be linked into one network, so you could walk from any stone to any other.',
+        'Click a stone, then a stone in line with it, to lay a plank; do it again for a second plank, and once more to take them away. A stone turns grey when its number is met, red when it has too many.',
+        'U undoes; H lays one right bridge, but costs the clean bonus. Tip: start where a stone has few neighbours: a 4 that sees only two stones needs two planks to each.'],
+      img: 'howto/hashi.png', caption: 'A bridged pond: every number met, no crossings, all the stones joined.'
+    },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsBridgesProgress:' + (def.id || 'hashi');
@@ -77,6 +87,7 @@
         bd.hist.push({ k, v: bd.v[k] }); bd.v[k] = next; ctx.note(next ? 520 + next * 120 : 330, 'lantern'); draw(); info(); check(); return true;
       }
       function tapStone(i) { if (st.phase !== 'play') return; if (bd.sel < 0) { bd.sel = i; draw(); return; } if (bd.sel === i) { bd.sel = -1; draw(); return; } const a = bd.sel; bd.sel = -1; if (!link(a, i)) { bd.sel = i; } draw(); }
+      function restart() { if (st.phase !== 'play' || !bd) return; const h = bd.hints; build(bd.k); bd.hints = h; info(); H.msg('Start again', 900); }
       function undo() { if (st.phase !== 'play' || !bd?.hist.length) return; const h = bd.hist.pop(); bd.v[h.k] = h.v; draw(); info(); }
       function hint() {
         if (st.phase !== 'play') return; bd.hints++; info(); const key = e => Math.min(e.a, e.b) + ',' + Math.max(e.a, e.b);
@@ -109,7 +120,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (k === 'u' || k === 'z' || k === 'backspace') undo(); else if (k === 'h') hint(); else if (k === 'escape') { bd.sel = -1; draw(); }
         },
         pointer(evt) {
@@ -119,6 +130,7 @@
           let best = -1, bdist = C * .55; bd.isl.forEach((p, i) => { const d = Math.hypot(px(p[0]) - u, py(p[1]) - v); if (d < bdist) { bdist = d; best = i; } });
           if (best >= 0) tapStone(best); else { bd.sel = -1; draw(); }
         },
+        restart, // the HUD's Restart button
         _test: { st, choose, link, tapStone, undo, hint, get bd() { return bd; }, LV, edgesOf },
         dispose() { pick.remove(); pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); } catch (e) {} }
       };

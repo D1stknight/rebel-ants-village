@@ -4,6 +4,7 @@
 // 10 x 10 Ronin's Last Shadow, each with one answer (checked by a solver; the hard ones need "what if" steps).
 // Click marks with the brush (Tab switches shadow / stone, right click the other one), drag paints, U undo, H hint
 // (no clean bonus). Score: the courtyard x 20, +10 without a hint. def: { levels, pass, points }
+// Oct 17: How to play (the rules + a solved 5 x 5 courtyard, howto/shadows.png) and Restart (every square lit again).
 (function () {
   const LEVELS = [
     { name: "The First Shadow", n: 5, g: [1,2,1,1,3,2,5,1,3,4,1,2,5,5,2,5,4,3,2,4,3,1,3,5,3], sol: '1010100000010100000110100' },
@@ -16,6 +17,14 @@
   ];
   const G = {
     title: "The Ronin's Shadows",
+    howTo: { lines: [
+      'Shade squares until no number shows twice in any row or column among the squares left in the light.',
+      'Two shadows never touch side by side (corner to corner is fine).',
+      'All the lit squares must stay joined in one piece; a red bar under the board means the light is split.',
+      'Click a square to shade it. Tab turns the brush into a white stone, for a square you are sure stays lit (right click uses the other one); drag to paint several.',
+      'U undoes, H shows a mistake or one right square (no +10 clean bonus then).',
+      'Tip: every square beside a shadow stays lit, so give it a stone.'],
+      img: 'howto/shadows.png', caption: 'A solved courtyard: no lit number twice in a line, no shadows side by side, the light in one piece.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsShadowsProgress:' + (def.id || 'shadows');
@@ -83,6 +92,8 @@
       const modeBtn = padBtn('■ Shadow', () => toggleMode()); padBtn('Undo', undo); padBtn('Hint', hint);
       function toggleMode() { st.mode = st.mode === 1 ? 2 : 1; modeBtn.textContent = st.mode === 1 ? '■ Shadow' : '○ Stone'; if (bd) info(); }
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'flex'; H.msg(`Courtyard ${k + 1}`, 900, LV[k].name); }
+      // Restart (the button beside Quit): the same courtyard all in the light, the clock, undo and hints from zero
+      function restart() { if (st.phase !== 'play' || !bd) return; st.drag = null; build(bd.k); H.msg('Start again', 900, 'every square back in the light'); }
       hud.append(pick, pads); drawPick();
       const cam = [0, TY + 6.2, -3.5], at = [0, TY, -.3];
       ctx.player.place(0, cam[2] - 1.6, 0); ctx.look(cam, at, def.fov || .8); // the player waits behind the camera, out of the picture
@@ -101,7 +112,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return; const n = bd.n, x = bd.cur % n, y = Math.floor(bd.cur / n);
           if (k === 'arrowup' || k === 'w') { bd.cur = ((y - 1 + n) % n) * n + x; draw(); } else if (k === 'arrowdown' || k === 's') { bd.cur = ((y + 1) % n) * n + x; draw(); }
           else if (k === 'arrowleft' || k === 'a') { bd.cur = y * n + (x - 1 + n) % n; draw(); } else if (k === 'arrowright' || k === 'd') { bd.cur = y * n + (x + 1) % n; draw(); }
@@ -115,6 +126,7 @@
           else if (evt.type === T.POINTERMOVE && st.drag) { const i = cellAt(); if (i >= 0) dragTo(i); }
           else if (evt.type === T.POINTERUP) st.drag = null;
         },
+        restart,
         _test: { st, choose, press, dragTo, undo, hint, toggleMode, problems, get bd() { return bd; }, LV, draw, end() { st.drag = null; }, unlock(k) { solvedUpTo = k; drawPick(); } },
         dispose() { pick.remove(); pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); } catch (e) {} }
       };

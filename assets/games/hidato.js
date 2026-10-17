@@ -3,6 +3,7 @@
 // steps are carved already. Click a number to take it up as the pen, then click a stone beside it to write the next
 // step (or type a number into any stone). Seven trails from 5 x 5 to the 10 x 10 Summit, each with one answer
 // (checked by a solver). U undo, H hint (no clean bonus). Score: the trail x 20, +10 without a hint.
+// Oct 17: How to play (the rules + a solved 4 x 4 trail, howto/hidato.png) and Restart (only the carved steps again).
 // def: { levels, pass, points }
 (function () {
   const LEVELS = [
@@ -16,6 +17,14 @@
   ];
   const G = {
     title: "The Pilgrim's Path",
+    howTo: { lines: [
+      'Number the stones of the trail from 1 to the last step: every open stone gets one number, the rocks get none.',
+      'Each number touches the next one, side by side or corner to corner.',
+      'The bold numbers are carved already; fill in the rest.',
+      'Click a number to take it up as the pen, then click a stone touching it to write the next step. Or click any stone and type its number.',
+      'Backspace rubs out, U undoes, H shows a wrong step or places the next one (no +10 clean bonus then).',
+      'Tip: where two carved numbers are close, like 9 and 12, the steps between them have only a few ways to go.'],
+      img: 'howto/hidato.png', caption: 'A solved trail: 1 to 15, each step touching the next (corners count), the rock left out.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsPilgrimProgress:' + (def.id || 'hidato');
@@ -96,6 +105,8 @@
       const padBtn = (t, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.style.cssText = 'min-width:52px;height:40px;padding:0 10px;border-radius:9px;border:1px solid #6fc8d0;background:rgba(8,20,20,.88);color:#e8ffff;font:700 15px system-ui;cursor:pointer'; b.onclick = (e) => { e.stopPropagation(); b.blur(); fn(); }; pads.appendChild(b); return b; };
       padBtn('⌫', erase); padBtn('Undo', undo); padBtn('Hint', hint);
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'flex'; H.msg(`Trail ${k + 1}`, 900, `${LV[k].name}: ${bd.N} steps`); }
+      // Restart (the button beside Quit): the same trail with only its carved steps, the clock, undo and hints from zero
+      function restart() { if (st.phase !== 'play' || !bd) return; build(bd.k); H.msg('Start again', 900, 'only the carved steps stay'); }
       hud.append(pick, pads); drawPick();
       const cam = [0, TY + 6.3, -3.5], at = [0, TY, -.3];
       ctx.player.place(0, cam[2] - 1.6, 0); ctx.look(cam, at, def.fov || .8); // the player waits behind the camera, out of the picture
@@ -114,7 +125,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return; const x = bd.cur < 0 ? 0 : bd.cur % bd.w, y = bd.cur < 0 ? 0 : Math.floor(bd.cur / bd.w);
           const mv = (dx, dy) => { const nx = Math.max(0, Math.min(bd.w - 1, x + dx)), ny = Math.max(0, Math.min(bd.h - 1, y + dy)); bd.cur = ny * bd.w + nx; bd.typed = ''; if (bd.val[bd.cur]) bd.pen = bd.cur; draw(); info(); };
           if (k === 'arrowup' || k === 'w') mv(0, -1); else if (k === 'arrowdown' || k === 's') mv(0, 1); else if (k === 'arrowleft' || k === 'a') mv(-1, 0); else if (k === 'arrowright' || k === 'd') mv(1, 0);
@@ -122,6 +133,7 @@
           else if (k === 'u' || (k === 'z' && (e.ctrlKey || e.metaKey))) undo(); else if (k === 'h') hint();
         },
         pointer(evt) { if (evt.type !== B.PointerEventTypes.POINTERDOWN || st.phase !== 'play' || !bd) return; click(cellAt()); },
+        restart,
         _test: { st, choose, click, type, erase, undo, hint, broken, get bd() { return bd; }, LV, draw, unlock(k) { solvedUpTo = k; drawPick(); } },
         dispose() { pick.remove(); pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); } catch (e) {} }
       };

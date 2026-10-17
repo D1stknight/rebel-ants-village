@@ -4,6 +4,7 @@
 // onto the same potion or into an empty vial. U undoes, H shows a good pour (no fewest-pours bonus then), R starts
 // again. Seven shelves from 11 to 26 pours (the fewest found by a solver); the ones with a single empty vial are the
 // hardest. Score: the shelf x 20, +10 in the fewest pours without a hint.
+// Oct 17: How to play (the rules in a few lines); the HUD's Restart is R (now also mid-pour: the pour is dropped).
 // def: { levels: [{ v: [[bottom..top colour ids], ...], best }], pass, points }
 (function () {
   const LEVELS = [
@@ -45,6 +46,12 @@
   const anyPour = v => { for (let a = 0; a < v.length; a++) for (let b = 0; b < v.length; b++) if (pour(v, a, b)) return true; return false; };
   const G = {
     title: 'The Potion Shelf',
+    howTo: { lines: [
+      'Pour the potions until every vial holds only one kind: a vial full of one potion gets its cork. Each potion has its own colour and rune.',
+      'Click a vial (or press its number), then the vial to pour into. The top potion pours across, with every layer of the same potion under it, while there is room.',
+      'You may pour only onto the same potion or into an empty vial, and a vial holds four layers.',
+      'U undoes, R starts the shelf again, H shows a good pour (no fewest-pours bonus then).',
+      'Tip: keep an empty vial free as long as you can: it is the way out when you are stuck.'] },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def, engine = ctx.engine || scene.getEngine();
       const LV = def.levels || LEVELS, KEY = 'rebelAntsPotionProgress:' + (def.id || 'potion');
@@ -127,7 +134,7 @@
         tryPour(board.sel, i);
       }
       function undo() { if (st.phase !== 'play' || st.anim || !board?.hist.length) return; const h = board.hist.pop(); board.v = h.v; board.moves = h.moves; board.vials.forEach((V, i) => { V.node.position.copyFrom(V.home); V.node.rotation.z = 0; paint(i); }); select(-1); info(); }
-      function restart() { if (st.phase !== 'play' || st.anim || !board) return; const k = board.k; build(k); H.msg('Again', 600); }
+      function restart() { if (st.phase !== 'play' || !board) return; if (st.anim) { st.anim = null; stream.setEnabled(false); } st.hintTo = null; st.shake = null; const k = board.k; build(k); H.msg('Again', 600); } // a pour in the air is dropped
       function hint() {
         if (st.phase !== 'play' || st.anim || !board) return; const h = hintFrom(board.v);
         if (h === 'far') { H.msg('Too tangled to see from here', 1500, 'undo a few pours'); return; }
@@ -183,7 +190,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (/^[0-9]$/.test(k)) { const i = k === '0' ? 9 : +k - 1; clickVial(i); return; }
           if (k === 'u' || k === 'z' || k === 'backspace') undo(); else if (k === 'r') restart(); else if (k === 'h') hint(); else if (k === ' ') select(-1);
         },
@@ -192,6 +199,7 @@
           const hit = scene.pickWithRay(ctx.ray(), m => m.metadata?.potionVial != null); if (!hit?.pickedMesh) { select(-1); return; }
           clickVial(hit.pickedMesh.metadata.potionVial);
         },
+        restart, // the HUD's Restart: the shelf as it was picked (no pours, undo or hints)
         _test: { st, choose, clickVial, tryPour, undo, restart, hint, get board() { return board; }, LV, pour, hintFrom },
         dispose() { pick.remove(); pads.remove(); if (board) board.vials.forEach(V => V.slots.forEach(s => { try { s.m?.dispose(); } catch (e) {} })); [table.top, table.cloth, table.riser, ...table.legs].forEach(n => { try { n?.dispose(); } catch (e) {} }); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };

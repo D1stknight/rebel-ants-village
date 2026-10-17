@@ -2,6 +2,7 @@
 // per ingredient. Eight jars float on a shelf by the cauldron; pour them in the recipe's order (click a jar, or press its
 // number). A wrong jar makes the brew hiss and costs one of three tries; the third spoils it. Each brew is a new recipe
 // (five of the eight ingredients, each with its own riddle).
+// Oct 17: How to play (the rules) and Restart (the same recipe from its first line, three tries again).
 // def: { cauldron: [x, z] (frame coords), rim: brew height, shelf: [x, y, z] (its middle), playerAt: [x, z], cam, at, pass, points }
 (function () {
   const ING = [
@@ -16,6 +17,12 @@
   ];
   const G = {
     title: "The Witch's Brew",
+    howTo: { lines: [
+      "The Lunar Witch's recipe is a page of riddles: each line describes one ingredient.",
+      'Read the line on the page, then pour that jar: click it or press its number (on the tag under each jar).',
+      "Pour them in the recipe's order. A wrong jar hisses and costs one of your three tries (the stars); the third spoils the brew.",
+      'Every brew is a new recipe, and fewer wrong jars score more.',
+      'Tip: each riddle points at one jar by what it is or where it comes from: match it to the names on the tags.'] },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const CA = def.cauldron || [0, -3.6], RIM = def.rim || 1.45, SH = def.shelf || [-2.7, 2.15, -3.1], STEPS = Math.min(6, def.steps || 5), TRIES = def.tries || 3;
@@ -89,6 +96,8 @@
         }
         drawPage(); info();
       }
+      // Restart (the button beside Quit): the same recipe from its first line, three tries again; a jar in the air goes home
+      function restart() { if (st.phase !== 'play') return; if (st.busy) { st.busy.j.root.rotation.z = 0; st.busy = null; } st.step = 0; st.tries = TRIES; st.mistakes = 0; want = BASE.slice(); drawPage(); info(); H.msg('A fresh brew', 1000, 'the same recipe, from the first line'); }
       function spark(up) { const s = sparkSrc.createInstance('brewS'); s.parent = ctx.frame; ctx.add(s); const a = Math.random() * 6.28, r = Math.random() * .5; s.position.set(CA[0] + Math.cos(a) * r, RIM + .1, CA[1] + Math.sin(a) * r); st.sparks.push({ s, v: new V3((Math.random() - .5) * .5, 1 + Math.random() * up, (Math.random() - .5) * .5), t: 0 }); }
       function puff() { const p = puffSrc.createInstance('brewP'); p.parent = ctx.frame; ctx.add(p); const a = Math.random() * 6.28; p.position.set(CA[0] + Math.cos(a) * .3, RIM + .2, CA[1] + Math.sin(a) * .3); st.puffs.push({ p, v: new V3(Math.cos(a) * .4, .8 + Math.random() * .6, Math.sin(a) * .4), t: 0 }); }
       const PA = def.playerAt || [1.9, CA[1] + 1.1];
@@ -130,6 +139,7 @@
           const hit = scene.pickWithRay(ctx.ray(), m => m.metadata?.brewJar !== undefined);
           if (hit && hit.hit) pour(hit.pickedMesh.metadata.brewJar);
         },
+        restart,
         _test: { st, recipe, pour, jars },
         dispose() {
           page.remove(); tags.forEach(t => t.remove()); lights.forEach((l, i) => l.diffuse.copyFrom(lightWas[i]));

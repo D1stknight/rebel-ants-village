@@ -4,6 +4,7 @@
 // the night crossings the lamp only lasts so long (each trip takes as long as the slowest aboard). A broken rule
 // sends the ferry back. U undoes a crossing, H shows the next good one (no clean bonus then). Seven crossings, the
 // fewest trips found by a solver. Score: the crossing x 20, +10 in the fewest trips without a hint or a slip.
+// Oct 17: How to play (the rules) and Restart beside Quit (its own restart: the pad's ⟲ and R).
 // def: { levels: [{ name, units[], cap, rowers?, eats?, guard?, outnumber?, lamp?, best }], pass, points }
 (function () {
   const LEVELS = [
@@ -37,6 +38,13 @@
   }
   const G = {
     title: 'The Canal Ferry',
+    howTo: { lines: [
+      "Get everyone across the canal in the little ferry; the card on the left lists this crossing's rules.",
+      "Click a piece on the ferry's bank to put it aboard (click it again to let it off), then press Space or ⛵ Cross.",
+      'Someone must row (on some crossings only the ferryman can) and the ferry holds only so many; a rule broken on either bank sends the ferry back.',
+      'On the night crossings a trip takes as long as the slowest one aboard, and the lamp lasts only so long.',
+      'U undoes a crossing, H puts a good next group aboard (no +10 then); the fewest trips earn +10.',
+      'Tip: sometimes the way forward is to bring someone back.'] },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsFerryProgress:' + (def.id || 'ferry');
@@ -175,7 +183,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (k === ' ' || k === 'enter' || k === 'c') cross(); else if (k === 'u' || k === 'z' || k === 'backspace') undo(); else if (k === 'h') hint(); else if (k === 'r') restart();
           else if (/^[1-9]$/.test(k) && bd && +k <= bd.n) click(+k - 1);
         },
@@ -183,6 +191,7 @@
           if (evt.type !== B.PointerEventTypes.POINTERDOWN || st.phase !== 'play') return;
           const hit = scene.pickWithRay(ctx.ray(), m => m.metadata?.ferryUnit != null); if (hit?.pickedMesh) click(hit.pickedMesh.metadata.ferryUnit);
         },
+        restart,
         _test: { st, choose, click, cross, undo, hint, restart, nextGroup, get bd() { return bd; }, LV, boat },
         dispose() { H.meter(null); pick.remove(); pads.remove(); card.remove(); if (bd) bd.pawns.forEach(p => { try { p.dispose(); } catch (e) {} }); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { waterM.dispose(); waterT.dispose(); } catch (e) {} }
       };

@@ -5,6 +5,8 @@
 // (checked by a solver; the hard ones need "what if this were a ship?" reasoning). Click marks with the brush (Tab
 // switches water / ship, right click the other one), drag paints, a click on a line's number fills it when it is sure.
 // H hint (no clean bonus). Score: the chart x 20, +10 without a hint.
+// Oct 17: How to play (the rules + a solved 6 x 6, howto/fleet.png) and Restart (the chart as picked: only the given
+// squares, no marks, undo, hints or time).
 // def: { levels, pass, points }
 (function () {
   const LEVELS = [
@@ -18,6 +20,14 @@
   ];
   const G = {
     title: 'The Fleet Chart',
+    howTo: { lines: [
+      'An enemy fleet hides on the chart: find every square of ship. The Fleet list (bottom left) shows how many ships of each length there are.',
+      'The number beside each row and under each column is how many ship squares lie in that line.',
+      'Ships are straight (across or down) and never touch each other, not even at a corner. The darker squares are given: a ship\'s end, its middle, a one-square boat or open water.',
+      'Click a square to mark it with the brush: Tab (or the button) switches water / ship, right click marks the other, drag paints. Click a line\'s number to fill the rest of it once it is sure.',
+      'U undoes, H fixes one square (no clean bonus then).',
+      'Tip: a 0 line is all water, and so is every square touching a ship at a corner.'],
+      img: 'howto/fleet.png', caption: 'A solved 6 x 6 chart: every count is met, and no two ships touch, not even at a corner.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsFleetProgress:' + (def.id || 'fleet');
@@ -96,7 +106,9 @@
         const v = s === need ? 1 : s + u === need ? 2 : 0; if (!v) { H.msg('Not sure yet', 900, `${need - s} more ship square${need - s === 1 ? '' : 's'} among ${u}`); return false; }
         for (let b = 0; b < n; b++) { const i = kind ? b * n + a : a * n + b; if (!bd.mark[i]) setMark(i, v, rec); } commit(rec); return true; }
       function undo() { if (st.phase !== 'play') return; const rec = bd.undo.pop(); if (!rec) return; for (let j = rec.length - 1; j >= 0; j--) bd.mark[rec[j][0]] = rec[j][1]; ctx.note(330, 'lantern'); draw(); fleetPanel(); }
-      function restart() { if (st.phase !== 'play') return; const rec = []; for (let i = 0; i < bd.n * bd.n; i++) if (bd.given[i] == null && bd.mark[i]) setMark(i, 0, rec); commit(rec); }
+      // Restart (the button beside Quit): the chart as it was picked (only the given squares; no marks, undo, hints or
+      // time), kept in the same board object (the tests hold it); only while it is being played
+      function restart() { if (st.phase !== 'play' || !bd) return; const b = bd; build(b.k); bd = Object.assign(b, bd); st.drag = null; H.msg('Start again', 900); }
       function hint() {
         if (st.phase !== 'play') return; const n = bd.n, sol = bd.L.sol;
         let i = -1; for (let j = 0; j < n * n; j++) { const want = sol[j] === '1' ? 2 : 1; if (bd.mark[j] && bd.mark[j] !== want) { i = j; break; } }
@@ -140,7 +152,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return; const n = bd.n, x = bd.cur % n, y = Math.floor(bd.cur / n);
           if (k === 'arrowup' || k === 'w') { bd.cur = ((y - 1 + n) % n) * n + x; draw(); } else if (k === 'arrowdown' || k === 's') { bd.cur = ((y + 1) % n) * n + x; draw(); }
           else if (k === 'arrowleft' || k === 'a') { bd.cur = y * n + (x - 1 + n) % n; draw(); } else if (k === 'arrowright' || k === 'd') { bd.cur = y * n + (x + 1) % n; draw(); }
@@ -156,6 +168,7 @@
           else if (evt.type === T.POINTERMOVE && st.drag) { const hit = cellAt(); if (hit && hit.i != null) dragTo(hit.i); }
           else if (evt.type === T.POINTERUP) st.drag = null;
         },
+        restart,
         _test: { st, choose, press, dragTo, fillLine, undo, hint, restart, toggleMode, finished, get bd() { return bd; }, LV, draw, end() { st.drag = null; }, unlock(k) { solvedUpTo = k; drawPick(); } },
         dispose() { pick.remove(); pads.remove(); fleetEl.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); } catch (e) {} }
       };

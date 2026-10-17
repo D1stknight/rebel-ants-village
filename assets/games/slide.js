@@ -2,12 +2,19 @@
 // slab missing; slide the slabs back into place. Click a slab in line with the gap (the slabs between move with it), or
 // press an arrow to move the slab next to the gap that way. Levels 3 x 3, 4 x 4 and 5 x 5; a level opens when the one
 // before is solved. Each slab carries its number in a corner.
+// Oct 17: How to play (the rules in a few lines) and Restart (the same mixed seal as it was dealt, moves and time 0).
 // def: { at: [x, z] (board middle, frame coordinates), size: board width (m), player: [x, z, yaw], cam, look, emblem, pass, points }
 (function () {
   const LEVELS = [{ n: 3, mix: 60 }, { n: 4, mix: 160 }, { n: 5, mix: 320 }];
   const SCORE = [30, 70, 120];
   const G = {
     title: 'The Broken Seal',
+    howTo: { lines: [
+      'The Shogun\'s seal lies cut into slabs, with one slab missing. Slide the slabs back until the seal is whole.',
+      'Whole means the numbers in the slabs\' corners run 1, 2, 3 ... row by row from the top left, with the gap at the bottom right.',
+      'Click a slab in line with the gap (same row or column): it slides toward the gap, and the slabs between go with it.',
+      'Or press an arrow (W A S D) to move the slab beside the gap that way. Restart lays the slabs out as they were dealt.',
+      'Tip: finish the top row, then the left column; what is left is a smaller seal of the same kind.'] },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, AT = def.at || [0, 0], W = def.size || 6.4;
@@ -59,6 +66,7 @@
         for (let m = 0, guard = 0; m < mixN && guard < mixN * 4; guard++) { const opts = neighbours().filter(t => !last || t !== last); const t = opts[Math.floor(Math.random() * opts.length)]; swap(t); last = t; m++; }
         if (solved()) { const t = neighbours()[0]; swap(t); }
         bd.tiles.forEach(t => t.node.position.copyFrom(posOf(t.r, t.c)));
+        bd.start = { at: bd.tiles.map(t => [t.r, t.c]), gap: bd.gap.slice() }; // as dealt, for Restart
         bd.moves = 0; bd.t = 0; info();
       }
       const at = (r, c) => bd.tiles.find(t => t.r === r && t.c === c);
@@ -106,7 +114,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return;
           if (k === 'arrowup' || k === 'w') arrow('up'); else if (k === 'arrowdown' || k === 's') arrow('down'); else if (k === 'arrowleft' || k === 'a') arrow('left'); else if (k === 'arrowright' || k === 'd') arrow('right');
         },
@@ -114,6 +122,8 @@
           if (evt.type !== B.PointerEventTypes.POINTERDOWN || st.phase !== 'play') return;
           const hit = scene.pickWithRay(ctx.ray(), m => m.metadata?.slTile !== undefined); if (hit?.hit) play(bd.tiles[hit.pickedMesh.metadata.slTile]);
         },
+        // Restart: the same mixed seal as it was dealt (every slab back where it lay, moves and time 0); only while it is played
+        restart() { if (st.phase !== 'play' || !bd) return; bd.tiles.forEach((t, j) => { [t.r, t.c] = bd.start.at[j]; t.node.position.copyFrom(posOf(t.r, t.c)); }); bd.gap = bd.start.gap.slice(); bd.moves = 0; bd.t = 0; info(); H.msg('Start again', 900); },
         _test: { st, choose, play, arrow, solved: () => bd && solved(), at: (r, c) => bd && at(r, c), get bd() { return bd; },
           // finish the board straight away (tests): put every slab home, then make the last move
           nearlySolve() { bd.tiles.forEach(t => { t.r = Math.floor(t.i / bd.n); t.c = t.i % bd.n; }); bd.gap = [bd.n - 1, bd.n - 1]; const t = at(bd.n - 1, bd.n - 2); swap(t); return t; } },

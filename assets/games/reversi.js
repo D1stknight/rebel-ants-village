@@ -4,6 +4,8 @@
 // Four opponents: the Termite Scout (picks almost at random), the Termite Captain (knows good squares), the Termite
 // General (looks four moves ahead) and the Termite Queen (looks six or more ahead and plays the last moves perfectly).
 // Beat one to meet the next. Score: the opponent x 20 for a win (+10 winning by 16 or more). def: { pass, points }
+// Oct 17: How to play (the rules + one capture before / after, howto/reversi.png) and Restart (a new game against the
+// same opponent; a game already over goes to its result).
 (function () {
   const OPP = [
     { name: 'Termite Scout', depth: 0, noise: 1, ms: 0 }, { name: 'Termite Captain', depth: 1, noise: .15, ms: 0 },
@@ -49,6 +51,14 @@
     return best; }
   const G = {
     title: 'Colony Corners',
+    howTo: { lines: [
+      'You play the red stones, the termites the dark ones. You move first, then you take turns.',
+      'Place a stone so that a straight line of termite stones (across, up and down, or diagonal) lies between it and another red stone: every stone in that line flips to red.',
+      'A move must flip at least one stone; the gold dots show where you can play. A side with no move passes.',
+      'When neither side can move, whoever has more stones wins.',
+      'Click a square with a gold dot (or move with the arrows and press Space).',
+      'Tip: a corner can never be flipped back, so take corners, and keep off the squares next to an empty corner.'],
+      img: 'howto/reversi.png', caption: 'One red stone closes two lines at once: the three termite stones between red stones all flip.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def, KEY = 'rebelAntsCornersProgress:' + (def.id || 'reversi');
       let beaten = 0; try { beaten = Math.max(0, Math.min(OPP.length, Number(localStorage.getItem(KEY)) || 0)); } catch (e) {}
@@ -130,6 +140,8 @@
           const hit = scene.pickWithRay(ctx.ray(), m => m.metadata?.rvBoard); if (!hit?.pickedPoint) return; const l = ctx.toLocal(hit.pickedPoint);
           const c = Math.floor((l.x + S / 2 - MG) / P), r = Math.floor((S / 2 - MG - l.z) / P); if (c >= 0 && c < 8 && r >= 0 && r < 8) { g.cur = r * 8 + c; playerMove(g.cur); }
         },
+        // Restart: a new game against the same opponent (the four middle stones, your move); not once a game is over
+        restart() { if (st.phase !== 'play' || !g) return; st.think = 0; inst.forEach(s => s.scaling.setAll(1)); build(g.k); H.msg('A new game', 1000, 'you play red, and you start'); },
         _test: { st, choose, playerMove, movesOf, chooseMove, flipsOf, get g() { return g; }, OPP, count, unlock(k) { beaten = k; drawPick(); } },
         dispose() { pick.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); stoneM.dispose(); } catch (e) {} }
       };

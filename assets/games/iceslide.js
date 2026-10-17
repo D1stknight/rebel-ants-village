@@ -4,6 +4,8 @@
 // starts the level again. Seven levels, each opens when the one before is solved (kept on this device); the fewest
 // moves were found by a solver. Score: the level x 20, +10 in the fewest moves.
 // def: { at: [x, z] (frame coords of the floor's middle), cell: 1.1, levels, pass, points }
+// Oct 17 (Miguel: the puzzles need a how-to, every board a Restart): howTo (the rules in a few lines) and inst.restart = R
+// (now mid-slide too).
 (function () {
   const LEVELS = [
     { rows: ['......', '......', '.E....', '..##.#', '.....#', '...@#.'], best: 5 },
@@ -26,6 +28,13 @@
   }
   const G = {
     title: 'The Lacquer Floor',
+    howTo: {
+      lines: ['Slide the Rebel across the polished floor to the purple seal.',
+        'Each move (arrow keys, WASD or the pad) slides you all the way until a pillar or the edge of the floor stops you: you can\'t stop halfway.',
+        'A tatami mat stops you on the mat, and so does the seal itself.',
+        'From level 5, gather every gold leaf before the seal will open; a slide picks up all the leaf it passes over.',
+        'U takes back a move, R starts the level again. The fewest moves (on the info line) earn a bonus. Tip: work backwards: what could stop you on the seal?']
+    },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, CELL = def.cell || 1.1, AT = def.at || [0, 0];
@@ -94,7 +103,7 @@
         board.gold.forEach((m, i) => m.setEnabled(!board.got.has(i)));
         const pp = cellPos(board.p); ctx.player.place(pp.x, pp.z); info();
       }
-      function restart() { if (st.phase !== 'play' || st.anim) return; build(board.k); H.msg('Again', 600); }
+      function restart() { if (st.phase !== 'play') return; st.anim = null; build(board.k); H.msg('Again', 600); }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
       pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(380px,90vw);background:rgba(18,8,16,.94);border:1px solid rgba(226,180,80,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
@@ -132,11 +141,12 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (k === 'arrowup' || k === 'w') move(0, -1); else if (k === 'arrowdown' || k === 's') move(0, 1); else if (k === 'arrowleft' || k === 'a') move(-1, 0); else if (k === 'arrowright' || k === 'd') move(1, 0);
           else if (k === 'u' || k === 'z' || k === 'backspace') undo(); else if (k === 'r') restart();
         },
         pointer() {},
+        restart, // the HUD's Restart button (as R)
         _test: { st, move, undo, choose, get board() { return board; }, LV, parse, slide },
         dispose() { pick.remove(); pads.remove(); if (board) board.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };

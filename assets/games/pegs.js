@@ -3,6 +3,7 @@
 // Clear the board until one stone is left, in the gold hole. Click a stone, then a glowing hole; U undoes, R starts
 // again, H finds a good jump (no clean bonus then). Seven boards, from six stones to the full 32-stone solitaire
 // (each checked by a solver). Score: the board x 20, +10 without a hint.
+// Oct 17: How to play (the rules in a few lines); the HUD's Restart is R (now also mid-jump: the jump is dropped).
 // def: { levels: [{ name, pegs: [[x, y], ...] | 'full', empty?: [x, y], goal: [x, y] }], pass, points }
 (function () {
   const ROWS = ['..ooo..', '..ooo..', 'ooooooo', 'ooooooo', 'ooooooo', '..ooo..', '..ooo..'];
@@ -28,6 +29,12 @@
   }
   const G = {
     title: "The Hermit's Pegs",
+    howTo: { lines: [
+      'A stone jumps over a stone right beside it (up, down, left or right, never diagonally) into the empty hole just behind; the stone it jumped over leaves the board.',
+      'Keep jumping until only one stone is left, and it must end in the hole with the gold ring.',
+      'Click a stone to pick it up: the holes it can jump to glow. Then click a glowing hole.',
+      'U undoes a jump, R starts the board again, H shows a jump that still leads to a win (no bonus then).',
+      'Tip: keep the stones together. A stone left on its own, with no neighbour, can never be jumped away.'] },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsPegsProgress:' + (def.id || 'pegs');
@@ -71,7 +78,7 @@
         if (!MOVES.some(([f, o, t]) => bd.pegs[f] && bd.pegs[o] && !bd.pegs[t])) H.msg('No jumps left', 1800, `${left()} stones: U undoes, R starts again`);
       }
       function undo() { if (st.phase !== 'play' || st.anim || !bd?.hist.length) return; const { f, o, t } = bd.hist.pop(); bd.pegs[f] = true; bd.pegs[o] = true; bd.pegs[t] = false; const s = bd.stones[t]; bd.stones[f] = s; bd.stones[t] = null; s.metadata.pgStone = f; s.position.copyFrom(pos(f)); s.position.y = TY + .07; bd.stones[o] = makeStone(o); select(-1); info(); }
-      function restart() { if (st.phase !== 'play' || st.anim) return; build(bd.k); H.msg('Again', 600); }
+      function restart() { if (st.phase !== 'play' || !bd) return; if (st.anim) { st.anim.gone?.dispose(); st.anim = null; } build(bd.k); H.msg('Again', 600); } // a jump in the air is dropped (its taken stone is no longer on the board's list)
       function hint() { if (st.phase !== 'play' || st.anim) return; const r = firstJump(bd.pegs, bd.goal);
         if (r === 'slow') { H.msg('Too many paths to see from here', 1500, 'undo a little, or try again'); return; }
         if (!r) { H.msg('No way to one stone from here', 1600, 'U undoes, R starts again'); return; }
@@ -109,7 +116,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (k === 'u' || k === 'z' || k === 'backspace') undo(); else if (k === 'r') restart(); else if (k === 'h') hint();
         },
         pointer(evt) {
@@ -117,6 +124,7 @@
           const hit = scene.pickWithRay(ctx.ray(), m => m.metadata?.pgStone != null || m.metadata?.pgHole != null); if (!hit?.pickedMesh) { select(-1); return; }
           const md = hit.pickedMesh.metadata; if (md.pgStone != null) clickAt(md.pgStone, true); else clickAt(md.pgHole, false);
         },
+        restart, // the HUD's Restart: the board as it was picked (no undo or hints)
         _test: { st, choose, jump, undo, restart, hint, clickAt, firstJump, MOVES, HOLES, get bd() { return bd; }, LV },
         dispose() { pick.remove(); pads.remove(); glows.forEach(g => { try { g.dispose(); } catch (e) {} }); if (bd) bd.stones.forEach(s => { try { s?.dispose(); } catch (e) {} }); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };

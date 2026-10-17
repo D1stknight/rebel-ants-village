@@ -3,6 +3,8 @@
 // field on the map. Drag from a gate to dig; drag back to fill in; digging through another channel cuts it there.
 // Seven maps from 5 x 5 to the 10 x 10 Great Irrigation, each with exactly one answer (checked by a solver).
 // H shows one channel whole (no clean bonus). Score: the map x 20, +10 without a hint. def: { levels, pass, points }
+// Oct 17: How to play (the rules + a solved 5 x 5, howto/channels.png) and Restart (the map afresh: no channels, undo,
+// hints or time; the Clear button still empties the map as one undoable step).
 (function () {
   const LEVELS = [
     { name: "The First Paddy", n: 5, ends: [[9,18],[11,4],[21,12],[20,2],[22,19]], paths: [[9,14,13,18],[11,6,7,8,3,4],[21,16,17,12],[20,15,10,5,0,1,2],[22,23,24,19]] },
@@ -16,6 +18,14 @@
   const COL = ['#e2463a', '#2f7fe0', '#f2c230', '#3fbf5a', '#e07a2a', '#9a5ad8', '#2cc4c4', '#e65aa6', '#8a6a3a', '#f0f0f0', '#23202e', '#a0c8ff'];
   const G = {
     title: 'The Irrigation Channels',
+    howTo: { lines: [
+      'Join each pair of sluice gates of the same colour with a channel.',
+      'Channels run from square to square (up, down, left, right, never diagonally) and never cross or share a square.',
+      'The map is done only when the channels together water every field: no square may stay dry.',
+      'Drag from a gate to dig, and back over a channel to fill it in. Digging through another channel cuts it there. Keys: arrows move, Space picks up and drops.',
+      'U undoes, Clear empties the map, H digs one channel for you.',
+      'Tip: start with the gates in corners and along the edges: their channels have the fewest ways to go.'],
+      img: 'howto/channels.png', caption: 'A solved 5 x 5 map: every pair joined, no channels crossing, every field watered.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsChannelsProgress:' + (def.id || 'channels');
@@ -79,6 +89,8 @@
         bd.paths = bd.paths.map(p => p.length === 1 ? [] : p); draw(); info(); check(); }
       function undo() { if (st.phase !== 'play') return; const s = bd.undo.pop(); if (!s) return; bd.paths = s; ctx.note(330, 'lantern'); draw(); info(); }
       function restart() { if (st.phase !== 'play') return; bd.undo.push(snap()); bd.paths = bd.paths.map(() => []); draw(); info(); }
+      // the HUD's Restart: the map as it was picked (no undo, hints or time either)
+      function startOver() { if (st.phase !== 'play' || !bd) return; st.drag = null; build(bd.k); H.msg('Start again', 900); }
       function hint() { if (st.phase !== 'play') return; const sol = bd.L.paths;
         // the first channel not dug as it should be: dug whole, cutting what lies in its way
         const same = (p, q) => p.length === q.length && (p.every((c, i) => c === q[i]) || p.every((c, i) => c === q[q.length - 1 - i]));
@@ -118,7 +130,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return; const n = bd.n, x = bd.cur % n, y = Math.floor(bd.cur / n); let nx = -1;
           if (k === 'arrowup' || k === 'w') nx = y > 0 ? bd.cur - n : -1; else if (k === 'arrowdown' || k === 's') nx = y < n - 1 ? bd.cur + n : -1;
           else if (k === 'arrowleft' || k === 'a') nx = x > 0 ? bd.cur - 1 : -1; else if (k === 'arrowright' || k === 'd') nx = x < n - 1 ? bd.cur + 1 : -1;
@@ -132,7 +144,8 @@
           else if (evt.type === T.POINTERMOVE && st.drag) { const i = cellAt(); if (i >= 0) toward(i); }
           else if (evt.type === T.POINTERUP && st.drag) end();
         },
-        _test: { st, choose, begin, step, toward, end, undo, hint, restart, joined, watered, get bd() { return bd; }, LV, draw, unlock(k) { solvedUpTo = k; drawPick(); } },
+        restart: startOver,
+        _test: { st, choose, begin, step, toward, end, undo, hint, restart, startOver, joined, watered, get bd() { return bd; }, LV, draw, unlock(k) { solvedUpTo = k; drawPick(); } },
         dispose() { pick.remove(); pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); } catch (e) {} }
       };
     }

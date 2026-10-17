@@ -4,6 +4,7 @@
 // out into the dirt (an open end leaks). Five boards from 4 x 4 to 7 x 7, the same board each time (a fixed seed per
 // level), each opens when the one before is done (kept on this device). Score: the board x 20, +10 within 10% of the
 // fewest turns.
+// Oct 17: How to play (the rules in a few lines); the HUD's Restart is R (the old board's leak marks now go with it).
 // def: { at: [x, z] (frame coords of the board's middle), cell: 1.2, levels: [{ n, seed }], pass, points }
 (function () {
   const LEVELS = [{ n: 4, seed: 11 }, { n: 5, seed: 23 }, { n: 5, seed: 37 }, { n: 6, seed: 41 }, { n: 7, seed: 59 }];
@@ -32,6 +33,12 @@
   }
   const G = {
     title: 'The Canal Gates',
+    howTo: { lines: [
+      'Every canal stone carries a piece of channel: a straight, a bend, a T, a cross, or a basin where a channel ends. A click turns a stone a quarter turn.',
+      'Water runs from the spout in the middle through every channel that lines up with the channel on the next stone.',
+      'The board is done when the water reaches every stone and no channel runs out into the dirt: the orange marks show the leaks.',
+      'Click a stone to turn it (or move the gold frame with the arrows and press Space). R starts the board again. Few turns earn a bonus.',
+      'Tip: start at the edges and corners. A channel there can only point inwards, which settles the stone.'] },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, CELL = def.cell || 1.2, AT = def.at || [0, 0];
@@ -71,7 +78,8 @@
         return { wet, leaks };
       }
       function build(k) {
-        if (board) board.nodes.forEach(n => { try { n.dispose(); } catch (e) {} });
+        if (board) [...board.nodes, ...board.leaks].forEach(n => { try { n.dispose(); } catch (e) {} }); // a restart: the old leak marks too
+        st.spin = [];
         const L = LV[k], g = generate(L.n, L.seed), n = L.n;
         board = { k, n, mask: g.mask, cur: g.start.slice(), src: g.src, best: g.best, turns: 0, nodes: [], tiles: [], sel: g.src, wet: new Set(), leaks: [] };
         const inst = (s, parent, x, y, z, ry = 0) => { const m = s.createInstance('canPart'); m.parent = parent; m.position.set(x, y, z); m.rotation.y = ry; board.nodes.push(m); ctx.add(m); return m; };
@@ -149,7 +157,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (k === 'arrowup' || k === 'w') moveSel(0, -1); else if (k === 'arrowdown' || k === 's') moveSel(0, 1); else if (k === 'arrowleft' || k === 'a') moveSel(-1, 0); else if (k === 'arrowright' || k === 'd') moveSel(1, 0);
           else if (k === ' ' || k === 'enter') turn(board.sel); else if (k === 'r') restart();
         },
@@ -158,7 +166,8 @@
           const hit = scene.pickWithRay(ctx.ray(), m => m.metadata?.canCell != null);
           const i = hit?.pickedMesh?.metadata?.canCell; if (i != null) turn(i);
         },
-        _test: { st, turn, moveSel, choose, flow, rot, generate, get board() { return board; }, LV },
+        restart, // the HUD's Restart: the board as it was picked (the same scramble, no turns)
+        _test: { st, turn, moveSel, choose, flow, rot, generate, restart, get board() { return board; }, LV },
         dispose() { pick.remove(); pads.remove(); if (board) { board.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); board.leaks.forEach(n => { try { n.dispose(); } catch (e) {} }); } }
       };
       return inst;

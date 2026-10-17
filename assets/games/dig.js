@@ -4,6 +4,9 @@
 // one to three chests; the dig limits come from a solver (level 4 leaves no dig to waste). Score: the beach x 20, +5
 // for every dig left.
 // def: { at: [x, z] (frame coords of the beach's middle), cell: 1.2, levels: [{ n, chests, digs, rocks: [index] }], pass, points }
+// Oct 17 (Miguel: the puzzles need a how-to with an example, every board a Restart): howTo (the rules + two stakes that
+// pin a chest, howto/dig.png) and inst.restart (the same beach and digs, the chests buried again elsewhere: the old stakes
+// would give them away).
 (function () {
   const LEVELS = [
     { n: 6, chests: 1, digs: 6 },
@@ -15,6 +18,14 @@
   ];
   const G = {
     title: 'The Buried Chest',
+    howTo: {
+      lines: ['Chests are buried somewhere on this beach. Find all of them before your digs run out (the info line counts both).',
+        'Click a square to dig it, or move the gold frame with the arrow keys and press Space.',
+        'An empty dig leaves a stake with a number: how many squares away the nearest chest still buried is, counted across plus up and down (never on a slant).',
+        'So a 1 means a chest lies right beside it, above or below it. Rocks can\'t be dug.',
+        'Tip: read two or three stakes together: only a few squares fit all their numbers. Every dig you have left over is worth 5 points.'],
+      img: 'howto/dig.png', caption: 'Two stakes say 3 and 4: only one square fits both, and the chest is there.'
+    },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, CELL = def.cell || 1.2, AT = def.at || [0, 0];
@@ -107,7 +118,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (k === 'arrowup' || k === 'w') moveSel(0, -1); else if (k === 'arrowdown' || k === 's') moveSel(0, 1); else if (k === 'arrowleft' || k === 'a') moveSel(-1, 0); else if (k === 'arrowright' || k === 'd') moveSel(1, 0);
           else if (k === ' ' || k === 'enter') dig(board.sel);
         },
@@ -115,6 +126,7 @@
           if (evt.type !== B.PointerEventTypes.POINTERDOWN || st.phase !== 'play') return;
           const hit = scene.pickWithRay(ctx.ray(), m => m.metadata?.digCell != null); const i = hit?.pickedMesh?.metadata?.digCell; if (i != null) dig(i);
         },
+        restart, // the HUD's Restart button
         _test: { st, dig, choose, moveSel, dist, get board() { return board; }, LV },
         dispose() { pick.remove(); pads.remove(); sel.dispose(); if (board) board.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };

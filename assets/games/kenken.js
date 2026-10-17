@@ -3,6 +3,8 @@
 // inside, in any order (a lone number is given). Seven tablets from 4 x 4 to the 7 x 7 Master's Abacus, each with one
 // answer (checked by a solver; the last ones need "what if" reasoning). N pencil notes, U undo, H hint (no clean bonus).
 // Score: the tablet x 20, +10 without a hint. def: { levels, pass, points }
+// Oct 17: How to play (the rules + a solved 4 x 4 with its cages, howto/kenken.png) and Restart (the tablet afresh:
+// only the given numbers, no notes, undo, hints or time).
 (function () {
   const LEVELS = [
     { name: "The Novice's Beads", n: 4, s: '1342412332142431', cages: [[[15,14],'/',3],[[0,1,5],'+',5],[[11,10,9],'+',7],[[6,2],'*',8],[[4,8],'*',12],[[3,7],'*',6],[[13,12],'/',2]] },
@@ -16,6 +18,13 @@
   const OPS = { '+': '+', '-': '−', '*': '×', '/': '÷', '=': '' };
   const G = {
     title: 'The Temple Abacus',
+    howTo: { lines: [
+      'Fill the grid so every row and every column holds each number once: 1 to 4 on a 4 x 4, up to 1 to 7.',
+      'Heavy lines split the grid into cages. The clue in a cage\'s corner is what its numbers make: 7+ add up to 7, 1− differ by 1, 12× multiply to 12, 2÷ divide to 2.',
+      'The order inside a cage does not matter, and a number may repeat in a cage when the two are not in the same row or column. A cage of one square is given.',
+      'Click a square and type its number (or use the pad). N writes small pencil notes, 0 rubs out, U undoes, H gives a hint.',
+      'Tip: start with the cages that allow only a few pairs, like 3÷ (1 and 3 only on a 4 x 4) or 3− (1 and 4).'],
+      img: 'howto/kenken.png', caption: 'A solved 4 x 4: each row and column holds 1, 2, 3 and 4 once, and every cage makes its clue.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsAbacusProgress:' + (def.id || 'kenken');
@@ -122,7 +131,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return;
           if (/^[1-9]$/.test(k) && +k <= bd.N) write(+k); else if (k === '0' || k === 'backspace' || k === 'delete') write(0);
           else if (k === 'arrowup' || k === 'w') moveSel(0, -1); else if (k === 'arrowdown' || k === 's') moveSel(0, 1); else if (k === 'arrowleft' || k === 'a') moveSel(-1, 0); else if (k === 'arrowright' || k === 'd') moveSel(1, 0);
@@ -134,6 +143,8 @@
           const l = ctx.toLocal(hit.pickedPoint), N = bd.N, M = 26 / TEX * S, C = (S - 2 * M) / N, c = Math.floor((l.x + S / 2 - M) / C), r = Math.floor((S / 2 - M - l.z) / C);
           if (c >= 0 && c < N && r >= 0 && r < N) { select(r * N + c); draw(); }
         },
+        // Restart: the same tablet afresh (the given numbers only, notes off, no undo, hints or time); only while it is played
+        restart() { if (st.phase !== 'play' || !bd) return; build(bd.k); drawPads(bd.N); H.msg('Start again', 900); },
         _test: { st, choose, setCell, write, undo, hint, select, moveSel, toggleNotes, conflicts, cageOk, get bd() { return bd; }, LV, unlock(k) { solvedUpTo = k; drawPick(); } },
         dispose() { pick.remove(); pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); } catch (e) {} }
       };

@@ -6,6 +6,8 @@
 // into you, and you are seen (the step is taken back). Step onto a watchman from behind or the side to take it out.
 // U undoes a turn, R starts the level again. Seven levels, each opens when the one before is solved (kept on this
 // device); every level was checked by a solver for its fewest turns. Score: the level x 20, +10 close to the fewest turns.
+// Oct 17: How to play (the rules in a few lines) and Restart beside Quit; Restart and R now start the level as it was
+// picked (the seen count too, which R used to carry over).
 // def: { at: [x, z] (frame coords of the board's middle), cell: 1.2, levels, pass, points }
 (function () {
   const LEVELS = [
@@ -52,6 +54,13 @@
   }
   const G = {
     title: 'The Silent Path',
+    howTo: { lines: [
+      'Reach the scroll without being seen.',
+      'Every step you take is one turn (Space waits a turn). After it the watchmen move: a walker steps along its beat, a turner turns on the spot (the small arrow shows where it looks next), a still one keeps watching one way.',
+      'Each lantern lights the squares in front of its watchman (walls stop the light). Step into the light, or let a watchman walk into you, and you are seen: the step is taken back.',
+      'Step onto a watchman from behind or from the side to take him out.',
+      'Move with the arrows / W A S D or the pads. U undoes a turn, R (or Restart) starts the level again.',
+      'Tip: watch a beat go round once before you move; waiting a turn is often the way through.'] },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, CELL = def.cell || 1.2, AT = def.at || [0, 0];
@@ -141,7 +150,8 @@
         board.guards.forEach(({ n, g }) => { const a = guardAt(g, board.t), p = xyPos(a.x, a.y); n.position.set(p.x, .12, p.z); n.rotation.y = YAW[a.f]; n.scaling.setAll(1.05); });
         relight(); info(); st.phase = 'play';
       }
-      function restart() { if (st.phase !== 'play' || st.anim) return; const seen = board.seen; build(board.k); board.seen = seen; info(); H.msg('Again', 600); }
+      // R, the pads' ⟲ and Restart beside Quit: the level as it was picked (turns, undo and the seen count); not mid-turn
+      function restart() { if (st.phase !== 'play' || st.anim) return; build(board.k); H.msg('Again', 600); }
       // the level picker (and the pads for phones)
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
@@ -184,12 +194,13 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (k === 'arrowup' || k === 'w') step(0, -1); else if (k === 'arrowdown' || k === 's') step(0, 1); else if (k === 'arrowleft' || k === 'a') step(-1, 0); else if (k === 'arrowright' || k === 'd') step(1, 0);
           else if (k === ' ' || k === 'enter' || k === '.') step(0, 0); else if (k === 'u' || k === 'z' || k === 'backspace') undo(); else if (k === 'r') restart();
         },
         pointer() {},
-        _test: { st, step, undo, choose, get board() { return board; }, LV, parse, turn, guardAt, litCells },
+        restart,
+        _test: { st, step, undo, restart, choose, get board() { return board; }, LV, parse, turn, guardAt, litCells },
         dispose() { pick.remove(); pads.remove(); if (board) { board.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); board.lit.forEach(n => { try { n.dispose(); } catch (e) {} }); } }
       };
       return inst;

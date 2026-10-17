@@ -4,6 +4,7 @@
 // a solver). Click a square (or move with the arrows) and type its height; N writes pencil notes, 0 / Backspace rubs
 // out, U undoes, H shows a mistake or one tower (no clean bonus). When the block is right the towers rise.
 // Score: the block x 20, +10 without a hint. def: { levels, pass, points }
+// Oct 17: How to play (the rules + a solved 4 x 4 block, howto/sky.png) and Restart (a blank plan, notes off).
 (function () {
   const LEVELS = [
     { name: "Main Street", n: 4, top: [0,0,0,0], bottom: [4,3,0,0], left: [0,0,0,0], right: [0,2,0,0], given: '0000000000000000', sol: '4123341223411234' },
@@ -18,6 +19,13 @@
   const seenSoFar = line => { let m = 0, c = 0; for (const v of line) { if (!v) break; if (v > m) { m = v; c++; } } return c; };
   const G = {
     title: 'Skyline View',
+    howTo: { lines: [
+      'Every row and every column gets one tower of each height, from 1 storey up to the size of the block (1 to 4 on a 4 x 4).',
+      'A number at the edge counts the towers you see looking along that line from there: a taller tower hides every shorter one behind it.',
+      'Click a square (or move with the arrows) and type its height; N writes small pencil notes, 0 or Backspace rubs out.',
+      'An edge number fades when its line is right and turns red when it is broken. U undoes, H shows a mistake or one tower (no +10 clean bonus then).',
+      'Tip: an edge 1 means the tallest tower stands right beside it; an edge number as big as the block means the towers climb 1, 2, 3... in order.'],
+      img: 'howto/sky.png', caption: 'A solved 4 x 4 block: each edge number counts the towers seen from that side.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsSkylineProgress:' + (def.id || 'sky');
@@ -113,6 +121,8 @@
       const drawPads = N => { pads.innerHTML = ''; for (let d = 1; d <= N; d++) padBtn(String(d), () => write(d)); notesBtn = padBtn('✎', () => toggleNotes()); padBtn('⌫', () => write(0)); padBtn('↶', undo); padBtn('?', hint); };
       function toggleNotes() { if (!bd) return; bd.notesOn = !bd.notesOn; if (notesBtn) notesBtn.style.background = bd.notesOn ? 'rgba(90,140,200,.75)' : 'rgba(14,16,24,.88)'; info(); draw(); }
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); drawPads(bd.N); pads.style.display = 'grid'; H.msg(`Block ${k + 1}`, 900, `${LV[k].name}: ${LV[k].n} × ${LV[k].n}`); }
+      // Restart (the button beside Quit): the same block with no towers and no notes, notes off, the clock, undo and hints from zero
+      function restart() { if (st.phase !== 'play' || !bd) return; build(bd.k); if (notesBtn) notesBtn.style.background = 'rgba(14,16,24,.88)'; H.msg('Start again', 900, 'a blank plan'); }
       hud.append(pick, pads); drawPick();
       const cam = [0, TY + 6.3, -3.4], at = [0, TY, -.3];
       ctx.player.place(0, cam[2] - 1.6, 0); ctx.look(cam, at, def.fov || .8); // the player waits behind the camera, out of the picture
@@ -132,7 +142,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return; const N = bd.N, x = bd.sel % N, y = Math.floor(bd.sel / N);
           if (k === 'arrowup' || k === 'w') { bd.sel = ((y - 1 + N) % N) * N + x; draw(); } else if (k === 'arrowdown' || k === 's') { bd.sel = ((y + 1) % N) * N + x; draw(); }
           else if (k === 'arrowleft' || k === 'a') { bd.sel = y * N + (x - 1 + N) % N; draw(); } else if (k === 'arrowright' || k === 'd') { bd.sel = y * N + (x + 1) % N; draw(); }
@@ -140,6 +150,7 @@
           else if (k === 'n') toggleNotes(); else if (k === 'u' || (k === 'z' && (e.ctrlKey || e.metaKey))) undo(); else if (k === 'h') hint();
         },
         pointer(evt) { const T = B.PointerEventTypes; if (st.phase !== 'play' || !bd) return; if (evt.type === T.POINTERDOWN) { const i = cellAt(); if (i != null) { bd.sel = i; draw(); } } },
+        restart,
         _test: { st, choose, setCell, write, undo, hint, toggleNotes, dupes, lines, clueState, get bd() { return bd; }, LV, draw: () => { st.dirty = false; paint(); }, unlock(k) { solvedUpTo = k; drawPick(); } },
         dispose() { pick.remove(); pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); towerM.dispose(); } catch (e) {} }
       };

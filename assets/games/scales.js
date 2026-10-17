@@ -3,6 +3,8 @@
 // the false coin (N, then click it). The scales are honest but the coin is not: it is whichever coin your weighings
 // have not yet ruled out, so only a sure answer wins. Seven offerings: a heavier coin among 3, 9, 8 and 27; then a
 // coin that is heavier OR lighter among 4, 12 and 13, with two or three weighings. Score: the offering x 20 + 10.
+// Oct 17: How to play (the rules + one weighing worked through, howto/scales.png) and Restart (the offering afresh:
+// every coin back on the table, all weighings back).
 // def: { levels: [{ n, w, mode: 'heavy' | 'either' }], pass, points }
 (function () {
   const LEVELS = [
@@ -11,6 +13,14 @@
   ];
   const G = {
     title: 'The Temple Scales',
+    howTo: { lines: [
+      'One coin of the offering is false: heavier than the rest (from offering 5: heavier or lighter, you do not know which).',
+      'Click a coin to move it: table, left pan, right pan, back to the table. Both pans must hold the same number of coins.',
+      'Press W (or Weigh) to weigh: the heavier side sinks, and if the pans balance the false coin is not on them. You have only a few weighings.',
+      'When only one coin can still be false, press N (or Name the coin) and click it.',
+      'No lucky guesses: the false coin is always one your weighings have not ruled out, so name it only when you are sure.',
+      'Tip: split the coins in three: left pan, right pan and table. Whatever the scales do, two of the three groups are ruled out.'],
+      img: 'howto/scales.png', caption: 'Offering 2: 9 coins, one heavier, 2 weighings. Three against three, then one against one.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsScalesProgress:' + (def.id || 'scales');
@@ -121,13 +131,15 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (k === 'w' || k === 'enter') weigh(); else if (k === 'c') clearPans(); else if (k === 'n') toggleName();
         },
         pointer(evt) {
           if (evt.type !== B.PointerEventTypes.POINTERDOWN || st.phase !== 'play') return;
           const hit = scene.pickWithRay(ctx.ray(), m => m.metadata?.scCoin != null); if (hit?.pickedMesh) cycle(hit.pickedMesh.metadata.scCoin);
         },
+        // Restart: the same offering afresh (every coin on the table, no weighings used); not once a coin is named
+        restart() { if (st.phase !== 'play' || !bd) return; st.anim = null; build(bd.k); nameBtn.style.background = 'rgba(26,16,6,.88)'; info(); H.msg('Start again', 900); },
         _test: { st, choose, cycle, weigh, name, clearPans, toggleName, get bd() { return bd; }, LV, setPans(L, R) { bd.coins.forEach(c => { c.where = L.includes(c.i) ? -1 : R.includes(c.i) ? 1 : 0; }); layoutCoins(); } },
         dispose() { pick.remove(); pads.remove(); logEl.remove(); if (bd) bd.coins.forEach(c => { try { c.node.dispose(); } catch (e) {} }); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };

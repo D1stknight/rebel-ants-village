@@ -4,6 +4,8 @@
 // 9 x 9 Grand Canal, each with one answer (checked by a solver). Click marks with the brush (Tab switches canal /
 // land, right click the other), drag paints. A pool is outlined red, an island too big or holding two numbers turns
 // its number red. H hint (no clean bonus). Score: the map x 20, +10 without a hint. def: { levels, pass, points }
+// Oct 17: How to play (the rules + a solved 5 x 5, howto/canals.png) and Restart (the map as picked: only the
+// numbered land, no marks, undo, hints or time).
 (function () {
   const LEVELS = [
     { name: "The Reed Bed", r: 5, c: 5, clues: [[12,2],[19,3],[3,3],[1,5]], sol: '0010001110010110101011100' },
@@ -16,6 +18,13 @@
   ];
   const G = {
     title: 'The Canal Islands',
+    howTo: { lines: [
+      'Dig canals to split the map into islands. Every island holds exactly one number, and that number is its size in squares.',
+      'All the canal squares join into one waterway (side to side), and no 2 x 2 block may be all canal: a standing pool is outlined red.',
+      'Islands never touch each other side to side. The numbered squares are always land; a number turns red when its island is too big or holds two numbers.',
+      'Click a square to mark it with the brush: Tab (or the button) switches canal / land, right click marks the other, drag paints. U undoes, H fixes one square (no clean bonus then).',
+      'Tip: a square between two numbers is always canal, since two numbers never share an island, and a 1 is ringed with canal.'],
+      img: 'howto/canals.png', caption: 'A solved 5 x 5 map: one joined waterway, no pools, and every island the size of its number.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsCanalsProgress:' + (def.id || 'canals');
@@ -75,7 +84,9 @@
         const want = bd.mark[i] === v ? 0 : v, rec = []; setMark(i, want, rec); bd.cur = i; st.drag = { want, last: i, rec }; commit(rec); return true; }
       function dragTo(i) { if (!st.drag || i === st.drag.last) return; st.drag.last = i; bd.cur = i; const rec = st.drag.rec; if (setMark(i, st.drag.want, rec)) { if (!bd.undo.includes(rec)) bd.undo.push(rec); draw(); info(); check(); } else draw(); }
       function undo() { if (st.phase !== 'play') return; const rec = bd.undo.pop(); if (!rec) return; for (let j = rec.length - 1; j >= 0; j--) bd.mark[rec[j][0]] = rec[j][1]; ctx.note(330, 'lantern'); draw(); info(); }
-      function restart() { if (st.phase !== 'play') return; const rec = []; for (let i = 0; i < bd.N; i++) if (!bd.num[i] && bd.mark[i]) setMark(i, 0, rec); commit(rec); }
+      // Restart (the button beside Quit): the map as it was picked (only the numbered land; no marks, undo, hints or
+      // time), kept in the same board object (the tests hold it); only while it is being played
+      function restart() { if (st.phase !== 'play' || !bd) return; const b = bd; build(b.k); bd = Object.assign(b, bd); st.drag = null; H.msg('Start again', 900); }
       function hint() {
         if (st.phase !== 'play') return;
         let i = -1; for (let j = 0; j < bd.N; j++) if (bd.mark[j] && !bd.num[j] && (bd.mark[j] === 1) !== !!bd.sol[j]) { i = j; break; }
@@ -121,7 +132,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return; const { R, C } = bd, x = bd.cur % C, y = Math.floor(bd.cur / C);
           if (k === 'arrowup' || k === 'w') { bd.cur = ((y - 1 + R) % R) * C + x; draw(); } else if (k === 'arrowdown' || k === 's') { bd.cur = ((y + 1) % R) * C + x; draw(); }
           else if (k === 'arrowleft' || k === 'a') { bd.cur = y * C + (x - 1 + C) % C; draw(); } else if (k === 'arrowright' || k === 'd') { bd.cur = y * C + (x + 1) % C; draw(); }
@@ -135,6 +146,7 @@
           else if (evt.type === T.POINTERMOVE && st.drag) { const i = cellAt(); if (i != null) dragTo(i); }
           else if (evt.type === T.POINTERUP) st.drag = null;
         },
+        restart,
         _test: { st, choose, press, dragTo, undo, hint, restart, toggleMode, pools, islands, get bd() { return bd; }, LV, draw: () => { st.dirty = false; paint(); }, end() { st.drag = null; }, unlock(k) { solvedUpTo = k; drawPick(); } },
         dispose() { pick.remove(); pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); } catch (e) {} }
       };

@@ -3,15 +3,24 @@
 // mark in the wrong place (they never say which). Eight tries. A logic puzzle: the fewer tries, the more it pays.
 // def: { box: [x, y, z] (frame coords of the box's foot), size: [w, h, d], face: yaw (the way its front faces), tries: 8,
 // playerAt: [x, z], cam, at, pass, points }
+// Oct 17 (Miguel: the puzzles need a how-to, every board a Restart): howTo (the rules in a few lines) and inst.restart
+// (the dials and tries back, a NEW code on the lock: the old one's beads would give it away).
 (function () {
   const MARKS = [{ s: '⚓︎', n: 'anchor', c: '#9fb8d8' }, { s: '☠︎', n: 'skull', c: '#e8e2d0' }, { s: '✦︎', n: 'star', c: '#ffd45e' },
     { s: '⚔︎', n: 'swords', c: '#d8d8e8' }, { s: '♒︎', n: 'waves', c: '#6fd0d8' }, { s: '☸︎', n: 'wheel', c: '#e0a060' }];
   const G = {
     title: "The Broker's Strongbox",
+    howTo: {
+      lines: ['Open the strongbox. Its code is four seals, each one of six sea marks, and no mark is used twice.',
+        'Set the four dials, then press Try the lock (or Enter). Click a dial to pick it and click it again to turn it; or ← → pick a dial and ↑ ↓ turn it (1-4 turn that dial).',
+        'After each try: a gold bead for every mark in the right place, a silver bead for every right mark in the wrong place. The beads never say which mark is which.',
+        'You have eight tries, and the fewer you need, the more it pays.',
+        'Tip: between tries, change only one or two dials and watch how the beads change.']
+    },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const BOX = def.box || [0, 0, 2], FACE = def.face ?? 0, TRIES = def.tries || 8, [SW, SH, SD] = def.size || [1.5, .7, .9];
-      const code = []; { const pool = [0, 1, 2, 3, 4, 5]; for (let k = 0; k < 4; k++) code.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]); }
+      const code = [], deal = () => { const pool = [0, 1, 2, 3, 4, 5]; code.length = 0; for (let k = 0; k < 4; k++) code.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]); }; deal();
       const mat = (k, c, em, spec = .2) => ctx.mat(k, n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(...c); m.specularColor = new B.Color3(spec, spec, spec); if (em) m.emissiveColor = new B.Color3(...em); return m; });
       // the strongbox: dark wood, iron bands, four brass dials on the front, a hinged lid with gold inside
       const root = new B.TransformNode('lockBox', scene); ctx.add(root); root.position.set(BOX[0], BOX[1], BOX[2]); root.rotation.y = FACE;
@@ -52,6 +61,7 @@
         else H.msg(`${f.gold} gold · ${f.silver} silver`, 1000);
         draw(); H.info(`Try ${Math.min(st.tries.length + 1, TRIES)} / ${TRIES}`);
       }
+      function restart() { if (st.phase !== 'play') return; deal(); st.set = [0, 1, 2, 3]; st.sel = 0; st.tries = []; draw(); H.info(`Try 1 / ${TRIES}`); H.msg('A new code', 1200, 'the Broker reset the lock'); }
       const PA = def.playerAt || [BOX[0] + Math.sin(FACE) * 2.2, BOX[2] + Math.cos(FACE) * 2.2];
       ctx.player.place(PA[0], PA[1], FACE + Math.PI);
       const cam = def.cam || [BOX[0] + Math.sin(FACE) * 3.4 - Math.cos(FACE) * 1.2, BOX[1] + 2.6, BOX[2] + Math.cos(FACE) * 3.4 + Math.sin(FACE) * 1.2], at = def.at || [BOX[0], BOX[1] + SH * .6, BOX[2]];
@@ -81,6 +91,7 @@
           else { const n = parseInt(k, 10); if (n >= 1 && n <= 4) { st.sel = n - 1; cycle(1); } }
         },
         pointer() {},
+        restart, // the HUD's Restart button
         _test: { st, code, tryLock, setDials(v) { st.set = v.slice(); draw(); }, feedback },
         dispose() { box.remove(); dials.forEach(d => { try { d.material.diffuseTexture?.dispose(); d.material.dispose(); } catch (e) {} }); }
       };

@@ -4,6 +4,8 @@
 // the 2048 Golden Banana if you can. Three boards: 4 x 4 (classic), 5 x 5 (roomy), 3 x 3 (the hard one, to 256).
 // Crates are small meshes sharing one material per number (made when first needed), so a slide moves meshes and
 // never redraws a texture. def: { levels: [{ n, goal, name }], pass (score), points }
+// Oct 17: How to play (the rules + one slide worked through, howto/merge.png) and Restart (a new game on the same
+// board: two fresh crates, score and slides at 0; the board's best score stays as it was).
 (function () {
   const LEVELS = [{ n: 4, goal: 2048, name: 'The Dock' }, { n: 5, goal: 4096, name: 'The Big Dock' }, { n: 3, goal: 256, name: 'The Rowboat' }];
   const TILE = { 2: '#f3e3b0', 4: '#f1d68a', 8: '#f2b05c', 16: '#ef8f45', 32: '#ea6c3c', 64: '#e2462e', 128: '#ead061', 256: '#e8c94c', 512: '#e4c03a', 1024: '#e2b827', 2048: '#ffd21a', 4096: '#9be35a', 8192: '#4ad0c8' };
@@ -12,6 +14,13 @@
   function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.lineTo(x + w - r, y); g.quadraticCurveTo(x + w, y, x + w, y + r); g.lineTo(x + w, y + h - r); g.quadraticCurveTo(x + w, y + h, x + w - r, y + h); g.lineTo(x + r, y + h); g.quadraticCurveTo(x, y + h, x, y + h - r); g.lineTo(x, y + r); g.quadraticCurveTo(x, y, x + r, y); g.closePath(); }
   const G = {
     title: 'Banana Merge',
+    howTo: { lines: [
+      'Slide every crate on the board one way: the arrows, W A S D, a swipe, or the arrow buttons.',
+      'Two crates with the same number that bump together merge into one crate with their sum, and the new number is added to your score.',
+      'After every slide a new crate (a 2, now and then a 4) lands on an empty square.',
+      'The run ends when no slide can change the board. Bank it ends it any time and keeps your score; the goal crate (2048 on The Dock) is there to chase.',
+      'Tip: keep your biggest crate in one corner and slide mostly two ways, so it never has to leave.'],
+      img: 'howto/merge.png', caption: 'Slide right: the two 8 crates merge into a 16 (+16 points), the 2s close up, and a new 2 lands.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS;
@@ -99,7 +108,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (k === 'arrowup' || k === 'w') move(0); else if (k === 'arrowright' || k === 'd') move(1); else if (k === 'arrowdown' || k === 's') move(2); else if (k === 'arrowleft' || k === 'a') move(3);
         },
         pointer(evt) {
@@ -107,6 +116,9 @@
           if (evt.type === T.POINTERDOWN) st.swipe = { x: scene.pointerX, y: scene.pointerY };
           else if (evt.type === T.POINTERUP && st.swipe) { const dx = scene.pointerX - st.swipe.x, dy = scene.pointerY - st.swipe.y; st.swipe = null; if (Math.max(Math.abs(dx), Math.abs(dy)) < 30) return; if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 1 : 3); else move(dy > 0 ? 2 : 0); }
         },
+        // Restart: a new game on the same board (two fresh crates, score and slides at 0; a slide under way is dropped);
+        // only while a run is on. The best score is not touched: an unbanked run never counts
+        restart() { if (st.phase !== 'play' || !bd) return; st.anim = 0; st.pendingSpawn = false; st.swipe = null; build(bd.k); H.score(0); H.msg('Start again', 900); },
         _test: { st, choose, move, canMove, settle, tileMesh, get bd() { return bd; }, LV, end },
         dispose() { pick.remove(); pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); } catch (e) {} for (const v in tileMats) { try { tileMats[v].diffuseTexture.dispose(); tileMats[v].dispose(); } catch (e) {} } }
       };

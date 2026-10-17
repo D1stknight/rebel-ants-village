@@ -3,9 +3,18 @@
 // to lift its top crate, then a stack to set it down. Fewer moves score more: the best is 2^n - 1.
 // def: { crates: 4, stacks: [[x, z], [x, z], [x, z]] (frame coords: start, middle, goal), pass, points,
 //        hide: [kit types] (the village's own crane steps aside while the game's stands there) }
+// Oct 17 (Miguel: the puzzles need a how-to, every board a Restart): howTo (the rules in a few lines) and inst.restart
+// (every crate back on the quay, the hook over it, the moves from 0).
 (function () {
   const G = {
     title: 'Cargo Crane',
+    howTo: {
+      lines: ['Move the whole stack of crates from the quay (stack 1) onto the ship\'s hatch (stack 3).',
+        'The hook carries one crate at a time: click a stack (or press 1, 2 or 3) to lift its top crate, then click another stack to set it down.',
+        'A bigger crate may never sit on a smaller one. Use the middle pallet (2) to park crates on the way.',
+        'Fewer moves score more: the fewest possible is on the info line (15 moves for 4 crates).',
+        'Tip: the biggest crate can only move once every other crate is stacked on the spare pallet, so first move the smaller tower out of its way.']
+    },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const N = Math.max(3, Math.min(6, def.crates || 4)), S = def.stacks || [[-2.6, 4.2], [0, 5], [2.6, 4.2]], CH = .42;
@@ -46,6 +55,11 @@
           if (s.length && top > st.held) { H.msg('Too big for that stack', 800); ctx.sound('thock'); return; }
           st.anim = { to: i, lift: false, k: st.held };
         }
+      }
+      function restart() { // every crate back on the quay, the hook over it, nothing held
+        if (st.phase !== 'play') return; // (in the intro nothing has moved yet)
+        st.stacks = [[...Array(N).keys()], [], []]; st.held = null; st.anim = null; st.moves = 0;
+        st.hx = st.tx = S[0][0]; st.hz = st.tz = S[0][1]; st.hy = st.ty = 4.5; layout(); info(); H.msg('Start again', 900);
       }
       function finish() {
         st.phase = 'done'; H.hint('');
@@ -90,6 +104,7 @@
           if (md.craneStack !== undefined) choose(md.craneStack);
           else { const i = st.stacks.findIndex(s => s.includes(md.craneCrate)); if (i >= 0) choose(i); }
         },
+        restart, // the HUD's Restart button
         _test: { st, choose, solve() { const out = []; const h = (n, a, b, c) => { if (!n) return; h(n - 1, a, c, b); out.push([a, b]); h(n - 1, c, b, a); }; h(N, 0, 2, 1); return out; } },
         dispose() { hidden.forEach(n => { if (!n.isDisposed()) n.setEnabled(true); }); }
       };
