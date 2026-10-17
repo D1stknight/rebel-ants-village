@@ -79,11 +79,14 @@
   const G = {
     title: 'The Potion Shelf',
     howTo: { lines: [
-      'Pour the potions until every vial holds only one kind: a vial full of one potion gets its cork. Each potion has its own colour and rune.',
-      'Click a vial (or press its number), then the vial to pour into. The top potion pours across, with every layer of the same potion under it, while there is room.',
-      'You may pour only onto the same potion or into an empty vial, and a vial holds four layers.',
-      'U undoes, R starts the shelf again, H shows a good pour (no fewest-pours bonus then).',
-      'Tip: keep an empty vial free as long as you can: it is the way out when you are stuck.'] },
+      'Pour the potions until every vial holds only one kind. Each potion has its own colour and its own rune.',
+      'Click (or tap) a vial, or press its number (0 is the tenth): it floats up on a gold ring. Then click the vial to pour into. Click it again (or Space) to set it down.',
+      'The top potion pours across with every layer of the same potion under it, as far as there is room. A vial holds four layers.',
+      'A pour may go only onto the same potion or into an empty vial. A vial full of one potion gets its cork: that potion is done.',
+      'U (or Undo) takes a pour back, R (or ⟲, or Restart) starts the shelf again. H (or Hint) shows a good pour: the vial to pour from rises and the one to pour into blinks.',
+      'The fewest pours are shown at the top: manage them with no hint for 10 more points.',
+      'Tip: keep an empty vial free as long as you can: it is the way out when you are stuck.'],
+      img: 'howto/potion.png', caption: 'One pour on a five-vial shelf: vial 1\'s two purple stars flow onto the purple in vial 2, which is then full of one potion and corked.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def, engine = ctx.engine || scene.getEngine();
       const LV = def.levels || LEVELS, KEY = 'rebelAntsPotionProgress:' + (def.id || 'potion');
