@@ -11062,9 +11062,10 @@ function buildMiniGameCtx(def, src, frame) {
       // read that pose at once (bone, grip), so a game can search the moment something meets something. false when that
       // move is not the one on
       pose(name, t) { const slot = miniGameClipSlot(name), g = slot != null ? animGroups[slot] : null; if (!g || animState !== slot || !g.isStarted) return false;
-        g.goToFrame(Math.min(g.to, g.from + Math.max(0, t) * 60)); if (g.isPlaying) g.stop(); // stopping keeps the pose (the next move blends from it)
+        if (g.isPlaying) g.pause(); MiniGames.posed = g; // paused (a stopped move can't be set again); stopped when the next move plays
+        g.goToFrame(Math.min(g.to, g.from + Math.max(0, t) * 60));
         charMesh.getChildMeshes(false).forEach(m => m.skeleton?.prepare(true)); return true; },
-      idle() { if (animState !== 0) { const g = animGroups[animState]; if (g?.isPlaying) g.stop(); animState = -1; switchAnim(0, true); } },
+      idle() { releasePosedClip(); if (animState !== 0) { const g = animGroups[animState]; if (g?.isPlaying) g.stop(); animState = -1; switchAnim(0, true); } },
       // where a bone is drawn now (world), e.g. 'RightHand'; null without a rig
       bone(name) { return getPlayerBoneWorld(name); },
       // a prop held in a fist (frame coords): the grip point, the axis through the fist toward the thumb (a haft runs
@@ -11189,7 +11190,11 @@ function loadGamesPack() {
 }
 window._gamesPack = GamesPack; // tests
 function miniGameClipSlot(name) { return MiniGames.weapon?.slots?.[name] ?? GamesPack.slots?.[name] ?? (window._forgeClipSlots || {})[name]; }
+// a move a game held on one pose (ctx.player.pose: paused) stops before the next move plays; stopping keeps the pose, so
+// the next move blends from it
+function releasePosedClip() { const g = MiniGames.posed; if (!g) return; MiniGames.posed = null; if (g.isStarted) g.stop(); if (animGroups[animState] === g) animState = -1; }
 function playMiniGameClip(name, o = {}) {
+  releasePosedClip();
   if (window.forgeRigBundleInfo) {
     const slot = miniGameClipSlot(name);
     const g = slot != null ? animGroups[slot] : null; if (!g) return false;
@@ -11357,7 +11362,7 @@ function restartMiniGame(o) {
 function quitMiniGame() { RebelGames.hideResult(); endMiniGame(); }
 function endMiniGame() {
   if (!MiniGames.on) return;
-  disposeMiniGameInstance();
+  disposeMiniGameInstance(); releasePosedClip();
   if (MiniGames.pointerObs) { scene.onPointerObservable.remove(MiniGames.pointerObs); MiniGames.pointerObs = null; }
   RebelGames.hideResult(); RebelGames.HUD.show(false);
   const s = MiniGames.saved, roam = MiniGames.roam;
