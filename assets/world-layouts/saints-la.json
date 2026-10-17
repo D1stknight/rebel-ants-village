@@ -25836,7 +25836,7 @@
       "holdSeconds": 20,
       "label": "Dance with the block",
       "questId": "saints-la-20",
-      "sound": "funk",
+      "sound": "hiphop",
       "holdLines": [
         "The DJ drops the needle. The whole block cheers.",
         "The Court Regular busts out a spin move.",
@@ -25847,8 +25847,8 @@
       "dance": {
         "notes": 12,
         "need": 27,
-        "every": 1,
-        "lead": 2,
+        "every": 1.2,
+        "lead": 2.4,
         "title": "Dance-off on the court",
         "pattern": [
           "x.x.",
@@ -25867,7 +25867,7 @@
           "xxxx",
           "x..."
         ],
-        "beat": 0.5,
+        "beat": 0.6,
         "loops": 2,
         "window": 0.24,
         "levels": true

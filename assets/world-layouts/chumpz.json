@@ -43100,7 +43100,7 @@
       "holdSeconds": 20,
       "label": "Dance with the cove",
       "questId": "chumpz-cove-20",
-      "sound": "party",
+      "sound": "house",
       "cheer": [
         "chumpz-bartender",
         "chumpz-fisher",
@@ -43119,8 +43119,8 @@
       "dance": {
         "notes": 12,
         "need": 27,
-        "every": 1.04,
-        "lead": 2.08,
+        "every": 0.96,
+        "lead": 1.92,
         "title": "Dance-off round the fire",
         "pattern": [
           "x.x.",
@@ -43139,7 +43139,7 @@
           "xxxx",
           "x..."
         ],
-        "beat": 0.52,
+        "beat": 0.48,
         "loops": 2,
         "window": 0.24,
         "levels": true
