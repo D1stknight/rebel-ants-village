@@ -32,9 +32,32 @@
         // the curling lip: a white tube along the crest, a little ahead of it
         const path = []; for (let i = 0; i <= 30; i++) { const x = X0 + 6 + (X1 - X0 - 12) * i / 30, e = env(x); path.push(new V3(x, (HT + .1) * e, -FW * .93 * SG)); }
         const lip = B.MeshBuilder.CreateTube('sfLip', { path, radius: .32, tessellation: 10 }, scene); lip.material = std('lip', [1, 1, 1], [.55, .6, .62]); lip.parent = wave; lip.isPickable = false; ctx.add(lip); nodes.push(lip); }
-      // the board under your feet
-      const board = keep(B.MeshBuilder.CreateBox('sfBoard', { width: .6, height: .09, depth: 2.3 }, scene)); board.material = std('board', [1, .55, .2], [.3, .14, .04], { spec: [.6, .6, .6] });
-      const stripe = B.MeshBuilder.CreateBox('sfStripe', { width: .14, height: .1, depth: 2.25 }, scene); stripe.material = std('stripe', [.15, .65, .75], [.03, .15, .18]); stripe.parent = board; stripe.isPickable = false; ctx.add(stripe); nodes.push(stripe);
+      // the board under your feet (Oct 17, Miguel: "make the surf board look like a real surf board"): a shaped board, its
+      // cross-sections lofted from a pointed nose (+z) to a squash tail with rocker, a painted deck (stringer, nose stripe,
+      // tail pad), a pale bottom and a fin under the tail
+      const board = keep((() => {
+        const N = 26, M = 16, L = 2.3, paths = [];
+        const half = t => t < .45 ? .18 + .12 * Math.sin(t / .45 * Math.PI / 2) : .3 * Math.pow(Math.cos((t - .45) / .55 * Math.PI / 2), .7); // squash tail, widest before the middle, pointed nose
+        const thick = t => .022 + .04 * Math.pow(Math.sin(Math.PI * t), .7), rocker = t => .11 * Math.pow(Math.max(0, t - .7) / .3, 2.2) + .03 * Math.pow(Math.max(0, .15 - t) / .15, 2);
+        for (let i = 0; i <= N; i++) { const t = i / N, w = Math.max(.012, half(t)), h = thick(t), y0 = rocker(t), z = -L / 2 + L * t, ring = [];
+          for (let j = 0; j <= M; j++) { const a = j / M * Math.PI * 2; ring.push(new V3(Math.cos(a) * w, y0 + Math.sin(a) * h, z)); } paths.push(ring); }
+        const m = B.MeshBuilder.CreateRibbon('sfBoard', { pathArray: paths, closePath: false, closeArray: false, sideOrientation: B.Mesh.DOUBLESIDE }, scene);
+        const S = 256, tex = new B.DynamicTexture('sfBoardTex', { width: S, height: S }, scene, true), g = tex.getContext();
+        // u runs round the board (0 to .5 the deck, .5 to 1 the bottom), v from the tail (0) to the nose (1)
+        g.fillStyle = '#f2efe6'; g.fillRect(0, 0, S, S);
+        g.fillStyle = '#f08a2c'; g.fillRect(0, 0, S / 2, S); g.fillStyle = '#1f8fa0'; g.fillRect(S * .2, 0, S * .1, S); // the deck, a teal band down it
+        g.fillStyle = '#c86a20'; g.fillRect(S * .245, 0, S * .01, S);                                                    // the stringer
+        g.fillStyle = '#1b1b1f'; g.fillRect(S * .08, S * .03, S * .34, S * .17);                                         // the tail pad
+        g.strokeStyle = 'rgba(255,255,255,.25)'; for (let y = S * .04; y < S * .2; y += 6) { g.beginPath(); g.moveTo(S * .09, y); g.lineTo(S * .41, y); g.stroke(); }
+        g.fillStyle = '#ffffff'; g.fillRect(0, S * .86, S / 2, S * .03); g.fillStyle = '#1f8fa0'; g.fillRect(0, S * .9, S / 2, S * .02); // the nose stripes
+        g.fillStyle = '#d9d4c8'; g.fillRect(S / 2, 0, S * .01, S); g.fillRect(S - S * .01, 0, S * .01, S);               // the rail lines
+        tex.update(); tex.wrapU = tex.wrapV = B.Texture.CLAMP_ADDRESSMODE;
+        const mt = ctx.mat('board2', n => { const q = new B.StandardMaterial(n, scene); q.specularColor = new B.Color3(.7, .7, .7); q.specularPower = 64; q.emissiveColor = new B.Color3(.14, .12, .1); return q; });
+        mt.diffuseTexture = tex; m.material = mt; m.isPickable = false;
+        const fin = new B.Mesh('sfFin', scene), vd = new B.VertexData(); vd.positions = [0, 0, -.92, 0, -.24, -.98, 0, -.02, -.72]; vd.indices = [0, 1, 2]; vd.normals = [1, 0, 0, 1, 0, 0, 1, 0, 0]; vd.applyToMesh(fin);
+        fin.material = std('fin', [.12, .12, .14], [.03, .03, .04]); fin.material.backFaceCulling = false; fin.parent = m; fin.isPickable = false; ctx.add(fin);
+        return m;
+      })());
       const ringM = std('ring', [1, .8, .3], [.9, .62, .18], { spec: [.8, .7, .4] }), woodM = std('drift', [.42, .3, .2], [.05, .04, .02]), rockM = std('rock', [.32, .33, .35], [.04, .04, .05]);
       const sprayM = std('spray', [0, 0, 0], [.9, .97, 1], { alpha: .55, add: true });
       const st = { phase: 'count', t: 2.6, said: '', wave: 0, s: 0, u: 0, du: 0, v: 9, score: 0, rings: 0, perfect: 0, finished: 0, wipes: 0, lip: 0, low: 0, items: [], spray: [], sprayT: 0, input: 0, ptr: null, cam: null, combo: 0 };
