@@ -3,8 +3,8 @@
 // (or move the ring with the arrows and press Space). Whoever takes the last stone wins; on the last level whoever has
 // to take it loses. From level 2 the Archivist never misses a winning move, so each of your turns must leave him a
 // position he cannot win from. After a loss he gives a hint, plainer each time.
-// Oct 17: How to play (the rules in a few lines) and Restart (a new game of the level: the rows set out again, you
-// first; a game already won or lost goes to its result).
+// Oct 17: How to play (the rules + a take that leaves pairs, howto/nim.png) and Restart (a new game of the level: the
+// rows set out again, you first; a game already won or lost goes to its result).
 // def: { opponent: npcId, at: [x, z] (the table's middle, frame coordinates), player: [x, z, yaw], cam, look, levels, pass, points }
 (function () {
   const LEVELS = [
@@ -49,10 +49,12 @@
     howTo: { lines: [
       'You and the Archivist take turns, and you go first.',
       'On your turn take one or more stones, all from the same row.',
-      'Whoever takes the last stone wins, except on the last level, where whoever has to take it loses.',
-      'Click a stone: it and every stone to its right are yours (they glow red first). Or move the ring with the arrows and press Space.',
-      'From level 2 he never misses a winning move, so every turn must leave him a position he cannot win from. After a loss he drops a hint.',
-      'Tip: when the last stone wins, leave him two equal rows, then take from one row whatever he takes from the other.'] },
+      'Whoever takes the last stone wins. On the levels marked "last stone loses" (4, 7, 9 and 10) whoever has to take it loses.',
+      'Click a stone: it and every stone to its right are yours (they glow red as you point at them). Or move the gold ring with the arrows (or WASD) and press Space.',
+      'On level 1 he sometimes slips; from level 2 he never misses a winning move, so every turn must leave him a position he cannot win from. After a loss he drops a hint, plainer each time.',
+      'Restart sets the rows out again for a new game, you first.',
+      'Tip: leave him two equal rows, then take from one row whatever he takes from the other. With more rows, count each row in fours, twos and ones, as in the picture.'],
+      img: 'howto/nim.png', caption: 'Rows of 2, 3 and 4: a click on the second stone of row 3 takes it and the two to its right, leaving 2, 3 and 1. Played right from there, he cannot win.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, AT = def.at || [0, 0];
