@@ -82,7 +82,7 @@ export default async function handler(req, res) {
         const gm = await sandbox.readFileToBuffer({ path: `${JOB_DIR}/games.glb` });
         if (gm && gm.length) {
           gamesUrl = (await put(path.replace(/_forge_rig\.glb$/, '_forge_games.glb'), gm, { access: 'public', addRandomSuffix: true, contentType: 'model/gltf-binary' })).url;
-          await redis([['SET', `forge:games:v1:${blob.url}`, gamesUrl]]);
+          await redis([['SET', `forge:games:v1:${blob.url}`, gamesUrl], ...(Array.isArray(result.gamesClips) ? [['SET', `forge:games-clips:v1:${blob.url}`, JSON.stringify(result.gamesClips)]] : [])]);
         }
       } catch (e) { /* the rig works without the games pack (games fall back to its own clips) */ }
     }

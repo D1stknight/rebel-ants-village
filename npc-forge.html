@@ -834,7 +834,11 @@ async function unapprove(k) { if (!confirm(`Remove ${k} from the village? NPCs w
 /* ---------- rig worker: NPC gesture pack + rebuild ---------- */
 const NPC_PACK = ['talking', 'talking2', 'waving', 'wave_short', 'bow', 'pointing', 'pick_up', 'nod_yes', 'shake_no', 'clapping', 'rallying', 'yelling', 'look_around', 'idle_looking'].map((c) => `mixamo/${c}.npz`);
 // v2.24 the Rebels' games pack (Miguel's Mixamo moves for the village games), uploaded here with the same button
-const GAMES_PACK = ['fishing_cast', 'fishing_idle', 'digging', 'plant', 'throw_object', 'goalie_throw', 'axe_combo', 'cheering', 'pushing', 'push', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam'].map((c) => `mixamo/gm_${c}.npz`);
+const GAMES_PACK = ['fishing_cast', 'fishing_idle', 'digging', 'plant', 'throw_object', 'goalie_throw', 'axe_combo', 'cheering', 'pushing', 'push', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam',
+  // v2.30 Miguel's second set (games-pack-moves-2.zip)
+  'goalkeeper_catch', 'dribble', 'throwing', 'center_block', 'melee_down', 'pulling_rope', 'shield_idle', 'shield_block', 'shield_impact', 'shield_hit', 'swimming'].map((c) => `mixamo/gm_${c}.npz`);
+// the moves of a pack made before v2.30 (no move list stored with it)
+const GAMES_V1 = ['game_cast', 'game_reel', 'game_fish_wait', 'game_dig', 'game_plant', 'game_pick_up', 'game_throw', 'game_throw_far', 'game_chop', 'game_cheer', 'game_push', 'game_push_walk', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam'];
 let workerPoll = null, workerSetup = null, workerBuilding = false, workerInfo = null, packUploaded = new Set();
 // setup.sh prints these step markers; the last one in the log tail is the current step (progress floor, %)
 const SETUP_STEPS = [['== system libs', 'Installing system libraries', 3], ['== python 3.13 + bpy', 'Installing Blender (the longest step)', 8], ['== worker code', 'Loading the rigger code', 80], ['== mocap pack', 'Loading the animation pack', 86], ['== self test', 'Testing the worker', 94]];
@@ -879,40 +883,47 @@ async function loadWorker() {
 }
 // Games packs for the Rebels in play (v2.24): each Rebel's active rig gets games.glb from a moves re-run on its own
 // sculpt (/api/forge-rig-moves; the rig is not touched). Needs a worker rebuilt with the games pack files.
-let gamesList = null; const gamesRun = { on: false, active: new Map(), note: '' };
+let gamesList = null, gamesMoves = null; const gamesRun = { on: false, active: new Map(), note: '' };
 const gamesReady = () => { const g = workerInfo?.games; return !!(g && g.have >= g.of); };   // the worker image holds every games move
+// v2.30 a pack without every current move (made before the second set) is made again; the move list is the deployed one
+const packMoves = (r) => r.gamesClips || GAMES_V1;
+const packOld = (r) => !!r.games && !!gamesMoves && gamesMoves.some((n) => !packMoves(r).includes(n));
+const packTodo = (r) => !r.games || packOld(r);
 async function loadGamesPacks() {
   try { gamesList = (await api('/api/forge-games-packs')).rebels || []; } catch (e) { const b = $('#gamesBox'); if (b) b.innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
+  try { gamesMoves = (await (await fetch('/forge-worker/anim/clips_games.json', { cache: 'no-store' })).json()).map((c) => c.name); } catch (e) { gamesMoves = null; }
   paintGames();
   // jobs still running (started on this or another computer): watch them, so they finish and none is started twice
-  const running = gamesList.filter((r) => !r.games && r.job?.status === 'running');
+  const running = gamesList.filter((r) => packTodo(r) && r.job?.status === 'running');
   if (running.length && !gamesRun.on) runGamesJobs(running);
 }
 function paintGames() {
   const box = $('#gamesBox'); if (!box) return;
   if (!gamesList) { box.innerHTML = `<button onclick="loadGamesPacks()">Rebels' games packs</button>`; return; }
-  const have = gamesList.filter((r) => r.games).length, todo = gamesList.filter((r) => !r.games);
+  const have = gamesList.filter((r) => r.games && !packOld(r)).length, todo = gamesList.filter(packTodo), old = todo.filter((r) => r.games).length;
   const line = (r) => {
-    if (r.games) return '✓';
     if (gamesRun.active.has(r.buildId)) return `making · ${esc(gamesRun.active.get(r.buildId))}`;
+    if (r.games && packOld(r)) return `<span class="bad">older pack (${packMoves(r).length} of ${gamesMoves.length} moves): make again</span>`;
+    if (r.games) return '✓';
     const j = r.job; if (!j || !j.gamesOnly) return 'none yet';   // (a weapon-moves run is not a games run)
     if (j.status === 'failed') return `<span class="bad">failed: ${esc(j.error || '')}</span>`;
     if (j.status === 'running') return `running · started ${when(j.startedAt)}`;
     if (j.gamesError) return `<span class="bad">made but not saved: ${esc(j.gamesError)}</span>`;
     return `<span class="bad">made on a worker image without the games moves${j.gamesMissing?.length ? ` (${j.gamesMissing.length} of ${GAMES_PACK.length} missing)` : ''}: make again</span>`;
   };
-  const label = gamesRun.on ? (gamesRun.note ? 'Rebuilding the worker…' : 'Making…') : gamesReady() ? `Make the missing ${todo.length}` : `Rebuild worker, then make the missing ${todo.length}`;
-  box.innerHTML = `<div class="state"><b>Games packs</b>: ${have} of ${gamesList.length} Rebels in play${gamesRun.note ? ` · ${esc(gamesRun.note)}` : gamesRun.on ? ` · making ${gamesRun.active.size} now` : ''}</div>
+  const what = old ? (old === todo.length ? `the ${old} older` : `${todo.length}`) : `the missing ${todo.length}`;
+  const label = gamesRun.on ? (gamesRun.note ? 'Rebuilding the worker…' : 'Making…') : gamesReady() ? `Make ${what}` : `Rebuild worker, then make ${what}`;
+  box.innerHTML = `<div class="state"><b>Games packs</b>: ${have} of ${gamesList.length} Rebels in play${old ? ` · ${old} older (without the new moves)` : ''}${gamesRun.note ? ` · ${esc(gamesRun.note)}` : gamesRun.on ? ` · making ${gamesRun.active.size} now` : ''}</div>
     <div style="max-height:180px;overflow:auto;margin-top:4px">${gamesList.map((r) => `<div class="state">${esc(r.name || '#' + r.tokenId)} <span style="opacity:.6">${esc(r.collectionKey)} ${esc(r.tokenId)}</span> · ${line(r)}</div>`).join('') || '<div class="state">No Rebels with a Forge rig in play.</div>'}</div>
     <div class="row" style="margin-top:6px"><button class="teal" onclick="makeGamesPacks()" ${gamesRun.on || !todo.length ? 'disabled' : ''}>${label}</button><button onclick="loadGamesPacks()" ${gamesRun.on ? 'disabled' : ''}>Refresh</button></div>
     <div class="state" style="margin-top:4px">Each one re-runs the Rigger on that Rebel's own sculpt (about 4 minutes, two at a time) and keeps only the games moves; the rig and its weapon moves are not changed. Keep this page open while they run.</div>`;
 }
 async function makeGamesPacks() {
   if (gamesRun.on || !gamesList) return;
-  const todo = gamesList.filter((r) => !r.games); if (!todo.length) return;
+  const todo = gamesList.filter(packTodo); if (!todo.length) return;
   // Oct 16: never on a worker image without the games moves (the Oct 16 runs were made on an image built before the upload)
   const gmiss = GAMES_PACK.filter((p) => !packUploaded.has(p));
-  if (gmiss.length) { toast(`Upload the games files first: ${gmiss.length} of ${GAMES_PACK.length} missing (the gm_*.npz files from games-pack-moves.zip)`, 8000); return; }
+  if (gmiss.length) { toast(`Upload the games files first: ${gmiss.length} of ${GAMES_PACK.length} missing (the gm_*.npz files from games-pack-moves.zip and games-pack-moves-2.zip)`, 8000); return; }
   if (workerBuilding) { toast('The rig worker is rebuilding: make the packs once it says rebuilt.', 6000); return; }
   const g = workerInfo?.games, ready = gamesReady();
   if (!confirm(`${ready ? '' : `The rig worker ${g ? `has ${g.have} of ${g.of} games moves` : 'was built before it could report its games moves'}, so it is rebuilt first (about a minute).\n\n`}Make the games pack for ${todo.length} Rebel${todo.length > 1 ? 's' : ''}? Each runs the Rigger for about 4 minutes, two at a time. Their rigs are not changed.`)) return;
@@ -929,7 +940,7 @@ async function makeGamesPacks() {
     todo.forEach((r) => { if (r.job?.status === 'running') r.job = null; });   // jobs on the old image: start them again
   }
   await runGamesJobs(todo);
-  const made = todo.filter((r) => r.games).length;
+  const made = todo.filter((r) => r.games && !packOld(r)).length;
   toast(made === todo.length ? `Games packs: all ${made} made. Each Rebel plays its new moves on its next village visit.` : `Games packs: ${made} of ${todo.length} made; the list says why for the others.`, 8000);
 }
 async function runGamesJobs(list) {   // two at a time; a Rebel whose job is still running is watched, not started again
@@ -942,7 +953,7 @@ async function runGamesJobs(list) {   // two at a time; a Rebel whose job is sti
       for (let k = 0; k < 140; k++) {   // polls every 15 s, up to 35 minutes
         await sleep(15000);
         const j = (await twice(() => api('/api/forge-rig-moves?buildId=' + encodeURIComponent(r.buildId)))).job || {};
-        if (j.status === 'done' || j.status === 'failed') { r.job = { ...j, gamesOnly: true }; r.games = j.games || null; break; }
+        if (j.status === 'done' || j.status === 'failed') { r.job = { ...j, gamesOnly: true }; if (j.games) { r.games = j.games; r.gamesClips = j.gamesClips || null; } break; }
         gamesRun.active.set(r.buildId, j.progress || 'running'); paintGames();
       }
     } catch (e) { r.job = { status: 'failed', gamesOnly: true, error: e.message }; }

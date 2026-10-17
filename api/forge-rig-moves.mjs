@@ -84,16 +84,16 @@ export default async function handler(req, res) {
         const gm = await sandbox.readFileToBuffer({ path: `${JOB_DIR}/games.glb` });
         if (gm && gm.length) {
           games = (await put(`forge/3d-builds/moves/${sanitize(buildId, 'build')}_forge_games.glb`, gm, { access: 'public', addRandomSuffix: true, contentType: 'model/gltf-binary' })).url;
-          await redis([['SET', `forge:games:v1:${job.rigUrl}`, games]]);
+          // v2.30 the moves it holds (packs made before say nothing: the first 16)
+          await redis([['SET', `forge:games:v1:${job.rigUrl}`, games], ...(Array.isArray(result.gamesClips) ? [['SET', `forge:games-clips:v1:${job.rigUrl}`, JSON.stringify(result.gamesClips)]] : [['DEL', `forge:games-clips:v1:${job.rigUrl}`]])]);
         } else gamesError = 'games.glb could not be read from the worker';
       } catch (e) { gamesError = e?.message || String(e); }   // the moves pack is saved either way
-    } else {
-      // job.sh logs each games file its image lacks ("games pack missing: mixamo/gm_x.npz (...)")
-      const log = (await readText(sandbox, `${JOB_DIR}/log`)) || '';
-      gamesMissing = [...log.matchAll(/^games pack missing: (\S+)/gm)].map((m) => m[1]);
     }
+    // job.sh logs each games file its image lacks ("games pack missing: mixamo/gm_x.npz (...)"); v2.30 a pack is made
+    // without their moves, so a done job can have both
+    { const log = (await readText(sandbox, `${JOB_DIR}/log`)) || ''; const m = [...log.matchAll(/^games pack missing: (\S+)/gm)].map((x) => x[1]); gamesMissing = m.length ? m : null; }
     try { await sandbox.stop(); } catch (e) {}
-    return res.status(200).json({ ok: true, job: await setJob(buildId, { ...job, status: 'done', moves: url, games, gamesMissing, gamesError, bytes: mv.length, seconds: result.seconds, finishedAt: new Date().toISOString() }) });
+    return res.status(200).json({ ok: true, job: await setJob(buildId, { ...job, status: 'done', moves: url, games, gamesClips: games && Array.isArray(result.gamesClips) ? result.gamesClips : null, gamesMissing, gamesError, bytes: mv.length, seconds: result.seconds, finishedAt: new Date().toISOString() }) });
   } catch (err) {
     return res.status(500).json({ ok: false, error: err?.message || String(err) });
   }

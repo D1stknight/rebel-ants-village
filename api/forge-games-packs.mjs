@@ -2,7 +2,8 @@
 // records the lobby and the village load), its live rig and whether that rig has a games pack yet
 // (forge:games:v1:<rig>, made by /api/forge-rig-moves on a worker built with the games moves). The Rig worker box in
 // the NPC Forge lists them and runs the missing ones.
-//   GET -> { ok, rebels: [{ buildId, collectionKey, tokenId, name, rigUrl, games, moves, job }] }
+//   GET -> { ok, rebels: [{ buildId, collectionKey, tokenId, name, rigUrl, games, gamesClips, moves, job }] }
+// v2.30 gamesClips = the moves that pack holds (null: made before 2.30, the first 16)
 import { isAdminRequest } from './_admin-auth.mjs';
 import { redis, buildKey } from './_forge-rig.mjs';
 
@@ -36,10 +37,11 @@ export default async function handler(req, res) {
       const rigUrl = b.output?.forgeRigGlbUrl || b.forgeRig?.forgeRigGlbUrl || a.forgeRigGlbUrl || null;
       return { buildId: id, collectionKey: b.collectionKey || a.collectionKey || '', tokenId: String(b.tokenId || a.tokenId || ''), name: a.name || b.name || '', rigUrl: BLOB.test(rigUrl || '') ? rigUrl : null };
     }).filter((r) => r.rigUrl);
-    const st = await redis(rebels.flatMap((r) => [['GET', `forge:games:v1:${r.rigUrl}`], ['GET', `forge:moves:v1:${r.rigUrl}`], ['GET', `forge:moves-job:v1:${r.buildId}`]]));
+    const st = await redis(rebels.flatMap((r) => [['GET', `forge:games:v1:${r.rigUrl}`], ['GET', `forge:moves:v1:${r.rigUrl}`], ['GET', `forge:moves-job:v1:${r.buildId}`], ['GET', `forge:games-clips:v1:${r.rigUrl}`]]));
     rebels.forEach((r, i) => {
-      r.games = st[i * 3]?.result || null; r.moves = st[i * 3 + 1]?.result || null;
-      let j = null; try { j = st[i * 3 + 2]?.result ? JSON.parse(st[i * 3 + 2].result) : null; } catch (e) {}
+      r.games = st[i * 4]?.result || null; r.moves = st[i * 4 + 1]?.result || null;
+      try { r.gamesClips = st[i * 4 + 3]?.result ? JSON.parse(st[i * 4 + 3].result) : null; } catch (e) { r.gamesClips = null; }
+      let j = null; try { j = st[i * 4 + 2]?.result ? JSON.parse(st[i * 4 + 2].result) : null; } catch (e) {}
       r.job = j ? { status: j.status, gamesOnly: !!j.gamesOnly, startedAt: j.startedAt || null, finishedAt: j.finishedAt || null, error: j.error || null, games: j.games || null,
         gamesMissing: j.gamesMissing || null, gamesError: j.gamesError || null } : null;
     });
