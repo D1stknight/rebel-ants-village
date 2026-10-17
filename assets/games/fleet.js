@@ -7,6 +7,10 @@
 // H hint (no clean bonus). Score: the chart x 20, +10 without a hint.
 // Oct 17: How to play (the rules + a solved 6 x 6, howto/fleet.png) and Restart (the chart as picked: only the given
 // squares, no marks, undo, hints or time).
+// Oct 17 (Miguel: "we can scale to 10 charts"): three more, 11 x 11 and two 12 x 12 with a five-square ship, made by
+// the Oct 15 generator (scratchpad lv/fleet/gen.mjs, now with a Math.imul LCG) and kept only when the human-style
+// solver reads them without a guess: 27, 29 and 44 what-ifs (the Admiral's Chart needs 22). Each has one answer by the
+// generator's counting search and by a SAT model of the rules written apart from it (lv/fleet/sat.py; all ten pass).
 // def: { levels, pass, points }
 (function () {
   const LEVELS = [
@@ -16,7 +20,11 @@
     { name: "The Bay", n: 8, fleet: [4,3,3,2,2,1,1,1], rows: [4,3,3,1,1,2,3,0], cols: [0,5,0,2,3,2,2,3], sol: '0101010101010001010001010100000000001000000010100100101000000000', hints: [[11,'b'],[17,'m']] },
     { name: "Open Water", n: 8, fleet: [4,3,3,2,2,1,1,1], rows: [0,4,1,4,1,3,2,2], cols: [1,4,1,5,1,0,4,1], sol: '0000000010110010000000100101101001000000010100100101000000010001', hints: [[63,'o']] },
     { name: "The Armada", n: 10, fleet: [4,3,3,2,2,2,1,1,1,1], rows: [2,1,4,2,3,0,3,2,3,0], cols: [3,4,0,1,2,4,3,0,1,2], sol: '1000010000000001000001010100010100010000010000001100000000001000101000000010100011000010000000000000', hints: [[23,'o'],[48,'l'],[64,'t']] },
-    { name: "The Admiral's Chart", n: 10, fleet: [4,3,3,2,2,2,1,1,1,1], rows: [1,4,0,2,1,4,3,2,3,0], cols: [1,5,1,1,2,1,2,3,3,1], sol: '0100000000010001110000000000000000101000000000001011110000000000000111010010000001000001100000000000', hints: [[15,'l'],[34,'o'],[48,'o']] }
+    { name: "The Admiral's Chart", n: 10, fleet: [4,3,3,2,2,2,1,1,1,1], rows: [1,4,0,2,1,4,3,2,3,0], cols: [1,5,1,1,2,1,2,3,3,1], sol: '0100000000010001110000000000000000101000000000001011110000000000000111010010000001000001100000000000', hints: [[15,'l'],[34,'o'],[48,'o']] },
+    // Oct 17: 11 x 11 and 12 x 12, 27 / 29 / 44 what-ifs (scratchpad lv/fleet)
+    { name: "Smugglers' Reef", n: 11, fleet: [5,4,3,3,2,2,2,1,1,1,1], rows: [3,1,1,6,1,3,1,3,1,4,1], cols: [0,2,3,0,1,6,2,1,7,2,1], sol: '0010001000100000000100000001000000110010111000000100000000001001100000010000001100000100000000001000000111010000000000100', hints: [[10,'o'],[19,'o'],[82,'w']] },
+    { name: "The Typhoon Sea", n: 12, fleet: [5,4,4,3,3,3,2,2,2,1,1,1], rows: [1,1,3,6,3,2,4,1,4,0,6,0], cols: [1,7,2,3,0,6,2,1,0,3,6,0], sol: '010000000000000000000010010100000010010101110010010100000010010001000000010001000110000001000000001001000110000000000000111001100100000000000000', hints: [[98,'o']] },
+    { name: "The Pirate King's Chart", n: 12, fleet: [5,4,4,3,3,3,2,2,2,1,1,1], rows: [2,0,1,8,1,4,1,2,4,4,3,1], cols: [5,1,2,2,3,7,1,1,0,8,0,1], sol: '000011000000000000000000000000000100110111100101000000000100000111000100000000000100100001000000101001000100101001000100000001010100100000000000', hints: [[38,'w'],[122,'w'],[125,'b'],[132,'o']] }
   ];
   const G = {
     title: 'The Fleet Chart',
@@ -122,9 +130,9 @@
         if (bd.k + 1 > solvedUpTo) { solvedUpTo = bd.k + 1; try { localStorage.setItem(KEY, String(solvedUpTo)); } catch (e) {} } return true; }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,92vw);background:rgba(18,12,6,.95);border:1px solid rgba(230,190,110,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 420) + 'px,92vw);background:rgba(18,12,6,.95);border:1px solid rgba(230,190,110,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#e6c27a;margin-bottom:10px">The Fleet Chart</div><div style="margin-bottom:12px;color:#bbb">The numbers count ship squares in each line. Ships never touch.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#e6c27a' : '#444'};background:${ok ? 'rgba(230,194,122,.2)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${L.n}×${L.n} · ${L.fleet.length} ships</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 4},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#e6c27a' : '#444'};background:${ok ? 'rgba(230,194,122,.2)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${L.n}×${L.n} · ${L.fleet.length} ships</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       const pads = document.createElement('div');
       pads.style.cssText = 'position:absolute;bottom:62px;right:14px;display:none;gap:6px;pointer-events:auto';
