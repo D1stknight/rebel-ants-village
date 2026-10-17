@@ -3,6 +3,7 @@
 // 5 x 5 with most of the field down, 6 x 6; a level opens when the one before is won, and the result tells the fewest
 // waterings it takes. Click a bed (or move the ring with the arrows and press Space); H shows one bed to water (each
 // hint costs 10 points); R lays the level out again.
+// Oct 17: How to play (the rules in a few lines) and Restart beside Quit (R's "the field as it was").
 // def: { at: [x, z] (the field's middle, frame coordinates), size: field width (m), player: [x, z, yaw], cam, look, levels, pass, points }
 (function () {
   // from scratchpad sprouts/gen.mjs: the beds that start down, and the fewest waterings that stand them all up
@@ -11,9 +12,16 @@
     { n: 4, down: [1, 5, 7, 12, 15], min: 6 },
     { n: 5, down: [0, 3, 5, 6, 9, 10, 11, 12, 13, 14, 15, 20, 21, 23, 24], min: 9 },
     { n: 5, down: [0, 6, 8, 10, 13, 17, 18, 19, 20, 21, 22, 24], min: 13 },
-    { n: 6, down: [2, 3, 5, 8, 9, 10, 11, 13, 15, 16, 18, 20, 21, 22, 23, 24, 28, 31, 32, 34], min: 16 }
+    { n: 6, down: [2, 3, 5, 8, 9, 10, 11, 13, 15, 16, 18, 20, 21, 22, 23, 24, 28, 31, 32, 34], min: 16 },
+    // Oct 17 (Miguel: "make it 10 levels"): sprouts/gen10.mjs, 6 x 6 to 8 x 8 (one answer each: these fields have no
+    // waterings that cancel out)
+    { n: 6, down: [2, 5, 6, 7, 8, 9, 11, 12, 13, 15, 16, 17, 20, 22, 23, 24, 26, 30, 31], min: 19 },
+    { n: 7, down: [0, 2, 3, 4, 7, 8, 9, 11, 12, 14, 15, 16, 22, 23, 24, 25, 26, 27, 28, 30, 34, 35, 36, 39, 40, 42, 43, 44, 45, 46, 48], min: 20 },
+    { n: 7, down: [3, 8, 10, 11, 12, 13, 14, 15, 17, 21, 23, 25, 27, 30, 31, 32, 35, 36, 37, 39, 41, 44, 45, 48], min: 25 },
+    { n: 8, down: [0, 2, 9, 14, 16, 17, 18, 21, 23, 24, 25, 26, 27, 31, 32, 33, 36, 38, 39, 40, 42, 43, 47, 48, 52, 55, 58, 62, 63], min: 28 },
+    { n: 8, down: [1, 4, 5, 6, 7, 13, 15, 16, 17, 19, 20, 22, 24, 25, 29, 30, 31, 32, 39, 42, 44, 45, 46, 48, 51, 52, 57, 58, 59, 62, 63], min: 34 }
   ];
-  const SCORE = [20, 35, 55, 75, 95];
+  const SCORE = [20, 35, 55, 75, 95, 110, 125, 145, 165, 190];
   const NB = [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]];
   // the fewest beds to water from this field (GF(2) elimination; the free choices tried for the lightest answer)
   function solve(n, down) {
@@ -41,6 +49,13 @@
   }
   const G = {
     title: 'Sprout Field',
+    howTo: { lines: [
+      'Stand every rice sprout up.',
+      'Watering a bed flips it: fallen sprouts stand up, standing ones are knocked flat. The four beds beside it (above, below, left, right) flip too.',
+      'Click a bed to water it, or move the ring with the arrows / W A S D and press Space.',
+      'H rings one bed worth watering (each hint costs 10 points). R (or Restart) lays the field out as it was.',
+      'The result tells the fewest waterings it takes; manage that with no hint for 15 more points.',
+      'Tip: the order never matters, only which beds you water, and watering a bed twice undoes it.'] },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, AT = def.at || [0, 0], W = def.size || 7.6;
@@ -123,13 +138,14 @@
         const p = cellPos(st.hint); st.hintRing.position.set(p.x, .16, p.z); st.hintRing.setEnabled(true);
         H.msg('Water the bed in the gold ring', 1300, `${s.length} more waterings from here · hints cost 10 points`);
       }
+      // R and Restart beside Quit: the field as it was picked (waterings and hints at 0)
       function relay() { if (st.phase !== 'play') return; const k = bd.k; build(k); H.msg('The field as it was', 800); }
       // the level picker
       const hud = document.getElementById('gameHud'), pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(400px,90vw);background:rgba(12,16,30,.94);border:1px solid rgba(216,179,92,.7);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 400) + 'px,92vw);background:rgba(12,16,30,.94);border:1px solid rgba(216,179,92,.7);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
       const label = L => `${L.n} × ${L.n} · ${L.down.length} down`;
       pick.innerHTML = `<div style="font:700 13px/1.2 Georgia,serif;letter-spacing:.14em;text-transform:uppercase;color:#d8b35c;margin-bottom:10px">Sprout Field</div><div style="margin-bottom:12px;color:#bbb">Watering a bed stands it up, or knocks it down, with the four beds beside it. Stand every sprout up.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:10px 4px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${done ? 'rgba(216,179,92,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? 'Level ' + (k + 1) : '🔒'}${done ? ' ✓' : ''}${open ? `<div style="font:12px Georgia,serif;color:#c9b88a">${label(L)}</div>` : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 2},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:10px 4px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${done ? 'rgba(216,179,92,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? 'Level ' + (k + 1) : '🔒'}${done ? ' ✓' : ''}${open ? `<div style="font:12px Georgia,serif;color:#c9b88a">${label(L)}</div>` : ''}</button>`; }).join('')}</div>`;
       pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); });
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); H.msg(`Level ${k + 1}`, 900, k >= 3 ? 'a hard one' : label(LV[k])); }
       hud.appendChild(pick);
@@ -153,7 +169,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return;
           if (k === 'arrowup' || k === 'w') st.cr = Math.max(0, st.cr - 1); else if (k === 'arrowdown' || k === 's') st.cr = Math.min(bd.n - 1, st.cr + 1);
           else if (k === 'arrowleft' || k === 'a') st.cc = Math.max(0, st.cc - 1); else if (k === 'arrowright' || k === 'd') st.cc = Math.min(bd.n - 1, st.cc + 1);
@@ -165,6 +181,7 @@
           const p = ctx.toLocal(hit.pickedPoint), c = Math.round((p.x - AT[0]) / bd.C + (bd.n - 1) / 2), r = Math.round((bd.n - 1) / 2 - (p.z - AT[1]) / bd.C);
           if (r >= 0 && c >= 0 && r < bd.n && c < bd.n) water(r, c);
         },
+        restart: relay,
         _test: { st, choose, water, hint, relay, solve, cellPos: i => cellPos(i), get bd() { return bd; } },
         dispose() { pick.remove(); if (bd) bd.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };
