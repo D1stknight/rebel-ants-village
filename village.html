@@ -3493,11 +3493,13 @@ function runGameJump(tries = 0) {
   if (!GameJump) return;
   const again = () => { if (tries < 60) setTimeout(() => runGameJump(tries + 1), 500); };
   if (!charMesh || !walkMode) { if (!walkMode && !adminMode && tries === 0) try { toggleWalk(); } catch (e) {} return again(); }
-  const spot = getQuestSpotRoots().find(r => r.metadata?.spotConfig?.game?.id === GameJump);
+  // a game's spot, else any quest spot by its id (the Wanderer's Map stone, a place riddle: &game=<spotId> works for them too)
+  const roots = getQuestSpotRoots();
+  const spot = roots.find(r => r.metadata?.spotConfig?.game?.id === GameJump) || roots.find(r => r.metadata?.spotConfig?.spotId === GameJump || r.name === 'questSpotRoot_' + GameJump);
   if (spot) {
-    const p = spot.getAbsolutePosition(), yaw = spot.rotation?.y || 0;
+    const p = spot.getAbsolutePosition(), yaw = spot.rotation?.y || 0, sc = spot.metadata.spotConfig;
     charMesh.position.x = p.x - Math.sin(yaw) * 1.4; charMesh.position.z = p.z - Math.cos(yaw) * 1.4; charMesh.rotation.y = yaw; _playerDeckSnapUntil = performance.now() + 1500;
-    showToast(`Game jump: ${spot.metadata.spotConfig.game.title || GameJump}. Press O to play.`, 7000); return;
+    showToast(sc.game ? `Game jump: ${sc.game.title || GameJump}. Press O to play.` : `Jump: ${sc.riddle?.title || sc.label || GameJump}. Press O here.`, 7000); return;
   }
   const configs = getInteriorRoomConfigs(); let room = null, hotspot = null;
   for (const [rid, cfg] of Object.entries(configs)) for (const h of cfg?.hotspots || []) if (h?.game?.id === GameJump) { room = rid; hotspot = h; }
