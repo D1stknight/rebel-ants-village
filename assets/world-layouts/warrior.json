@@ -52954,10 +52954,10 @@
         "type": "siege",
         "id": "war-siege-engine",
         "title": "The Siege Engine",
-        "pass": 150,
+        "pass": 300,
         "points": 70,
         "questOn": "pass",
-        "stones": 10
+        "stones": 20
       }
     }
   },
