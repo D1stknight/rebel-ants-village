@@ -7,14 +7,38 @@
 // def: { pass, points }
 // Oct 17 (Miguel: the puzzles need a how-to, every board a Restart): howTo (the rules in a few lines) and inst.restart
 // (the same deal back on the table, its two shuffles too, the clock from 0; hints still count: they cost the bonus).
+// Oct 17 (Miguel: "all board games need to be 10 or 15 [levels]"): ten gardens, five new ones after the Castle, from
+// 152 to 190 tiles: The Fortress (corner towers, walls, a keep), The Koi Pond (a ring of tiles round an island), The
+// Rice Terraces (three long terraces), The Twin Pagodas (two five-storey pagodas) and The Mountain Temple (five
+// storeys, each half a tile in from the one below). Checked by scratchpad agents/lvC/mahjong/check.mjs: hundreds of
+// deals each, every one cleared by a solver of its own (playouts, then a depth-first search; the way replayed step
+// by step) and the order set by how often a careless player (any free pair) clears them: about 19, 17, 14, 13, 9 %
+// (the Castle about 23 %). The hint keeps a way known to clear the garden (the dealer's own order of pairs, the order
+// a shuffle mixed them in, or a way it found) while you take pairs from it; off it, it plays quick weighted games from
+// where you are before it searches (on the big gardens the search alone timed out, and then it showed any pair).
 (function () {
   const rect = (out, l, x0, y0, cols, rows) => { for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) out.push([l, x0 + c * 2, y0 + r * 2]); return out; };
+  const stack = (out, cols, rows, storeys, x0 = 0, y0 = 0) => { for (let l = 0; l < storeys; l++) rect(out, l, x0 + l, y0 + l, cols - l, rows - l); return out; }; // each storey half a tile in from the one below
   const GARDENS = [
     { name: 'The Garden Path', make: () => { const o = []; rect(o, 0, 0, 0, 8, 4); rect(o, 1, 4, 2, 4, 2); rect(o, 2, 6, 3, 2, 1); return o; } },
     { name: 'The Moon Bridge', make: () => { const o = []; rect(o, 0, 0, 2, 10, 4); rect(o, 0, 4, 0, 6, 1); rect(o, 0, 4, 10, 6, 1); rect(o, 1, 2, 3, 8, 3); rect(o, 2, 6, 5, 4, 1); return o; } },
     { name: 'The Torii Gate', make: () => { const o = []; rect(o, 0, 0, 0, 2, 7); rect(o, 0, 18, 0, 2, 7); rect(o, 0, 4, 0, 7, 2); rect(o, 0, 4, 10, 7, 2); rect(o, 1, 0, 1, 2, 6); rect(o, 1, 18, 1, 2, 6); rect(o, 1, 6, 1, 4, 1); rect(o, 1, 6, 11, 4, 1); rect(o, 2, 1, 2, 1, 5); rect(o, 2, 19, 2, 1, 5); rect(o, 0, 6, 5, 4, 1); return o; } },
     { name: 'The Pagoda', make: () => { const o = []; rect(o, 0, 0, 0, 10, 6); rect(o, 1, 2, 2, 8, 4); rect(o, 2, 4, 4, 6, 2); rect(o, 3, 8, 5, 2, 1); return o; } },
-    { name: "The Shogun's Castle", make: () => { const o = []; rect(o, 0, 0, 0, 12, 6); rect(o, 1, 2, 1, 10, 5); rect(o, 2, 6, 3, 6, 3); rect(o, 3, 8, 4, 4, 2); return o; } }];
+    { name: "The Shogun's Castle", make: () => { const o = []; rect(o, 0, 0, 0, 12, 6); rect(o, 1, 2, 1, 10, 5); rect(o, 2, 6, 3, 6, 3); rect(o, 3, 8, 4, 4, 2); return o; } },
+    { name: 'The Fortress', make: () => { const o = []; // a wall two tiles thick, a tower at each corner, a keep in the yard
+      for (let y = 0; y <= 14; y += 2) for (let x = 0; x <= 24; x += 2) if (!(x >= 4 && x <= 20 && y >= 4 && y <= 10)) o.push([0, x, y]);
+      for (const [x0, y0] of [[0, 0], [22, 0], [0, 12], [22, 12]]) { rect(o, 1, x0, y0, 2, 2); rect(o, 2, x0 + 1, y0 + 1, 1, 1); }
+      rect(o, 1, 5, 1, 8, 1); rect(o, 1, 5, 13, 8, 1); rect(o, 1, 1, 4, 1, 4); rect(o, 1, 23, 4, 1, 4); rect(o, 2, 6, 1, 7, 1); rect(o, 2, 6, 13, 7, 1);
+      stack(o, 5, 3, 3, 8, 5); return o; } },
+    { name: 'The Koi Pond', make: () => { const o = []; // a ring of tiles round the pond, an island in it, two storeys of bridges on the ring
+      for (let y = 0; y <= 14; y += 2) for (let x = 0; x <= 24; x += 2) if (!(x >= 6 && x <= 18 && y >= 4 && y <= 10)) o.push([0, x, y]);
+      rect(o, 0, 10, 6, 3, 2); rect(o, 1, 11, 7, 2, 1);
+      rect(o, 1, 1, 1, 12, 1); rect(o, 1, 1, 13, 12, 1); rect(o, 1, 1, 3, 2, 5); rect(o, 1, 21, 3, 2, 5);
+      rect(o, 2, 2, 1, 11, 1); rect(o, 2, 2, 13, 11, 1); rect(o, 2, 2, 4, 1, 4); rect(o, 2, 22, 4, 1, 4); return o; } },
+    { name: 'The Rice Terraces', make: () => { const o = []; // three long terraces, four storeys each
+      for (const y0 of [0, 7, 14]) { rect(o, 0, 0, y0, 13, 2); rect(o, 1, 1, y0 + 1, 12, 1); rect(o, 2, 2, y0 + 1, 11, 1); rect(o, 3, 5, y0 + 1, 7, 1); } return o; } },
+    { name: 'The Twin Pagodas', make: () => { const o = []; stack(o, 6, 6, 5, 0, 0); stack(o, 6, 6, 5, 14, 0); rect(o, 0, 12, 4, 1, 2); return o; } }, // and a bridge between
+    { name: 'The Mountain Temple', make: () => stack([], 11, 6, 5) }];
   const overlap = (a, b) => Math.abs(a[1] - b[1]) < 2 && Math.abs(a[2] - b[2]) < 2;
   function freeTiles(pos, alive) { const out = [];
     for (let i = 0; i < pos.length; i++) { if (!alive[i]) continue; const p = pos[i]; let top = false, left = false, right = false;
@@ -31,7 +55,32 @@
         const ia = Math.floor(rnd() * f.length), a = f[ia], f2 = f.filter((x, j) => j !== ia), b = f2[Math.floor(rnd() * f2.length)]; al[a] = al[b] = false; kind[a] = kind[b] = bag[k++]; pairs.push([a, b]); left -= 2; }
       if (ok) { kind.pairs = pairs; return kind; } }
     return null; }
+  // a quick whole game from here: all of a kind free goes at once; else a free pair at random, likelier the more tiles
+  // its two lie on and the more tiles taking it frees, never one that leaves the last two of a kind one on the other (a
+  // dead end); the pairs taken when it clears the garden, else null. net: each tile's tiles on it, beside it (left,
+  // right), under it (all storeys down) and near it (what taking it can free)
+  function playout(pos, alive0, kind, net) {
+    const alive = alive0.slice(), path = [], free = i => alive[i] && !net.on[i].some(j => alive[j]) && (!net.side[i][0].some(j => alive[j]) || !net.side[i][1].some(j => alive[j]));
+    for (;;) {
+      const by = {}, left = {}; alive.forEach((a, i) => { if (!a) return; left[kind[i]] = (left[kind[i]] || 0) + 1; if (free(i)) (by[kind[i]] = by[kind[i]] || []).push(i); });
+      const pairs = [], w = []; let pick = null;
+      for (const k in by) { const a = by[k]; if (a.length > 1 && a.length === left[k]) { pick = [a[0], a[1]]; break; }
+        for (let x = 0; x < a.length; x++) for (let y = x + 1; y < a.length; y++) { const p = a[x], q = a[y];
+          if (left[k] === 4) { const rest = []; alive.forEach((v, i) => { if (v && kind[i] === +k && i !== p && i !== q) rest.push(i); }); if (net.under[rest[0]].has(rest[1]) || net.under[rest[1]].has(rest[0])) continue; }
+          alive[p] = alive[q] = false; let g = 0; for (const j of new Set([...net.near[p], ...net.near[q]])) if (free(j)) g++; alive[p] = alive[q] = true;
+          pairs.push([p, q]); w.push(Math.exp((net.under[p].size + net.under[q].size) / 4 + g / 2)); } }
+      if (!pick) { if (!pairs.length) return alive.some(Boolean) ? null : path; let r = Math.random() * w.reduce((t, v) => t + v, 0), k = 0; while ((r -= w[k]) > 0 && k < w.length - 1) k++; pick = pairs[k]; }
+      alive[pick[0]] = alive[pick[1]] = false; path.push(pick);
+    }
+  }
   function solveFrom(pos, alive0, kind, ms) { // the pairs that clear the garden from here: [[a, b], ...], [] when clear, null when none (or out of time: .timeout)
+    // playouts for up to 40 % of the time (Oct 17: on the big gardens they find a way where the search ran out of time)
+    const tp = performance.now(), net = { on: pos.map(() => []), side: pos.map(() => [[], []]), under: pos.map(() => new Set()), near: pos.map(() => []) };
+    pos.forEach((p, i) => pos.forEach((q, j) => { if (j === i || Math.abs(q[2] - p[2]) >= 2) return;
+      if (q[0] === p[0] + 1 && Math.abs(q[1] - p[1]) < 2) { net.on[i].push(j); net.near[j].push(i); } else if (q[0] === p[0] && Math.abs(q[1] - p[1]) === 2) { net.side[i][q[1] < p[1] ? 0 : 1].push(j); net.near[i].push(j); } }));
+    pos.map((p, i) => i).sort((a, b) => pos[a][0] - pos[b][0]).forEach(i => net.near[i].forEach(j => { if (pos[j][0] < pos[i][0]) { net.under[i].add(j); net.under[j].forEach(x => net.under[i].add(x)); } }));
+    if (alive0.some(Boolean)) while (performance.now() - tp < ms * .4) { const way = playout(pos, alive0, kind, net); if (way) return way; }
+    ms -= performance.now() - tp;
     const t0 = performance.now(), seen = new Set(), alive = alive0.slice(); let out = null, timeout = false;
     const key = () => { let k = ''; for (let i = 0; i < alive.length; i += 30) { let v = 0; for (let j = i; j < Math.min(alive.length, i + 30); j++) v = v * 2 + (alive[j] ? 1 : 0); k += v.toString(36) + ','; } return k; };
     (function rec(path) { if (out || timeout) return; if (performance.now() - t0 > ms) { timeout = true; return; }
@@ -71,11 +120,13 @@
   const G = {
     title: 'The Tile Garden',
     howTo: {
-      lines: ['Clear the garden table by taking the tiles off in matching pairs: two tiles with the same picture.',
-        'Only a free tile can be taken: nothing lies on top of it, and its left or right side is open. Blocked tiles are shaded.',
-        'Click a free tile, then a free tile that matches it. Clicking a different tile holds that one instead.',
-        'U takes the last pair back. H shows a pair that still lets you clear the garden, S shuffles the tiles that are left (two shuffles a garden); a hint or a shuffle costs the clean bonus.',
-        'Tip: don\'t just take the first pair you see. Free the tall stacks and the long rows first, or you may bury a tile you need.']
+      lines: ['Clear the garden table: take every tile off in pairs of two matching tiles (the same picture).',
+        'Only a free tile can be taken: nothing lies on top of it (not even half over it), and its left or right side is open, with no tile right beside it on that side. Blocked tiles are shaded.',
+        'Click (or tap) a free tile, then a free tile that matches it, and the pair goes. Clicking a tile that does not match holds that one instead.',
+        'U takes the last pair back, again and again (back to the last shuffle). H shows a pair that still lets you clear the garden; S shuffles the tiles that are left (two shuffles a garden). A hint or a shuffle costs the clean bonus.',
+        'Ten gardens, from 42 tiles to 190 and up to five storeys; the next one opens when a garden is clear.',
+        'Tip: take the tiles that hold others first: the top storeys and the ends of the long rows. If three of a kind are free, keep the one that is not holding anything back.'],
+      img: 'howto/mahjong.png', caption: 'Free tiles are bright; shaded ones are held by a tile on top or by tiles on both sides. The two free suns make a pair.'
     },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def, KEY = 'rebelAntsTilesProgress:' + (def.id || 'mahjong');
@@ -102,7 +153,8 @@
         const TW = Math.min((TEX - 80) / (maxX / 2 + layers * .14), (TEX - 80) / ((maxY / 2) * 1.3 + layers * .14)), TH = TW * 1.3, OFF = TW * .14;
         const OX = (TEX - (maxX / 2 * TW + layers * OFF)) / 2 + layers * OFF, OY = (TEX - (maxY / 2 * TH + layers * OFF)) / 2 + layers * OFF;
         const order = pos.map((_, i) => i).sort((a, b) => pos[a][0] - pos[b][0] || pos[a][2] - pos[b][2] || pos[a][1] - pos[b][1]);
-        bd = { k, G: g, pos, alive, kind, kind0: kind.slice(), sel: -1, hints: 0, shuffles: 0, time: 0, undo: [], flash: null, TW, TH, OX, OY, OFF, order }; // kind0: the deal (a shuffle rewrites kind)
+        bd = { k, G: g, pos, alive, kind, kind0: kind.slice(), sel: -1, hints: 0, shuffles: 0, time: 0, undo: [], flash: null, TW, TH, OX, OY, OFF, order, // kind0: the deal (a shuffle rewrites kind)
+          way: kind.pairs.map(p => p.slice()), way0: kind.pairs.map(p => p.slice()) }; // way: pairs known to clear it from here (first the dealer's own order)
         ctx.player.place(0, cam[2] - 1.6, 0); draw(); info();
       }
       const faceRect = i => { const [l, x, y] = bd.pos[i]; return [bd.OX + x / 2 * bd.TW - l * bd.OFF, bd.OY + y / 2 * bd.TH - l * bd.OFF, bd.TW, bd.TH]; };
@@ -128,11 +180,14 @@
         const free = new Set(freeTiles(bd.pos, bd.alive)); if (!free.has(i)) { bd.flash = { tiles: [i], t: 0, good: false }; H.msg('That tile is held fast', 900, 'nothing on it, and its left or right side open'); ctx.note(220, 'lantern'); draw(); return false; }
         if (bd.sel < 0 || bd.sel === i) { bd.sel = bd.sel === i ? -1 : i; ctx.note(600, 'lantern'); draw(); return true; }
         if (bd.kind[bd.sel] !== bd.kind[i]) { bd.sel = i; ctx.note(600, 'lantern'); draw(); return true; } // not a pair: the new tile is held instead
-        const a = bd.sel; bd.alive[a] = bd.alive[i] = false; bd.sel = -1; bd.undo.push([a, i]); ctx.note(880, 'bell'); draw(); info(); check(); return true; }
-      function undo() { if (st.phase !== 'play') return; const p = bd.undo.pop(); if (!p) return; bd.alive[p[0]] = bd.alive[p[1]] = true; bd.sel = -1; ctx.note(330, 'lantern'); draw(); info(); }
+        const a = bd.sel; bd.alive[a] = bd.alive[i] = false; bd.sel = -1; bd.undo.push([a, i]); keepWay(a, i); ctx.note(880, 'bell'); draw(); info(); check(); return true; }
+      // the known way: a pair taken from it leaves the rest of it good (taking tiles only frees others), any other pair
+      // loses it (the hint searches again); a pair taken back goes in front of it
+      function keepWay(a, b) { if (!bd.way) return; const k = bd.way.findIndex(p => (p[0] === a && p[1] === b) || (p[0] === b && p[1] === a)); if (k >= 0) bd.way.splice(k, 1); else bd.way = null; }
+      function undo() { if (st.phase !== 'play') return; const p = bd.undo.pop(); if (!p) return; bd.alive[p[0]] = bd.alive[p[1]] = true; if (bd.way) bd.way.unshift(p.slice()); bd.sel = -1; ctx.note(330, 'lantern'); draw(); info(); }
       function hint() { if (st.phase !== 'play') return; const m = moves(); if (!m.pairs.length) { H.msg('No pair can be taken', 1300, (2 - bd.shuffles) ? 'shuffle the tiles (S)' : 'take a pair back (U)'); return; }
-        // a pair from a way that still clears the garden (searched for up to 0.4 s), else any pair
-        const way = solveFrom(bd.pos, bd.alive, bd.kind, 400);
+        // a pair from a way that still clears the garden: the known way, else one searched for (up to 0.4 s), else any pair
+        const known = bd.way && bd.way.length ? bd.way : null, way = known || solveFrom(bd.pos, bd.alive, bd.kind, 400); if (way && !known) bd.way = way.map(q => q.slice());
         if (!way && !solveFrom.timeout) { H.msg('This garden can no longer be cleared', 2200, (2 - bd.shuffles) ? 'take pairs back (U) or shuffle (S)' : 'take pairs back (U)'); return; }
         const p = way ? way[0] : m.pairs[Math.floor(rnd() * m.pairs.length)]; bd.hints++; bd.flash = { tiles: p, t: 0, good: true }; H.msg('This pair', 1100); draw(); info(); }
       function shuffle() { if (st.phase !== 'play') return; if (bd.shuffles >= 2) { H.msg('No shuffles left', 1000); return; }
@@ -140,19 +195,19 @@
         // the same kinds stay in play, a pair of them on each pair of places a player could take in turn
         const have = {}; bd.alive.forEach((a, i) => { if (a) have[bd.kind[i]] = (have[bd.kind[i]] || 0) + 1; }); const want = []; for (const k in have) for (let n = 0; n < have[k] / 2; n++) want.push(+k);
         for (let i = want.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [want[i], want[j]] = [want[j], want[i]]; }
-        d.pairs.forEach(([a, b], w) => { bd.kind[a] = bd.kind[b] = want[w]; });
+        d.pairs.forEach(([a, b], w) => { bd.kind[a] = bd.kind[b] = want[w]; }); bd.way = d.pairs.map(q => q.slice()); // the order it was mixed in clears it
         bd.shuffles++; bd.sel = -1; bd.undo = []; ctx.sound('thock'); H.msg('The tiles are mixed', 1000, `${2 - bd.shuffles} shuffle${2 - bd.shuffles === 1 ? '' : 's'} left`); draw(); info(); }
-      function restart() { if (st.phase !== 'play' || !bd) return; bd.alive.fill(true); bd.kind = bd.kind0.slice(); Object.assign(bd, { sel: -1, undo: [], shuffles: 0, time: 0, flash: null }); draw(); info(); H.msg('Start again', 900, 'the same deal'); }
+      function restart() { if (st.phase !== 'play' || !bd) return; bd.alive.fill(true); bd.kind = bd.kind0.slice(); Object.assign(bd, { sel: -1, undo: [], shuffles: 0, time: 0, flash: null, way: bd.way0.map(q => q.slice()) }); draw(); info(); H.msg('Start again', 900, 'the same deal'); }
       function check() { if (left() === 0) { st.phase = 'won'; st.wt = 0; pads.style.display = 'none'; ctx.sound('gamewin'); H.msg('The garden is clear', 1600, fmt(bd.time));
           if (bd.k + 1 > solvedUpTo) { solvedUpTo = bd.k + 1; try { localStorage.setItem(KEY, String(solvedUpTo)); } catch (e) {} } return true; }
         const m = moves(); if (!m.n) { if (bd.shuffles < 2) H.msg('No pair can be taken', 1800, 'shuffle (S) or take a pair back (U)'); else H.msg('No pair can be taken', 1800, 'take a pair back (U), or quit'); }
         return false; }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,92vw);background:rgba(14,20,12,.95);border:1px solid rgba(216,179,92,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (GARDENS.length > 6 && innerWidth >= 600 ? 560 : 420) + 'px,92vw);background:rgba(14,20,12,.95);border:1px solid rgba(216,179,92,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#d8b35c;margin-bottom:10px">The Tile Garden</div><div style="margin-bottom:12px;color:#bbb">Take the tiles off in matching pairs. A tile is free with nothing on it and its left or right side open.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${GARDENS.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo, n = L.make().length; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${ok ? 'rgba(216,179,92,.2)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}${ok ? ' ✓' : ''}<div style="font:500 11px system-ui;color:#c9b88f">${n} tiles</div>` : `${k + 1}<div style="font:500 11px system-ui">locked</div>`}</button>`; }).join('')}</div>`
-          + `<div style="margin-top:10px;font-size:12px;color:#998">Keys 1-${GARDENS.length} pick a garden</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${GARDENS.length > 6 && innerWidth >= 600 ? 5 : GARDENS.length > 6 ? 4 : 3},1fr);gap:8px">${GARDENS.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo, n = L.make().length; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${ok ? 'rgba(216,179,92,.2)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}${ok ? ' ✓' : ''}<div style="font:500 11px system-ui;color:#c9b88f">${n} tiles</div>` : `${k + 1}<div style="font:500 11px system-ui">locked</div>`}</button>`; }).join('')}</div>`
+          + `<div style="margin-top:10px;font-size:12px;color:#998">Keys 1-${Math.min(9, GARDENS.length)}${GARDENS.length > 9 ? ' and 0' : ''} pick a garden</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       const pads = document.createElement('div');
       pads.style.cssText = 'position:absolute;bottom:62px;right:14px;display:none;gap:6px;pointer-events:auto';
@@ -179,7 +234,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= GARDENS.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= GARDENS.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return;
           if (k === 'u' || (k === 'z' && (e.ctrlKey || e.metaKey))) undo(); else if (k === 'h') hint(); else if (k === 's') shuffle();
         },
