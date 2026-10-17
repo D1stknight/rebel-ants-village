@@ -5,6 +5,13 @@
 // sends the ferry back. U undoes a crossing, H shows the next good one (no clean bonus then). Seven crossings, the
 // fewest trips found by a solver. Score: the crossing x 20, +10 in the fewest trips without a hint or a slip.
 // Oct 17: How to play (the rules) and Restart beside Quit (its own restart: the pad's ⟲ and R).
+// Oct 17 (Miguel: "make it 10 crossings"): three more, made only of the rules the ferry already has (scratchpad
+// lv/ferry/search.mjs + search2.mjs tried ~5,000 designs, SP/ferry/solve.mjs = these rules, BFS fewest trips): The Darkest
+// Night (six on the lamp: 9 trips in 36 minutes, the least time there is (35 has no way); its slowest pair wants the
+// two-quick-ones trick, the middle pair does not), Five and Four (cap 2, 15 trips) and The Ferryman's Dog (the dog rows
+// too but chases the cat and the fox when the ferryman is away: 17 trips). lv/ferry/hintcheck.mjs replays the game's own
+// H hint from the start of every crossing: the fewest trips each time, inside the lamp. The rule card now puts three or
+// more 'eats' rules on one line and sits higher (on the market crossings it hid the left bank's pieces).
 // def: { levels: [{ name, units[], cap, rowers?, eats?, guard?, outnumber?, lamp?, best }], pass, points }
 (function () {
   const LEVELS = [
@@ -14,13 +21,17 @@
     { name: 'The Ferry Market', units: ['ferryman', 'fox', 'hen', 'rice', 'cat', 'mouse'], cap: 3, rowers: ['ferryman'], eats: [['fox', 'hen'], ['hen', 'rice'], ['cat', 'mouse'], ['mouse', 'rice'], ['cat', 'hen']], guard: 'ferryman', best: 7 },
     { name: 'Four and Four', units: ['samurai', 'samurai', 'samurai', 'samurai', 'ronin', 'ronin', 'ronin', 'ronin'], cap: 3, outnumber: ['ronin', 'samurai'], best: 9 },
     { name: 'Five and Five', units: ['samurai', 'samurai', 'samurai', 'samurai', 'samurai', 'ronin', 'ronin', 'ronin', 'ronin', 'ronin'], cap: 3, outnumber: ['ronin', 'samurai'], best: 11 },
-    { name: 'The Long Night', units: ['t1', 't3', 't6', 't8', 't12'], cap: 2, lamp: 29, best: 7 }
+    { name: 'The Long Night', units: ['t1', 't3', 't6', 't8', 't12'], cap: 2, lamp: 29, best: 7 },
+    { name: 'The Darkest Night', units: ['t1', 't3', 't4', 't7', 't9', 't13'], cap: 2, lamp: 36, best: 9 },
+    { name: 'Five and Four', units: ['samurai', 'samurai', 'samurai', 'samurai', 'samurai', 'ronin', 'ronin', 'ronin', 'ronin'], cap: 2, outnumber: ['ronin', 'samurai'], best: 15 },
+    { name: "The Ferryman's Dog", units: ['ferryman', 'fox', 'hen', 'rice', 'cat', 'mouse', 'dog'], cap: 2, rowers: ['ferryman', 'dog'], eats: [['fox', 'hen'], ['hen', 'rice'], ['cat', 'mouse'], ['dog', 'cat'], ['dog', 'fox']], guard: 'ferryman', best: 17 }
   ];
-  const LOOK = { ferryman: '#3f6db5', fox: '#e0742a', hen: '#f4f1e6', rice: '#d9b56a', cat: '#8b8f98', mouse: '#b9b4ad', samurai: '#b3262b', ronin: '#26262b' };
-  const NAMES = { ferryman: 'the ferryman', fox: 'the fox', hen: 'the hen', rice: 'the rice', cat: 'the cat', mouse: 'the mouse', samurai: 'samurai', ronin: 'ronin' };
+  const LOOK = { ferryman: '#3f6db5', fox: '#e0742a', hen: '#f4f1e6', rice: '#d9b56a', cat: '#8b8f98', mouse: '#b9b4ad', samurai: '#b3262b', ronin: '#26262b', dog: '#a8703f' };
+  const NAMES = { ferryman: 'the ferryman', fox: 'the fox', hen: 'the hen', rice: 'the rice', cat: 'the cat', mouse: 'the mouse', samurai: 'samurai', ronin: 'ronin', dog: 'the dog' };
+  const VERBS = { dog: ['chases', 'chased off'] }, verb = a => VERBS[a] || ['eats', 'ate']; // the rule card's word and the slip's
   const mins = u => /^t(\d+)$/.test(u) ? +u.slice(1) : 0;
   function bankBad(L, names) {
-    if (L.eats && !(L.guard && names.includes(L.guard))) for (const [a, b] of L.eats) if (names.includes(a) && names.includes(b)) return `${NAMES[a][0].toUpperCase() + NAMES[a].slice(1)} ate ${NAMES[b]}`;
+    if (L.eats && !(L.guard && names.includes(L.guard))) for (const [a, b] of L.eats) if (names.includes(a) && names.includes(b)) return `${NAMES[a][0].toUpperCase() + NAMES[a].slice(1)} ${verb(a)[1]} ${NAMES[b]}`;
     if (L.outnumber) { const [x, y] = L.outnumber, nx = names.filter(n => n === x).length, ny = names.filter(n => n === y).length; if (ny > 0 && nx > ny) return `The ${x} outnumbered the ${y}`; }
     return null;
   }
@@ -76,6 +87,7 @@
         else if (kind === 'hen') { circ(64, 70, 32, '#ffffff'); g.fillStyle = '#d4312a'; g.beginPath(); g.arc(56, 36, 9, 0, Math.PI * 2); g.arc(68, 33, 9, 0, Math.PI * 2); g.fill(); g.fillStyle = '#f0b22a'; g.beginPath(); g.moveTo(92, 66); g.lineTo(108, 72); g.lineTo(92, 78); g.closePath(); g.fill(); circ(76, 62, 5, '#222'); }
         else if (kind === 'rice') { g.fillStyle = '#d9b56a'; g.beginPath(); g.moveTo(40, 42); g.lineTo(88, 42); g.lineTo(98, 100); g.lineTo(30, 100); g.closePath(); g.fill(); g.fillStyle = '#8a5a2a'; g.fillRect(44, 40, 40, 8); g.fillStyle = '#fff6dc'; for (let i = 0; i < 6; i++) circ(48 + i * 7, 32 - (i % 2) * 4, 4, '#fff6dc'); }
         else if (kind === 'cat') { g.fillStyle = '#8b8f98'; g.beginPath(); g.moveTo(30, 36); g.lineTo(50, 50); g.lineTo(78, 50); g.lineTo(98, 36); g.lineTo(98, 80); g.arc(64, 80, 34, 0, Math.PI); g.lineTo(30, 36); g.fill(); circ(52, 70, 6, '#cfe85a'); circ(76, 70, 6, '#cfe85a'); g.strokeStyle = '#333'; g.lineWidth = 2; for (const s of [-1, 1]) for (const d of [-6, 2]) { g.beginPath(); g.moveTo(64 + s * 8, 86); g.lineTo(64 + s * 34, 86 + d); g.stroke(); } }
+        else if (kind === 'dog') { g.fillStyle = '#6b4226'; for (const s of [-1, 1]) { g.beginPath(); g.ellipse(64 + s * 30, 60, 13, 27, -s * .35, 0, Math.PI * 2); g.fill(); } circ(64, 64, 32, '#a8703f'); circ(64, 84, 17, '#ecd5ae'); circ(64, 76, 7, '#222'); circ(52, 58, 5, '#222'); circ(76, 58, 5, '#222'); g.fillStyle = '#e06a6a'; g.fillRect(60, 90, 8, 10); }
         else if (kind === 'mouse') { circ(40, 44, 18, '#b9b4ad'); circ(88, 44, 18, '#b9b4ad'); circ(40, 44, 9, '#f2b8b8'); circ(88, 44, 9, '#f2b8b8'); circ(64, 74, 30, '#b9b4ad'); circ(56, 70, 4, '#222'); circ(72, 70, 4, '#222'); circ(64, 86, 5, '#e88'); }
         else if (kind === 'samurai') { circ(64, 70, 34, '#b3262b'); g.fillStyle = '#e3b04b'; g.beginPath(); g.moveTo(36, 26); g.lineTo(64, 52); g.lineTo(92, 26); g.lineTo(86, 22); g.lineTo(64, 42); g.lineTo(42, 22); g.closePath(); g.fill(); g.fillStyle = '#2a1414'; g.fillRect(44, 66, 40, 8); }
         else if (kind === 'ronin') { circ(64, 68, 36, '#26262b'); g.fillStyle = '#c4242a'; g.beginPath(); g.ellipse(64, 72, 10, 13, 0, 0, Math.PI * 2); g.fill(); for (let i = 0; i < 4; i++) { g.fillRect(53 + i * 6.5, 50, 4.5, 16); } }
@@ -145,18 +157,21 @@
       }
       const hud = document.getElementById('gameHud');
       const card = document.createElement('div');
-      card.style.cssText = 'position:absolute;left:14px;top:132px;width:min(260px,46vw);display:none;background:rgba(14,18,12,.85);border:1px solid rgba(150,190,110,.55);border-radius:10px;padding:8px 10px;font:13px/1.45 system-ui,sans-serif;color:#eef6e4;pointer-events:none';
+      card.style.cssText = 'position:absolute;left:14px;top:66px;width:min(260px,46vw);display:none;background:rgba(14,18,12,.85);border:1px solid rgba(150,190,110,.55);border-radius:10px;padding:8px 10px;font:13px/1.45 system-ui,sans-serif;color:#eef6e4;pointer-events:none';
       function rulesCard() { const L = bd.L, r = [];
-        if (L.eats) r.push(...L.eats.map(([a, b]) => `${NAMES[a][0].toUpperCase() + NAMES[a].slice(1)} eats ${NAMES[b]}${L.guard ? ` unless ${NAMES[L.guard]} is there` : ''}.`));
+        if (L.eats && L.guard && L.eats.length > 2) { // many rules: one line, each eater named once (a line per rule hid the bank's pieces)
+          const by = []; L.eats.forEach(([a, b]) => { const g = by.find(x => x.a === a); if (g) g.bs.push(NAMES[b]); else by.push({ a, bs: [NAMES[b]] }); });
+          r.push(`When ${NAMES[L.guard]} is not there, ${by.map(g => `${NAMES[g.a]} ${verb(g.a)[0]} ${g.bs.join(' and ')}`).join(', ')}.`); }
+        else if (L.eats) r.push(...L.eats.map(([a, b]) => `${NAMES[a][0].toUpperCase() + NAMES[a].slice(1)} ${verb(a)[0]} ${NAMES[b]}${L.guard ? ` unless ${NAMES[L.guard]} is there` : ''}.`));
         if (L.outnumber) r.push(`The ${L.outnumber[0]} must never outnumber the ${L.outnumber[1]} on a bank (the ferry counts with the bank it is at).`);
         if (L.lamp) r.push(`The lamp lasts ${L.lamp} minutes; a trip takes as long as the slowest aboard (the number is minutes).`);
         if (L.rowers) r.push(`Only ${L.rowers.map(x => NAMES[x]).join(' or ')} can row.`);
         r.push(`The ferry holds ${L.cap}.`);
         card.style.display = 'block'; card.innerHTML = `<div style="font:800 11px system-ui;letter-spacing:.12em;text-transform:uppercase;color:#b9e08a;margin-bottom:4px">${L.name}</div>` + r.map(x => `<div>• ${x}</div>`).join(''); }
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(400px,90vw);background:rgba(12,18,10,.95);border:1px solid rgba(150,190,110,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 400) + 'px,92vw);background:rgba(12,18,10,.95);border:1px solid rgba(150,190,110,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#b9e08a;margin-bottom:10px">The Canal Ferry</div><div style="margin-bottom:12px;color:#bbb">Get everyone across without breaking a rule.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#b9e08a' : '#444'};background:${ok ? 'rgba(185,224,138,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${L.name}</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 4},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#b9e08a' : '#444'};background:${ok ? 'rgba(185,224,138,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${L.name}</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       const pads = document.createElement('div');
       pads.style.cssText = 'position:absolute;bottom:62px;right:14px;display:none;gap:6px;pointer-events:auto';
