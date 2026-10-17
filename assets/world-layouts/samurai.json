@@ -31348,6 +31348,12 @@
           1,
           0.27,
           0.258
+        ],
+        "packMoves": [
+          "dance_wave",
+          "dance_tut",
+          "dance_house",
+          "dance_gangnam"
         ]
       }
     }

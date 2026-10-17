@@ -11056,6 +11056,8 @@ function buildMiniGameCtx(def, src, frame) {
       // how far into its clip the move by that name is now (seconds; null when it is not playing): a ball or a stone can
       // follow the move's own timing (the dribble's bounces, the jump shot's release)
       clipTime(name) { const slot = miniGameClipSlot(name), g = slot != null ? animGroups[slot] : null, a = g?.isPlaying && g.animatables?.[0]; return a ? Math.max(0, (a.masterFrame - g.from) / 60) : null; },
+      // how long a move's clip is at its own pace (seconds; null without it): a dance looped in time with a song
+      clipLength(name) { const slot = miniGameClipSlot(name), g = slot != null ? animGroups[slot] : null; return g ? (g.to - g.from) / 60 : null; },
       // stop the move playing now on its pose t seconds in (an axe's edge held in the log) until the next move; the bones
       // read that pose at once (bone, grip), so a game can search the moment something meets something. false when that
       // move is not the one on

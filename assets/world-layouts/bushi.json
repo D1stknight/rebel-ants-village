@@ -41875,6 +41875,12 @@
           0.904,
           0.39,
           0.333
+        ],
+        "packMoves": [
+          "dance_wave",
+          "dance_tut",
+          "dance_house",
+          "dance_gangnam"
         ]
       }
     }

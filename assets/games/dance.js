@@ -707,9 +707,13 @@
       const store = (ctx.util || window.RebelGames.util).levelStore(def.id || 'dance-' + vid);
       // def.packMoves: real dances from the Rebel's games pack (dance_wave / tut / house / gangnam) when it has them;
       // they loop and an arrow switches to its dance (the same one keeps going). Else def.moves, one move per arrow.
+      // Oct 17 (Miguel: "the dancing animations will probably need to be sped up", "make sure all the dancing games are
+      // using the dancing animations"): every dance-off has packMoves; each loop is stretched to a whole number of the
+      // song's beats a little quicker than the move's own pace and starts on the beat, an arrow changes the dance at
+      // most once a bar, and two misses in a row stop the dancing until the next good press
       const DANCES = !!(def.packMoves && def.packMoves.every(m => ctx.player.has?.(m)));
       const moves = DANCES ? def.packMoves : def.moves || ['cartwheel', 'jump', 'front_flip', 'backflip'];
-      let dancing = null;
+      let dancing = null, danceAt = -1e9, missRow = 0;
       const floorC = def.floor || [.95, .45, .7];
       const st = { phase: 'pick', k: 0, song: null, lv: null, notes: [], ev: [], evi: 0, hits: 0, perfect: 0, combo: 0, maxCombo: 0, pts: 0, t0: 0, end: 0, judge: '', judgeAt: 0, beatAt: 0, car: null, carT: 0, carMove: -1, pxs: 190 };
       const nodes = [], keep = n => { ctx.add(n); nodes.push(n); if (n.isPickable !== undefined) n.isPickable = false; return n; };
@@ -787,17 +791,26 @@
       function upd() { H.score(`${st.hits} / ${st.need}`); }
       function say(t, bad) { judgeEl.textContent = t; judgeEl.style.color = bad ? '#ff8a7a' : '#ffd877'; st.judgeAt = performance.now(); }
       function dance(d) {
-        if (st.car) { st.carMove = d; st.carT = 0; return; }
-        if (DANCES) { if (dancing !== moves[d]) { dancing = moves[d]; ctx.player.clip(moves[d], { loop: true }); } return; }
+        missRow = 0;
+        if (st.car) { st.carMove = d; st.carT = 0; if (!DANCES) return; } // the lowrider's dancer dances beside it
+        if (DANCES) {
+          const now = clock() - st.lat, beat = 60 / song.bpm;
+          if (dancing === moves[d] || now - danceAt < 4 * beat - .08) return; // dancing on: a bar for each dance at least
+          const len = ctx.player.clipLength?.(moves[d]), n = len ? Math.max(2, Math.round(len / (beat * 1.12))) : 0, speed = n ? len / (n * beat) : 1;
+          const since = ((now - st.t0) % beat + beat) % beat; // the loop starts on the beat just gone
+          ctx.player.clip(moves[d], { loop: true, speed, from: since * speed }); dancing = moves[d]; danceAt = now - since;
+          return;
+        }
         ctx.player.clip(moves[d]);
       }
+      function missed() { if (++missRow >= 2 && dancing) { dancing = null; danceAt = -1e9; ctx.player.idle?.(); } }
       function press(d) {
         if (st.phase !== 'play') return;
         const now = clock() - st.lat, win = st.lv.window;
         let bestN = null; for (const n of st.notes) if (!n.judged && Math.abs(n.t - now) <= win && (!bestN || Math.abs(n.t - now) < Math.abs(bestN.t - now))) bestN = n;
-        if (!bestN) { st.combo = 0; say('Off beat', true); return; }
+        if (!bestN) { st.combo = 0; say('Off beat', true); missed(); return; }
         bestN.judged = true;
-        if (bestN.d !== d) { bestN.el.style.opacity = '.25'; st.combo = 0; say('Wrong move', true); return; }
+        if (bestN.d !== d) { bestN.el.style.opacity = '.25'; st.combo = 0; say('Wrong move', true); missed(); return; }
         const dt = Math.abs(bestN.t - now), perfect = dt <= win * .36;
         st.hits++; st.combo++; st.maxCombo = Math.max(st.maxCombo, st.combo); if (perfect) st.perfect++;
         st.pts += (perfect ? 3 : 2) * (1 + Math.min(.5, Math.floor(st.combo / 10) * .1));
@@ -826,7 +839,7 @@
           const w = box.querySelector('.dn-lane').clientWidth || 560, ringX = w * .09, heard = now - st.lat;
           for (const n of st.notes) {
             if (!n.judged) n.el.style.left = (ringX + (n.t - heard) * st.pxs) + 'px';
-            if (!n.judged && heard - n.t > st.lv.window) { n.judged = true; n.el.style.opacity = '.2'; st.combo = 0; say('Miss', true); }
+            if (!n.judged && heard - n.t > st.lv.window) { n.judged = true; n.el.style.opacity = '.2'; st.combo = 0; say('Miss', true); missed(); }
           }
           if (performance.now() - st.judgeAt > 700) judgeEl.textContent = st.combo >= 5 ? `Combo ${st.combo}` : '';
           // the floor pulses on the beat
@@ -845,8 +858,8 @@
         // back to the song list (the song stops)
         restart() { if (st.phase === 'pick') return; clearTimeout(finT); stopBand(); lane.innerHTML = ''; box.remove();
           Object.assign(st, { phase: 'pick', notes: [], ev: [], evi: 0, hits: 0, perfect: 0, combo: 0, maxCombo: 0, pts: 0, end: 0, fakeNow: null }); judgeEl.textContent = '';
-          dancing = null; ctx.player.idle?.(); H.score(''); H.info(`${list.length} songs`); H.hint(''); H.msg(''); showPick(); },
-        _test: { st, begin, press, now: v => { st.fakeNow = v; }, chart: k => chart(list[k ?? st.k], k ?? st.k, 0), score: k => score(list[k ?? st.k], 0), get song() { return song; }, list, TIERS },
+          dancing = null; danceAt = -1e9; missRow = 0; ctx.player.idle?.(); H.score(''); H.info(`${list.length} songs`); H.hint(''); H.msg(''); showPick(); },
+        _test: { st, begin, press, now: v => { st.fakeNow = v; }, get dancing() { return dancing; }, DANCES, chart: k => chart(list[k ?? st.k], k ?? st.k, 0), score: k => score(list[k ?? st.k], 0), get song() { return song; }, list, TIERS },
         dispose() { clearTimeout(finT); pick.remove(); box.remove(); stopBand(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };
       return inst;
