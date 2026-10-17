@@ -2,7 +2,9 @@
 // detector (its bar fills and it beeps quicker the nearer the closest chest), stop and dig with Space. A chest within a
 // stride of the hole comes up (50 points); else only sand. Four chests in 90 s; the seconds left count once all are up.
 // With the Rebel's games pack (Forge rigs) the Rebel digs with a shovel (game_dig); else a quick stoop.
-// def: { spots: [[x, z]...] (world: where chests can lie), chests: 4, seconds: 90, pass, text }
+// Each chest also holds Rebel points (Oct 17, Miguel: "the chests should give you Rebel points"): 10 a chest, up to 40 a
+// day (a full round), so a replay can't farm them.
+// def: { spots: [[x, z]...] (world: where chests can lie), chests: 4, seconds: 90, pass, text, chestPoints: 10, chestCap: 40 }
 (function () {
   const G = {
     title: 'Treasure Dig', roam: true, moves: true,
@@ -53,6 +55,7 @@
         box('tdGold', .8, .1, .5, goldM, 0, .46, 0, ch);
         st.ups.push({ ch, lid, t: 0, y0: gy - .5 });
         const sp = ctx.screenOf(new V3(hx, gy + 1.6, hz)); if (!sp.behind) H.pop(sp.x, sp.y, '+50');
+        ctx.rebelPoints?.(def.chestPoints ?? 10, def.chestCap ?? 40); // each chest holds Rebel points too (40 a day at most)
         H.msg(st.found >= chests.length ? 'All four!' : 'Treasure!', 900, `${st.found} / ${chests.length}`);
         hud(); if (st.found >= chests.length) finish(true);
       }

@@ -10914,6 +10914,19 @@ function showMiniGameHowTo() {
   const how = MiniGames.impl?.howTo; if (!how) return;
   RebelGames.HUD.howTo({ title: MiniGames.def?.title || MiniGames.impl.title, lines: how.lines, img: how.img ? 'assets/games/' + how.img : null, caption: how.caption });
 }
+function grantMiniGameRebelPoints(def, points, cap) {
+  const day = new Date().toISOString().slice(0, 10), key = `${def.id}:${day}`;
+  const got = ProgressionState.gamePointsDay?.[key] || 0, give = Math.max(0, Math.min(Math.round(points) || 0, cap - got));
+  if (!give) return 0;
+  const today = Object.fromEntries(Object.entries(ProgressionState.gamePointsDay || {}).filter(([k]) => k.endsWith(':' + day))); // only today's counts are kept
+  ProgressionState.gamePointsDay = { ...today, [key]: got + give };
+  ProgressionState.rebelPoints = (Number(ProgressionState.rebelPoints) || 0) + give;
+  if (!Array.isArray(ProgressionState.rebelPointsLog)) ProgressionState.rebelPointsLog = [];
+  ProgressionState.rebelPointsLog.push({ gameId:def.id, found:true, villageId:CURRENT_VILLAGE_ID, points:give, at:Date.now(), synced:false });
+  saveProgressionState(); showRebelPointsPop(give);
+  try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ gameId:def.id, points:give, total:ProgressionState.rebelPoints } })); } catch(e) {}
+  return give;
+}
 function buildMiniGameCtx(def, src, frame) {
   const V3 = BABYLON.Vector3;
   const frameYaw = () => { const q = new BABYLON.Quaternion(); frame.getWorldMatrix().decompose(undefined, q); return q.toEulerAngles().y; };
@@ -10922,6 +10935,10 @@ function buildMiniGameCtx(def, src, frame) {
     best: () => miniGameRecord(def.id).best,
     record: () => ({ ...miniGameRecord(def.id) }),
     quit() { setTimeout(() => quitMiniGame(), 0); },              // leave without a result card
+    // Rebel points found inside a game (Oct 17, Miguel: the Treasure Dig chests "should give you Rebel points"): kept like
+    // a chest's (rebelPointsLog, the coin pop), at most `cap` a day per game so a replay can't farm them; returns the
+    // points given (0 once the day's cap is reached)
+    rebelPoints(points, cap = 40) { return grantMiniGameRebelPoints(def, points, cap); },
     toWorld: (x, y, z) => V3.TransformCoordinates(new V3(x, y, z), frame.getWorldMatrix()),
     toLocal: (p) => V3.TransformCoordinates(p, BABYLON.Matrix.Invert(frame.getWorldMatrix())),
     // the camera: at local position p, looking at local point t
