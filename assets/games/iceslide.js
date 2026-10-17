@@ -4,8 +4,8 @@
 // starts the level again. Seven levels, each opens when the one before is solved (kept on this device); the fewest
 // moves were found by a solver. Score: the level x 20, +10 in the fewest moves.
 // def: { at: [x, z] (frame coords of the floor's middle), cell: 1.1, levels, pass, points }
-// Oct 17 (Miguel: the puzzles need a how-to, every board a Restart): howTo (the rules in a few lines) and inst.restart = R
-// (now mid-slide too).
+// Oct 17 (Miguel: the puzzles need a how-to, every board a Restart): howTo (the rules + a 6 x 6 floor's fewest way,
+// howto/iceslide.png) and inst.restart = R (now mid-slide too).
 // Oct 17 (Miguel: "make it 10"): ten levels; 8-10 are 11 x 11, 11 x 11 and 12 x 12 floors with 4, 5 and 6 gold leaf
 // (scratchpad lv/ice/gen10.mjs: random floors, then a hill climb on the pillars, gold, mats and seal while the fewest
 // moves (BFS over square + gold gathered) grows to a target, then the floor with the most positions to get lost in):
@@ -36,11 +36,14 @@
   const G = {
     title: 'The Lacquer Floor',
     howTo: {
-      lines: ['Slide the Rebel across the polished floor to the purple seal.',
-        'Each move (arrow keys, WASD or the pad) slides you all the way until a pillar or the edge of the floor stops you: you can\'t stop halfway.',
-        'A tatami mat stops you on the mat, and so does the seal itself.',
-        'From level 5, gather every gold leaf before the seal will open; a slide picks up all the leaf it passes over.',
-        'U takes back a move, R starts the level again. The fewest moves (on the info line) earn a bonus. Tip: work backwards: what could stop you on the seal?']
+      lines: ['Slide the Rebel across the Shogun\'s polished floor to the purple seal.',
+        'Each move slides you all the way, until a pillar or the edge of the floor stops you: you can\'t stop halfway.',
+        'A tatami mat stops you on the mat, and the seal stops you on the seal.',
+        'From level 5 there is gold leaf on the floor: gather every leaf before the seal opens. A slide picks up all the leaf it passes over. Reaching the seal too early just stops you there: slide on.',
+        'Arrow keys, WASD or the arrow pad slide; U (↶) takes back a move, R (⟲ or Restart) starts the level again.',
+        'The fewest moves (on the info line) earn +10.',
+        'Tip: work backwards from the seal. Which square could a slide onto the seal start from, and what would stop you on that square?'],
+      img: 'howto/iceslide.png', caption: 'A 6 x 6 floor in 5 moves, the fewest: left, down, right over the leaf onto the mat, up to the pillar, left onto the seal.'
     },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
