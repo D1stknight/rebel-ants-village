@@ -10892,6 +10892,14 @@ function buildMiniGameCtx(def, src, frame) {
       // a move by name: Forge rigs any slot by its clip name (idle walk run jab cross_punch front_kick ...), held on its
       // last frame with hold; kit apes kick / jump; the starter ant flip-kicks / jumps
       clip(name, o = {}) { return playMiniGameClip(name, o); },
+      // a quick hop lasting about this long (a game's own hop from square to square): the running jump sped up to fit (the
+      // standing jump is 2.6 s, crouch to landing, far too slow for a hop), else the jump from its take-off
+      hop(seconds = .3) {
+        const t = Math.max(.15, seconds + .1);
+        if (ctx.player.has('jump_run')) return playMiniGameClip('jump_run', { speed: 1.03 / t });
+        if (ctx.player.has('jump')) return playMiniGameClip('jump', { speed: 1.2 / t, from: .7 });
+        return playMiniGameClip('jump');
+      },
       // whether this Rebel can play a move by that name (its rig's clips, a lent weapon's, the games pack's)
       has(name) { return !!window.forgeRigBundleInfo && miniGameClipSlot(name) != null && !!animGroups[miniGameClipSlot(name)]; },
       idle() { if (animState !== 0) { const g = animGroups[animState]; if (g?.isPlaying) g.stop(); animState = -1; switchAnim(0, true); } },
@@ -11012,7 +11020,9 @@ function playMiniGameClip(name, o = {}) {
     const slot = miniGameClipSlot(name);
     const g = slot != null ? animGroups[slot] : null; if (!g) return false;
     if (animState === slot) { if (g.isPlaying) g.stop(); animState = -1; } // the same move again: from its start
-    if (o.speed) g.speedRatio = o.speed;
+    // a game's speed for this move only: the group's own speed comes back for the next play without one, and after the game
+    if (g._gameSpeed0 == null) g._gameSpeed0 = g.speedRatio;
+    g.speedRatio = o.speed || g._gameSpeed0;
     const from = () => { if (o.from) g.goToFrame(Math.min(g.to, g.from + o.from * 60)); }; // o.from: start that many seconds in
     if (o.loop) { switchAnim(slot, true); from(); return true; }
     if (o.hold) { switchAnim(slot, false); from(); return true; } // stays on its last frame until the next move
@@ -11168,6 +11178,7 @@ function endMiniGame() {
   RebelGames.hideResult(); RebelGames.HUD.show(false);
   const s = MiniGames.saved, roam = MiniGames.roam;
   MiniGames.on = false; MiniGames.ctx = null; MiniGames.roam = false; MiniGames.holdWalk = false; MiniGames.floatY = null;
+  animGroups.forEach(g => { if (g && g._gameSpeed0 != null) { g.speedRatio = g._gameSpeed0; g._gameSpeed0 = null; } });
   document.body.classList.remove('game-roam');
   window._newTerrain?.birds?.setVisible(birdsShownFor(getFakeLightStateFactor()));
   moveForward = moveBackward = turnLeft = turnRight = runKey = false;

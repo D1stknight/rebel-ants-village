@@ -61,7 +61,7 @@
           if (lv.pos === lv.path.length - 1) { st.finishIn = .5; } }
         else { st.fallIn = .32; st.fallStone = lv.stones[r][c]; }
       }
-      function hopTo(p) { st.from = [st.at[0], st.at[1]]; st.at = [p.x, p.z]; st.hop = .28; ctx.player.face(Math.atan2(p.x - st.from[0], p.z - st.from[1])); ctx.player.clip('jump'); }
+      function hopTo(p) { st.from = [st.at[0], st.at[1]]; st.at = [p.x, p.z]; st.hop = .28; ctx.player.face(Math.atan2(p.x - st.from[0], p.z - st.from[1])); if (ctx.player.hop) ctx.player.hop(.28); else ctx.player.clip('jump'); }
       function move(dc, dr) { if (!lv) return; const cur = lv.pos < 0 ? null : lv.path[lv.pos]; if (!cur) { if (dr > 0) { /* from the ledge: the stone ahead of where the Rebel stands */ const c = Math.max(0, Math.min(lv.cols - 1, Math.round((st.at[0] - AT[0]) / P + (lv.cols - 1) / 2) + dc)); stepTo(c, 0); } else if (dc) { st.at = [Math.max(AT[0] - (lv.cols - 1) / 2 * P, Math.min(AT[0] + (lv.cols - 1) / 2 * P, st.at[0] + dc * P)), st.at[1]]; ctx.player.place(st.at[0], st.at[1], 0); } return; }
         stepTo(cur[0] + dc, cur[1] + dr); }
       // the picker
