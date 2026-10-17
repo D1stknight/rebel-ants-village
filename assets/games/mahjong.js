@@ -5,6 +5,8 @@
 // what is left into a deal that can still be cleared (two per garden), U takes the last pair back. Blocked tiles are
 // shaded. Score: the garden x 20, +10 with no hint or shuffle; a garden left unfinished scores its pairs.
 // def: { pass, points }
+// Oct 17 (Miguel: the puzzles need a how-to, every board a Restart): howTo (the rules in a few lines) and inst.restart
+// (the same deal back on the table, its two shuffles too, the clock from 0; hints still count: they cost the bonus).
 (function () {
   const rect = (out, l, x0, y0, cols, rows) => { for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) out.push([l, x0 + c * 2, y0 + r * 2]); return out; };
   const GARDENS = [
@@ -68,6 +70,13 @@
     g.restore(); }
   const G = {
     title: 'The Tile Garden',
+    howTo: {
+      lines: ['Clear the garden table by taking the tiles off in matching pairs: two tiles with the same picture.',
+        'Only a free tile can be taken: nothing lies on top of it, and its left or right side is open. Blocked tiles are shaded.',
+        'Click a free tile, then a free tile that matches it. Clicking a different tile holds that one instead.',
+        'U takes the last pair back. H shows a pair that still lets you clear the garden, S shuffles the tiles that are left (two shuffles a garden); a hint or a shuffle costs the clean bonus.',
+        'Tip: don\'t just take the first pair you see. Free the tall stacks and the long rows first, or you may bury a tile you need.']
+    },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def, KEY = 'rebelAntsTilesProgress:' + (def.id || 'mahjong');
       let solvedUpTo = 0; try { solvedUpTo = Math.max(0, Math.min(GARDENS.length, Number(localStorage.getItem(KEY)) || 0)); } catch (e) {}
@@ -93,7 +102,7 @@
         const TW = Math.min((TEX - 80) / (maxX / 2 + layers * .14), (TEX - 80) / ((maxY / 2) * 1.3 + layers * .14)), TH = TW * 1.3, OFF = TW * .14;
         const OX = (TEX - (maxX / 2 * TW + layers * OFF)) / 2 + layers * OFF, OY = (TEX - (maxY / 2 * TH + layers * OFF)) / 2 + layers * OFF;
         const order = pos.map((_, i) => i).sort((a, b) => pos[a][0] - pos[b][0] || pos[a][2] - pos[b][2] || pos[a][1] - pos[b][1]);
-        bd = { k, G: g, pos, alive, kind, sel: -1, hints: 0, shuffles: 0, time: 0, undo: [], flash: null, TW, TH, OX, OY, OFF, order };
+        bd = { k, G: g, pos, alive, kind, kind0: kind.slice(), sel: -1, hints: 0, shuffles: 0, time: 0, undo: [], flash: null, TW, TH, OX, OY, OFF, order }; // kind0: the deal (a shuffle rewrites kind)
         ctx.player.place(0, cam[2] - 1.6, 0); draw(); info();
       }
       const faceRect = i => { const [l, x, y] = bd.pos[i]; return [bd.OX + x / 2 * bd.TW - l * bd.OFF, bd.OY + y / 2 * bd.TH - l * bd.OFF, bd.TW, bd.TH]; };
@@ -133,6 +142,7 @@
         for (let i = want.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [want[i], want[j]] = [want[j], want[i]]; }
         d.pairs.forEach(([a, b], w) => { bd.kind[a] = bd.kind[b] = want[w]; });
         bd.shuffles++; bd.sel = -1; bd.undo = []; ctx.sound('thock'); H.msg('The tiles are mixed', 1000, `${2 - bd.shuffles} shuffle${2 - bd.shuffles === 1 ? '' : 's'} left`); draw(); info(); }
+      function restart() { if (st.phase !== 'play' || !bd) return; bd.alive.fill(true); bd.kind = bd.kind0.slice(); Object.assign(bd, { sel: -1, undo: [], shuffles: 0, time: 0, flash: null }); draw(); info(); H.msg('Start again', 900, 'the same deal'); }
       function check() { if (left() === 0) { st.phase = 'won'; st.wt = 0; pads.style.display = 'none'; ctx.sound('gamewin'); H.msg('The garden is clear', 1600, fmt(bd.time));
           if (bd.k + 1 > solvedUpTo) { solvedUpTo = bd.k + 1; try { localStorage.setItem(KEY, String(solvedUpTo)); } catch (e) {} } return true; }
         const m = moves(); if (!m.n) { if (bd.shuffles < 2) H.msg('No pair can be taken', 1800, 'shuffle (S) or take a pair back (U)'); else H.msg('No pair can be taken', 1800, 'take a pair back (U), or quit'); }
@@ -174,6 +184,7 @@
           if (k === 'u' || (k === 'z' && (e.ctrlKey || e.metaKey))) undo(); else if (k === 'h') hint(); else if (k === 's') shuffle();
         },
         pointer(evt) { const T = B.PointerEventTypes; if (st.phase !== 'play' || !bd) return; if (evt.type === T.POINTERDOWN) tap(tileAt()); },
+        restart, // the HUD's Restart button
         _test: { st, choose, tap, undo, hint, shuffle, moves, freeTiles: () => freeTiles(bd.pos, bd.alive), get bd() { return bd; }, GARDENS, draw: () => { st.dirty = false; paint(); }, unlock(k) { solvedUpTo = k; drawPick(); },
           greedy() { // play the deal out taking any free pair (gets stuck: tests)
             let n = 0; for (let guard = 0; guard < 400 && st.phase === 'play'; guard++) { const m = moves(); if (!m.pairs.length) break; const [a, b] = m.pairs[0]; bd.sel = -1; tap(a); tap(b); n++; } return n; },
