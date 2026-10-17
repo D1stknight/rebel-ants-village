@@ -11015,10 +11015,10 @@ function getPlayerBoneWorld(name) {
 // Glove colours (Oct 16, Miguel's idea): the player picks their Rebel's glove and cuff colours in the Rebel panel (Gloves,
 // under Journal), saved per Rebel on this device (localStorage rebelAntsGloves:v1: { '<collection>:<token or id>':
 // { glove, cuff } }, each '#rrggbb', 'forged' or absent). Forge rigs carry the gloves as their own materials ('Glove',
-// 'GloveCuff'), so the colour is set on the loaded rig: no re-rig, the rig files untouched. Default = as the village has
-// always shown it (the loader paints untextured parts with a palette colour); Forged = the colour the Forge gave the
-// gloves (the rig's own, kept before that paint). Rigs without glove materials (older rigs, kit apes, the starter ant)
-// show no Gloves button.
+// 'GloveCuff'), so the colour is set on the loaded rig: no re-rig, the rig files untouched. The standard look is Forged =
+// the colour the Forge gave the gloves (the rig's own, kept before the loader paints untextured parts with a palette
+// colour; Oct 17, Miguel: "i like the forged better as the standard look"); Palette = the look the village had before.
+// Rigs without glove materials (older rigs, kit apes, the starter ant) show no Gloves button.
 const PlayerGloves = (() => {
   const KEY = 'rebelAntsGloves:v1';
   const PRESETS = [['Ink', '#1b1b1f'], ['Bone', '#e9e2d0'], ['Crimson', '#8c1c1c'], ['Ember', '#d9622b'], ['Gold', '#d8b35c'], ['Moss', '#4f6b3a'],
@@ -11041,8 +11041,8 @@ const PlayerGloves = (() => {
     document.body.classList.toggle('has-gloves', !!mats); apply(); paint();
   }
   function colourFor(e, v) {
-    if (v === 'forged') return e.forged || e.c0;
-    return /^#[0-9a-f]{6}$/i.test(v || '') ? BABYLON.Color3.FromHexString(v).toLinearSpace() : e.c0;
+    if (v === 'palette') return e.c0;
+    return /^#[0-9a-f]{6}$/i.test(v || '') ? BABYLON.Color3.FromHexString(v).toLinearSpace() : e.forged || e.c0; // none or 'forged': the Forge's
   }
   function apply() {
     if (!mats) return; const c = choice();
@@ -11057,14 +11057,14 @@ const PlayerGloves = (() => {
       if (!row.childElementCount && mats?.[k]?.length) {
         const mk = (name, v, bg, cls) => { const b = document.createElement('button'); b.type = 'button'; b.title = name; b.dataset.v = v || ''; if (bg) b.style.background = bg; if (cls) b.className = cls; b.onclick = () => set(k, v); return b; };
         const e = mats[k][0];
-        row.appendChild(mk('Default (as your Rebel looks now)', null, hexOf(e.c0), 'default'));
-        if (e.forged && hexOf(e.forged) !== hexOf(e.c0)) row.appendChild(mk('Forged (the colour the Forge gave it)', 'forged', hexOf(e.forged), 'forged'));
+        row.appendChild(mk('Forged (the colour the Forge gave it)', null, hexOf(e.forged || e.c0), 'forged'));
+        if (e.forged && hexOf(e.forged) !== hexOf(e.c0)) row.appendChild(mk('Palette (the village\'s old look)', 'palette', hexOf(e.c0), 'default'));
         PRESETS.forEach(([n, h]) => row.appendChild(mk(n, h, h)));
         const pick = document.createElement('input'); pick.type = 'color'; pick.title = 'Any colour'; pick.oninput = () => set(k, pick.value); row.appendChild(pick);
       }
-      row.querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.v || null) === cur));
+      row.querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.v || null) === (cur === 'forged' ? null : cur)));
       const pk = row.querySelector('input[type=color]'); if (pk && /^#/.test(cur || '')) pk.value = cur;
-      const nm = el.querySelector(`.gp-name[data-k="${k}"]`); if (nm) nm.textContent = !cur ? 'Default' : cur === 'forged' ? 'Forged' : (PRESETS.find(p => p[1] === cur)?.[0] || cur);
+      const nm = el.querySelector(`.gp-name[data-k="${k}"]`); if (nm) nm.textContent = !cur || cur === 'forged' ? 'Forged' : cur === 'palette' ? 'Palette' : (PRESETS.find(p => p[1] === cur)?.[0] || cur);
     }
   }
   return { attach, set, choice, apply, paint, PRESETS, available: () => !!mats, _mats: () => mats };
