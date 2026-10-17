@@ -3646,7 +3646,7 @@
     }
   }
   // apes: the joints are pivots; the gait comes from how fast the placed root actually moves (NPC patrols, the
-  // player), so nothing outside has to drive it. actorAction(root, 'jump' | 'kick') plays a one-shot move.
+  // player), so nothing outside has to drive it. actorAction(root, 'jump' | 'kick' | 'dance') plays a one-shot move.
   const APE_L1 = .55, APE_L2 = .54;
   function buildApe(root, type, scene, shadows, skipShadows) {
     const body = new BABYLON.TransformNode(root.name + '_body', scene), N = {}; body.parent = root;
@@ -3672,7 +3672,7 @@
     let thL = (.42 + .25 * R) * A * s, thR = -thL, knL = kn(g), knR = kn(g + Math.PI);
     const sw = (.32 + .3 * R) * A * s, sway = .05 * idle * Math.sin(t * 1.1 + a.ph);
     let shL = -sw + sway, shR = sw + sway, elL = .3 + (.3 + .7 * R) * A + .1 * A * s, elR = .3 + (.3 + .7 * R) * A - .1 * A * s, splay = .12 + .08 * R;
-    let lean = -(.04 * A + .2 * R), twist = .1 * A * s, lift = 0;
+    let lean = -(.04 * A + .2 * R), twist = .1 * A * s, lift = 0, roll = 0;
     if (a.act) {
       if (a.act.t0 == null) a.act.t0 = t;
       const u = (t - a.act.t0) / a.act.dur;
@@ -3680,18 +3680,28 @@
       else {
         const w = Math.sin(Math.PI * u), L = (x, y, k = w) => x + (y - x) * k;
         if (a.act.kind === 'jump') { thL = L(thL, .95); thR = L(thR, .75); knL = L(knL, -1.5); knR = L(knR, -1.3); shL = L(shL, 2.5); shR = L(shR, 2.4); elL = L(elL, .4); elR = L(elR, .4); lift = 1.3 * w; }
+        else if (a.act.kind === 'dance') {
+          // a party groove (Oct 17, Miguel: the parties need dancing): on the house song's beat (125 a minute) the knees dip
+          // in turn, the hips swing and roll, the arms pump up one after the other, a little bounce on every beat
+          const e = Math.min(1, u * 5, (1 - u) * 5), b = (t - a.act.t0) * 2.0833 * Math.PI * 2, sb = Math.sin(b), cb = Math.cos(b / 2);
+          thL = L(thL, .22 + .3 * Math.max(0, sb), e); thR = L(thR, .22 + .3 * Math.max(0, -sb), e);
+          knL = L(knL, -.45 - .4 * Math.max(0, sb), e); knR = L(knR, -.45 - .4 * Math.max(0, -sb), e);
+          shL = L(shL, 1.1 + 1.4 * Math.max(0, cb), e); shR = L(shR, 1.1 + 1.4 * Math.max(0, -cb), e); elL = L(elL, 1.3, e); elR = L(elR, 1.3, e);
+          twist = L(twist, .38 * cb, e); lean = L(lean, .06, e); roll = .14 * sb * e; lift = .14 * Math.abs(sb) * e;
+        }
         else { const ext = Math.min(1, Math.max(0, (u - .25) / .2)); thR = L(thR, 1.7); knR = L(knR, -1.6 + 1.55 * ext); thL = L(thL, -.12); knL = L(knL, -.25); lean = L(lean, .28); shL = L(shL, .9); shR = L(shR, -.6); splay += .3 * w; }
       }
     }
     N.hip_l.rotation.x = thL; N.hip_r.rotation.x = thR; N.kn_l.rotation.x = knL; N.kn_r.rotation.x = knR;
     N.sh_l.rotation.set(shL, 0, -splay); N.sh_r.rotation.set(shR, 0, splay); N.el_l.rotation.x = elL; N.el_r.rotation.x = elR;
-    N.pelvis.rotation.set(lean, twist, 0); N.pelvis.scaling.set(1 + .012 * br * idle, 1 + .008 * br * idle, 1 + .012 * br * idle);
+    N.pelvis.rotation.set(lean, twist, roll); N.pelvis.scaling.set(1 + .012 * br * idle, 1 + .008 * br * idle, 1 + .012 * br * idle);
     N.neck.rotation.set(-lean * .6 + .04 * idle * Math.sin(t * .7 + a.ph), idle * .35 * Math.sin(t * .31 + a.ph) * (Math.sin(t * .13 + a.ph) > 0 ? 1 : .3), 0);
     // keep the lower foot on the ground: drop the body by what the bent legs lose in reach
     const reach = (th, k) => APE_L1 * Math.cos(th) + APE_L2 * Math.cos(th + k);
     a.body.position.y = Math.max(reach(thL, knL), reach(thR, knR)) - APE_L1 - APE_L2 + lift;
   }
-  function actorAction(root, kind, dur) { const a = actors.find(x => x.root === root); if (a) a.act = { kind, t0: null, dur: dur || (kind === 'jump' ? .9 : 1.1) }; return !!a; }
+  function actorAction(root, kind, dur) { const a = actors.find(x => x.root === root); if (a) a.act = { kind, t0: null, dur: dur || (kind === 'jump' ? .9 : kind === 'dance' ? 1.92 : 1.1) }; return !!a; }
+  const actorBusy = root => !!actors.find(x => x.root === root)?.act; // a one-shot still playing
   function ensureAnim(scene) { if (!scene._kitFloat) scene._kitFloat = scene.onBeforeRenderObservable.add(() => animate(performance.now() / 1000)); }
   const heartbeat = t => { const u = (t * 1.1) % 1; return Math.exp(-(((u - .1) / .05) ** 2)) + .6 * Math.exp(-(((u - .3) / .05) ** 2)); };
   function animate(t) {
@@ -7069,5 +7079,5 @@
     }
     return walkTriangles(parts);
   }
-  window.SamuraiKit = { build, setLightFactor, animate, actorAction, protoMeshes, decks, rooms: ROOMS, stairsSteps, refreshStairs, types: Object.keys(B), walkEligible, walkTriangles, walkTrianglesOf, walkRoomParts, _Kit: Kit, _B: B, _org: { blob, curveTube } };
+  window.SamuraiKit = { build, setLightFactor, animate, actorAction, actorBusy, protoMeshes, decks, rooms: ROOMS, stairsSteps, refreshStairs, types: Object.keys(B), walkEligible, walkTriangles, walkTrianglesOf, walkRoomParts, _Kit: Kit, _B: B, _org: { blob, curveTube } };
 })();

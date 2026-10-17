@@ -11309,7 +11309,8 @@ function questSpotCheerTick(hc, state) {
   if (!hc.cheer?.length || performance.now() < (state.cheerAt || 0)) return;
   state.cheerAt = performance.now() + 450 + Math.random() * 650;
   const npc = getNPCById?.(hc.cheer[Math.floor(Math.random() * hc.cheer.length)]), km = npc?.metadata?.kitModel;
-  if (km) window.SamuraiKit?.actorAction?.(km, Math.random() < .75 ? 'jump' : 'kick');
+  // kit apes dance (a groove on the beat), now and then a jump or a kick; one move at a time each
+  if (km) { if (!window.SamuraiKit?.actorBusy?.(km)) { const r = Math.random(); window.SamuraiKit?.actorAction?.(km, r < .7 ? 'dance' : r < .9 ? 'jump' : 'kick'); } }
   else if (npc) playNPCPartyMove(npc); // forged NPCs dance with their own clips
 }
 
@@ -18451,18 +18452,27 @@ const NPC_GESTURE_CLIPS = { greet:'wave_short', bye:'bow', yes:'nod_yes', cheer:
 // played to its end; an NPC without them (a placeholder ant) hops. No arms-overhead clips (waving, rallying): on the
 // Chumpz / Saints rigs they pull the sweater / fur up with the arms
 const NPC_PARTY_CLIPS = ['clapping', 'jump', 'yelling', 'wave_short'];
+// NPCs rigged since v2.29 carry the games pack's four dances: at a party they dance them (now and then a clap or a jump)
+const NPC_PARTY_DANCES = ['dance_house', 'dance_wave', 'dance_tut', 'dance_gangnam'];
 function playNPCPartyMove(root) {
   const meta = root?.metadata;
   if (!meta || meta.gestureGroup?.isPlaying || meta.partyHop) return false;
-  const clips = meta.modelLoaded && Array.isArray(meta.animationGroups) ? NPC_PARTY_CLIPS.filter(c => meta.animationGroups.some(g => g.name.toLowerCase().endsWith(c))) : [];
+  const has = c => meta.animationGroups.some(g => g.name.toLowerCase().endsWith(c));
+  const loaded = meta.modelLoaded && Array.isArray(meta.animationGroups);
+  const dances = loaded ? NPC_PARTY_DANCES.filter(has) : [], others = loaded ? NPC_PARTY_CLIPS.filter(has) : [];
+  const clips = dances.length && (Math.random() < .8 || !others.length) ? dances : others;
   if (clips.length) return playNPCGesture(root, 'party', clips[Math.floor(Math.random() * clips.length)]);
+  // a model without party clips (the placeholder ants) grooves as a whole: a bounce on every beat of the house song (125 a
+  // minute), a sway side to side and a turn, for two bars' worth of beats
   const vis = meta.modelRoot || root.getChildren?.().find(n => n.getChildMeshes?.().length);
   if (!vis) return false;
-  const y0 = vis.position.y, t0 = performance.now();
+  const y0 = vis.position.y, x0 = vis.position.x, q0 = vis.rotationQuaternion?.clone() || null, ry0 = vis.rotation.y, t0 = performance.now(), D = 1920;
   meta.partyHop = scene.onBeforeRenderObservable.add(() => {
-    const t = (performance.now() - t0) / 520;
-    if (t >= 1 || vis.isDisposed?.()) { vis.position.y = y0; scene.onBeforeRenderObservable.remove(meta.partyHop); meta.partyHop = null; return; }
-    vis.position.y = y0 + Math.sin(t * Math.PI) * .7;
+    const u = (performance.now() - t0) / D;
+    if (u >= 1 || vis.isDisposed?.()) { vis.position.y = y0; vis.position.x = x0; if (q0) vis.rotationQuaternion = q0; else vis.rotation.y = ry0; scene.onBeforeRenderObservable.remove(meta.partyHop); meta.partyHop = null; return; }
+    const b = u * D / 1000 * 2.0833 * Math.PI * 2, e = Math.min(1, u * 5, (1 - u) * 5), yaw = Math.sin(b / 4) * .45 * e;
+    vis.position.y = y0 + Math.abs(Math.sin(b)) * .3 * e; vis.position.x = x0 + Math.sin(b / 2) * .18 * e;
+    if (q0) vis.rotationQuaternion = q0.multiply(BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, yaw)); else vis.rotation.y = ry0 + yaw;
   });
   return true;
 }
