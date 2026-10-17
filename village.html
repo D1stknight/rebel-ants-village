@@ -27793,7 +27793,77 @@ function villageOnKitDeck(x, z) {
   return on;
 }
 function villageSeaBlocks(x, z) {
-  return !!window._newTerrain?.seaBlocks?.(x, z) && !Number.isFinite(getVillageWalkableSurfaceHeightAt(x, z));
+  if (!window._newTerrain?.seaBlocks?.(x, z) || Number.isFinite(getVillageWalkableSurfaceHeightAt(x, z))) return false;
+  return !(_villageSwimmer && villageSwimAllowedAt(x, z)); // the player wades in and swims; NPCs stay out of the water
+}
+// Swimming (Oct 17, Miguel: "i think it will be cool if he goes in any deep water to swim through it"): the Rebel wades into
+// the sea, a lake or a pond from its shore (slower in the water) and past chest depth swims: the games pack's front crawl
+// (game_swim), the hips held just under the surface, slower than a walk (R a little quicker), rings on the water round it.
+// The open sea more than SWIM.maxR from the village's middle stays out of bounds, and during a game the water stops the
+// player as before (a run or a chase never swims across the bay). Rebels without the crawl stand in it up to the chest.
+var _villageSwimmer = false; // the player's own move is being resolved
+const SWIM = { in:1.7, out:1.4, wade:.35, maxR:180, on:false, wading:false, waterY:null, base:null, slot:null, speed0:null, ringAt:0, rings:[] };
+window._swim = SWIM; // tests
+function villageWaterSurfaceAt(x, z) {
+  const NT = window._newTerrain; if (!NT) return null;
+  let y = null;
+  if (NT.sea && Number.isFinite(NT.seaY) && NT.heightAt(x, z) < NT.seaY) y = NT.seaY;
+  for (const p of NT.recipe?.village?.pools || []) { // canals, ponds, a moat (as waterSoundAt reads them)
+    let inside;
+    if (p.c) { const rho = Math.hypot(x - p.c[0], z - p.c[1]); inside = p.ring ? rho >= p.ring[0] && rho <= p.ring[1] : rho <= p.c[2]; }
+    else { const [x0, z0, x1, z1] = p.r; inside = x >= x0 && x <= x1 && z >= z0 && z <= z1; }
+    if (inside && Number.isFinite(p.y) && (y == null || p.y > y)) y = p.y;
+  }
+  return y;
+}
+function villageSwimAllowedAt(x, z) { return !MiniGames.on && Math.hypot(x, z) <= SWIM.maxR; }
+// how fast the player moves on foot / in the water (x the walk)
+function playerMoveSpeedK() { return SWIM.on ? (runKey ? .8 : .55) : SWIM.wading ? (runKey ? .95 : .62) : runKey ? 2 : 1; }
+// the floor the player stands at this frame: the ground, or the swimming height while in deep water
+function updatePlayerSwim(groundY, dt) {
+  const p = charMesh.position, now = performance.now();
+  const w = walkMode && !ActiveInterior && Number.isFinite(groundY) && villageSwimAllowedAt(p.x, p.z) ? villageWaterSurfaceAt(p.x, p.z) : null;
+  const depth = w == null ? 0 : w - groundY, was = SWIM.on;
+  SWIM.on = depth > (was ? SWIM.out : SWIM.in); SWIM.wading = !SWIM.on && depth > SWIM.wade; SWIM.waterY = w;
+  updateSwimRings(dt);
+  if (!SWIM.on) { if (was) leavePlayerSwim(); return groundY; }
+  if (!was) { if (!GamesPack.ready) loadGamesPack(); MoonTaleSounds.fx('splash'); SWIM.base = null; swimRing(p.x, w, p.z, 1.6); }
+  const slot = miniGameClipSlot('game_swim');
+  SWIM.slot = slot != null && animGroups[slot] ? slot : null;
+  // the hips just under the surface while the crawl plays (from where they are drawn); without it, chest-deep
+  const hips = SWIM.slot != null && animState === SWIM.slot ? getPlayerBoneWorld('Hips') : null;
+  let base = SWIM.base ?? Math.max(groundY, w - 1.5);
+  base += hips ? (w - .12 - hips.y) * Math.min(1, dt * 8) : (w - 1.5 - base) * Math.min(1, dt * 6);
+  SWIM.base = Math.max(groundY, base);
+  const moving = Math.abs(charMesh._vel || 0) > .01;
+  if (now > SWIM.ringAt) { SWIM.ringAt = now + (moving ? 420 : 950); swimRing(p.x, w, p.z, moving ? 1 : .7); }
+  return SWIM.base;
+}
+function leavePlayerSwim() {
+  SWIM.base = null; const g = SWIM.slot != null ? animGroups[SWIM.slot] : null;
+  if (g) { if (SWIM.speed0 != null) g.speedRatio = SWIM.speed0; if (animState === SWIM.slot) { if (g.isPlaying) g.stop(); animState = -1; switchAnim(0, true); } }
+  SWIM.speed0 = null; SWIM.slot = null;
+}
+// the crawl while swimming (idle: slower, treading water); called where the walk picks its clip
+function playPlayerSwimClip(moving) {
+  const g = animGroups[SWIM.slot]; if (!g) return false;
+  if (SWIM.speed0 == null) SWIM.speed0 = g.speedRatio;
+  if (animState !== SWIM.slot) { if (animState >= 3) return true; switchAnim(SWIM.slot, true); } // a move (a jump) finishes first
+  g.speedRatio = moving ? (runKey ? 1.3 : 1) : .45;
+  return true;
+}
+// rings that spread on the water round the swimmer (a few torus meshes that grow and fade)
+function swimRing(x, y, z, big) {
+  const m = BABYLON.MeshBuilder.CreateTorus('swimRing', { diameter:.6, thickness:.05, tessellation:24 }, scene);
+  m.material = holdShowMats().ring; m.isPickable = false; m.position.set(x, y + .03, z);
+  SWIM.rings.push({ m, t:0, big }); while (SWIM.rings.length > 6) SWIM.rings.shift().m.dispose();
+}
+function updateSwimRings(dt) {
+  for (let i = SWIM.rings.length - 1; i >= 0; i--) {
+    const g = SWIM.rings[i]; g.t += dt; const k = g.t / 1.6, s = 1 + k * 5 * g.big;
+    g.m.scaling.set(s, 1, s); g.m.visibility = Math.max(0, 1 - k);
+    if (k >= 1) { g.m.dispose(); SWIM.rings.splice(i, 1); }
+  }
 }
 function villagePointBlocked(x, z, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING) {
   const onDeck = villageOnKitDeck(x, z); // piers run over the quay wall and the water, bridges over the ravine
@@ -28114,7 +28184,7 @@ function resolveVillagePlayerCollision(currentPosition, proposedPosition) {
   if (ActiveInterior) return resolveInteriorPlayerCollision(currentPosition, proposedPosition);
   refreshVillageCollisionBlockersIfNeeded();
   const cx = currentPosition.x, cz = currentPosition.z, wy = charMesh?._terrainY;
-  const stops = (x, z) => { _villageWalkerY = Number.isFinite(wy) ? wy : NaN; try { return villageSegmentBlocked(cx, cz, x, z) || villageLedgeBlocks(cx, cz, x, z); } finally { _villageWalkerY = NaN; } };
+  const stops = (x, z) => { _villageWalkerY = Number.isFinite(wy) ? wy : NaN; _villageSwimmer = true; try { return villageSegmentBlocked(cx, cz, x, z) || villageLedgeBlocks(cx, cz, x, z); } finally { _villageWalkerY = NaN; _villageSwimmer = false; } };
 
   if (!stops(proposedPosition.x, proposedPosition.z)) {
     return { x: proposedPosition.x, z: proposedPosition.z, blocked: false };
@@ -28424,7 +28494,7 @@ engine.runRenderLoop(()=>{
     if(!charMesh._vel)charMesh._vel=0;
     const actionMovementSuppressed = isForgeActionMovementSuppressed();
     // turning right round (more than ~90 degrees still to go): nearly on the spot, then off at full speed
-    const tv=actionMovementSuppressed||!hasDir?0:moveSpeed*(runKey?2:1)*(Math.abs(_turnRest)>1.6?0.25:1);
+    const tv=actionMovementSuppressed||!hasDir?0:moveSpeed*playerMoveSpeedK()*(Math.abs(_turnRest)>1.6?0.25:1); // slower wading and swimming
     const _lf=tv!==0?0.22:0.28; charMesh._vel+=(tv-charMesh._vel)*_lf;
     if(Math.abs(charMesh._vel)>0.0001){
       const _currentPos = charMesh.position.clone();
@@ -28436,16 +28506,18 @@ engine.runRenderLoop(()=>{
     }
     if (ActiveInterior) updateInteriorDeckY();
     // a game can hold the feet at its own height (ctx.player.float: a surfboard on the sea)
-    const _terrainY = ActiveInterior ? getActiveInteriorPlayerFloorY() : MiniGames.on && MiniGames.floatY != null ? MiniGames.floatY : getVillagePlayerGroundHeightAt(charMesh.position.x, charMesh.position.z);
+    // in deep water the player swims at the surface (updatePlayerSwim)
+    const _terrainY = ActiveInterior ? getActiveInteriorPlayerFloorY() : MiniGames.on && MiniGames.floatY != null ? MiniGames.floatY : updatePlayerSwim(getVillagePlayerGroundHeightAt(charMesh.position.x, charMesh.position.z), dt);
     if (Number.isFinite(_terrainY)) {
       groundPlayableVisualToTerrain(_terrainY);
       // Slope tilt removed — character stays upright
     }
     // a roam game's own walk (ctx.player.walkAs: the sneak walk) takes the walk's place; running stays the run
     const _ws = MiniGames.on ? MiniGames.walkSlot : null;
-    if (_ws != null && animGroups[_ws]) { if (animState === _ws || animState < 3) { const mv = moveForward||moveBackward||turnLeft||turnRight; if (mv && runKey) { if (animState !== 2) switchAnim(2, true); } else if (mv) { if (animState !== _ws) switchAnim(_ws, true); } else if (animState !== 0) switchAnim(0, true); } }
+    if (SWIM.on && SWIM.slot != null && !MiniGames.on) playPlayerSwimClip(moveForward||moveBackward||turnLeft||turnRight||runKey);
+    else if (_ws != null && animGroups[_ws]) { if (animState === _ws || animState < 3) { const mv = moveForward||moveBackward||turnLeft||turnRight; if (mv && runKey) { if (animState !== 2) switchAnim(2, true); } else if (mv) { if (animState !== _ws) switchAnim(_ws, true); } else if (animState !== 0) switchAnim(0, true); } }
     else if(animState!==2&&animState<3){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
-    if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8*(window._walkLightK??1)*(MiniGames.on?(MiniGames.walkLight??1):1);updateSandFootprints(_terrainY);}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
+    if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8*(window._walkLightK??1)*(MiniGames.on?(MiniGames.walkLight??1):1);updateSandFootprints(SWIM.on ? NaN : _terrainY);}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
     // the camera swings round behind the character while it moves (about two seconds for a half turn at a walk, quicker
     // running), unless the mouse just turned it: walking out of a doorway toward the camera, it comes round behind
     if (hasDir && Math.abs(charMesh._vel) > .01 && performance.now() > _camManualUntil && !DanceOff.on) {
