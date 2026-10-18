@@ -248,11 +248,12 @@
         }
         if (!N1) { N1 = new V3(P1.x, P1.y, npcZ - .55); N2 = new V3(P1.x, P1.y - .03, npcZ - .2); }
       // the rope: a tail behind each puller dropping to the ground, straight through each one's two fists, sagging between
-        const tail = (a, b, n) => { const w = a.subtract(b); w.y = 0; w.normalize(); const out = [];
-          for (let i = n; i >= 1; i--) { const f = i / n, p = a.add(w.scale(1.5 * f)); p.y = .05 + (a.y - .05) * (1 - Math.pow(f, 1.6)); out.push(p); } return out; };
-        const pts = [...tail(P2, P1, 4), P2, P1];
+        // (each tail runs along the rope, away from the other puller: the two fists can sit one above the other)
+        const tail = (a, dz, n) => { const out = [];
+          for (let i = n; i >= 1; i--) { const f = i / n, p = a.add(new V3(0, 0, dz * 1.5 * f)); p.y = .05 + (a.y - .05) * (1 - Math.pow(f, 1.6)); out.push(p); } return out; };
+        const pts = [...tail(P2, -1, 4), P2, P1];
         for (let i = 1; i < 10; i++) { const f = i / 10, p = V3.Lerp(P1, N1, f); p.y -= Math.sin(Math.PI * f) * .12; pts.push(p); }
-        pts.push(N1, N2, ...tail(N2, N1, 4).reverse());
+        pts.push(N1, N2, ...tail(N2, 1, 4).reverse());
         rope = B.MeshBuilder.CreateTube('tgRope', { path: pts, radius: .045, tessellation: 6, updatable: true, instance: rope || undefined }, scene);
         if (!rope.material) { rope.material = M.rope; rope.isPickable = false; keep(rope); }
         // the ribbon hangs from the rope at the middle mark (it slides with the bout)
