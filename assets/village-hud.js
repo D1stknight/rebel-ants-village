@@ -87,7 +87,7 @@ body.rebel-panel-open #questLine{display:none!important}
     cam.mode = BABYLON.Camera.ORTHOGRAPHIC_CAMERA; cam.orthoLeft = -R; cam.orthoRight = R; cam.orthoTop = R; cam.orthoBottom = -R; cam.minZ = 1; cam.maxZ = 1400;
     const rtt = new BABYLON.RenderTargetTexture('miniMapRTT', size, scene, false, true);
     rtt.activeCamera = cam;
-    const skip = /sky|cloud|mist|fog|rain|snow|bird|player|npc|ghost|questTarget|glint|shadow|halo|beam|ray/i;
+    const skip = /sky|cloud|mist|fog|rain|snow|bird|player|npc|ghost|questTarget|glint|shadow|halo|beam|ray|saintsTraffic/i; // (moving cars would stay painted where they were)
     const pr = scene.getTransformNodeByName('playerRoot');
     rtt.renderList = null; // a predicate, as the main render picks meshes (instanced copies draw through their source)
     rtt.renderListPredicate = m => m.isEnabled() && !skip.test(m.name || '') && !inside(m, pr);

@@ -25653,8 +25653,89 @@ function newTerrainLayoutFromSaved(data) {
     }).catch(e => console.warn('Terrain decor failed', e)), 50);
     if (NT.water || NT.falls?.length || NT.recipe.village?.pools) startNewTerrainWaterSound(NT); // streams, cliff waterfalls, canals
     if (NT.sea && NT.recipe.sea.surf !== false) startNewTerrainSurfSound(NT); // lakes: surf 'calm' (lapping)
+    if (CURRENT_VILLAGE_ID === 'saints-la') setTimeout(() => startSaintsTraffic(NT), 1500); // cars on the city streets
   }
   return out;
+}
+// Saints of LA traffic (Oct 18, Miguel: "can we add driving cars in saints?"): kit cars in the parked cars' six colours
+// drive the street grid (village-terrain.js saintsCity: streets every 132 m / 144 m, 14 m wide, cars parked 5.2 m out)
+// round the Saints' block and its four neighbours. Each loop runs clockwise 2 m inside its block's streets, the
+// right-hand lane, turning right at every corner, so loops never cross (each keeps to its own corner of a crossing) and
+// every street has a lane each way. A car eases off behind the one ahead on its loop, slows into the corners, stops for
+// you when you step into its lane (and honks if you stay), climbs and tips with the ground, and can't be walked through.
+// Hidden (and still) in rooms and while a game is on: Crosswalk Rush, the Lowrider Hop and Valet Parking use the streets.
+const SaintsTraffic = { on: false, cars: [] };
+function startSaintsTraffic(NT) {
+  if (SaintsTraffic.on || !window.SamuraiKit || CURRENT_VILLAGE_ID !== 'saints-la') return; SaintsTraffic.on = true;
+  const LANE = 2.0, R = 6.5, HL = 3.9, HW = 1.45; // lane from the street's middle, corner radius, the car's half length / width
+  const KINDS = ['sl_car_red', 'sl_car_blue', 'sl_car_white', 'sl_car_gold', 'sl_car_black', 'sl_car_purple'];
+  const loopOf = (bx, bz) => { // the closed path round a block: points every ~1.5 m, arcs flagged
+    const x0 = bx - 66 + LANE, x1 = bx + 66 - LANE, z0 = bz - 72 + LANE, z1 = bz + 72 - LANE, pts = [];
+    const seg = (a, b) => { const L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.ceil(L / 1.5)); for (let i = 0; i < n; i++) pts.push([a[0] + (b[0] - a[0]) * i / n, a[1] + (b[1] - a[1]) * i / n, 0]); };
+    const arc = (c, a0, a1) => { for (let i = 0; i < 10; i++) { const a = a0 + (a1 - a0) * i / 10; pts.push([c[0] + Math.cos(a) * R, c[1] + Math.sin(a) * R, 1]); } };
+    seg([x0 + R, z1], [x1 - R, z1]); arc([x1 - R, z1 - R], Math.PI / 2, 0);          // north side going east, the NE corner
+    seg([x1, z1 - R], [x1, z0 + R]); arc([x1 - R, z0 + R], 0, -Math.PI / 2);         // east side going south
+    seg([x1 - R, z0], [x0 + R, z0]); arc([x0 + R, z0 + R], -Math.PI / 2, -Math.PI);  // south side going west
+    seg([x0, z0 + R], [x0, z1 - R]); arc([x0 + R, z1 - R], Math.PI, Math.PI / 2);    // west side going north
+    const cum = [0]; for (let i = 1; i <= pts.length; i++) { const a = pts[i - 1], b = pts[i % pts.length]; cum.push(cum[i - 1] + Math.hypot(b[0] - a[0], b[1] - a[1])); }
+    return { pts, cum, len: cum[pts.length] };
+  };
+  const at = (L, s) => { // position, direction and whether a corner is near, a distance s along a loop
+    s = ((s % L.len) + L.len) % L.len; let lo = 0, hi = L.pts.length; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (L.cum[m] <= s) lo = m; else hi = m; }
+    const a = L.pts[lo], b = L.pts[(lo + 1) % L.pts.length], f = (s - L.cum[lo]) / Math.max(1e-6, L.cum[lo + 1] - L.cum[lo]);
+    const dx = b[0] - a[0], dz = b[1] - a[1], d = Math.hypot(dx, dz) || 1;
+    return { x: a[0] + dx * f, z: a[1] + dz * f, dx: dx / d, dz: dz / d, idx: lo };
+  };
+  const cornerAhead = (L, s, ahead) => { for (let k = 0; k <= ahead; k += 3) if (L.pts[at(L, s + k).idx][2]) return k; return null; };
+  const loops = [[0, 20, 3], [-132, 20, 2], [132, 20, 2], [0, -124, 2], [0, 164, 2]].map(([bx, bz, n]) => ({ L: loopOf(bx, bz), n }));
+  const ground = (x, z) => { const h = NT.heightAt?.(x, z); return Number.isFinite(h) ? h : 0; };
+  let k = 0;
+  loops.forEach((lp, li) => { for (let i = 0; i < lp.n; i++) {
+    const node = new BABYLON.TransformNode('saintsTrafficCar_' + k, scene);
+    window.SamuraiKit.build(node, KINDS[(k + li) % KINDS.length], scene, null, false);
+    node.getChildMeshes(false).forEach(m => { m.isPickable = false; m.metadata = { ...(m.metadata || {}), camSkip: true, saintsTraffic: true }; try { shadows.addShadowCaster(m); } catch (e) {} });
+    SaintsTraffic.cars.push({ node, loop: lp, s: lp.L.len * (i + .37 * li) / lp.n, v: 6 + Math.random() * 3, top: 8.5 + Math.random() * 2, honkAt: 0, waitT: 0, box: null });
+    k++;
+  } });
+  const honk = (car, dist) => { // two horn tones, quieter further off
+    const m = MoonTaleSounds.mix(); if (!m) return; const { ctx, out } = m, t = ctx.currentTime, g = ctx.createGain(), lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 1800; g.connect(lp).connect(out);
+    const lvl = .5 / (1 + dist * .08); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(lvl, t + .02); g.gain.setValueAtTime(lvl, t + .22); g.gain.linearRampToValueAtTime(0, t + .3);
+    g.gain.setValueAtTime(0, t + .38); g.gain.linearRampToValueAtTime(lvl, t + .4); g.gain.setValueAtTime(lvl, t + .7); g.gain.linearRampToValueAtTime(0, t + .8);
+    for (const f of [392, 494]) { const o = ctx.createOscillator(); o.type = 'square'; o.frequency.value = f; o.connect(g); o.start(t); o.stop(t + .85); }
+    setTimeout(() => { try { out.disconnect(); } catch (e) {} }, 1200);
+  };
+  scene.onBeforeRenderObservable.add(() => {
+    const show = !ActiveInterior && !MiniGames.on && !adminMode, dt = Math.min(.1, engine.getDeltaTime() / 1000), P = charMesh?.position, now = performance.now();
+    for (const c of SaintsTraffic.cars) {
+      if (!show) { if (c.node.isEnabled()) c.node.setEnabled(false); c.box = null; continue; }
+      const L = c.loop.L, here = at(L, c.s);
+      let want = c.top; const corner = cornerAhead(L, c.s, 15); if (corner != null) want = Math.min(want, 4.5 + corner * .35);
+      for (const o of SaintsTraffic.cars) if (o !== c && o.loop === c.loop) { const gap = ((o.s - c.s) % L.len + L.len) % L.len; if (gap < 22) want = Math.min(want, Math.max(0, (gap - 11) * 1.2)); }
+      let forYou = false;
+      if (P) { const rx = P.x - here.x, rz = P.z - here.z, ahead = rx * here.dx + rz * here.dz, side = Math.abs(rx * here.dz - rz * here.dx);
+        if (side < HW + 1.3 && ahead > -HL - .6 && ahead < 16) { forYou = ahead > 0; want = Math.min(want, Math.max(0, (ahead - HL - 2.2) * 1.1)); } }
+      c.v += Math.max(-9 * dt, Math.min(3 * dt, want - c.v)); if (c.v < .05 && want <= 0) c.v = 0;
+      c.waitT = c.v === 0 && forYou ? c.waitT + dt : 0;
+      if (c.waitT > 1.4 && now - c.honkAt > 5000 && P) { c.honkAt = now; honk(c, Math.hypot(P.x - here.x, P.z - here.z)); }
+      c.s = (c.s + c.v * dt) % L.len;
+      const p = at(L, c.s), far = P ? Math.hypot(P.x - p.x, P.z - p.z) > 300 : false;
+      if (c.node.isEnabled() === far) c.node.setEnabled(!far);
+      const yb = ground(p.x - p.dx * 2.6, p.z - p.dz * 2.6), yf = ground(p.x + p.dx * 2.6, p.z + p.dz * 2.6), yl = ground(p.x - p.dz * 1.2, p.z + p.dx * 1.2), yr = ground(p.x + p.dz * 1.2, p.z - p.dx * 1.2);
+      c.node.position.set(p.x, (yb + yf + yl + yr) / 4 + .02, p.z);
+      // facing along the lane (the kit car's front is its local -x), nose and sides following the ground's slope
+      c.node.rotationQuaternion = BABYLON.Quaternion.RotationYawPitchRoll(Math.atan2(p.dz, -p.dx), 0, Math.atan2(yb - yf, 5.2)).multiply(BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, Math.atan2(yl - yr, 2.4)));
+      c.box = { x: p.x, z: p.z, dx: p.dx, dz: p.dz };
+    }
+  });
+  window._saintsTraffic = SaintsTraffic; // tests
+}
+// is (x, z) inside a moving car (padded)? a car you stand inside already (it drove into you) lets you walk out
+function saintsTrafficBlocks(x, z, pad = 0) {
+  if (!SaintsTraffic.on) return false;
+  const inside = (b, px, pz, e) => { const rx = px - b.x, rz = pz - b.z, a = Math.abs(rx * b.dx + rz * b.dz), s = Math.abs(rx * b.dz - rz * b.dx); return a < 3.9 + e && s < 1.45 + e; };
+  const P = charMesh?.position;
+  return SaintsTraffic.cars.some(c => c.box && inside(c.box, x, z, pad) && !(P && inside(c.box, P.x, P.z, 0)));
 }
 // Running water: soft filtered noise made in the browser (no sound file), louder near the waterfall and the stream.
 // Follows the Master and Ambience sliders; starts on the first click or key press (browsers block sound before that).
@@ -26667,7 +26748,7 @@ function getCameraOccluders() {
   _camOcc.at = now;
   const p = charMesh.position, pr = scene.getTransformNodeByName('playerRoot');
   _camOcc.list = scene.meshes.filter(m => {
-    if (!m.isEnabled() || !m.isVisible || m.visibility < .5 || !m.getTotalVertices?.() || m.metadata?.keepInInteriors || m.isAnInstance === false && m.metadata?.samKitTemplate) return false;
+    if (!m.isEnabled() || !m.isVisible || m.visibility < .5 || !m.getTotalVertices?.() || m.metadata?.keepInInteriors || m.metadata?.camSkip || m.isAnInstance === false && m.metadata?.samKitTemplate) return false;
     if (CAM_OCC_SKIP.test(m.name || '') || CAM_OCC_SKIP.test(m.material?.name || '')) return false;
     for (let n = m.parent; n; n = n.parent) if (n === pr) return false;
     const bb = m.getBoundingInfo().boundingBox, c = bb.centerWorld, e = bb.extendSizeWorld;
@@ -27975,6 +28056,7 @@ function villagePointBlocked(x, z, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PA
   const onDeck = villageOnKitDeck(x, z); // piers run over the quay wall and the water, bridges over the ravine
   if (!onDeck && !villageSwimmerUnderwater(x, z) && window._newTerrain?.decorBlocksPoint(x, z, padding)) return true; // scattered pines and rocks
   if (villageSeaBlocks(x, z)) return true; // no wading into the sea
+  if (saintsTrafficBlocks(x, z, padding)) return true; // the Saints' moving cars
   const cachedBlockerHit = villageCollisionBlockers.some(blocker => {
     if (blocker.kind === 'group') {
       const dx = x - blocker.x, dz = z - blocker.z, rr = blocker.r + padding;
