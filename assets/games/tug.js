@@ -168,13 +168,16 @@
       const armLen = r => V3.Distance(W(r, r.Left.arm), W(r, r.Left.fore)) + V3.Distance(W(r, r.Left.fore), W(r, r.Left.hand));
       // where a rig holds the rope: in front of its belly (down and forward from its shoulders along its own leaning body),
       // on the middle line (frame x 0) so both pullers share one straight rope
+      // (the root's axes normalized: the Rebel's root is scaled, so its raw axes put the belly 0.8 m under the shoulders,
+      // out of the arms' reach, and the fists stayed at the chest)
       const belly = (r, root) => { const A = V3.Center(W(r, r.Left.arm), W(r, r.Right.arm)), L = armLen(r);
-        const p = local(A.add(root.getDirection(V3.Up()).scale(-.55 * L)).addInPlace(root.getDirection(V3.Forward()).scale(.18 * L))); p.x = 0; return p; };
+        const p = local(A.add(root.getDirection(V3.Up()).normalize().scale(-.55 * L)).addInPlace(root.getDirection(V3.Forward()).normalize().scale(.18 * L))); p.x = 0; return p; };
       // fists closed, then both arms onto the rope from its belly toward the other puller's (s: drawn in 0..1)
       const hold = (r, fists, Rb, Ro, s) => {
         for (const [n, q] of fists) n.rotationQuaternion = q.clone();
         if (r.bones) r.sk.prepare(true); else { below(r.Left.hand.node); below(r.Right.hand.node); }
         const g = holdOn(r, world(Rb), world(Ro).subtract(world(Rb)).normalize(), s);
+        (st.aims || (st.aims = {}))[r.bones ? 'me' : 'npc'] = g.T.map(local); // where its fists were sent (tests)
         return [local(g.front), local(g.back)];
       };
       const holdRope = () => {
@@ -248,7 +251,7 @@
         },
         key(e, down) { if (!down || e.repeat) return; if (e.key === ' ' || e.key === 'Enter') pull(); },
         pointer(evt) { if (evt.type === B.PointerEventTypes.POINTERDOWN) pull(); },
-        _test: { st, pull, swell, CYCLE, cycleNow, rigs, gripOf, W },
+        _test: { st, pull, swell, CYCLE, cycleNow, rigs, gripOf, W, holdOn, belly, armLen, freshRig },
         dispose() { st.phase = 'gone'; scene.onBeforeRenderObservable.remove(obs); hidden.forEach(n => { try { n.setEnabled(true); } catch (e) {} }); ringBox.remove(); flash.remove(); if (pr) pr.rotation.x = prWas; nodes.forEach(n => { try { n.dispose(); } catch (e) {} });
           if (npc && npcWas) { npc.position.copyFrom(npcWas.p); npc.rotation.y = npcWas.ry; npc.rotation.x = npcWas.rx || 0; if (npc.metadata) { npc.metadata.home = npcWas.m.home; npc.metadata.wanderOrigin = npcWas.m.wo; npc.metadata.target = npcWas.m.target; delete npc.metadata.gameHold; } } }
       };
