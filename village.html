@@ -3512,7 +3512,7 @@ function runGameJump(tries = 0) {
   const spot = roots.find(r => r.metadata?.spotConfig?.game?.id === GameJump) || roots.find(r => r.metadata?.spotConfig?.spotId === GameJump || r.name === 'questSpotRoot_' + GameJump);
   if (spot) {
     // the spot is in the village: out of any room first (Oct 18, Miguel: the Trick or Treat link "did not jump me to the
-    // game": a room left open on an earlier visit had been put back on load, and the jump moved him into its empty space)
+    // game": a room left open on an earlier visit had been put back on load, and the jump moved the Rebel into its empty space)
     if (ActiveInterior) { if (!ActiveInterior.exiting) returnToVillageFromInterior(); return again(); }
     const p = spot.getAbsolutePosition(), yaw = spot.rotation?.y || 0, sc = spot.metadata.spotConfig;
     charMesh.position.x = p.x - Math.sin(yaw) * 1.4; charMesh.position.z = p.z - Math.cos(yaw) * 1.4; charMesh.rotation.y = yaw; _playerDeckSnapUntil = performance.now() + 1500;
