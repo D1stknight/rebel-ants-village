@@ -15,15 +15,17 @@
 // doesnt have the rope pulling animation"): the rope ran from the middle of the Rebel's two hands (in the air between them)
 // to the middle of the opponent's, and the opponent was held by the chat's dialogueOpen, so it played its talk clip and
 // kept turning toward you. Now the rope is drawn through each fist's grip point (the Rebel's two, then the opponent's two),
-// with a tail behind each puller; the opponent is held by gameHold (no talking, no turning). With your games pack's rope
-// pull it pulls with the same move, carried over onto its own joints (ropePullFor): facing the camera as you do, it
-// reaches toward you and draws away, quicker through a heave. Without the move (no games pack) its arms are bent onto the
-// rope every frame after the animations (two-bone reach + the fist turned along the rope, its fingers closed from its own
-// flip kick's fist), hand over hand while it leans back, and the Rebel reaches onto the rope the same way. Models without
-// arm joints (the starter ant, kit apes) keep a rope end in front of them.
+// with a tail behind each puller, and the opponent is held by gameHold (no talking, no turning).
+// Oct 18, later (Miguel: "arent they supposed to face each other?"): the games pack's rope pull draws a rope sideways
+// across the body, so with it both stood side on to the camera, hands on their far sides. Now both face each other down
+// the middle and lean back from their feet (deeper as they draw the rope in, through his heaves and after your good
+// pulls), fists closed (from each one's own flip kick fist) on one straight rope at belly height, the arms bent onto it
+// every frame after the animations (two-bone reach, the fist turned along the rope): the front hand reaches out, the
+// back one holds near the belly, and both draw in as the puller leans back. Models without arm joints (the starter ant,
+// kit apes) keep a rope end in front of them.
 (function () {
   const G = {
-    title: 'Tug of War', moves: true,   // waits for the games pack (the rope pull)
+    title: 'Tug of War',
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const GAP = def.gap || 5.2, SEC = def.seconds || 40, CYCLE = def.cycle || 1.05, CYCLE_END = def.cycleEnd || .8, LINE = 1.25, WIN = .88;
@@ -38,14 +40,7 @@
       const pr = ctx.player.root, prWas = pr ? pr.rotation.x : 0;
       const st = { phase: 'intro', intro: 2, t: 0, ph: 0, left: SEC, b: 0, good: 0, weak: 0, combo: 0, heave: 0, warn: 0, nextHeave: 3.5 + Math.random() * 1.5, flash: 0, best: 0, kick: 0, lit: null,
         pull: 0, s: 0, lean: 0 }; // the opponent's hand-over-hand cycle (pull 0..1 a draw), how far drawn in (s 0..1), its lean
-      // the Rebel's stance: hand over hand on the rope (the games pack's rope pull: side on, the rope across its front, it
-      // reaches out toward its left and draws in toward its right, leaning right), else both hands forward (the push), else
-      // its idle. Side on it turns -90 deg and the camera stands on the -x side: then it faces the camera with its left
-      // toward the opponent (Oct 18: at +90 it faced the camera but pulled toward the opponent; measured on #262)
-      let ROPE = !!ctx.player.has?.('game_rope_pull'), stance = ROPE || !!ctx.player.has?.('game_push'), YAW = ROPE ? -Math.PI / 2 : 0;
-      if (ROPE) ctx.player.clip('game_rope_pull', { loop: true }); else if (stance) ctx.player.clip('game_push', { loop: true });
-      // a games pack still downloading when the bout began (the game waits 12 s for it): take up the rope pull when it comes
-      const ropeLate = () => { if (ROPE || !ctx.player.has?.('game_rope_pull')) return; ROPE = stance = true; YAW = -Math.PI / 2; if (pr) pr.rotation.x = 0; ctx.player.clip('game_rope_pull', { loop: true }); };
+      ctx.player.idle?.(); // its own stance, the arms set onto the rope every frame
       // def.hide: layout pieces of these types near the pullers step aside while the bout is on (Warrior: the yard's torch
       // stands between the camera and the rope)
       const hidden = [];
@@ -68,61 +63,18 @@
         const r = { root, sm, sk, bones: !!viaBones };
         for (const sd of ['Left', 'Right']) { const j = { arm: by(sd + 'Arm'), fore: by(sd + 'ForeArm'), hand: by(sd + 'Hand'), i1: by(sd + 'HandIndex1'), m1: by(sd + 'HandMiddle1'), p1: by(sd + 'HandPinky1') };
           if (!Object.values(j).every(Boolean)) return null; r[sd] = j; }
-        r.fingers = all.filter(t => /Hand(Thumb|Index|Middle|Ring|Pinky)\d$/.test(t.name));
+        const isFinger = n => /Hand(Thumb|Index|Middle|Ring|Pinky)\d$/.test(n);
+        r.fingers = viaBones ? sk.bones.filter(b => isFinger(b.name)).map(b => b.getTransformNode()).filter(Boolean) : all.filter(t => isFinger(t.name));
         return r;
       };
-      // a forged NPC's grip: its fingers closed three quarters of the way from its idle hand to the fist of its own flip kick
-      // (the rope pull's fists are as closed: about 205 deg over the three finger joints, idle 77, the flip kick 251)
-      const gripPose = r => {
-        const gs = r.root.metadata?.animationGroups || [], key = (g, n) => { const a = g?.targetedAnimations.find(t => t.target === n && t.animation.targetProperty === 'rotationQuaternion'); return a?.animation.getKeys()[0]?.value || null; };
-        const fist = gs.find(g => g.name === 'flip_kick'), idle = gs.find(g => g.name === 'idle'); if (!fist) return [];
-        return r.fingers.map(n => { const f = key(fist, n), i = key(idle, n) || n.rotationQuaternion; return f && i ? [n, B.Quaternion.Slerp(i, f, .75)] : null; }).filter(Boolean);
+      // a grip: the fingers closed three quarters of the way from the idle hand to the fist of the rig's own flip kick (a
+      // forged NPC's idle hand is about 77 deg over the three finger joints, the flip kick 251)
+      const fistOf = (fingers, fist, idle) => {
+        if (!fist) return [];
+        const key = (g, n) => { const a = g?.targetedAnimations.find(t => t.target === n && t.animation.targetProperty === 'rotationQuaternion'); return a?.animation.getKeys()[0]?.value || null; };
+        return fingers.map(n => { const f = key(fist, n), i = key(idle, n) || n.rotationQuaternion; return f && i ? [n, B.Quaternion.Slerp(i, f, .75)] : null; }).filter(Boolean);
       };
-      const rigs = { me: null, npc: null, grip: [], seek: 0, pull: null };
-      // the opponent pulls with your own move: a forged NPC's rig carries the village's clips, not the rope pull, so the
-      // games pack's move of yours is carried over onto its joints when both are in. Both rigs come from the Forge Rigger
-      // (the same joints under an untransformed Armature): each joint gets the same turn away from its rest, taken in its
-      // parent's rest frame in the model's space, the hips the same shift scaled to its height, and the cuff bones (NPC
-      // rigs only) turn with the hand about the sleeve as the rigger bakes them. The NPC is drawn through the glTF root's
-      // turn and mirror and the Rebel's skin without them, so the same move comes out as the mirror image of yours: facing
-      // the camera as you do, it reaches toward you and draws away
-      const ropePullFor = (src, meSk, sk) => {
-        const key = n => n.replace(/^mixamorig[_:]/, ''), I = B.Quaternion.Identity();
-        const restOf = bones => { const by = {};
-          for (const b of bones) { const s = new V3(), q = new B.Quaternion(), t = new V3(); b.getRestMatrix().decompose(s, q, t); by[key(b.name)] = { b, q, t, p: b.getParent() ? key(b.getParent().name) : null }; }
-          const W = k => { const e = by[k]; if (!e.W) e.W = e.p && by[e.p] ? W(e.p).multiply(e.q) : e.q.clone(); return e.W; };
-          for (const k in by) W(k); return by; };
-        const R = restOf(meSk.bones), N = restOf(sk.bones);
-        if (!R.Hips || !N.Hips) return null;
-        const ks = Math.abs(R.Hips.t.y) > 1e-4 ? N.Hips.t.y / R.Hips.t.y : 1;
-        const g = new B.AnimationGroup('game_rope_pull', scene), hand = {};
-        for (const ta of src.targetedAnimations) {
-          const k = ta.target?.name ? key(ta.target.name) : null; if (!k || /^cloth_/.test(k)) continue; // the cloth springs own those
-          const r = R[k], n = N[k], tn = n?.b.getTransformNode?.(); if (!r || !tn) continue;
-          const A = ta.animation, P = A.targetProperty;
-          let keys = null;
-          if (P === 'rotationQuaternion') { // q' = Wn^-1 Wr q r^-1 Wr^-1 Wn n (W = the parent's rest, model space)
-            const Wr = r.p && R[r.p] ? R[r.p].W : I, Wn = n.p && N[n.p] ? N[n.p].W : I;
-            const pre = Wn.conjugate().multiply(Wr), post = r.q.conjugate().multiply(Wr.conjugate()).multiply(Wn).multiply(n.q);
-            keys = A.getKeys().map(f => ({ frame: f.frame, value: pre.multiply(f.value).multiply(post) }));
-            if (/^(Left|Right)Hand$/.test(k)) hand[k] = { keys, fps: A.framePerSecond };
-          } else if (P === 'position' && k === 'Hips') keys = A.getKeys().map(f => ({ frame: f.frame, value: n.t.add(f.value.subtract(r.t).scale(ks)) }));
-          if (!keys) continue;
-          const a = new B.Animation('tg_' + k + '_' + P, P, A.framePerSecond, A.dataType, B.Animation.ANIMATIONLOOPMODE_CYCLE); a.setKeys(keys);
-          g.addTargetedAnimation(a, tn);
-        }
-        for (const sd of ['Left', 'Right']) { // the cuff: the hand's twist about the sleeve (its own axis, in the forearm's frame)
-          const c = N[sd + 'ForeArmCuff'], h = N[sd + 'Hand'], hk = hand[sd + 'Hand'], tn = c?.b.getTransformNode?.(); if (!c || !h || !hk || !tn) continue;
-          const ax = V3.Up().applyRotationQuaternion(c.q), hInv = h.q.conjugate();
-          const keys = hk.keys.map(f => { const D = f.value.multiply(hInv), tw = 2 * Math.atan2(D.x * ax.x + D.y * ax.y + D.z * ax.z, D.w);
-            return { frame: f.frame, value: B.Quaternion.RotationAxis(ax, tw).multiply(c.q) }; });
-          const a = new B.Animation('tg_' + sd + 'Cuff', 'rotationQuaternion', hk.fps, B.Animation.ANIMATIONTYPE_QUATERNION, B.Animation.ANIMATIONLOOPMODE_CYCLE); a.setKeys(keys);
-          g.addTargetedAnimation(a, tn);
-        }
-        if (!g.targetedAnimations.length) { g.dispose(); return null; }
-        g.enableBlending = true; g.blendingSpeed = .12;
-        return g;
-      };
+      const rigs = { me: null, npc: null, fistMe: [], fistNpc: [], seek: 0 };
       // the ring: swells to full once a cycle; a pull near the top counts
       const hud = document.getElementById('gameHud'), ringBox = document.createElement('div');
       // high on the side away from the opponent (Oct 18: at mid right it covered him on most screens); see ringSide
@@ -147,15 +99,16 @@
           if (!(st.wordT > 0)) wordEl.textContent = lit ? 'PULL!' : '';
         }
       }
-      const place = () => { // the pullers slide with the ribbon and lean back
-        const shift = st.b * LINE, lean = (stance ? .26 : .1) + Math.abs(st.b) * .08; // the ribbon reaches a chalk line at b = ±1
-        ctx.player.place(0, -GAP / 2 - shift - st.kick * .5, YAW); if (pr) pr.rotation.x = ROPE ? 0 : -(lean + st.kick);
-        st.lean = .2 + Math.abs(st.b) * .06 + st.s * .07 + (st.heave > 0 ? .08 : 0);
-        if (npc) { const z = GAP / 2 - shift, w = ctx.toWorld(0, 0, z); npc.position.x = w.x; npc.position.z = w.z;
-          // with your rope pull it faces the camera as you do (the move leans by itself), else it faces you and leans back
-          const f = rigs.pull ? ctx.toWorld(Math.sin(YAW), 0, z + Math.cos(YAW)) : ctx.toWorld(0, 0, -GAP); npc.rotation.y = Math.atan2(f.x - w.x, f.z - w.z);
-          npc.rotation.x = rigs.pull ? 0 : rigs.npc ? -st.lean : -lean;
-          if (npc.metadata) { npc.metadata.target = null; npc.metadata.home = npc.position.clone(); npc.metadata.wanderOrigin = npc.position.clone(); npc.metadata.gameHold = { clip: rigs.pull ? 'game_rope_pull' : 'idle' }; } }
+      // both face the middle and lean back from their feet: deeper as they draw the rope in, through his heaves and after
+      // each of your good pulls (the kick also steps you back)
+      const place = () => {
+        const shift = st.b * LINE; // the ribbon reaches a chalk line at b = ±1
+        st.lean = .34 + Math.abs(st.b) * .05 + st.s * .08 + (st.heave > 0 ? .1 : 0);
+        st.meS = Math.min(1, st.kick / .16); st.meLean = .34 + st.meS * .1 + Math.abs(st.b) * .04;
+        ctx.player.place(0, -GAP / 2 - shift - st.kick * .5, 0); if (pr) pr.rotation.x = rigs.me ? -st.meLean : -(.12 + st.kick);
+        if (npc) { const w = ctx.toWorld(0, 0, GAP / 2 - shift), f = ctx.toWorld(0, 0, -GAP); npc.position.x = w.x; npc.position.z = w.z; npc.rotation.y = Math.atan2(f.x - w.x, f.z - w.z);
+          npc.rotation.x = rigs.npc ? -st.lean : -.12;
+          if (npc.metadata) { npc.metadata.target = null; npc.metadata.home = npc.position.clone(); npc.metadata.wanderOrigin = npc.position.clone(); npc.metadata.gameHold = { clip: 'idle' }; } }
       };
       // world matrices from the top of a node's chain down (after the animations this frame: cached ones are a frame old)
       const chainUp = n => { const ch = []; for (let p = n; p; p = p.parent) ch.push(p); for (let i = ch.length - 1; i >= 0; i--) ch[i].computeWorldMatrix(true); };
@@ -212,41 +165,32 @@
       };
       // each frame after the animations: the arms onto the rope and the rope through the fists (frame coordinates)
       const local = v => ctx.toLocal(v), world = v => ctx.toWorld(v.x, v.y, v.z);
+      const armLen = r => V3.Distance(W(r, r.Left.arm), W(r, r.Left.fore)) + V3.Distance(W(r, r.Left.fore), W(r, r.Left.hand));
+      // where a rig holds the rope: in front of its belly (down and forward from its shoulders along its own leaning body),
+      // on the middle line (frame x 0) so both pullers share one straight rope
+      const belly = (r, root) => { const A = V3.Center(W(r, r.Left.arm), W(r, r.Right.arm)), L = armLen(r);
+        const p = local(A.add(root.getDirection(V3.Up()).scale(-.55 * L)).addInPlace(root.getDirection(V3.Forward()).scale(.18 * L))); p.x = 0; return p; };
+      // fists closed, then both arms onto the rope from its belly toward the other puller's (s: drawn in 0..1)
+      const hold = (r, fists, Rb, Ro, s) => {
+        for (const [n, q] of fists) n.rotationQuaternion = q.clone();
+        if (r.bones) r.sk.prepare(true); else { below(r.Left.hand.node); below(r.Right.hand.node); }
+        const g = holdOn(r, world(Rb), world(Ro).subtract(world(Rb)).normalize(), s);
+        return [local(g.front), local(g.back)];
+      };
       const holdRope = () => {
-        if ((rigs.seek -= 1) <= 0 && (!rigs.npc || !rigs.me || (ROPE && !rigs.pullTried))) { rigs.seek = 30; // models still loading: look again
-          if (!rigs.npc && npc?.metadata?.modelLoaded) { rigs.npc = rigOf(npc, false); if (rigs.npc) rigs.grip = gripPose(rigs.npc); }
-          if (!rigs.me && pr && ctx.player.rig) rigs.me = rigOf(pr, true);
-          if (ROPE && !rigs.pullTried && rigs.npc && rigs.me && Array.isArray(npc.metadata?.animationGroups)) { rigs.pullTried = true; // your rope pull onto it
-            const src = ctx.player.group?.('game_rope_pull'), sk = npc.getChildMeshes(false).find(m => m.skeleton)?.skeleton;
-            try { rigs.pull = src && sk ? ropePullFor(src, rigs.me.sk, sk) : null; } catch (e) { rigs.pull = null; console.warn('tug rope pull', e?.message || e); }
-            if (rigs.pull) npc.metadata.animationGroups.push(rigs.pull); } }
+        if ((rigs.seek -= 1) <= 0 && (!rigs.npc || !rigs.me)) { rigs.seek = 30; // models still loading: look again
+          if (!rigs.npc && npc?.metadata?.modelLoaded) { rigs.npc = rigOf(npc, false);
+            if (rigs.npc) { const gs = npc.metadata.animationGroups || []; rigs.fistNpc = fistOf(rigs.npc.fingers, gs.find(g => g.name === 'flip_kick'), gs.find(g => g.name === 'idle')); } }
+          if (!rigs.me && pr && ctx.player.rig) { rigs.me = rigOf(pr, true);
+            if (rigs.me) rigs.fistMe = fistOf(rigs.me.fingers, ctx.player.group?.('flip_kick'), ctx.player.group?.('idle')); } }
         const shift = st.b * LINE, meZ = -GAP / 2 - shift, npcZ = GAP / 2 - shift;
-        let P1, P2; // the Rebel's front (toward the opponent) and back grip points
-        if (rigs.me) {
-          const r = rigs.me; freshRig(r);
-          if (ROPE) { const gl = local(gripOf(r, r.Left, 'Left').p), gr = local(gripOf(r, r.Right, 'Right').p); [P1, P2] = gl.z >= gr.z ? [gl, gr] : [gr, gl]; }
-          else { // no rope pull: both hands reach onto a rope beside its right hip, as the opponent's
-            const L0 = W(r, r.Left.arm), R1 = W(r, r.Right.arm), L = V3.Distance(L0, W(r, r.Left.fore)) + V3.Distance(W(r, r.Left.fore), W(r, r.Left.hand));
-            const R0 = V3.Center(L0, R1).addInPlace(R1.subtract(L0).normalize().scale(.3 * L)).addInPlace(new V3(0, -.6 * L, 0));
-            const g = holdOn(r, R0, ctx.toWorld(0, 0, 1).subtract(ctx.toWorld(0, 0, 0)).normalize(), .3);
-            P1 = local(g.front); P2 = local(g.back); }
-        }
-        if (!P1) { P1 = new V3(0, 1.45, meZ + .55); P2 = new V3(0, 1.4, meZ + .2); }
-        let N1, N2; // the opponent's front and back grip points
-        if (rigs.npc) {
-          const r = rigs.npc; freshRig(r);
-          if (rigs.pull) { // its own fists on the rope (the move closes them): the front one is nearer you
-            const gl = local(gripOf(r, r.Left, 'Left').p), gr = local(gripOf(r, r.Right, 'Right').p); [N1, N2] = gl.z <= gr.z ? [gl, gr] : [gr, gl];
-          } else {
-          for (const [n, q] of rigs.grip) n.rotationQuaternion = q.clone();
-          below(r.Left.hand.node); below(r.Right.hand.node);
-          const A = V3.Center(local(W(r, r.Left.arm)), local(W(r, r.Right.arm))), L = V3.Distance(W(r, r.Left.arm), W(r, r.Left.fore)) + V3.Distance(W(r, r.Left.fore), W(r, r.Left.hand));
-          // the rope on the line of your fists, at a height its arms reach (between its chest and its hips)
-          const R0 = new V3(P1.x, Math.min(A.y - .45 * L, Math.max(A.y - .85 * L, P1.y)), A.z), u = P1.subtract(R0).normalize();
-          const g = holdOn(r, world(R0), world(R0.add(u)).subtract(world(R0)).normalize(), st.s);
-          N1 = local(g.front); N2 = local(g.back); st.npcAim = g.T.map(local); st.npcArm = g.L; }
-        }
-        if (!N1) { N1 = new V3(P1.x, P1.y, npcZ - .55); N2 = new V3(P1.x, P1.y - .03, npcZ - .2); }
+        if (rigs.me) freshRig(rigs.me); if (rigs.npc) freshRig(rigs.npc);
+        const Bm = rigs.me ? belly(rigs.me, pr) : new V3(0, 1.45, meZ + .55), Bn = rigs.npc ? belly(rigs.npc, npc) : new V3(0, 1.45, npcZ - .55);
+        let P1, P2, N1, N2; // each puller's front (toward the other) and back grip points
+        if (rigs.me) [P1, P2] = hold(rigs.me, rigs.fistMe, Bm, Bn, st.meS);
+        else { P1 = new V3(0, 1.45, meZ + .55); P2 = new V3(0, 1.4, meZ + .2); }
+        if (rigs.npc) [N1, N2] = hold(rigs.npc, rigs.fistNpc, Bn, Bm, st.s);
+        else { N1 = new V3(0, 1.45, npcZ - .55); N2 = new V3(0, 1.4, npcZ - .2); }
       // the rope: a tail behind each puller dropping to the ground, straight through each one's two fists, sagging between
         // (each tail runs along the rope, away from the other puller: the two fists can sit one above the other)
         const tail = (a, dz, n) => { const out = [];
@@ -263,8 +207,8 @@
       };
       const obs = scene.onBeforeRenderObservable.add(() => { if (st.phase !== 'gone') try { holdRope(); } catch (e) { if (!st.ropeErr) { st.ropeErr = 1; console.warn('tug rope', e?.message || e); } } });
       place();
-      // both pullers in view (the Rebel was cut at the left edge; side on, it faces this camera)
-      const camOf = () => def.cam || (ROPE ? [-6.6, 3.0, -1.0] : [6.6, 3.0, -1.0]), look = def.look || [0, 1.5, -.4];
+      // both pullers side by side in view, the Rebel nearer the left
+      const camOf = () => def.cam || [6.6, 3.0, -1.0], look = def.look || [0, 1.5, -.4];
       ctx.look(camOf(), look, def.fov || .8);
       H.title(def.title || 'Tug of War'); H.score(''); H.info(`${SEC} s`);
       H.hint('Pull (<kbd>Space</kbd>, <kbd>Enter</kbd> or a click) as the ring swells full. Hold on through his heaves: a good pull then counts double.');
@@ -292,11 +236,9 @@
             const end = st.b >= 1 ? 'won' : st.b <= -1 ? 'lost' : st.left <= 0 ? (st.b > 0 ? 'won' : 'lost') : null;
             if (end) { st.phase = end; st.wait = 1.8; ctx.sound(end === 'won' ? 'gamewin' : 'thock'); H.msg(end === 'won' ? 'Over the line!' : 'Pulled over…', 1500); }
           }
-          if (!ROPE && (st.lateT = (st.lateT || 0) - dt) <= 0) { st.lateT = .5; ropeLate(); }
           if ((st.sideT = (st.sideT || 0) - dt) <= 0) { st.sideT = .5; ringSide(); }
-          // the opponent pulls hand over hand: reach out along the rope, then draw it in (quicker and deeper in a heave)
+          // the opponent pulls in rhythm: reach out along the rope, then draw it in leaning back (quicker in a heave)
           st.pull = (st.pull + dt / (st.heave > 0 ? .62 : 1.3)) % 1; st.s = .5 - .5 * Math.cos(Math.PI * 2 * st.pull);
-          if (rigs.pull) rigs.pull.speedRatio = st.heave > 0 ? 1.35 : 1; // its move quicker through a heave
           st.kick = Math.max(0, st.kick - dt * .6); drawRing(); place();
           if ((st.phase === 'won' || st.phase === 'lost') && (st.wait -= dt) <= 0) {
             const won = st.phase === 'won'; st.phase = 'done'; H.hint('');
@@ -306,9 +248,8 @@
         },
         key(e, down) { if (!down || e.repeat) return; if (e.key === ' ' || e.key === 'Enter') pull(); },
         pointer(evt) { if (evt.type === B.PointerEventTypes.POINTERDOWN) pull(); },
-        _test: { st, pull, swell, CYCLE, cycleNow, get stance() { return stance; }, get ROPE() { return ROPE; }, rigs, gripOf, W, setYaw(y) { YAW = y; } },
-        dispose() { st.phase = 'gone'; scene.onBeforeRenderObservable.remove(obs);
-          if (rigs.pull) { try { rigs.pull.stop(); const gs = npc?.metadata?.animationGroups, i = gs ? gs.indexOf(rigs.pull) : -1; if (i >= 0) gs.splice(i, 1); rigs.pull.dispose(); } catch (e) {} rigs.pull = null; } hidden.forEach(n => { try { n.setEnabled(true); } catch (e) {} }); ringBox.remove(); flash.remove(); if (pr) pr.rotation.x = prWas; nodes.forEach(n => { try { n.dispose(); } catch (e) {} });
+        _test: { st, pull, swell, CYCLE, cycleNow, rigs, gripOf, W },
+        dispose() { st.phase = 'gone'; scene.onBeforeRenderObservable.remove(obs); hidden.forEach(n => { try { n.setEnabled(true); } catch (e) {} }); ringBox.remove(); flash.remove(); if (pr) pr.rotation.x = prWas; nodes.forEach(n => { try { n.dispose(); } catch (e) {} });
           if (npc && npcWas) { npc.position.copyFrom(npcWas.p); npc.rotation.y = npcWas.ry; npc.rotation.x = npcWas.rx || 0; if (npc.metadata) { npc.metadata.home = npcWas.m.home; npc.metadata.wanderOrigin = npcWas.m.wo; npc.metadata.target = npcWas.m.target; delete npc.metadata.gameHold; } } }
       };
     }
