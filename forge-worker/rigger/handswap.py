@@ -167,7 +167,8 @@ for side in ('Left', 'Right'):
     fit = np.clip([float(f_.get(k, 0) or 0) for k in ('along', 'thumb', 'back')], -0.6, 0.6) * L
     size = float(np.clip(float(f_.get('size', 1) or 1), 0.6, 1.5))
     # v2.20 the cuff's own width (where it sits in the sleeve) and length (from the wrist back into the sleeve)
-    cuffw = float(np.clip(float(f_.get('cuffSize', 1) or 1), 0.5, 1.5)); cuffl = float(np.clip(float(f_.get('cuffLen', 1) or 1), 0.4, 1.6))
+    # v2.34 the width goes down to 0.1 (Rebel Forge: a slim cuff inside the guard)
+    cuffw = float(np.clip(float(f_.get('cuffSize', 1) or 1), 0.1, 1.5)); cuffl = float(np.clip(float(f_.get('cuffLen', 1) or 1), 0.4, 1.6))
     thumb_ax = -y if side == 'Left' else y     # the left glove is mirrored: its thumb is on -y
     if f_: print(f'handswap {side} hand fit: along {fit[0]:+.3f} thumb {fit[1]:+.3f} back {fit[2]:+.3f} size x{size:.2f} cuff x{cuffw:.2f} cuff length x{cuffl:.2f}')
     plan[side] = dict(W=W + off[0] * y + off[1] * z + fit[0] * x + fit[1] * thumb_ax + fit[2] * z, x=x, y=y, z=z, L=L * size, girth=girth, bend=bend, col=col, ccol=ccol, prof=prof, mirror=(side == 'Left'), cuffw=cuffw, cuffl=cuffl,
