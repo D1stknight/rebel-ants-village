@@ -4,6 +4,12 @@
 // (checked by a solver; the big ones need "what if a tent stood here?" reasoning). Squares beside no tree are grass
 // from the start. Click marks with the brush (Tab switches tent / grass, right click the other), drag paints, a click
 // on a line's number fills it when it is sure. H hint (no clean bonus). Score: the camp x 20, +10 without a hint.
+// Oct 17: How to play (the rules in a few lines) and Restart (the camp as picked: no marks, undo, hints or time).
+// Oct 17 (Miguel: "the War Camp needs 10 and image sample"): three more after the General's Camp, a 13 x 13 and two
+// 14 x 14 from the Oct 15 generator (scratchpad agents/lvA/tents/gen.mjs), harder by both its what-if count (28, 33, 40;
+// the General's Camp 22) and a second grader written apart from it (logic.py: 21, 25, 40; the General's Camp 12), which
+// also pitches every camp with no deeper search. Each has one answer by a SAT model of the rules (sat.py: the counts, no
+// tents touching, every tree its own tent; all ten pass). How to play shows a solved 6 x 6 (howto/tents.png).
 // def: { levels, pass, points }
 (function () {
   const LEVELS = [
@@ -13,10 +19,23 @@
     { name: "The Strategist's Camp", n: 9, trees: [1,4,6,17,22,27,34,39,44,45,52,60,64,65,78,79], tents: [3,5,8,10,21,28,33,35,40,53,54,56,59,73,77,80], rows: [3,1,1,3,1,1,3,0,3], cols: [1,3,1,2,1,3,1,0,4] },
     { name: "The Siege Camp", n: 10, trees: [1,7,8,14,24,30,33,37,38,46,48,51,55,63,69,75,80,82,89,96], tents: [4,6,9,11,23,25,28,31,45,47,49,50,62,65,68,81,83,85,97,99], rows: [3,1,3,1,3,1,3,0,3,2], cols: [1,3,1,2,1,4,1,2,2,3] },
     { name: "The Grand Army", n: 12, trees: [0,10,15,17,20,27,28,34,38,41,56,61,79,84,86,88,89,91,92,95,99,104,114,118,125,128,133,142], tents: [1,3,5,8,11,29,37,39,44,46,53,60,74,76,78,80,83,96,98,101,103,105,119,121,124,126,140,143], rows: [5,0,1,4,1,1,5,0,5,1,3,2], cols: [2,3,2,2,2,4,2,1,4,1,1,4] },
-    { name: "The General's Camp", n: 12, trees: [1,3,7,9,18,24,26,41,44,47,57,61,62,64,68,71,72,76,87,90,95,96,110,115,116,124,129,133,143], tents: [0,2,8,10,17,25,27,32,42,46,50,52,56,60,75,80,83,84,89,99,104,107,108,114,122,131,132,136,141], rows: [4,1,3,2,3,1,3,2,3,2,2,3], cols: [5,1,3,3,2,2,2,0,5,1,2,3] }
+    { name: "The General's Camp", n: 12, trees: [1,3,7,9,18,24,26,41,44,47,57,61,62,64,68,71,72,76,87,90,95,96,110,115,116,124,129,133,143], tents: [0,2,8,10,17,25,27,32,42,46,50,52,56,60,75,80,83,84,89,99,104,107,108,114,122,131,132,136,141], rows: [4,1,3,2,3,1,3,2,3,2,2,3], cols: [5,1,3,3,2,2,2,0,5,1,2,3] },
+    // Oct 17: 13 x 13 and two 14 x 14, 28 / 33 / 40 trials, 21 / 25 / 40 what-ifs (scratchpad agents/lvA/tents)
+    { name: "The Winter Camp", n: 13, trees: [3,10,13,14,18,19,22,37,41,42,45,51,58,75,79,86,89,98,107,111,114,117,118,121,123,131,141,150,151,153,158,161,168], tents: [0,4,9,15,20,24,31,35,40,46,55,62,64,66,71,87,90,94,97,104,112,115,119,130,134,136,138,140,155,157,160,163,166], rows: [3,3,2,2,3,2,2,2,3,1,5,1,4], cols: [3,3,2,2,3,1,3,3,2,3,3,2,3] },
+    { name: "The Highland Camp", n: 14, trees: [1,4,10,14,19,21,26,36,47,50,52,58,70,71,75,77,83,92,95,99,101,118,119,121,126,132,137,139,144,156,170,176,177,178,180,181,183,185,187], tents: [0,3,5,7,9,12,28,33,35,44,51,53,56,63,69,72,74,81,93,98,102,104,120,122,125,127,146,151,155,158,163,167,182,184,186,188,190,192,194], rows: [6,0,3,3,3,3,1,3,3,1,2,4,0,7], cols: [5,2,3,1,4,2,3,3,2,4,2,3,2,3] },
+    { name: "The Rising Sun Camp", n: 14, trees: [6,10,12,14,18,25,31,37,43,53,60,62,65,72,75,84,89,95,96,99,101,104,106,122,124,127,138,144,148,149,150,156,166,168,181,183,186,188,193], tents: [0,7,9,11,13,17,19,29,36,54,59,61,63,66,71,82,90,92,94,98,100,102,118,121,123,128,139,145,147,151,155,163,167,172,179,182,184,189,195], rows: [5,2,2,1,4,2,3,3,3,2,3,3,2,4], cols: [3,3,3,2,2,3,2,4,2,3,2,4,2,4] }
   ];
   const G = {
     title: 'The War Camp',
+    howTo: { lines: [
+      'Pitch one tent for every tree: each tree has its own tent right beside it, above, below, left or right of it (never at a corner).',
+      'Tents never touch each other, not even at a corner (touching tents are outlined red).',
+      'The numbers beside each row and under each column count the tents in that line.',
+      'Squares beside no tree can never hold a tent: they are grass from the start (the paler ones).',
+      'Click (or tap) a square to mark it with the brush: Tab (or the button) switches tent / grass, right click marks the other, drag paints. Click a line\'s number to fill the rest of it once it is sure.',
+      'Keys: arrows move the gold frame, Space marks with the brush, E a tent, Q grass, F fills its row and column. U undoes, H fixes one square (no clean bonus then), Restart starts the camp again.',
+      'Tip: a line whose count is already met is all grass, and so is every square around a tent, corners too.'],
+      img: 'howto/tents.png', caption: 'A solved 6 x 6 camp: every tree has its own tent beside it, no two tents touch, and every count is met.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsCampProgress:' + (def.id || 'tents');
@@ -89,7 +108,9 @@
         const v = s === need ? 1 : s + u === need ? 2 : 0; if (!v) { H.msg('Not sure yet', 900, `${need - s} more tent${need - s === 1 ? '' : 's'} among ${u} squares`); return false; }
         for (let b = 0; b < n; b++) { const i = kind ? b * n + a : a * n + b; if (bd.open[i] && !bd.mark[i]) setMark(i, v, rec); } commit(rec); return true; }
       function undo() { if (st.phase !== 'play') return; const rec = bd.undo.pop(); if (!rec) return; for (let j = rec.length - 1; j >= 0; j--) bd.mark[rec[j][0]] = rec[j][1]; ctx.note(330, 'lantern'); draw(); info(); }
-      function restart() { if (st.phase !== 'play') return; const rec = []; for (let i = 0; i < bd.mark.length; i++) if (bd.mark[i]) setMark(i, 0, rec); commit(rec); }
+      // Restart (the button beside Quit): the camp as it was picked (no marks, undo, hints or time), kept in the same
+      // board object (the tests hold it); only while it is being played
+      function restart() { if (st.phase !== 'play' || !bd) return; const b = bd; build(b.k); bd = Object.assign(b, bd); st.drag = null; H.msg('Start again', 900); }
       function hint() {
         if (st.phase !== 'play') return; const N2 = bd.n * bd.n;
         let i = -1; for (let j = 0; j < N2; j++) if (bd.mark[j] && (bd.mark[j] === 2) !== !!bd.sol[j]) { i = j; break; }
@@ -105,10 +126,10 @@
         if (bd.k + 1 > solvedUpTo) { solvedUpTo = bd.k + 1; try { localStorage.setItem(KEY, String(solvedUpTo)); } catch (e) {} } return true; }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,92vw);background:rgba(20,10,8,.95);border:1px solid rgba(216,179,92,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 420) + 'px,92vw);background:rgba(20,10,8,.95);border:1px solid rgba(216,179,92,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#d8b35c;margin-bottom:10px">The War Camp</div><div style="margin-bottom:12px;color:#bbb">Every tree has its own tent beside it. Tents never touch, not even at a corner. The numbers count the tents in each line.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${ok ? 'rgba(216,179,92,.2)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}${ok ? ' ✓' : ''}<div style="font:500 11px system-ui;color:#c9b88f">${L.n} × ${L.n}</div>` : `${k + 1}<div style="font:500 11px system-ui">locked</div>`}</button>`; }).join('')}</div>`
-          + `<div style="margin-top:10px;font-size:12px;color:#998">Keys 1-${LV.length} pick a camp</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 4},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${ok ? 'rgba(216,179,92,.2)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}${ok ? ' ✓' : ''}<div style="font:500 11px system-ui;color:#c9b88f">${L.n} × ${L.n}</div>` : `${k + 1}<div style="font:500 11px system-ui">locked</div>`}</button>`; }).join('')}</div>`
+          + `<div style="margin-top:10px;font-size:12px;color:#998">Keys ${LV.length > 9 ? '1-9 and 0' : '1-' + LV.length} pick a camp</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       const pads = document.createElement('div');
       pads.style.cssText = 'position:absolute;bottom:62px;right:14px;display:none;gap:6px;pointer-events:auto';
@@ -136,7 +157,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return; const n = bd.n, x = bd.cur % n, y = Math.floor(bd.cur / n);
           if (k === 'arrowup' || k === 'w') { bd.cur = ((y - 1 + n) % n) * n + x; draw(); } else if (k === 'arrowdown' || k === 's') { bd.cur = ((y + 1) % n) * n + x; draw(); }
           else if (k === 'arrowleft' || k === 'a') { bd.cur = y * n + (x - 1 + n) % n; draw(); } else if (k === 'arrowright' || k === 'd') { bd.cur = y * n + (x + 1) % n; draw(); }
@@ -152,6 +173,7 @@
           else if (evt.type === T.POINTERMOVE && st.drag) { const hit = cellAt(); if (hit && hit.i != null) dragTo(hit.i); }
           else if (evt.type === T.POINTERUP) st.drag = null;
         },
+        restart,
         _test: { st, choose, press, dragTo, fillLine, undo, hint, restart, toggleMode, touching, get bd() { return bd; }, LV, draw: () => { st.dirty = false; paint(); }, end() { st.drag = null; }, unlock(k) { solvedUpTo = k; drawPick(); } },
         dispose() { pick.remove(); pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); } catch (e) {} }
       };

@@ -51,6 +51,9 @@
     "api/forge-rig-moves.mjs": {
       "maxDuration": 120
     },
+    "api/forge-games-packs.mjs": {
+      "maxDuration": 60
+    },
     "api/forge-rig-headcloth.mjs": {
       "maxDuration": 120
     },

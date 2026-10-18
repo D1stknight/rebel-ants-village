@@ -4,6 +4,9 @@
 // double. Aim with the mouse; hold the button (or Space) to draw and let go to loose: a fuller draw flies faster and
 // flatter, a draw held too long starts to shake. Arrows drop with distance and drift with the wind. Rings 10 / 7 / 5 / 3.
 // A Forge Rebel holds a lent bow (Dawn's Light) and plays its own bow moves; others shoot from the shoulder.
+// The arrow camera (Oct 17, Miguel: "I should be able to see the arrow hitting the target and flying into the target"):
+// once loosed, the view chases the arrow (the flight at half speed, a light streak behind it), then holds on the target
+// (or the ground) where it lands before going back to the line. def.arrowCam false keeps the old fixed view.
 (function () {
   const G = {
     title: 'Archery',
@@ -20,19 +23,20 @@
       for (const [x, z] of def.targets || [[-3.5, 16], [2.5, 24], [-1, 32]]) {
         const w = ctx.toWorld(x, 0, z);
         let node = layoutTargets.find(n => Math.hypot(n.getAbsolutePosition().x - w.x, n.getAbsolutePosition().z - w.z) < 1.6);
-        if (!node) { node = ctx.kit('ashi_target'); node.position.set(x, 0, z); node.scaling.setAll(SC); }
+        if (!node) { node = ctx.kit('ashi_target'); node.position.set(x, def.onGround && ctx.ground ? ctx.ground(w.x, w.z) - ctx.toWorld(0, 0, 0).y : 0, z); node.scaling.setAll(SC); }
         node.computeWorldMatrix(true);
         targets.push(faceOf(node, .62 * Math.abs(node.scaling.x), 1, 'straw'));
       }
       // the slider: a target on a sled along a rail
       const mv = { z: 21, amp: 5, speed: 2.4, ...(def.mover || {}) };
+      const gy = (x, z) => { if (!def.onGround || !ctx.ground) return 0; const w = ctx.toWorld(x, 0, z); return ctx.ground(w.x, w.z) - ctx.toWorld(0, 0, 0).y; };
       const railMat = ctx.mat('rail', n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(.32, .2, .1); m.specularColor = new B.Color3(.05, .05, .05); return m; });
-      const rail = B.MeshBuilder.CreateBox('archRail', { width: mv.amp * 2 + 2.4, height: .16, depth: .5 }, scene); rail.material = railMat; rail.position.set(0, .08, mv.z); rail.isPickable = false; ctx.add(rail);
-      const slider = ctx.kit('ashi_target'); slider.position.set(0, .16, mv.z); slider.scaling.setAll(SC); slider.setEnabled(false);
+      const rail = B.MeshBuilder.CreateBox('archRail', { width: mv.amp * 2 + 2.4, height: .16, depth: .5 }, scene); rail.material = railMat; rail.position.set(0, .08 + gy(0, mv.z), mv.z); rail.isPickable = false; ctx.add(rail);
+      const slider = ctx.kit('ashi_target'); slider.position.set(0, .16 + gy(0, mv.z), mv.z); slider.scaling.setAll(SC); slider.setEnabled(false);
       const sliderT = faceOf(slider, R, 1, 'moving'); sliderT.off = true; targets.push(sliderT);
       // the gold target: a small gold disc with a red heart on a tall pole
       const gd = { x: 3.5, z: 30, h: 4.4, ...(def.gold || {}) };
-      const gold = new B.TransformNode('archGold', scene); ctx.add(gold); gold.position.set(gd.x, 0, gd.z);
+      const gold = new B.TransformNode('archGold', scene); ctx.add(gold); gold.position.set(gd.x, gy(gd.x, gd.z), gd.z);
       const goldMat = ctx.mat('gold', n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(.9, .68, .2); m.emissiveColor = new B.Color3(.35, .25, .06); m.specularColor = new B.Color3(1, .9, .5); m.backFaceCulling = false; return m; });
       const redMat = ctx.mat('red', n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(.75, .08, .06); m.emissiveColor = new B.Color3(.25, .02, .02); m.backFaceCulling = false; return m; });
       const pole = B.MeshBuilder.CreateCylinder('archPole', { height: gd.h, diameter: .14, tessellation: 8 }, scene); pole.material = railMat; pole.parent = gold; pole.position.y = gd.h / 2; pole.isPickable = false;
@@ -53,10 +57,18 @@
         shaft.material = wood; head.material = steel; fl.forEach(p => { p.material = feather; });
         const m = B.Mesh.MergeMeshes([shaft, head, ...fl], true, true, undefined, false, true); m.name = 'archArrow'; m.isPickable = false; m.isVisible = false; ctx.add(m); return m;
       })();
+      // the streak behind a flying arrow (taken off when it lands)
+      const trailSrc = (() => {
+        const t = B.MeshBuilder.CreateCylinder('archTrail', { height: 2.4, diameterTop: .05, diameterBottom: .005, tessellation: 6 }, scene); t.rotation.x = -Math.PI / 2; t.bakeCurrentTransformIntoVertices();
+        t.material = ctx.mat('trail', n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(0, 0, 0); m.emissiveColor = new B.Color3(1, .92, .7); m.alpha = .45; m.disableLighting = true; m.backFaceCulling = false; return m; });
+        t.isPickable = false; t.isVisible = false; ctx.add(t); return t;
+      })();
+      const ARROW_CAM = def.arrowCam !== false;
+      let view = null; // the arrow camera: { p, t } world position / target being eased toward, hold = seconds left on a landing
       // ── state ──
       const st = { n: 0, score: 0, hits: 0, phase: 'intro', t: 0, wait: 1.4, power: 0, holdT: 0, wind: 0, flying: [], stuck: [], aimX: null, aimY: null, wob: [0, 0], rings: [], bow: null, releaseAt: -1, shot: null };
       const canvas = ctx.engine.getRenderingCanvas();
-      const camP = [.95, 3.55, -2.7], camT = [0, 2.2, 26];
+      const camP = def.camP || [.95, 3.55, -2.7], camT = def.camT || [0, 2.2, 26];
       function hud() {
         H.score(st.score);
         const w = st.wind, wt = Math.abs(w) < .05 ? 'calm' : `${w < 0 ? '←' : '→'} ${Math.abs(w).toFixed(1)}`;
@@ -104,12 +116,18 @@
         const o = from || ctx.toWorld(.55, 2.75, .9), d = V3.Distance(o, s.P), t = d / s.speed;
         const aim = s.P.add(new V3(0, .5 * .5 * GRAV * t * t, 0));
         const v = aim.subtract(o).normalize().scale(s.speed);
-        const a = arrowSrc.createInstance('archArrowFly'); a.position.copyFrom(o); a.lookAt(o.add(v));
-        st.flying.push({ a, v, t: 0 }); ctx.sound('whoosh');
+        // a copy takes its source's parent (the game frame) and the flight is worked out in world coordinates: no parent
+        // (Oct 17, Miguel: "there is no arrow"; every arrow flew where the frame put it, 80 m off and out of sight)
+        const a = arrowSrc.createInstance('archArrowFly'); a.parent = null; a.position.copyFrom(o); a.lookAt(o.add(v));
+        const tr = trailSrc.createInstance('archTrailFly'); tr.parent = a; tr.position.set(0, 0, -1.5 - 1.2);
+        st.flying.push({ a, v, t: 0, tr }); ctx.sound('whoosh');
+        if (ARROW_CAM) view = { p: ctx.camera.position.clone(), t: ctx.camera.getTarget().clone(), hold: 0 };
         st.phase = 'flight'; st.t = 0;
       }
-      function landed(hit) {
-        st.phase = 'after'; st.wait = 1.1;
+      function landed(hit, at, dir) {
+        st.phase = 'after'; st.wait = ARROW_CAM ? 1.7 : 1.1;
+        // the arrow camera holds on where it landed: beside and a little back from the arrow, looking at its head
+        if (ARROW_CAM && at) { const d = dir.normalizeToNew(), side = V3.Cross(d, V3.Up()).normalize(); view = { p: at.subtract(d.scale(3.4)).add(side.scale(1.3)).add(new V3(0, .7, 0)), t: at.clone(), hold: 1.7, land: true }; }
         if (st.bow) setTimeout(() => { if (st.phase === 'after' || st.phase === 'ready') ctx.player.clip('bow_idle', { loop: true }); }, 500);
         if (!hit) { H.msg('Miss', 700); return; }
         const q = hit.d / hit.tg.r, ring = q < .14 / .62 ? 10 : q < .3 / .62 ? 7 : q < .46 / .62 ? 5 : 3; // the painted rings
@@ -132,10 +150,16 @@
       ctx.look(camP, camT, .85);
       const inst = {
         update(dt) {
+          const realDt = dt; if (st.phase === 'flight' && ARROW_CAM) dt *= .5; // the flight in half time: arrows, wind and targets alike
           st.t += dt;
-          // the camera: over the shoulder, closing in as the bow draws
+          // the camera: over the shoulder, closing in as the bow draws; with an arrow loose, the arrow camera
           const fov = .85 - (st.phase === 'draw' ? .25 * st.power : 0);
-          ctx.look(camP, camT, fov);
+          if (view && ARROW_CAM && (st.phase === 'flight' || st.phase === 'after')) {
+            const f = st.flying[0];
+            if (f && !view.land) { const d = f.v.normalizeToNew(); view.p = f.a.position.subtract(d.scale(3.2)).add(new V3(0, .55, 0)); view.t = f.a.position.add(d.scale(4)); }
+            const cam = ctx.camera, k = 1 - Math.exp(-realDt * (view.land ? 6 : 14)), tg = cam.getTarget();
+            cam.position = V3.Lerp(cam.position, view.p, k); cam.setTarget(V3.Lerp(tg, view.t, k)); cam.fov += (.7 - cam.fov) * k;
+          } else { view = null; ctx.look(camP, camT, fov); }
           if (st.phase === 'intro' && (st.wait -= dt) <= 0) nextArrow();
           if (st.phase === 'draw') {
             st.drawT += dt;
@@ -164,9 +188,9 @@
             const l1 = ctx.toLocal(p1);
             if (hit) {
               f.a.position.copyFrom(hit.P.subtract(f.v.normalizeToNew().scale(.35))); f.a.lookAt(f.a.position.add(f.v));
-              f.a.setParent(hit.tg.node); st.stuck.push(f.a); st.flying.splice(i, 1); landed(hit); continue;
+              f.tr?.dispose(); f.a.setParent(hit.tg.node); st.stuck.push(f.a); st.flying.splice(i, 1); landed(hit, hit.P, f.v); continue;
             }
-            if (l1.y <= .02 || f.t > 4) { if (l1.y <= .02) { f.a.position.copyFrom(p1); f.a.lookAt(p1.add(f.v)); st.stuck.push(f.a); } else f.a.dispose(); st.flying.splice(i, 1); landed(null); continue; }
+            if (l1.y <= .02 || f.t > 4) { f.tr?.dispose(); if (l1.y <= .02) { f.a.position.copyFrom(p1); f.a.lookAt(p1.add(f.v)); st.stuck.push(f.a); } else f.a.dispose(); st.flying.splice(i, 1); landed(null, l1.y <= .02 ? p1 : null, f.v); continue; }
             f.a.position.copyFrom(p1); f.a.lookAt(p1.add(f.v));
           }
           if (st.phase === 'after' && (st.wait -= dt) <= 0) nextArrow();

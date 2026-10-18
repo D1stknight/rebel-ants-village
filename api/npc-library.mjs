@@ -6,6 +6,9 @@ import { isAdminRequest } from './_admin-auth.mjs';
 
 const KEY = 'npc:library:v1';
 const CLEAN = /^[a-z0-9_]{2,60}$/;
+// Oct 16: the Cute & Creepy NPCs are built in the kit (the village draws them from assets/samurai-kit.js); a forged model
+// under one of their keys would replace that look, so those keys are never approved
+const KIT_KEY = /^(cc_|mystic_moons_)/;
 const ID = /^[A-Za-z0-9_.:-]{1,120}$/;
 const GLB_OK = /^(https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\/[\w./-]+\.glb|\/assets\/[\w./-]+\.glb)$/;
 const IMG_OK = /^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\/[\w./-]+\.(jpg|jpeg|png|webp)$/;
@@ -58,6 +61,7 @@ export default async function handler(req, res) {
     const key = String(b.key || '');
     if (!CLEAN.test(key)) return res.status(400).json({ ok: false, error: 'key must be 2-60 of a-z 0-9 _' });
     if (b.action === 'approve') {
+      if (KIT_KEY.test(key)) return res.status(400).json({ ok: false, error: 'Cute & Creepy NPCs are built in the kit, not approved as forged models' });
       const entry = cleanEntry(key, b.entry);
       await redis([['HSET', KEY, key, JSON.stringify(entry)]]);
       return res.status(200).json({ ok: true, npc: entry });

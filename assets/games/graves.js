@@ -4,9 +4,16 @@
 // win; dig a spirit and it rises. The first dig is always safe, and every graveyard can be cleared by reasoning
 // alone (each is checked by a solver before you play, no guessing needed). Seven graveyards from 6 x 6 to 16 x 16.
 // H shows one plot you can be sure of (no clean bonus then). Score: the graveyard x 20, +10 without a hint.
+// Oct 17: How to play (the rules + a graveyard read part way, howto/graves.png) and Restart (a fresh graveyard of
+// the same size: the spirits are laid again after the first dig, so that dig is safe again).
+// Oct 17 (Miguel: "3 more grave yards to make it an even 10"): 18 x 18, 20 x 20 and 22 x 22 with 23 % spirits (the
+// 16 x 16 has 22 %), laid by the same rule. Random layouts that dense are rarely fair, so lay() mends a stuck one
+// (below). Checked with the game's own lay() and deduce() (scratchpad lv/graves/laycheck.mjs): 100 first digs on every
+// yard, all fair, none on or beside the first dig; a 22 x 22 lays in about 0.2-0.4 s. Big yards are seen from higher up.
 // def: { levels: [{ n, spirits }], pass, points }
 (function () {
-  const LEVELS = [{ n: 6, spirits: 5 }, { n: 8, spirits: 10 }, { n: 9, spirits: 14 }, { n: 10, spirits: 20 }, { n: 12, spirits: 30 }, { n: 14, spirits: 42 }, { n: 16, spirits: 56 }];
+  const LEVELS = [{ n: 6, spirits: 5 }, { n: 8, spirits: 10 }, { n: 9, spirits: 14 }, { n: 10, spirits: 20 }, { n: 12, spirits: 30 }, { n: 14, spirits: 42 }, { n: 16, spirits: 56 },
+    { n: 18, spirits: 74 }, { n: 20, spirits: 92 }, { n: 22, spirits: 112 }]; // Oct 17: 23 % (scratchpad lv/graves)
   const NUMC = ['', '#3b6fd8', '#2f8a3a', '#c8352c', '#2a2f8a', '#7a2a1a', '#2a8a8a', '#222', '#777'];
   // a logic-only solver: from the opened plots, apply "all mines found / all left are mines" and the subset rule
   // until stuck. Returns the set of plots it could open (safe) and mark (mines).
@@ -25,6 +32,14 @@
   }
   const G = {
     title: 'The Restless Graves',
+    howTo: { lines: [
+      'Some plots hide restless spirits. Dig every quiet plot without waking one.',
+      'Click a plot to dig it. A dug plot shows how many spirits lie in the eight plots around it; a blank one has none, and the plots around it open by themselves.',
+      'When you are sure a plot hides a spirit, set a candle on it: Tab (or the button) switches between digging and candles, F sets one on the plot in the gold frame.',
+      'Click a number whose candles are all set to dig every other plot around it at once.',
+      'The first dig is always safe, and no graveyard ever needs a guess. H shows one quiet plot (no clean bonus then).',
+      'Tip: a number with exactly that many hidden plots beside it has a spirit in every one of them.'],
+      img: 'howto/graves.png', caption: 'Part way through: the 1 touches one hidden plot, so that plot holds a spirit; a candle marks it.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsGravesProgress:' + (def.id || 'graves');
@@ -43,13 +58,22 @@
       const count = i => nbr(i).filter(j => bd.mines.has(j)).length;
       function build(k) {
         const L = LV[k]; bd = { k, n: L.n, total: L.spirits, mines: null, open: new Set(), flags: new Set(), hints: 0, hit: -1, cur: Math.floor(L.n / 2) * L.n + Math.floor(L.n / 2), time: 0, ghost: null };
-        ctx.player.place(0, cam[2] - 1.6, 0); draw(); info();
+        view(L.n); ctx.player.place(0, -4.9, 0); draw(); info();
       }
-      // the spirits are laid only after the first dig: none on or around it, and only a graveyard reasoning can clear
+      // the spirits are laid only after the first dig: none on or around it, and only a graveyard reasoning can clear.
+      // A layout the reasoning gets stuck on is mended before the next try (Oct 17, for the big yards): a spirit on the
+      // stuck edge moves to a hidden plot away from everything open, kept when the reasoning then opens at least as
+      // much, up to 40 times. The yard still counts as fair only when deduce clears it from the first dig.
       function lay(first) {
-        const n = bd.n, N = n * n, keepOut = new Set([first, ...nbr(first)]); let best = null;
+        const n = bd.n, N = n * n, keepOut = new Set([first, ...nbr(first)]); let best = null, bestOpen = -1;
         for (let t = 0; t < 600; t++) { const pool = [...Array(N).keys()].filter(i => !keepOut.has(i)); for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
-          const mines = new Set(pool.slice(0, bd.total)); const r = deduce(n, mines, [first]); if (r.solved) { best = mines; break; } if (!best || r.open.size > best._open) { best = mines; best._open = r.open.size; } }
+          let mines = new Set(pool.slice(0, bd.total)), r = deduce(n, mines, [first]);
+          for (let m = 0; m < 40 && !r.solved; m++) {
+            const edge = [...mines].filter(i => !r.flag.has(i) && nbr(i).some(j => r.open.has(j))), far = pool.filter(i => !mines.has(i) && !r.open.has(i) && !nbr(i).some(j => r.open.has(j)));
+            if (!edge.length || !far.length) break;
+            const m2 = new Set(mines); m2.delete(edge[Math.floor(Math.random() * edge.length)]); m2.add(far[Math.floor(Math.random() * far.length)]);
+            const r2 = deduce(n, m2, [first]); if (r2.open.size >= r.open.size) { mines = m2; r = r2; } }
+          if (r.solved) { best = mines; break; } if (r.open.size > bestOpen) { best = mines; bestOpen = r.open.size; } }
         bd.mines = best; bd.fair = deduce(n, best, [first]).solved;
       }
       const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
@@ -58,7 +82,7 @@
         const g = tex.getContext(), n = bd.n, C = TEX / n, over = st.phase === 'lost' || st.phase === 'done' && bd.hit >= 0;
         g.fillStyle = '#141018'; g.fillRect(0, 0, TEX, TEX);
         for (let i = 0; i < n * n; i++) { const x = (i % n) * C, y = Math.floor(i / n) * C, isOpen = bd.open.has(i);
-          if (isOpen) { g.fillStyle = (i + Math.floor(i / n)) % 2 ? '#5b4a3a' : '#634f3e'; g.fillRect(x + 1, y + 1, C - 2, C - 2); const c = count(i); if (c) { g.fillStyle = NUMC[c]; g.font = `bold ${Math.round(C * .6)}px Georgia, serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(c), x + C / 2, y + C * .54); } }
+          if (isOpen) { g.fillStyle = (i + Math.floor(i / n)) % 2 ? '#5b4a3a' : '#634f3e'; g.fillRect(x + 1, y + 1, C - 2, C - 2); const c = count(i); if (c) { g.fillStyle = NUMC[c]; g.font = `bold ${Math.round(C * (n >= 18 ? .7 : .6))}px Georgia, serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(c), x + C / 2, y + C * .54); } }
           else { g.fillStyle = (i + Math.floor(i / n)) % 2 ? '#2d4a2e' : '#335235'; g.fillRect(x + 1, y + 1, C - 2, C - 2); g.fillStyle = 'rgba(190,200,190,.25)'; g.fillRect(x + C * .46, y + C * .25, C * .08, C * .42); g.fillRect(x + C * .34, y + C * .35, C * .32, C * .07); }
           if (bd.flags.has(i) && !isOpen) { g.fillStyle = '#f2ead2'; g.fillRect(x + C * .42, y + C * .42, C * .16, C * .34); g.fillStyle = '#ffb030'; g.beginPath(); g.ellipse(x + C / 2, y + C * .34, C * .07, C * .11, 0, 0, Math.PI * 2); g.fill(); if (over && !bd.mines?.has(i)) { g.strokeStyle = '#e03030'; g.lineWidth = 4; g.beginPath(); g.moveTo(x + C * .2, y + C * .2); g.lineTo(x + C * .8, y + C * .8); g.stroke(); } }
           if (over && bd.mines?.has(i) && !bd.flags.has(i)) { g.fillStyle = i === bd.hit ? '#a82020' : 'rgba(0,0,0,0)'; g.fillRect(x + 1, y + 1, C - 2, C - 2); g.fillStyle = '#d8f2ff'; g.beginPath(); g.arc(x + C / 2, y + C * .45, C * .22, Math.PI, 0); g.lineTo(x + C * .72, y + C * .74); g.lineTo(x + C * .6, y + C * .66); g.lineTo(x + C * .5, y + C * .76); g.lineTo(x + C * .4, y + C * .66); g.lineTo(x + C * .28, y + C * .74); g.closePath(); g.fill(); g.fillStyle = '#222'; g.fillRect(x + C * .41, y + C * .4, C * .05, C * .07); g.fillRect(x + C * .54, y + C * .4, C * .05, C * .07); }
@@ -87,9 +111,9 @@
       }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(400px,90vw);background:rgba(14,10,20,.95);border:1px solid rgba(150,230,170,.55);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 400) + 'px,90vw);background:rgba(14,10,20,.95);border:1px solid rgba(150,230,170,.55);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#a8f0bc;margin-bottom:10px">The Restless Graves</div><div style="margin-bottom:12px;color:#bbb">A dug plot counts the spirits around it. Never a guess needed.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#a8f0bc' : '#444'};background:${ok ? 'rgba(168,240,188,.2)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${L.n}×${L.n} · ${L.spirits} 👻</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 4},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#a8f0bc' : '#444'};background:${ok ? 'rgba(168,240,188,.2)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${L.n}×${L.n} · ${L.spirits} 👻</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       const pads = document.createElement('div');
       pads.style.cssText = 'position:absolute;bottom:62px;right:14px;display:none;gap:6px;pointer-events:auto';
@@ -99,6 +123,9 @@
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'flex'; H.msg(`Graveyard ${k + 1}`, 900, `${LV[k].spirits} restless spirits`); }
       hud.append(pick, pads); drawPick();
       const cam = [0, TY + 6.4, -3.3], at = [0, TY, .1];
+      // the big yards (18 x 18 and up, Oct 17) are seen from higher up and more from above, the whole yard clear of the
+      // hint bar, with larger numbers; the player still waits where the camera stood for the others
+      const view = n => { const big = n >= 18; cam[1] = TY + (big ? 7.65 : 6.4); cam[2] = big ? -1.7 : -3.3; at[2] = big ? -.25 : .1; };
       ctx.player.place(0, cam[2] - 1.6, 0); ctx.look(cam, at, def.fov || .8); // the player waits behind the camera, out of the picture
       { const g = tex.getContext(); g.fillStyle = '#2d4a2e'; g.fillRect(0, 0, TEX, TEX); tex.update(); }
       H.title(def.title || 'The Restless Graves'); H.score(''); info();
@@ -116,7 +143,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return; const n = bd.n, x = bd.cur % n, y = Math.floor(bd.cur / n);
           if (k === 'arrowup' || k === 'w') { bd.cur = ((y - 1 + n) % n) * n + x; draw(); } else if (k === 'arrowdown' || k === 's') { bd.cur = ((y + 1) % n) * n + x; draw(); }
           else if (k === 'arrowleft' || k === 'a') { bd.cur = y * n + (x - 1 + n) % n; draw(); } else if (k === 'arrowright' || k === 'd') { bd.cur = y * n + (x + 1) % n; draw(); }
@@ -128,6 +155,9 @@
           const l = ctx.toLocal(hit.pickedPoint), n = bd.n, c = Math.floor((l.x + S / 2) / S * n), r = Math.floor((S / 2 - l.z) / S * n);
           if (c >= 0 && c < n && r >= 0 && r < n) { bd.cur = r * n + c; act(bd.cur); }
         },
+        // Restart: a fresh graveyard of the same size (no plots dug, no candles, hints or time); the spirits are laid
+        // again after the first dig, so that dig is safe again; only while it is being played
+        restart() { if (st.phase !== 'play' || !bd) return; build(bd.k); H.msg('Start again', 900); },
         _test: { st, choose, dig, flag, hint, toggleMode, deduce, get bd() { return bd; }, LV, count },
         dispose() { pick.remove(); pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); } catch (e) {} }
       };

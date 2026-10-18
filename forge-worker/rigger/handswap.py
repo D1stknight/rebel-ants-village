@@ -44,6 +44,11 @@ def srgb2lin(c): return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) 
 # glove 40 % bigger than the other (Shogun). Rebels keep their own per-hand sizes.
 NPCM = bool(os.environ.get('FORGE_NPC'))
 HGT = float(co[:, 2].max() - co[:, 2].min())
+# v2.25 Chumpz (ape) and Saints (human) NPCs wear the gloves too. Their sculpted hands are drawn oversized (1.6-1.8x a
+# glove's surface), so the glove takes a set share of the height instead of their reach: a human hand ~10.6 %, an ape's
+# a little longer
+SPECIES = os.environ.get('FORGE_NPC_SPECIES', '') if NPCM else ''
+GLOVE_LEN = {'human': 0.106, 'ape': 0.118}
 # the NPC Forge hands panel: per side {along, thumb, back} (fractions of the hand length), size (x), v2.20 cuffSize and cuffLen (x)
 try: FIT = json.loads(os.environ.get('FORGE_HAND_FIT') or '{}') or {}
 except Exception: FIT = {}
@@ -56,7 +61,8 @@ if NPCM:
         tt = (co - W) @ x; handw = Wt[:, names.index(P + side + 'Hand')] / Wsum; own = (handw > 0.5) & (tt > 0.0)
         reaches.append(np.percentile(tt[own], 98) if own.sum() > 20 else 0.75 * np.linalg.norm(W - E))
     L_NPC = float(np.clip(np.mean(reaches), 0.112 * HGT, 0.124 * HGT))
-    print(f'handswap NPC: one glove length {L_NPC:.3f} for both hands (reach {np.round(reaches, 3).tolist()}, height {HGT:.3f})')
+    if SPECIES in GLOVE_LEN: L_NPC = GLOVE_LEN[SPECIES] * HGT
+    print(f'handswap NPC: one glove length {L_NPC:.3f} for both hands (reach {np.round(reaches, 3).tolist()}, height {HGT:.3f}{", " + SPECIES if SPECIES in GLOVE_LEN else ""})')
 
 plan, cut = {}, np.zeros(nv, bool)
 for side in ('Left', 'Right'):
@@ -244,6 +250,7 @@ cb_.inputs['Base Color'].default_value = (*srgb2lin(ccol).tolist(), 1.0); cb_.in
 me.materials.append(cmat); cmi = len(me.materials) - 1
 print('handswap cuff colour', np.round(ccol, 3).tolist())
 
+HAND_FIX = {}   # v2.27 species: side -> the hand bone's rest turn before it was put on the glove's axis
 bpy.context.view_layer.objects.active = arm; bpy.ops.object.mode_set(mode='EDIT')
 eb = arm.data.edit_bones; Ai = Aw.inverted()
 for side, pl in plan.items():
@@ -272,6 +279,17 @@ for side, pl in plan.items():
         cb_.align_roll(Ai.to_3x3() @ mu.Vector(pl['z'].tolist()))
         cb_.parent = eb[P + side + 'ForeArm']; cb_.use_connect = False; cb_.use_deform = True
         print(f'handswap {side}: hand pivot moved {sh_.length * 100:.1f} cm to the glove, cuff bone added')
+        # v2.27 Chumpz / Saints: their hand bone came from the sculpted hand, which hangs 18-23 deg toward the palm (and
+        # 6-16 to a side). The clips line that bone up with the actor's hand, so the glove, built along the forearm, came
+        # out bent back by as much (palms to the floor). The hand bone is turned onto the glove's axis here (the shortest
+        # turn, so its roll comes along) and every clip re-keyed below to keep its pose: the glove points where the
+        # sculpted hand did. Rebel villagers' hand bones already run along the glove (0-2 deg).
+        if SPECIES:
+            R0 = hb_.matrix.to_3x3().normalized(); h0 = hb_.y_axis.normalized(); z0 = hb_.z_axis.normalized(); ln = hb_.length
+            xa = (Ai.to_3x3() @ mu.Vector(pl['x'].tolist())).normalized(); D3 = h0.rotation_difference(xa)
+            hb_.tail = hb_.head + xa * ln; hb_.align_roll(D3 @ z0)
+            HAND_FIX[side] = R0
+            print(f'handswap {side}: hand bone turned {math.degrees(h0.angle(xa)):.1f} deg onto the glove axis')
 bpy.ops.object.mode_set(mode='OBJECT')
 
 bm = bmesh.new(); bm.from_mesh(me)
@@ -352,6 +370,18 @@ def hand_pose(clip, side):
     # weapon moves (v2.11): swords are held in both hands; the bow in the left hand (the right draws the string)
     if clip.startswith('sword_') or clip.startswith('twin_'): return 'grip'
     if clip.startswith('bow_'): return 'grip' if side == 'Left' or clip in ('bow_draw', 'bow_sheathe') else 'relaxed'
+    # v2.24 games pack (anim/clips_games.json): both hands round the rod / shovel / axe; the throwing hand holds the ball
+    if clip in ('game_cast', 'game_reel', 'game_fish_wait', 'game_dig', 'game_chop'): return 'grip'
+    if clip in ('game_throw', 'game_throw_far'): return 'grip' if side == 'Right' else 'relaxed'
+    if clip in ('game_push', 'game_push_walk') or clip.startswith('dance_'): return 'open'
+    if clip == 'game_cheer': return 'fist'
+    # v2.30 the second set: both hands open on the ball (jump shot) and in the strokes, the dribbling hand open, a hand
+    # round the bowling ball / the hammer, fists up to block, both round the rope and the sword hilt + shield handle
+    if clip in ('game_shoot', 'game_swim'): return 'open'
+    if clip == 'game_dribble': return 'open' if side == 'Right' else 'relaxed'
+    if clip in ('game_bowl', 'game_hammer_up', 'game_hammer'): return 'grip' if side == 'Right' else 'relaxed'
+    if clip == 'game_block': return 'fist'
+    if clip == 'game_rope_pull' or clip.startswith('game_shield_'): return 'grip'
     if clip == 'pointing': return 'point' if side == 'Right' else 'relaxed'
     if clip in TALK: return 'talk'
     return 'fist' if clip in FIST else 'open' if clip in OPEN else 'relaxed'
@@ -384,6 +414,8 @@ if os.environ.get('FORGE_NPC'):
         src_ = os.path.join(os.environ.get('FORGE_PACK', '.'), c['file'])
         if c.get('airborne') or not src_.endswith('.npz') or not os.path.exists(src_): continue
         z = np.load(src_); nm = [str(n) for n in z['names']]; Q = z['Q']; hands = {}
+        if 't0' in c or 't1' in c:   # v2.29 a window of the source (the dances): the frames the retarget took, at 30 a second
+            dt_ = float(z['dt']); Q = Q[np.arange(int(c.get('t0', 0) / dt_), min(int(c.get('t1', 1e9) / dt_), len(Q) - 1) + 1, max(1, int(round(1 / (30 * dt_)))))]
         up_ = int(np.argmax(np.abs(z['rest'][nm.index('Head')] - z['rest'][nm.index('Hips')]))) if 'Head' in nm and 'Hips' in nm else 1
         for side in ('Left', 'Right'):
             ch = [side + 'Hand', side + 'HandIndex1', side + 'HandIndex2', side + 'HandIndex3']
@@ -453,6 +485,27 @@ for act in bpy.data.actions:
 for pb in arm.pose.bones:
     if any(('Hand' + f) in pb.name for f in FING): pb.rotation_mode = 'QUATERNION'
 print('handswap hand poses written to clips', n_act, '| following the mocap fingers', n_live)
+# v2.27 species: the turned hand bones keep every clip's hand pose (rest' @ basis' = rest @ basis, so basis' = K @ basis;
+# a quaternion product is linear in the keys, so the frames between keys are unchanged too)
+for side, R0 in HAND_FIX.items():
+    bn = P + side + 'Hand'; K = (arm.data.bones[bn].matrix_local.to_3x3().normalized().inverted() @ R0).to_quaternion(); nk = 0
+    for act in bpy.data.actions:
+        for cb in bags(act):
+            fcs = [cb.fcurves.find(f'pose.bones["{bn}"].rotation_quaternion', index=i) for i in range(4)]
+            if not all(fcs): continue
+            frames = sorted({round(kp.co[0], 4) for fc in fcs for kp in fc.keyframe_points}); vals = []
+            for fr in frames:
+                q = K @ mu.Quaternion([fc.evaluate(fr) for fc in fcs])
+                if vals and vals[-1].dot(q) < 0: q.negate()
+                vals.append(q)
+            for fc in fcs: cb.fcurves.remove(fc)
+            for i in range(4):
+                fc = cb.fcurves.new(f'pose.bones["{bn}"].rotation_quaternion', index=i, group_name=bn)
+                fc.keyframe_points.add(len(frames)); fc.keyframe_points.foreach_set('co', [x for fr, q in zip(frames, vals) for x in (fr, q[i])])
+                for kp in fc.keyframe_points: kp.interpolation = 'LINEAR'
+                fc.update()
+            nk += 1
+    print(f'handswap {side}: hand keys kept on the turned bone in {nk} clips (K {math.degrees(K.angle):.1f} deg)')
 if NPCM:
     import cufftwist   # v2.21 the cuff bones' twist keys (baked again after the NPC arm steps)
     print('handswap cuff twist keys', cufftwist.bake(arm))

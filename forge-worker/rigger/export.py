@@ -23,8 +23,9 @@ for n in mat.node_tree.nodes:
         if n.image.size[0]>size: n.image.scale(size,size)
         print(n.image.name,links,tuple(n.image.size))
 # v2.11: weapon moves ship in their own GLB (exp_moves.py); the village rig keeps its 24 clips
-_wc=os.environ.get('FORGE_WEAPON_CLIPS')
-if _wc and os.path.exists(_wc) and arm.animation_data:
+# v2.24: so do the games pack's moves (FORGE_GAME_CLIPS)
+for _wc in (os.environ.get('FORGE_WEAPON_CLIPS'), os.environ.get('FORGE_GAME_CLIPS')):
+    if not (_wc and os.path.exists(_wc) and arm.animation_data): continue
     import json as _j; _names={c['name'] for c in _j.load(open(_wc))}
     for _t in list(arm.animation_data.nla_tracks):
         if _t.name in _names: arm.animation_data.nla_tracks.remove(_t)

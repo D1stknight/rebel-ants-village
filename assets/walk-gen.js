@@ -8,8 +8,11 @@
 (function (root) {
   // g grid (m); ground: the ground's height in the piece's frame; stepUp: the highest step; low: geometry this far above a floor
   // (up to stepUp) right under the feet makes it no floor (a low block, not a step); band: the body's height range, kept clear
-  // within radius of where it stands; inflate: walls widened by this; minFloor: floors lower than this are left to the ground
-  const DEF = { g: .1, ground: 0, stepUp: .5, drop: 1.2, low: .12, band: 2.2, radius: .2, inflate: .3, margin: 1.2, minFloor: .08, slice: .1, maxCells: 1.2e6 };
+  // within radius of where it stands; inflate: walls widened by this; minFloor: floors lower than this are left to the ground;
+  // floorsAt(x, z): heights of floors known beforehand there (a room's own decks); ownDecks(x, z): [{ top, under }] of
+  // those within a quarter metre (their edges too); wallFrom: how high above a floor solid starts to count as a wall (a
+  // room uses its step: rails, lips and kerbs lower than that are stepped over)
+  const DEF = { g: .1, ground: 0, stepUp: .5, drop: 1.2, low: .12, band: 2.2, radius: .2, inflate: .3, margin: 1.2, minFloor: .08, slice: .1, maxCells: 1.2e6, wallFrom: .15 };
 
   // tris: Float32Array / array of 9 numbers per triangle (x, y, z of a, b, c)
   function fromTriangles(tris, opts = {}) {
@@ -95,6 +98,9 @@
         }
       }
     }
+    // floors the caller already knows (a room's own decks: stages, tiers, galleries, stairs) stand as candidates too, so the
+    // walk reaches them and only what stands on them (a table on a stage) becomes a wall, never the deck's own edge
+    if (o.floorsAt) for (let k = 0; k < H; k++) for (let i = 0; i < W; i++) for (const y of o.floorsAt(x0 + (i + .5) * g, z0 + (k + .5) * g) || []) addCand(k * W + i, y);
     // is anything solid in the height range [ylo, yhi] over cell c
     const rangeMask = (ylo, yhi) => { const s0 = Math.max(0, Math.floor((ylo - ys0) / SL)), s1 = Math.min(NS - 1, Math.floor((yhi - ys0) / SL)); return [s0, s1]; };
     const occAt = (c, s0, s1) => {
@@ -158,15 +164,15 @@
         const ii = i + di, kk = k + dk; if (ii < 0 || kk < 0 || ii >= W || kk >= H) continue;
         const d = kk * W + ii;
         let best = bestFrom(d, f);
-        // the cells at a step's edge hold its riser and nosing (no floor there): step up over up to 0.4 m of them onto the
-        // floor beyond, as long as what stands in them is part of the step (nothing above the floor stepped onto: a railing
-        // or a wall is never stepped through)
+        // the cells at a step's edge hold its riser and nosing (no floor there): step up (or, in a room, which may be entered
+        // at the top of its stairs, down) over up to 0.4 m of them onto the floor beyond, as long as what stands in them is
+        // part of the step (nothing above the higher of the two floors: a railing or a wall is never stepped through)
         if (best !== best) {
           for (let n = 2; n <= Math.max(2, Math.round(.4 / g)); n++) {
             const i2 = ii + di * (n - 1), k2 = kk + dk * (n - 1); if (i2 < 0 || k2 < 0 || i2 >= W || k2 >= H) break;
             const e = k2 * W + i2, up = bestFrom(e, f);
-            if (!(up === up && up > f + .03)) continue;
-            const [t0, t1] = rangeMask(up + .2, up + o.band); let stepLike = true;
+            if (!(up === up && (up > f + .03 || (o.seeds && up < f - .03 && up >= f - o.stepUp)))) continue;
+            const top = Math.max(up, f), [t0, t1] = rangeMask(top + .2, top + o.band); let stepLike = true;
             for (let m = 0; m < n - 1 && stepLike; m++) { const cm = (kk + dk * m) * W + (ii + di * m); if (occAt(cm, t0, t1)) stepLike = false; }
             if (!stepLike) break;
             if (!(level[e] >= up - .005)) { for (let m = 0; m < n - 1; m++) { const cm = (kk + dk * m) * W + (ii + di * m); if (!(level[cm] >= up - .005)) level[cm] = up; } level[e] = up; push(e); }
@@ -180,18 +186,34 @@
     // walls: cells the walk never reaches with something solid at body height above the floor beside them (the highest one
     // reached within 0.2 m: a wall standing on a veranda counts from the veranda) or above the ground, or a floor top there.
     // Each wall belongs to that floor: a room tests it only there (a prop on a stage stops the body on the stage, not under it)
-    const [gs0, gs1] = rangeMask(G0 + .15, G0 + o.band);
+    const [gs0, gs1] = rangeMask(G0 + o.wallFrom, G0 + o.band);
     const wall = new Uint8Array(N), LQ = .3, classes = new Map();
     for (let c = 0; c < N; c++) {
       if (level[c] === level[c]) continue;
       const i = c % W, k = (c - i) / W; let m = -Infinity;
       for (let dk = -2; dk <= 2; dk++) for (let di = -2; di <= 2; di++) { const ii = i + di, kk = k + dk; if (ii < 0 || kk < 0 || ii >= W || kk >= H) continue; const y = level[kk * W + ii]; if (y === y && y > m) m = y; }
-      let hit = occAt(c, gs0, gs1) || (nc[c] && cand[c * CAP] > G0 + .15);
-      if (!hit && m > G0 + .15) { const [a0, a1] = rangeMask(m + .15, m + o.band); hit = occAt(c, a0, a1); }
-      if (!hit) continue;
+      const base = m > -Infinity ? m : G0, levels = [];
+      // on (or at the edge of) floors the caller owns (a room's stages, tiers, galleries, stairs, one over another): their
+      // own bodies, lips and risers are those floors' business; what stands on one at body height is a wall tested from
+      // that floor; the floor walked beside them is tested only where no solid one of them rises a step above it (its side
+      // holds the body there) and it is not one of them
+      const owns = o.ownDecks ? o.ownDecks(x0 + (i + .5) * g, z0 + (k + .5) * g) : [];
+      if (owns.length) {
+        for (const d of owns) { // above the next step up, if that is one of them too (its riser and lip are its own)
+          const next = owns.reduce((h, e) => e.top > d.top + .02 && e.top <= d.top + o.stepUp + .05 ? Math.max(h, e.top + .2) : h, -Infinity);
+          const [a0, a1] = rangeMask(Math.max(d.top + o.stepUp, next), d.top + o.band); if (occAt(c, a0, a1)) levels.push(d.top);
+        }
+        if (!owns.some(d => !d.under && d.top >= base + .45) && !owns.some(d => Math.abs(d.top - base) < .45)) {
+          const [a0, a1] = rangeMask(base + o.wallFrom, base + o.band); if (occAt(c, a0, a1)) levels.push(base);
+        }
+      } else {
+        let hit = occAt(c, gs0, gs1) || (nc[c] && cand[c * CAP] > G0 + o.wallFrom);
+        if (!hit && m > G0 + .15) { const [a0, a1] = rangeMask(m + o.wallFrom, m + o.band); hit = occAt(c, a0, a1); }
+        if (hit) levels.push(base);
+      }
+      if (!levels.length) continue;
       wall[c] = 1;
-      const key = Math.round((m > -Infinity ? m : G0) / LQ);
-      if (!classes.has(key)) classes.set(key, []); classes.get(key).push(c);
+      for (const lv of new Set(levels.map(y => Math.round(y / LQ)))) { if (!classes.has(lv)) classes.set(lv, []); classes.get(lv).push(c); }
     }
     // widen the walls by about the body's half-width (the village tests the body's centre against them), then boxes on a 2-cell grid
     const IR = Math.max(0, Math.round(o.inflate / g)), wide = new Uint8Array(N), P = 2, W2 = Math.ceil(W / P), H2 = Math.ceil(H / P), blockers = [];

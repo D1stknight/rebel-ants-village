@@ -1,15 +1,16 @@
-// The Siege Engine (Oct 15, Warrior): a trebuchet outside the gate and five straw siege towers out on the plain.
+// The Siege Engine (Oct 15, Warrior): a trebuchet outside the gate and ten straw siege towers out on the plain (Oct 17,
+// Miguel: "5 more towers and 10 more stones"; the new five stand clear of the plain's trees, seen from the camera).
 // A / D (or the arrows) turn it, W / S raise or lower the throw, hold Space to wind the counterweight and let go to
 // throw (the power swings back down if you hold too long). The wind pushes every stone (the sock shows where it
-// blows; it turns when a tower falls). The last stone's flight stays drawn in the air to aim the next. Ten stones;
-// a tower is worth more the farther it stands, and stones left over count once all five are down.
+// blows; it turns when a tower falls). The last stone's flight stays drawn in the air to aim the next. Twenty stones;
+// a tower is worth more the farther it stands, and stones left over count once all ten are down.
 // def: { stones: 10, towers: [[x, z]...] (frame coords, +z ahead), pass, points }
 (function () {
   const G = {
     title: 'The Siege Engine',
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, U = ctx.util, scene = ctx.scene, def = ctx.def;
-      const STONES = def.stones || 10, TOWERS = def.towers || [[-14, 46], [11, 60], [-24, 78], [18, 94], [-2, 116]];
+      const STONES = def.stones || 20, TOWERS = def.towers || [[-14, 46], [11, 60], [-24, 78], [18, 94], [-2, 116], [12, 38], [-14, 68], [36, 86], [-50, 118], [-12, 106]];
       const frameY = ctx.frame.getAbsolutePosition().y;
       const groundAt = (x, z) => { const w = ctx.toWorld(x, 0, z), h = window._newTerrain?.heightAt?.(w.x, w.z); return Number.isFinite(h) ? h - frameY : 0; };
       const mat = (k, c, em, o = {}) => ctx.mat(k, n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(...c); m.specularColor = new B.Color3(.05, .05, .05); if (em) m.emissiveColor = new B.Color3(...em); if (o.flat) m.disableLighting = true; if (o.alpha != null) m.alpha = o.alpha; return m; });

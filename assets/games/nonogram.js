@@ -1,9 +1,17 @@
 // The War Banner (Oct 15, Warrior): paint the banner from its numbers. The numbers beside a row (or over a column)
 // are the runs of inked squares in it, in order, with at least one bare square between runs. Click (or drag) to ink,
 // switch to marks (X) to note the squares that stay bare; a row's numbers grey out when the row matches them. U undoes,
-// H fixes one square (no clean bonus then). Eight banners, 5 x 5 to 13 x 13, the big ones are the clans' emblems;
+// H fixes one square (no clean bonus then). Ten banners, 5 x 5 to 15 x 15, the big ones are the clans' emblems;
 // each has one answer that the numbers alone lead to (checked by a solver). Score: the banner x 20, +10 without a hint.
 // def: { levels: [{ name, rows: ['#..#', ...] }], pass, points }
+// Oct 17 (Miguel: the puzzles need a how-to with an example, every board a Restart): howTo (the rules + a solved 5 x 5
+// banner, howto/nonogram.png) and inst.restart (the same banner bare again, the clock from 0; hints still count, the brush stays).
+// Oct 17 (Miguel: "2 more banners to make it the complete 10"): two 15 x 15 emblems, the hardest. The Sun Cross (Sohei:
+// the ring, the hollow cross, the sun) drawn square by square, then six squares of the outer ring thickened (in mirror
+// pairs) until the numbers alone settle it (scratchpad lv/nonogram/fix3.py); The Rebel Ant (the Samurai ant) from
+// vector shapes rasterised and swept for line-solvable ones (lv/nonogram/antvec.py, antsweep.py), its middle legs then
+// run out to the edges. Both solved by two line solvers (nono/emb.py and lv/nonogram/nsolve.py) in 8 and 9 passes (The
+// Blade in the Circle: 7). The picker takes 5 columns on wide screens.
 (function () {
   const LEVELS = [
     { name: 'Arrowhead', rows: ['..#..', '.###.', '#####', '..#..', '..#..'] },
@@ -13,11 +21,21 @@
     { name: "The Shogun's Crown", rows: ['....#....', '....#....', '##.###.##', '##.###.##', '.#######.', '.#######.', '..#####..', '.#######.', '.#######.', '.#######.', '.#######.', '.#######.', '..#####..'] },
     { name: 'The Sprout', rows: ['.....#.....', '....###....', '....###....', '....###....', '....###....', '.##..#.###.', '.#########.', '...#####...', '.....#.....', '###########', '.#########.', '..#######..', '...#####...'] },
     { name: 'The Spiral', rows: ['...#######...', '..##..#..##..', '.#..#####..#.', '#...###....##', '#...###..#..#', '#.#.##.####.#', '#.#.##.####.#', '#.#########.#', '#.#####..##.#', '##.####.##.##', '.#.....##..#.', '..##.....##..', '...#######...'] },
-    { name: 'The Blade in the Circle', rows: ['...#######...', '..##.....##..', '.##...###.##.', '##...###...##', '#...###....##', '#...###.....#', '#...###.....#', '#...####....#', '##.#######.##', '##...##....##', '.##..##...##.', '..#########..', '...#######...'] }
+    { name: 'The Blade in the Circle', rows: ['...#######...', '..##.....##..', '.##...###.##.', '##...###...##', '#...###....##', '#...###.....#', '#...###.....#', '#...####....#', '##.#######.##', '##...##....##', '.##..##...##.', '..#########..', '...#######...'] },
+    { name: 'The Sun Cross', rows: ['.....#####.....', '...##.#.#.##...', '.##...#.#...##.', '.#....#.#....#.', '.#....###....#.', '#....##.##....#', '######...######', '#...#.....#...#', '######...######', '#....##.##....#', '.#....###....#.', '.#....#.#....#.', '.##...#.#...##.', '...####.####...', '.....#####.....'] },
+    { name: 'The Rebel Ant', rows: ['....#..#..#....', '....#..#..#....', '...#..###..#...', '...#..###..#...', '....#.###.#....', '.....#####.....', '#####.###.#####', '#....#####....#', '.......#.......', '.....#####.....', '...##.###.##...', '...#..###..#...', '..#...###...#..', '..#...###...#..', '..#....#....#..'] }
   ];
   const runs = line => { const out = []; let k = 0; for (const v of line) { if (v === 1) k++; else if (k) { out.push(k); k = 0; } } if (k) out.push(k); return out; };
   const G = {
     title: 'The War Banner',
+    howTo: {
+      lines: ['Paint the hidden picture. The numbers beside each row and above each column are the runs of inked squares in that line, in order.',
+        '"3 1" means a run of 3 inked squares, then at least one bare square, then 1 inked square. A 0 means the whole line stays bare.',
+        'Click a square (or drag across several) to ink it. Tab or the Ink button switches to marks: put an X on squares you know stay bare.',
+        'A line\'s numbers turn grey once the line matches them. Keys: arrows move the frame, Space inks, X marks, U undoes; H fixes one square, but costs the clean bonus.',
+        'Tip: start with the big numbers. In a row of 5, a run of 4 must cover the middle three squares, wherever it sits.'],
+      img: 'howto/nonogram.png', caption: 'A solved 5 x 5 banner (a crown), with X marks on the bare squares.'
+    },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsBannerProgress:' + (def.id || 'nonogram');
@@ -83,6 +101,7 @@
         let best = null; for (let r = 0; r < bd.R; r++) for (let c = 0; c < bd.C; c++) if (bd.sol[r][c] && bd.cells[r][c] !== 1) { const left = bd.cells[r].filter((v, i) => bd.sol[r][i] && v !== 1).length; if (!best || left < best.left) best = { r, c, left }; }
         if (!best) return; bd.cur = [best.r, best.c]; bd.flash = { r: best.r, c: best.c, t: 0, good: true }; setCell(best.r, best.c, 1); H.msg('Ink this one', 1100);
       }
+      function restart() { if (st.phase !== 'play') return; const h = bd.hints, m = bd.mode; st.drag = null; build(bd.k); bd.hints = h; bd.mode = m; info(); H.msg('Start again', 900); }
       function check() {
         for (let r = 0; r < bd.R; r++) for (let c = 0; c < bd.C; c++) if ((bd.cells[r][c] === 1) !== !!bd.sol[r][c]) return;
         st.phase = 'won'; st.wt = 0; pads.style.display = 'none'; draw(); ctx.sound('gamewin'); H.msg(LV[bd.k].name, 1700, 'the banner is painted');
@@ -93,9 +112,9 @@
         return r >= 0 && c >= 0 && r < bd.R && c < bd.C ? [r, c] : null; }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(400px,90vw);background:rgba(14,18,10,.94);border:1px solid rgba(216,180,80,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 400) + 'px,90vw);background:rgba(14,18,10,.94);border:1px solid rgba(216,180,80,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#e3c46a;margin-bottom:10px">The War Banner</div><div style="margin-bottom:12px;color:#bbb">The numbers are the runs of ink in each row and column.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#e3c46a' : '#444'};background:${ok ? 'rgba(227,196,106,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${L.rows[0].length}×${L.rows.length}</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 4},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#e3c46a' : '#444'};background:${ok ? 'rgba(227,196,106,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${L.rows[0].length}×${L.rows.length}</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       const pads = document.createElement('div');
       pads.style.cssText = 'position:absolute;bottom:62px;right:14px;display:none;gap:6px;pointer-events:auto';
@@ -119,7 +138,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return; const [r, c] = bd.cur;
           if (k === 'arrowup' || k === 'w') { bd.cur = [(r - 1 + bd.R) % bd.R, c]; draw(); } else if (k === 'arrowdown' || k === 's') { bd.cur = [(r + 1) % bd.R, c]; draw(); }
           else if (k === 'arrowleft' || k === 'a') { bd.cur = [r, (c - 1 + bd.C) % bd.C]; draw(); } else if (k === 'arrowright' || k === 'd') { bd.cur = [r, (c + 1) % bd.C]; draw(); }
@@ -132,6 +151,7 @@
           else if (evt.type === T.POINTERMOVE && st.drag) { const rc = cellAt(); if (rc && rc[0] * 64 + rc[1] !== st.drag.last) { st.drag.last = rc[0] * 64 + rc[1]; bd.cur = rc; if (!setCell(rc[0], rc[1], st.drag.want)) draw(); } }
           else if (evt.type === T.POINTERUP) st.drag = null;
         },
+        restart, // the HUD's Restart button
         _test: { st, choose, setCell, press, undo, hint, toggleMode, get bd() { return bd; }, LV, draw },
         dispose() { pick.remove(); pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { clothM.dispose(); tex.dispose(); } catch (e) {} }
       };

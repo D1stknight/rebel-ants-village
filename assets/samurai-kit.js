@@ -370,8 +370,10 @@
     });
     T.scroll_sam = scrollTex('scroll_sam', 7, 4); T.scroll_sam2 = scrollTex('scroll_sam2', 23, 3);
     // the arcade's four games (Hub Rebel Arcade): attract screens, cabinet marquees, neon signs over each game's row
-    const GAMES = { fw: ['FACTION WARS', '#ff3b5c', '#3bd5ff'], raid: ['THE RAID', '#b25aff', '#ffcf3b'], tunnel: ['ANT TUNNEL', '#3bffb0', '#ff8a3b'], shuffle: ['EGG SHUFFLE', '#ffd43b', '#ff3b8d'] };
-    const neonText = (c, txt, x, y, size, col) => { c.font = `900 ${size}px Arial Black, Arial, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
+    const GAMES = { fw: ['FACTION WARS', '#ff3b5c', '#3bd5ff'], raid: ['THE RAID', '#b25aff', '#ffcf3b'], tunnel: ['ANT TUNNEL', '#3bffb0', '#ff8a3b'], shuffle: ['EGG SHUFFLE', '#ffd43b', '#ff3b8d'],
+      descent: ['HIVE DESCENT', '#ff3399', '#3bd5ff'], bounty: ['BOUNTY HUNTERS', '#a78bfa', '#ffcf3b'], gp: ['GRAND PRIX', '#ffd166', '#ff3b5c'], siege: ['THE SIEGE', '#e8a04a', '#3bffb0'] };
+    const neonText = (c, txt, x, y, size, col, maxW) => { c.font = `900 ${size}px Arial Black, Arial, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
+      if (maxW) { const w = c.measureText(txt).width + size * .3; if (w > maxW) { size = Math.floor(size * maxW / w); c.font = `900 ${size}px Arial Black, Arial, sans-serif`; } } // long titles shrink to fit
       c.shadowColor = col; c.shadowBlur = size * .5; c.strokeStyle = col; c.lineWidth = size * .14; c.strokeText(txt, x, y); c.shadowBlur = size * .25; c.fillStyle = '#ffffff'; c.fillText(txt, x, y); c.shadowBlur = 0; };
     for (const [g, [title, a, b]] of Object.entries(GAMES)) {
       T['scr_' + g] = cv('scr_' + g, 256, 200, (c, W, H) => {
@@ -379,11 +381,28 @@
         if (g === 'fw') { c.fillStyle = '#123018'; c.fillRect(0, 120, W, 80); for (let k = 0; k < 7; k++) { c.fillStyle = a; c.fillRect(18 + k * 14, 128 + (k % 2) * 10, 8, 14); c.fillStyle = b; c.fillRect(W - 26 - k * 14, 128 + (k % 2) * 10, 8, 14); } c.fillStyle = '#ffffff'; c.fillRect(W / 2 - 2, 100, 4, 60); }
         else if (g === 'raid') { c.fillStyle = '#1c1430'; for (let k = 0; k < 5; k++) c.fillRect(10 + k * 50, 70, 40, 120); c.fillStyle = '#ffb030'; for (let k = 0; k < 5; k++) { c.beginPath(); c.arc(30 + k * 50, 86, 6, 0, 7); c.fill(); } c.fillStyle = a; c.fillRect(110, 150, 36, 30); }
         else if (g === 'tunnel') { c.strokeStyle = '#2a6a4a'; c.lineWidth = 14; c.beginPath(); c.moveTo(10, 180); for (let k = 0; k < 6; k++) c.lineTo(20 + k * 45, k % 2 ? 70 : 170); c.stroke(); c.strokeStyle = a; c.lineWidth = 3; c.stroke(); for (let k = 0; k < 9; k++) { c.fillStyle = k % 3 ? '#ffe066' : '#8af'; c.fillRect(r() * W, 60 + r() * 130, 5, 5); } }
-        else { for (let k = 0; k < 5; k++) { c.fillStyle = k === 2 ? a : '#f2ead8'; c.beginPath(); c.ellipse(30 + k * 49, 140, 18, 24, 0, 0, 7); c.fill(); } c.fillStyle = b; c.beginPath(); c.moveTo(128, 70); c.lineTo(118, 100); c.lineTo(138, 100); c.fill(); }
-        neonText(c, title, W / 2, 34, title.length > 9 ? 26 : 32, a); c.font = 'bold 14px monospace'; c.fillStyle = b; c.textAlign = 'center'; c.fillText('PRESS O TO PLAY', W / 2, H - 10);
+        else if (g === 'shuffle') { for (let k = 0; k < 5; k++) { c.fillStyle = k === 2 ? a : '#f2ead8'; c.beginPath(); c.ellipse(30 + k * 49, 140, 18, 24, 0, 0, 7); c.fill(); } c.fillStyle = b; c.beginPath(); c.moveTo(128, 70); c.lineTo(118, 100); c.lineTo(138, 100); c.fill(); }
+        else if (g === 'descent') { // floor after floor down to the queen
+          for (let k = 0; k < 4; k++) { c.fillStyle = k % 2 ? '#24102c' : '#160a20'; c.fillRect(0, 58 + k * 29, W, 29); c.fillStyle = b; c.fillRect(k % 2 ? 26 : 130, 84 + k * 29, 100, 3); c.font = 'bold 12px monospace'; c.textAlign = 'left'; c.fillText('B' + (k + 1), 6, 76 + k * 29); }
+          c.fillStyle = '#f2ead8'; c.beginPath(); c.arc(70, 78, 5, 0, 7); c.fill();
+          c.fillStyle = a; c.beginPath(); c.ellipse(200, 160, 16, 9, 0, 0, 7); c.fill(); c.beginPath(); c.moveTo(186, 150); c.lineTo(190, 138); c.lineTo(195, 147); c.lineTo(200, 136); c.lineTo(205, 147); c.lineTo(210, 138); c.lineTo(214, 150); c.fill(); }
+        else if (g === 'bounty') { // a wanted poster under the sights
+          c.fillStyle = '#d9c08c'; c.fillRect(78, 54, 100, 120); c.fillStyle = '#3a2410'; c.font = '900 17px Arial Black, Arial, sans-serif'; c.textAlign = 'center'; c.fillText('WANTED', 128, 72);
+          c.beginPath(); c.ellipse(128, 118, 22, 28, 0, 0, 7); c.fill(); c.beginPath(); c.arc(128, 84, 12, 0, 7); c.fill(); c.fillText('$5000', 128, 166);
+          c.strokeStyle = a; c.lineWidth = 3; c.beginPath(); c.arc(128, 118, 34, 0, 7); c.stroke(); for (const [x0, y0, x1, y1] of [[84, 118, 106, 118], [150, 118, 172, 118], [128, 74, 128, 96], [128, 140, 128, 162]]) { c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke(); } }
+        else if (g === 'gp') { // the oval with the karts on it
+          c.fillStyle = '#123a1c'; c.fillRect(0, 54, W, 124); c.strokeStyle = '#555a66'; c.lineWidth = 22; c.beginPath(); c.ellipse(128, 116, 96, 42, 0, 0, 7); c.stroke();
+          c.strokeStyle = '#f2ead8'; c.lineWidth = 2; c.setLineDash([8, 8]); c.stroke(); c.setLineDash([]);
+          for (let i = 0; i < 6; i++) for (let j = 0; j < 2; j++) { c.fillStyle = (i + j) % 2 ? '#f2ead8' : '#05040c'; c.fillRect(120 + j * 8, 64 + i * 4, 8, 4); }
+          for (const [x, y, col] of [[60, 146, b], [180, 82, '#3bd5ff'], [212, 120, a]]) { c.fillStyle = col; c.fillRect(x - 7, y - 4, 14, 8); } }
+        else if (g === 'siege') { // the wall, the gate, the spiders coming
+          c.fillStyle = '#5c5a62'; c.fillRect(0, 78, W, 48); for (let k = 0; k < 9; k++) c.fillRect(4 + k * 29, 66, 16, 14); c.fillStyle = '#05040c'; c.beginPath(); c.moveTo(110, 126); c.lineTo(110, 102); c.arc(128, 102, 18, Math.PI, 0); c.lineTo(146, 126); c.fill();
+          c.fillStyle = a; for (let k = 0; k < 6; k++) c.fillRect(14 + k * 44, 70, 6, 6);
+          c.strokeStyle = '#7a1420'; c.fillStyle = '#7a1420'; c.lineWidth = 2; for (const [x, y] of [[40, 156], [96, 166], [168, 152], [222, 164]]) { c.beginPath(); c.ellipse(x, y, 9, 6, 0, 0, 7); c.fill(); for (const t of [-1, 1]) for (let l = 0; l < 3; l++) { c.beginPath(); c.moveTo(x, y); c.lineTo(x + t * 15, y - 6 + l * 6); c.stroke(); } } }
+        neonText(c, title, W / 2, 34, title.length > 9 ? 26 : 32, a, W - 8); c.font = 'bold 14px monospace'; c.fillStyle = b; c.textAlign = 'center'; c.fillText('PRESS O TO PLAY', W / 2, H - 10);
       });
-      T['mq_' + g] = cv('mq_' + g, 512, 128, (c, W, H) => { const gr = c.createLinearGradient(0, 0, W, 0); gr.addColorStop(0, '#120a24'); gr.addColorStop(.5, '#24103e'); gr.addColorStop(1, '#120a24'); c.fillStyle = gr; c.fillRect(0, 0, W, H); neonText(c, title, W / 2, H / 2 + 4, title.length > 9 ? 56 : 66, a); });
-      T['sign_' + g] = cv('sign_' + g, 1024, 192, (c, W, H) => { c.clearRect(0, 0, W, H); neonText(c, title, W / 2, H / 2 + 6, 120, a); });
+      T['mq_' + g] = cv('mq_' + g, 512, 128, (c, W, H) => { const gr = c.createLinearGradient(0, 0, W, 0); gr.addColorStop(0, '#120a24'); gr.addColorStop(.5, '#24103e'); gr.addColorStop(1, '#120a24'); c.fillStyle = gr; c.fillRect(0, 0, W, H); neonText(c, title, W / 2, H / 2 + 4, title.length > 9 ? 56 : 66, a, W - 16); });
+      T['sign_' + g] = cv('sign_' + g, 1024, 192, (c, W, H) => { c.clearRect(0, 0, W, H); neonText(c, title, W / 2, H / 2 + 6, 120, a, W - 24); });
     }
     T.runner = cv('runner', 128, 512, (c, W, H) => { c.fillStyle = '#6e1414'; c.fillRect(0, 0, W, H); c.fillStyle = '#c9a452'; c.fillRect(8, 0, 8, H); c.fillRect(W - 16, 0, 8, H); c.fillStyle = 'rgba(201,164,82,.55)'; for (let y = 32; y < H; y += 64) { c.beginPath(); c.moveTo(W / 2, y - 18); c.lineTo(W / 2 + 18, y); c.lineTo(W / 2, y + 18); c.lineTo(W / 2 - 18, y); c.fill(); } });
     T.sign_prizes = cv('sign_prizes', 512, 128, (c, W, H) => { c.clearRect(0, 0, W, H); neonText(c, 'PRIZES', W / 2, H / 2 + 4, 76, '#ffd43b'); });
@@ -831,6 +850,9 @@
     flower_pink: { col: [.95, .55, .66] }, flower_teal: { col: [.3, .75, .7], em: [.05, .2, .18] }, flower_orange: { col: [.95, .5, .12] }, ear_pink: { col: [.95, .62, .7] },
     cat_black: { col: [.07, .065, .07] }, cat_white: { col: [.95, .93, .9] }, collar_red: { col: [.7, .08, .1] }, gem_green: { col: [.2, .9, .4], em: [.1, .6, .25] }, rose_quartz: { col: [.97, .66, .78], em: [.5, .16, .3], spec: [1, .92, .96], power: 90 }, moon_cake: { col: [.72, .45, .18] }, moon_cake_top: { col: [.9, .64, .32] }, shadow_wisp: { col: [.05, .03, .08], em: [.03, .01, .06], alpha: .72 }, wisp_eye: { col: [.85, .5, 1], em: [.85, .45, 1] }, starlight: { col: [.86, .9, 1], em: [.72, .8, 1] },
     orb: { col: [.6, .85, 1], em: [.45, .75, 1] }, glow_blue: { glow: [.35, .6, 1] },
+    // Nariko's circle (Moon Tales 17-19): dark storm stone, the sigil's electric blue, the orb's glass, the three transformed burdens
+    storm_stone: { tex: 'granite', tint: [.6, .58, .68] }, storm_rune: { col: [.2, .45, .9], em: [.2, .5, 1] }, storm_arc: { col: [.7, .85, 1], em: [.62, .8, 1] }, orb_glass: { col: [.08, .16, .4], em: [.14, .36, .95], alpha: .5 }, glow_storm: { glow: [.05, .15, .55] }, glow_storm_soft: { glow: [.025, .07, .3] },
+    crystal_rose: { col: [1, .62, .8], em: [.75, .3, .55], alpha: .82 }, crystal_ember: { col: [1, .62, .25], em: [.85, .4, .1], alpha: .82 }, crystal_violet: { col: [.55, .4, .95], em: [.36, .2, .78], alpha: .82 },
     palm_leaf: { tex: 'palm_leaf' }, banana_leaf: { tex: 'banana_leaf' }, palm_bark: { tex: 'palm_bark' }, coconut: { col: [.36, .24, .12] }, banana: { col: [.95, .8, .22] }, banana_stem: { col: [.36, .5, .18] }, flower_purple: { col: [.45, .12, .3] },
     plank_teal: { tex: 'plank_teal' }, plank_yellow: { tex: 'plank_yellow' }, plank_red: { tex: 'plank_red' }, tin_roof: { tex: 'tin_roof' }, banana_big: { tex: 'banana_big' }, brick: { tex: 'brick' },
     bottles: { tex: 'bottles', em: [.25, .17, .08] }, sign_fishbook: { tex: 'sign_fishbook' }, sign_chzdice: { tex: 'sign_chzdice' }, awning: { col: [.95, .82, .36] }, curtain_red: { col: [.55, .08, .1] },
@@ -868,7 +890,7 @@
     lantern_violet: { col: [.55, .2, .9], em: [.5, .16, .9] }, lantern_cyan: { col: [.15, .75, .9], em: [.1, .7, .9] },
     emblem_rebel: { img: 'assets/brand/icon-512.png', self: true }, books_dim: { tex: 'books' }, runner: { tex: 'runner' }, map_table: { tex: 'war_map' },
     sign_prizes: { tex: 'sign_prizes', self: true, alphaTex: true }, sign_claw: { tex: 'sign_claw', self: true },
-    ...Object.fromEntries(['fw', 'raid', 'tunnel', 'shuffle'].flatMap(g => [['scr_' + g, { tex: 'scr_' + g, self: true }], ['mq_' + g, { tex: 'mq_' + g, self: true }], ['sign_' + g, { tex: 'sign_' + g, self: true, alphaTex: true }]])),
+    ...Object.fromEntries(['fw', 'raid', 'tunnel', 'shuffle', 'descent', 'bounty', 'gp', 'siege'].flatMap(g => [['scr_' + g, { tex: 'scr_' + g, self: true }], ['mq_' + g, { tex: 'mq_' + g, self: true }], ['sign_' + g, { tex: 'sign_' + g, self: true, alphaTex: true }]])),
     wisteria: { col: [.6, .42, .86], em: [.1, .05, .16] }, wisteria_pale: { col: [.82, .72, .96], em: [.12, .1, .16] }, brass: { col: [.72, .55, .24], spec: [.8, .7, .4], power: 50 }, paper: { col: [.94, .91, .84] },
     fusuma_cranes: { tex: 'fusuma_cranes' }, byobu_pine: { tex: 'byobu_pine' }, pebbles_white: { tex: 'pebbles_white' }, drawers: { tex: 'drawers' }, valley_view: { tex: 'valley_view', self: true },
     dome_stars: { tex: 'dome_stars', em: [.16, .1, .2] }, council_map: { tex: 'council_map', em: [.2, .16, .08] },
@@ -1354,6 +1376,30 @@
     curveTube(M, fur, [[0, .45, .2], [.3, .62, .35], [.42, .55, .75], [.3, .45, .9]], [.09, .08, .07, .03], { segs: 8, n: 3, ridge: .02, bump: .02, seed: 9 });
   }
   function ccFlower(M, m, x, y, z, r) { for (let k = 0; k < 5; k++) { const a = k * 1.2566; M.sphere(m, [x + Math.cos(a) * r * .55, y - .01, z + Math.sin(a) * r * .55], r * .5, .6, 6, 3); } M.sphere('gold', [x, y - .04, z], r * .25, 1, 5, 3); }
+  // a standing stone of Nariko's circle (Moon Tales 17-19), ~2.7 m: seven-sided, tapering and leaning a little, the top
+  // slanted; its flat face (-y) carries her storm sigil (a lightning bolt in a ring, tally marks over it, a chevron under it),
+  // carved dark or, once the stone is woken (lit), burning electric blue with a glow in front of it and on the ground
+  function stormStone(M, lit) {
+    const H = 2.7, A = .66, D = .4, deg = [240, 300, 352, 398, 450, 502, 548], J = [1, 1, .92, 1.08, .95, 1.06, .9];
+    const tap = z => 1 - .3 * z / H, lean = z => .1 * (z / H) * (z / H);
+    // the two front vertices keep their radius, so the face between them stays one plane: y = -.866 D tap(z)
+    const ring = (zf, k) => deg.map((d, i) => { const a = d * Math.PI / 180, z = zf(i), t = tap(z) * (i < 2 ? 1 : J[i] * (1 + .04 * Math.sin(i * 2.3 + k * 1.7))); return [Math.cos(a) * A * t + lean(z), Math.sin(a) * D * t, z]; });
+    const R = [ring(() => -.15, 0), ring(() => .9, 1), ring(() => 1.8, 2), ring(i => H + .2 * Math.cos(deg[i] * Math.PI / 180) - .06 * ((i * 5) % 3), 3)];
+    for (let r = 0; r < R.length - 1; r++) for (let i = 0; i < 7; i++) { const i2 = (i + 1) % 7; M.poly('storm_stone', [R[r][i], R[r][i2], R[r + 1][i2], R[r + 1][i]]); }
+    const T = R[R.length - 1], apex = [lean(H) + .04, -.02, H + .16];
+    for (let i = 0; i < 7; i++) M.poly('storm_stone', [T[i], T[(i + 1) % 7], apex]);
+    blob(M, 'moss', [0, .05, -.02], .86, .58, .17, { flat: .3, amp: .25, seed: 4, segs: 12, rings: 6 });
+    const m = lit ? 'storm_rune' : 'dark', off = lit ? .014 : .01, F = (u, z) => [u + lean(z), -.866 * D * tap(z) - off, z];
+    const stroke = (u0, z0, u1, z1, w) => { const L = Math.hypot(u1 - u0, z1 - z0) || 1, nu = -(z1 - z0) / L * w / 2, nz = (u1 - u0) / L * w / 2; M.poly(m, [F(u0 + nu, z0 + nz), F(u1 + nu, z1 + nz), F(u1 - nu, z1 - nz), F(u0 - nu, z0 - nz)]); };
+    const zc = 1.5;
+    for (let k = 0; k < 16; k++) { const a0 = k * Math.PI / 8, a1 = a0 + Math.PI / 8, r0 = .205, r1 = .24; M.poly(m, [F(Math.cos(a0) * r0, zc + Math.sin(a0) * r0), F(Math.cos(a0) * r1, zc + Math.sin(a0) * r1), F(Math.cos(a1) * r1, zc + Math.sin(a1) * r1), F(Math.cos(a1) * r0, zc + Math.sin(a1) * r0)]); }
+    stroke(.075, zc + .17, -.045, zc + .01, .055); stroke(-.06, zc + .012, .06, zc - .012, .05); stroke(.045, zc - .01, -.07, zc - .19, .05); // the bolt
+    for (const u of [-.08, 0, .08]) stroke(u, 2.0, u, 2.13, .03);
+    stroke(-.12, 1.07, 0, .97, .035); stroke(0, .97, .12, 1.07, .035);
+    if (!lit) return;
+    M.poly('glow_storm', [F(-.6, zc - .6), F(.6, zc - .6), F(.6, zc + .6), F(-.6, zc + .6)].map(q => [q[0], q[1] - .05, q[2]]));
+    M.quad('glow_storm', [[-1.7, -2.4, .05], [1.7, -2.4, .05], [1.7, 1, .05], [-1.7, 1, .05]]);
+  }
   // a leaf / frond as a strip along a spine (pt(f), f 0..1), half-width w(f), folded down from the midrib by fold;
   // d = the leaf's horizontal direction (the sides spread perpendicular to it)
   function leafStrip(M, m, pt, w, d, fold, n) {
@@ -2935,6 +2981,45 @@
       for (const [x, y, z, r] of [[.06, .08, 1.82, .17], [-.1, .04, 2.1, .11], [.08, 0, 2.31, .065]]) M.sphere('shadow_wisp', [x, y, z], r, 1.3, 10, 6); // smoke rising off it
       for (const sd of [-1, 1]) M.sphere('wisp_eye', [sd * .13, -.47, 1.08], .06, .65, 10, 6);
     },
+    // ── the Moon Tales: Nariko's tale (Thunder Moon) ──
+    cc_storm_stone(M) { stormStone(M, false); }, // one of the seven ancient stones, asleep
+    cc_storm_stone_lit(M) { stormStone(M, true); }, // woken: its sigil burns blue, a spark crackles over it (subpart cc_storm_spark)
+    cc_storm_spark(M) { // the spark over a woken stone (a subpart: it pulses and turns)
+      M.sphere('storm_arc', [0, 0, 0], .07, 1, 8, 5);
+      for (let k = 0; k < 5; k++) { const a = k * 1.2566, b = a + .5, p1 = [Math.cos(a) * .14, Math.sin(a) * .14, .05 * Math.sin(k * 2.1)], p2 = [Math.cos(b) * .26, Math.sin(b) * .26, .1 * Math.cos(k * 1.7)]; M.rod('storm_arc', [0, 0, 0], p1, .01, 3); M.rod('storm_arc', p1, p2, .008, 3); }
+      for (const a of [0, 1.571]) { const c = Math.cos(a) * .38, s = Math.sin(a) * .38; M.quad('glow_storm', [[-c, -s, -.38], [c, s, -.38], [c, s, .38], [-c, -s, .38]]); }
+    },
+    cc_storm_orb(M) { M.quad('glow_storm', [[-3.4, -3.4, .07], [3.4, -3.4, .07], [3.4, 3.4, .07], [-3.4, 3.4, .07]]); }, // her storm orb risen over the circle (the orb is the subpart cc_storm_orb_core), blue light on the ground under it
+    cc_storm_orb_core(M) {
+      M.sphere('orb_glass', [0, 0, 0], .62, 1, 16, 10); M.sphere('storm_arc', [0, 0, 0], .26, 1, 10, 6);
+      for (let k = 0; k < 9; k++) { // arcs crackling out of the core, through the glass
+        const a = k * 2.4, e = .9 * Math.sin(k * 1.9), d = [Math.cos(a) * Math.cos(e), Math.sin(a) * Math.cos(e), Math.sin(e)];
+        let p = [d[0] * .2, d[1] * .2, d[2] * .2];
+        for (let s = 1; s <= 4; s++) { const r = .2 + s * .17, j = .07 * (s % 2 ? 1 : -1), q = [d[0] * r + j * d[1], d[1] * r - j * d[0], d[2] * r + j]; M.rod('storm_arc', p, q, .016 - s * .002, 3); p = q; }
+      }
+      for (const a of [0, 1.571]) { const c = Math.cos(a) * 1.5, s = Math.sin(a) * 1.5; M.quad('glow_storm', [[-c, -s, -1.5], [c, s, -1.5], [c, s, 1.5], [-c, -s, 1.5]]); }
+    },
+    cc_storm_roots(M) { // from root to sky: veins of storm light in the ground from the seven stones (the circle's angles) to the centre, a column of light rising
+      for (let k = 0; k < 7; k++) {
+        const a = Math.PI / 7 + k * 2 * Math.PI / 7, c = Math.cos(a), s = Math.sin(a);
+        let p = [c * .7, s * .7];
+        for (let i = 1; i <= 6; i++) { const r = .7 + i * .58, w = i < 6 ? (i % 2 ? .28 : -.28) : 0, q = [c * r - s * w, s * r + c * w], L = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1, nx = -(q[1] - p[1]) / L * .05, ny = (q[0] - p[0]) / L * .05;
+          M.poly('storm_rune', [[p[0] + nx, p[1] + ny, .05], [q[0] + nx, q[1] + ny, .05], [q[0] - nx, q[1] - ny, .05], [p[0] - nx, p[1] - ny, .05]]); p = q; }
+      }
+      // the column: two narrow, fainter sheets at 45 deg to the circle's axes (a sheet seen edge-on is a bright line)
+      for (const a of [.785, 2.356]) { const c = Math.cos(a) * .45, s = Math.sin(a) * .45; M.quad('glow_storm_soft', [[-c, -s, 0], [c, s, 0], [c, s, 3.6], [-c, -s, 3.6]]); }
+      M.quad('glow_storm', [[-1.6, -1.6, .06], [1.6, -1.6, .06], [1.6, 1.6, .06], [-1.6, 1.6, .06]]);
+    },
+    cc_storm_crystals(M) { // pain, anger, fear: not destroyed, transformed. Three clusters of storm crystal west of the circle's centre
+      const shard = (m, x, y, h, r, tilt, rot) => { // a six-sided crystal with a pointed tip, leaning tilt toward rot
+        const tx = Math.cos(rot) * tilt, ty = Math.sin(rot) * tilt, P = (a, z, rr) => [x + Math.cos(a) * rr + tx * z, y + Math.sin(a) * rr + ty * z, z], top = h + r * 1.4, tip = [x + tx * top, y + ty * top, top];
+        for (let k = 0; k < 6; k++) { const a0 = k * Math.PI / 3, a1 = a0 + Math.PI / 3; M.poly(m, [P(a0, -.1, r), P(a1, -.1, r), P(a1, h, r * .92), P(a0, h, r * .92)]); M.poly(m, [P(a0, h, r * .92), P(a1, h, r * .92), tip]); }
+      };
+      for (const [m, x, y, s] of [['crystal_rose', -2.2, .9, 1], ['crystal_ember', -2.6, -.6, .85], ['crystal_violet', -1.6, -1.7, .9]]) {
+        shard(m, x, y, 1.1 * s, .17 * s, .12, Math.atan2(y, x)); shard(m, x + .32 * s, y + .12, .62 * s, .11 * s, .3, .4); shard(m, x - .2 * s, y - .25 * s, .5 * s, .09 * s, .35, -2.2);
+        M.quad('glow_storm', [[x - 1.1, y - 1.1, .06], [x + 1.1, y - 1.1, .06], [x + 1.1, y + 1.1, .06], [x - 1.1, y + 1.1, .06]]);
+      }
+    },
     cc_candles(M) { ccCandles(M, 0, 0, 5); M.quad('glow', [[-1.4, -1.4, .05], [1.4, -1.4, .05], [1.4, 1.4, .05], [-1.4, 1.4, .05]]); },
     cc_bench(M) { M.block('darkwood', 0, 0, .45, 2.4, .5, .1); for (const sd of [-1, 1]) M.block('darkwood', sd * 1, 0, 0, .12, .45, .45); M.block('darkwood', 0, .22, .55, 2.4, .08, .55); },
     // ── the Cute & Creepy gang (Miguel's NFTs), low poly: three kokeshi dolls and two lucky cats; used as NPC
@@ -3561,8 +3646,8 @@
   // floating pieces (ghosts): their instances bob and sway under the placed root, so saved positions never move
   const FLOAT = new Set(['cc_ghost']), floaters = [];
   // characters: the body rocks (kokeshi) or breathes (cats); subparts under their own pivots wave, flicker, pulse
-  const CHAR = { chz_torch_lit: 'still', chz_bonfire_lit: 'still', chz_crab: 'rock', chz_crab_shades: 'rock', cc_flower_moon: 'rock', cc_nariko: 'rock', cc_ostara: 'rock', cc_mamoru: 'bob', cc_mochi: 'bob', cc_trickster: 'hover', cc_chime_light: 'hover', cc_shadow: 'hover' };
-  const SUBPARTS = { chz_torch_lit: [['chz_torch_flame', [0, 0, 2.5], 'flicker']], chz_bonfire_lit: [['chz_bonfire_flame', [0, 0, .05], 'flicker']], cc_mamoru: [['cc_paw_black', [.36, -.25, .92], 'wave'], ['cc_candle_flame', [0, 0, 2.17], 'flicker']], cc_mochi: [['cc_paw_white', [.36, -.25, .92], 'wave']], cc_nariko: [['cc_orb', [0, -.56, .74], 'pulse']] };
+  const CHAR = { cc_storm_stone_lit: 'still', cc_storm_orb: 'still', chz_torch_lit: 'still', chz_bonfire_lit: 'still', chz_crab: 'rock', chz_crab_shades: 'rock', cc_flower_moon: 'rock', cc_nariko: 'rock', cc_ostara: 'rock', cc_mamoru: 'bob', cc_mochi: 'bob', cc_trickster: 'hover', cc_chime_light: 'hover', cc_shadow: 'hover' };
+  const SUBPARTS = { cc_storm_stone_lit: [['cc_storm_spark', [.14, -.02, 3.12], 'pulse']], cc_storm_orb: [['cc_storm_orb_core', [0, 0, 3.7], 'pulse']], chz_torch_lit: [['chz_torch_flame', [0, 0, 2.5], 'flicker']], chz_bonfire_lit: [['chz_bonfire_flame', [0, 0, .05], 'flicker']], cc_mamoru: [['cc_paw_black', [.36, -.25, .92], 'wave'], ['cc_candle_flame', [0, 0, 2.17], 'flicker']], cc_mochi: [['cc_paw_white', [.36, -.25, .92], 'wave']], cc_nariko: [['cc_orb', [0, -.56, .74], 'pulse']] };
   const actors = [];
   function animateActors(t) {
     for (let i = actors.length - 1; i >= 0; i--) {
@@ -3580,7 +3665,7 @@
     }
   }
   // apes: the joints are pivots; the gait comes from how fast the placed root actually moves (NPC patrols, the
-  // player), so nothing outside has to drive it. actorAction(root, 'jump' | 'kick') plays a one-shot move.
+  // player), so nothing outside has to drive it. actorAction(root, 'jump' | 'kick' | 'dance') plays a one-shot move.
   const APE_L1 = .55, APE_L2 = .54;
   function buildApe(root, type, scene, shadows, skipShadows) {
     const body = new BABYLON.TransformNode(root.name + '_body', scene), N = {}; body.parent = root;
@@ -3606,7 +3691,7 @@
     let thL = (.42 + .25 * R) * A * s, thR = -thL, knL = kn(g), knR = kn(g + Math.PI);
     const sw = (.32 + .3 * R) * A * s, sway = .05 * idle * Math.sin(t * 1.1 + a.ph);
     let shL = -sw + sway, shR = sw + sway, elL = .3 + (.3 + .7 * R) * A + .1 * A * s, elR = .3 + (.3 + .7 * R) * A - .1 * A * s, splay = .12 + .08 * R;
-    let lean = -(.04 * A + .2 * R), twist = .1 * A * s, lift = 0;
+    let lean = -(.04 * A + .2 * R), twist = .1 * A * s, lift = 0, roll = 0;
     if (a.act) {
       if (a.act.t0 == null) a.act.t0 = t;
       const u = (t - a.act.t0) / a.act.dur;
@@ -3614,18 +3699,28 @@
       else {
         const w = Math.sin(Math.PI * u), L = (x, y, k = w) => x + (y - x) * k;
         if (a.act.kind === 'jump') { thL = L(thL, .95); thR = L(thR, .75); knL = L(knL, -1.5); knR = L(knR, -1.3); shL = L(shL, 2.5); shR = L(shR, 2.4); elL = L(elL, .4); elR = L(elR, .4); lift = 1.3 * w; }
+        else if (a.act.kind === 'dance') {
+          // a party groove (Oct 17, Miguel: the parties need dancing): on the house song's beat (125 a minute) the knees dip
+          // in turn, the hips swing and roll, the arms pump up one after the other, a little bounce on every beat
+          const e = Math.min(1, u * 5, (1 - u) * 5), b = (t - a.act.t0) * 2.0833 * Math.PI * 2, sb = Math.sin(b), cb = Math.cos(b / 2);
+          thL = L(thL, .22 + .3 * Math.max(0, sb), e); thR = L(thR, .22 + .3 * Math.max(0, -sb), e);
+          knL = L(knL, -.45 - .4 * Math.max(0, sb), e); knR = L(knR, -.45 - .4 * Math.max(0, -sb), e);
+          shL = L(shL, 1.1 + 1.4 * Math.max(0, cb), e); shR = L(shR, 1.1 + 1.4 * Math.max(0, -cb), e); elL = L(elL, 1.3, e); elR = L(elR, 1.3, e);
+          twist = L(twist, .38 * cb, e); lean = L(lean, .06, e); roll = .14 * sb * e; lift = .14 * Math.abs(sb) * e;
+        }
         else { const ext = Math.min(1, Math.max(0, (u - .25) / .2)); thR = L(thR, 1.7); knR = L(knR, -1.6 + 1.55 * ext); thL = L(thL, -.12); knL = L(knL, -.25); lean = L(lean, .28); shL = L(shL, .9); shR = L(shR, -.6); splay += .3 * w; }
       }
     }
     N.hip_l.rotation.x = thL; N.hip_r.rotation.x = thR; N.kn_l.rotation.x = knL; N.kn_r.rotation.x = knR;
     N.sh_l.rotation.set(shL, 0, -splay); N.sh_r.rotation.set(shR, 0, splay); N.el_l.rotation.x = elL; N.el_r.rotation.x = elR;
-    N.pelvis.rotation.set(lean, twist, 0); N.pelvis.scaling.set(1 + .012 * br * idle, 1 + .008 * br * idle, 1 + .012 * br * idle);
+    N.pelvis.rotation.set(lean, twist, roll); N.pelvis.scaling.set(1 + .012 * br * idle, 1 + .008 * br * idle, 1 + .012 * br * idle);
     N.neck.rotation.set(-lean * .6 + .04 * idle * Math.sin(t * .7 + a.ph), idle * .35 * Math.sin(t * .31 + a.ph) * (Math.sin(t * .13 + a.ph) > 0 ? 1 : .3), 0);
     // keep the lower foot on the ground: drop the body by what the bent legs lose in reach
     const reach = (th, k) => APE_L1 * Math.cos(th) + APE_L2 * Math.cos(th + k);
     a.body.position.y = Math.max(reach(thL, knL), reach(thR, knR)) - APE_L1 - APE_L2 + lift;
   }
-  function actorAction(root, kind, dur) { const a = actors.find(x => x.root === root); if (a) a.act = { kind, t0: null, dur: dur || (kind === 'jump' ? .9 : 1.1) }; return !!a; }
+  function actorAction(root, kind, dur) { const a = actors.find(x => x.root === root); if (a) a.act = { kind, t0: null, dur: dur || (kind === 'jump' ? .9 : kind === 'dance' ? 1.92 : 1.1) }; return !!a; }
+  const actorBusy = root => !!actors.find(x => x.root === root)?.act; // a one-shot still playing
   function ensureAnim(scene) { if (!scene._kitFloat) scene._kitFloat = scene.onBeforeRenderObservable.add(() => animate(performance.now() / 1000)); }
   const heartbeat = t => { const u = (t * 1.1) % 1; return Math.exp(-(((u - .1) / .05) ** 2)) + .6 * Math.exp(-(((u - .3) / .05) ** 2)); };
   function animate(t) {
@@ -3673,7 +3768,7 @@
   // ({ box: [x0, z0, x1, z1] } | { circle: [x, z, r] }), spawn [x, z, facing], exit [x, z] (walk into it to leave),
   // hemi { i, c, g } fill light, lights [{ p: [x, y, z], c, i, r }] point lights.
   const SD = { HX: 20, HY: 16, H: 9, CX: 13.5, CY: [-10.5, -3.5, 3.5, 10.5], ZN: 12.6, DW: 7, DH: 5.8, AW: 10, AD: 1.9, AZ: 8.4, DZ: .8 };
-  const AR = { HX: 22, HY: 20, H: 12, DW: 7, DH: 6, CABS: [-12.6, -10.2, -7.8, -5.4, 5.4, 7.8, 10.2, 12.6], COLS: [-12, -4, 4, 12] };
+  const AR = { HX: 22, HY: 20, H: 12, DW: 7, DH: 6, CABS: [-12.6, -10.2, -7.8, -5.4, 5.4, 7.8, 10.2, 12.6], COLS: [-12, -4, 4, 12], ISL: 10.5, ICABS: [-3.6, -1.2, 1.2, 3.6] };
   const LB = { HX: 18, HY: 22, H: 11, DW: 6, DH: 5.6, BAYS: [-19.8, -15.4, -11, -6.6, -2.2, 2.2, 6.6, 11, 15.4, 19.8], SHELF: [-19.8, -11, -2.2, 6.6, 15.4] };
   // Samurai rooms: Library (SL: the moon window in the back wall, the garden behind it), Forge (SF), Ancestor Hall (SA)
   const SL = { HX: 13, HY: 11, H: 8, DW: 3.6, DH: 3.6, WIN: { r: 2.6, z: 3.9 }, CUB: { y0: -9.6, y1: 9.6, z0: .5, rows: 8, cell: .6, d: .9 }, DESKS: [[-5, -1.6], [0, -1.6], [5, -1.6], [-5, 3], [0, 3], [5, 3]] };
@@ -3816,7 +3911,8 @@
         { p: [0, 5.5, 15], c: [1, .86, .64], i: .55, r: 15 }, { p: [0, 7, 0], c: [.92, .66, 1], i: .6, r: 18 }],
       blockers: [{ box: [-AR.HX, -14.1, -20.3, -3.9] }, { box: [-AR.HX, 3.9, -20.3, 14.1] }, { box: [20.3, -14.1, AR.HX, -3.9] }, { box: [20.3, 3.9, AR.HX, 14.1] },
         { box: [-8.6, -AR.HY, 8.6, -17.15] }, { circle: [-6.5, -16.2, .75] }, { circle: [6.5, -16.2, .75] }, ...AR.COLS.flatMap(z => [{ circle: [-15.5, z, .65] }, { circle: [15.5, z, .65] }]),
-        { box: [-7, -12.1, -2, -10.9] }, { box: [2, -12.1, 7, -10.9] }, { box: [11.6, 13.6, 18.4, AR.HY] }, { box: [-16.3, 13.9, -13.7, 16.5] }, { circle: [7.6, 17.6, .9] }, { box: [-AR.HX, -15.85, -20.3, -14.15] }]
+        { box: [-7, -12.1, -2, -10.9] }, { box: [2, -12.1, 7, -10.9] }, { box: [11.6, 13.6, 18.4, AR.HY] }, { box: [-16.3, 13.9, -13.7, 16.5] }, { circle: [7.6, 17.6, .9] }, { box: [-AR.HX, -15.85, -20.3, -14.15] },
+        ...[-1, 1].map(s => ({ box: [s * AR.ISL - 1.7, -4.6, s * AR.ISL + 1.7, 4.6] }))]
     },
     room_sam_library: {
       bounds: [-SL.HX, SL.HX, -SL.HY, SL.HY + .2], spawn: [0, 6.4, Math.PI], exit: [0, SL.HY + .3], ceil: SL.H,
@@ -4546,6 +4642,15 @@
         }
       }
       cabinet(M, -HX, -15, 1, null, 'lacquer_black', 'lacquer_black'); // the Dark Cabinet: no light, no sound (a Hub secret wakes it at night)
+      // the playground's newer games on two islands either side of the emblem, back to back: Hive Descent and Bounty Hunters face
+      // the middle, the Grand Prix and the Siege the side aisles (the walls are under the NFT frames, which would take the O press)
+      for (const s of [-1, 1]) {
+        const cx = s * AR.ISL, faces = [[-s, s < 0 ? 'descent' : 'bounty'], [s, s < 0 ? 'gp' : 'siege']];
+        for (const [f, g] of faces) { const [body, neon] = { descent: ['paint_black', 'neon_pink'], bounty: ['paint_black', 'neon_purple'], gp: ['paint_white', 'neon_gold'], siege: ['darkwood', 'neon_gold'] }[g]; for (const y of AR.ICABS) cabinet(M, cx, y, f, g, body, neon); }
+        M.block('lacquer_black', cx, 0, 3.3, .24, 4.6, .85); for (const z of [3.3, 4.1]) M.block('neon_cyan', cx, 0, z, .28, 4.64, .05); // the sign board on the spine
+        for (const [f, g] of faces) { const xf = cx + f * .125, A = f > 0 ? [-2, 2] : [2, -2]; M.quad('sign_' + g, [[xf, A[0], 3.35], [xf, A[1], 3.35], [xf, A[1], 4.1], [xf, A[0], 4.1]]); }
+        for (const y of [-4.42, 4.42]) M.block('lacquer_black', cx, y, 0, 2.86, .1, 3.3); // end panels
+      }
       // back wall: the stage, the big screen's black backing and its red torii, neon trim; front wall: the door, the emblem over it
       M.block('arcade_wall', 0, -HY - T / 2, 0, 2 * HX + 2 * T, T, H + .4); M.block('lacquer_black', 0, -HY + .06, 0, 2 * HX, .12, 2.4); M.block('neon_cyan', 0, -HY + .14, 2.4, 2 * HX, .06, .07);
       M.block('lacquer_black', 0, -HY + 1.4, 0, 17.2, 2.8, .6); M.block('neon_pink', 0, -HY + 2.82, .52, 17.2, .05, .06);
@@ -7003,5 +7108,5 @@
     }
     return walkTriangles(parts);
   }
-  window.SamuraiKit = { build, setLightFactor, animate, actorAction, protoMeshes, decks, rooms: ROOMS, stairsSteps, refreshStairs, types: Object.keys(B), walkEligible, walkTriangles, walkTrianglesOf, walkRoomParts, _Kit: Kit, _B: B, _org: { blob, curveTube } };
+  window.SamuraiKit = { build, setLightFactor, animate, actorAction, actorBusy, protoMeshes, decks, rooms: ROOMS, stairsSteps, refreshStairs, types: Object.keys(B), walkEligible, walkTriangles, walkTrianglesOf, walkRoomParts, _Kit: Kit, _B: B, _org: { blob, curveTube } };
 })();

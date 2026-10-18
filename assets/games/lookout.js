@@ -2,11 +2,18 @@
 // moat. Enemy scouts creep through the grass: spot each one (click it, or bring it into the ring and press Space)
 // before time runs out. A scout keeps still, then stirs now and then: watch for the movement. Look round with the
 // arrows / WASD or by dragging, zoom the spyglass with Z or the mouse wheel. A wrong call costs 3 seconds.
-// Levels: 5 scouts in 60 s; 7 farther out in 60 s; 8 in 50 s that stir less. A level opens when the one before is won.
+// Ten levels (Oct 17, Miguel: "make it 10 levels"): more scouts, farther out, less time, stirring less; from level 4
+// wild boars root about in the grass too (they move more than the scouts; calling one is a wrong call), from level 6
+// the scouts wear grass-green bands instead of red. Every scout stands where the tower can see it (no tree, rock or
+// rise in between). A level opens when the one before is won.
 // def: { eye: lookout height (m), arc: half the view to the sides (deg), levels, pass, points }
 (function () {
-  const LEVELS = [{ n: 5, near: 32, far: 58, sec: 60, stir: [2.5, 5] }, { n: 7, near: 38, far: 80, sec: 60, stir: [3, 6] }, { n: 8, near: 42, far: 95, sec: 50, stir: [5, 9] }];
-  const SCORE = [30, 50, 75];
+  const LEVELS = [{ n: 5, near: 32, far: 58, sec: 60, stir: [2.5, 5] }, { n: 7, near: 38, far: 80, sec: 60, stir: [3, 6] }, { n: 8, near: 42, far: 95, sec: 50, stir: [5, 9] },
+    { n: 9, near: 40, far: 100, sec: 55, stir: [4, 8], boars: 2 }, { n: 9, near: 42, far: 105, sec: 50, stir: [5, 9], boars: 3 },
+    { n: 10, near: 44, far: 110, sec: 55, stir: [6, 10], camo: true }, { n: 10, near: 46, far: 115, sec: 50, stir: [6, 11], boars: 3, camo: true },
+    { n: 11, near: 48, far: 120, sec: 50, stir: [7, 12], boars: 4, camo: true }, { n: 12, near: 50, far: 125, sec: 48, stir: [8, 13], boars: 4, camo: true },
+    { n: 12, near: 52, far: 130, sec: 45, stir: [9, 14], boars: 5, camo: true }];
+  const SCORE = [30, 50, 75, 90, 105, 120, 140, 160, 180, 200];
   const G = {
     title: 'The Lookout',
     start(ctx) {
@@ -15,32 +22,57 @@
       const KEY = 'rebelAntsLookoutProgress:' + (def.id || 'lookout');
       let solvedUpTo = 0; try { solvedUpTo = Math.max(0, Math.min(LV.length, Number(localStorage.getItem(KEY)) || 0)); } catch (e) {}
       const mat = (k, c, em) => ctx.mat(k, n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(...c); m.specularColor = new B.Color3(.04, .04, .04); if (em) m.emissiveColor = new B.Color3(...em); return m; });
-      const M = { cloak: mat('cloak', [.36, .33, .2], [.06, .055, .03]), head: mat('head', [.24, .2, .14], [.04, .03, .02]), band: mat('band', [.55, .12, .1], [.15, .03, .02]), mark: mat('mark', [1, .25, .2], [1, .2, .15]) };
+      const M = { cloak: mat('cloak', [.36, .33, .2], [.06, .055, .03]), head: mat('head', [.24, .2, .14], [.04, .03, .02]), band: mat('band', [.55, .12, .1], [.15, .03, .02]), mark: mat('mark', [1, .25, .2], [1, .2, .15]),
+        camo: mat('camo', [.34, .38, .18], [.05, .06, .025]), boar: mat('boar', [.2, .16, .13], [.035, .028, .022]), snout: mat('snout', [.42, .3, .26], [.07, .05, .04]) };
       M.mark.disableLighting = true;
       const frameY = ctx.frame.getAbsolutePosition().y;
       const groundAt = (x, z) => { const w = ctx.toWorld(x, 0, z), h = window._newTerrain?.heightAt?.(w.x, w.z); return Number.isFinite(h) ? h - frameY : 0; };
       // a scout: a crouched ant in a grass-brown cloak, a red headband, two antennae
-      function scout() {
+      // (camo: a grass-green cloak and band, no red)
+      function scout(camo) {
         const root = new B.TransformNode('lkScout', scene); root.parent = ctx.frame; ctx.add(root);
         const part = (m, mt, x, y, z, s) => { m.parent = root; m.position.set(x, y, z); if (s) m.scaling.set(...s); m.material = mt; m.isPickable = false; ctx.add(m); return m; };
-        part(B.MeshBuilder.CreateSphere('lkBody', { diameter: 1, segments: 8 }, scene), M.cloak, 0, .55, 0, [1.1, .9, 1.5]);
+        part(B.MeshBuilder.CreateSphere('lkBody', { diameter: 1, segments: 8 }, scene), camo ? M.camo : M.cloak, 0, .55, 0, [1.1, .9, 1.5]);
         part(B.MeshBuilder.CreateSphere('lkHead', { diameter: .62, segments: 8 }, scene), M.head, 0, 1.0, .55);
-        part(B.MeshBuilder.CreateCylinder('lkBand', { height: .12, diameter: .64, tessellation: 10 }, scene), M.band, 0, 1.08, .55);
+        part(B.MeshBuilder.CreateCylinder('lkBand', { height: .12, diameter: .64, tessellation: 10 }, scene), camo ? M.camo : M.band, 0, 1.08, .55);
         for (const s of [-1, 1]) { const a = part(B.MeshBuilder.CreateCylinder('lkAnt', { height: .7, diameter: .04, tessellation: 4 }, scene), M.head, s * .14, 1.5, .62); a.rotation.set(-.5, 0, s * .35); }
         return root;
       }
-      let lv = null; // { k, L, scouts: [{ root, home, found, stir, move }], left, found, wrong }
+      // a wild boar: about a scout's size, dark bristles, a pale snout, short legs (it roots about more than a scout stirs)
+      function boar() {
+        const root = new B.TransformNode('lkBoar', scene); root.parent = ctx.frame; ctx.add(root);
+        const part = (m, mt, x, y, z, s) => { m.parent = root; m.position.set(x, y, z); if (s) m.scaling.set(...s); m.material = mt; m.isPickable = false; ctx.add(m); return m; };
+        part(B.MeshBuilder.CreateSphere('lkBoarBody', { diameter: 1, segments: 8 }, scene), M.boar, 0, .62, 0, [.95, .85, 1.6]);
+        part(B.MeshBuilder.CreateSphere('lkBoarHead', { diameter: .6, segments: 8 }, scene), M.boar, 0, .62, .82, [1, .95, 1.15]);
+        const sn = part(B.MeshBuilder.CreateCylinder('lkBoarSnout', { height: .3, diameterTop: .26, diameterBottom: .3, tessellation: 8 }, scene), M.snout, 0, .55, 1.18); sn.rotation.x = Math.PI / 2;
+        for (const s of [-1, 1]) { const e = part(B.MeshBuilder.CreateCylinder('lkBoarEar', { height: .2, diameterTop: 0, diameterBottom: .14, tessellation: 4 }, scene), M.boar, s * .17, .92, .8); e.rotation.z = s * -.4; }
+        for (const sx of [-1, 1]) for (const sz of [-1, 1]) part(B.MeshBuilder.CreateCylinder('lkBoarLeg', { height: .4, diameter: .13, tessellation: 5 }, scene), M.boar, sx * .26, .2, sz * .45);
+        return root;
+      }
+      // the line from the tower's eye to (x, y + .8, z) clear of the ground and of the trees and rocks (their trunks and
+      // bodies, widened for the crowns): no scout hides where the spyglass cannot reach
+      const decor = (() => { const T = window._newTerrain, o = ctx.toWorld(0, 0, 0), out = [];
+        for (const cell of T?.decorBlockers?.values?.() || []) for (const b of cell) if (Math.hypot(b.x - o.x, b.z - o.z) < 190) out.push(b);
+        return out; })();
+      function seen(x, y, z) {
+        const a = ctx.toWorld(0, EYE, 0), b = ctx.toWorld(x, y + .8, z), dx = b.x - a.x, dz = b.z - a.z, L2 = dx * dx + dz * dz || 1;
+        for (let i = 1; i < 24; i++) { const f = i / 24, px = a.x + dx * f, pz = a.z + dz * f, h = window._newTerrain?.heightAt?.(px, pz); if (Number.isFinite(h) && h > a.y + (b.y - a.y) * f - .25) return false; }
+        for (const t of decor) { const f = Math.max(0, Math.min(1, ((t.x - a.x) * dx + (t.z - a.z) * dz) / L2)); if (f > .02 && Math.hypot(a.x + dx * f - t.x, a.z + dz * f - t.z) < t.r + 2.6) return false; }
+        return true;
+      }
+      let lv = null; // { k, L, scouts: [{ root, home, found, stir, move }], boars: [..same, no found], left, found, wrong }
       const st = { phase: 'pick', yaw: 0, pitch: -.12, zoom: false, fov: .8, drag: null, keys: {}, wait: 0, pops: [] };
       function build(k) {
-        if (lv) lv.scouts.forEach(s => { try { s.root.dispose(); } catch (e) {} });
-        const L = LV[k]; lv = { k, L, scouts: [], left: L.sec, found: 0, wrong: 0 };
-        for (let i = 0; i < L.n; i++) {
-          // spread over the view: one per slice of the arc, at a random range
-          let x = 0, z = 0, y = 0;
-          for (let t = 0; t < 12; t++) { const a = (-ARC * .85) + (i + .2 + Math.random() * .6) / L.n * ARC * 1.7, r = L.near + Math.random() * (L.far - L.near); x = Math.sin(a) * r; z = Math.cos(a) * r; y = groundAt(x, z); if (y > -6) break; }
-          const root = scout(); root.position.set(x, y, z); root.rotation.y = Math.random() * Math.PI * 2;
-          lv.scouts.push({ root, home: new V3(x, y, z), found: false, stir: L.stir[0] + Math.random() * (L.stir[1] - L.stir[0]), move: null });
-        }
+        if (lv) [...lv.scouts, ...lv.boars].forEach(s => { try { s.root.dispose(); } catch (e) {} });
+        const L = LV[k]; lv = { k, L, scouts: [], boars: [], left: L.sec, found: 0, wrong: 0 };
+        // spread over the view: one per slice of the arc, at a random range, where the tower can see it
+        const spot = (i, n) => { let x = 0, z = 0, y = 0;
+          for (let t = 0; t < 30; t++) { const a = (-ARC * .85) + (i + .2 + Math.random() * .6) / n * ARC * 1.7, r = L.near + Math.random() * (L.far - L.near); x = Math.sin(a) * r; z = Math.cos(a) * r; y = groundAt(x, z); if (y > -6 && seen(x, y, z)) break; }
+          return [x, y, z]; };
+        for (let i = 0; i < L.n; i++) { const [x, y, z] = spot(i, L.n), root = scout(L.camo); root.position.set(x, y, z); root.rotation.y = Math.random() * Math.PI * 2;
+          lv.scouts.push({ root, home: new V3(x, y, z), found: false, stir: L.stir[0] + Math.random() * (L.stir[1] - L.stir[0]), move: null }); }
+        for (let i = 0; i < (L.boars || 0); i++) { const [x, y, z] = spot(i + .5, L.boars), root = boar(); root.position.set(x, y, z); root.rotation.y = Math.random() * Math.PI * 2;
+          lv.boars.push({ root, home: new V3(x, y, z), boar: true, stir: 1 + Math.random() * 2.5, move: null }); }
         info();
       }
       const info = () => { if (!lv || st.phase === 'pick') { H.info('Pick a level'); H.score(''); return; } H.info(`Scouts ${lv.found} / ${lv.L.n} · ${Math.ceil(lv.left)} s`); H.score(lv.found * 10); };
@@ -56,22 +88,23 @@
         if (st.phase !== 'play') return;
         const ray = ctx.ray(px, py), o = ray.origin, d = ray.direction;
         let best = null, bestA = 1e9;
-        for (const s of lv.scouts) { if (s.found) continue; const p = ctx.toWorld(s.root.position.x, s.root.position.y + .8, s.root.position.z), v = p.subtract(o), dist = v.length(), a = Math.acos(Math.max(-1, Math.min(1, V3.Dot(v.normalize(), d))));
-          const reach = Math.max(1.6 / dist, st.zoom ? .006 : .014); if (a < reach && a < bestA) { best = s; bestA = a; } }
+        let boarHit = false;
+        for (const s of [...lv.scouts, ...lv.boars]) { if (s.found) continue; const p = ctx.toWorld(s.root.position.x, s.root.position.y + .8, s.root.position.z), v = p.subtract(o), dist = v.length(), a = Math.acos(Math.max(-1, Math.min(1, V3.Dot(v.normalize(), d))));
+          const reach = Math.max(1.6 / dist, st.zoom ? .006 : .014); if (a < reach) { if (s.boar) boarHit = true; else if (a < bestA) { best = s; bestA = a; } } }
         if (best) { best.found = true; lv.found++; best.pop = .7; ctx.note(660 + lv.found * 60, 'bell'); H.msg('Spotted!', 600, `${lv.found} / ${lv.L.n}`);
           const mk = B.MeshBuilder.CreateCylinder('lkMark', { height: 1.6, diameterTop: .5, diameterBottom: 0, tessellation: 6 }, scene); mk.parent = ctx.frame; ctx.add(mk); mk.material = M.mark; mk.isPickable = false; mk.position.set(best.root.position.x, best.root.position.y + 3, best.root.position.z); st.pops.push({ m: mk, t: 1.2 });
           if (lv.found >= lv.L.n) { st.phase = 'won'; st.wait = 1.6; ctx.sound('gamewin'); H.msg('Every scout spotted!', 1500, `${Math.ceil(lv.left)} s to spare`);
             if (lv.k + 1 > solvedUpTo) { solvedUpTo = lv.k + 1; try { localStorage.setItem(KEY, String(solvedUpTo)); } catch (e) {} } } }
-        else { lv.wrong++; lv.left = Math.max(0, lv.left - 3); ctx.sound('thock'); H.msg('Nothing there', 600, '-3 s'); }
+        else { lv.wrong++; lv.left = Math.max(0, lv.left - 3); ctx.sound('thock'); H.msg(boarHit ? 'Just a boar' : 'Nothing there', 700, '-3 s'); }
         info();
       }
       const center = () => { const c = ctx.engine.getRenderingCanvas(), r = c.getBoundingClientRect(); return [r.width / 2, r.height / 2]; };
       // the picker
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(400px,90vw);background:rgba(12,16,30,.94);border:1px solid rgba(216,179,92,.7);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 540 : 400) + 'px,92vw);background:rgba(12,16,30,.94);border:1px solid rgba(216,179,92,.7);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
       const label = L => `${L.n} scouts · ${L.sec} s`;
       pick.innerHTML = `<div style="font:700 13px/1.2 Georgia,serif;letter-spacing:.14em;text-transform:uppercase;color:#d8b35c;margin-bottom:10px">The Lookout</div><div style="margin-bottom:12px;color:#bbb">Scouts creep in the grass past the moat. Spot them all before time runs out. Watch for movement.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:10px 4px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${done ? 'rgba(216,179,92,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? 'Level ' + (k + 1) : '🔒'}${done ? ' ✓' : ''}${open ? `<div style="font:12px Georgia,serif;color:#c9b88a">${label(L)}</div>` : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 3},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:10px 4px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${done ? 'rgba(216,179,92,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? 'Level ' + (k + 1) : '🔒'}${done ? ' ✓' : ''}${open ? `<div style="font:12px Georgia,serif;color:#c9b88a">${label(L)}</div>` : ''}</button>`; }).join('')}</div>`;
       pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); });
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); H.msg(`Level ${k + 1}`, 900, label(LV[k])); }
       hud.appendChild(pick);
@@ -89,11 +122,11 @@
           aim();
           if (st.phase === 'play') {
             lv.left = Math.max(0, lv.left - dt); info();
-            for (const s of lv.scouts) {
+            for (const s of [...lv.scouts, ...lv.boars]) {
               if (s.found) { if (s.pop > 0) { s.pop -= dt; const f = Math.max(0, s.pop) / .7; s.root.position.y = s.home.y + Math.sin((1 - f) * Math.PI) * 1.2; if (s.pop <= 0) s.root.setEnabled(false); } continue; }
               // a still scout stirs now and then: a short shuffle through the grass
               if (s.move) { s.move.t += dt / .7; const f = Math.min(1, s.move.t), e = f * f * (3 - 2 * f); s.root.position.x = s.move.a.x + (s.move.b.x - s.move.a.x) * e; s.root.position.z = s.move.a.z + (s.move.b.z - s.move.a.z) * e; s.root.position.y = groundAt(s.root.position.x, s.root.position.z) + Math.sin(f * Math.PI) * .25; if (f >= 1) s.move = null; }
-              else if ((s.stir -= dt) <= 0) { const L = lv.L; s.stir = L.stir[0] + Math.random() * (L.stir[1] - L.stir[0]); const a = Math.random() * Math.PI * 2, r = .6 + Math.random() * .8;
+              else if ((s.stir -= dt) <= 0) { const L = lv.L; s.stir = s.boar ? 1 + Math.random() * 2.5 : L.stir[0] + Math.random() * (L.stir[1] - L.stir[0]); const a = Math.random() * Math.PI * 2, r = s.boar ? 1.2 + Math.random() * 1.6 : .6 + Math.random() * .8;
                 const b = new V3(s.home.x + Math.cos(a) * r, 0, s.home.z + Math.sin(a) * r); s.move = { a: s.root.position.clone(), b, t: 0 }; s.root.rotation.y = Math.atan2(b.x - s.root.position.x, b.z - s.root.position.z); }
             }
             if (lv.left <= 0) { st.phase = 'lost'; st.wait = 1.6; ctx.sound('thock'); H.msg('Time!', 1300, `${lv.found} of ${lv.L.n} spotted`); }
@@ -110,7 +143,7 @@
           const k = e.key.toLowerCase(), map = { arrowleft: 'left', a: 'left', arrowright: 'right', d: 'right', arrowup: 'up', w: 'up', arrowdown: 'down', s: 'down' };
           if (map[k]) { st.keys[map[k]] = down; return; }
           if (!down || e.repeat) return;
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (k === 'z') st.zoom = !st.zoom;
           else if (k === ' ' || k === 'enter') { const [x, y] = center(); call(x, y); }
         },
@@ -123,7 +156,7 @@
           if (evt.type === T.POINTERUP && st.drag) { const moved = st.drag.moved; st.drag = null; if (moved < 6) call(scene.pointerX, scene.pointerY); }
         },
         _test: { st, choose, call, aimAt(s) { const p = s.root.position, d = Math.hypot(p.x, p.z); st.yaw = Math.atan2(p.x, p.z); st.pitch = Math.atan2(p.y + .8 - EYE, d); aim(); }, get lv() { return lv; } },
-        dispose() { pick.remove(); glass.remove(); ring.remove(); if (lv) lv.scouts.forEach(s => { try { s.root.dispose(); } catch (e) {} }); st.pops.forEach(p => { try { p.m.dispose(); } catch (e) {} }); }
+        dispose() { pick.remove(); glass.remove(); ring.remove(); if (lv) [...lv.scouts, ...lv.boars].forEach(s => { try { s.root.dispose(); } catch (e) {} }); st.pops.forEach(p => { try { p.m.dispose(); } catch (e) {} }); }
       };
     }
   };

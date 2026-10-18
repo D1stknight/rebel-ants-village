@@ -5,6 +5,14 @@
 // Six codes, from 3 flags of 4 colours to 5 flags of 8 colours with repeats; the par is what a careful tactician
 // needs. Score: the code x 20, +10 within the par without a hint.
 // def: { levels: [{ pegs, colours, tries, repeats, par }], pass, points }
+// Oct 17 (Miguel: the puzzles need a how-to with an example, every board a Restart): howTo (the rules + a code broken
+// in four guesses, howto/mastermind.png) and inst.restart (the same code level, tries back, a NEW secret code: the old
+// one's pegs would give it away).
+// Oct 17 (Miguel: "all board games need to be 10 or 15 [levels]"): ten codes. 7-8: six flags of 8 colours (10 tries,
+// then 8); 9-10: six flags of 10 colours, two new flags (pink, teal) on keys 9 and 0 (10 tries, then 9). Each par is
+// what a careful tactician needs: scratchpad agents/lvC/mastermind/sim.mjs plays 300-1000 codes per level by only
+// ever sending a guess that fits every answer so far; it breaks every code within the tries (99.3 % on 8 and 10) and
+// meets the par in 56-94 % of them (levels.out).
 (function () {
   const LEVELS = [
     { pegs: 3, colours: 4, tries: 8, repeats: false, par: 4 },
@@ -12,15 +20,29 @@
     { pegs: 4, colours: 6, tries: 9, repeats: true, par: 6 },
     { pegs: 4, colours: 6, tries: 7, repeats: true, par: 5 },
     { pegs: 5, colours: 8, tries: 10, repeats: true, par: 7 },
-    { pegs: 5, colours: 8, tries: 8, repeats: true, par: 6 }
+    { pegs: 5, colours: 8, tries: 8, repeats: true, par: 6 },
+    { pegs: 6, colours: 8, tries: 10, repeats: true, par: 7 },
+    { pegs: 6, colours: 8, tries: 8, repeats: true, par: 6 },
+    { pegs: 6, colours: 10, tries: 10, repeats: true, par: 8 },
+    { pegs: 6, colours: 10, tries: 9, repeats: true, par: 7 }
   ];
   const FLAGS = [
     { c: '#d23b2f', g: '✚', n: 'red' }, { c: '#2f6fd2', g: '●', n: 'blue' }, { c: '#e8c22c', g: '★', n: 'gold' }, { c: '#3aa856', g: '☾', n: 'green' },
-    { c: '#f2f2ea', g: '◆', n: 'white' }, { c: '#8a46c8', g: '▲', n: 'purple' }, { c: '#e9822a', g: '■', n: 'orange' }, { c: '#2a2a2e', g: '♥', n: 'black' }
+    { c: '#f2f2ea', g: '◆', n: 'white' }, { c: '#8a46c8', g: '▲', n: 'purple' }, { c: '#e9822a', g: '■', n: 'orange' }, { c: '#2a2a2e', g: '♥', n: 'black' },
+    { c: '#ee7fb5', g: '✿', n: 'pink' }, { c: '#1ea89e', g: '♣', n: 'teal' }
   ];
   function score(code, guess) { let b = 0, w = 0; const cc = {}, gc = {}; code.forEach((c, i) => { if (c === guess[i]) b++; else { cc[c] = (cc[c] || 0) + 1; gc[guess[i]] = (gc[guess[i]] || 0) + 1; } }); for (const k in gc) w += Math.min(gc[k], cc[k] || 0); return [b, w]; }
   const G = {
     title: "The Spy's Code",
+    howTo: {
+      lines: ['Break the spy\'s secret code: a row of coloured flags, hidden at the top of the board. The info line says how many flags and colours the code has, and whether a colour may be used more than once.',
+        'Fill the glowing guess row: click (or tap) a colour button, or press its number (1-9, 0 for the tenth colour), and it goes into the next flag. Click a flag of the row (or ← →) to change that one; Backspace takes one back. Enter or Signal sends the guess.',
+        'Every guess gets pegs: a black peg for each flag of the right colour in the right place, a white peg for each other flag whose colour is in the code but somewhere else. The pegs never say which flag they mean.',
+        'A colour earns pegs only as often as it is in the code: two red flags against one red in the code earn one peg, not two.',
+        'Break the code before the tries run out (one row a try). Within the par and with no hint scores +10; H shows one flag of the code (no bonus then).',
+        'Tip: change one or two flags at a time and watch how the pegs change. A guess with no pegs at all rules out every colour in it.'],
+      img: 'howto/mastermind.png', caption: 'A 4-flag code broken on the fourth guess. Guess 2: blue is right (1 black); red and gold are in the code but elsewhere (2 white).'
+    },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsCodeProgress:' + (def.id || 'mastermind');
@@ -43,7 +65,7 @@
         const L = LV[k], code = []; const pool = [...Array(L.colours).keys()];
         for (let i = 0; i < L.pegs; i++) { if (L.repeats) code.push(Math.floor(Math.random() * L.colours)); else code.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]); }
         bd = { k, P: L.pegs, C: L.colours, tries: L.tries, rep: L.repeats, par: L.par, code, rows: [], cur: new Array(L.pegs).fill(-1), slot: 0, hints: 0, known: new Map() };
-        ctx.player.place(BW / 2 + 1.4, 1.2, -Math.PI / 2 - .5); drawPalette(); draw(); info();
+        ctx.player.place(BW / 2 + 1.4, 1.2, -Math.PI / 2 - .5); drawPalette(); draw(); info(); keysHint(L.colours);
       }
       const info = () => H.info(bd ? `Code ${bd.k + 1} / ${LV.length} · ${bd.P} flags of ${bd.C} colours${bd.rep ? ', repeats' : ''} · guess ${Math.min(bd.tries, bd.rows.length + 1)} / ${bd.tries} · par ${bd.par}${bd.hints ? ` · hints ${bd.hints}` : ''}` : 'Pick a code');
       // the board drawing: one row per try (oldest at the bottom), flags as little banners, the pegs on the right
@@ -87,18 +109,19 @@
       }
       function hint() { if (st.phase !== 'play') return; const free = [...Array(bd.P).keys()].filter(i => !bd.known.has(i)); if (free.length <= 1) { H.msg('No more hints for this code', 1000); return; }
         const i = free[Math.floor(Math.random() * free.length)]; bd.known.set(i, bd.code[i]); bd.cur[i] = bd.code[i]; bd.hints++; H.msg(`Flag ${i + 1} is ${FLAGS[bd.code[i]].n}`, 1300); draw(); info(); }
+      function restart() { if (st.phase !== 'play' || !bd) return; build(bd.k); H.msg('A new code', 1200, 'the spy changed the signal'); }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(400px,90vw);background:rgba(10,14,28,.95);border:1px solid rgba(120,150,230,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 400) + 'px,90vw);background:rgba(10,14,28,.95);border:1px solid rgba(120,150,230,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#9fb6ff;margin-bottom:10px">The Spy's Code</div><div style="margin-bottom:12px;color:#bbb">Black peg: right colour, right place. White: right colour, wrong place.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#9fb6ff' : '#444'};background:${ok ? 'rgba(159,182,255,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${L.pegs} of ${L.colours}${L.repeats ? ' +rep' : ''} · ${L.tries} tries</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : LV.length > 6 ? 4 : 3},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#9fb6ff' : '#444'};background:${ok ? 'rgba(159,182,255,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${L.pegs} of ${L.colours}${L.repeats ? ' +rep' : ''} · ${L.tries} tries</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       const pads = document.createElement('div');
       pads.style.cssText = 'position:absolute;bottom:62px;right:14px;display:none;flex-direction:column;gap:6px;pointer-events:auto;align-items:flex-end';
       const pal = document.createElement('div'); pal.style.cssText = 'display:grid;grid-template-columns:repeat(4,46px);gap:5px'; pads.appendChild(pal);
       const row2 = document.createElement('div'); row2.style.cssText = 'display:flex;gap:6px'; pads.appendChild(row2);
       const btn = (parent, html, fn, css = '') => { const b = document.createElement('button'); b.type = 'button'; b.innerHTML = html; b.style.cssText = `height:42px;min-width:46px;border-radius:9px;border:1px solid #8aa0e0;background:rgba(14,18,34,.88);color:#eef2ff;font:700 15px system-ui;cursor:pointer;${css}`; b.onclick = (e) => { e.stopPropagation(); b.blur(); fn(); }; parent.appendChild(b); return b; };
-      function drawPalette() { pal.innerHTML = ''; for (let c = 0; c < bd.C; c++) btn(pal, `<span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:${FLAGS[c].c};border:2px solid rgba(255,255,255,.6);line-height:20px;font-size:12px;color:${c === 7 ? '#eee' : '#222'}">${FLAGS[c].g}</span>`, () => put(c)); }
+      function drawPalette() { pal.innerHTML = ''; pal.style.gridTemplateColumns = `repeat(${bd.C > 8 ? 5 : 4},46px)`; for (let c = 0; c < bd.C; c++) btn(pal, `<span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:${FLAGS[c].c};border:2px solid rgba(255,255,255,.6);line-height:20px;font-size:12px;color:${c === 7 ? '#eee' : '#222'}">${FLAGS[c].g}</span>`, () => put(c)); }
       btn(row2, '⌫', back); btn(row2, 'Hint', hint); btn(row2, 'Signal ⏎', send, 'background:rgba(60,90,170,.9)');
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'flex'; const L = LV[k]; H.msg(`Code ${k + 1}`, 1100, `${L.pegs} flags, ${L.colours} colours${L.repeats ? ', colours may repeat' : ''}`); }
       hud.append(pick, pads); drawPick();
@@ -106,7 +129,8 @@
       ctx.player.place(BW / 2 + 1.4, 1.2, -Math.PI / 2 - .5); ctx.look(cam, at, def.fov || .85);
       { const g = tex.getContext(); g.fillStyle = '#e9dfc4'; g.fillRect(0, 0, TEX, TEX); g.strokeStyle = '#1e2a4a'; g.lineWidth = 14; g.strokeRect(7, 7, TEX - 14, TEX - 14); tex.update(); }
       H.title(def.title || "The Spy's Code"); H.score(''); info();
-      H.hint('Pick colours (click or <kbd>1</kbd>-<kbd>8</kbd>), <kbd>Backspace</kbd> takes one back, <kbd>Enter</kbd> sends the guess, <kbd>H</kbd> hint.');
+      const keysHint = C => H.hint(`Pick colours (click or <kbd>1</kbd>-<kbd>${C > 9 ? '9' : C}</kbd>${C > 9 ? ', <kbd>0</kbd>' : ''}), <kbd>Backspace</kbd> takes one back, <kbd>Enter</kbd> sends the guess, <kbd>H</kbd> hint.`);
+      keysHint(8);
       return {
         update(dt) {
           ctx.look(cam, at); st.t += dt; if (!bd) return;
@@ -116,9 +140,9 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return;
-          if (/^[1-8]$/.test(k)) put(+k - 1); else if (k === 'backspace' || k === 'delete') back(); else if (k === 'enter' || k === ' ') send(); else if (k === 'h') hint();
+          if (/^[0-9]$/.test(k)) put(k === '0' ? 9 : +k - 1); else if (k === 'backspace' || k === 'delete') back(); else if (k === 'enter' || k === ' ') send(); else if (k === 'h') hint();
           else if (k === 'arrowleft' || k === 'a') { bd.slot = (bd.slot - 1 + bd.P) % bd.P; draw(); } else if (k === 'arrowright' || k === 'd') { bd.slot = (bd.slot + 1) % bd.P; draw(); }
         },
         pointer(evt) {
@@ -127,6 +151,7 @@
           const uv = hit.getTextureCoordinates(); if (!uv) return; const px = uv.x * TEX, py = (1 - uv.y) * TEX, r = bd.rows.length, y = geo.top + (bd.tries - 1 - r) * geo.rowH;
           if (py >= y && py <= y + geo.rowH) { const i = Math.floor((px - geo.x0) / geo.cell); if (i >= 0 && i < bd.P) { bd.slot = i; draw(); } }
         },
+        restart, // the HUD's Restart button
         _test: { st, choose, put, back, send, hint, score, get bd() { return bd; }, LV, draw },
         dispose() { pick.remove(); pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); } catch (e) {} }
       };

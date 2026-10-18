@@ -3,6 +3,13 @@
 // arrows or a click on a free square in its line slide it; one slide of a car, however far, is one move. U undoes, R
 // starts again. Seven lots from 5 to 30 moves (the fewest moves found by a solver); each opens when the one before
 // is done. Score: the lot x 20, +10 in the fewest moves.
+// Oct 17: How to play (the rules) and Restart beside Quit (the same as R: every car back where the lot started).
+// Oct 17 (Miguel: "make it 15"): lots 8-15, 33 to 49 moves (the hardest 6 x 6 lot there is needs 51). Made by hill
+// climbing on car sets (scratchpad lv/valet): for a set of cars, every position they can reach is searched back from
+// every position with the lowrider out, and the farthest one is that set's hardest start; cars were added, dropped or
+// swapped while it got harder (a car whose removal kept the fewest moves was dropped: none was). Each lot's fewest
+// moves checked again by the old breadth-first solver from its start; no two of the new lots share more than six cars.
+// The camera sits a little farther back and aims nearer: the near curb sat under the hint bar.
 // def: { at: [x, z] (frame coords of the lot's middle), cell: 1.4, levels: [{ cars: [{ x, y, len, h }], best }], pass, points }
 (function () {
   const LEVELS = [
@@ -12,11 +19,29 @@
     { best: 16, cars: [{ x: 0, y: 2, len: 2, h: true }, { x: 1, y: 3, len: 3, h: true }, { x: 3, y: 1, len: 2, h: false }, { x: 0, y: 0, len: 2, h: false }, { x: 1, y: 5, len: 2, h: true }, { x: 0, y: 4, len: 2, h: true }, { x: 4, y: 4, len: 2, h: true }, { x: 5, y: 0, len: 3, h: false }, { x: 4, y: 1, len: 2, h: false }, { x: 2, y: 1, len: 2, h: false }, { x: 4, y: 5, len: 2, h: true }, { x: 3, y: 0, len: 2, h: true }, { x: 4, y: 3, len: 2, h: true }] },
     { best: 20, cars: [{ x: 2, y: 2, len: 2, h: true }, { x: 3, y: 4, len: 2, h: true }, { x: 0, y: 3, len: 2, h: true }, { x: 4, y: 2, len: 2, h: false }, { x: 0, y: 0, len: 3, h: true }, { x: 4, y: 0, len: 2, h: false }, { x: 5, y: 4, len: 2, h: false }, { x: 0, y: 1, len: 2, h: false }, { x: 1, y: 4, len: 2, h: false }, { x: 2, y: 3, len: 2, h: false }] },
     { best: 26, cars: [{ x: 1, y: 2, len: 2, h: true }, { x: 3, y: 4, len: 2, h: true }, { x: 3, y: 0, len: 2, h: false }, { x: 0, y: 4, len: 2, h: false }, { x: 0, y: 1, len: 3, h: true }, { x: 0, y: 0, len: 2, h: true }, { x: 5, y: 0, len: 2, h: false }, { x: 4, y: 1, len: 2, h: false }, { x: 3, y: 2, len: 2, h: false }, { x: 1, y: 3, len: 2, h: true }, { x: 5, y: 4, len: 2, h: false }, { x: 2, y: 4, len: 2, h: false }] },
-    { best: 30, cars: [{ x: 0, y: 2, len: 2, h: true }, { x: 4, y: 2, len: 2, h: false }, { x: 0, y: 4, len: 2, h: false }, { x: 2, y: 0, len: 2, h: false }, { x: 4, y: 4, len: 2, h: false }, { x: 3, y: 0, len: 2, h: false }, { x: 1, y: 4, len: 3, h: true }, { x: 0, y: 3, len: 2, h: true }, { x: 3, y: 2, len: 2, h: false }, { x: 4, y: 0, len: 2, h: true }] }
+    { best: 30, cars: [{ x: 0, y: 2, len: 2, h: true }, { x: 4, y: 2, len: 2, h: false }, { x: 0, y: 4, len: 2, h: false }, { x: 2, y: 0, len: 2, h: false }, { x: 4, y: 4, len: 2, h: false }, { x: 3, y: 0, len: 2, h: false }, { x: 1, y: 4, len: 3, h: true }, { x: 0, y: 3, len: 2, h: true }, { x: 3, y: 2, len: 2, h: false }, { x: 4, y: 0, len: 2, h: true }] },
+    // Oct 17: 33 to 49 moves (scratchpad lv/valet: the hardest start of each car set, checked by breadth-first search)
+    { best: 33, cars: [{ x: 3, y: 2, len: 2, h: true }, { x: 0, y: 1, len: 2, h: false }, { x: 5, y: 0, len: 3, h: false }, { x: 2, y: 2, len: 3, h: false }, { x: 0, y: 3, len: 2, h: true }, { x: 1, y: 1, len: 2, h: true }, { x: 3, y: 4, len: 3, h: true }, { x: 3, y: 5, len: 2, h: true }, { x: 1, y: 5, len: 2, h: true }, { x: 3, y: 0, len: 2, h: false }, { x: 0, y: 0, len: 3, h: true }] },
+    { best: 35, cars: [{ x: 0, y: 2, len: 2, h: true }, { x: 2, y: 1, len: 2, h: false }, { x: 0, y: 4, len: 2, h: false }, { x: 5, y: 0, len: 2, h: false }, { x: 5, y: 2, len: 2, h: false }, { x: 2, y: 3, len: 2, h: false }, { x: 4, y: 4, len: 2, h: true }, { x: 0, y: 0, len: 3, h: true }, { x: 0, y: 1, len: 2, h: true }, { x: 1, y: 5, len: 2, h: true }, { x: 3, y: 4, len: 2, h: false }, { x: 3, y: 3, len: 2, h: true }, { x: 4, y: 1, len: 2, h: false }] },
+    { best: 36, cars: [{ x: 3, y: 2, len: 2, h: true }, { x: 4, y: 3, len: 2, h: true }, { x: 5, y: 0, len: 3, h: false }, { x: 3, y: 3, len: 3, h: false }, { x: 2, y: 0, len: 3, h: false }, { x: 0, y: 3, len: 2, h: false }, { x: 1, y: 5, len: 2, h: true }, { x: 0, y: 0, len: 2, h: true }, { x: 1, y: 4, len: 2, h: true }] },
+    { best: 38, cars: [{ x: 0, y: 2, len: 2, h: true }, { x: 0, y: 0, len: 2, h: false }, { x: 2, y: 2, len: 3, h: false }, { x: 4, y: 3, len: 2, h: true }, { x: 1, y: 1, len: 2, h: true }, { x: 3, y: 1, len: 2, h: false }, { x: 2, y: 0, len: 3, h: true }, { x: 3, y: 5, len: 2, h: true }, { x: 5, y: 0, len: 3, h: false }, { x: 1, y: 5, len: 2, h: true }, { x: 3, y: 3, len: 2, h: false }] },
+    { best: 41, cars: [{ x: 0, y: 2, len: 2, h: true }, { x: 1, y: 3, len: 3, h: true }, { x: 3, y: 4, len: 2, h: true }, { x: 5, y: 2, len: 2, h: false }, { x: 4, y: 0, len: 2, h: true }, { x: 2, y: 0, len: 2, h: true }, { x: 1, y: 0, len: 2, h: false }, { x: 4, y: 1, len: 3, h: false }, { x: 3, y: 5, len: 2, h: true }, { x: 3, y: 1, len: 2, h: false }, { x: 2, y: 4, len: 2, h: false }, { x: 0, y: 3, len: 3, h: false }] },
+    { best: 44, cars: [{ x: 0, y: 2, len: 2, h: true }, { x: 2, y: 1, len: 3, h: true }, { x: 4, y: 4, len: 2, h: false }, { x: 2, y: 0, len: 2, h: true }, { x: 5, y: 4, len: 2, h: false }, { x: 2, y: 2, len: 2, h: false }, { x: 3, y: 2, len: 2, h: false }, { x: 1, y: 5, len: 3, h: true }, { x: 1, y: 4, len: 3, h: true }, { x: 0, y: 0, len: 2, h: false }, { x: 4, y: 0, len: 2, h: true }, { x: 5, y: 1, len: 2, h: false }, { x: 4, y: 3, len: 2, h: true }] },
+    { best: 47, cars: [{ x: 1, y: 2, len: 2, h: true }, { x: 1, y: 3, len: 3, h: true }, { x: 4, y: 4, len: 2, h: true }, { x: 3, y: 0, len: 2, h: true }, { x: 3, y: 4, len: 2, h: false }, { x: 2, y: 0, len: 2, h: false }, { x: 0, y: 2, len: 3, h: false }, { x: 0, y: 1, len: 2, h: true }, { x: 0, y: 5, len: 2, h: true }, { x: 0, y: 0, len: 2, h: true }, { x: 4, y: 1, len: 3, h: false }, { x: 4, y: 5, len: 2, h: true }, { x: 5, y: 1, len: 3, h: false }] },
+    { best: 49, cars: [{ x: 2, y: 2, len: 2, h: true }, { x: 1, y: 4, len: 2, h: false }, { x: 2, y: 3, len: 2, h: false }, { x: 3, y: 0, len: 2, h: false }, { x: 5, y: 0, len: 3, h: false }, { x: 4, y: 5, len: 2, h: true }, { x: 4, y: 0, len: 3, h: false }, { x: 0, y: 0, len: 3, h: true }, { x: 0, y: 1, len: 2, h: false }, { x: 0, y: 3, len: 2, h: true }, { x: 1, y: 1, len: 2, h: true }, { x: 2, y: 5, len: 2, h: true }, { x: 4, y: 4, len: 2, h: true }] }
   ];
   const N = 6, PAINT = ['sl_car_blue', 'sl_car_gold', 'sl_car_red', 'sl_car_black', 'sl_car_white'];
   const G = {
     title: 'Valet Parking',
+    howTo: { lines: [
+      'Get the purple lowrider out through the gap in the curb on the right.',
+      'Cars only roll forward and back along their own line: they never turn, and they cannot pass through each other.',
+      'Click (or tap) a car, or press Tab (or ⇥) to step through them: the gold outline marks it and the glowing dots show where it can roll. Click a dot (or a free square in its line), or press the arrows / W A S D to roll it one square at a time.',
+      'Moving a car counts as one move however far it rolls (more slides of the same car in a row still count once).',
+      'U (or ↶) undoes; R (or ⟲, or Restart) parks every car back where the lot started.',
+      'The fewest moves are shown at the top: clear the lot in them for 10 more points.',
+      'Tip: start from the lowrider: which car blocks its way out, and which cars block that one?'],
+      img: 'howto/valet.png', caption: 'A lot cleared in its fewest moves, as numbered: the gold car rolls left so the red one can roll down out of the row, the blue car rolls up, and the lowrider is out.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, CELL = def.cell || 1.4, AT = def.at || [0, 0];
@@ -41,11 +66,12 @@
       function grid(skip) { const g = new Int8Array(N * N).fill(-1); board.cars.forEach((c, k) => { if (k === skip) return; for (let i = 0; i < c.len; i++) { const x = c.h ? c.x + i : c.x, y = c.h ? c.y : c.y + i; g[y * N + x] = k; } }); return g; }
       function placeCar(c, k) { const p = carCenter(c); c.node.position.set(p.x, .09, p.z); c.node.rotation.y = c.h ? 0 : Math.PI / 2; const s = .35; c.node.scaling.set((c.len * CELL * .9) / 7.6, s, s); }
       function build(k) {
-        if (board) board.cars.forEach(c => { try { c.node.dispose(); } catch (e) {} });
+        if (board) { board.cars.forEach(c => { try { c.node.dispose(); } catch (e) {} }); board.dots.forEach(d => d.dispose()); } // a restart leaves no old dots behind
         board = { k, cars: LV[k].cars.map(c => ({ ...c })), sel: 0, moves: 0, hist: [], lastCar: -1, dots: [] };
         board.cars.forEach((c, i) => { c.node = ctx.kit(i === 0 ? 'sl_car_purple' : PAINT[(i * 3 + k) % PAINT.length]); c.node.getChildMeshes(false).forEach(m => { m.isPickable = true; m.metadata = { ...(m.metadata || {}), valetCar: i }; }); placeCar(c, i); });
         ctx.player.place(AT[0] - CELL * 4.3, AT[1] - CELL * 3.6, Math.PI / 4);
-        st.cam = [AT[0], N * CELL * 1.25 + 3.2, AT[1] - N * CELL * .7 - 2]; st.at = [AT[0] + .4, 0, AT[1] + .3];
+        // a little farther and aimed nearer: the near curb clears the hint bar (it sat under it), the far one the title bar
+        st.cam = [AT[0], N * CELL * 1.31 + 3.36, AT[1] - N * CELL * .905 - 2.42]; st.at = [AT[0] + .4, 0, AT[1] - N * CELL * .17];
         select(0); info();
       }
       function select(i) { if (!board || i < 0 || i >= board.cars.length) return; board.sel = i; const c = board.cars[i], p = carCenter(c); sel.setEnabled(true); sel.position.set(p.x, .1, p.z); sel.scaling.set(c.h ? c.len * CELL : CELL * .96, 1, c.h ? CELL * .96 : c.len * CELL); dots(); }
@@ -62,13 +88,13 @@
       }
       function step(dx, dy) { if (!board) return; const c = board.cars[board.sel]; if (c.h ? dy : dx) return; slide(board.sel, (c.h ? c.x : c.y) + (c.h ? dx : dy)); }
       function undo() { if (st.phase !== 'play' || st.anim || !board.hist.length) return; const h = board.hist.pop(), c = board.cars[h.i]; if (c.h) c.x = h.from; else c.y = h.from; board.moves = h.moves; board.lastCar = h.last; placeCar(c, h.i); select(h.i); info(); }
-      function restart() { if (st.phase !== 'play' || st.anim) return; build(board.k); H.msg('Again', 600); }
+      function restart() { if (st.phase !== 'play') return; st.anim = null; build(board.k); H.msg('Again', 600); } // a car still rolling is parked back too
       function done() { const c = board.cars[0]; return c.x + c.len - 1 === N - 1; }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(390px,90vw);background:rgba(14,10,22,.94);border:1px solid rgba(180,120,255,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 390) + 'px,92vw);background:rgba(14,10,22,.94);border:1px solid rgba(180,120,255,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#c79bff;margin-bottom:10px">Valet Parking</div><div style="margin-bottom:12px;color:#bbb">Get the purple lowrider out through the gap on the right.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#c79bff' : '#444'};background:${ok ? 'rgba(199,155,255,.25)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${L.best} moves</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 4},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#c79bff' : '#444'};background:${ok ? 'rgba(199,155,255,.25)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${L.best} moves</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'grid'; H.msg(`Lot ${k + 1}`, 900, k >= 4 ? 'a hard one' : ''); }
       const pads = document.createElement('div');
@@ -95,7 +121,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (k === 'arrowup' || k === 'w') step(0, -1); else if (k === 'arrowdown' || k === 's') step(0, 1); else if (k === 'arrowleft' || k === 'a') step(-1, 0); else if (k === 'arrowright' || k === 'd') step(1, 0);
           else if (k === 'tab') { e.preventDefault?.(); select((board.sel + 1) % board.cars.length); } else if (k === 'u' || k === 'z' || k === 'backspace') undo(); else if (k === 'r') restart();
         },
@@ -106,6 +132,7 @@
           const l = ctx.toLocal(hit.pickedPoint), x = Math.round((l.x - AT[0]) / CELL + (N - 1) / 2), y = Math.round((N - 1) / 2 - (l.z - AT[1]) / CELL), c = board.cars[board.sel];
           if (c.h && y === c.y) { const p = x > c.x ? x - c.len + 1 : x; slide(board.sel, p); } else if (!c.h && x === c.x) { const p = y > c.y ? y - c.len + 1 : y; slide(board.sel, p); }
         },
+        restart,
         _test: { st, slide, select, step, undo, choose, reach, get board() { return board; }, LV, N },
         dispose() { pick.remove(); pads.remove(); if (board) { board.cars.forEach(c => { try { c.node.dispose(); } catch (e) {} }); board.dots.forEach(d => { try { d.dispose(); } catch (e) {} }); } nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };

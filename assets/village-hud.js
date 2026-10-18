@@ -119,12 +119,16 @@ body.rebel-panel-open #questLine{display:none!important}
       for (let i = 3; i < im.data.length; i += 4) im.data[i] = 255;
       g.putImageData(im, 0, 0);
       map = { img: c, x0: -R, z1: R, mpp: 2 * R / size };
-      built = true; return true;
+      built = true;
+      try { opts.onMapBuilt?.(c, R); } catch (e) {}
+      return true;
     }).catch(e => { console.warn('minimap read failed', e); return false; }).finally(() => {
       rtt.dispose(); cam.dispose();
       if (shot === 'empty' && tries > 1) setTimeout(() => HUD.buildMap(R, size, tries - 1), 5000);
     });
   };
+  // a picture kept from an earlier visit shows at once; the live render replaces it when ready
+  HUD.setMapImage = function (img, R = 320) { const size = img?.width || img?.naturalWidth; if (!size || built) return false; map = { img, x0: -R, z1: R, mpp: 2 * R / size }; return true; };
   HUD.isBuilt = () => built;
   HUD._mapImage = () => map?.img || null; // the picture itself (tests)
 

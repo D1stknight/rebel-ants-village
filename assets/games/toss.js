@@ -7,15 +7,33 @@
 //        targets: [{ x, y, z, r, kind: 'hoop' | 'barrel' | 'board', points, mult (boards: x the ring score), label,
 //        build (the game builds an open barrel / a straw board / a floating barrel there), anchor { type, local }, drift: m/s across },
 //        kind 'float': a barrel on the water], cam, at, fov, pass, points }
+// Oct 17 (Miguel: "give free throws 20 levels ... 10 shots for the first 10, then 15, 20 and the final 3, 40, 60, 80 shots
+// and make the bar go faster and smaller as it goes. same thing with coconut and spear toss ... keep it to 50"; the Swivel
+// Gun "at least 20"): twenty levels, picked at the start; each level's bars sweep faster and their sweet spots narrow (the
+// power bar spans a wider range of speeds, the aim bar a wider arc), drifting barrels drift faster, and a level is cleared
+// by landing enough throws (half on the first, three in four on the last). With the games pack the free throw is a jump
+// shot (game_shoot: the ball in both hands until they let go at the top) after a dribble (game_dribble: the ball bounces
+// with the hand), and every throw leaves from where the hand is.
 (function () {
   const G = {
-    title: 'Toss',
+    title: 'Toss', moves: true,
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const kindItem = ['ball', 'coconut', 'spear', 'cannon'].includes(def.item) ? def.item : 'coconut';
+      // with the Rebel's games pack a coconut gets a real overhand throw and a spear the long throw: the move starts at its
+      // wind-up (from, s) and the throw leaves the hand at its release (rel, s later)
+      // (Oct 17, Miguel: "we need the animations that go with it": the free throw takes the same overhand throw, the ball
+      // in the right hand until it leaves; no basketball shot in the pack yet)
+      const PACK = { coconut: { clip: 'game_throw', from: .55, rel: .32, hand: 'RightHand' }, ball: { clip: 'game_throw', from: .55, rel: .32, hand: 'RightHand' }, spear: { clip: 'game_throw_far', from: .95, rel: .38 } }[kindItem], usePack = !!(PACK && ctx.player.has?.(PACK.clip));
       const ITEM = { ball: { r: .18, angle: 54, clip: 'jump', sound: 'thock' }, coconut: { r: .18, angle: 42, clip: 'cross_punch', sound: 'thock' }, spear: { r: .05, angle: 14, clip: 'jab', sound: 'whoosh' }, cannon: { r: .13, angle: 9, clip: null, sound: 'boom' } }[kindItem];
       const seaY = window._newTerrain?.seaY, WATER = def.water ?? (seaY != null ? seaY - ctx.toWorld(0, 0, 0).y : -3);
-      const SHOTS = def.shots || 10, GR = 9.8, ANG = (def.angle || ITEM.angle) * Math.PI / 180;
+      const GR = 9.8, ANG = (def.angle || ITEM.angle) * Math.PI / 180;
+      const LEVELS = 20, store = ctx.util.levelStore(def.id || 'toss-' + kindItem);
+      const shotsOf = k => k < 10 ? 10 : k < 14 ? 15 : k < 17 ? 20 : (kindItem === 'ball' ? [40, 60, 80] : [30, 40, 50])[k - 17];
+      const LV = Array.from({ length: LEVELS }, (_, k) => { const u = k / (LEVELS - 1), n = shotsOf(k); return { shots: n, need: Math.ceil(n * (.5 + .25 * u)), aimK: 1 + .65 * u, powK: 1 + .55 * u, span: .2 * (1 + .25 * u), margin: .16 * (1 + .5 * u), drift: 1 + 1.5 * u, snap: 1 - .6 * u }; });
+      let L = LV[0], level = 0, SHOTS = L.shots;
+      // the free throw with the games pack: a dribble while the bars run, then the jump shot
+      const SHOT = kindItem === 'ball' && !!ctx.player.has?.('game_shoot'), DRIB = SHOT && !!ctx.player.has?.('game_dribble');
       const REL = def.release ? new V3(...def.release) : new V3(.35, 2.6, .6);
       const targets = (def.targets || []).map(t => ({ ...t, y: t.kind === 'float' ? WATER + .45 : (t.y ?? 0), r: t.r || .5, kind: t.kind || 'barrel', points: t.points || 10, x0: t.x, z0: t.z, ph: Math.random() * 6.28 }));
       // anchor: { type, local: [x, y, z] }: the target is that point of the nearest layout piece of the type (the court's
@@ -90,33 +108,61 @@
       const info = () => H.info(`${kindItem === 'ball' ? 'Shot' : kindItem === 'spear' ? 'Spear' : kindItem === 'cannon' ? 'Shot' : 'Coconut'} ${Math.min(st.n + 1, SHOTS)} / ${SHOTS}${st.streak >= 2 ? ' · streak ' + st.streak : ''}`);
       // the throw's yaw for an aim value (0..1): the sweep spans the targets' bearings plus a margin
       const bear = targets.map(t => Math.atan2(t.x - REL.x, t.z - REL.z));
-      const yMin = Math.min(...bear, 0) - .16, yMax = Math.max(...bear, 0) + .16;
+      let yMin = Math.min(...bear, 0) - .16, yMax = Math.max(...bear, 0) + .16;
       const yawOf = a => yMin + (yMax - yMin) * a;
       const nearestT = yaw => targets.reduce((b, t, i) => Math.abs(bear[i] - yaw) < Math.abs(bear[b] - yaw) ? i : b, 0);
       // the speed that lands the throw on target t at the launch pitch (dy up from the release, d along the ground)
-      const idealV = t => { const d = Math.hypot(t.x - REL.x, t.z - REL.z), dy = t.y + (t.kind === 'board' ? 0 : .05) - REL.y, c = Math.cos(ANG), q = d * Math.tan(ANG) - dy; return q > .01 ? Math.sqrt(GR * d * d / (2 * c * c * q)) : 12; };
-      // the power mark runs from 80 % to 120 % of the speed the aimed-at target needs: the middle is right
-      const vIdeal = targets.map(idealV), POW = [.8, 1.2];
+      const idealV = (t, o = REL) => { const d = Math.hypot(t.x - o.x, t.z - o.z), dy = t.y + (t.kind === 'board' ? 0 : .05) - o.y, c = Math.cos(ANG), q = d * Math.tan(ANG) - dy; return q > .01 ? Math.sqrt(GR * d * d / (2 * c * c * q)) : 12; };
+      // the power mark runs from 80 % to 120 % of the speed the aimed-at target needs (wider on later levels): the middle is right
+      const vIdeal = targets.map(t => idealV(t)), POW = [.8, 1.2];
       const powOf = () => .5;
-      function aimPhase() { st.phase = 'aim'; st.aim = 0; st.aimV = 1; info(); H.msg('', 0); }
+      function aimPhase() { st.phase = 'aim'; st.aim = 0; st.aimV = 1; info(); H.msg('', 0); if (DRIB) { ctx.player.clip('game_dribble', { loop: true }); proj.setEnabled(true); } }
+      // the dribble: the ball under the palm while the hand pushes down, then down to the floor and back up to the hand
+      // (the clip's own timing: the hand is lowest at .25 s and .99 s, highest at .63 s and 1.33 s of its 1.4 s)
+      function dribble() {
+        const t = ctx.player.clipTime('game_dribble'), h = ctx.player.bone('RightHand'); if (t == null || !h) return;
+        const hp = ctx.toLocal(h), tau = t % 1.4, free = tau >= .25 && tau < .63 ? [.25, .63] : tau >= .99 && tau < 1.33 ? [.99, 1.33] : null;
+        const base = hp.subtract(new V3(0, ITEM.r + .1, 0)), fl = ITEM.r + .01;
+        if (!free) { proj.position.copyFrom(base); st.bounce = false; return; }
+        const u = (tau - free[0]) / (free[1] - free[0]), k = Math.abs(1 - 2 * u);
+        proj.position.set(base.x, fl + (base.y - fl) * Math.pow(k, .75), base.z); if (u >= .5 && !st.bounce) { st.bounce = true; ctx.sound('bounce'); } if (u < .5) st.bounce = false;
+      }
+      // the throw leaves from where it is in the hand: its speed is worked out again from there (aim and power kept)
+      function launchFrom(p) {
+        const f = st.flight, sp = f.v.length(), ideal0 = idealV(targets[f.ti]), k = sp / ideal0;
+        f.p = p.clone(); f.v = f.v.scale(1 / sp).scale(idealV(targets[f.ti], p) * k); proj.position.copyFrom(p);
+      }
+      // ── the level picker ──
+      let picker = null;
+      function pickLevel(k) {
+        if (st.phase !== 'pick') return; if (picker) { picker.remove(); picker = null; }
+        level = k; L = LV[k]; SHOTS = L.shots; POW[0] = 1 - L.span; POW[1] = 1 + L.span;
+        yMin = Math.min(...bear, 0) - L.margin; yMax = Math.max(...bear, 0) + L.margin;
+        Object.assign(st, { n: 0, score: 0, made: 0, streak: 0, phase: 'intro', wait: 1.2 }); H.score(0); info();
+        H.msg(`Level ${k + 1}`, 1300, `${SHOTS} ${kindItem === 'ball' ? 'shots' : kindItem === 'spear' ? 'spears' : kindItem === 'cannon' ? 'shots' : 'coconuts'} \u00b7 ${L.need} to clear`);
+      }
+      const showPicker = () => { picker = H.levels({ title: def.title || 'Toss', sub: 'Twenty levels: the bars run faster and the sweet spots get smaller as you go.', n: LEVELS, open: store.open(LEVELS), done: store.get(), label: k => `${LV[k].shots} \u00b7 ${LV[k].need} in`, pick: pickLevel }); };
       function press() {
         if (st.phase === 'aim') { st.lockAim = st.aim; st.phase = 'power'; st.pow = 0; st.powV = 1; return; }
         if (st.phase === 'power') { throwIt(); }
       }
       function throwIt() {
         let yaw = yawOf(st.lockAim);
-        if (def.snap) { // a little help on long shots: an aim this close to a target's bearing (now: they drift) goes straight at it
-          let bd = def.snap; for (const t of targets) { if (t.gone) continue; const b = Math.atan2(t.x - REL.x, t.z - REL.z); if (Math.abs(b - yaw) < bd) { bd = Math.abs(b - yaw); st.snapTo = b; } }
-          if (bd < def.snap) yaw = st.snapTo;
+        if (def.snap) { // a little help on long shots: an aim this close to a target's bearing (now: they drift) goes straight at it (less help on later levels)
+          const snap = def.snap * L.snap; let bd = snap; for (const t of targets) { if (t.gone) continue; const b = Math.atan2(t.x - REL.x, t.z - REL.z); if (Math.abs(b - yaw) < bd) { bd = Math.abs(b - yaw); st.snapTo = b; } }
+          if (bd < snap) yaw = st.snapTo;
         }
         const ti = targets.reduce((b, t, i) => Math.abs(Math.atan2(t.x - REL.x, t.z - REL.z) - yaw) < Math.abs(Math.atan2(targets[b].x - REL.x, targets[b].z - REL.z) - yaw) ? i : b, 0);
         const v = idealV(targets[ti]) * (POW[0] + (POW[1] - POW[0]) * st.pow);
         const dir = new V3(Math.sin(yaw) * Math.cos(ANG), Math.sin(ANG), Math.cos(yaw) * Math.cos(ANG));
-        st.flight = { p: gun ? REL.add(new V3(Math.sin(yaw) * .5, 0, Math.cos(yaw) * .5 - .45)) : REL.clone(), v: dir.scale(v), t: 0, done: false, bounced: 0, out: null };
-        proj.setEnabled(true); proj.position.copyFrom(st.flight.p);
+        st.flight = { p: gun ? REL.add(new V3(Math.sin(yaw) * .5, 0, Math.cos(yaw) * .5 - .45)) : REL.clone(), v: dir.scale(v), t: 0, done: false, bounced: 0, out: null, ti, yaw };
+        proj.position.copyFrom(st.flight.p); H.meter(null); aimLine.setEnabled(false);
+        if (SHOT) { ctx.player.face(yaw); ctx.player.clip('game_shoot', { hold: true }); st.phase = 'release'; st.relT = .9; return; } // the jump shot lets go at its top
+        if (usePack) { ctx.player.face(yaw); ctx.player.clip(PACK.clip, { from: PACK.from }); st.phase = 'release'; st.relT = PACK.rel; proj.setEnabled(false); return; }
+        proj.setEnabled(true);
         ctx.player.face(yaw); if (ITEM.clip) ctx.player.clip(ITEM.clip); if (gun) { gun.rotation.y = yaw; gun.kick = 1; }
         ctx.sound(ITEM.sound);
-        st.phase = 'flight'; H.meter(null); aimLine.setEnabled(false);
+        st.phase = 'flight';
       }
       function result(kind, pts, txt) {
         const f = st.flight; f.done = true; f.out = kind;
@@ -171,40 +217,54 @@
       ctx.look(cam, at, def.fov || .9);
       H.title(def.title || 'Toss'); H.score(0); info();
       H.hint('Press <kbd>Space</kbd> (or click / tap) to stop the <b>aim</b>, then again for the <b>power</b>');
-      H.msg(def.title || 'Toss', 1500, `${SHOTS} ${kindItem === 'ball' ? 'shots' : kindItem === 'spear' ? 'spears' : kindItem === 'cannon' ? 'shots' : 'coconuts'}`);
+      st.phase = 'pick'; showPicker();
       const inst = {
         update(dt) {
           ctx.look(cam, at);
           st.clock = (st.clock || 0) + dt;
           for (const t of targets) if (t.kind === 'float') {
             if (t.gone) { if ((t.gone -= dt) <= 0) { t.gone = 0; t.x = t.x0 + (Math.random() - .5) * 6; t.z = t.z0 + (Math.random() - .5) * 4; t.node.setEnabled(true); } else continue; }
-            if (t.drift && st.n >= 4) { t.dx = t.dx || 1; t.x += t.drift * t.dx * dt; if (Math.abs(t.x - t.x0) > (t.span || 5)) t.dx = -t.dx; }
+            if (t.drift && st.n >= 4) { t.dx = t.dx || 1; t.x += t.drift * L.drift * t.dx * dt; if (Math.abs(t.x - t.x0) > (t.span || 5)) t.dx = -t.dx; }
             t.node.position.set(t.x, WATER - .05 + Math.sin(st.clock * 1.6 + t.ph) * .1, t.z); t.node.rotation.z = Math.sin(st.clock * 1.2 + t.ph) * .12; t.node.rotation.x = Math.cos(st.clock * 1.1 + t.ph) * .1;
           }
           if (gun) { if (st.phase === 'aim') gun.rotation.y = yawOf(st.aim); gun.kick = Math.max(0, gun.kick - dt * 3); gun.getChildren().forEach(c => { if (c.name === 'tossGunBarrel') c.position.z = .3 - .25 * gun.kick; }); }
           for (let i = fx.length - 1; i >= 0; i--) { const e = fx[i]; e.t += dt; e.v.y -= 9.8 * dt; e.m.position.addInPlace(e.v.scale(dt)); e.m.rotation.x += e.spin * dt; e.m.scaling.setAll(Math.max(.1, 1 - e.t / 1.2)); if (e.t > 1.2 || e.m.position.y < WATER - .5) { e.m.dispose(); fx.splice(i, 1); } }
           if (st.phase === 'intro' && (st.wait -= dt) <= 0) aimPhase();
           else if (st.phase === 'aim') {
-            st.aim += st.aimV * dt * (def.aimSpeed || .9); if (st.aim > 1) { st.aim = 1; st.aimV = -1; } if (st.aim < 0) { st.aim = 0; st.aimV = 1; }
-            const zone = targets.length === 1 ? (() => { const a = (bear[0] - yMin) / (yMax - yMin); return [a - .07, a + .07]; })() : null;
+            st.aim += st.aimV * dt * (def.aimSpeed || .9) * L.aimK; if (st.aim > 1) { st.aim = 1; st.aimV = -1; } if (st.aim < 0) { st.aim = 0; st.aimV = 1; }
+            const zone = targets.length === 1 ? (() => { const a = (bear[0] - yMin) / (yMax - yMin), w = .07 * .16 / L.margin; return [a - w, a + w]; })() : null;
+            if (DRIB) dribble();
             H.meter({ label: 'Aim', value: st.aim, zone });
             ctx.player.face(yawOf(st.aim)); aimLine.setEnabled(true); setAim(yawOf(st.aim));
           } else if (st.phase === 'power') {
-            st.pow += st.powV * dt * (.75 + .03 * st.n); if (st.pow > 1) { st.pow = 1; st.powV = -1; } if (st.pow < 0) { st.pow = 0; st.powV = 1; }
-            const ti = nearestT(yawOf(st.lockAim));
-            H.meter({ label: targets[ti].label ? `Power · ${targets[ti].label}` : 'Power', value: st.pow, fill: st.pow, zone: [.45, .55] });
-          } else if (st.phase === 'flight') { const n = 4; for (let i = 0; i < n && st.phase === 'flight'; i++) step(dt / n); }
+            st.pow += st.powV * dt * (.75 + .03 * Math.min(10, st.n)) * L.powK; if (st.pow > 1) { st.pow = 1; st.powV = -1; } if (st.pow < 0) { st.pow = 0; st.powV = 1; }
+            const ti = nearestT(yawOf(st.lockAim)), w = .05 * .2 / L.span;
+            H.meter({ label: targets[ti].label ? `Power · ${targets[ti].label}` : 'Power', value: st.pow, fill: st.pow, zone: [.5 - w, .5 + w] });
+            if (DRIB) dribble();
+          } else if (st.phase === 'release') {
+            if (SHOT) { // the ball between the two hands, a little in front of them, until they let go at the jump's top (.6 s)
+              const l = ctx.player.bone('LeftHand'), r = ctx.player.bone('RightHand'), y = st.flight.yaw, t = ctx.player.clipTime('game_shoot');
+              if (l && r) { proj.position.copyFrom(V3.Center(ctx.toLocal(l), ctx.toLocal(r)).add(new V3(Math.sin(y) * .14, .05, Math.cos(y) * .14))); proj.setEnabled(true); }
+              if ((t != null && t >= .6) || (st.relT -= dt) <= 0) { if (l && r) launchFrom(proj.position); st.phase = 'flight'; proj.setEnabled(true); ctx.sound('swish'); }
+            } else {
+              // the coconut rides the throwing hand through the wind-up, then leaves from the hand
+              const h = PACK.hand && ctx.player.bone(PACK.hand); if (h) { proj.position.copyFrom(ctx.toLocal(h)); proj.setEnabled(true); }
+              if ((st.relT -= dt) <= 0) { st.phase = 'flight'; if (h) launchFrom(proj.position); else proj.position.copyFrom(st.flight.p); proj.setEnabled(true); ctx.sound(ITEM.sound); }
+            } }
+          else if (st.phase === 'flight') { const n = 4; for (let i = 0; i < n && st.phase === 'flight'; i++) step(dt / n); }
           else if (st.phase === 'after' && (st.wait -= dt) <= 0) {
             proj.setEnabled(false);
-            if (st.n >= SHOTS) { st.phase = 'done'; H.hint(''); H.meter(null); if (st.score >= (def.pass || 0)) ctx.sound('gamewin');
-              ctx.finish({ score: st.score, label: 'points', extra: kindItem === 'cannon' ? `${st.made} of ${SHOTS} barrels burst.` : `${st.made} of ${SHOTS} in.` }); }
+            if (st.n >= SHOTS) { st.phase = 'done'; H.hint(''); H.meter(null); const ok = st.made >= L.need; if (ok) { store.set(level + 1); ctx.sound('gamewin'); }
+              ctx.finish({ score: st.score, label: 'points', kicker: ok ? `Level ${level + 1} cleared` : `Level ${level + 1}`, solved: ok, next: ok && level + 1 < LEVELS ? level + 1 : null,
+                extra: `${st.made} of ${SHOTS} ${kindItem === 'cannon' ? 'barrels burst' : 'in'}${ok ? '' : ` (${L.need} clears level ${level + 1})`}.` }); }
             else aimPhase();
           }
         },
-        key(e, down) { if (down && !e.repeat && (e.key === ' ' || e.key === 'Enter' || e.key.toLowerCase() === 'o')) press(); },
+        key(e, down) { if (!down || e.repeat) return; if (picker && picker.key(e)) return; if (e.key === ' ' || e.key === 'Enter' || e.key.toLowerCase() === 'o') press(); },
         pointer(evt) { if (evt.type === B.PointerEventTypes.POINTERDOWN) press(); },
-        _test: { st, press, targets, vIdeal, powOf, bear, yMin, yMax, throwAt(ti, aimErr = 0, powErr = 0) { st.lockAim = (bear[ti] - yMin) / (yMax - yMin) + aimErr; st.pow = .5 + powErr; throwIt(); } },
-        dispose() { fx.forEach(e => { try { e.m.dispose(); } catch (er) {} }); }
+        restart() { if (st.phase === 'pick') return; st.phase = 'pick'; st.flight = null; proj.setEnabled(false); H.meter(null); aimLine.setEnabled(false); ctx.player.idle(); showPicker(); },
+        _test: { st, press, targets, vIdeal, powOf, bear, LV, pickLevel, get L() { return L; }, get yMin() { return yMin; }, get yMax() { return yMax; }, throwAt(ti, aimErr = 0, powErr = 0) { st.lockAim = (bear[ti] - yMin) / (yMax - yMin) + aimErr; st.pow = .5 + powErr; throwIt(); } },
+        dispose() { if (picker) picker.remove(); fx.forEach(e => { try { e.m.dispose(); } catch (er) {} }); }
       };
       return inst;
     }

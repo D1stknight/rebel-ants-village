@@ -4,7 +4,7 @@
 import { put } from '@vercel/blob';
 import { Sandbox, creds, JOB_DIR, JOB_TIMEOUT_MS, redis, loadBuild, updateRigging, readText, sanitize, body } from './_forge-rig.mjs';
 
-const STEPS = ['starting', 'download', 'armor', 'head', 'normalize', 'landmarks', 'skeleton', 'weights', 'bind', 'hands', 'cloth', 'animate', 'moves', 'weapons', 'cleanup', 'export', 'headcloth', 'movespack', 'qa', 'thumb', 'done'];
+const STEPS = ['starting', 'download', 'armor', 'head', 'normalize', 'landmarks', 'skeleton', 'weights', 'bind', 'hands', 'cloth', 'animate', 'moves', 'weapons', 'games', 'cleanup', 'export', 'headcloth', 'movespack', 'gamespack', 'qa', 'thumb', 'done'];
 
 export default async function handler(req, res) {
   const buildId = req.query?.buildId || body(req).buildId;
@@ -75,9 +75,20 @@ export default async function handler(req, res) {
         }
       } catch (e) { /* the rig works without weapon moves */ }
     }
+    // v2.24 games pack (skeleton + the village games' moves); a worker built before the pack was uploaded makes none
+    let gamesUrl = null;
+    if (result.games) {
+      try {
+        const gm = await sandbox.readFileToBuffer({ path: `${JOB_DIR}/games.glb` });
+        if (gm && gm.length) {
+          gamesUrl = (await put(path.replace(/_forge_rig\.glb$/, '_forge_games.glb'), gm, { access: 'public', addRandomSuffix: true, contentType: 'model/gltf-binary' })).url;
+          await redis([['SET', `forge:games:v1:${blob.url}`, gamesUrl], ...(Array.isArray(result.gamesClips) ? [['SET', `forge:games-clips:v1:${blob.url}`, JSON.stringify(result.gamesClips)]] : [])]);
+        }
+      } catch (e) { /* the rig works without the games pack (games fall back to its own clips) */ }
+    }
     try { await sandbox.stop(); } catch (e) {}
     const next = await updateRigging(buildId, {
-      status: 'succeeded', movesGlbUrl: movesUrl, progress: 'done', forgeRigGlbUrl: blob.url, thumbUrl, bytes: glb.length, seconds: result.seconds,
+      status: 'succeeded', movesGlbUrl: movesUrl, gamesGlbUrl: gamesUrl, progress: 'done', forgeRigGlbUrl: blob.url, thumbUrl, bytes: glb.length, seconds: result.seconds,
       qa: result.qa || null, verdict: result.qa?.verdict || null, finishedAt: new Date().toISOString()
     }, { forgeRigGlbUrl: blob.url, ...(thumbUrl ? { forgeRigThumbUrl: thumbUrl } : {}) });
     return res.status(200).json({ ok: true, forgeRig: next.forgeRig, forgeRigGlbUrl: blob.url, percent: 100 });

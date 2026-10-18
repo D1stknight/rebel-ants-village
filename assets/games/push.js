@@ -3,6 +3,7 @@
 // row will not move. U (or Z) undoes a step, R starts the level again. Six levels, from a five-step warm-up to seven
 // stones; a level opens when the one before it is solved (remembered on this device). Score: the level x 20, plus 10
 // when it is solved in close to the fewest steps.
+// Oct 17: How to play (the rules in a few lines) and Restart beside Quit (R's start again: the level as picked).
 // def: { at: [x, z] (frame coords of the board's middle), cell: 1.3, levels: [[rows...]...], best: [fewest steps per level], pass, points }
 (function () {
   const LEVELS = [
@@ -11,11 +12,26 @@
     ['  #####', '###   #', '#  $# #', '# #. .#', '# $ $ #', '#. @ ##', '######'],
     ['#########', '#  .#   #', '# $ $ # #', '#  #.@  #', '##   ## #', ' # $  . #', ' ########'],
     [' ######', ' #    #', '##$## #', '#  .  #', '# $#$ #', '#. @ .#', '#######'],
-    ['  #####', '###   #', '#.@$  #', '### $.#', '#.##$ #', '# # . ##', '#$ *$$.#', '#   .  #', '########']
+    ['  #####', '###   #', '#.@$  #', '### $.#', '#.##$ #', '# # . ##', '#$ *$$.#', '#   .  #', '########'],
+    // Oct 17 (Miguel: "make it 10 rounds"): scratchpad push/gen10b.mjs (each room's deepest layout by a search backwards
+    // from the solved court), the fewest steps checked forwards (push/verify10.mjs)
+    ['#########', '# #@    #', '#. ###$ #', '#   $ $.#', '#      .#', '#   #   #', '#########'],
+    ['#########', '#. #@   #', '# $#$   #', '#    $  #', '#.  # . #', '#########'],
+    ['#########', '#@$. #  #', '## $ $$ #', '# . ..  #', '#       #', '# #   # #', '#########'],
+    ['########', '#  # .@#', '#  #$ .#', '#  #  ##', '#.$$$ ##', '#     .#', '########']
   ];
-  const BEST = [5, 19, 25, 36, 35, 34];
+  const BEST = [5, 19, 25, 36, 35, 34, 41, 49, 57, 70];
   const G = {
-    title: 'The Stone Court',
+    title: 'The Stone Court', moves: true,
+    howTo: { lines: [
+      'Push every debt stone onto a red hand. When each hand holds a stone, the level is solved.',
+      'Walk the Rebel one square at a time with the arrows / W A S D (or the pads). Walking into a stone pushes it one square on.',
+      'Stones can only be pushed, never pulled. A stone will not move into a wall or into another stone, so two in a row will not budge.',
+      'A stone on a hand glows red. It can still be pushed off again: only where the stones end up counts.',
+      'U (or Z, or ↶) takes a step back; R (or ⟲, or Restart) lays the level out again.',
+      'Steps are counted and the fewest is shown at the top: solve it within a fifth more than the fewest for 10 more points.',
+      'Tip: never push a stone into a corner without a hand: it can never be pushed out again. A stone against a wall can only slide along it.'],
+      img: 'howto/push.png', caption: 'One step right pushes the stone onto its hand; the red one is home already. A stone in the crossed corner would be stuck for good.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, BS = def.best || BEST, CELL = def.cell || 1.3, AT = def.at || [0, 0];
@@ -68,7 +84,8 @@
         st.moving = { from: cellPos(b.p), to: cellPos(t), t: 0, yaw, pushed, sFrom: pushed ? cellPos(pushed.from) : null, sTo: pushed ? cellPos(pushed.to) : null };
         b.p = t; if (pushed) { pushed.s.i = pushed.to; ctx.sound('thock'); }
         b.moves++; info();
-        ctx.player.clip('walk', { loop: true });
+        // a push leans into the stone (the games pack's push walk, when the Rebel has it)
+        ctx.player.clip(pushed && ctx.player.has?.('game_push_walk') ? 'game_push_walk' : 'walk', { loop: true });
       }
       function bump(dx, dy) { ctx.player.face(dx > 0 ? Math.PI / 2 : dx < 0 ? -Math.PI / 2 : dy < 0 ? 0 : Math.PI); }
       function undo() {
@@ -76,6 +93,7 @@
         const h = board.hist.pop(); board.p = h.p; board.stones.forEach((s, k) => { s.i = h.stones[k]; const p = cellPos(s.i); s.m.position.x = p.x; s.m.position.z = p.z; relit(s); });
         const pp = cellPos(board.p); ctx.player.place(pp.x, pp.z); board.moves = Math.max(0, board.moves - 1); info();
       }
+      // R, the pads' ⟲ and Restart beside Quit: the level as it was picked (steps and undo too); not mid-step
       function restart() { if (st.phase !== 'play' || st.moving) return; build(board.k); H.msg('Again', 600); }
       // the level picker (and the pads for phones)
       const hud = document.getElementById('gameHud');
@@ -116,12 +134,13 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (k === 'arrowup' || k === 'w') step(0, -1); else if (k === 'arrowdown' || k === 's') step(0, 1); else if (k === 'arrowleft' || k === 'a') step(-1, 0); else if (k === 'arrowright' || k === 'd') step(1, 0);
           else if (k === 'u' || k === 'z' || k === 'backspace') undo(); else if (k === 'r') restart();
         },
         pointer() {},
-        _test: { st, step, undo, choose, get board() { return board; }, solved: () => board && solved() },
+        restart,
+        _test: { st, step, undo, restart, choose, get board() { return board; }, solved: () => board && solved() },
         dispose() { pick.remove(); pads.remove(); if (board) board.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };
       return inst;

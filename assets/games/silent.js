@@ -6,6 +6,13 @@
 // into you, and you are seen (the step is taken back). Step onto a watchman from behind or the side to take it out.
 // U undoes a turn, R starts the level again. Seven levels, each opens when the one before is solved (kept on this
 // device); every level was checked by a solver for its fewest turns. Score: the level x 20, +10 close to the fewest turns.
+// Oct 17: How to play (the rules in a few lines) and Restart beside Quit; Restart and R now start the level as it was
+// picked (the seen count too, which R used to carry over).
+// Oct 17 (Miguel: "make it 10"): ten levels; 8-10 are 9 x 9 with six watchmen and 10 x 10 with seven (scratchpad
+// lv/silent/gen10.mjs: random boards, then a hill climb on walls, the start / scroll and the watchmen while the fewest
+// turns by the BFS grows to a target; past it, boards that need a takedown and a wait, with more states to get lost in,
+// at least 13 % walls): fewest 28, 32 and 39 turns (level 7: 23); none can be done without a takedown in fewer than
+// 33 turns; each checked again by a BFS on this file's own rules (lv/silent/verify.mjs), the way replayed turn by turn.
 // def: { at: [x, z] (frame coords of the board's middle), cell: 1.2, levels, pass, points }
 (function () {
   const LEVELS = [
@@ -15,7 +22,10 @@
     { rows: ['..#..S#', '.......', '##..#.#', '#..#...', '.......', '.......', '##...@#'], guards: [{ at: [3, 1], f: 'NESW', r: 3 }, { at: [5, 4], f: 'EW', r: 2 }, { at: [6, 4], f: 'WN', r: 3 }], best: 12 },
     { rows: ['#S......', '#..##..#', '.......#', '#..#....', '....#..#', '#...##..', '..#..#..', '..#@..#.'], guards: [{ at: [1, 3], f: 'NESW', r: 2 }, { p: [[5, 4], [6, 4]], r: 2 }, { at: [1, 1], f: 'ES', r: 2 }, { p: [[2, 2], [1, 2], [0, 2]], r: 2 }], best: 18 },
     { rows: ['.#...S..#', '....#....', '.#.#...##', '#..#...#.', '.#..#.#..', '.........', '..#....#.', '#......#.', '.....@#..'], guards: [{ p: [[4, 3], [4, 2]], r: 2 }, { at: [6, 3], f: 'WN', r: 2 }, { p: [[5, 5], [6, 5], [7, 5], [8, 5], [8, 6]], r: 2 }, { p: [[0, 6], [0, 5], [0, 4]], r: 2 }, { p: [[3, 8], [2, 8], [1, 8], [0, 8]], r: 1 }, { p: [[2, 4], [2, 3], [2, 2], [2, 1], [2, 0], [3, 0], [4, 0]], r: 2 }], best: 18 },
-    { rows: ['S........', '...##..#.', '..#...#..', '##.......', '.#...#...', '..#...##.', '.........', '.#.......', '......@.#'], guards: [{ at: [6, 1], f: 'W', r: 4 }, { p: [[2, 4], [3, 4], [4, 4], [4, 5]], r: 1 }, { p: [[2, 0], [2, 1]], r: 2 }, { at: [8, 3], f: 'ES', r: 2 }, { p: [[8, 6], [8, 5], [8, 4]], r: 1 }], best: 23 }
+    { rows: ['S........', '...##..#.', '..#...#..', '##.......', '.#...#...', '..#...##.', '.........', '.#.......', '......@.#'], guards: [{ at: [6, 1], f: 'W', r: 4 }, { p: [[2, 4], [3, 4], [4, 4], [4, 5]], r: 1 }, { p: [[2, 0], [2, 1]], r: 2 }, { at: [8, 3], f: 'ES', r: 2 }, { p: [[8, 6], [8, 5], [8, 4]], r: 1 }], best: 23 },
+    { rows: ['.S#......', '..#......', '.#..#....', '.#.....#.', '....#..#.', '....#.#..', '.....#.#.', '.........', '.......@.'], guards: [{ p: [[6, 2], [6, 3], [6, 4]], r: 2 }, { p: [[6, 7], [7, 7], [8, 7], [8, 8]], r: 1 }, { at: [4, 6], f: 'NS', r: 3 }, { at: [5, 4], f: 'EW', r: 3 }, { p: [[3, 5], [3, 4], [3, 3], [3, 2], [2, 2]], r: 2 }, { at: [7, 5], f: 'NWSE', r: 3 }], best: 28 },
+    { rows: ['....#....S', '...#.###..', '.....#....', '.#.#.#....', '.#...#....', '..#...#...', '..#.#.....', '#.........', '..........', '..@.......'], guards: [{ p: [[1, 1], [2, 1]], r: 1 }, { p: [[8, 4], [8, 5], [8, 6], [8, 7], [7, 7]], r: 1 }, { p: [[1, 2], [0, 2]], r: 1 }, { at: [3, 6], f: 'S', r: 3 }, { at: [2, 2], f: 'NESW', r: 2 }, { at: [0, 6], f: 'S', r: 1 }, { p: [[4, 8], [4, 7], [3, 7], [2, 7]], r: 2 }], best: 32 },
+    { rows: ['....#S.#..', '..........', '..........', '....#.....', '....#..#..', '........#.', '...##..#..', '....#...#.', '....#...#.', '@..#......'], guards: [{ p: [[6, 5], [5, 5], [4, 5], [3, 5], [3, 4]], r: 1 }, { at: [7, 1], f: 'SW', r: 2 }, { p: [[3, 1], [3, 0]], r: 1 }, { p: [[6, 2], [7, 2], [7, 3]], r: 2 }, { at: [1, 7], f: 'S', r: 1 }, { p: [[2, 5], [2, 4], [2, 3], [2, 2], [2, 1], [1, 1], [0, 1]], r: 1 }, { p: [[2, 7], [2, 6]], r: 1 }], best: 39 }
   ];
   // the rules (the same as the level checker's)
   const DIRS = { N: [0, -1], S: [0, 1], E: [1, 0], W: [-1, 0] }, YAW = { N: 0, E: Math.PI / 2, S: Math.PI, W: -Math.PI / 2 };
@@ -52,6 +62,15 @@
   }
   const G = {
     title: 'The Silent Path',
+    howTo: { lines: [
+      'Reach the scroll without being seen.',
+      'Every step you take is one turn; Space (or the · pad) waits a turn. After each turn the watchmen move: a walker steps along its beat and back, a turner turns on the spot (the small arrow shows where it looks next), a still one keeps watching one way.',
+      'Each lantern lights the squares in front of its watchman (walls stop the light). Step into a lit square, stand in one after the watchmen move, or let a watchman walk into you, and you are seen: the step is taken back.',
+      'Step onto a watchman from behind or from the side to take him out: his lantern goes out with him.',
+      'Move with the arrows / W A S D or the pads. U (or ↶) undoes a turn, R (or ⟲, or Restart) starts the level again.',
+      'The fewest turns is shown at the top: reach the scroll within a quarter more for 10 more points.',
+      'Tip: watch a beat go round once before you move; waiting a turn is often the way through.'],
+      img: 'howto/silent.png', caption: 'The fewest way, numbered: turn 1 takes the walker from behind. At turn 5 the turner faces the scroll, as he does now, so the Rebel waits, and takes it at 6.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, CELL = def.cell || 1.2, AT = def.at || [0, 0];
@@ -101,7 +120,7 @@
         const gp = cellPos(Bd.goal); scrollNode.position.set(gp.x, .12, gp.z); scrollNode.rotation.y = 0;
         const pp = cellPos(Bd.start); ctx.player.place(pp.x, pp.z, 0);
         const span = Math.max(W, Hh) * CELL;
-        st.cam = [AT[0], span * 1.2 + 3.5, AT[1] - span * .5 - 1.6]; st.at = [AT[0], 0, AT[1] + .4];
+        st.cam = [AT[0], span * 1.35 + 4.2, AT[1] - span * .64 - 2.2]; st.at = [AT[0], 0, AT[1] - span * .09]; // Oct 17: back, up and aimed nearer: the near row sat under the hint bar
         relight(); info();
       }
       function relight(seenAt) {
@@ -141,13 +160,14 @@
         board.guards.forEach(({ n, g }) => { const a = guardAt(g, board.t), p = xyPos(a.x, a.y); n.position.set(p.x, .12, p.z); n.rotation.y = YAW[a.f]; n.scaling.setAll(1.05); });
         relight(); info(); st.phase = 'play';
       }
-      function restart() { if (st.phase !== 'play' || st.anim) return; const seen = board.seen; build(board.k); board.seen = seen; info(); H.msg('Again', 600); }
+      // R, the pads' ⟲ and Restart beside Quit: the level as it was picked (turns, undo and the seen count); not mid-turn
+      function restart() { if (st.phase !== 'play' || st.anim) return; build(board.k); H.msg('Again', 600); }
       // the level picker (and the pads for phones)
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(380px,90vw);background:rgba(10,9,13,.94);border:1px solid rgba(224,120,50,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 380) + 'px,92vw);background:rgba(10,9,13,.94);border:1px solid rgba(224,120,50,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:700 13px/1.2 Georgia,serif;letter-spacing:.14em;text-transform:uppercase;color:#e08a3a;margin-bottom:10px">The Silent Path</div><div style="margin-bottom:12px;color:#bbb">Reach the scroll without stepping into a lantern's light.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${LV.map((_, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:10px 4px;border-radius:9px;border:1px solid ${open ? '#e08a3a' : '#444'};background:${done ? 'rgba(224,138,58,.25)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 16px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? k + 1 : '🔒'}${done ? ' ✓' : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 4},1fr);gap:8px">${LV.map((_, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:10px 4px;border-radius:9px;border:1px solid ${open ? '#e08a3a' : '#444'};background:${done ? 'rgba(224,138,58,.25)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 16px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? k + 1 : '🔒'}${done ? ' ✓' : ''}</button>`; }).join('')}</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'grid'; H.msg(`Level ${k + 1}`, 900, k >= 4 ? 'a hard one' : k === 1 ? 'take the watchman from behind' : ''); }
       const pads = document.createElement('div');
@@ -184,12 +204,13 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (k === 'arrowup' || k === 'w') step(0, -1); else if (k === 'arrowdown' || k === 's') step(0, 1); else if (k === 'arrowleft' || k === 'a') step(-1, 0); else if (k === 'arrowright' || k === 'd') step(1, 0);
           else if (k === ' ' || k === 'enter' || k === '.') step(0, 0); else if (k === 'u' || k === 'z' || k === 'backspace') undo(); else if (k === 'r') restart();
         },
         pointer() {},
-        _test: { st, step, undo, choose, get board() { return board; }, LV, parse, turn, guardAt, litCells },
+        restart,
+        _test: { st, step, undo, restart, choose, get board() { return board; }, LV, parse, turn, guardAt, litCells },
         dispose() { pick.remove(); pads.remove(); if (board) { board.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); board.lit.forEach(n => { try { n.dispose(); } catch (e) {} }); } }
       };
       return inst;

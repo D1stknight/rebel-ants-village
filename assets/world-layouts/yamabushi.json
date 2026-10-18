@@ -29600,9 +29600,9 @@
             5
           ]
         ],
-        "pass": 7,
+        "pass": 10,
         "points": 50,
-        "max": 10,
+        "max": 16,
         "hide": [
           "yam_spirit_lantern"
         ]
@@ -30639,6 +30639,775 @@
         "pass": 60,
         "points": 60,
         "questOn": "pass"
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_yam-before-the-mist",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -6.5,
+      "y": 0,
+      "z": -68
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "yamabushi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "yam-before-the-mist",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "course",
+        "id": "yam-before-the-mist",
+        "title": "Before the Mist",
+        "points": 60,
+        "questOn": "pass",
+        "gates": [
+          [
+            0,
+            -55
+          ],
+          [
+            -35,
+            -30
+          ],
+          [
+            -35,
+            10
+          ],
+          [
+            0,
+            18
+          ],
+          [
+            0,
+            32
+          ],
+          [
+            40,
+            45
+          ],
+          [
+            62,
+            54
+          ],
+          [
+            85,
+            54
+          ],
+          [
+            97.5,
+            54
+          ]
+        ],
+        "start": [
+          -5.78,
+          -66.57
+        ],
+        "path": [
+          [
+            -6.5,
+            -70
+          ],
+          [
+            -6,
+            -70.5
+          ],
+          [
+            -5.5,
+            -71
+          ],
+          [
+            -5,
+            -71.5
+          ],
+          [
+            -4.5,
+            -71
+          ],
+          [
+            -4,
+            -70.5
+          ],
+          [
+            0,
+            -57.5
+          ],
+          [
+            0,
+            -55
+          ],
+          [
+            -14,
+            -43.5
+          ],
+          [
+            -35,
+            -30
+          ],
+          [
+            -34,
+            -15.5
+          ],
+          [
+            -33,
+            -12.5
+          ],
+          [
+            -33.5,
+            8.5
+          ],
+          [
+            -35,
+            10
+          ],
+          [
+            -22,
+            9
+          ],
+          [
+            -6,
+            10
+          ],
+          [
+            -5.5,
+            10.5
+          ],
+          [
+            -5,
+            11
+          ],
+          [
+            0,
+            18
+          ],
+          [
+            0,
+            32
+          ],
+          [
+            5,
+            32
+          ],
+          [
+            17.5,
+            39.5
+          ],
+          [
+            23.5,
+            40.5
+          ],
+          [
+            40,
+            45
+          ],
+          [
+            62,
+            54
+          ],
+          [
+            85,
+            54
+          ],
+          [
+            97.5,
+            54
+          ]
+        ],
+        "medals": [
+          36,
+          43,
+          56
+        ],
+        "radius": 3,
+        "cloth": [
+          0.145,
+          0.251,
+          0.176
+        ],
+        "text": "Reach the pillar shrine before the mist closes the path",
+        "mist": {
+          "delay": 3,
+          "speed": 5.6
+        },
+        "length": 260.7
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_yam-spirit-dance",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -0.5,
+      "y": 0.1,
+      "z": -22.9
+    },
+    "rotation": {
+      "x": 0,
+      "y": 3.1416,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "yamabushi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "yam-spirit-dance",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "dance",
+        "id": "yam-spirit-dance",
+        "title": "Spirit Dance",
+        "points": 60,
+        "pass": 0,
+        "questOn": "pass",
+        "song": "yamabushi",
+        "moves": [
+          "crescent_kick",
+          "jump",
+          "backflip",
+          "front_flip"
+        ],
+        "floor": [
+          0.352,
+          0.522,
+          0.402
+        ],
+        "packMoves": [
+          "dance_wave",
+          "dance_tut",
+          "dance_house",
+          "dance_gangnam"
+        ]
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_yam-spirit-chase",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -30,
+      "y": 0.1,
+      "z": -40
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "yamabushi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "yam-spirit-chase",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "chase",
+        "id": "yam-spirit-chase",
+        "title": "Spirit Chase",
+        "points": 60,
+        "questOn": "pass",
+        "loop": [
+          [
+            -30,
+            -40
+          ],
+          [
+            30,
+            -40
+          ],
+          [
+            33,
+            -5.5
+          ],
+          [
+            33.5,
+            -5
+          ],
+          [
+            1.5,
+            8.5
+          ],
+          [
+            0,
+            10
+          ],
+          [
+            -20.5,
+            -1.5
+          ],
+          [
+            -33.5,
+            -5
+          ],
+          [
+            -30.5,
+            -34.5
+          ]
+        ],
+        "medals": [
+          71,
+          89,
+          117
+        ],
+        "look": "wisp",
+        "name": "the spirit",
+        "speed": [
+          8.8,
+          9.8
+        ],
+        "text": "A mountain spirit wants to play"
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_yam-prayer-flags",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 20,
+      "y": 0.1,
+      "z": -30
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "yamabushi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "yam-prayer-flags",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "gather",
+        "id": "yam-prayer-flags",
+        "title": "Prayer Flags",
+        "points": 60,
+        "questOn": "pass",
+        "look": "flag",
+        "carry": 4,
+        "name": "prayer flag",
+        "names": "prayer flags",
+        "dropName": "the bridge",
+        "text": "Gather the prayer flags the wind took and hang them at the bridge",
+        "items": [
+          [
+            10.5,
+            16
+          ],
+          [
+            25,
+            5.5
+          ],
+          [
+            29.4,
+            -15.6
+          ],
+          [
+            16.6,
+            -33.3
+          ],
+          [
+            -6,
+            -37.4
+          ],
+          [
+            -25,
+            -25.5
+          ],
+          [
+            -29.4,
+            -4.4
+          ],
+          [
+            -16.6,
+            13.3
+          ]
+        ],
+        "drop": [
+          48,
+          54
+        ],
+        "medals": [
+          63,
+          80,
+          108
+        ],
+        "dropLook": "line",
+        "dropYaw": -1.5708
       }
     }
   }

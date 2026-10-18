@@ -40795,9 +40795,9 @@
             5
           ]
         ],
-        "pass": 6,
+        "pass": 9,
         "points": 50,
-        "max": 8,
+        "max": 14,
         "hide": [
           "ronin_brazier"
         ]
@@ -41325,6 +41325,908 @@
         "pass": 60,
         "points": 60,
         "questOn": "pass"
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_bushi-beacon-relay",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -18,
+      "y": 0.06,
+      "z": -51
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "bushi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "bushi-beacon-relay",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "course",
+        "id": "bushi-beacon-relay",
+        "title": "Beacon Relay",
+        "points": 60,
+        "questOn": "pass",
+        "gates": [
+          [
+            -50.5,
+            -48
+          ],
+          [
+            -52,
+            55
+          ],
+          [
+            0,
+            29.5
+          ],
+          [
+            52,
+            55
+          ],
+          [
+            50.5,
+            -46
+          ],
+          [
+            8,
+            -42
+          ]
+        ],
+        "start": [
+          -19.59,
+          -50.85
+        ],
+        "path": [
+          [
+            -17.5,
+            -53.5
+          ],
+          [
+            -18,
+            -54
+          ],
+          [
+            -18.5,
+            -54.5
+          ],
+          [
+            -32,
+            -55
+          ],
+          [
+            -47,
+            -54.5
+          ],
+          [
+            -47.5,
+            -55
+          ],
+          [
+            -48,
+            -54.5
+          ],
+          [
+            -48.5,
+            -54
+          ],
+          [
+            -49,
+            -53.5
+          ],
+          [
+            -49.5,
+            -52.5
+          ],
+          [
+            -50.5,
+            -49
+          ],
+          [
+            -50.5,
+            -48
+          ],
+          [
+            -52,
+            -0.5
+          ],
+          [
+            -52,
+            55
+          ],
+          [
+            -44,
+            48
+          ],
+          [
+            -43.5,
+            47.5
+          ],
+          [
+            -43,
+            47
+          ],
+          [
+            -41,
+            43.5
+          ],
+          [
+            -40.5,
+            43
+          ],
+          [
+            -40,
+            42.5
+          ],
+          [
+            -39,
+            40.5
+          ],
+          [
+            -38.5,
+            40
+          ],
+          [
+            -38,
+            39.5
+          ],
+          [
+            -37.5,
+            39
+          ],
+          [
+            -36.5,
+            38
+          ],
+          [
+            -36,
+            37.5
+          ],
+          [
+            -35.5,
+            37
+          ],
+          [
+            -35,
+            36.5
+          ],
+          [
+            -31.5,
+            30.5
+          ],
+          [
+            -28,
+            26.5
+          ],
+          [
+            -27.5,
+            26
+          ],
+          [
+            -27,
+            25.5
+          ],
+          [
+            -26.5,
+            25
+          ],
+          [
+            -8,
+            19
+          ],
+          [
+            -6,
+            18
+          ],
+          [
+            -5.5,
+            18.5
+          ],
+          [
+            -5,
+            19
+          ],
+          [
+            0,
+            29.5
+          ],
+          [
+            5,
+            19
+          ],
+          [
+            5.5,
+            18.5
+          ],
+          [
+            6,
+            18
+          ],
+          [
+            26.5,
+            25
+          ],
+          [
+            27,
+            25.5
+          ],
+          [
+            27.5,
+            26
+          ],
+          [
+            28,
+            26.5
+          ],
+          [
+            31.5,
+            47.5
+          ],
+          [
+            32,
+            48
+          ],
+          [
+            32.5,
+            48.5
+          ],
+          [
+            33,
+            49
+          ],
+          [
+            52,
+            55
+          ],
+          [
+            53,
+            7
+          ],
+          [
+            53,
+            -25
+          ],
+          [
+            52.5,
+            -25.5
+          ],
+          [
+            52,
+            -26.5
+          ],
+          [
+            51.5,
+            -27.5
+          ],
+          [
+            50.5,
+            -46
+          ],
+          [
+            50.5,
+            -40
+          ],
+          [
+            50,
+            -39.5
+          ],
+          [
+            49.5,
+            -39
+          ],
+          [
+            9.5,
+            -39
+          ],
+          [
+            9,
+            -39.5
+          ],
+          [
+            8.5,
+            -40
+          ],
+          [
+            8,
+            -42
+          ]
+        ],
+        "medals": [
+          62,
+          72,
+          93
+        ],
+        "radius": 3,
+        "cloth": [
+          0.49,
+          0.169,
+          0.133
+        ],
+        "style": "brazier",
+        "text": "Light the beacons in order round the fort",
+        "length": 451.1
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_bushi-war-fan-dance",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -29.5,
+      "y": 0.1,
+      "z": -5
+    },
+    "rotation": {
+      "x": 0,
+      "y": 1.5708,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "bushi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "bushi-war-fan-dance",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "dance",
+        "id": "bushi-war-fan-dance",
+        "title": "War Fan Dance",
+        "points": 60,
+        "pass": 0,
+        "questOn": "pass",
+        "song": "bushi",
+        "moves": [
+          "roundhouse_kick",
+          "jump",
+          "crescent_kick",
+          "spin_flip_kick"
+        ],
+        "floor": [
+          0.904,
+          0.39,
+          0.333
+        ],
+        "packMoves": [
+          "dance_wave",
+          "dance_tut",
+          "dance_house",
+          "dance_gangnam"
+        ]
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_bushi-catch-the-spy",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -35,
+      "y": 0.1,
+      "z": -35
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "bushi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "bushi-catch-the-spy",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "chase",
+        "id": "bushi-catch-the-spy",
+        "title": "Catch the Spy",
+        "points": 60,
+        "questOn": "pass",
+        "loop": [
+          [
+            -35,
+            -35
+          ],
+          [
+            1,
+            -32
+          ],
+          [
+            34,
+            -34
+          ],
+          [
+            35,
+            -35
+          ],
+          [
+            30.5,
+            -11
+          ],
+          [
+            28.5,
+            -8.5
+          ],
+          [
+            31.5,
+            10
+          ],
+          [
+            5.5,
+            17.5
+          ],
+          [
+            0,
+            15
+          ],
+          [
+            -8,
+            17.5
+          ],
+          [
+            -31,
+            10
+          ],
+          [
+            -28.5,
+            -11
+          ],
+          [
+            -36.5,
+            -20
+          ]
+        ],
+        "medals": [
+          56,
+          70,
+          92
+        ],
+        "look": "thief",
+        "carry": "scroll",
+        "color": [
+          0.1,
+          0.12,
+          0.2
+        ],
+        "trim": [
+          0.55,
+          0.15,
+          0.12
+        ],
+        "name": "the spy",
+        "text": "A spy has the battle plans"
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_bushi-long-shot",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 20,
+      "y": 0,
+      "z": -72
+    },
+    "rotation": {
+      "x": 0,
+      "y": 3.1416,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "bushi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "bushi-long-shot",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "id": "bushi-long-shot",
+        "title": "Long Shot",
+        "points": 60,
+        "questOn": "pass",
+        "type": "archery",
+        "arrows": 10,
+        "onGround": true,
+        "targets": [
+          [
+            -6,
+            38
+          ],
+          [
+            7,
+            52
+          ],
+          [
+            -3,
+            66
+          ]
+        ],
+        "mover": {
+          "z": 46,
+          "amp": 7,
+          "speed": 3
+        },
+        "gold": {
+          "x": 5,
+          "z": 74,
+          "h": 6
+        },
+        "camT": [
+          0,
+          2.4,
+          45
+        ],
+        "pass": 50
       }
     }
   }

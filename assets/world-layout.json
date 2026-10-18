@@ -44579,6 +44579,390 @@
           },
           {
             "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_descent_l0",
+            "linkName": "Hive Descent",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/descent",
+            "description": "DESCEND THROUGH 10 FLOORS · FACE THE QUEEN · WIN OR DIE",
+            "enabled": true,
+            "position": {
+              "x": -9.8,
+              "y": 2.6,
+              "z": -3.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_descent_l1",
+            "linkName": "Hive Descent",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/descent",
+            "description": "DESCEND THROUGH 10 FLOORS · FACE THE QUEEN · WIN OR DIE",
+            "enabled": true,
+            "position": {
+              "x": -9.8,
+              "y": 2.6,
+              "z": -1.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_descent_l2",
+            "linkName": "Hive Descent",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/descent",
+            "description": "DESCEND THROUGH 10 FLOORS · FACE THE QUEEN · WIN OR DIE",
+            "enabled": true,
+            "position": {
+              "x": -9.8,
+              "y": 2.6,
+              "z": 1.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_descent_l3",
+            "linkName": "Hive Descent",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/descent",
+            "description": "DESCEND THROUGH 10 FLOORS · FACE THE QUEEN · WIN OR DIE",
+            "enabled": true,
+            "position": {
+              "x": -9.8,
+              "y": 2.6,
+              "z": 3.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_gp_l0",
+            "linkName": "Rebel Grand Prix",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/grand-prix",
+            "description": "KART RACING · FIVE CUPS, FIFTEEN TRACKS, EIGHT ANTS ON THE GRID · DRIFT · BOX · WASP",
+            "enabled": true,
+            "position": {
+              "x": -11.2,
+              "y": 2.6,
+              "z": -3.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_gp_l1",
+            "linkName": "Rebel Grand Prix",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/grand-prix",
+            "description": "KART RACING · FIVE CUPS, FIFTEEN TRACKS, EIGHT ANTS ON THE GRID · DRIFT · BOX · WASP",
+            "enabled": true,
+            "position": {
+              "x": -11.2,
+              "y": 2.6,
+              "z": -1.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_gp_l2",
+            "linkName": "Rebel Grand Prix",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/grand-prix",
+            "description": "KART RACING · FIVE CUPS, FIFTEEN TRACKS, EIGHT ANTS ON THE GRID · DRIFT · BOX · WASP",
+            "enabled": true,
+            "position": {
+              "x": -11.2,
+              "y": 2.6,
+              "z": 1.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_gp_l3",
+            "linkName": "Rebel Grand Prix",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/grand-prix",
+            "description": "KART RACING · FIVE CUPS, FIFTEEN TRACKS, EIGHT ANTS ON THE GRID · DRIFT · BOX · WASP",
+            "enabled": true,
+            "position": {
+              "x": -11.2,
+              "y": 2.6,
+              "z": 3.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_bounty_r0",
+            "linkName": "Bounty Hunters",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/bounty",
+            "description": "RUN · GUN · TAKE THE HEAD · FOUR BOARDS OF CORRUPTED HIVE, FOUR WANTED BOSSES",
+            "enabled": true,
+            "position": {
+              "x": 9.8,
+              "y": 2.6,
+              "z": -3.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_bounty_r1",
+            "linkName": "Bounty Hunters",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/bounty",
+            "description": "RUN · GUN · TAKE THE HEAD · FOUR BOARDS OF CORRUPTED HIVE, FOUR WANTED BOSSES",
+            "enabled": true,
+            "position": {
+              "x": 9.8,
+              "y": 2.6,
+              "z": -1.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_bounty_r2",
+            "linkName": "Bounty Hunters",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/bounty",
+            "description": "RUN · GUN · TAKE THE HEAD · FOUR BOARDS OF CORRUPTED HIVE, FOUR WANTED BOSSES",
+            "enabled": true,
+            "position": {
+              "x": 9.8,
+              "y": 2.6,
+              "z": 1.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_bounty_r3",
+            "linkName": "Bounty Hunters",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/bounty",
+            "description": "RUN · GUN · TAKE THE HEAD · FOUR BOARDS OF CORRUPTED HIVE, FOUR WANTED BOSSES",
+            "enabled": true,
+            "position": {
+              "x": 9.8,
+              "y": 2.6,
+              "z": 3.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_siege_r0",
+            "linkName": "The Siege",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/siege",
+            "description": "HOLD THE GATE · TWELVE WAVES OF THE SPIDER HORDE, ONE WALL, ELEVEN DEFENDERS · SEE YOU ON THE BATTLEMENTS",
+            "enabled": true,
+            "position": {
+              "x": 11.2,
+              "y": 2.6,
+              "z": -3.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_siege_r1",
+            "linkName": "The Siege",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/siege",
+            "description": "HOLD THE GATE · TWELVE WAVES OF THE SPIDER HORDE, ONE WALL, ELEVEN DEFENDERS · SEE YOU ON THE BATTLEMENTS",
+            "enabled": true,
+            "position": {
+              "x": 11.2,
+              "y": 2.6,
+              "z": -1.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_siege_r2",
+            "linkName": "The Siege",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/siege",
+            "description": "HOLD THE GATE · TWELVE WAVES OF THE SPIDER HORDE, ONE WALL, ELEVEN DEFENDERS · SEE YOU ON THE BATTLEMENTS",
+            "enabled": true,
+            "position": {
+              "x": 11.2,
+              "y": 2.6,
+              "z": 1.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_siege_r3",
+            "linkName": "The Siege",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/siege",
+            "description": "HOLD THE GATE · TWELVE WAVES OF THE SPIDER HORDE, ONE WALL, ELEVEN DEFENDERS · SEE YOU ON THE BATTLEMENTS",
+            "enabled": true,
+            "position": {
+              "x": 11.2,
+              "y": 2.6,
+              "z": 3.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
             "hotspotId": "hotspot_rebel_arcade_kit_dark_cabinet",
             "linkName": "Dark Cabinet",
             "actionType": "showInfo",
@@ -54287,8 +54671,8 @@
         "id": "hub-shell-game",
         "type": "shells",
         "title": "Mini Ant Shell Game",
-        "rounds": 6,
-        "lives": 2,
+        "rounds": 20,
+        "lives": 3,
         "pass": 60,
         "points": 40
       }
@@ -54863,11 +55247,11 @@
     "position": {
       "x": -17.23,
       "y": 0,
-      "z": 46.22
+      "z": 36.22
     },
     "rotation": {
       "x": 0,
-      "y": -3.1407,
+      "y": 0,
       "z": 0
     },
     "scaling": {
@@ -55167,10 +55551,32 @@
             ],
             "right": 0,
             "why": "The Buke hold the canyon village with its canals and palisades."
+          },
+          {
+            "q": "Whetstones and bamboo practice swords for the swordmasters by the still ponds. Which village?",
+            "a": [
+              "Kenshi",
+              "Samurai",
+              "Ronin",
+              "Bushi"
+            ],
+            "right": 0,
+            "why": "The Kenshi train among bamboo groves, still ponds and raked-stone clearings."
+          },
+          {
+            "q": "Bells and saffron robes for the warrior monks of the temple mountain. Where does it go?",
+            "a": [
+              "Sohei",
+              "Yamabushi",
+              "Shogun",
+              "Kenshi"
+            ],
+            "right": 0,
+            "why": "The Sohei: stone steps, autumn maples and the great temple bell."
           }
         ],
-        "ask": 8,
-        "pass": 7,
+        "ask": 10,
+        "pass": 9,
         "points": 50
       }
     }
@@ -55293,6 +55699,836 @@
         "pass": 60,
         "points": 60,
         "questOn": "pass"
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_hub-courtyard-circuit",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 22,
+      "y": 0,
+      "z": -50
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "hub",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "hub-courtyard-circuit",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "course",
+        "id": "hub-courtyard-circuit",
+        "title": "Courtyard Circuit",
+        "points": 60,
+        "questOn": "pass",
+        "gates": [
+          [
+            48,
+            -48
+          ],
+          [
+            48,
+            40
+          ],
+          [
+            -45,
+            48
+          ],
+          [
+            -48,
+            -40
+          ],
+          [
+            0,
+            -79
+          ],
+          [
+            22,
+            -58
+          ]
+        ],
+        "start": [
+          23.51,
+          -49.47
+        ],
+        "path": [
+          [
+            48,
+            -48
+          ],
+          [
+            48,
+            40
+          ],
+          [
+            -45,
+            48
+          ],
+          [
+            -48,
+            -40
+          ],
+          [
+            -2,
+            -70.5
+          ],
+          [
+            -1.5,
+            -71
+          ],
+          [
+            -1,
+            -71.5
+          ],
+          [
+            -1,
+            -72
+          ],
+          [
+            -1,
+            -72.5
+          ],
+          [
+            -1,
+            -73
+          ],
+          [
+            -1,
+            -73.5
+          ],
+          [
+            -1,
+            -74
+          ],
+          [
+            -1,
+            -74.5
+          ],
+          [
+            -1,
+            -75
+          ],
+          [
+            -1,
+            -75.5
+          ],
+          [
+            -1,
+            -76
+          ],
+          [
+            0,
+            -79
+          ],
+          [
+            0,
+            -76
+          ],
+          [
+            0,
+            -75.5
+          ],
+          [
+            0,
+            -75
+          ],
+          [
+            0,
+            -74.5
+          ],
+          [
+            0,
+            -74
+          ],
+          [
+            0,
+            -73.5
+          ],
+          [
+            0,
+            -73
+          ],
+          [
+            0.5,
+            -72.5
+          ],
+          [
+            1,
+            -72
+          ],
+          [
+            1.5,
+            -71.5
+          ],
+          [
+            2,
+            -71
+          ],
+          [
+            2.5,
+            -70.5
+          ],
+          [
+            22,
+            -58
+          ]
+        ],
+        "medals": [
+          54,
+          63,
+          81
+        ],
+        "radius": 3,
+        "cloth": [
+          0.612,
+          0.11,
+          0.11
+        ],
+        "text": "Round the courtyard and up the Gathering Hall steps",
+        "length": 392.5
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_hub-rebel-groove",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 28,
+      "y": 0,
+      "z": 5
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0.3927,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "hub",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "hub-rebel-groove",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "dance",
+        "id": "hub-rebel-groove",
+        "title": "Rebel Groove",
+        "points": 60,
+        "pass": 0,
+        "questOn": "pass",
+        "song": "hub",
+        "moves": [
+          "cartwheel",
+          "jump",
+          "front_flip",
+          "backflip"
+        ],
+        "floor": [
+          1,
+          0.296,
+          0.296
+        ],
+        "packMoves": [
+          "dance_wave",
+          "dance_tut",
+          "dance_house",
+          "dance_gangnam"
+        ]
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_hub-mini-ant-tag",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 30,
+      "y": 0,
+      "z": -30
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "hub",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "hub-mini-ant-tag",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "chase",
+        "id": "hub-mini-ant-tag",
+        "title": "Mini Ant Tag",
+        "points": 60,
+        "questOn": "pass",
+        "loop": [
+          [
+            30,
+            -30
+          ],
+          [
+            34,
+            20
+          ],
+          [
+            0,
+            34
+          ],
+          [
+            -34,
+            20
+          ],
+          [
+            -30,
+            -30
+          ],
+          [
+            0,
+            -40
+          ]
+        ],
+        "medals": [
+          63,
+          79,
+          104
+        ],
+        "look": "ant",
+        "color": [
+          0.45,
+          0.12,
+          0.08
+        ],
+        "name": "the mini ant",
+        "text": "A mini ant wants a race: tag it three times"
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_hub-root-seal",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -36,
+      "y": 0,
+      "z": -22
+    },
+    "rotation": {
+      "x": 0,
+      "y": 3.1416,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "hub",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "hub-root-seal",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "id": "hub-root-seal",
+        "title": "Root Seal",
+        "points": 60,
+        "questOn": "pass",
+        "type": "roots",
+        "pass": 60
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_grand-relay",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 5,
+      "y": 0,
+      "z": 12
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "hub",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "grand-relay",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "id": "grand-relay",
+        "title": "The Grand Relay",
+        "points": 60,
+        "questOn": "pass",
+        "type": "relay",
+        "medals": [
+          195,
+          225,
+          270
+        ],
+        "pass": 0
       }
     }
   }

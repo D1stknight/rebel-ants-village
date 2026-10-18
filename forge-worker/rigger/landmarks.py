@@ -8,6 +8,9 @@ NPCM = bool(os.environ.get('FORGE_NPC'))
 # mid-forearm. Their wrist sits one hand length (of the body height) back from the fingertip along the arm's own centre line.
 SPECIES = os.environ.get('FORGE_NPC_SPECIES', '') if NPCM else ''
 HAND_LEN = {'human': 0.11, 'ape': 0.12}
+# v2.28 bare arms (Chumpz in shorts): a sculpted hand can be far longer than that, so the wrist landed on the knuckles and
+# the palm stayed on the arm beside the glove. With the vertex colours (normalize, species only) the wrist moves up to
+# where the arm's colour (skin, fur, sleeve) turns into the hand's, when that is further up the arm.
 def runs(row,minw=2):
     r=[];i=0;n=len(row)
     while i<n:
@@ -19,7 +22,39 @@ def runs(row,minw=2):
         else: i+=1
     return r
 DEBUG=False
-def detect(V,F):
+def colour_wrist(C,x,z,qs,S,u,L,rows,cols,ar,zr,side):
+    # v2.28 species: where the arm's colour turns into the hand's, as a fraction of shoulder -> fingertip (None: no clear edge).
+    # The arm's own silhouette runs (one per row, apart from the body), their vertices placed along that axis
+    rv=np.rint((zr-z)/zr*(rows-1)).astype(int); cv=(x+ar)*(cols-1)/(2*ar)
+    lo=np.full(rows,np.inf); hi=np.full(rows,-np.inf)
+    for r_,a_,b_ in qs: lo[r_]=a_-1; hi[r_]=b_+1
+    ok=(rv>=0)&(rv<rows); ok[ok]&=(cv[ok]>=lo[rv[ok]])&(cv[ok]<=hi[rv[ok]])
+    if ok.sum()<200: return None
+    t=((np.c_[rv[ok],cv[ok]]-S)@u)/L; c=C[ok]
+    fm=(t>=0.52)&(t<=0.64); hm=(t>=0.88)&(t<=0.97)
+    if fm.sum()<20 or hm.sum()<20: return None
+    fc=np.median(c[fm],0); hc=np.median(c[hm],0)
+    if np.linalg.norm(hc-fc)<0.12: return None          # the arm and the hand look alike: no colour edge to go by
+    ed=np.arange(0.52,0.97,0.02); near=[]
+    for t0 in ed:
+        m_=(t>=t0)&(t<t0+0.02)
+        if m_.sum()<8: near.append(None); continue
+        k=np.median(c[m_],0); dh=np.linalg.norm(k-hc); near.append(bool(dh<np.linalg.norm(k-fc) and dh<0.5*np.linalg.norm(hc-fc)))   # the hand's own colour, not just nearer to it (cuff bands)
+    if DEBUG: print(side,'colours arm',np.round(fc,2),'hand',np.round(hc,2),''.join('h' if n else ('.' if n is False else '?') for n in near))
+    # the hand = the last run of hand-coloured slices (slices without points don't break it) reaching the hand's own colour
+    # window: a cuff band or a bracelet further up the arm that happens to match is not the wrist
+    rn=[]; a_=None
+    for i,n in enumerate(near):
+        if n is False:
+            if a_ is not None: rn.append((a_,b_,h_)); a_=None
+        elif n:
+            if a_ is None: a_,h_=i,0
+            b_=i; h_+=1
+    if a_ is not None: rn.append((a_,b_,h_))
+    for a_,b_,h_ in reversed(rn):
+        if h_>=3 and ed[b_]>=0.88-1e-6: return float(ed[a_]) if ed[a_]>=0.66-1e-6 else None
+    return None
+def detect(V,F,VC=None):
     M,g=silhouette(V,F); rows,cols,ar,zr=g['rows'],g['cols'],g['ar'],g['zr']
     X=lambda c: c/(cols-1)*2*ar-ar; Z=lambda r: zr-r/(rows-1)*zr; cc=cols//2
     x,y,z=V.T
@@ -65,7 +100,7 @@ def detect(V,F):
     for s,sg in (('Left',1),('Right',-1)):
         # outer run on character side: Left = +x = image right
         pick=(lambda rr: rr[-1]) if sg>0 else (lambda rr: rr[0])
-        pts=[];wid=[]
+        pts=[];wid=[];qs=[]
         for r in range(gtop,rows):
             rr=runs(M[r])
             need=4 if r>crotch else 3          # below the crotch: 2 legs + 2 arms
@@ -73,7 +108,7 @@ def detect(V,F):
             q=pick(rr); c_=(q[0]+q[1])/2
             # v1.2: follow the arm continuously; stop at the first break (torn cloth / leg slivers are not arms)
             if pts and (r-pts[-1][0]>0.08*rows or abs(c_-pts[-1][1])>0.15*cols): break
-            pts.append((r,c_)); wid.append(q[1]-q[0])
+            pts.append((r,c_)); wid.append(q[1]-q[0]); qs.append((r,q[0],q[1]))
         pts=np.array(pts); wid=np.array(wid)
         tip_r=pts[-1,0]; 
         # wrist: first row (downward) where outer width drops below 0.65 of max sleeve width
@@ -116,7 +151,29 @@ def detect(V,F):
             i_=int(np.argmin(np.abs(back-HAND_LEN[SPECIES]*Hb*zr/(rows-1))))
             Wp=np.array([(zr-C[i_][0])/zr*(rows-1),(C[i_][1]+ar)*(cols-1)/(2*ar)])
             if DEBUG: print(s,'own hand: wrist t',round(float((Wp-S)@u/L),3),'was',round(tw,3))
-            W_=Wp; E_=S+(Wp-S)*0.53; HC=W_+(T-W_)*0.45
+            # v2.28: the colour edge (colour_wrist) instead, when it is further up the arm
+            E_=S+(Wp-S)*0.53
+            if VC is not None:
+                tc_=colour_wrist(VC,x,z,qs,S,u,L,rows,cols,ar,zr,s)
+                tp_=float((Wp-S)@u/L)
+                if tc_ is not None and tc_ < tp_ - 0.01:
+                    # bare arms: the sculpted palm's heel widens the arm before its colour shows (Banana Band: the silhouette
+                    # grows 63 -> 87 px over the last 6 % before the colour edge, a skin frill round the glove) -> back to where
+                    # that widening starts (within 12 % of the narrowest forearm above it), at most 7 % of the arm
+                    j_=int(np.argmin(np.abs(ts-tc_)))
+                    if not np.isnan(ws[j_]):
+                        win=(ts>=tc_-0.15)&(ts<=tc_+1e-6)&~np.isnan(ws)
+                        wmin=float(ws[win].min()) if win.any() else ws[j_]
+                        while j_>0 and ts[j_-1]>=tc_-0.07-1e-6 and not np.isnan(ws[j_-1]) and ws[j_]>1.12*wmin: j_-=1
+                        if DEBUG and ts[j_]<tc_-1e-6: print(s,'colour wrist',round(tc_,3),'-> where the hand starts widening',round(float(ts[j_]),3))
+                        tc_=min(tc_,float(ts[j_]))
+                    # on the arm's own centre line there, not the shoulder -> fingertip chord (up to 8 cm inside a bent arm)
+                    Cp=np.c_[(zr-C[:,0])/zr*(rows-1),(C[:,1]+ar)*(cols-1)/(2*ar)]
+                    Wp=Cp[int(np.argmin(np.abs(((Cp-S)@u)/L-tc_)))]
+                    if DEBUG: print(s,'colour wrist t',round(tc_,3),'(hand length rule',round(tp_,3),')')
+            # the elbow stays where the hand-length wrist puts it (moved up with the colour wrist, Big Chain's inner elbow took
+            # jacket weights and tore 0.44 of the height in waving / rallying / pick_up)
+            W_=Wp; HC=W_+(T-W_)*0.45
         J[s+'Arm']=P(shx,shz); J[s+'Shoulder']=P(sg*abs(shx)*0.35,shz+0.01)
         J[s+'Hand']=P(X(W_[1]),Z(W_[0])); J[s+'ForeArm']=P(X(E_[1]),Z(E_[0]))
         J[s+'_handC']=P(X(HC[1]),Z(HC[0])); J[s+'_tip']=P(X(T[1]),Z(T[0]))

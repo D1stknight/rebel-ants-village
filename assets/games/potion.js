@@ -4,6 +4,14 @@
 // onto the same potion or into an empty vial. U undoes, H shows a good pour (no fewest-pours bonus then), R starts
 // again. Seven shelves from 11 to 26 pours (the fewest found by a solver); the ones with a single empty vial are the
 // hardest. Score: the shelf x 20, +10 in the fewest pours without a hint.
+// Oct 17: How to play (the rules in a few lines); the HUD's Restart is R (now also mid-pour: the pour is dropped).
+// Oct 17 (Miguel: "make it 15 games"): shelves 8-15, 8 to 12 potions (four new ones: pearl, amber, silver and lime, each
+// with its own rune) and 28 to 42 pours; three have a single empty vial. Random shelves (scratchpad lv/potion) solved
+// by A* with a lower bound that never overestimates (runs beyond one a potion, plus a pour into an empty vial for each
+// potion with no layer at the bottom of a vial), every one checked by the old breadth-first search (the same fewest
+// pours on all 15 shelves and on 400 random ones). H uses that A* too: the breadth-first hint stalled the big shelves
+// for seconds (and its shelf key read potions 1, 0 and 10 alike); now it runs a little each frame and says the shelf
+// is too tangled past 60000 shelves looked at.
 // def: { levels: [{ v: [[bottom..top colour ids], ...], best }], pass, points }
 (function () {
   const LEVELS = [
@@ -13,7 +21,16 @@
     { best: 14, v: [[0, 3, 2, 1], [2, 3, 1, 0], [3, 0, 1, 0], [2, 3, 2, 1], []] },
     { best: 20, v: [[3, 4, 2, 5], [3, 2, 3, 2], [1, 0, 1, 5], [2, 1, 5, 0], [1, 5, 4, 0], [4, 3, 0, 4], [], []] },
     { best: 18, v: [[0, 4, 3, 1], [2, 0, 1, 2], [3, 4, 2, 4], [3, 0, 1, 3], [0, 2, 1, 4], []] },
-    { best: 26, v: [[1, 4, 6, 4], [7, 1, 6, 3], [2, 1, 7, 5], [3, 5, 0, 3], [6, 6, 5, 3], [7, 5, 2, 0], [4, 7, 2, 0], [1, 0, 2, 4], [], []] }
+    { best: 26, v: [[1, 4, 6, 4], [7, 1, 6, 3], [2, 1, 7, 5], [3, 5, 0, 3], [6, 6, 5, 3], [7, 5, 2, 0], [4, 7, 2, 0], [1, 0, 2, 4], [], []] },
+    // Oct 17: 8 to 12 potions, the fewest pours by A* and by breadth-first search (scratchpad lv/potion)
+    { best: 28, v: [[3, 1, 2, 3], [0, 3, 3, 2], [5, 4, 6, 4], [5, 6, 7, 4], [0, 7, 1, 2], [0, 1, 5, 6], [4, 5, 0, 2], [7, 1, 6, 7], []] },
+    { best: 30, v: [[5, 2, 1, 2], [5, 0, 1, 7], [4, 4, 7, 2], [7, 0, 3, 1], [5, 6, 3, 3], [3, 5, 8, 6], [4, 2, 0, 6], [8, 1, 0, 8], [8, 6, 7, 4], [], []] },
+    { best: 31, v: [[4, 6, 0, 2], [8, 7, 1, 8], [6, 6, 3, 0], [5, 3, 2, 7], [7, 1, 5, 3], [6, 4, 7, 5], [4, 2, 0, 1], [8, 5, 0, 1], [3, 8, 4, 2], []] },
+    { best: 33, v: [[7, 6, 0, 3], [8, 6, 1, 9], [8, 4, 0, 9], [4, 2, 0, 5], [3, 9, 1, 4], [4, 5, 7, 2], [0, 7, 3, 1], [3, 1, 8, 9], [8, 5, 2, 2], [5, 6, 6, 7], [], []] },
+    { best: 34, v: [[4, 1, 3, 4], [7, 6, 9, 1], [5, 7, 3, 4], [9, 6, 1, 0], [0, 2, 3, 9], [2, 6, 0, 5], [8, 0, 6, 8], [9, 8, 1, 2], [8, 5, 2, 4], [7, 5, 7, 3], []] },
+    { best: 38, v: [[2, 1, 9, 10], [3, 1, 6, 2], [5, 1, 9, 7], [10, 4, 3, 10], [0, 4, 0, 3], [9, 1, 8, 9], [2, 7, 0, 5], [3, 5, 6, 10], [8, 7, 6, 8], [4, 6, 0, 5], [8, 7, 2, 4], [], []] },
+    { best: 40, v: [[5, 7, 6, 0], [0, 1, 2, 10], [7, 4, 6, 8], [11, 4, 1, 9], [4, 7, 2, 11], [10, 11, 4, 3], [0, 9, 8, 10], [1, 1, 9, 7], [0, 2, 10, 5], [6, 9, 3, 5], [8, 3, 8, 11], [2, 3, 6, 5], [], []] },
+    { best: 42, v: [[8, 3, 2, 1], [7, 3, 4, 8], [8, 0, 5, 9], [10, 4, 10, 11], [3, 5, 9, 6], [2, 4, 11, 0], [2, 1, 4, 8], [7, 1, 0, 6], [11, 3, 2, 5], [10, 9, 10, 5], [7, 1, 7, 0], [6, 11, 6, 9], [], []] }
   ];
   const CAP = 4;
   // the potions: colour, glow, and a rune drawn on each layer (so no two need telling apart by colour alone)
@@ -21,7 +38,10 @@
     { c: [.35, .95, .42], em: [.12, .5, .16], g: '☾' }, { c: [.62, .36, 1], em: [.3, .14, .6], g: '★' },
     { c: [1, .56, .16], em: [.58, .26, .04], g: '▲' }, { c: [1, .42, .74], em: [.58, .16, .38], g: '♥' },
     { c: [.3, .6, 1], em: [.1, .28, .62], g: '●' }, { c: [1, .93, .32], em: [.58, .5, .1], g: '✦' },
-    { c: [.92, .18, .18], em: [.5, .05, .05], g: '✚' }, { c: [.28, .95, .86], em: [.08, .48, .44], g: '◆' }
+    { c: [.92, .18, .18], em: [.5, .05, .05], g: '✚' }, { c: [.28, .95, .86], em: [.08, .48, .44], g: '◆' },
+    // Oct 17, for the 9- to 12-potion shelves: pearl, amber, silver, lime
+    { c: [.96, .95, .9], em: [.42, .41, .38], g: '✿' }, { c: [.72, .43, .2], em: [.3, .15, .05], g: '■' },
+    { c: [.6, .63, .7], em: [.22, .23, .28], g: '♣' }, { c: [.72, 1, .16], em: [.32, .5, .04], g: '☀' }
   ];
   // one pour on a state (vials bottom..top): the new state, or null when it is not a pour
   function pour(v, a, b) {
@@ -32,19 +52,41 @@
   }
   const sorted = v => v.every(x => !x.length || (x.length === CAP && x.every(c => c === x[0])));
   const full = x => x.length === CAP && x.every(c => c === x[0]);
-  const keyOf = v => v.map(x => x.join('')).sort().join('|');
-  // the first pour of a shortest way to sort it from here (breadth-first), or null (none / too far)
-  function hintFrom(v, cap = 90000) {
-    if (sorted(v)) return null; const seen = new Set([keyOf(v)]); let fr = [{ v, first: null }];
-    while (fr.length && seen.size < cap) { const nx = [];
-      for (const s of fr) for (let a = 0; a < s.v.length; a++) for (let b = 0; b < s.v.length; b++) { const r = pour(s.v, a, b); if (!r) continue; const k = keyOf(r.w); if (seen.has(k)) continue; seen.add(k);
-        const first = s.first || [a, b]; if (sorted(r.w)) return first; nx.push({ v: r.w, first }); }
-      fr = nx; }
-    return fr.length ? 'far' : null;
+  // the first pour of a shortest way to sort it from here: A* over shelves written as strings (a letter a layer), the
+  // bound = runs beyond one a potion + potions with no layer at the bottom of a vial (a pour onto the same potion joins two
+  // runs, a pour into an empty vial joins none, and each potion's own vial starts with such a pour unless it has a bottom
+  // layer already: so a pour lowers the bound by one at most, and the first sorted shelf reached is a fewest-pours one).
+  // A generator: it yields every 50 shelves taken, so the game runs it a little each frame. Returns [from, to], 'far'
+  // (more than cap shelves seen) or null (sorted already, or no way to sort it from here).
+  function* hintSearch(v, cap = 60000) {
+    if (sorted(v)) return null;
+    const key = s => s.slice().sort().join('|'), done = s => s.every(x => !x || (x.length === CAP && x === x[0].repeat(CAP)));
+    const bound = s => { let seg = 0, bot = 0; for (const x of s) { if (!x) continue; bot |= 1 << (x.charCodeAt(0) - 97); for (let i = 0; i < x.length; i++) if (!i || x[i] !== x[i - 1]) seg++; } for (; bot; bot &= bot - 1) seg--; return seg; };
+    const s0 = v.map(x => String.fromCharCode(...x.map(c => 97 + c))), k0 = key(s0), G = new Map([[k0, 0]]), Q = []; let n = 0;
+    (Q[bound(s0)] = []).push([s0, 0, null, k0]);
+    for (let f = 0; f < Q.length; f++) { const bk = Q[f]; if (!bk) continue;
+      while (bk.length) { const [s, g, first, k] = bk.pop(); if (G.get(k) !== g) continue;
+        if (++n % 50 === 0) yield; if (G.size > cap) return 'far';
+        for (let a = 0; a < s.length; a++) { const A = s[a]; if (!A) continue; const t = A[A.length - 1]; let run = 1; while (run < A.length && A[A.length - 1 - run] === t) run++;
+          for (let b = 0; b < s.length; b++) { const T = s[b]; if (b === a || T.length >= CAP || (T && T[T.length - 1] !== t) || (!T && run === A.length)) continue;
+            const m = Math.min(run, CAP - T.length), w = s.slice(); w[a] = A.slice(0, A.length - m); w[b] = T + t.repeat(m);
+            const fm = first || [a, b]; if (done(w)) return fm; // the bound is at least 1 on an unsorted shelf, so this is a fewest-pours way too
+            const kw = key(w); if (G.has(kw) && G.get(kw) <= g + 1) continue; G.set(kw, g + 1); const fw = g + 1 + bound(w); (Q[fw] || (Q[fw] = [])).push([w, g + 1, fm, kw]); } } } }
+    return null;
   }
+  const hintFrom = (v, cap) => { const it = hintSearch(v, cap); let r; do r = it.next(); while (!r.done); return r.value; }; // all at once (tests)
   const anyPour = v => { for (let a = 0; a < v.length; a++) for (let b = 0; b < v.length; b++) if (pour(v, a, b)) return true; return false; };
   const G = {
     title: 'The Potion Shelf',
+    howTo: { lines: [
+      'Pour the potions until every vial holds only one kind. Each potion has its own colour and its own rune.',
+      'Click (or tap) a vial, or press its number (0 is the tenth): it floats up on a gold ring. Then click the vial to pour into. Click it again (or Space) to set it down.',
+      'The top potion pours across with every layer of the same potion under it, as far as there is room. A vial holds four layers.',
+      'A pour may go only onto the same potion or into an empty vial. A vial full of one potion gets its cork: that potion is done.',
+      'U (or Undo) takes a pour back, R (or ⟲, or Restart) starts the shelf again. H (or Hint) shows a good pour: the vial to pour from rises and the one to pour into blinks.',
+      'The fewest pours are shown at the top: manage them with no hint for 10 more points.',
+      'Tip: keep an empty vial free as long as you can: it is the way out when you are stuck.'],
+      img: 'howto/potion.png', caption: 'One pour on a five-vial shelf: vial 1\'s two purple stars flow onto the purple in vial 2, which is then full of one potion and corked.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def, engine = ctx.engine || scene.getEngine();
       const LV = def.levels || LEVELS, KEY = 'rebelAntsPotionProgress:' + (def.id || 'potion');
@@ -98,6 +140,7 @@
       }
       function paint(vi) { const x = board.v[vi], V = board.vials[vi]; for (let j = 0; j < CAP; j++) setSlot(vi, j, j < x.length ? x[j] : null); V.cork.setEnabled(full(x)); }
       function build(k) {
+        st.hintJob = null; // a hint still looking is for the old shelf
         if (board) board.vials.forEach(V => { V.slots.forEach(s => { if (s.m) s.m.dispose(); }); [V.glass, V.rim, V.cork, V.node].forEach(n => { try { n.dispose(); } catch (e) {} }); });
         const v = LV[k].v.map(x => x.slice()), L = layout(v.length); buildTable(L.width);
         board = { k, v, vials: [], sel: -1, moves: 0, hist: [], hints: 0, start: v.map(x => x.slice()) };
@@ -113,7 +156,7 @@
       function tryPour(a, b, fromHint) {
         if (st.phase !== 'play' || st.anim || !board) return false; const r = pour(board.v, a, b);
         if (!r) { st.shake = { i: b, t: 0 }; ctx.sound('thock'); const why = !board.v[a].length ? 'That vial is empty' : board.v[b].length >= CAP ? 'That vial is full' : 'Only onto the same potion or an empty vial'; H.msg(why, 900); return false; }
-        board.hist.push({ v: board.v.map(x => x.slice()), moves: board.moves }); board.moves++;
+        st.hintJob = null; board.hist.push({ v: board.v.map(x => x.slice()), moves: board.moves }); board.moves++;
         const A = board.vials[a], Bv = board.vials[b], dir = Bv.home.x > A.home.x + .01 ? 1 : Bv.home.x < A.home.x - .01 ? -1 : 1, tilt = 1.92;
         const at = new V3(Bv.home.x - dir * (VH / 2) * Math.sin(tilt), Bv.home.y + VH / 2 + .14 - (VH / 2) * Math.cos(tilt), Bv.home.z);
         st.anim = { a, b, n: r.n, top: r.top, w: r.w, from: A.home.clone(), at, rot: -dir * tilt, t: 0, lenA: board.v[a].length, lenB: board.v[b].length, painted: false };
@@ -126,19 +169,25 @@
         if (board.sel === i) { select(-1); return; }
         tryPour(board.sel, i);
       }
-      function undo() { if (st.phase !== 'play' || st.anim || !board?.hist.length) return; const h = board.hist.pop(); board.v = h.v; board.moves = h.moves; board.vials.forEach((V, i) => { V.node.position.copyFrom(V.home); V.node.rotation.z = 0; paint(i); }); select(-1); info(); }
-      function restart() { if (st.phase !== 'play' || st.anim || !board) return; const k = board.k; build(k); H.msg('Again', 600); }
+      function undo() { if (st.phase !== 'play' || st.anim || !board?.hist.length) return; st.hintJob = null; const h = board.hist.pop(); board.v = h.v; board.moves = h.moves; board.vials.forEach((V, i) => { V.node.position.copyFrom(V.home); V.node.rotation.z = 0; paint(i); }); select(-1); info(); }
+      function restart() { if (st.phase !== 'play' || !board) return; if (st.anim) { st.anim = null; stream.setEnabled(false); } st.hintTo = null; st.shake = null; const k = board.k; build(k); H.msg('Again', 600); } // a pour in the air is dropped
+      // H: the search runs ~30 ms at once (most hints end there), then ~10 ms a frame (update), so the shelf never stalls
       function hint() {
-        if (st.phase !== 'play' || st.anim || !board) return; const h = hintFrom(board.v);
+        if (st.phase !== 'play' || st.anim || !board || st.hintJob) return;
+        st.hintJob = hintSearch(board.v); stepHint(30); if (st.hintJob) H.msg('Reading the shelf…', 1500);
+      }
+      function stepHint(ms) {
+        const t0 = performance.now(); let r; do r = st.hintJob.next(); while (!r.done && performance.now() - t0 < ms);
+        if (!r.done) return; st.hintJob = null; const h = r.value;
         if (h === 'far') { H.msg('Too tangled to see from here', 1500, 'undo a few pours'); return; }
         if (!h) { H.msg('This shelf cannot be sorted from here', 1800, 'U undoes, R starts again'); return; }
         board.hints++; select(h[0]); st.hintTo = { i: h[1], t: 0 }; H.msg(`Pour ${h[0] + 1} into ${h[1] + 1}`, 1300); info();
       }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(390px,90vw);background:rgba(16,8,22,.94);border:1px solid rgba(150,240,160,.55);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 390) + 'px,92vw);background:rgba(16,8,22,.94);border:1px solid rgba(150,240,160,.55);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#9cf0a8;margin-bottom:10px">The Potion Shelf</div><div style="margin-bottom:12px;color:#bbb">Pour the potions until every vial holds just one.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#9cf0a8' : '#444'};background:${ok ? 'rgba(156,240,168,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${L.best} pours</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 4},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#9cf0a8' : '#444'};background:${ok ? 'rgba(156,240,168,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${L.best} pours</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       const pads = document.createElement('div');
       pads.style.cssText = 'position:absolute;bottom:62px;right:16px;display:none;gap:6px;pointer-events:auto';
@@ -156,6 +205,7 @@
           ctx.look(st.cam, st.at); st.t += dt;
           table.candles.forEach(c => { const s = 1 + Math.sin(st.t * 13 + c.ph) * .12 + Math.sin(st.t * 7.3 + c.ph * 2) * .08; c.f.scaling.set(1, s, 1); });
           if (!board) return;
+          if (st.hintJob) stepHint(10); // a hint still looking
           // the selected vial floats up and glows; a hinted target's rim blinks
           board.vials.forEach((V, i) => { if (st.anim && (i === st.anim.a)) return; const up = i === board.sel ? .32 + Math.sin(st.t * 5) * .03 : 0; V.node.position.y += (V.home.y + up - V.node.position.y) * Math.min(1, dt * 14);
             let sx = 0; if (st.shake && st.shake.i === i) sx = Math.sin(st.shake.t * 50) * .05 * Math.max(0, 1 - st.shake.t / .35); V.node.position.x = V.home.x + sx; });
@@ -183,7 +233,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (/^[0-9]$/.test(k)) { const i = k === '0' ? 9 : +k - 1; clickVial(i); return; }
           if (k === 'u' || k === 'z' || k === 'backspace') undo(); else if (k === 'r') restart(); else if (k === 'h') hint(); else if (k === ' ') select(-1);
         },
@@ -192,7 +242,8 @@
           const hit = scene.pickWithRay(ctx.ray(), m => m.metadata?.potionVial != null); if (!hit?.pickedMesh) { select(-1); return; }
           clickVial(hit.pickedMesh.metadata.potionVial);
         },
-        _test: { st, choose, clickVial, tryPour, undo, restart, hint, get board() { return board; }, LV, pour, hintFrom },
+        restart, // the HUD's Restart: the shelf as it was picked (no pours, undo or hints)
+        _test: { st, choose, clickVial, tryPour, undo, restart, hint, get board() { return board; }, LV, pour, hintFrom, hintSearch, POTIONS },
         dispose() { pick.remove(); pads.remove(); if (board) board.vials.forEach(V => V.slots.forEach(s => { try { s.m?.dispose(); } catch (e) {} })); [table.top, table.cloth, table.riser, ...table.legs].forEach(n => { try { n?.dispose(); } catch (e) {} }); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };
     }

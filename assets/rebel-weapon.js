@@ -165,10 +165,13 @@
 
   // moves pack made with this rig (null if the rig predates weapon moves)
   const movesCache = {};
-  function movesFor(rigUrl) {
-    if (!rigUrl) return Promise.resolve(null);
-    return movesCache[rigUrl] || (movesCache[rigUrl] = fetch('/api/forge-weapon?action=moves&rig=' + encodeURIComponent(rigUrl)).then((r) => r.json()).then((j) => j.moves || null).catch(() => null));
+  // one lookup per rig: { moves, games } (the weapon moves pack and, since v2.24, the games pack)
+  function packsFor(rigUrl) {
+    if (!rigUrl) return Promise.resolve({});
+    return movesCache[rigUrl] || (movesCache[rigUrl] = fetch('/api/forge-weapon?action=moves&rig=' + encodeURIComponent(rigUrl)).then((r) => r.json()).catch(() => ({})));
   }
+  function movesFor(rigUrl) { return packsFor(rigUrl).then((j) => j.moves || null); }
+  function gamesFor(rigUrl) { return packsFor(rigUrl).then((j) => j.games || null); }
   // load the pack and re-target its clips onto this Rebel's bones (by name). Returns { name: AnimationGroup }.
   async function loadMoves({ scene, root, url, prefix = '' }) {
     const nodes = {}; [root, ...root.getDescendants(false)].forEach((n) => { if (n.name && !(n.name in nodes)) nodes[n.name] = n; });
@@ -716,5 +719,5 @@
     });
     return { play: say, dispose() { scene.onBeforeRenderObservable.remove(obs); } };
   }
-  window.RebelWeapon = { attach, resolve, fromTrait, catalog, MOVESET, MOVE_NAMES, kindOf, movesFor, loadMoves, hold, holdAll, showHeld, twoHand, archer, sfx, WEAPON_SFX, _fist: fistCenter };
+  window.RebelWeapon = { attach, resolve, fromTrait, catalog, MOVESET, MOVE_NAMES, kindOf, movesFor, gamesFor, loadMoves, hold, holdAll, showHeld, twoHand, archer, sfx, WEAPON_SFX, _fist: fistCenter };
 })();

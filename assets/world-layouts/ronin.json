@@ -41655,5 +41655,1526 @@
         "questOn": "pass"
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_ronin-fortress-run",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -12,
+      "y": 0.1,
+      "z": -40.5
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "ronin",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "ronin-fortress-run",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "course",
+        "id": "ronin-fortress-run",
+        "title": "Fortress Run",
+        "points": 60,
+        "questOn": "pass",
+        "gates": [
+          [
+            -49,
+            -38
+          ],
+          [
+            -56,
+            0
+          ],
+          [
+            -45,
+            28
+          ],
+          [
+            0,
+            47
+          ],
+          [
+            45,
+            28
+          ],
+          [
+            54.5,
+            -20.5
+          ],
+          [
+            20,
+            -40.5
+          ],
+          [
+            2,
+            -28
+          ]
+        ],
+        "start": [
+          -13.6,
+          -40.39
+        ],
+        "path": [
+          [
+            -18.5,
+            -40
+          ],
+          [
+            -20.5,
+            -41
+          ],
+          [
+            -21,
+            -41.5
+          ],
+          [
+            -21.5,
+            -42
+          ],
+          [
+            -22,
+            -42.5
+          ],
+          [
+            -22.5,
+            -43
+          ],
+          [
+            -23.5,
+            -43.5
+          ],
+          [
+            -49,
+            -38
+          ],
+          [
+            -47.5,
+            -36
+          ],
+          [
+            -47,
+            -35.5
+          ],
+          [
+            -46.5,
+            -35
+          ],
+          [
+            -46,
+            -34.5
+          ],
+          [
+            -45.5,
+            -34
+          ],
+          [
+            -44.5,
+            -33.5
+          ],
+          [
+            -35.5,
+            -30.5
+          ],
+          [
+            -35,
+            -30
+          ],
+          [
+            -34.5,
+            -29.5
+          ],
+          [
+            -29,
+            -9
+          ],
+          [
+            -23.5,
+            -1
+          ],
+          [
+            -23,
+            -0.5
+          ],
+          [
+            -22.5,
+            0
+          ],
+          [
+            -23,
+            0.5
+          ],
+          [
+            -23.5,
+            1
+          ],
+          [
+            -55.5,
+            0.5
+          ],
+          [
+            -56,
+            0
+          ],
+          [
+            -53,
+            21
+          ],
+          [
+            -52.5,
+            21.5
+          ],
+          [
+            -52,
+            22
+          ],
+          [
+            -47,
+            26
+          ],
+          [
+            -45,
+            28
+          ],
+          [
+            -39,
+            22
+          ],
+          [
+            -38.5,
+            21.5
+          ],
+          [
+            -38,
+            21
+          ],
+          [
+            -37.5,
+            20.5
+          ],
+          [
+            -33,
+            8
+          ],
+          [
+            -32.5,
+            7.5
+          ],
+          [
+            -32,
+            7
+          ],
+          [
+            -6,
+            5.5
+          ],
+          [
+            -5.5,
+            6
+          ],
+          [
+            -5,
+            6.5
+          ],
+          [
+            -5,
+            39.5
+          ],
+          [
+            -4.5,
+            40
+          ],
+          [
+            -4,
+            40.5
+          ],
+          [
+            -3.5,
+            41
+          ],
+          [
+            -3.5,
+            41.5
+          ],
+          [
+            -1,
+            46
+          ],
+          [
+            0,
+            47
+          ],
+          [
+            0,
+            41.5
+          ],
+          [
+            0,
+            41
+          ],
+          [
+            0,
+            40.5
+          ],
+          [
+            0,
+            40
+          ],
+          [
+            0,
+            39.5
+          ],
+          [
+            5,
+            6.5
+          ],
+          [
+            5.5,
+            6
+          ],
+          [
+            6,
+            5.5
+          ],
+          [
+            32,
+            7
+          ],
+          [
+            32.5,
+            7.5
+          ],
+          [
+            33,
+            8
+          ],
+          [
+            37.5,
+            22
+          ],
+          [
+            38,
+            22.5
+          ],
+          [
+            38.5,
+            23
+          ],
+          [
+            39,
+            23.5
+          ],
+          [
+            45,
+            28
+          ],
+          [
+            39,
+            23.5
+          ],
+          [
+            38.5,
+            23
+          ],
+          [
+            38,
+            22.5
+          ],
+          [
+            33.5,
+            16
+          ],
+          [
+            33,
+            8
+          ],
+          [
+            32.5,
+            7.5
+          ],
+          [
+            32,
+            7
+          ],
+          [
+            23.5,
+            1
+          ],
+          [
+            23,
+            0.5
+          ],
+          [
+            22.5,
+            0
+          ],
+          [
+            29,
+            -9.5
+          ],
+          [
+            29.5,
+            -10
+          ],
+          [
+            30,
+            -10.5
+          ],
+          [
+            53.5,
+            -16
+          ],
+          [
+            54,
+            -16.5
+          ],
+          [
+            54.5,
+            -17
+          ],
+          [
+            55,
+            -20
+          ],
+          [
+            54.5,
+            -20.5
+          ],
+          [
+            54.5,
+            -23.5
+          ],
+          [
+            46,
+            -32
+          ],
+          [
+            45.5,
+            -32.5
+          ],
+          [
+            45,
+            -33
+          ],
+          [
+            30,
+            -37
+          ],
+          [
+            27.5,
+            -39.5
+          ],
+          [
+            27,
+            -40
+          ],
+          [
+            26.5,
+            -40.5
+          ],
+          [
+            26,
+            -41
+          ],
+          [
+            25.5,
+            -41.5
+          ],
+          [
+            25,
+            -42
+          ],
+          [
+            24.5,
+            -42.5
+          ],
+          [
+            24,
+            -43
+          ],
+          [
+            23.5,
+            -43.5
+          ],
+          [
+            22.5,
+            -43
+          ],
+          [
+            22,
+            -42.5
+          ],
+          [
+            21.5,
+            -42
+          ],
+          [
+            21,
+            -41.5
+          ],
+          [
+            20.5,
+            -41
+          ],
+          [
+            20,
+            -40.5
+          ],
+          [
+            12,
+            -36
+          ],
+          [
+            10.5,
+            -34.5
+          ],
+          [
+            10,
+            -34
+          ],
+          [
+            9.5,
+            -33.5
+          ],
+          [
+            2,
+            -28
+          ]
+        ],
+        "medals": [
+          67,
+          79,
+          101
+        ],
+        "radius": 3,
+        "cloth": [
+          0.416,
+          0.102,
+          0.114
+        ],
+        "text": "Through the fortress and up the stairs to the dojo",
+        "length": 491.6
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_ronin-shadow-chase",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -34,
+      "y": 0.1,
+      "z": -30
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "ronin",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "ronin-shadow-chase",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "chase",
+        "id": "ronin-shadow-chase",
+        "title": "Shadow Chase",
+        "points": 60,
+        "questOn": "pass",
+        "loop": [
+          [
+            -35,
+            -30.5
+          ],
+          [
+            -23,
+            -28
+          ],
+          [
+            -16.5,
+            -33.5
+          ],
+          [
+            -10,
+            -31
+          ],
+          [
+            32.5,
+            -28
+          ],
+          [
+            35,
+            -30.5
+          ],
+          [
+            23.5,
+            -13
+          ],
+          [
+            22.5,
+            0.5
+          ],
+          [
+            25.5,
+            1.5
+          ],
+          [
+            37.5,
+            5
+          ],
+          [
+            2.5,
+            5.5
+          ],
+          [
+            0,
+            8
+          ],
+          [
+            -7.5,
+            5
+          ],
+          [
+            -37.5,
+            5
+          ],
+          [
+            -23,
+            1
+          ],
+          [
+            -22,
+            -2
+          ]
+        ],
+        "medals": [
+          44,
+          55,
+          72
+        ],
+        "look": "thief",
+        "color": [
+          0.05,
+          0.05,
+          0.06
+        ],
+        "trim": [
+          0.6,
+          0.08,
+          0.08
+        ],
+        "carry": "gold",
+        "name": "the shadow",
+        "text": "A shadow is loose in the fortress"
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_ronin-watch-fires",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -17.1,
+      "y": 0.1,
+      "z": -34
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "ronin",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "ronin-watch-fires",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "tend",
+        "id": "ronin-watch-fires",
+        "title": "Watch Fires",
+        "points": 60,
+        "questOn": "pass",
+        "style": "brazier",
+        "color": [
+          1,
+          0.45,
+          0.2
+        ],
+        "name": "watch fire",
+        "text": "Keep the watch fires burning round the bonsai",
+        "lamps": [
+          [
+            5.4,
+            3.4
+          ],
+          [
+            20.1,
+            -6.6
+          ],
+          [
+            19.6,
+            -22.2
+          ],
+          [
+            4.3,
+            -31.6
+          ],
+          [
+            -13.7,
+            -27.8
+          ],
+          [
+            -22,
+            -13.5
+          ],
+          [
+            -13.3,
+            0.4
+          ]
+        ],
+        "burn": [
+          37,
+          24
+        ],
+        "medals": [
+          95,
+          85,
+          70
+        ]
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_ronin-silent-steps",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 7.3,
+      "y": 0.1,
+      "z": -40.5
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "ronin",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "ronin-silent-steps",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "id": "ronin-silent-steps",
+        "title": "Silent Steps",
+        "points": 60,
+        "questOn": "pass",
+        "type": "stealth",
+        "goal": [
+          0,
+          30
+        ],
+        "checkpoints": [
+          [
+            -16,
+            -14
+          ],
+          [
+            14,
+            14
+          ]
+        ],
+        "guards": [
+          {
+            "path": [
+              [
+                -26.5,
+                -30
+              ],
+              [
+                -26,
+                -29.5
+              ],
+              [
+                -25.5,
+                -29
+              ],
+              [
+                -24.5,
+                -28.5
+              ],
+              [
+                -18,
+                -28.5
+              ],
+              [
+                -17.5,
+                -28
+              ],
+              [
+                -16.5,
+                -27.5
+              ],
+              [
+                -12,
+                -28
+              ],
+              [
+                1.5,
+                -28.5
+              ],
+              [
+                18,
+                -29
+              ],
+              [
+                25,
+                -28.5
+              ],
+              [
+                25.5,
+                -29
+              ],
+              [
+                26,
+                -29.5
+              ],
+              [
+                26.5,
+                -30
+              ]
+            ],
+            "speed": 2.2,
+            "wait": 1.4
+          },
+          {
+            "path": [
+              [
+                0,
+                -26
+              ],
+              [
+                6.5,
+                -22.5
+              ],
+              [
+                7,
+                -22
+              ],
+              [
+                7.5,
+                -21.5
+              ],
+              [
+                8,
+                -21
+              ],
+              [
+                8.5,
+                -20
+              ],
+              [
+                9.5,
+                -18.5
+              ],
+              [
+                12,
+                -14.5
+              ],
+              [
+                11.5,
+                -14
+              ],
+              [
+                8.5,
+                -7.5
+              ],
+              [
+                8,
+                -7
+              ],
+              [
+                7.5,
+                -6.5
+              ],
+              [
+                7,
+                -6
+              ],
+              [
+                5.5,
+                -5
+              ],
+              [
+                4.5,
+                -4.5
+              ],
+              [
+                0,
+                -2
+              ],
+              [
+                -5,
+                -5
+              ],
+              [
+                -5.5,
+                -5.5
+              ],
+              [
+                -7,
+                -6
+              ],
+              [
+                -7.5,
+                -6.5
+              ],
+              [
+                -8,
+                -7
+              ],
+              [
+                -9,
+                -8.5
+              ],
+              [
+                -9.5,
+                -9.5
+              ],
+              [
+                -10,
+                -10.5
+              ],
+              [
+                -11.5,
+                -14
+              ],
+              [
+                -12,
+                -14.5
+              ],
+              [
+                -9,
+                -19.5
+              ],
+              [
+                -8.5,
+                -20
+              ],
+              [
+                -8,
+                -21
+              ],
+              [
+                -7.5,
+                -21.5
+              ],
+              [
+                -7,
+                -22
+              ],
+              [
+                -6,
+                -22.5
+              ]
+            ],
+            "loop": true,
+            "speed": 1.9
+          },
+          {
+            "path": [
+              [
+                -24,
+                1
+              ],
+              [
+                15.5,
+                1.5
+              ],
+              [
+                16,
+                2
+              ],
+              [
+                17,
+                2.5
+              ],
+              [
+                24,
+                1
+              ]
+            ],
+            "speed": 2.4,
+            "wait": 1
+          },
+          {
+            "path": [
+              [
+                -26,
+                20
+              ],
+              [
+                -25,
+                12.5
+              ],
+              [
+                -24.5,
+                12
+              ],
+              [
+                -24,
+                11.5
+              ],
+              [
+                -23.5,
+                11
+              ],
+              [
+                -5.5,
+                5.5
+              ],
+              [
+                18.5,
+                6
+              ],
+              [
+                23.5,
+                11
+              ],
+              [
+                24,
+                11.5
+              ],
+              [
+                24.5,
+                12
+              ],
+              [
+                25,
+                12.5
+              ],
+              [
+                26,
+                20
+              ]
+            ],
+            "speed": 2.1,
+            "wait": 1.2
+          },
+          {
+            "path": [
+              [
+                0,
+                9
+              ]
+            ],
+            "look": [
+              3.141592653589793,
+              1.1
+            ]
+          }
+        ],
+        "medals": [
+          45,
+          65,
+          95
+        ],
+        "text": "Reach the dojo yard unseen"
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_ronin-debt-marker-stones",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -34.5,
+      "y": 0.1,
+      "z": 18.5
+    },
+    "rotation": {
+      "x": 0,
+      "y": -1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "ronin",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "ronin-debt-marker-stones",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "id": "ronin-debt-marker-stones",
+        "title": "The Debt Marker",
+        "points": 60,
+        "questOn": "pass",
+        "type": "debts",
+        "ask": 6,
+        "pass": 100
+      }
+    }
   }
 ]

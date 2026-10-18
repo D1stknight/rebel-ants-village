@@ -103,6 +103,24 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #hudProgressFill{height:100%;width:0;background:linear-gradient(90deg,#5ecfca,#e8c56a);box-shadow:0 0 8px rgba(94,207,202,.35)}
 #journalBtn{margin-top:7px;width:100%;height:26px;border:1px solid rgba(94,207,202,.34);background:rgba(94,207,202,.05);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:2px;cursor:pointer}
 #journalBtn:hover{background:rgba(94,207,202,.13)}
+#gloveBtn{margin-top:5px;width:100%;height:24px;border:1px solid rgba(232,197,106,.34);background:rgba(232,197,106,.05);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:2px;cursor:pointer;display:none}
+#gloveBtn:hover{background:rgba(232,197,106,.13)}
+body.has-gloves #gloveBtn{display:block}
+#glovePanel{position:fixed;top:124px;left:340px;width:min(300px,calc(100vw - 32px));padding:12px;background:rgba(5,10,28,.95);border:1px solid rgba(232,197,106,.45);backdrop-filter:blur(12px);z-index:30;display:none;color:#f3e6c4;font:600 12px/1.3 Georgia,serif}
+#glovePanel.on{display:block}
+#glovePanel h4{margin:0 0 8px;font:700 10px 'Cinzel Decorative',serif;letter-spacing:2px;color:#e8c56a;text-transform:uppercase}
+#glovePanel .gp-row{margin-bottom:10px}
+#glovePanel .gp-label{font-size:11px;color:#cfd8e6;margin-bottom:5px;display:flex;justify-content:space-between}
+#glovePanel .gp-sw{display:flex;flex-wrap:wrap;gap:5px}
+#glovePanel .gp-sw button{width:24px;height:24px;border-radius:50%;border:2px solid rgba(255,255,255,.25);cursor:pointer;padding:0}
+#glovePanel .gp-sw button.on{border-color:#ffe9b0;box-shadow:0 0 0 2px rgba(232,197,106,.55)}
+#glovePanel .gp-sw button.default,#glovePanel .gp-sw button.forged{position:relative}
+#glovePanel .gp-sw button.default::after,#glovePanel .gp-sw button.forged::after{content:'';position:absolute;inset:6px;border-radius:50%;border:1.5px dashed rgba(255,255,255,.75)}
+#glovePanel .gp-sw button.forged::after{border-style:solid;inset:7px}
+#glovePanel .gp-sw input[type=color]{width:24px;height:24px;border:0;padding:0;background:none;cursor:pointer}
+#glovePanel .gp-note{font-size:11px;color:#aab3c2;margin-top:4px}
+#glovePanel .gp-close{position:absolute;top:8px;right:10px;background:none;border:0;color:#cfd8e6;font-size:16px;cursor:pointer}
+@media (max-width:700px){#glovePanel{left:50%;top:50%;transform:translate(-50%,-50%)}}
 #questTracker{
   margin-top:7px;
   padding-top:7px;
@@ -134,7 +152,7 @@ body.walk-photo #photoBtn{display:block}
 #photoOverlay .ph-btns{display:flex;justify-content:center;gap:10px}
 #photoOverlay .ph-btns button{font:600 13px Georgia,serif;letter-spacing:.06em;padding:8px 18px;border-radius:6px;border:1px solid #8a6a2a;background:#2a1d10;color:#ffe9b0;cursor:pointer}
 /* the dance-off (DanceOff): arrows come down the lane to the ring */
-#danceOff{position:fixed;left:50%;bottom:20%;transform:translateX(-50%);width:min(560px,92vw);padding:12px 16px 12px;background:rgba(10,13,22,.9);border:1px solid rgba(216,179,92,.6);border-radius:14px;color:#f3e6c4;font:600 14px/1.3 Georgia,serif;text-align:center;z-index:60;display:none;box-shadow:0 8px 30px rgba(0,0,0,.45);user-select:none}
+#danceOff{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);width:min(560px,92vw);padding:12px 16px 12px;background:rgba(10,13,22,.9);border:1px solid rgba(216,179,92,.6);border-radius:14px;color:#f3e6c4;font:600 14px/1.3 Georgia,serif;text-align:center;z-index:60;display:none;box-shadow:0 8px 30px rgba(0,0,0,.45);user-select:none}
 #danceOff.on{display:block}
 #danceOff .do-title{letter-spacing:.14em;text-transform:uppercase;font-size:12px;color:#d8b35c;margin-bottom:8px}
 #danceOff .do-lane{position:relative;height:58px;border-radius:29px;background:linear-gradient(90deg,rgba(255,216,119,.12),rgba(255,255,255,.04));overflow:hidden}
@@ -528,6 +546,20 @@ body.walk-photo #photoBtn{display:block}
 .journal-row{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);border-radius:6px;padding:10px;color:rgba(255,255,255,.74);font-size:12px;line-height:1.35}
 .journal-row.locked{opacity:.52}
 .journal-row b{color:#e8c56a;font-family:'Cinzel Decorative',serif;letter-spacing:1px}
+/* shared game leaderboards (GameBoard): the result card and the journal's Games tab */
+.gb-head{font:600 11px/1.3 Georgia,serif;letter-spacing:.2em;text-transform:uppercase;color:#5ecfca;text-align:center;margin-bottom:6px}
+.gb-list{list-style:none;margin:0;padding:0;font:600 13px/1.25 Georgia,serif;text-align:left}
+.gb-list li{display:grid;grid-template-columns:24px minmax(0,1fr) auto auto;gap:8px;align-items:baseline;padding:3px 8px;border-radius:6px;color:#f3e6c4}
+.gb-list li:nth-child(odd){background:rgba(255,255,255,.04)}
+.gb-list li.you{background:rgba(232,197,106,.22);color:#ffe9b0}
+.gb-r{color:#d8b35c;text-align:right;font-variant-numeric:tabular-nums}
+.gb-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gb-t{font:500 11px ui-monospace,Menlo,monospace;color:#8f9bb0}
+.gb-v{color:#ffd877;font-variant-numeric:tabular-nums;text-align:right}
+.gb-note{margin-top:6px;font:600 12px/1.35 Georgia,serif;color:#aab3c2;text-align:center}
+.journal-game-link{all:unset;cursor:pointer;color:#e8c56a;border-bottom:1px dotted rgba(232,197,106,.5)}
+.journal-game-link:hover,.journal-game-link:focus-visible{color:#ffe9b0;border-bottom-color:#ffe9b0}
+.journal-board{margin-top:8px;padding:8px 6px 6px;border-top:1px solid rgba(232,197,106,.25)}
 .badge-image-drop{border:1px dashed rgba(94,207,202,.42);background:rgba(94,207,202,.045);border-radius:6px;padding:10px;text-align:center;color:rgba(255,255,255,.72);font-size:10px;line-height:1.45;cursor:pointer;margin:7px 0}
 .badge-image-drop.dragover{background:rgba(94,207,202,.12);border-color:#5ecfca;color:#5ecfca}
 .badge-image-help{font-size:9px;line-height:1.45;color:rgba(255,255,255,.58);padding:0 2px 6px}
@@ -1675,6 +1707,7 @@ body.walk-photo #photoBtn{display:block}
       <div class="world-status-row"><span>Items</span><span class="world-status-value" id="hudCollectibleCount">0</span></div>
       <div class="world-status-row"><span>Quests</span><span class="world-status-value" id="hudQuestCount">0</span></div>
       <button id="journalBtn" type="button" onclick="openProgressionJournal()">Journal</button>
+      <button id="gloveBtn" type="button" onclick="togglePlayerGlovePanel()">Gloves</button>
     </div>
     <div id="questTracker">
       <div id="questTrackerTitle">Active Quest</div>
@@ -1683,6 +1716,7 @@ body.walk-photo #photoBtn{display:block}
     </div>
   </div>
 </div>
+<div id="glovePanel" role="dialog" aria-label="Glove colours"><button class="gp-close" type="button" onclick="togglePlayerGlovePanel(false)" aria-label="Close">✕</button><h4>Gloves</h4><div class="gp-row"><div class="gp-label"><span>Gloves</span><span class="gp-name" data-k="glove"></span></div><div class="gp-sw" data-k="glove"></div></div><div class="gp-row"><div class="gp-label"><span>Cuffs</span><span class="gp-name" data-k="cuff"></span></div><div class="gp-sw" data-k="cuff"></div></div><div class="gp-note">Saved for this Rebel on this device. The first swatch is how your Rebel looks now, the ringed one the colour the Forge gave it.</div></div>
 <button id="backToLobbyBtn" onclick="backToLobby()">← Back to Lobby</button>
 
 <button id="wb" onclick="toggleWalk()">⚔️ &nbsp;ENTER VILLAGE</button>
@@ -2801,6 +2835,9 @@ const MOON_TALES_QUESTS = [
   makeMoonTaleQuest(15, 'The Silver Bell', 'Ostara', "Ostara's tiny silver bell wards off shadows and unwelcome spirits.", ['Ring the silver bell at three shadowed places.', 'Talk to Ostara.'], ['+45 progress'], 'Three shadows gone, one delicate chime at a time.', ['moon-tales-14']),
   makeMoonTaleQuest(16, 'Sap and Seed', 'Ostara', 'The pulse of magic in the air, the thrum of sap, the stirring of seeds.', ['Listen at the great tree, the pumpkin patch and the Moon Ledge.', 'Talk to Ostara.'], ['+50 progress'], 'Sap rising, seeds stirring, and the moon whispering promises of new beginnings.', ['moon-tales-15']),
   makeMoonTaleQuest(12, 'Seeds of New Beginnings', 'Kokeshi Flower Moon', 'Two seeds have fallen where nothing grows.', ['Find two moon seeds.', 'Plant them at the roots of the great tree.', 'Talk to Kokeshi Flower Moon.'], ['+50 progress'], 'Two seeds planted at the old tree\'s roots, and the dead tree remembered how to bloom.', ['moon-tales-11']),
+  makeMoonTaleQuest(17, 'Storm-Wrought Slumber', 'Nariko', 'The Thunder Moon rises over a sacred circle of seven ancient stones, and Nariko wakes from her storm-wrought slumber.', ['Wake the seven ancient stones.', 'Stand in the circle as the Thunder Moon rises.', 'Talk to Nariko.'], ['+45 progress'], 'Seven ancient stones woke one by one, the Thunder Moon rose, and Nariko rose with it from the centre of the circle.', ['moon-tales-01']),
+  makeMoonTaleQuest(18, 'The Storm Orb', 'Nariko', 'With hands aglow, Nariko summons a crackling orb of energy from the storm.', ['Call the lightning down into her orb.', 'Stand with her, from root to sky.', 'Talk to Nariko.'], ['+50 progress'], 'Bolts of lightning arced down from the heavens and fed the orb, and from root to sky Nariko grew stronger with every heartbeat.', ['moon-tales-17']),
+  makeMoonTaleQuest(19, 'Lightning in the Darkness', 'Nariko', "Nariko's thunder spell lifts the weight from others: the Coven's pain, anger and fear.", ['Ask Mamoru what she carries.', 'Ask Kokeshi Flower Moon what she carries.', 'Ask Ostara what she carries.', 'Release the burdens in the stone circle with the Coven.', 'Talk to Nariko.'], ['+60 progress'], 'Pain, anger, fear: not destroyed, transformed. The Mystic Moons stood taller, brighter, fiercer, and whispered her name in thanks.', ['moon-tales-18']),
   Object.assign(makeMoonTaleQuest(20, 'Until the First Blush of Dawn', 'Mamoru', 'The Mystic Moon Coven gathers for the Harvest Festival, and Mamoru keeps watch through the night.', ['Give thanks with the Coven at the feast table.', 'Return to Mamoru at the gate.', 'Keep watch beside Mamoru until dawn.', 'Talk to Mamoru.'], ['+80 progress', 'Badge: Mystic Moon Coven'], 'The Coven feasted, Mamoru kept watch, and for the first time the sky over the hill turned to dawn.', ['moon-tales-04', 'moon-tales-08', 'moon-tales-12', 'moon-tales-16']), { badgeRewardId:'moon-tales-coven' })
 ];
 const MOON_TALES_WIRING = {
@@ -2889,6 +2926,35 @@ const MOON_TALES_WIRING = {
       { id:'listen-hill', objective:'Listen at the great tree, the pumpkin patch and the Moon Ledge.', objectiveType:'useQuestSpot', targetObjectId:'mt-listen', count:3, villageId:'cute-creepy' },
       { id:'tale-heard', objective:'Talk to Ostara.', objectiveType:'talkToNpc', targetNpcId:'cc-ostara', villageId:'cute-creepy',
         say:['The sap rising in the trees, the seeds stirring underground, the moon whispering its promises. You felt them.', 'That is my tale, as the moon told it to the Lunar Witch. It is in your journal now.'] }
+    ] },
+  17: { giver:'cc-nariko',
+    offer:['Do you feel it, little Rebel? The night hums with heat, and the sky keeps splitting with light.', 'The Thunder Moon is coming. South of the graves stands a sacred circle of seven ancient stones, asleep the way I was.', 'Wake them for me, one by one. Then stand in the circle and watch the sky.'],
+    steps:[
+      { id:'wake-stones', objective:'Wake the seven ancient stones in the circle south of the graveyard.', objectiveType:'useQuestSpot', targetObjectId:'mt-storm-stone', count:7, villageId:'cute-creepy' },
+      { id:'watch-rise', objective:'Stand in the circle as the Thunder Moon rises.', objectiveType:'useQuestSpot', targetObjectId:'mt-storm-rise', villageId:'cute-creepy' },
+      { id:'nariko-rises', objective:'Talk to Nariko in the stone circle.', objectiveType:'talkToNpc', targetNpcId:'cc-nariko', villageId:'cute-creepy',
+        say:['The Thunder Moon, round and glowing with power. It woke me from my storm-wrought slumber.', 'I was born of stormlight, little Rebel: part dragon, my spirit forged in thunderclouds and bound to the pulse of the earth itself.', 'Now I begin my spell. Come back when you are ready to catch lightning.'] }
+    ] },
+  18: { giver:'cc-nariko',
+    offer:['With hands aglow I summon an orb from the storm. Feel it crackle? It is hungry, little Rebel.', 'Stand on the glowing mark beside me and call the lightning down to it. A bar will run: when its marker crosses the gold part, press O. Not before, not after.'],
+    steps:[
+      { id:'catch-lightning', objective:"Step onto the glowing mark beside Nariko and press O to call the lightning into her orb.", objectiveType:'useQuestSpot', targetObjectId:'mt-storm-orb', villageId:'cute-creepy' },
+      { id:'root-to-sky', objective:'Stand with Nariko in the circle, from root to sky.', objectiveType:'useQuestSpot', targetObjectId:'mt-storm-root', villageId:'cute-creepy' },
+      { id:'orb-fed', objective:'Talk to Nariko.', objectiveType:'talkToNpc', targetNpcId:'cc-nariko', villageId:'cute-creepy',
+        say:['From root to sky. Did you feel your heart keep time with the thunder?', 'This power is not for me alone. The whole Coven felt that surge in their bones, and every one of them carries a weight.'] }
+    ] },
+  19: { giver:'cc-nariko',
+    offer:['My sisters carry burdens: pain, anger, fear. A weight like that can bend a witch double.', 'Go to Mamoru, to Kokeshi Flower Moon and to Ostara, in any order, and ask them gently what they carry. Then come back to the circle.'],
+    steps:[
+      { id:'ask-mamoru', objective:'Ask Mamoru what she carries.', anyOrder:'asks', anyOrderText:'Ask Mamoru, Kokeshi Flower Moon and Ostara what they carry (any order).', objectiveType:'talkToNpc', targetNpcId:'cc-mamoru', villageId:'cute-creepy',
+        say:['Anger, little Rebel. Every harvest night the tricksters slip in, and every harvest night I am the one on watch.', 'I keep my candle steady. Inside, it burns too hot.', 'Nariko is calling? Then I will come to the circle.'] },
+      { id:'ask-flower-moon', objective:'Ask Kokeshi Flower Moon what she carries.', anyOrder:'asks', anyOrderText:'Ask Mamoru, Kokeshi Flower Moon and Ostara what they carry (any order).', objectiveType:'talkToNpc', targetNpcId:'cc-flower-moon', villageId:'cute-creepy',
+        say:['Pain. I sing every bud awake, and every bloom still fades.', 'I know it is the cycle of life and death. Knowing does not make it hurt less.', 'I will come to the circle.'] },
+      { id:'ask-ostara', objective:'Ask Ostara what she carries.', anyOrder:'asks', anyOrderText:'Ask Mamoru, Kokeshi Flower Moon and Ostara what they carry (any order).', objectiveType:'talkToNpc', targetNpcId:'cc-ostara', villageId:'cute-creepy',
+        say:['Fear. My bell keeps the shadows away, but I am always listening for them to come back.', 'Even still as starlight, part of me is waiting to run.', 'For Nariko, I will come.'] },
+      { id:'release', objective:'Release the burdens in the stone circle with the Coven.', objectiveType:'useQuestSpot', targetObjectId:'mt-storm-release', villageId:'cute-creepy' },
+      { id:'lightning-told', objective:'Talk to Nariko.', objectiveType:'talkToNpc', targetNpcId:'cc-nariko', villageId:'cute-creepy',
+        say:['Pain, anger, fear. My magic did not destroy them. It transformed them.', 'Look at my sisters, little Rebel: taller, brighter, fiercer. Lightning in the darkness, every one of them.', 'Own your fire, and fear nothing. That is my tale. It is in your journal now.'] }
     ] },
   20: { giver:'cc-mamoru',
     offer:['The Harvest Moon is at its fullest, and the Coven is home. Every one of them.', 'Go to the feast table and give thanks with them, little Rebel. Then come back to me at the gate.'],
@@ -3315,6 +3381,8 @@ function registerBook1QuestDefinitions() {
 	            villageId:objective.villageId || null,
 	            say:Array.isArray(objective.say) ? objective.say : null,
 	            weather:objective.weather || null,
+	            anyOrder:objective.anyOrder || null,
+	            anyOrderText:objective.anyOrderText || null,
 	            wired:Boolean(objective.objectiveType)
 	          }
 	      ).concat({ id:'complete', objective:`Completed: ${quest.title}` })
@@ -3423,17 +3491,23 @@ const PlaytestNote = (() => {
 const GameJump = (() => { const id = new URLSearchParams(location.search).get('game'); return id && /(-git-|^localhost$|^127\.0\.0\.1$)/.test(location.hostname) ? id : null; })();
 function runGameJump(tries = 0) {
   if (!GameJump) return;
-  const again = () => { if (tries < 60) setTimeout(() => runGameJump(tries + 1), 500); };
-  if (!charMesh || !walkMode) { if (!walkMode && !adminMode && tries === 0) try { toggleWalk(); } catch (e) {} return again(); }
-  const spot = getQuestSpotRoots().find(r => r.metadata?.spotConfig?.game?.id === GameJump);
+  // patient (Oct 17, Miguel: the Yabusame jump "still did not jump me"): a Rebel and its moves can take more than the 30 s
+  // this used to wait on a slow connection, and a village's spots can come after that; it now waits up to 3 minutes
+  const again = () => { if (tries < 360) setTimeout(() => runGameJump(tries + 1), 500); };
+  if (tries === 0) showToast(`Game jump: getting your Rebel to ${GameJump}…`, 4000);
+  if (!charMesh || !walkMode) { if (!walkMode && !adminMode && tries % 20 === 0) try { toggleWalk(); } catch (e) {} return again(); }
+  if (window.forgeRigBundleInfo && !GamesPack.ready) loadGamesPack(); // the games pack on its way while the Rebel walks over
+  // a game's spot, else any quest spot by its id (the Wanderer's Map stone, a place riddle: &game=<spotId> works for them too)
+  const roots = getQuestSpotRoots();
+  const spot = roots.find(r => r.metadata?.spotConfig?.game?.id === GameJump) || roots.find(r => r.metadata?.spotConfig?.spotId === GameJump || r.name === 'questSpotRoot_' + GameJump);
   if (spot) {
-    const p = spot.getAbsolutePosition(), yaw = spot.rotation?.y || 0;
+    const p = spot.getAbsolutePosition(), yaw = spot.rotation?.y || 0, sc = spot.metadata.spotConfig;
     charMesh.position.x = p.x - Math.sin(yaw) * 1.4; charMesh.position.z = p.z - Math.cos(yaw) * 1.4; charMesh.rotation.y = yaw; _playerDeckSnapUntil = performance.now() + 1500;
-    showToast(`Game jump: ${spot.metadata.spotConfig.game.title || GameJump}. Press O to play.`, 7000); return;
+    showToast(sc.game ? `Game jump: ${sc.game.title || GameJump}. Press O to play.` : `Jump: ${sc.riddle?.title || sc.label || GameJump}. Press O here.`, 7000); return;
   }
   const configs = getInteriorRoomConfigs(); let room = null, hotspot = null;
   for (const [rid, cfg] of Object.entries(configs)) for (const h of cfg?.hotspots || []) if (h?.game?.id === GameJump) { room = rid; hotspot = h; }
-  if (!room) return tries < 6 ? again() : showToast(`There is no game ${GameJump} in this village.`, 6000);
+  if (!room) return tries < 120 ? again() : showToast(`There is no game ${GameJump} in this village.`, 6000);
   const at = () => { const h = scene.getTransformNodeByName('interiorHotspotRoot_' + hotspot.hotspotId); if (!h) return false; const p = h.getAbsolutePosition();
     const toward = Math.atan2(-p.x, -p.z); charMesh.position.x = p.x + Math.sin(toward) * 1.3; charMesh.position.z = p.z + Math.cos(toward) * 1.3; charMesh.rotation.y = toward + Math.PI; _playerDeckSnapUntil = performance.now() + 1500;
     showToast(`Game jump: ${hotspot.game.title || GameJump}. Press O to play.`, 7000); return true; };
@@ -3501,11 +3575,27 @@ function getSideQuestTalkStepForNpc(npc) {
   const npcId = String(npc?.metadata?.npcId || '').toLowerCase();
   if (!npcId) return null;
   for (const [questId, st] of Object.entries(SideQuestState.active)) {
-    const step = getQuestStep(questId, st.step);
-    if (step && normalizeQuestObjectiveAction(step.objectiveType) === 'talkToNpc' && String(step.targetNpcId || '').toLowerCase() === npcId) return { questId, step };
+    for (const step of sideQuestOpenSteps(questId, st)) {
+      if (normalizeQuestObjectiveAction(step.objectiveType) === 'talkToNpc' && String(step.targetNpcId || '').toLowerCase() === npcId) return { questId, step };
+    }
   }
   return null;
 }
+
+// The steps a side quest can take next: its current step, or every step of the current step's anyOrder group still to
+// do (steps sharing anyOrder: 'asks' are done in any order: ask the three of them, whoever comes first)
+function sideQuestGroup(questId, step) {
+  return step?.anyOrder ? (QUEST_DEFINITIONS[questId]?.steps || []).filter(s => s.anyOrder === step.anyOrder) : null;
+}
+function sideQuestOpenSteps(questId, st) {
+  const step = st && getQuestStep(questId, st.step);
+  if (!step) return [];
+  const group = sideQuestGroup(questId, step);
+  if (!group) return [step];
+  const done = st.steps?.['group:' + step.anyOrder]?.ids || [];
+  return group.filter(s => !done.includes(s.id));
+}
+function sideQuestStepText(questId, step) { return sideQuestGroup(questId, step) ? step.anyOrderText || step.objective : step.objective; }
 
 function getSideQuestDialogueLines(npc) {
   const talk = getSideQuestTalkStepForNpc(npc);
@@ -3528,7 +3618,7 @@ function startSideQuest(questId) {
   SideQuestState.active[questId] = { step:first.id, steps:{}, touched:Date.now() };
   saveSideQuestState();
   playProgressionAudio('progressMilestone');
-  showToast(`${sideQuestKindLabel(questId)} started: ${QUEST_DEFINITIONS[questId].title}. ${first.objective}`, 6500);
+  showToast(`${sideQuestKindLabel(questId)} started: ${QUEST_DEFINITIONS[questId].title}. ${sideQuestStepText(questId, first)}`, 6500);
   return true;
 }
 
@@ -3546,10 +3636,24 @@ function advanceSideQuests(actionType, context = {}) {
     if (!quest) { delete SideQuestState.active[questId]; continue; }
     const step = getQuestStep(questId, st.step);
     if (!step) continue;
-    const expected = getConfiguredQuestAction(quest, st.step);
-    if (!expected || !questActionMatches(expected, actionType)) continue;
-    if (!doesQuestContextMatchTarget(quest, context, actionType, st.step)) continue;
-    if (step.count > 1) {
+    const group = sideQuestGroup(questId, step);
+    if (group) {
+      // a step of an anyOrder group: whichever of the group's open steps this matches; the quest moves past the group
+      // once all of them are done, else its step is the first one still open (the guide points there)
+      const open = sideQuestOpenSteps(questId, st);
+      const hit = open.find(s => { const want = getConfiguredQuestAction(quest, s.id); return want && questActionMatches(want, actionType) && doesQuestContextMatchTarget(quest, context, actionType, s.id); });
+      if (!hit) continue;
+      getSideQuestStepProgress(questId, 'group:' + step.anyOrder).ids.push(hit.id);
+      advanced = true;
+      const left = open.filter(s => s !== hit);
+      if (left.length) { st.step = left[0].id; st.touched = Date.now(); playProgressionAudio('progressMilestone'); showToast(`${quest.title}: ${group.length - left.length} / ${group.length}`, 5000); continue; }
+      st.step = group[group.length - 1].id;
+    } else {
+      const expected = getConfiguredQuestAction(quest, st.step);
+      if (!expected || !questActionMatches(expected, actionType)) continue;
+      if (!doesQuestContextMatchTarget(quest, context, actionType, st.step)) continue;
+    }
+    if (!group && step.count > 1) {
       const progress = getSideQuestStepProgress(questId, step.id);
       const id = context.progressId || getQuestTargetObjectIdFromContext(context) || `${step.id}_${progress.ids.length + 1}`;
       if (progress.ids.includes(id)) continue;
@@ -3564,7 +3668,7 @@ function advanceSideQuests(actionType, context = {}) {
     if (index >= 0 && index < steps.length - 1) {
       st.step = steps[index + 1].id;
       playProgressionAudio('progressMilestone');
-      showToast(`${quest.title}: ${steps[index + 1].objective}`, 6000);
+      showToast(`${quest.title}: ${sideQuestStepText(questId, steps[index + 1])}`, 6000);
     } else {
       completeSideQuest(questId);
     }
@@ -3596,8 +3700,9 @@ function getActiveSideQuestTrackerLines(limit = 2) {
 function getSideQuestTrackerLine(questId) {
   const st = SideQuestState.active[questId], quest = QUEST_DEFINITIONS[questId], step = st && getQuestStep(questId, st.step);
   if (!quest || !step) return '';
-  const n = step.count > 1 ? ` (${Math.min((st.steps?.[step.id]?.ids || []).length, step.count)}/${step.count})` : '';
-  return `${quest.title}: ${step.objective}${n}`;
+  const group = sideQuestGroup(questId, step);
+  const n = group ? ` (${group.length - sideQuestOpenSteps(questId, st).length}/${group.length})` : step.count > 1 ? ` (${Math.min((st.steps?.[step.id]?.ids || []).length, step.count)}/${step.count})` : '';
+  return `${quest.title}: ${sideQuestStepText(questId, step)}${n}`;
 }
 
 // Quest items found before their step asked for them (a collectible can be picked up any time, and a picked-up item
@@ -3639,7 +3744,8 @@ function isQuestSpotTargetedBySideQuest(spotId) {
 // MOON TALES (Cute & Creepy) — Miguel's tales of the Mystic Moons, word for word (two small fixes he approved:
 // "Its light", "she followed"). Each tale has its own moon: the village sky shows the moon of the tale whose quest
 // moved on last (MOON_TALE_QUEST_MOONS: quest number -> tale; quests moon-tales-NN), the purple moon between tales.
-// A tale's journal page (Journal > Moon Tales) opens when its last quest is done. Nariko's tale is still to come.
+// A tale's journal page (Journal > Moon Tales) opens when its last quest is done. Nariko's tale (Oct 16, one fix:
+// "summer’s") brings the Thunder Moon: moon.storm = heat lightning over the hill while it is up (taleThunderSky).
 // Preview a moon: village.html?village=cute-creepy&taleMoon=pink (or window.setTaleMoon('pink'), null to clear).
 // ═══════════════════════════════════════
 const MOON_TALES = [
@@ -3680,19 +3786,29 @@ const MOON_TALES = [
       'All through the night, Mamoru kept watch, her candle steady, her pumpkin lantern glowing warm. She guarded her sisters from tricksters beyond the veil, keeping their joy safe until the first blush of dawn.',
       'Each year, when the Harvest Moon rises again, Mamoru will return, a faithful guardian cat protecting the coven, blessing all who gather in her glow. 🌕🐈‍⬛🕸️'
     ] },
-  { id:'nariko', teller:'Nariko', moonName:'', unlockQuestId:'moon-tales-19', title:'Nariko', pending:true, text:[] }
+  { id:'nariko', teller:'Nariko', moonName:'Thunder Moon', unlockQuestId:'moon-tales-19', title:'Nariko Thunder Moon',
+    moon:{ pos:[-135, 212, 430], size:4.4, color:[.88, .93, 1], halo:[.3, .4, .95], light:[.5, .58, 1], storm:true },
+    text:[
+      'One summer’s eve, when the night hummed with heat and lightning split the sky, the Thunder Moon rose, round and glowing with power, awakening Nariko from her storm-wrought slumber.',
+      'Born of stormlight, Nariko was part dragon, her spirit forged in thunderclouds and bound to the pulse of the earth itself. As the moon reached its fullest blaze, she rose from the centre of a sacred circle of seven ancient stones. The wind howled. The sky flashed. And Nariko began to cast her spell.',
+      'With eyes like molten silver and hands aglow, she summoned a crackling orb of energy from the storm. Bolts of lightning arced toward her from the heavens, feeding the sphere with raw power. From root to sky, Nariko channeled this wild force through her very being, growing stronger with every heartbeat.',
+      'The entire Mystic Moon Coven felt the surge in their bones. One by one, they turned toward the sky, drawn to her rising magic. For Nariko did not wield this power for herself alone, she used it to lift the weight from others. With her thunder spell, she taught the coven to release the burdens they carried: pain, anger, fear. Her magic did not destroy, it transformed.',
+      'And in that storm-lit moment, the Mystic Moons were reborn. Energised by Nariko’s connection to the earth and sky, they stood taller, brighter, fiercer.',
+      'With determination, focus, and fire in their hearts, they too became lightning in the darkness, each Mystic whispering her name in thanks: Nariko Thunder Moon. The Dragon Witch who taught us to own our fire and fear nothing.'
+    ] }
 ];
-const MOON_TALE_QUEST_MOONS = { 1:['harvest', 'tell-mamoru'], 2:'harvest', 3:'harvest', 4:'harvest', 6:'pink', 7:'pink', 8:'pink', 9:'flower', 10:'flower', 11:'flower', 12:'flower', 14:['hare', 'starlight-told'], 15:'hare', 16:'hare', 20:'harvest' };
+const MOON_TALE_QUEST_MOONS = { 1:['harvest', 'tell-mamoru'], 2:'harvest', 3:'harvest', 4:'harvest', 6:'pink', 7:'pink', 8:'pink', 9:'flower', 10:'flower', 11:'flower', 12:'flower', 14:['hare', 'starlight-told'], 15:'hare', 16:'hare', 17:['nariko', 'watch-rise'], 18:'nariko', 19:'nariko', 20:'harvest' };
 // NPCs that move with a quest: once a quest reaches a step (or is done), the NPC lives there (Ostara on her Moon Ledge).
 // whileActive places hold only while their quest runs (the Coven round the feast table at the Harvest Festival); still =
 // no patrol or wander there (Mamoru keeping watch at the gate). Without a place the NPC stands at its own layout spot.
-const FESTIVAL = { quest:'moon-tales-20', whileActive:true }, BEACH_PARTY = { quest:'chumpz-cove-20', whileActive:true, still:true }, BLOCK_PARTY = { quest:'saints-la-20', whileActive:true, still:true };
+const FESTIVAL = { quest:'moon-tales-20', whileActive:true }, STORM_CIRCLE = { quest:'moon-tales-19', step:'release', whileActive:true, still:true }, BEACH_PARTY = { quest:'chumpz-cove-20', whileActive:true, still:true }, BLOCK_PARTY = { quest:'saints-la-20', whileActive:true, still:true };
 const QUEST_NPC_PLACES = {
-  'cc-ostara': [{ quest:'moon-tales-13', step:'meet-ostara', x:-22.6, z:70.2, ry:0 }, { ...FESTIVAL, x:1.25, z:6.75, ry:Math.PI }],
-  'cc-flower-moon': [{ ...FESTIVAL, x:-1.25, z:6.75, ry:Math.PI }],
-  'cc-mochi': [{ ...FESTIVAL, x:3.3, z:5.3, ry:-1.66 }],
-  'cc-nariko': [{ ...FESTIVAL, x:-3.1, z:6.4, ry:2 }],
-  'cc-mamoru': [{ ...FESTIVAL, step:'keep-watch', still:true, x:0, z:-53, ry:Math.PI }],
+  // Nariko's circle of seven stones (Moon Tales 17-19) is centred on (-54.5, 16.5), open to the east
+  'cc-ostara': [{ quest:'moon-tales-13', step:'meet-ostara', x:-22.6, z:70.2, ry:0 }, { ...FESTIVAL, x:1.25, z:6.75, ry:Math.PI }, { ...STORM_CIRCLE, x:-56.05, z:13.82, ry:.524 }],
+  'cc-flower-moon': [{ ...FESTIVAL, x:-1.25, z:6.75, ry:Math.PI }, { ...STORM_CIRCLE, x:-56.05, z:19.18, ry:2.618 }],
+  'cc-mochi': [{ ...FESTIVAL, x:3.3, z:5.3, ry:-1.66 }, { ...STORM_CIRCLE, x:-52.95, z:13.82, ry:-.524 }],
+  'cc-nariko': [{ ...FESTIVAL, x:-3.1, z:6.4, ry:2 }, { quest:'moon-tales-17', step:'nariko-rises', x:-54.5, z:16.5, ry:Math.PI / 2 }],
+  'cc-mamoru': [{ ...FESTIVAL, step:'keep-watch', still:true, x:0, z:-53, ry:Math.PI }, { ...STORM_CIRCLE, x:-52.95, z:19.18, ry:-2.618 }],
   // the Beach Party (Chumpz Cove 20): the whole cove round the bonfire on the beach by the west pier (-38, -32), facing the fire
   'chumpz-bartender': [{ ...BEACH_PARTY, x:-38, z:-28.4, ry:Math.PI }],
   'chumpz-fisher': [{ ...BEACH_PARTY, x:-41.3, z:-30.2, ry:2.07 }],
@@ -3811,10 +3927,10 @@ const MoonTaleSounds = (() => {
   };
   // sound effects (Chumpz Cove): filtered noise bursts, pitch glides, plucked / steel-pan tones (partials: [ratio, gain, decay])
   let noiseBuf = null;
+  const nbuf = () => { if (!noiseBuf) { noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; } return noiseBuf; };
   const noise = (t, dur, g, type = 'lowpass', freq = 1200, q = .7) => {
-    if (!noiseBuf) { noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
     const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), e = ctx.createGain();
-    src.buffer = noiseBuf; src.loop = true; f.type = type; f.frequency.value = freq; f.Q.value = q;
+    src.buffer = nbuf(); src.loop = true; f.type = type; f.frequency.value = freq; f.Q.value = q;
     src.connect(f).connect(e); e.connect(bus);
     e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(g, t + .004); e.gain.exponentialRampToValueAtTime(.0006, t + dur);
     src.start(t, Math.random() * .5); src.stop(t + dur + .05);
@@ -3833,7 +3949,42 @@ const MoonTaleSounds = (() => {
       o.start(t); o.stop(t + dur * pd + .05);
     }
   };
+  // Nariko's storm (Moon Tales 17-19): wind that rises and falls (band-passed noise, its pitch swept), a hum that swells,
+  // a thunderclap (the crack, the boom, the roll) and a distant rumble
+  const wind = (t, dur, g, f0, f1, q = 4) => {
+    const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), e = ctx.createGain();
+    src.buffer = nbuf(); src.loop = true; f.type = 'bandpass'; f.Q.value = q;
+    f.frequency.setValueAtTime(f0, t); f.frequency.linearRampToValueAtTime(f1, t + dur * .55); f.frequency.linearRampToValueAtTime(f0 * 1.15, t + dur);
+    src.connect(f).connect(e); e.connect(bus);
+    e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(g, t + dur * .45); e.gain.linearRampToValueAtTime(g * .55, t + dur * .8); e.gain.linearRampToValueAtTime(0, t + dur);
+    src.start(t, Math.random() * .5); src.stop(t + dur + .05);
+  };
+  const swell = (f0, f1, t, dur, g, type = 'triangle') => {
+    const o = ctx.createOscillator(), e = ctx.createGain(); o.type = type;
+    o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    o.connect(e); e.connect(bus);
+    e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(g, t + dur * .8); e.gain.linearRampToValueAtTime(0, t + dur);
+    o.start(t); o.stop(t + dur + .05);
+  };
+  const thunder = (t0, g = 1) => { noise(t0, .12, .6 * g, 'highpass', 1800); noise(t0 + .02, .5, .5 * g, 'bandpass', 700, .8); noise(t0 + .05, 2.8, .55 * g, 'lowpass', 140); glide(70, 34, t0 + .05, 1.6, .4 * g);
+    for (let k = 0; k < 6; k++) noise(t0 + .6 + k * .38 + Math.random() * .2, .9, .2 * g * (1 - k / 7), 'lowpass', 180 + Math.random() * 120); };
+  const rumble = (t0, g = 1) => { for (let k = 0; k < 5; k++) noise(t0 + k * .45 + Math.random() * .25, 1.1, .16 * g * (1 - k / 6), 'lowpass', 110 + Math.random() * 90); };
   const PAN = [[1, 1, 1], [2, .5, .55], [3.01, .22, .3], [4.2, .06, .15]], PLUCK = [[1, 1, 1], [2, .35, .5], [3, .2, .3], [4, .08, .2]];
+  // the party dance-offs' drum machine and synths (house, hip hop): a kick that drops in pitch, an 808 bass, claps,
+  // snares, closed and open hats, and a filtered saw / square voice for bass lines and chord stabs
+  const synth = (f, t, dur, g, type = 'sawtooth', cut = 1200, cutEnd = null, q = 1) => {
+    const o = ctx.createOscillator(), fl = ctx.createBiquadFilter(), e = ctx.createGain(); o.type = type; o.frequency.value = f;
+    fl.type = 'lowpass'; fl.Q.value = q; fl.frequency.setValueAtTime(cut, t); if (cutEnd) fl.frequency.exponentialRampToValueAtTime(cutEnd, t + dur);
+    o.connect(fl).connect(e); e.connect(bus);
+    e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(g, t + .006); e.gain.exponentialRampToValueAtTime(.0006, t + dur);
+    o.start(t); o.stop(t + dur + .05);
+  };
+  const kick = (t, g = .9, f0 = 160, f1 = 44, dur = .32) => { glide(f0, f1, t, dur, g); noise(t, .02, g * .25, 'lowpass', 1200); };
+  const bass808 = (f, t, dur, g = .5) => { const o = ctx.createOscillator(), e = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(f * 1.5, t); o.frequency.exponentialRampToValueAtTime(f, t + .05);
+    o.connect(e); e.connect(bus); e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(g, t + .008); e.gain.setValueAtTime(g * .8, t + dur * .6); e.gain.exponentialRampToValueAtTime(.0006, t + dur); o.start(t); o.stop(t + dur + .05); };
+  const clap = (t, g = .3) => { for (const k of [0, .012, .026]) noise(t + k, .09, g, 'bandpass', 1400, 1.1); noise(t + .03, .18, g * .4, 'bandpass', 1100, .8); };
+  const snare = (t, g = .35) => { noise(t, .2, g, 'bandpass', 1900, .7); noise(t, .12, g * .5, 'highpass', 5000); tone(185, t, .12, g * .45, [[1, 1, 1]]); };
+  const hat = (t, g = .07, open = false) => noise(t, open ? .2 : .04, g, 'highpass', open ? 6500 : 8000);
   // a fishing reel: bursts of ratchet clicks (n bursts, every gap s)
   const reel = (t0, n, gap, g = .2) => { for (let b = 0; b < n; b++) for (let k = 0; k < 18 + 4 * b; k++) noise(t0 + b * gap + k * (.075 - .002 * Math.min(k, 20)), .022, g * (1 + .08 * b), 'highpass', 3200, 1); };
   const splash = (t0, g = .4) => { noise(t0, .9, g, 'lowpass', 1500); noise(t0 + .04, .5, g * .7, 'bandpass', 650, 1.3); glide(420, 110, t0, .3, g * .5); for (let k = 0; k < 7; k++) noise(t0 + .2 + k * .09 + Math.random() * .05, .05, g * .25, 'highpass', 2500); };
@@ -3864,6 +4015,9 @@ const MoonTaleSounds = (() => {
     // the 3-point contest: a swish through the net, a clang off the rim, a bounce on the court
     swish: { fx:t0 => noise(t0, .35, .16, 'highpass', 2600) },
     clang: { fx:t0 => { tone(540, t0, .5, .14, [[1, 1, 1], [2.76, .5, .5], [5.4, .25, .3]]); noise(t0, .05, .2, 'bandpass', 2200, 2); } },
+    // a hammer on hot steel on the anvil: the strike's crack, the anvil's bright ring (its partials out of tune, as a
+    // block of iron rings), a thud of the stump; each blow a little higher or lower
+    anvil: { fx:t0 => { const f = 1180 * (.95 + Math.random() * .1); tone(f, t0, 1.2, .1, [[1, 1, 1], [2.43, .55, .7], [4.07, .3, .45], [5.93, .16, .3]]); noise(t0, .035, .4, 'highpass', 3200); noise(t0, .11, .28, 'bandpass', 1500, 1.4); tone(120, t0, .18, .16, [[1, 1, 1], [2, .3, .5]]); } },
     bounce: { fx:t0 => { tone(92, t0, .22, .3, [[1, 1, 1]]); noise(t0, .08, .2, 'lowpass', 500); } },
     funk: { len:16, fx:t0 => { // 8 bars at 0.25 s an eighth: a slap bassline, brass stabs on the off-beats, hi-hats, a snare on 2 and 4
       const E = .25, bass = ['C3', 'C3', 'G3', 'A3', 'F3', 'F3', 'G3', 'G3'], riff = [0, 3, 4, 6];
@@ -3874,6 +4028,45 @@ const MoonTaleSounds = (() => {
         for (let k = 0; k < 8; k++) noise(t0 + (b * 8 + k) * E, .04, k % 2 ? .05 : .03, 'highpass', 7000);
         if (b % 2) for (const [k, n] of [[3, 'E5'], [5, 'G5'], [7, 'A5']]) tone(N[n], t0 + (b * 8 + k) * E, .22, .12, [[1, 1, 1], [2, .5, .7], [3, .3, .5]]);
       }
+    } },
+    // the party dance-offs (Oct 17, Miguel: "hip hop and house"). House for the Beach Party: 8 bars at 125 a minute (an
+    // eighth 0.24 s): four on the floor, claps on 2 and 4, open hats on the off-beats, a pumping off-beat bass, chord stabs
+    // (Am7 Fmaj7 C G), a plucked hook from bar 5
+    house: { len:15.36, fx:t0 => {
+      const E = .24, chords = [['A3', 'C4', 'E4', 'G4'], ['F3', 'A3', 'C4', 'E4'], ['C4', 'E4', 'G4', 'B4'], ['G3', 'B3', 'D4', 'G4']], roots = ['A2', 'F2', 'C3', 'G2'];
+      const hook = ['E5 . G5 . A5 . G5 E5', 'C5 . E5 . A5 . G5 .', 'G5 . E5 . C5 . D5 E5', 'D5 . B4 . G4 . . .'];
+      const hz = n => N[n] || 440 * Math.pow(2, ({ C: -9, D: -7, E: -5, F: -4, G: -2, A: 0, B: 2 }[n[0]] + (n[1] === '#' ? 1 : 0) + 12 * (+n.slice(-1) - 4)) / 12);
+      for (let b = 0; b < 8; b++) {
+        const c = b % 4, bt = t0 + b * 8 * E;
+        for (let k = 0; k < 4; k++) kick(bt + k * 2 * E, .6);
+        clap(bt + 2 * E, .2); clap(bt + 6 * E, .2);
+        for (let k = 0; k < 16; k++) hat(bt + k * E / 2, k % 4 === 2 ? .09 : .035, k % 4 === 2);
+        for (let k = 0; k < 4; k++) synth(hz(roots[c]), bt + (k * 2 + 1) * E, .22, .14, 'sawtooth', 700, 160, 4);
+        for (const k of [1, 4.5, 7]) for (const n of chords[c]) synth(hz(n), bt + k * E, .2, .045, 'square', 2400, 500, 2);
+        if (b >= 4) hook[c].split(' ').forEach((n, k) => { if (n !== '.') tone(hz(n), bt + k * E, .45, .1, PLUCK); });
+      }
+    } },
+    // hip hop for the Block Party: 8 bars at 100 a minute (an eighth 0.3 s, the sixteenths swung): a boom-bap kick, the
+    // snare on 2 and 4, sixteenth hats with a roll every other bar, an 808 under the kicks, electric-piano chords
+    // (Cm9 Abmaj7 Fm9 G7), a brass line over bars 5-8
+    hiphop: { len:19.2, fx:t0 => {
+      const keep = bus, sub = ctx.createGain(); sub.gain.value = .7; sub.connect(keep); bus = sub; // the 808 sits low: the whole song a little down
+      try {
+      const S = .15, sw = .03, at = (b, k) => t0 + (b * 16 + k) * S + (k % 2 ? sw : 0);
+      const hz = n => 440 * Math.pow(2, ({ C: -9, D: -7, E: -5, F: -4, G: -2, A: 0, B: 2 }[n[0]] + (n[1] === '#' ? 1 : n[1] === 'b' ? -1 : 0) + 12 * (+n.slice(-1) - 4)) / 12);
+      const kicks = ['X.....x...X..x..', 'X.....x.x.X.....'], chords = [['C3', 'Eb4', 'G4', 'Bb4', 'D5'], ['Ab2', 'C4', 'Eb4', 'G4'], ['F2', 'Ab3', 'C4', 'Eb4', 'G4'], ['G2', 'B3', 'D4', 'F4']];
+      const roots = ['C2', 'Ab1', 'F1', 'G1'], brass = ['. . G4 . Bb4 . C5 .', 'Eb5 . . C5 . . . .', 'C5 . Bb4 . Ab4 . G4 .', 'F4 . G4 . B4 . D5 .'];
+      for (let b = 0; b < 8; b++) {
+        const c = b % 4;
+        [...kicks[b % 2]].forEach((x, k) => { if (x !== '.') { kick(at(b, k), x === 'X' ? .55 : .4, 130, 42, .4); bass808(hz(roots[c]), at(b, k), k === 0 ? 1.1 : .5, x === 'X' ? .2 : .14); } });
+        snare(at(b, 4), .26); snare(at(b, 12), .26);
+        for (let k = 0; k < 16; k++) hat(at(b, k), k % 4 === 0 ? .08 : .045);
+        if (b % 2) for (let k = 0; k < 6; k++) hat(at(b, 14) + k * S / 3, .06);
+        for (const n of chords[c]) tone(hz(n), at(b, 0), 1.6, .05, [[1, 1, 1], [2, .25, .4], [3, .1, .25]]);
+        for (const n of chords[c]) tone(hz(n), at(b, 10), .7, .035, [[1, 1, 1], [2, .25, .4]]);
+        if (b >= 4) brass[c].split(' ').forEach((n, k) => { if (n !== '.') synth(hz(n), at(b, k * 2), .26, .07, 'sawtooth', 2600, 900, 1.5); });
+      }
+      } finally { bus = keep; }
     } },
     // the Beach Party: a steel-pan calypso (8 bars of eighths at 0.26 s), bass on the beats, a shaker on every eighth
     party: { len:16.64, fx:t0 => {
@@ -3901,6 +4094,21 @@ const MoonTaleSounds = (() => {
     hum: { beat:.32, notes:[['E5', 0], ['G5', 1], ['A5', 2], ['G5', 3], ['E5', 4, 1.6]] },
     chime: { beat:.11, notes:[['G5', 0, .9], ['C6', 1, .9], ['E6', 2, 1.2]], gain:.22 },
     silverbell: { bell:true },
+    // Nariko's tale: a stone waking (a grind, a low thrum, a crackle, two bell notes), a thunderclap, the Thunder Moon rising
+    // (wind howling, distant rolls, the crack at the end), her heartbeat quickening under a swelling hum, the release
+    // (three dark beating chords, each broken by a crack and lifted into a bright one, a last thunderclap, the major chord)
+    stonewake: { fx:t0 => { noise(t0, 1.1, .3, 'lowpass', 220); swell(46, 64, t0, 1.8, .26); for (let k = 0; k < 14; k++) noise(t0 + .45 + Math.random() * 1.1, .03, .1 + Math.random() * .14, 'highpass', 3000 + Math.random() * 2500); note(N.G4, t0 + .9, 2.2, .13); note(N.D5, t0 + 1.06, 2.2, .1); } },
+    thunderclap: { fx:t0 => thunder(t0) },
+    stormrise: { fx:t0 => { wind(t0, 10, .2, 360, 880); wind(t0 + 1.6, 8.4, .12, 620, 1350, 8); noise(t0, 10, .07, 'lowpass', 90); rumble(t0 + 2.2, .7); rumble(t0 + 5.4, 1); thunder(t0 + 8.6, .8); swell(110, 165, t0, 9.5, .05); } },
+    heartbeat: { fx:t0 => { let t = t0 + .3, gap = 1; while (t < t0 + 11.6) { tone(54, t, .24, .5, [[1, 1, 1], [2, .3, .5]]); noise(t, .1, .2, 'lowpass', 160); tone(47, t + .22 * gap, .2, .36, [[1, 1, 1]]); t += gap; gap = Math.max(.48, gap * .92); }
+      swell(55, 110, t0, 12, .07); for (let k = 0; k < 44; k++) { const u = Math.sqrt(Math.random()); noise(t0 + u * 11.6, .03, .05 + .14 * u, 'highpass', 3200 + Math.random() * 2000); } } },
+    release: { fx:t0 => {
+      [[N.A3 / 2, 0, [N.C5, N.E5, N.G5]], [N.C4 / 2, 2.3, [N.D5, N.F5, N.A5]], [N.D4 / 2, 4.6, [N.E5, N.G5, N.C6]]].forEach(([f, d, up]) => {
+        const t = t0 + d; tone(f, t, 2, .2, [[1, 1, 1], [1.06, .8, .9], [2, .3, .5]]);
+        noise(t + 1.5, .08, .4, 'highpass', 2200); glide(f * 4, f * 8, t + 1.5, .5, .08, 'triangle'); up.forEach((n, i) => note(n, t + 1.6 + i * .09, 1.2, .12));
+      });
+      thunder(t0 + 7.4, .9); [N.C5, N.E5, N.G5, N.C6].forEach((n, i) => note(n, t0 + 7.9 + i * .05, 3.2, .16));
+    } },
     thanks: { beat:.42, notes:[['C5', 0], ['E5', 1], ['G5', 2], ['E5', 3], ['F5', 4], ['A5', 5], ['G5', 6, 1.8], ['E5', 8], ['G5', 9], ['C6', 10], ['A5', 11], ['G5', 12], ['E5', 13], ['C5', 14, 2.4]],
       bass:[['C3', 0], ['G3', 4], ['C3', 8], ['C3', 12]] },
     sap: { beat:1.1, notes:[['C4', 0, 2.6], ['G3', 1, 2.6], ['C4', 2, 3]], gain:.2 },
@@ -3943,8 +4151,16 @@ const MoonTaleSounds = (() => {
     } finally { bus = keep; }
     setTimeout(() => { try { mine.disconnect(); } catch (e) {} }, 4000);
   }
-  window._taleSounds = { play, stop, fx, ping, names:() => Object.keys(SONGS), ctx:() => ctx }; // tests
-  return { play, stop, fx, ping, latency:() => (ctx ? (ctx.outputLatency || ctx.baseLatency || 0) : 0) };
+  // a bus of its own for a game's music (the dance-offs' songs): { ctx, out (a gain at the mix level), latency }; the game
+  // disconnects it when done
+  function mix() {
+    if (!ensure() || document.hidden) return null;
+    try { if (ctx.state === 'suspended') ctx.resume(); } catch (e) {}
+    out.gain.value = .55 * vol(); const g = ctx.createGain(); g.connect(out);
+    return { ctx, out: g, latency: ctx.outputLatency || ctx.baseLatency || 0 };
+  }
+  window._taleSounds = { play, stop, fx, ping, mix, names:() => Object.keys(SONGS), ctx:() => ctx }; // tests
+  return { play, stop, fx, ping, mix, latency:() => (ctx ? (ctx.outputLatency || ctx.baseLatency || 0) : 0) };
 })();
 
 // Journal > Moon Tales: one page per tale, its text once its last quest is done.
@@ -4141,8 +4357,8 @@ const DEFAULT_BADGE_DEFINITIONS = [
 // Every collectible placed in the village layouts (Hub + 14 villages; rooms have none): the Relic Keeper badge asks for
 // all of them. Update it whenever collectibles are added or removed (the friend-village quests will bring their items).
 const COLLECTIBLE_TOTAL = 97;
-// The other 46 of the 75 badges: a crest and an all-secrets badge per village, secret milestones, mini ant
-// spotters, chest and collector badges. All award themselves (checkAutoBadges).
+// The other 62 of the 91 badges: a crest, an all-secrets and an all-games badge per village, secret milestones, mini
+// ant spotters, chest and collector badges, every game cleared. All award themselves (checkAutoBadges).
 (() => {
   const FACTION_ART = new Set(['ronin','samurai','shogun','bushi','buke','ashigaru','kenshi','yamabushi','sohei','wokou','warrior']);
   const villages = ['hub','ronin','samurai','shogun','bushi','buke','ashigaru','kenshi','yamabushi','sohei','wokou','warrior','cute-creepy','chumpz','saints-la'];
@@ -4157,6 +4373,9 @@ const COLLECTIBLE_TOTAL = 97;
   add({ badgeId:'chest-hunter', name:'Chest Hunter', category:'collector', rarity:'Rare', requirementType:'chestCount', requirementValue:25, requirementText:'Open 25 chests', description:'You know where chests like to hide.' });
   add({ badgeId:'chest-master', name:'Hoard of the Colony', category:'collector', rarity:'Mythic', requirementType:'chestCount', requirementValue:100, requirementText:'Open 100 chests', description:'One hundred chests, opened.' });
   ['hub','ronin','shogun','yamabushi','wokou'].forEach(v => add({ badgeId:`legend-chest-${v}`, name:`Legend of ${short(v)}`, category:'collector', rarity:'Legendary', emblem:FACTION_ART.has(v) ? v : null, requirementType:'chestId', requirementValue:`${v}-chest-legend-1`, requirementText:`Open the legend chest in ${short(v)}`, description:'A thousand Rebel points, and a story to go with it.' }));
+  // Miguel (Oct 15): a badge for clearing all of a village's games, and one for clearing every game
+  villages.forEach(v => add({ badgeId:`games-${v}`, name:`${short(v)} Champion`, category:'arcade', rarity:'Epic', emblem:FACTION_ART.has(v) ? v : null, requirementType:'villageGames', requirementValue:v, requirementText:`Clear every game in ${short(v)}`, description:`Every game, puzzle and riddle in ${short(v)}, cleared.` }));
+  add({ badgeId:'games-all', name:'Master of Games', category:'arcade', rarity:'Mythic', requirementType:'allGames', requirementValue:'all', requirementText:'Clear every game in the colony', description:'Every game in all fifteen villages, cleared.' });
   add({ badgeId:'collector-relic-keeper', name:'Relic Keeper', category:'collector', rarity:'Epic', requirementType:'collectibleCount', requirementValue:COLLECTIBLE_TOTAL, requirementText:'Collect every collectible', description:'The archive has nothing left to ask of you.' });
 })();
 
@@ -4181,6 +4400,9 @@ function isAutoBadgeEarned(badge) {
     case 'chestCount': return (P.chestsOpened || []).length >= Number(v);
     case 'chestId': return (P.chestsOpened || []).includes(v);
     case 'collectibleCount': return (P.collectiblesFound || []).length >= Number(v);
+    // games (GAME_LIST, defined further down: a check before it exists counts nothing)
+    case 'villageGames': try { const ids = GAME_LIST.filter(g => g[2] === v).map(g => g[0]); return ids.length > 0 && ids.every(id => P.games?.[id]?.cleared); } catch (e) { return false; }
+    case 'allGames': try { return GAME_LIST.length > 0 && GAME_LIST.every(g => P.games?.[g[0]]?.cleared); } catch (e) { return false; }
     default: return false;
   }
 }
@@ -9947,16 +10169,16 @@ function getSecretVillageTotal(villageId) {
 
 // The Games tab: every mini-game in the villages (GAME_LIST: [id, title, village], written by tools/gen-game-list.mjs
 // from the layouts); the ones played show their best score and a tick once cleared, the rest stay unnamed until found
-const GAME_LIST = [["hub-shell-game","Mini Ant Shell Game","hub"],["hub-archivist-riddles","The Archivist's Riddles","hub"],["hub-emblem-match","Emblem Match","hub"],["hub-sorting-crates","Sorting the Crates","hub"],["hub-colony-corners","Colony Corners","hub"],["hub-dummy-drill","Dummy Drill","hub"],["ashi-log-split","Log Split","ashigaru"],["ashi-sprout-field","Sprout Field","ashigaru"],["ashi-lookout","The Lookout","ashigaru"],["ashi-keeper-questions","The Archive Keeper's Questions","ashigaru"],["ashi-farmers-fields","The Farmer's Fields","ashigaru"],["ashi-irrigation-channels","The Irrigation Channels","ashigaru"],["buke-shield-wall","Shield Wall","buke"],["buke-engineer-puzzles","The Engineer's Puzzles","buke"],["buke-canal-gates","The Canal Gates","buke"],["buke-canal-ferry","The Canal Ferry","buke"],["buke-canal-islands","The Canal Islands","buke"],["buke-engineer-basins","The Engineer's Basins","buke"],["bushi-signal-fires","Signal Fires","bushi"],["bushi-strategist-question","The Strategist's Question","bushi"],["bushi-cavalry-ride","The Cavalry Ride","bushi"],["bushi-spys-code","The Spy's Code","bushi"],["bushi-war-camp","The War Camp","bushi"],["bushi-banners","The Tactician's Banners","bushi"],["chz-coconut-toss","Coconut Toss","chumpz"],["chz-high-low","High-Low with Peely","chumpz"],["chz-beer-pong","Beer Pong","chumpz"],["chumpz-peely-riddles","Peely's Riddles","chumpz"],["chz-pier-fishing","Pier Fishing","chumpz"],["chz-banana-merge","Banana Merge","chumpz"],["chz-banana-drop","Banana Drop","chumpz"],["cc-ghost-catch","Ghost Catch","cute-creepy"],["cc-mochi-riddles","Mochi's Lucky Riddles","cute-creepy"],["cc-potion-shelf","The Potion Shelf","cute-creepy"],["cc-restless-graves","The Restless Graves","cute-creepy"],["cc-moons-and-suns","Moons and Suns","cute-creepy"],["cc-witch-brew","The Witch's Brew","cute-creepy"],["cc-claw-machine","Claw Machine","cute-creepy"],["kenshi-raked-stones","Raked Stones","kenshi"],["kenshi-duelist-questions","The Duelist's Questions","kenshi"],["kenshi-archivist-stones","The Archivist's Stones","kenshi"],["kenshi-stone-skipping","Stone Skipping","kenshi"],["kenshi-sacred-rope","The Sacred Rope","kenshi"],["kenshi-quick-draw","The Quick Draw","kenshi"],["ronin-stone-court","The Stone Court","ronin"],["ronin-watcher-trial","The Watcher's Trial","ronin"],["ronin-silent-path","The Silent Path","ronin"],["ronin-watchmans-lanterns","The Watchman's Lanterns","ronin"],["ronin-ronins-shadows","The Ronin's Shadows","ronin"],["ronin-shuriken","Shuriken","ronin"],["sl-three-point","3-Point Contest","saints-la"],["saints-librarian-riddles","The Librarian's Riddles","saints-la"],["sl-free-throws","Free Throws","saints-la"],["sl-crosswalk-rush","Crosswalk Rush","saints-la"],["sl-valet-parking","Valet Parking","saints-la"],["sl-skyline-blocks","Skyline Blocks","saints-la"],["sl-skyline-view","Skyline View","saints-la"],["sl-bowling","Bowling","saints-la"],["sam-yabusame","Yabusame Range","samurai"],["sam-tameshigiri","Tameshigiri","samurai"],["samurai-captain-riddles","The Captain's Riddles","samurai"],["sam-swordsmith-forge","The Swordsmith's Forge","samurai"],["sam-ancestors-grid","The Ancestor's Grid","samurai"],["sam-tile-garden","The Tile Garden","samurai"],["shogun-sun-mirrors","The Sun Mirrors","shogun"],["shogun-lords-puzzles","The Lord's Puzzles","shogun"],["shogun-lacquer-floor","The Lacquer Floor","shogun"],["shogun-garden-bridges","The Garden Bridges","shogun"],["shogun-land-grants","The Land Grants","shogun"],["shogun-broken-seal","The Broken Seal","shogun"],["sohei-bell-song","Bell Song","sohei"],["sohei-monk-koan","The Monk's Koan","sohei"],["sohei-raking-path","The Raking Path","sohei"],["sohei-maple-catch","Maple Catch","sohei"],["sohei-temple-scales","The Temple Scales","sohei"],["sohei-temple-abacus","The Temple Abacus","sohei"],["warrior-cracked-circle","The Cracked Circle","warrior"],["war-spear-throw","Spear Throw","warrior"],["war-tug-of-war","Tug of War","warrior"],["war-siege-engine","The Siege Engine","warrior"],["war-war-banner","The War Banner","warrior"],["war-war-drums","The War Drums","warrior"],["wok-cargo-crane","Cargo Crane","wokou"],["wok-swivel-gun","Swivel Gun","wokou"],["wokou-broker-wagers","The Broker's Wagers","wokou"],["wok-buried-chest","The Buried Chest","wokou"],["wok-fleet-chart","The Fleet Chart","wokou"],["wok-pearl-route","The Pearl Route","wokou"],["wok-strongbox","The Broker's Strongbox","wokou"],["yam-spirit-lanterns","Spirit Lanterns","yamabushi"],["yam-misty-stones","The Misty Stones","yamabushi"],["yam-cairn-stack","Cairn Stack","yamabushi"],["yam-herbalist-questions","The Herbalist's Questions","yamabushi"],["yam-hermits-pegs","The Hermit's Pegs","yamabushi"],["yam-pilgrims-path","The Pilgrim's Path","yamabushi"]];
+const GAME_LIST = [["hub-shell-game","Mini Ant Shell Game","hub"],["hub-archivist-riddles","The Archivist's Riddles","hub"],["hub-emblem-match","Emblem Match","hub"],["hub-sorting-crates","Sorting the Crates","hub"],["hub-colony-corners","Colony Corners","hub"],["hub-courtyard-circuit","Courtyard Circuit","hub"],["hub-rebel-groove","Rebel Groove","hub"],["hub-mini-ant-tag","Mini Ant Tag","hub"],["hub-root-seal","Root Seal","hub"],["grand-relay","The Grand Relay","hub"],["hub-dummy-drill","Dummy Drill","hub"],["ashi-log-split","Log Split","ashigaru"],["ashi-sprout-field","Sprout Field","ashigaru"],["ashi-lookout","The Lookout","ashigaru"],["ashi-keeper-questions","The Archive Keeper's Questions","ashigaru"],["ashi-farmers-fields","The Farmer's Fields","ashigaru"],["ashi-irrigation-channels","The Irrigation Channels","ashigaru"],["ashi-palisade-run","Palisade Run","ashigaru"],["ashi-rice-planting-song","Rice Planting Song","ashigaru"],["ashi-loose-chickens","Loose Chickens","ashigaru"],["ashi-harvest-run","Harvest Run","ashigaru"],["ashi-rice-planting","Rice Planting","ashigaru"],["buke-shield-wall","Shield Wall","buke"],["buke-engineer-puzzles","The Engineer's Puzzles","buke"],["buke-canal-gates","The Canal Gates","buke"],["buke-canal-ferry","The Canal Ferry","buke"],["buke-canal-islands","The Canal Islands","buke"],["buke-canal-run","Canal Run","buke"],["buke-trident-march","Trident March","buke"],["buke-archive-thief","Archive Thief","buke"],["buke-canal-lanterns","Canal Lanterns","buke"],["buke-engineer-basins","The Engineer's Basins","buke"],["bushi-signal-fires","Signal Fires","bushi"],["bushi-strategist-question","The Strategist's Question","bushi"],["bushi-cavalry-ride","The Cavalry Ride","bushi"],["bushi-spys-code","The Spy's Code","bushi"],["bushi-war-camp","The War Camp","bushi"],["bushi-beacon-relay","Beacon Relay","bushi"],["bushi-war-fan-dance","War Fan Dance","bushi"],["bushi-catch-the-spy","Catch the Spy","bushi"],["bushi-long-shot","Long Shot","bushi"],["bushi-banners","The Tactician's Banners","bushi"],["chz-coconut-toss","Coconut Toss","chumpz"],["chz-high-low","High-Low with Peely","chumpz"],["chz-beer-pong","Beer Pong","chumpz"],["chumpz-peely-riddles","Peely's Riddles","chumpz"],["chz-pier-fishing","Pier Fishing","chumpz"],["chz-banana-merge","Banana Merge","chumpz"],["chz-banana-drop","Banana Drop","chumpz"],["chz-jungle-run","Jungle Run","chumpz"],["chz-calypso-cove","Calypso Cove","chumpz"],["chz-sneaky-crab","Sneaky Crab","chumpz"],["chz-treasure-dig","Treasure Dig","chumpz"],["chz-surf-the-cove","Surf the Cove","chumpz"],["cc-ghost-catch","Ghost Catch","cute-creepy"],["cc-mochi-riddles","Mochi's Lucky Riddles","cute-creepy"],["cc-potion-shelf","The Potion Shelf","cute-creepy"],["cc-restless-graves","The Restless Graves","cute-creepy"],["cc-moons-and-suns","Moons and Suns","cute-creepy"],["cc-graveyard-run","Graveyard Run","cute-creepy"],["cc-monster-mash","Monster Mash","cute-creepy"],["cc-lantern-thief","Lantern Thief","cute-creepy"],["cc-trick-or-treat","Trick or Treat Night","cute-creepy"],["cc-witch-brew","The Witch's Brew","cute-creepy"],["cc-claw-machine","Claw Machine","cute-creepy"],["kenshi-raked-stones","Raked Stones","kenshi"],["kenshi-duelist-questions","The Duelist's Questions","kenshi"],["kenshi-archivist-stones","The Archivist's Stones","kenshi"],["kenshi-stone-skipping","Stone Skipping","kenshi"],["kenshi-sacred-rope","The Sacred Rope","kenshi"],["kenshi-dojo-circuit","Dojo Circuit","kenshi"],["kenshi-blade-kata","Blade Kata","kenshi"],["kenshi-stolen-blade","The Stolen Blade","kenshi"],["kenshi-bamboo-cut","Bamboo Cut","kenshi"],["kenshi-quick-draw","The Quick Draw","kenshi"],["ronin-stone-court","The Stone Court","ronin"],["ronin-watcher-trial","The Watcher's Trial","ronin"],["ronin-silent-path","The Silent Path","ronin"],["ronin-watchmans-lanterns","The Watchman's Lanterns","ronin"],["ronin-ronins-shadows","The Ronin's Shadows","ronin"],["ronin-fortress-run","Fortress Run","ronin"],["ronin-shadow-chase","Shadow Chase","ronin"],["ronin-watch-fires","Watch Fires","ronin"],["ronin-silent-steps","Silent Steps","ronin"],["ronin-debt-marker-stones","The Debt Marker","ronin"],["ronin-shuriken","Shuriken","ronin"],["sl-three-point","3-Point Contest","saints-la"],["saints-librarian-riddles","The Librarian's Riddles","saints-la"],["sl-free-throws","Free Throws","saints-la"],["sl-crosswalk-rush","Crosswalk Rush","saints-la"],["sl-valet-parking","Valet Parking","saints-la"],["sl-skyline-blocks","Skyline Blocks","saints-la"],["sl-skyline-view","Skyline View","saints-la"],["sl-downtown-sprint","Downtown Sprint","saints-la"],["sl-lowrider-hop","Lowrider Hop","saints-la"],["sl-street-art","Street Art","saints-la"],["sl-bowling","Bowling","saints-la"],["sam-yabusame","Yabusame Range","samurai"],["sam-tameshigiri","Tameshigiri","samurai"],["samurai-captain-riddles","The Captain's Riddles","samurai"],["sam-swordsmith-forge","The Swordsmith's Forge","samurai"],["sam-ancestors-grid","The Ancestor's Grid","samurai"],["sam-tile-garden","The Tile Garden","samurai"],["sam-terrace-run","Terrace Run","samurai"],["sam-taiko-thunder","Taiko Thunder","samurai"],["sam-lantern-night","Lantern Night","samurai"],["sam-messenger-run","Messenger Run","samurai"],["shogun-sun-mirrors","The Sun Mirrors","shogun"],["shogun-lords-puzzles","The Lord's Puzzles","shogun"],["shogun-lacquer-floor","The Lacquer Floor","shogun"],["shogun-garden-bridges","The Garden Bridges","shogun"],["shogun-land-grants","The Land Grants","shogun"],["shogun-castle-run","Castle Run","shogun"],["shogun-court-fan-dance","Court Fan Dance","shogun"],["shogun-keep-thief","Keep Thief","shogun"],["shogun-koi-feeding","Koi Feeding","shogun"],["shogun-broken-seal","The Broken Seal","shogun"],["sohei-bell-song","Bell Song","sohei"],["sohei-monk-koan","The Monk's Koan","sohei"],["sohei-raking-path","The Raking Path","sohei"],["sohei-maple-catch","Maple Catch","sohei"],["sohei-temple-scales","The Temple Scales","sohei"],["sohei-temple-abacus","The Temple Abacus","sohei"],["sohei-temple-steps","Temple Steps","sohei"],["sohei-temple-drum","Temple Drum","sohei"],["sohei-temple-lamps","Temple Lamps","sohei"],["sohei-water-bowl","Water Bowl","sohei"],["warrior-cracked-circle","The Cracked Circle","warrior"],["war-spear-throw","Spear Throw","warrior"],["war-tug-of-war","Tug of War","warrior"],["war-siege-engine","The Siege Engine","warrior"],["war-war-banner","The War Banner","warrior"],["war-war-drums","The War Drums","warrior"],["war-obstacle-course","Obstacle Course","warrior"],["war-war-dance","War Dance","warrior"],["war-spy-in-the-fort","Spy in the Fort","warrior"],["war-fighting-ring","Fighting Ring","warrior"],["wok-cargo-crane","Cargo Crane","wokou"],["wok-swivel-gun","Swivel Gun","wokou"],["wokou-broker-wagers","The Broker's Wagers","wokou"],["wok-buried-chest","The Buried Chest","wokou"],["wok-fleet-chart","The Fleet Chart","wokou"],["wok-pearl-route","The Pearl Route","wokou"],["wok-pier-run","Pier Run","wokou"],["wok-sea-shanty","Sea Shanty","wokou"],["wok-harbour-fishing","Harbour Fishing","wokou"],["wok-strongbox","The Broker's Strongbox","wokou"],["yam-spirit-lanterns","Spirit Lanterns","yamabushi"],["yam-misty-stones","The Misty Stones","yamabushi"],["yam-cairn-stack","Cairn Stack","yamabushi"],["yam-herbalist-questions","The Herbalist's Questions","yamabushi"],["yam-hermits-pegs","The Hermit's Pegs","yamabushi"],["yam-pilgrims-path","The Pilgrim's Path","yamabushi"],["yam-before-the-mist","Before the Mist","yamabushi"],["yam-spirit-dance","Spirit Dance","yamabushi"],["yam-spirit-chase","Spirit Chase","yamabushi"],["yam-prayer-flags","Prayer Flags","yamabushi"]];
 function renderGamesJournal() {
   const rec = ProgressionState.games || {}, played = GAME_LIST.filter(([id]) => rec[id]?.plays).length, cleared = GAME_LIST.filter(([id]) => rec[id]?.cleared).length;
   const rows = Object.values(VILLAGE_REGISTRY).map(village => {
     const list = GAME_LIST.filter(g => g[2] === village.villageId); if (!list.length) return '';
     const mine = list.filter(([id]) => rec[id]?.plays), left = list.length - mine.length;
-    const names = mine.map(([id, title]) => `<span class="journal-secret-name">${escapeHTML(title)} · best ${Math.round(rec[id].best || 0)}${rec[id].cleared ? ' ✓' : ''}</span>`).join(' · ');
+    const names = mine.map(([id, title]) => `<button type="button" class="journal-game-link" title="Top 10" onclick="openJournalGameBoard(this, '${id}', ${rec[id].low ? 1 : 0})">${escapeHTML(title)} · best ${rec[id].low ? (rec[id].best ? GameBoard.fmt(rec[id].best, 't') : '—') : Math.round(rec[id].best || 0)}${rec[id].cleared ? ' ✓' : ''}</button>`).join(' · ');
     return `<div class="journal-row ${mine.length ? '' : 'locked'}"><b>${escapeHTML(village.displayName)}</b> · ${mine.length} / ${list.length}<br>${names}${left ? `${names ? ' · ' : ''}${left === 1 ? 'one game' : left + ' games'} still to find` : ''}</div>`;
   }).join('');
-  return `<div class="journal-card full"><strong>Games</strong><span>${played} / ${GAME_LIST.length} found · ${cleared} cleared</span><div class="journal-progress"><div style="width:${Math.round(cleared / Math.max(1, GAME_LIST.length) * 100)}%"></div></div></div>${rows}`;
+  return `<div class="journal-card full"><strong>Games</strong><span>${played} / ${GAME_LIST.length} found · ${cleared} cleared${played ? ' · tap a game for its top 10' : ''}</span><div class="journal-progress"><div style="width:${Math.round(cleared / Math.max(1, GAME_LIST.length) * 100)}%"></div></div></div>${rows}`;
 }
 
 function renderSecretsJournal() {
@@ -9972,6 +10194,7 @@ function renderSecretsJournal() {
   return `<div class="journal-card full"><strong>Secrets</strong><span>${found.size} / ${SECRET_TOTAL} found</span></div>${rows}`;
 }
 
+function normalizeTaleBoltSpec(b) { return typeof b === 'string' && b ? b : (Array.isArray(b) && b.length >= 3 ? b.slice(0, 3).map(v => Number(v) || 0) : null); }
 const QUEST_SPOT_ACTIONS = { inspect:'Inspect', read:'Read', listen:'Listen', light:'Light', ring:'Ring', hold:'Hold still', reach:'', race:'Start the run', follow:'Follow' };
 const QUEST_SPOT_TIME_HINTS = { night:'Something stirs here after dark.', day:'Come back in daylight.', dawn:'Come back at dawn.', dusk:'Come back at dusk.' };
 const QuestSpotRuntime = { hold:null, race:null, follow:null, nearest:null, lastHintAt:0, reached:new Set() };
@@ -10015,8 +10238,19 @@ function normalizeQuestSpotConfig(cfg = {}) {
     sound: cfg.sound ? String(cfg.sound) : null,
     // lines shown one after another while a hold lasts
     holdLines: Array.isArray(cfg.holdLines) ? cfg.holdLines.map(String) : null,
+    // the Rebel acts the hold out (HoldShow): moves through it, a yaw to turn to, a prop (a fishing rod cast holdCast m out,
+    // a fish on at holdBite of the hold)
+    holdMoves: Array.isArray(cfg.holdMoves) ? cfg.holdMoves.filter(m => m?.clip).map(m => ({ clip:String(m.clip), at:Number(m.at) || 0, loop:m.loop === true, hold:m.hold === true, speed:Number(m.speed) || 0, pull:Number(m.pull) || 0 })) : null,
+    holdFace: cfg.holdFace === 'spot' ? 'spot' : cfg.holdFace != null && Number.isFinite(Number(cfg.holdFace)) ? Number(cfg.holdFace) : null,
+    holdProp: cfg.holdProp ? String(cfg.holdProp) : null,
+    holdDoneMove: cfg.holdDoneMove ? String(cfg.holdDoneMove) : null,
+    holdTake: Array.isArray(cfg.holdTake) ? cfg.holdTake.map(String) : null,
+    holdCast: Number(cfg.holdCast) || 0,
+    holdBite: Number(cfg.holdBite) || 0,
     // a sound when the spot is used (after a hold's own sound: the splash of a catch)
     doneSound: cfg.doneSound ? String(cfg.doneSound) : null,
+    // a lightning bolt from the sky when the spot is used (strikeTaleBolt): an NPC id (its orb) or [x, y, z] in the spot's frame
+    bolt: normalizeTaleBoltSpec(cfg.bolt),
     // NPCs (kit apes) that hop and kick while a hold lasts (the Beach Party dance)
     cheer: Array.isArray(cfg.cheer) ? cfg.cheer.map(String) : null,
     // a dance-off instead of a plain hold (DanceOff): notes arrows, every seconds apart after lead, need good presses to finish
@@ -10041,7 +10275,8 @@ function normalizeQuestSpotConfig(cfg = {}) {
     // a timing bar before the spot is used (SkillBar): hits good stops in the gold middle, the marker speeding up each time
     skill: cfg.skill && typeof cfg.skill === 'object' ? { hits: Math.max(1, Math.min(6, Math.floor(Number(cfg.skill.hits) || 3))), speed: Math.max(.3, Number(cfg.skill.speed) || 1.1),
       zone: Math.max(.06, Math.min(.5, Number(cfg.skill.zone) || .16)), title: String(cfg.skill.title || ''), startText: String(cfg.skill.startText || ''),
-      hitText: Array.isArray(cfg.skill.hitText) ? cfg.skill.hitText.map(String) : [], hitSound: cfg.skill.hitSound ? String(cfg.skill.hitSound) : null } : null,
+      hitText: Array.isArray(cfg.skill.hitText) ? cfg.skill.hitText.map(String) : [], hitSound: cfg.skill.hitSound ? String(cfg.skill.hitSound) : null,
+      bolt: normalizeTaleBoltSpec(cfg.skill.bolt) } : null, // each good strike calls a bolt down there (Nariko's orb)
     // a secret made of several spots: each spot with this secretId counts once, the secret is found at the setCount-th
     setCount: Math.max(0, Math.floor(Number(cfg.setCount) || 0)),
     // a timed run: from this spot through path [[x, z], ...] (in order, within pathRadius) in seconds (0 = a walk, no time limit)
@@ -10301,11 +10536,13 @@ function getMiniAntWhisper() {
 function completeQuestSpot(root) {
   const cfg0 = root.metadata.spotConfig;
   const cfg = cfg0.miniAnt ? { ...cfg0, text:`${cfg0.text ? cfg0.text + ' ' : ''}${getMiniAntWhisper()}` } : cfg0;
+  if (HoldShow.hold && HoldShow.hold === QuestSpotRuntime.hold) endHoldShow(true);
   QuestSpotRuntime.hold = null;
   if ((cfg.action === 'light' || cfg.action === 'ring') && !cfg.sound && !cfg.doneSound) playInteractionAudio(cfg.action === 'ring' ? 'templeBell' : 'collectiblePickup');
   if ((cfg.piece || cfg.donePiece || cfg.questId) && !(ProgressionState.spotsUsed || []).includes(cfg.spotId)) { (ProgressionState.spotsUsed ||= []).push(cfg.spotId); saveProgressionState(); }
   if (cfg.doneSound) MoonTaleSounds.play(cfg.doneSound);
   else if (cfg.sound && cfg.action !== 'hold' && cfg.action !== 'race') MoonTaleSounds.play(cfg.sound);
+  if (cfg.bolt) strikeTaleBolt(taleBoltTarget(root, cfg.bolt));
   if (cfg.photo) setTimeout(() => takeVillagePhoto(cfg.photo), 250); // a picture spot takes a real one
   let secretNew = false, setNote = '';
   if (cfg.secretId && cfg.setCount > 1 && !(ProgressionState.secretsFound || []).includes(cfg.secretId)) {
@@ -10326,6 +10563,8 @@ function completeQuestSpot(root) {
   return true;
 }
 
+// Miguel (Oct 15): a first clear of a game or a place riddle pays double the points its layout lists
+const GAME_POINTS_X = 2;
 // Place riddles (ProgressionState.riddles[id] = { asked, part, solved, at }): the riddle spot reads the current part out
 // in the quest card; the right answer spot moves it on (the next part read out at once) or solves it (Rebel points the
 // first time); a wrong one only says so, or starts the riddle over when it resets
@@ -10360,17 +10599,18 @@ function answerPlaceRiddle(cfg) {
   r.part = (r.part || 0) + 1;
   if (r.part < R.parts.length) { saveProgressionState(); if (A.text) showToast(A.text, 4500); showPlaceRiddlePart(R, r.part); return true; }
   r.solved = true; r.solvedAt = Date.now();
-  if (R.points) {
-    ProgressionState.rebelPoints = (Number(ProgressionState.rebelPoints) || 0) + R.points;
+  const pts = (R.points || 0) * GAME_POINTS_X;
+  if (pts) {
+    ProgressionState.rebelPoints = (Number(ProgressionState.rebelPoints) || 0) + pts;
     if (!Array.isArray(ProgressionState.rebelPointsLog)) ProgressionState.rebelPointsLog = [];
-    ProgressionState.rebelPointsLog.push({ riddleId:R.id, villageId:CURRENT_VILLAGE_ID, points:R.points, at:Date.now(), synced:false });
-    try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ riddleId:R.id, points:R.points, total:ProgressionState.rebelPoints } })); } catch (e) {}
-    setTimeout(() => showRebelPointsPop(R.points), 600);
+    ProgressionState.rebelPointsLog.push({ riddleId:R.id, villageId:CURRENT_VILLAGE_ID, points:pts, at:Date.now(), synced:false });
+    try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ riddleId:R.id, points:pts, total:ProgressionState.rebelPoints } })); } catch (e) {}
+    setTimeout(() => showRebelPointsPop(pts), 600);
   }
   saveProgressionState();
   try { window.dispatchEvent(new CustomEvent('rebelAntsRiddle', { detail:{ riddleId:R.id, villageId:CURRENT_VILLAGE_ID } })); } catch (e) {}
   MoonTaleSounds.fx?.('gamewin');
-  queueQuestCelebration({ kicker:'Riddle Solved', title:R.title, body:escapeHTML(A.text || R.solvedText || ''), chips:R.points ? [{ label:`+${R.points} Rebel points`, tone:'gold' }] : [], duration:7000 });
+  queueQuestCelebration({ kicker:'Riddle Solved', title:R.title, body:escapeHTML(A.text || R.solvedText || ''), chips:pts ? [{ label:`+${pts} Rebel points`, tone:'gold' }] : [], duration:7000 });
   return true;
 }
 window._placeRiddles = { read:readPlaceRiddle, answer:answerPlaceRiddle }; // tests
@@ -10435,6 +10675,7 @@ function tryUseNearbyQuestSpot() {
   if (cfg.action === 'hold') {
     QuestSpotRuntime.hold = { root, startedAt: performance.now(), x: charMesh.position.x, z: charMesh.position.z, line: 0 };
     if (cfg.sound) MoonTaleSounds.play(cfg.sound);
+    startHoldShow(QuestSpotRuntime.hold, cfg);
     return true;
   }
   if (cfg.action === 'race') {
@@ -10487,6 +10728,7 @@ function pressSkillBar() {
   if (Math.abs(off) <= SkillBar.zone / 2) {
     SkillBar.hits++;
     MoonTaleSounds.play(sk.hitSound || 'flag');
+    if (sk.bolt) strikeTaleBolt(taleBoltTarget(SkillBar.root, sk.bolt));
     msg.textContent = sk.hitText[SkillBar.hits - 1] || 'Yes!';
   } else {
     SkillBar.hits = Math.max(0, SkillBar.hits - 1);
@@ -10512,6 +10754,53 @@ function restartSkillBar() {
 }
 window.pressSkillBar = pressSkillBar;
 window.restartSkillBar = restartSkillBar;
+
+// A lightning bolt from the sky to a point (Nariko's circle: a stone as it wakes, her orb, the centre): a jagged line of
+// light with two forks and a glow round it, on for a third of a second with one flicker, and the screen flash. The caller
+// plays the thunder. taleBoltTarget: an NPC id = the NPC's orb (kit subpart cc_orb), else its chest; [x, y, z] = a point
+// in that spot's own frame.
+const TaleBolt = { meshes:[], flashUntil:0, mat:null, glow:null };
+function taleBoltTarget(root, spec) {
+  if (!root || !spec) return null;
+  if (typeof spec === 'string') {
+    const npc = typeof getNPCById === 'function' ? getNPCById(spec) : null; if (!npc) return null;
+    const orb = npc.getChildTransformNodes?.(false).find(n => /_cc_orb$/.test(n.name));
+    if (orb) return orb.getAbsolutePosition().clone();
+    const p = npc.getAbsolutePosition(); return new BABYLON.Vector3(p.x, p.y + 1.2, p.z);
+  }
+  return BABYLON.Vector3.TransformCoordinates(new BABYLON.Vector3(spec[0], spec[1], spec[2]), root.computeWorldMatrix(true));
+}
+function strikeTaleBolt(to) {
+  if (!scene || !to) return false;
+  if (!TaleBolt.mat) {
+    const mk = (n, c, a) => { const m = new BABYLON.StandardMaterial(n, scene); m.disableLighting = true; m.diffuseColor = BABYLON.Color3.Black(); m.specularColor = BABYLON.Color3.Black(); m.emissiveColor = new BABYLON.Color3(...c);
+      m.alpha = a; m.alphaMode = BABYLON.Engine.ALPHA_ADD; m.disableDepthWrite = true; m.fogEnabled = false; m.backFaceCulling = false; m.metadata = { perfKeepLive:true }; return m; };
+    TaleBolt.mat = mk('taleBoltMat', [.85, .93, 1], 1); TaleBolt.glow = mk('taleBoltGlow', [.22, .42, 1], .4);
+  }
+  TaleBolt.meshes.forEach(m => m.dispose()); TaleBolt.meshes = [];
+  const jag = (a, b, n, amp) => { const pts = []; for (let i = 0; i <= n; i++) { const u = i / n, q = BABYLON.Vector3.Lerp(a, b, u); if (i && i < n) { const k = amp * Math.sin(Math.PI * u); q.x += (Math.random() - .5) * k; q.z += (Math.random() - .5) * k; q.y += (Math.random() - .5) * k * .3; } pts.push(q); } return pts; };
+  const top = new BABYLON.Vector3(to.x + (Math.random() - .5) * 16, to.y + 48, to.z + (Math.random() - .5) * 16), main = jag(top, to, 16, 3.2), paths = [main];
+  for (const i of [5, 9]) paths.push(jag(main[i], main[i].add(new BABYLON.Vector3((Math.random() - .5) * 9, -6 - Math.random() * 5, (Math.random() - .5) * 9)), 6, 1.4)); // two forks
+  paths.forEach((path, k) => {
+    for (const [mat, r] of [[TaleBolt.mat, k ? .05 : .09], [TaleBolt.glow, k ? .22 : .38]]) {
+      const m = BABYLON.MeshBuilder.CreateTube('taleBolt_beam', { path, radius:r, tessellation:5, cap:BABYLON.Mesh.NO_CAP }, scene);
+      m.material = mat; m.isPickable = false; m.applyFog = false; m.alwaysSelectAsActiveMesh = true; m.metadata = { _perfNeverFreeze:true };
+      TaleBolt.meshes.push(m);
+    }
+  });
+  TaleBolt.flashUntil = performance.now() + 220;
+  const mine = TaleBolt.meshes;
+  setTimeout(() => mine.forEach(m => { if (!m.isDisposed()) m.setEnabled(false); }), 120); // one flicker
+  setTimeout(() => mine.forEach(m => { if (!m.isDisposed()) m.setEnabled(true); }), 170);
+  setTimeout(() => { mine.forEach(m => m.dispose()); if (TaleBolt.meshes === mine) TaleBolt.meshes = []; }, 340);
+  return true;
+}
+window._taleBolt = { state:TaleBolt, strike:strikeTaleBolt, target:taleBoltTarget, sky:() => taleThunderSky() }; // tests
+// Nariko's Thunder Moon (a tale moon with storm: true) up in the sky: heat lightning over the hill (the storm's flash,
+// softer, its distant bolts and thunder), no rain
+function taleThunderSky() {
+  return !!(TaleMoonView.key && MOON_TALES.find(t => t.id === TaleMoonView.key)?.moon?.storm) && !ActiveInterior;
+}
 window._skillBar = SkillBar; // tests
 
 // The photo camera: P (out of the editor) or the camera button takes a picture of the game view (the page's HUD is not in
@@ -10572,9 +10861,13 @@ async function startMiniGame(def, src) {
   RebelGames.HUD.loading(true);
   let impl = null;
   try { impl = await RebelGames.load(def.type); } catch (e) { console.warn('mini-game', e); }
+  // a game that plays the games pack's moves waits for it the first time (up to 12 s, then its stand-ins). Oct 17: it
+  // waited 3.5 s, and a game started at once (a game jump, a game near the gate) missed a pack still downloading, so it
+  // played the whole game with the stand-ins (no dribble, no dances)
+  if (impl?.moves && !GamesPack.slots) { const t = loadGamesPack(); await Promise.race([t, new Promise(r => setTimeout(r, 12000))]); }
   RebelGames.HUD.loading(false);
-  if (!impl || !walkMode || adminMode) { MiniGames.busy = false; if (!impl) showToast('This game is not ready yet.'); return true; }
-  closeSkillBar(); closeDanceOff(); QuestSpotRuntime.hold = null;
+  if (!impl || !walkMode || adminMode) { MiniGames.busy = false; if (!impl) showToast('The game did not load (slow connection?). Press O to try again.', 6000); return true; }
+  closeSkillBar(); closeDanceOff(); QuestSpotRuntime.hold = null; endHoldShow(false);
   moveForward = moveBackward = turnLeft = turnRight = runKey = false; charMesh._vel = 0;
   _camOcc.dist = null; setPlayerCameraFade(1);
   const guide = scene.getTransformNodeByName?.('questTargetAutoGuide');
@@ -10582,7 +10875,11 @@ async function startMiniGame(def, src) {
   guide?.setEnabled(false);
   MiniGames.saved.hidden = [src.root, ...(ActiveInterior ? getInteriorHotspotRoots() : [])].filter(n => n?.isEnabled?.());
   MiniGames.saved.hidden.forEach(n => n.setEnabled(false));
-  Object.assign(MiniGames, { on:true, busy:false, impl, def, src, objs:[], escAt:0 });
+  // a roam game (impl.roam: runs, chases, lights to keep lit) keeps the walk: the keys walk, the camera follows, the
+  // minimap stays; the game watches the player and gets a key first (O, Space ...)
+  const roam = !!(impl.roam || def.roam);
+  Object.assign(MiniGames, { on:true, busy:false, impl, def, src, objs:[], escAt:0, roam, holdWalk:false, walkLight:null });
+  document.body.classList.toggle('game-roam', roam);
   window._newTerrain?.birds?.setVisible(false);
   document.getElementById('interactionPrompt')?.classList.remove('on');
   holdBadgeUnlockPopup(); // a badge card left open would sit over the game
@@ -10610,8 +10907,45 @@ function runMiniGameInstance() {
   const frame = makeMiniGameFrame(src);
   MiniGames.objs = [frame];
   const ctx = MiniGames.ctx = buildMiniGameCtx(def, src, frame);
+  ctx.startLevel = MiniGames.startLevel ?? null; MiniGames.startLevel = null; MiniGames.level = null;
   try { MiniGames.inst = MiniGames.impl.start(ctx) || {}; }
-  catch (e) { console.warn('mini-game start', e); showToast('The game hit a snag.'); endMiniGame(); }
+  catch (e) { console.warn('mini-game start', e); showToast('The game hit a snag.'); endMiniGame(); return; }
+  setMiniGameTools();
+  // the result card's Next level: a game with a level picker (buttons data-k) opens that level straight away
+  if (ctx.startLevel != null) document.querySelector(`#gameHud button[data-k="${ctx.startLevel}"]:not([disabled])`)?.click();
+}
+// which level the player picked (a picker's data-k button, or its digit key): the result card offers the next one
+document.addEventListener('click', e => { const b = MiniGames.on && e.target?.closest?.('#gameHud button[data-k]'); if (b) noteMiniGameLevel(+b.dataset.k, b.parentElement); }, true);
+function noteMiniGameLevel(k, box) { if (Number.isFinite(k)) { MiniGames.level = k; MiniGames.levels = box ? box.querySelectorAll('button[data-k]').length : 0; } }
+// How to play + Restart beside Quit (Oct 17, Miguel: the puzzles need a better explanation with an example, and every
+// board a restart): a game's rules card (impl.howTo { lines, img (under assets/games/), caption }) opens by itself the
+// first time that game is played on this device (localStorage rebelAntsHowTo:v1) and from its button any time; a game
+// whose board can be started over (inst.restart) gets the Restart button
+function setMiniGameTools() {
+  const how = MiniGames.impl?.howTo, inst = MiniGames.inst, type = MiniGames.def?.type;
+  RebelGames.HUD.tools({ help: how ? showMiniGameHowTo : null, restart: inst?.restart ? () => { try { inst.restart(); } catch (e) { console.warn('mini-game restart', e); } } : null });
+  if (!how || !type) return;
+  let seen = {}; try { seen = JSON.parse(localStorage.getItem('rebelAntsHowTo:v1') || '{}') || {}; } catch (e) {}
+  if (seen[type]) return;
+  seen[type] = 1; try { localStorage.setItem('rebelAntsHowTo:v1', JSON.stringify(seen)); } catch (e) {}
+  showMiniGameHowTo();
+}
+function showMiniGameHowTo() {
+  const how = MiniGames.impl?.howTo; if (!how) return;
+  RebelGames.HUD.howTo({ title: MiniGames.def?.title || MiniGames.impl.title, lines: how.lines, img: how.img ? 'assets/games/' + how.img : null, caption: how.caption });
+}
+function grantMiniGameRebelPoints(def, points, cap) {
+  const day = new Date().toISOString().slice(0, 10), key = `${def.id}:${day}`;
+  const got = ProgressionState.gamePointsDay?.[key] || 0, give = Math.max(0, Math.min(Math.round(points) || 0, cap - got));
+  if (!give) return 0;
+  const today = Object.fromEntries(Object.entries(ProgressionState.gamePointsDay || {}).filter(([k]) => k.endsWith(':' + day))); // only today's counts are kept
+  ProgressionState.gamePointsDay = { ...today, [key]: got + give };
+  ProgressionState.rebelPoints = (Number(ProgressionState.rebelPoints) || 0) + give;
+  if (!Array.isArray(ProgressionState.rebelPointsLog)) ProgressionState.rebelPointsLog = [];
+  ProgressionState.rebelPointsLog.push({ gameId:def.id, found:true, villageId:CURRENT_VILLAGE_ID, points:give, at:Date.now(), synced:false });
+  saveProgressionState(); showRebelPointsPop(give);
+  try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ gameId:def.id, points:give, total:ProgressionState.rebelPoints } })); } catch(e) {}
+  return give;
 }
 function buildMiniGameCtx(def, src, frame) {
   const V3 = BABYLON.Vector3;
@@ -10619,6 +10953,12 @@ function buildMiniGameCtx(def, src, frame) {
   const ctx = {
     B: BABYLON, scene, engine, def, frame, camera: walk, HUD: RebelGames.HUD, util: RebelGames.util, inRoom: !!ActiveInterior,
     best: () => miniGameRecord(def.id).best,
+    record: () => ({ ...miniGameRecord(def.id) }),
+    quit() { setTimeout(() => quitMiniGame(), 0); },              // leave without a result card
+    // Rebel points found inside a game (Oct 17, Miguel: the Treasure Dig chests "should give you Rebel points"): kept like
+    // a chest's (rebelPointsLog, the coin pop), at most `cap` a day per game so a replay can't farm them; returns the
+    // points given (0 once the day's cap is reached)
+    rebelPoints(points, cap = 40) { return grantMiniGameRebelPoints(def, points, cap); },
     toWorld: (x, y, z) => V3.TransformCoordinates(new V3(x, y, z), frame.getWorldMatrix()),
     toLocal: (p) => V3.TransformCoordinates(p, BABYLON.Matrix.Invert(frame.getWorldMatrix())),
     // the camera: at local position p, looking at local point t
@@ -10632,13 +10972,59 @@ function buildMiniGameCtx(def, src, frame) {
         (ActiveInterior.root?.metadata?.interiorLights || []).forEach(l => { if (l.includedOnlyMeshes?.length) l.includedOnlyMeshes.push(...ms); }); }
       return node;
     },
+    // a room's own part the game moves (the bowling ball and pins): room meshes are built with their bounds frozen, so a
+    // moved part would keep its old box and drop out of view; its bounds follow it until the game ends
+    movable(node) {
+      for (const m of node ? [node, ...(node.getChildMeshes?.(false) || [])] : []) {
+        if (!m.getTotalVertices || m.doNotSyncBoundingInfo !== true) continue;
+        m.doNotSyncBoundingInfo = false; (MiniGames.movables ||= []).push(m);
+      }
+      return node;
+    },
     // a material kept for this game (one per key)
     mat(key, make) { const n = 'miniGameMat_' + def.type + '_' + key; let m = scene.getMaterialByName(n); if (!m) { m = make(n); m.name = n; if ('maxSimultaneousLights' in m) m.maxSimultaneousLights = 4; } return m; },
     kit(type, parent) { const n = new BABYLON.TransformNode('miniGameKit_' + type, scene); n.parent = parent || frame; window.SamuraiKit?.build(n, type, scene, null, !!ActiveInterior); ctx.add(n); n.getChildMeshes(false).forEach(m => { m.isPickable = false; }); return n; },
     sound(name) { if (name) MoonTaleSounds.fx(name); },     // a short effect over the music
     note(f, kind) { MoonTaleSounds.ping(f, kind); },         // one pitched note: 'bell', 'lantern' or 'fire'
     npc(id) { return getNPCById(id); },                      // a village NPC's root (riddle-givers, opponents)
+    // a forged NPC model of the game's own (Oct 17, Miguel: the Quick Draw opponent "should look a lot better, maybe you
+    // should use an NPC"): a fresh copy of the NPC library's approved model for the first key that has one ('kenshi_villager'),
+    // under the game; null when none is approved, it fails to load or the game ended meanwhile (the game keeps its own
+    // stand-in). { key, root, play(clip, { loop, speed }), bone(name) }; it starts in its idle loop
+    async npcModel(keys) {
+      try { await npcForgedReady; } catch (e) {}
+      const k = [].concat(keys || []).find(x => NPC_FORGED[x]?.modelUrl); if (!k) return null;
+      const api = await ctx.model(NPC_FORGED[k].modelUrl, { scale: NPC_FORGED[k].modelScale || 1.9, name: k, opaque: true });
+      if (api) { api.key = k; api.play('idle', { loop: true }); }
+      return api;
+    },
+    // any GLB as a fresh copy under the game (the Hub's mini ant): scale, or size = the longest side in metres; null when it
+    // fails or the game ended meanwhile. { root, groups, play(clip, { loop, speed }), bone(name) }
+    async model(url, o = {}) {
+      let res; try { res = await BABYLON.SceneLoader.ImportMeshAsync('', '', url, scene); } catch (e) { console.warn('game model', url, e?.message || e); return null; }
+      const nodes = [...(res.transformNodes || []), ...(res.meshes || [])], set = new Set(nodes);
+      if (!MiniGames.on || MiniGames.ctx !== ctx) { res.animationGroups.forEach(g => g.dispose()); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); return null; }
+      const holder = new BABYLON.TransformNode('miniGameModel_' + (o.name || 'm'), scene), body = new BABYLON.TransformNode('miniGameModelBody_' + (o.name || 'm'), scene); body.parent = holder;
+      nodes.forEach(n => { if (!n.parent || !set.has(n.parent)) n.parent = body; });
+      (res.meshes || []).forEach(m => { m.isPickable = false; m.alwaysSelectAsActiveMesh = true; if (o.opaque) makeNPCMaterialOpaque(m.material); }); // skinned bounds stay in the bind pose
+      // size: measured on the skinned rest pose, which then stands on the holder's origin (a rigged model's own vertex data
+      // can sit anywhere: the Hub mini ant's is 1.6 cm across before its skin is applied and its skinned pose 3.3 units up, so
+      // in Mini Ant Tag it came out 140 times too big, then 190 m up in the air, and only its light showed)
+      if (o.size) { (res.skeletons || []).forEach(sk => { try { sk.prepare(true); } catch (e) {} }); (res.meshes || []).forEach(m => { if (m.skeleton) try { m.refreshBoundingInfo(true); } catch (e) {} });
+        const { min, max } = holder.getHierarchyBoundingVectors(true), big = Math.max(max.x - min.x, max.y - min.y, max.z - min.z) || 1; // the holder is still at the origin
+        body.position.set(-(min.x + max.x) / 2, -min.y, -(min.z + max.z) / 2); holder.scaling.setAll(o.size / big); }
+      else holder.scaling.setAll(o.scale || 1);
+      holder.parent = frame;
+      const groups = res.animationGroups || []; groups.forEach(g => { g.stop(); g.enableBlending = true; g.blendingSpeed = .2; });
+      ctx.add(holder); MiniGames.objs.push({ dispose() { groups.forEach(g => g.dispose()); }, isDisposed: () => false });
+      const find = n => groups.find(g => g.name.toLowerCase() === String(n).toLowerCase()) || groups.find(g => g.name.toLowerCase().endsWith(String(n).toLowerCase()));
+      let cur = null;
+      return { root: holder, groups,
+        play(name, p = {}) { const g = find(name); if (!g) return null; if (cur === g && g.isPlaying && p.loop) { g.speedRatio = p.speed || 1; return g; } if (cur && cur !== g) cur.stop(); cur = g; g.start(!!p.loop, p.speed || 1, g.from, g.to, false); return g; },
+        bone(name) { return nodes.find(n => n.name === name) || nodes.find(n => n.name.endsWith(name)) || null; } };
+    },
     music(name, loops) { if (name) MoonTaleSounds.play(name, loops); }, stopMusic() { MoonTaleSounds.stop(.3); },
+    audio() { return MoonTaleSounds.mix(); },                // a music bus of the game's own (Web Audio), or null
     sfx(name, opts) { try { (MiniGames.sfx ||= window.RebelWeapon?.sfx?.({ scene, clip: () => null, kind: 'bow', volume: () => (WeatherManager.interactionAudioEnabled ? WeatherManager.masterVolume * WeatherManager.interactionVolume * 1.4 : 0) }))?.play?.(name, opts); } catch (e) {} },
     // a screen point (CSS px) of a world point, for score pops
     screenOf(p) { const r = engine.getRenderingCanvasClientRect(); const v = BABYLON.Vector3.Project(p, BABYLON.Matrix.Identity(), scene.getTransformMatrix(), walk.viewport.toGlobal(engine.getRenderWidth(), engine.getRenderHeight()));
@@ -10657,12 +11043,61 @@ function buildMiniGameCtx(def, src, frame) {
       // a move by name: Forge rigs any slot by its clip name (idle walk run jab cross_punch front_kick ...), held on its
       // last frame with hold; kit apes kick / jump; the starter ant flip-kicks / jumps
       clip(name, o = {}) { return playMiniGameClip(name, o); },
-      idle() { if (animState !== 0) { const g = animGroups[animState]; if (g?.isPlaying) g.stop(); animState = -1; switchAnim(0, true); } },
+      // a quick hop lasting about this long (a game's own hop from square to square): the running jump sped up to fit (the
+      // standing jump is 2.6 s, crouch to landing, far too slow for a hop), else the jump from its take-off
+      hop(seconds = .3) {
+        const t = Math.max(.15, seconds + .1);
+        if (ctx.player.has('jump_run')) return playMiniGameClip('jump_run', { speed: 1.03 / t });
+        if (ctx.player.has('jump')) return playMiniGameClip('jump', { speed: 1.2 / t, from: .7 });
+        return playMiniGameClip('jump');
+      },
+      // whether this Rebel can play a move by that name (its rig's clips, a lent weapon's, the games pack's)
+      has(name) { return !!window.forgeRigBundleInfo && miniGameClipSlot(name) != null && !!animGroups[miniGameClipSlot(name)]; },
+      // how far into its clip the move by that name is now (seconds; null when it is not playing): a ball or a stone can
+      // follow the move's own timing (the dribble's bounces, the jump shot's release)
+      clipTime(name) { const slot = miniGameClipSlot(name), g = slot != null ? animGroups[slot] : null, a = g?.isPlaying && g.animatables?.[0]; return a ? Math.max(0, (a.masterFrame - g.from) / 60) : null; },
+      // how long a move's clip is at its own pace (seconds; null without it): a dance looped in time with a song
+      clipLength(name) { const slot = miniGameClipSlot(name), g = slot != null ? animGroups[slot] : null; return g ? (g.to - g.from) / 60 : null; },
+      // stop the move playing now on its pose t seconds in (an axe's edge held in the log) until the next move; the bones
+      // read that pose at once (bone, grip), so a game can search the moment something meets something. false when that
+      // move is not the one on
+      pose(name, t) { const slot = miniGameClipSlot(name), g = slot != null ? animGroups[slot] : null; if (!g || animState !== slot || !g.isStarted) return false;
+        if (g.isPlaying) g.pause(); MiniGames.posed = g; // paused (a stopped move can't be set again); stopped when the next move plays
+        g.goToFrame(Math.min(g.to, g.from + Math.max(0, t) * 60));
+        charMesh.getChildMeshes(false).forEach(m => m.skeleton?.prepare(true)); return true; },
+      idle() { releasePosedClip(); if (animState !== 0) { const g = animGroups[animState]; if (g?.isPlaying) g.stop(); animState = -1; switchAnim(0, true); } },
       // where a bone is drawn now (world), e.g. 'RightHand'; null without a rig
       bone(name) { return getPlayerBoneWorld(name); },
+      // a prop held in a fist (frame coords): the grip point, the axis through the fist toward the thumb (a haft runs
+      // along it) and the knuckles' way (an axe's edge, a hammer's face); from the finger bones, so it is the same for
+      // every Forge rig; null without them
+      grip(side = 'Right') {
+        const w = n => getPlayerBoneWorld(side + n), h = w('Hand'), i1 = w('HandIndex1'), p1 = w('HandPinky1'), m1 = w('HandMiddle1') || i1; if (!h || !i1 || !p1) return null;
+        const H = ctx.toLocal(h), I = ctx.toLocal(i1), P = ctx.toLocal(p1), M = ctx.toLocal(m1), fing = M.subtract(H).normalize(), up = I.subtract(P).normalize();
+        const palm = BABYLON.Vector3.Cross(fing, up).normalize().scale(side === 'Left' ? -1 : 1), len = BABYLON.Vector3.Distance(H, M);
+        return { p: BABYLON.Vector3.Center(I, P).add(fing.scale(len * .45)).add(palm.scale(len * .35)), up, edge: fing.subtract(up.scale(BABYLON.Vector3.Dot(fing, up))).normalize(), palm };
+      },
       // a bow or a katana in hand with its moves (Promise of { kind, H, onRelease(fn) } or null)
-      weapon(kind, weaponId) { return lendGameWeapon(kind, weaponId); }
+      weapon(kind, weaponId) { return lendGameWeapon(kind, weaponId); },
+      // roam games: where the player is (world), stand somewhere in the village (world x, z, facing yaw), hold the walk
+      // (a countdown: the walking keys do nothing), and whether R is held
+      world() { return charMesh.position.clone(); },
+      placeWorld(x, z, yaw) { charMesh.position.x = x; charMesh.position.z = z; if (yaw != null) charMesh.rotation.y = yaw; charMesh._vel = 0; _playerDeckSnapUntil = performance.now() + 600;
+        const g = getVillagePlayerGroundHeightAt(x, z); if (Number.isFinite(g)) groundPlayableVisualToTerrain(g); snapWalkCameraBehindPlayer(); },
+      hold(on) { MiniGames.holdWalk = !!on; if (on) { moveForward = moveBackward = turnLeft = turnRight = runKey = false; charMesh._vel = 0; } },
+      // roam games: walk with another move while the game runs (Silent Steps: the sneak walk), null = the Rebel's own
+      // walk again; false when the Rebel has no such move
+      walkAs(name, speed = 1) { const slot = name && ctx.player.has(name) ? miniGameClipSlot(name) : null; MiniGames.walkSlot = slot; if (slot != null) { const g = animGroups[slot]; if (g._gameSpeed0 == null) g._gameSpeed0 = g.speedRatio; g.speedRatio = speed; } if (animState === slot || animState === 1) { const g = animGroups[animState]; if (g?.isPlaying) g.stop(); animState = -1; switchAnim(0, true); } return slot != null; },
+      // stand at this height (world y) instead of on the ground, e.g. a board on the sea; null = the ground again
+      float(y) { MiniGames.floatY = Number.isFinite(y) ? +y : null; if (MiniGames.floatY != null) groundPlayableVisualToTerrain(MiniGames.floatY); },
+      running() { return !!runKey; },
+      speed() { return Math.abs(charMesh._vel || 0) / Math.max(1e-3, engine.getDeltaTime() / 1000); }
     },
+    // the ground (or a kit floor) at a world point
+    ground(x, z) { const g = getNPCGroundHeightAt?.(x, z); return Number.isFinite(g) ? g : 0; },
+    village: CURRENT_VILLAGE_ID,
+    night() { return getFakeLightStateFactor?.() || 0; },
+    walkLight(k) { MiniGames.walkLight = k; },              // scale the walking light while the game is on (a stealth game dims it)
     event(name, data) { miniGameEvent(name, data); },
     finish(result) { finishMiniGame(result || {}); }
   };
@@ -10674,15 +11109,103 @@ function getPlayerBoneWorld(name) {
   if (!b) return null;
   return BABYLON.Vector3.TransformCoordinates(BABYLON.Vector3.Zero(), b.getFinalMatrix().multiply(sm.getWorldMatrix()));
 }
+// Glove colours (Oct 16, Miguel's idea): the player picks their Rebel's glove and cuff colours in the Rebel panel (Gloves,
+// under Journal), saved per Rebel on this device (localStorage rebelAntsGloves:v1: { '<collection>:<token or id>':
+// { glove, cuff } }, each '#rrggbb', 'forged' or absent). Forge rigs carry the gloves as their own materials ('Glove',
+// 'GloveCuff'), so the colour is set on the loaded rig: no re-rig, the rig files untouched. The standard look is Forged =
+// the colour the Forge gave the gloves (the rig's own, kept before the loader paints untextured parts with a palette
+// colour; Oct 17, Miguel: "i like the forged better as the standard look"); Palette = the look the village had before.
+// Rigs without glove materials (older rigs, kit apes, the starter ant) show no Gloves button.
+const PlayerGloves = (() => {
+  const KEY = 'rebelAntsGloves:v1';
+  const PRESETS = [['Ink', '#1b1b1f'], ['Bone', '#e9e2d0'], ['Crimson', '#8c1c1c'], ['Ember', '#d9622b'], ['Gold', '#d8b35c'], ['Moss', '#4f6b3a'],
+    ['Jade', '#2f8a6b'], ['Teal', '#1f5753'], ['Sky', '#4f8fd6'], ['Navy', '#1d2b4f'], ['Plum', '#5f1d45'], ['Rose', '#d98ba6']];
+  let mats = null; // { glove: [{ m, c0, forged }], cuff: [...] }: the rig's glove materials, their default and forged colours
+  const rebelKey = () => { const r = window.activeRebel || getSelectedRebel() || {}; return `${r.collectionKey || 'battle_for_colony'}:${r.tokenId ?? r.id ?? 'ant_1'}`; };
+  const all = () => { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } };
+  const choice = () => all()[rebelKey()] || {};
+  const save = (c) => { try { const a = all(); if (c.glove || c.cuff) a[rebelKey()] = c; else delete a[rebelKey()]; localStorage.setItem(KEY, JSON.stringify(a)); } catch (e) {} };
+  const hexOf = (lin) => lin.toGammaSpace().toHexString().toLowerCase();
+  function attach(meshes) {
+    mats = { glove: [], cuff: [] }; const seen = new Set();
+    for (const m of meshes || []) {
+      const mt = m.material; if (!mt || seen.has(mt) || !/^Glove/.test(mt.name || '')) continue; seen.add(mt);
+      const c0 = (mt.albedoColor || mt.diffuseColor)?.clone(); if (!c0) continue;
+      mt.unfreeze?.(); // a frozen material keeps its old colour
+      mats[/Cuff/i.test(mt.name) ? 'cuff' : 'glove'].push({ m: mt, c0, forged: mt._forgedAlbedo?.clone() || null });
+    }
+    if (!mats.glove.length && !mats.cuff.length) mats = null;
+    document.body.classList.toggle('has-gloves', !!mats); apply(); paint();
+  }
+  function colourFor(e, v) {
+    if (v === 'palette') return e.c0;
+    return /^#[0-9a-f]{6}$/i.test(v || '') ? BABYLON.Color3.FromHexString(v).toLinearSpace() : e.forged || e.c0; // none or 'forged': the Forge's
+  }
+  function apply() {
+    if (!mats) return; const c = choice();
+    for (const k of ['glove', 'cuff']) for (const e of mats[k]) { const col = colourFor(e, c[k]); if (e.m.albedoColor) e.m.albedoColor = col.clone(); else e.m.diffuseColor = col.clone(); }
+  }
+  function set(k, v) { const c = { ...choice() }; c[k] = v ? String(v).toLowerCase() : null; save(c); apply(); paint(); }
+  function paint() {
+    const el = document.getElementById('glovePanel'); if (!el) return; const c = choice();
+    for (const k of ['glove', 'cuff']) {
+      const row = el.querySelector(`.gp-sw[data-k="${k}"]`), cur = c[k] || null; if (!row) continue;
+      row.closest('.gp-row').style.display = mats?.[k]?.length ? '' : 'none'; // older rigs have no cuff material of their own
+      if (!row.childElementCount && mats?.[k]?.length) {
+        const mk = (name, v, bg, cls) => { const b = document.createElement('button'); b.type = 'button'; b.title = name; b.dataset.v = v || ''; if (bg) b.style.background = bg; if (cls) b.className = cls; b.onclick = () => set(k, v); return b; };
+        const e = mats[k][0];
+        row.appendChild(mk('Forged (the colour the Forge gave it)', null, hexOf(e.forged || e.c0), 'forged'));
+        if (e.forged && hexOf(e.forged) !== hexOf(e.c0)) row.appendChild(mk('Palette (the village\'s old look)', 'palette', hexOf(e.c0), 'default'));
+        PRESETS.forEach(([n, h]) => row.appendChild(mk(n, h, h)));
+        const pick = document.createElement('input'); pick.type = 'color'; pick.title = 'Any colour'; pick.oninput = () => set(k, pick.value); row.appendChild(pick);
+      }
+      row.querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.v || null) === (cur === 'forged' ? null : cur)));
+      const pk = row.querySelector('input[type=color]'); if (pk && /^#/.test(cur || '')) pk.value = cur;
+      const nm = el.querySelector(`.gp-name[data-k="${k}"]`); if (nm) nm.textContent = !cur || cur === 'forged' ? 'Forged' : cur === 'palette' ? 'Palette' : (PRESETS.find(p => p[1] === cur)?.[0] || cur);
+    }
+  }
+  return { attach, set, choice, apply, paint, PRESETS, available: () => !!mats, _mats: () => mats };
+})();
+window.PlayerGloves = PlayerGloves; // tests
+window.togglePlayerGlovePanel = function (on) {
+  const el = document.getElementById('glovePanel'); if (!el || !PlayerGloves.available()) return;
+  const show = on == null ? !el.classList.contains('on') : !!on; el.classList.toggle('on', show); if (show) PlayerGloves.paint();
+};
+// The games pack (v2.24): Miguel's Mixamo moves for the games (game_cast / reel / fish_wait, game_dig, game_plant,
+// game_pick_up, game_throw / throw_far, game_chop, game_cheer, game_push / push_walk, dance_wave / tut / house /
+// gangnam), made by the Forge Rigger for each Rebel beside its rig (games.glb: the skeleton + those clips). Loaded
+// once a visit, a while after the Rebel arrives or when a game that plays them starts (impl.moves). null = this Rebel
+// has none (no rig, or a rig from before the pack): games play their stand-in moves.
+const GamesPack = { ready:null, slots:null }, GAMES_PACK_SLOT0 = 150;
+function loadGamesPack() {
+  if (GamesPack.ready) return GamesPack.ready;
+  if (!window.forgeRigBundleInfo || !window.RebelWeapon?.gamesFor || !window._playerImport || !charMesh) return Promise.resolve(null);
+  return GamesPack.ready = (async () => {
+    const url = await RebelWeapon.gamesFor((activeCharacter.basePath || '') + (_forgeSingleGlb || '')); if (!url) return null;
+    const groups = await RebelWeapon.loadMoves({ scene, root:window._playerImport.meshes[0], url });
+    const slots = {}; let i = GAMES_PACK_SLOT0;
+    for (const [name, g] of Object.entries(groups)) { g.enableBlending = true; g.blendingSpeed = 0.12; animGroups[i] = g; slots[name] = i++; }
+    return GamesPack.slots = slots;
+  })().catch(e => { console.warn('games pack', e); return null; });
+}
+window._gamesPack = GamesPack; // tests
+function miniGameClipSlot(name) { return MiniGames.weapon?.slots?.[name] ?? GamesPack.slots?.[name] ?? (window._forgeClipSlots || {})[name]; }
+// a move a game held on one pose (ctx.player.pose: paused) stops before the next move plays; stopping keeps the pose, so
+// the next move blends from it
+function releasePosedClip() { const g = MiniGames.posed; if (!g) return; MiniGames.posed = null; if (g.isStarted) g.stop(); if (animGroups[animState] === g) animState = -1; }
 function playMiniGameClip(name, o = {}) {
+  releasePosedClip();
   if (window.forgeRigBundleInfo) {
-    const slot = MiniGames.weapon?.slots?.[name] ?? (window._forgeClipSlots || {})[name];
+    const slot = miniGameClipSlot(name);
     const g = slot != null ? animGroups[slot] : null; if (!g) return false;
     if (animState === slot) { if (g.isPlaying) g.stop(); animState = -1; } // the same move again: from its start
-    if (o.speed) g.speedRatio = o.speed;
-    if (o.loop) { switchAnim(slot, true); return true; }
-    if (o.hold) { switchAnim(slot, false); return true; } // stays on its last frame until the next move
-    return playForgeRigAction(slot, null, true);
+    // a game's speed for this move only: the group's own speed comes back for the next play without one, and after the game
+    if (g._gameSpeed0 == null) g._gameSpeed0 = g.speedRatio;
+    g.speedRatio = o.speed || g._gameSpeed0;
+    const from = () => { if (o.from) g.goToFrame(Math.min(g.to, g.from + o.from * 60)); }; // o.from: start that many seconds in
+    if (o.loop) { switchAnim(slot, true); from(); return true; }
+    if (o.hold) { switchAnim(slot, false); from(); return true; } // stays on its last frame until the next move
+    const ok = playForgeRigAction(slot, null, true, (o.from || 0) * 1000 / (g.speedRatio || 1)); from(); return ok;
   }
   if (window.kitPlayerModel) { window.SamuraiKit?.actorAction?.(window.kitPlayerModel, /jump|flip/.test(name) ? 'jump' : 'kick'); return true; }
   if (/kick|punch|jab|throw|roll/.test(name) && animGroups[3]) { if (animState === 3) { animGroups[3].stop(); animState = -1; } switchAnim(3, false); setTimeout(() => { if (animState === 3) switchAnim(0, true); }, 900); return true; }
@@ -10695,14 +11218,31 @@ function updateMiniGame(dt) {
 }
 function miniGameKey(e, down) {
   const key = e.key.toLowerCase();
-  if (RebelGames.resultOpen()) { if (down && (key === 'enter' || key === 'escape')) { e.preventDefault(); document.querySelector('#gameResult .gr-done')?.click(); } return; }
+  // the result card: Enter goes on (Next when the game offers it, else Done), Esc is Done
+  if (RebelGames.resultOpen()) { if (down && (key === 'enter' || key === 'escape')) { e.preventDefault(); document.querySelector(key === 'enter' ? '#gameResult .gr-next:not([hidden]), #gameResult .gr-done' : '#gameResult .gr-done')?.click(); } return; }
+  // the how-to card: Enter, Space or Esc closes it; nothing reaches the game while it is open
+  if (RebelGames.HUD.howToOpen?.()) { if (down && (key === 'enter' || key === ' ' || key === 'escape')) { e.preventDefault(); RebelGames.HUD.closeHowTo(); } return; }
   if (down && key === 'escape') {
     e.preventDefault();
     if (performance.now() - MiniGames.escAt < 1800) { quitMiniGame(); return; }
     MiniGames.escAt = performance.now(); RebelGames.HUD.msg('Esc again to quit', 1700); return;
   }
   if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) e.preventDefault();
+  // a digit on a level picker picks that level (1-9, 0 = the tenth)
+  if (down && /^[0-9]$/.test(key)) { const b = document.querySelector(`#gameHud button[data-k="${key === '0' ? 9 : +key - 1}"]:not([disabled])`); if (b) noteMiniGameLevel(+b.dataset.k, b.parentElement); }
   try { MiniGames.inst?.key?.(e, down); } catch (err) { console.warn('mini-game key', err); }
+}
+// a roam game's keys: the result card and Esc as in other games; the game gets each key first (true = used); the
+// village's own O / Tab / M wait while it runs (no doors or talks mid-run); everything else walks. false = walk on.
+function miniGameRoamKey(e, down) {
+  const key = e.key.toLowerCase();
+  if (RebelGames.resultOpen() || RebelGames.HUD.howToOpen?.() || key === 'escape') { if (down || RebelGames.resultOpen()) miniGameKey(e, down); return true; }
+  let used = false;
+  try { used = !!MiniGames.inst?.key?.(e, down); } catch (err) { console.warn('mini-game key', err); }
+  if (!down) return false; // a key let go always reaches the walk (no stuck keys)
+  if (used) { e.preventDefault(); return true; }
+  if (MiniGames.holdWalk && ['w', 's', 'a', 'd', 'r', ' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) { e.preventDefault(); return true; }
+  return key === 'o' || key === 'tab' || key === 'm' || key === 'enter';
 }
 // the spot or hotspot counts for the quest step asking for it (the step moves on only if one does)
 function miniGameQuestHook() {
@@ -10724,12 +11264,15 @@ function miniGameEvent(name, data) {
 function finishMiniGame(r) {
   if (!MiniGames.on) return;
   const def = MiniGames.def, rec = miniGameRecord(def.id);
-  const score = Math.max(0, Math.round(Number(r.score) || 0)), passed = r.passed != null ? !!r.passed : score >= def.pass;
-  const prevBest = rec.best || 0, newBest = score > prevBest && rec.plays > 0;
-  rec.plays = (rec.plays || 0) + 1; rec.best = Math.max(prevBest, score); rec.last = score; rec.at = Date.now();
-  let points = 0;
+  // a time trial (r.time in seconds): the lowest time is the best; a run not finished (r.finished false) counts no time
+  const low = r.time != null, done = !low || r.finished !== false;
+  const score = low ? Math.round(Number(r.time) * 10) / 10 : Math.max(0, Math.round(Number(r.score) || 0)), passed = r.passed != null ? !!r.passed : !low && score >= def.pass;
+  const prevBest = rec.best || 0, newBest = rec.plays > 0 && done && (low ? !prevBest || score < prevBest : score > prevBest);
+  rec.plays = (rec.plays || 0) + 1; rec.best = low ? (done ? (prevBest ? Math.min(prevBest, score) : score) : prevBest) : Math.max(prevBest, score); rec.last = score; rec.at = Date.now();
+  if (low) rec.low = true;
+  let points = 0, firstClear = false;
   if (passed && !rec.cleared) {
-    rec.cleared = true; rec.clearedAt = Date.now(); points = def.points || 0;
+    rec.cleared = true; rec.clearedAt = Date.now(); points = (def.points || 0) * GAME_POINTS_X; firstClear = true;
     if (points) {
       ProgressionState.rebelPoints = (Number(ProgressionState.rebelPoints) || 0) + points;
       if (!Array.isArray(ProgressionState.rebelPointsLog)) ProgressionState.rebelPointsLog = [];
@@ -10738,23 +11281,80 @@ function finishMiniGame(r) {
     }
   }
   saveProgressionState();
+  if (firstClear) checkAutoBadges(); // a first clear can finish a village's games (the card waits for the game to end)
   if (passed && def.questOn === 'pass') miniGameQuestHook();
+  if (passed && GamesPack.slots?.game_cheer && !MiniGames.roam) playMiniGameClip('game_cheer'); // a Rebel with the games pack cheers a clear
   try { window.dispatchEvent(new CustomEvent('rebelAntsGameEnd', { detail:{ game:def.id, score, passed, best:rec.best, newBest, points } })); } catch (e) {}
   if (points) setTimeout(() => showRebelPointsPop(points), 600);
+  if (MiniGames.roam) { moveForward = moveBackward = turnLeft = turnRight = runKey = false; if (charMesh) charMesh._vel = 0; }
   const extra = [r.extra || '', points ? `First clear: +${points} Rebel points.` : (!passed && def.pass ? (r.solved ? `${def.pass} points clears the game: try a harder level.` : `Score ${def.pass} to clear it.`) : '')].filter(Boolean).join(' ');
-  RebelGames.showResult({ kicker: passed ? 'Cleared' : r.solved ? (r.solvedWord || 'Solved') : 'Game over', title: def.title || MiniGames.impl?.title || '', score, label: r.label || 'points', best: rec.best, newBest, extra,
-    onAgain: () => restartMiniGame(), onDone: () => endMiniGame() });
+  const clock = t => t >= 60 ? `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}` : t.toFixed(1); // a minute or more as m:ss.s
+  const nextLevel = r.next !== undefined ? r.next : (r.solved || passed) && MiniGames.level != null && MiniGames.level + 1 < (MiniGames.levels || 0) ? MiniGames.level + 1 : null;
+  RebelGames.showResult({ kicker: r.kicker || (passed ? 'Cleared' : r.solved ? (r.solvedWord || 'Solved') : 'Game over'), title: def.title || MiniGames.impl?.title || '', score: low ? (done ? clock(score) : '—') : score, label: r.label || (low ? (done && score >= 60 ? 'time' : 'seconds') : 'points'), best: low ? (rec.best ? (rec.best >= 60 ? clock(rec.best) : rec.best.toFixed(1) + ' s') : null) : rec.best, newBest, extra,
+    onAgain: () => restartMiniGame(), onDone: () => endMiniGame(),
+    // a game with levels goes straight on to the next one (r.next: its index; else the level picked on the game's own
+    // picker, once that level is solved or cleared)
+    onNext: nextLevel != null ? () => restartMiniGame({ level: nextLevel }) : null, nextLabel: r.nextLabel });
+  showGameResultBoard(def, low, done, score, rec);
 }
+// Shared leaderboards (api/game-board.mjs): every game's top 10, one entry per wallet. The result card shows the board;
+// a finished run posts this device's best first when the wallet is signed in (the lobby's sign-in), guests only see
+// the board. Time trials (rec.low) rank the lowest time. Tap a game in the journal's Games tab for its board too.
+const GameBoard = (() => {
+  let sess = null, tok = 0;
+  const session = () => sess || (sess = fetch('/api/wallet-auth?action=session', { credentials: 'same-origin' })
+    .then(r => r.ok ? r.json() : null).then(j => j?.address || null).catch(() => null));
+  const rebel = () => { const r = window.activeRebel || getSelectedRebel() || {}; return { col: r.collectionKey || 'battle_for_colony', id: r.tokenId ?? null }; };
+  const json = async (r) => { const j = await r.json().catch(() => null); return r.ok && j?.ok ? j : null; };
+  const get = (game, kind) => fetch(`/api/game-board?game=${encodeURIComponent(game)}&kind=${kind}`, { credentials: 'same-origin' }).then(json).catch(() => null);
+  const post = (game, kind, value) => fetch('/api/game-board', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ game, kind, value, rebel: rebel() }) }).then(json).catch(() => null);
+  const fmt = (v, kind) => kind === 't' ? (v >= 60 ? `${Math.floor(v / 60)}:${(v % 60).toFixed(1).padStart(4, '0')}` : `${(+v).toFixed(1)} s`) : Math.round(v).toLocaleString('en-US');
+  function html(b, kind, signedIn) {
+    const rows = (b?.top || []).map(t => `<li class="${t.you ? 'you' : ''}"><span class="gb-r">${t.rank}</span><span class="gb-n">${escapeHTML(t.name)}${t.you ? ' (you)' : ''}</span><span class="gb-t">${escapeHTML(t.tag || '')}</span><span class="gb-v">${fmt(t.value, kind)}</span></li>`).join('');
+    const you = b?.you && !(b.top || []).some(t => t.you) ? `<div class="gb-note">You: #${b.you.rank} · ${fmt(b.you.value, kind)}</div>` : '';
+    const note = signedIn ? '' : '<div class="gb-note">Sign in with your wallet in the lobby to put your scores on the board.</div>';
+    return `<div class="gb-head">Top 10</div>${rows ? `<ol class="gb-list">${rows}</ol>` : '<div class="gb-note">No scores yet: be the first.</div>'}${you}${note}`;
+  }
+  // into an element: 'Top 10 …' at once, the board when it comes, nothing if the boards can't be reached
+  async function show(el, game, kind, postValue) {
+    if (!el) return; const t = el._gbTok = ++tok; // each board waits for its own answer only
+    el.innerHTML = '<div class="gb-head">Top 10</div><div class="gb-note">Loading…</div>';
+    const me = await session();
+    let b = me && postValue != null ? await post(game, kind, postValue) : null;
+    if (!b) b = await get(game, kind);
+    if (t !== el._gbTok || !el.isConnected) return;
+    el.innerHTML = b ? html(b, kind, !!b.signedIn) : '';
+  }
+  return { session, get, post, show, html, fmt };
+})();
+window.GameBoard = GameBoard; // tests
+function showGameResultBoard(def, low, done, score, rec) {
+  const el = RebelGames.resultBoard?.(); if (!el || !def?.id) return;
+  // a finished run posts this device's best (the server keeps each wallet's best), so a best set before signing in counts too
+  GameBoard.show(el, def.id, low ? 't' : 's', done && rec.best > 0 ? rec.best : null);
+}
+window.openJournalGameBoard = function (btn, id, low) {
+  const row = btn?.closest('.journal-row'); if (!row) return;
+  let el = row.querySelector('.journal-board');
+  if (el && el.dataset.game === id) { el.remove(); return; }       // a second tap closes it
+  if (!el) { el = document.createElement('div'); el.className = 'journal-board'; row.appendChild(el); }
+  el.dataset.game = id;
+  GameBoard.show(el, id, low ? 't' : 's', null);
+};
 function disposeMiniGameInstance() {
   try { MiniGames.inst?.dispose?.(); } catch (e) { console.warn('mini-game dispose', e); }
   MiniGames.inst = null;
   putAwayGameWeapon();
   MiniGames.objs.slice().reverse().forEach(n => { try { if (!n.isDisposed?.()) n.dispose(false, false); } catch (e) {} });
   MiniGames.objs = [];
+  (MiniGames.movables || []).forEach(m => { if (!m.isDisposed?.()) { m.parent?.computeWorldMatrix?.(true); m.computeWorldMatrix(true); m.doNotSyncBoundingInfo = true; } });
+  MiniGames.movables = [];
   RebelGames.HUD.meter(null); RebelGames.HUD.reticle(null); RebelGames.HUD.card(''); RebelGames.HUD.msg('');
 }
-function restartMiniGame() {
+function restartMiniGame(o) {
   if (!MiniGames.on) return;
+  MiniGames.startLevel = o?.level ?? null; // ctx.startLevel: the level to open at once (the result card's Next)
   disposeMiniGameInstance();
   RebelGames.HUD.score(''); RebelGames.HUD.info(''); RebelGames.HUD.hint('');
   runMiniGameInstance();
@@ -10762,24 +11362,101 @@ function restartMiniGame() {
 function quitMiniGame() { RebelGames.hideResult(); endMiniGame(); }
 function endMiniGame() {
   if (!MiniGames.on) return;
-  disposeMiniGameInstance();
+  disposeMiniGameInstance(); releasePosedClip();
   if (MiniGames.pointerObs) { scene.onPointerObservable.remove(MiniGames.pointerObs); MiniGames.pointerObs = null; }
   RebelGames.hideResult(); RebelGames.HUD.show(false);
-  const s = MiniGames.saved;
-  MiniGames.on = false; MiniGames.ctx = null;
+  const s = MiniGames.saved, roam = MiniGames.roam;
+  MiniGames.on = false; MiniGames.ctx = null; MiniGames.roam = false; MiniGames.holdWalk = false; MiniGames.floatY = null; MiniGames.walkSlot = null;
+  animGroups.forEach(g => { if (g && g._gameSpeed0 != null) { g.speedRatio = g._gameSpeed0; g._gameSpeed0 = null; } });
+  document.body.classList.remove('game-roam');
   window._newTerrain?.birds?.setVisible(birdsShownFor(getFakeLightStateFactor()));
   moveForward = moveBackward = turnLeft = turnRight = runKey = false;
   if (charMesh) {
-    if (s) { charMesh.position.x = s.x; charMesh.position.z = s.z; charMesh.rotation.y = s.ry; _playerDeckSnapUntil = performance.now() + 600; }
+    if (s && !roam) { charMesh.position.x = s.x; charMesh.position.z = s.z; charMesh.rotation.y = s.ry; _playerDeckSnapUntil = performance.now() + 600; }
     charMesh._vel = 0; charMesh.getChildMeshes(false).forEach(m => { m.visibility = 1; });
     const g = animGroups[animState]; if (animState !== 0 && g?.isPlaying) g.stop(); animState = -1; switchAnim(0, true);
   }
   if (s) { walk.fov = s.fov; if (s.guide && !s.guide.isDisposed?.()) s.guide.setEnabled(!!s.guideOn); (s.hidden || []).forEach(n => { if (!n.isDisposed?.()) n.setEnabled(true); }); }
-  snapWalkCameraBehindPlayer();
+  if (!roam) snapWalkCameraBehindPlayer();
   setTimeout(processBadgeUnlockQueue, 400); // a badge earned in the game
 }
 window._miniGames = MiniGames; // tests
 window.startMiniGame = startMiniGame;
+// The Grand Relay (Oct 16): one run through all fifteen villages in the gate menu's order (the Hub, then 1-14), gate to
+// gate. It starts at its spot in the Hub (assets/games/relay.js: the rules, your best, Start). In each village the leg
+// runs from arriving (the walk on) until you reach its gate, which takes you straight on to the next village; loading
+// between villages is not timed. The run lives in localStorage across the page loads (rebelAntsGrandRelay:v1, the leg's
+// own clock kept every 2 s, so a reload goes on from there instead of starting the leg again); going anywhere else
+// (another village, the lobby, three hours away) ends it. At the last gate the result card shows the
+// total: a 'relay' game run with finishTime, recorded like any game (the lowest time, first-clear points, badges).
+const GrandRelay = (() => {
+  const KEY = 'rebelAntsGrandRelay:v1', ORDER = ['hub', ...FACTION_VILLAGES], MEDALS = [195, 225, 270];
+  let S = null, t0 = null, el = null, beam = null, gate = null, away = false; // away: this page has handed the run to the next village
+  let base = 0, keptAt = 0; // base: seconds of this leg run before this page (a reload carries the leg's clock on)
+  const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } };
+  const save = () => { try { if (S) localStorage.setItem(KEY, JSON.stringify(S)); else localStorage.removeItem(KEY); } catch (e) {} };
+  const fmt = t => { const m = Math.floor(t / 60), s = t - m * 60; return `${m}:${s.toFixed(1).padStart(4, '0')}`; };
+  const leg = () => base + (t0 != null ? (performance.now() - t0) / 1000 : 0);
+  const total = () => S ? S.done + leg() : 0;
+  const keep = () => { if (S && !away && t0 != null) { S.cur = +leg().toFixed(2); save(); } };
+  const name = v => VILLAGE_REGISTRY[v]?.displayName || v;
+  function hud(on) {
+    if (!on) { el?.remove(); el = null; beam?.dispose(); beam = null; return; }
+    if (el) return;
+    el = document.createElement('div'); el.id = 'grandRelayHud';
+    el.style.cssText = 'position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:12px;background:rgba(14,12,20,.86);border:1px solid rgba(232,190,90,.7);color:#f4ecd8;font:600 14px/1.2 Georgia,serif;pointer-events:auto';
+    el.innerHTML = '<b style="color:#e8be5a;letter-spacing:.08em;text-transform:uppercase;font-size:12px">Grand Relay</b><span class="gr-leg"></span><span class="gr-time" style="font:700 17px ui-monospace,Menlo,monospace;color:#ffe9a0;min-width:66px;text-align:right"></span><button type="button" style="border:1px solid #7a6a4a;background:transparent;color:#cdbf9f;border-radius:8px;padding:3px 8px;font:12px Georgia,serif;cursor:pointer">Give up</button>';
+    el.querySelector('button').onclick = (e) => { e.stopPropagation(); if (confirm('Give up the Grand Relay?')) cancel('Relay given up.'); };
+    document.body.appendChild(el);
+  }
+  function begin() { S = { on: true, leg: 0, done: 0, cur: 0, legs: [], at: Date.now() }; base = 0; save(); t0 = performance.now(); hud(true); }
+  function resume() {
+    const s = load(); if (!s?.on) return;
+    if (Date.now() - (s.at || 0) > 3 * 3600e3 || ORDER[s.leg] !== CURRENT_VILLAGE_ID) {
+      try { localStorage.removeItem(KEY); } catch (e) {}
+      setTimeout(() => showToast('The Grand Relay was left part-way: start it again at the Hub.', 3600), 3000); return;
+    }
+    S = s; t0 = null; base = +s.cur || 0;
+  }
+  function tick() {
+    if (!S || away) return;
+    if (t0 == null) { if (!walkMode || !charMesh || adminMode) return; t0 = performance.now(); hud(true); showToast(`Grand Relay · ${name(CURRENT_VILLAGE_ID)}: run to the gate!`, 1800); }
+    hud(true);
+    el.querySelector('.gr-leg').textContent = `${S.leg + 1} / ${ORDER.length} · ${name(CURRENT_VILLAGE_ID)}`;
+    el.querySelector('.gr-time').textContent = fmt(total());
+    if (performance.now() - keptAt > 2000) { keptAt = performance.now(); keep(); }
+    if (!gate || gate.isDisposed?.()) gate = getVillageGateRoots()[0] || null;
+    if (gate && !beam) {
+      beam = BABYLON.MeshBuilder.CreateCylinder('grandRelayBeam', { height: 14, diameterTop: .4, diameterBottom: 1.4, tessellation: 16, cap: BABYLON.Mesh.NO_CAP }, scene);
+      const m = new BABYLON.StandardMaterial('grandRelayBeamMat', scene); m.disableLighting = true; m.emissiveColor = new BABYLON.Color3(1, .78, .3); m.alpha = .28; m.alphaMode = BABYLON.Engine.ALPHA_ADD; m.backFaceCulling = false; beam.material = m; beam.isPickable = false;
+      beam.onDisposeObservable.add(() => m.dispose());
+    }
+    if (gate && beam) { beam.position.set(gate.position.x, gate.position.y + 7, gate.position.z); beam.material.alpha = .22 + .1 * Math.sin(performance.now() / 160); }
+  }
+  // the gate opened during a leg: on to the next village (true: the gate menu stays shut). The page leaves a moment
+  // later (the travel fade, then the next page's load): meanwhile the clock stays stopped and the gate does nothing more
+  function atGate() {
+    if (away) return true;
+    if (!S || t0 == null || MiniGames.on) return false;
+    const t = leg(); S.legs.push(+t.toFixed(2)); S.done += t; S.leg++; S.cur = 0; base = 0; t0 = null;
+    if (S.leg >= ORDER.length) { const run = S; S = null; save(); hud(false); finish(run); return true; }
+    S.at = Date.now(); save(); hud(false); away = true; selectVillageGateDestination(ORDER[S.leg]); return true;
+  }
+  // the total on the result card (a 'relay' game run that only finishes)
+  function finish(run) {
+    _lastVillageGateAutoOpenAt = performance.now() + 6000; // standing in the gate: no menu straight after the card
+    const root = new BABYLON.TransformNode('grandRelayEnd', scene); root.position.copyFrom(charMesh.position); root.rotation.y = charMesh.rotation.y;
+    startMiniGame({ type: 'relay', id: 'grand-relay', title: 'The Grand Relay', finishTime: run.done, legs: run.legs, order: ORDER, medals: MEDALS, points: 60, pass: 0, questOn: 'pass' }, { kind: 'spot', root, cfg: {} });
+    setTimeout(() => root.dispose(), 60000);
+  }
+  function cancel(msg) { S = null; t0 = null; base = 0; save(); hud(false); if (msg) showToast(msg, 2200); }
+  // back to this page from the browser's cache (Back after a gate): the run went on elsewhere, so read it afresh
+  window.addEventListener('pageshow', (e) => { if (e.persisted && away) { away = false; S = null; t0 = null; hud(false); resume(); } });
+  window.addEventListener('pagehide', keep);
+  return { begin, resume, tick, atGate, cancel, on: () => !!S, target: () => { const g = gate || getVillageGateRoots()[0]; return S && g ? { x: g.position.x, z: g.position.z } : null; }, ORDER, MEDALS, fmt, names: () => ORDER.map(name), _state: () => S };
+})();
+window.GrandRelay = GrandRelay;
+GrandRelay.resume();
 
 // the crowd at a hold or dance-off with spotConfig.cheer: now and then one of them hops or kicks (kit apes) or plays a
 // lively clip (forged NPCs)
@@ -10787,8 +11464,189 @@ function questSpotCheerTick(hc, state) {
   if (!hc.cheer?.length || performance.now() < (state.cheerAt || 0)) return;
   state.cheerAt = performance.now() + 450 + Math.random() * 650;
   const npc = getNPCById?.(hc.cheer[Math.floor(Math.random() * hc.cheer.length)]), km = npc?.metadata?.kitModel;
-  if (km) window.SamuraiKit?.actorAction?.(km, Math.random() < .75 ? 'jump' : 'kick');
+  // kit apes dance (a groove on the beat), now and then a jump or a kick; one move at a time each
+  if (km) { if (!window.SamuraiKit?.actorBusy?.(km)) { const r = Math.random(); window.SamuraiKit?.actorAction?.(km, r < .7 ? 'dance' : r < .9 ? 'jump' : 'kick'); } }
   else if (npc) playNPCPartyMove(npc); // forged NPCs dance with their own clips
+}
+
+// A hold the Rebel acts out (Miguel, Test Night 3, on the Big Catch: "i wish we could have the character really look like he
+// is fishing and catching something"). spotConfig.holdMoves [{ clip, at, loop, hold, speed, pull }] = moves through the hold
+// (at = its fraction of holdSeconds; Forge rigs: the games pack's game_cast / game_fish_wait / game_reel; pull = how hard the
+// fish pulls the rod while it plays), holdFace = the yaw in the spot's frame the Rebel turns to ('spot': toward the spot),
+// holdProp 'rod' = a rod in the hands, cast holdCast m out to a float on the water; at holdBite of the hold the float goes
+// under and the line fights, the rod bending with it; 'shovel' = a spade in both hands, sand flying where it bites (the
+// Treasure Map's X); holdTake = kit material keys of the spot's own piece the Rebel takes up for the show (the X's stuck
+// shovel: hidden while the shovel is in the hands, back if the hold stops). The show ends with the hold however it ends:
+// done (holdDoneMove, else a cheer), moved, a game starting.
+const HoldShow = { hold:null, hc:null, nodes:[], obs:null, move:-1, tryAt:0, mats:null, rod:null, shovel:null, taken:[] };
+window._holdShow = HoldShow; // tests
+const HOLD_CAST_RELEASE = 1.45, HOLD_CAST_LEN = 2.7, HOLD_CAST_FLY = .9; // game_cast: the rod comes forward 1.45 s in (Pier Fishing)
+function holdShowMats() {
+  if (HoldShow.mats && HoldShow.mats.rod.getScene?.() === scene && !HoldShow.mats.rod.isDisposed?.()) return HoldShow.mats;
+  const m = (n, c, e) => { const x = new BABYLON.StandardMaterial(n, scene); x.diffuseColor = new BABYLON.Color3(...c); x.specularColor = new BABYLON.Color3(.15, .15, .15); if (e) x.emissiveColor = new BABYLON.Color3(...e); x.metadata = { perfKeepLive:true }; return x; };
+  const ring = m('holdRing', [.9, .95, 1], [.6, .7, .8]); ring.disableLighting = true; ring.alpha = .7;
+  const iron = m('holdIron', [.42, .43, .46], [.05, .05, .06]); iron.specularColor = new BABYLON.Color3(.5, .5, .5);
+  return HoldShow.mats = { rod:m('holdRod', [.42, .28, .14], [.06, .04, .02]), reel:m('holdReel', [.2, .2, .22], [.04, .04, .04]), red:m('holdBobRed', [.9, .15, .12], [.35, .05, .04]), white:m('holdBobWhite', [.95, .95, .92], [.3, .3, .3]), ring, iron, sand:m('holdSand', [.86, .74, .52], [.18, .15, .1]) };
+}
+function startHoldShow(hold, hc) {
+  endHoldShow(false);
+  if (!hc.holdMoves && !hc.holdProp && hc.holdFace == null) return;
+  HoldShow.hold = hold; HoldShow.hc = hc; HoldShow.move = -1; HoldShow.tryAt = 0;
+  const ry = hold.root.rotationQuaternion ? hold.root.rotationQuaternion.toEulerAngles().y : hold.root.rotation.y || 0;
+  if (hc.holdFace === 'spot' && charMesh) { const dx = hold.root.position.x - charMesh.position.x, dz = hold.root.position.z - charMesh.position.z; if (Math.hypot(dx, dz) > .4) charMesh.rotation.y = Math.atan2(dx, dz); }
+  else if (hc.holdFace != null && charMesh) charMesh.rotation.y = ry + hc.holdFace;
+  if (hc.holdMoves && window.forgeRigBundleInfo && !GamesPack.slots) loadGamesPack();
+  if (hc.holdProp === 'rod') buildHoldRod(hc);
+  if (hc.holdProp === 'shovel') buildHoldShovel();
+  if (hc.holdProp && hc.holdTake?.length) { const keys = new Set(hc.holdTake.map(k => 'samKit_' + k)); HoldShow.taken = (hold.root.metadata?._piece?.getChildMeshes(false) || []).filter(c => c.isEnabled() && keys.has(c.material?.name)); HoldShow.taken.forEach(c => c.setEnabled(false)); }
+  HoldShow.obs = scene.onBeforeRenderObservable.add(tickHoldShow);
+}
+function endHoldShow(done) {
+  if (HoldShow.obs) { scene.onBeforeRenderObservable.remove(HoldShow.obs); HoldShow.obs = null; }
+  const had = HoldShow.hold, hc = HoldShow.hc; HoldShow.hold = null; HoldShow.hc = null;
+  HoldShow.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); HoldShow.nodes = []; HoldShow.rod = null; HoldShow.shovel = null;
+  HoldShow.taken.forEach(c => { if (!c.isDisposed()) c.setEnabled(true); }); HoldShow.taken = []; // put back (a done spot swaps to its done piece anyway)
+  // the show's move ends: its done move (a cheer for a catch, a pick-up for a find), else back to standing
+  if (had && HoldShow.move >= 0 && animState >= 3 && !(done && playMiniGameClip(hc?.holdDoneMove || 'game_cheer'))) {
+    const g = animGroups[animState]; if (g?.isPlaying) g.stop(); animState = -1; switchAnim(0, true);
+  }
+  HoldShow.move = -1;
+}
+function buildHoldRod(hc) {
+  const M = holdShowMats(), keep = n => { n.isPickable = false; HoldShow.nodes.push(n); return n; };
+  const R = HoldShow.rod = { path:[], cast:hc.holdCast || 14, bite:hc.holdBite || .2, rings:[], ringAt:0, released:null, land:null };
+  for (let i = 0; i < 9; i++) R.path.push(new BABYLON.Vector3(0, i * .4, 0)); // set every frame
+  R.rad = i => .034 - .024 * i / 8;
+  R.tube = keep(BABYLON.MeshBuilder.CreateTube('holdRod', { path:R.path, radiusFunction:R.rad, tessellation:8, updatable:true, cap:BABYLON.Mesh.CAP_ALL }, scene)); R.tube.material = M.rod;
+  R.reel = keep(BABYLON.MeshBuilder.CreateCylinder('holdReel', { diameter:.15, height:.07, tessellation:14 }, scene)); R.reel.material = M.reel;
+  R.bob = keep(new BABYLON.TransformNode('holdBob', scene));
+  const top = keep(BABYLON.MeshBuilder.CreateSphere('holdBobTop', { diameter:.24, segments:8, slice:.5 }, scene)); top.material = M.red; top.parent = R.bob;
+  const bot = keep(BABYLON.MeshBuilder.CreateSphere('holdBobBot', { diameter:.24, segments:8, slice:.5 }, scene)); bot.material = M.white; bot.rotation.x = Math.PI; bot.parent = R.bob;
+  R.bob.setEnabled(false);
+  [R.tube, R.reel].forEach(m => { m.alwaysSelectAsActiveMesh = true; });
+}
+function tickHoldShow() {
+  const hold = HoldShow.hold;
+  if (!hold || QuestSpotRuntime.hold !== hold || !charMesh) { endHoldShow(false); return; }
+  const hc = hold.root.metadata.spotConfig, held = (performance.now() - hold.startedAt) / 1000, u = Math.min(1, held / hc.holdSeconds);
+  // the move for this part of the hold (tried again while the games pack is still on its way)
+  const moves = hc.holdMoves; let k = -1;
+  if (moves?.length) moves.forEach((m, i) => { if (u >= m.at) k = i; });
+  if (k >= 0 && k !== HoldShow.move && window.forgeRigBundleInfo && performance.now() >= HoldShow.tryAt) {
+    const m = moves[k];
+    if (playMiniGameClip(m.clip, { loop:m.loop, hold:m.hold, speed:m.speed || undefined })) HoldShow.move = k;
+    else HoldShow.tryAt = performance.now() + 400;
+  }
+  if (HoldShow.rod) poseHoldRod(hc, held, k >= 0 ? moves[k].pull || 0 : 0);
+  if (HoldShow.shovel) poseHoldShovel();
+}
+// the spade: a wooden shaft through both hands (the higher one at its top), a T grip, an iron blade past the lower hand,
+// facing the way the Rebel faces; sand thrown up whenever the blade is down in the ground
+function buildHoldShovel() {
+  const M = holdShowMats(), keep = n => { n.isPickable = false; n.alwaysSelectAsActiveMesh = true; HoldShow.nodes.push(n); return n; };
+  const S = HoldShow.shovel = { sand:[], sandAt:0 };
+  S.shaft = keep(BABYLON.MeshBuilder.CreateCylinder('holdShovelShaft', { height:1, diameter:.055, tessellation:8 }, scene)); S.shaft.material = M.rod;
+  S.grip = keep(BABYLON.MeshBuilder.CreateBox('holdShovelGrip', { width:.22, height:.06, depth:.06 }, scene)); S.grip.material = M.reel;
+  S.blade = keep(BABYLON.MeshBuilder.CreateBox('holdShovelBlade', { width:.3, height:.38, depth:.03 }, scene)); S.blade.material = M.iron;
+  S.grain = keep(BABYLON.MeshBuilder.CreateSphere('holdSandGrain', { diameter:.12, segments:4 }, scene)); S.grain.material = M.sand; S.grain.isVisible = false;
+}
+function poseHoldShovel() {
+  const S = HoldShow.shovel, V3 = BABYLON.Vector3, yaw = charMesh.rotation.y, p0 = charMesh.position;
+  const f = new V3(Math.sin(yaw), 0, Math.cos(yaw)), r = new V3(Math.cos(yaw), 0, -Math.sin(yaw));
+  const rh = getPlayerBoneWorld('RightHand'), lh = getPlayerBoneWorld('LeftHand');
+  let top, low;
+  if (rh && lh && V3.Distance(rh, lh) > .12) { [top, low] = rh.y >= lh.y ? [rh, lh] : [lh, rh]; }
+  else { top = p0.add(r.scale(.25)).add(new V3(0, 1.55, 0)).add(f.scale(.35)); low = top.add(new V3(0, -.55, 0)).add(f.scale(.35)); }
+  const ax = low.subtract(top).normalize(), a = top.subtract(ax.scale(.22)), b = low.add(ax.scale(.62)), len = V3.Distance(a, b);
+  const q = S.shaft.rotationQuaternion || (S.shaft.rotationQuaternion = new BABYLON.Quaternion());
+  BABYLON.Quaternion.FromUnitVectorsToRef(V3.Up(), ax.scale(-1), q);
+  S.shaft.position.copyFrom(V3.Lerp(a, b, .5)); S.shaft.scaling.set(1, len, 1);
+  // the grip across the top, the blade below the shaft, its face across the Rebel's way
+  const X = r.subtract(ax.scale(V3.Dot(r, ax))).normalize(), Y = ax.scale(-1), Z = V3.Cross(X, Y);
+  for (const m of [S.grip, S.blade]) { m.rotationQuaternion = m.rotationQuaternion || new BABYLON.Quaternion(); BABYLON.Quaternion.RotationQuaternionFromAxisToRef(X, Y, Z, m.rotationQuaternion); }
+  S.grip.position.copyFrom(a); S.blade.position.copyFrom(b.add(ax.scale(.17)));
+  // sand where the blade bites
+  const t = performance.now() / 1000, tip = b.add(ax.scale(.36)), dt = engine.getDeltaTime() / 1000;
+  if (tip.y < p0.y + .3 && t >= S.sandAt) {
+    S.sandAt = t + .22;
+    for (let k = 0; k < 6; k++) { const g = S.grain.createInstance('holdSand'); g.isPickable = false; HoldShow.nodes.push(g); g.position.copyFrom(tip); g.position.y = Math.max(tip.y, p0.y + .05);
+      S.sand.push({ g, v: f.scale(-.6 - Math.random()).add(r.scale((Math.random() - .5) * 1.6)).add(new V3(0, 2.2 + Math.random() * 1.6, 0)), t: 0 }); }
+  }
+  for (let i = S.sand.length - 1; i >= 0; i--) {
+    const s = S.sand[i]; s.t += dt; s.v.y -= 9.8 * dt; s.g.position.addInPlace(s.v.scale(dt)); s.g.scaling.setAll(Math.max(.05, 1 - s.t * .9));
+    if (s.t > 1 || s.g.position.y < p0.y - .1) { s.g.dispose(); S.sand.splice(i, 1); const j = HoldShow.nodes.indexOf(s.g); if (j >= 0) HoldShow.nodes.splice(j, 1); }
+  }
+}
+function poseHoldRod(hc, held, pull) {
+  const R = HoldShow.rod, V3 = BABYLON.Vector3, yaw = charMesh.rotation.y, t = held;
+  const f = new V3(Math.sin(yaw), 0, Math.cos(yaw)), r = new V3(Math.cos(yaw), 0, -Math.sin(yaw)), up = V3.Up(), p0 = charMesh.position;
+  const NT = window._newTerrain, seaY = Number.isFinite(NT?.seaY) ? NT.seaY : Number.isFinite(NT?.recipe?.sea?.y) ? NT.recipe.sea.y : p0.y - 2;
+  const biteT = R.bite * hc.holdSeconds, bitten = t >= biteT, fight = Math.max(0, Math.min(1, (t - biteT) / Math.max(1, hc.holdSeconds - biteT)));
+  // the hands: the right through the cast, both while it waits, the left while the right winds the reel (Rebels with the
+  // games pack); without its moves the rod is held out from the right side
+  const rh = HoldShow.move >= 0 ? getPlayerBoneWorld('RightHand') : null, lh = rh ? getPlayerBoneWorld('LeftHand') : null;
+  const grip = rh && lh ? (t < HOLD_CAST_LEN ? rh : bitten && /reel/.test(hc.holdMoves?.[HoldShow.move]?.clip || '') ? lh : V3.Lerp(rh, lh, .5))
+    : p0.add(r.scale(.55)).add(up.scale(1.5)).add(f.scale(.4));
+  // the rod's lean from upright: back over the shoulder in the wind-up, whipped out at the release, then out over the water;
+  // a fish on pulls the tip down and jerks it
+  const REST = .95, jerk = pull * (.1 * Math.sin(t * 7.3) + .07 * Math.sin(t * 13.1));
+  let pitch = REST;
+  if (t < HOLD_CAST_RELEASE) pitch = REST - (REST + .55) * Math.sin(t / HOLD_CAST_RELEASE * Math.PI / 2);
+  else if (t < HOLD_CAST_RELEASE + .25) pitch = -.55 + (REST + .85) * (t - HOLD_CAST_RELEASE) / .25;
+  else if (t < HOLD_CAST_LEN) pitch = REST + .3 * (1 - (t - HOLD_CAST_RELEASE - .25) / (HOLD_CAST_LEN - HOLD_CAST_RELEASE - .25));
+  else if (bitten) pitch = REST - .35 + .3 * (1 - pull) + jerk; // held up against the pull
+  else pitch = REST + .03 * Math.sin(t * 2);
+  const d = up.scale(Math.cos(pitch)).add(f.scale(Math.sin(pitch))).normalize();
+  // where the line goes: the float on the water, or (a fish on) the point it enters the water, the fish running side to side
+  // and coming in as it is reeled
+  const tipAt = grip.add(d.scale(2.9));
+  if (t >= HOLD_CAST_RELEASE && !R.released) { R.released = tipAt.clone(); R.land = new V3(p0.x + f.x * R.cast, seaY + .06, p0.z + f.z * R.cast); }
+  let end = null;
+  if (R.land) {
+    if (!bitten) {
+      const k = Math.min(1, (t - HOLD_CAST_RELEASE) / HOLD_CAST_FLY);
+      end = k < 1 ? V3.Lerp(R.released, R.land, k).add(up.scale(Math.sin(Math.PI * k) * 3.2)) : R.land.add(up.scale(.04 * Math.sin(t * 3)));
+      R.bob.setEnabled(true); R.bob.position.copyFrom(end);
+    } else {
+      const sink = Math.min(1, (t - biteT) / .35);
+      R.bob.position.set(R.land.x, seaY + .06 - .35 * sink, R.land.z); R.bob.setEnabled(sink < 1);
+      if (!R.bit) { R.bit = true; holdRing(R, R.land, seaY, 1.6); }
+      const dist = R.cast * (1 - .78 * Math.pow(fight, 1.3)) + 1.2 * pull * Math.sin(t * .8);
+      end = new V3(p0.x + f.x * dist + r.x * (2.6 * Math.sin(t * .9) + .7 * Math.sin(t * 2.3)) * (1 - .6 * fight), seaY - .02, p0.z + f.z * dist + r.z * (2.6 * Math.sin(t * .9) + .7 * Math.sin(t * 2.3)) * (1 - .6 * fight));
+      if (t >= R.ringAt) { R.ringAt = t + .45 + Math.random() * .4; holdRing(R, end, seaY, .7 + pull * .6); }
+    }
+  }
+  // the rod bends toward the line: harder the harder the fish pulls
+  const bend = bitten ? .55 + .7 * pull + jerk : end && t > HOLD_CAST_LEN ? .12 : 0;
+  let bd = end ? end.subtract(tipAt) : up.scale(-1); bd = bd.subtract(d.scale(V3.Dot(bd, d))); if (bd.length() < 1e-4) bd = up.scale(-1); bd.normalize();
+  const seg = 3.2 / 8; let p = grip.subtract(d.scale(.3));
+  for (let i = 0; i < 9; i++) { R.path[i].copyFrom(p); const s = i / 8, dir = d.add(bd.scale(bend * s * 1.25)).normalize(); p = p.add(dir.scale(seg)); }
+  BABYLON.MeshBuilder.CreateTube(null, { path:R.path, radiusFunction:R.rad, instance:R.tube });
+  const tip = R.path[8];
+  // the reel under the rod, a hand's width up from the grip, spinning while it is wound
+  const n = up.subtract(d.scale(V3.Dot(up, d))).normalize();
+  R.reel.position.copyFrom(grip.add(d.scale(.12)).subtract(n.scale(.09)));
+  const q = R.reel.rotationQuaternion || (R.reel.rotationQuaternion = new BABYLON.Quaternion());
+  BABYLON.Quaternion.FromUnitVectorsToRef(V3.Up(), r, q);
+  if (bitten && /reel/.test(hc.holdMoves?.[HoldShow.move]?.clip || '')) q.multiplyInPlace(BABYLON.Quaternion.RotationAxis(V3.Up(), t * 14));
+  // the line: slack with a sag while the float sits, taut with a fish on
+  if (end) {
+    const sagAt = V3.Lerp(tip, end, .5); sagAt.y = Math.min(tip.y, end.y) - (bitten ? .05 : .3 + V3.Distance(tip, end) * .02);
+    const pts = [tip, V3.Lerp(tip, sagAt, .5), sagAt, V3.Lerp(sagAt, end, .5), end];
+    R.line = BABYLON.MeshBuilder.CreateLines('holdLine', { points:pts, updatable:true, instance:R.line || undefined }, scene);
+    if (!R.lineKept) { R.lineKept = true; R.line.color = new BABYLON.Color3(.95, .95, .9); R.line.isPickable = false; R.line.alwaysSelectAsActiveMesh = true; HoldShow.nodes.push(R.line); }
+  }
+  // rings spreading where the line cuts the water
+  for (let i = R.rings.length - 1; i >= 0; i--) {
+    const g = R.rings[i]; g.t += engine.getDeltaTime() / 1000;
+    const k = g.t / 1.2; g.m.scaling.setAll(1 + k * 2.5 * g.big); g.m.visibility = Math.max(0, 1 - k);
+    if (k >= 1) { g.m.dispose(); R.rings.splice(i, 1); const j = HoldShow.nodes.indexOf(g.m); if (j >= 0) HoldShow.nodes.splice(j, 1); }
+  }
+}
+function holdRing(R, at, seaY, big) {
+  const m = BABYLON.MeshBuilder.CreateTorus('holdRing', { diameter:.5, thickness:.04, tessellation:24 }, scene);
+  m.material = holdShowMats().ring; m.isPickable = false; m.position.set(at.x, seaY + .03, at.z);
+  HoldShow.nodes.push(m); R.rings.push({ m, t:0, big });
 }
 
 // The dance-off (spotConfig.dance { notes, need, every, lead, title, winText, loseText }): the spot's song plays and an arrow
@@ -10811,6 +11669,10 @@ function openDanceOff(root, cfg, level) {
   if (cfg.dance.levels && !level) return chooseDanceLevel(root, cfg);
   const dc = level ? { ...cfg.dance, ...DANCE_LEVELS[level] } : cfg.dance;
   el.classList.remove('choose');
+  try { loadGamesPack(); } catch (e) {} // the dances (usually here already: the pack comes 15 s after the Rebel)
+  // the Rebel turns to the camera to dance (it stood with its back to it), and the panel sits at the bottom of the screen
+  // (it covered the Rebel)
+  if (charMesh && typeof _orbitAngleH === 'number') charMesh.rotation.y = _orbitAngleH;
   // the song starts a moment after (and is heard a little after that): the moves wait for it
   const t0 = performance.now() / 1000 + dc.lead + .05 + (MoonTaleSounds.latency?.() || 0), lane = el.querySelector('.do-notes');
   lane.innerHTML = '';
@@ -10824,7 +11686,7 @@ function openDanceOff(root, cfg, level) {
     return { t: t0 + t, dir, el: n, judged: false };
   });
   moveForward = moveBackward = turnLeft = turnRight = false;
-  Object.assign(DanceOff, { on:true, choosing:false, replay:isDanceReplay(cfg), root, cfg, level, dc, notes, need:Math.min(dc.need, notes.length), hits:0, combo:0, px:charMesh.position.x, pz:charMesh.position.z, end:t0 + times[times.length - 1] + .6, cheerAt:0 });
+  Object.assign(DanceOff, { on:true, choosing:false, replay:isDanceReplay(cfg), root, cfg, level, dc, notes, need:Math.min(dc.need, notes.length), hits:0, combo:0, missRow:0, move:null, px:charMesh.position.x, pz:charMesh.position.z, end:t0 + times[times.length - 1] + .6, cheerAt:0 });
   el.querySelector('.do-title').textContent = (dc.title || cfg.label || 'Dance-off') + (level ? ' · ' + DANCE_LEVELS[level].label : '');
   el.querySelector('.do-judge').textContent = 'Get ready...';
   updateDanceOffScore();
@@ -10865,7 +11727,7 @@ function restartDanceOff() {
   return openDanceOff(root, cfg, level);
 }
 window.restartDanceOff = restartDanceOff;
-function closeDanceOff() { DanceOff.on = false; DanceOff.choosing = false; document.getElementById('danceOff')?.classList.remove('on', 'choose'); setTimeout(processBadgeUnlockQueue, 400); }
+function closeDanceOff() { DanceOff.on = false; DanceOff.choosing = false; stopDanceOffLoop(); document.getElementById('danceOff')?.classList.remove('on', 'choose'); setTimeout(processBadgeUnlockQueue, 400); }
 function updateDanceOff() {
   if (DanceOff.choosing && (!walkMode || ActiveInterior || !charMesh || Math.hypot(charMesh.position.x - DanceOff.px, charMesh.position.z - DanceOff.pz) > 2)) { closeDanceOff(); return; }
   if (!DanceOff.on) return;
@@ -10874,7 +11736,7 @@ function updateDanceOff() {
   const w = el.querySelector('.do-lane').clientWidth || 500, ring = w * .09, pxs = w * .36; // the lane shows ~2.5 s ahead
   for (const n of DanceOff.notes) {
     n.el.style.left = (ring + (n.t - now) * pxs) + 'px';
-    if (!n.judged && now - n.t > (DanceOff.dc || DanceOff.cfg.dance).window - .06) { n.judged = true; n.el.classList.add('miss'); DanceOff.combo = 0; el.querySelector('.do-judge').textContent = 'Miss'; updateDanceOffScore(); }
+    if (!n.judged && now - n.t > (DanceOff.dc || DanceOff.cfg.dance).window - .06) { n.judged = true; n.el.classList.add('miss'); DanceOff.combo = 0; el.querySelector('.do-judge').textContent = 'Miss'; danceOffMissed(); updateDanceOffScore(); }
   }
   questSpotCheerTick(DanceOff.cfg, DanceOff);
   if (now > DanceOff.end) {
@@ -10892,21 +11754,51 @@ function pressDance(dir) {
   const now = performance.now() / 1000, el = document.getElementById('danceOff'), judge = el.querySelector('.do-judge');
   const win = (DanceOff.dc || DanceOff.cfg.dance).window;
   let best = null; for (const n of DanceOff.notes) if (!n.judged && Math.abs(n.t - now) <= win && (!best || Math.abs(n.t - now) < Math.abs(best.t - now))) best = n;
-  if (!best) { judge.textContent = 'Off beat'; DanceOff.combo = 0; updateDanceOffScore(); return true; }
+  if (!best) { judge.textContent = 'Off beat'; DanceOff.combo = 0; danceOffMissed(); updateDanceOffScore(); return true; }
   best.judged = true;
-  if (best.dir !== dir) { best.el.classList.add('miss'); judge.textContent = 'Wrong move'; DanceOff.combo = 0; updateDanceOffScore(); return true; }
+  if (best.dir !== dir) { best.el.classList.add('miss'); judge.textContent = 'Wrong move'; DanceOff.combo = 0; danceOffMissed(); updateDanceOffScore(); return true; }
   const dt = Math.abs(best.t - now); best.el.classList.add('hit');
-  DanceOff.hits++; DanceOff.combo++;
+  DanceOff.hits++; DanceOff.combo++; DanceOff.missRow = 0;
   judge.textContent = dt <= win * .36 ? 'Perfect!' : 'Good';
-  playDanceMove(dir);
+  playDanceMove(dir, now - best.t);
   updateDanceOffScore();
   return true;
 }
 window.pressDance = pressDance;
 window._danceOff = DanceOff; // tests
-// the move a good press plays: Forge rigs cartwheel / jump / front flip / backflip; a Chumpz ape kicks or jumps; the starter
-// ant flip-kicks or jumps (a move still playing finishes first)
-function playDanceMove(dir) {
+// the move a good press plays: with the games pack the Rebel dances right through the song (Oct 17, Miguel: "the dance
+// offs still dont have the animations", "the dancing animations will probably need to be sped up"): the arrow's dance
+// (← wave, ↑ house, → tut, ↓ gangnam) loops in time with the song, each loop stretched to a whole number of the song's
+// beats a little quicker than the move's own pace, and starts where the note was (a late press starts it part-way);
+// the dance changes to the pressed arrow's at most once a bar, and two misses in a row stop it until the next good
+// press. Other Forge rigs cartwheel / jump / front flip / backflip; a Chumpz ape kicks or jumps; the starter ant
+// flip-kicks or jumps (a move still playing finishes first)
+const DANCE_PACK_MOVES = ['dance_wave', 'dance_house', 'dance_tut', 'dance_gangnam'];
+function danceOffLoop(dir, late) {
+  const slot = GamesPack.slots?.[DANCE_PACK_MOVES[dir]], g = slot != null ? animGroups[slot] : null; if (!g) return false;
+  const beat = DanceOff.dc?.beat || DanceOff.dc?.every || .5, len = (g.to - g.from) / 60, n = Math.max(2, Math.round(len / (beat * 1.12)));
+  if (g._danceSpeed0 == null) g._danceSpeed0 = g.speedRatio;
+  g.speedRatio = len / (n * beat);
+  // the same dance again: from the beat; another one: switchAnim stops the one playing (idle or the last dance), else
+  // every dance kept looping under the next and went on after the dance-off
+  if (animState === slot) { if (g.isPlaying) g.stop(); animState = -1; }
+  switchAnim(slot, true);
+  if (late > 0) g.goToFrame(Math.min(g.to, g.from + late * g.speedRatio * 60));
+  DanceOff.move = { dir, slot, at: performance.now() / 1000 - Math.max(0, late || 0) };
+  return true;
+}
+function stopDanceOffLoop() { // back to standing, every dance at its own speed again
+  const m = DanceOff.move; DanceOff.move = null;
+  for (const k of DANCE_PACK_MOVES) { const g = animGroups[GamesPack.slots?.[k]]; if (g && g._danceSpeed0 != null) { g.speedRatio = g._danceSpeed0; g._danceSpeed0 = null; } }
+  if (m && animState === m.slot) { animGroups[m.slot]?.stop(); animState = -1; switchAnim(0, true); }
+}
+function danceOffMissed() { if (++DanceOff.missRow >= 2 && DanceOff.move) stopDanceOffLoop(); }
+function playDanceMove(dir, late = 0) {
+  if (window.forgeRigBundleInfo && GamesPack.slots?.[DANCE_PACK_MOVES[dir]] != null) {
+    const m = DanceOff.move, beat = DanceOff.dc?.beat || DanceOff.dc?.every || .5;
+    if (m && (m.dir === dir || performance.now() / 1000 - m.at < 4 * beat - .08)) return; // dancing on (a bar per dance)
+    if (danceOffLoop(dir, late)) return;
+  }
   if (window.forgeRigBundleInfo && playForgeRigAction([9, 4, 12, 11][dir])) return;
   if (window.kitPlayerModel) { window.SamuraiKit?.actorAction?.(window.kitPlayerModel, dir === 1 || dir === 3 ? 'jump' : 'kick'); return; }
   if (animState >= 3) return;
@@ -10954,7 +11846,7 @@ function updateQuestSpots() {
   if (hold) {
     const moved = !charMesh || Math.hypot(charMesh.position.x - hold.x, charMesh.position.z - hold.z) > .6;
     const hc = hold.root.metadata.spotConfig, held = (performance.now() - hold.startedAt) / 1000;
-    if (moved || hold.root.isDisposed?.() || !walkMode) { QuestSpotRuntime.hold = null; if (hc.sound) MoonTaleSounds.stop(); showToast('You moved. Try again and stay still.'); }
+    if (moved || hold.root.isDisposed?.() || !walkMode) { QuestSpotRuntime.hold = null; endHoldShow(false); if (hc.sound) MoonTaleSounds.stop(); showToast('You moved. Try again and stay still.'); }
     else if (held >= hc.holdSeconds) completeQuestSpot(hold.root);
     // lines one after another through the hold (Kokeshi Flower Moon's chant)
     else if (hc.holdLines?.length && hold.line < hc.holdLines.length && held >= (hold.line + 1) * hc.holdSeconds / (hc.holdLines.length + 1)) showToast(hc.holdLines[hold.line++], 6000);
@@ -11486,6 +12378,7 @@ function isCharacterInsideVillageGateOpening(gate) {
 
 function openVillageGateMenu() {
   if (ActiveInterior) return false;
+  if (GrandRelay.atGate()) return true; // the Grand Relay: straight on to the next village
   const overlay = document.getElementById('villageGateOverlay');
   const list = document.getElementById('villageGateList');
   if (!overlay || !list) return false;
@@ -13041,11 +13934,12 @@ function triggerDistantLightning() {
 function updateDistantLightning() {
   const root = ensureDistantLightning();
   const now = performance.now();
-  if (WeatherManager.mode === 'storm' && now >= WeatherManager.distantLightningStrikeAt) {
+  const tale = WeatherManager.mode !== 'storm' && taleThunderSky(), on = WeatherManager.mode === 'storm' || tale;
+  if (on && now >= WeatherManager.distantLightningStrikeAt) {
     triggerDistantLightning();
-    WeatherManager.distantLightningStrikeAt = now + 6500 + Math.random() * 11000;
+    WeatherManager.distantLightningStrikeAt = now + (tale ? 9000 + Math.random() * 12000 : 6500 + Math.random() * 11000);
   }
-  root.setEnabled(WeatherManager.mode === 'storm' && now < WeatherManager.distantLightningUntil);
+  root.setEnabled(on && now < WeatherManager.distantLightningUntil);
 }
 
 function ensureWeatherRainPool(count) {
@@ -13277,9 +14171,11 @@ function updateWeatherRain() {
 
 function applyWeatherLighting() {
   const cfg = getWeatherVisualConfig();
-  const lightningActive = cfg.lightning && performance.now() < WeatherManager.lightningUntil;
+  const nowL = performance.now(), boltFlash = nowL < TaleBolt.flashUntil, taleSky = !cfg.lightning && taleThunderSky();
+  const lightningActive = ((cfg.lightning || taleSky) && nowL < WeatherManager.lightningUntil) || boltFlash;
+  const flashK = cfg.lightning || boltFlash ? 1 : .6; // heat lightning under the Thunder Moon is softer than a storm's
   const flash = document.getElementById('weatherLightningFlash');
-  if (flash) flash.style.opacity = lightningActive ? '0.78' : '0';
+  if (flash) flash.style.opacity = lightningActive ? (.78 * flashK).toFixed(2) : '0';
   const heat = document.getElementById('weatherHeatHaze');
   if (heat) heat.style.opacity = cfg.warm ? '.22' : '0';
   if (cfg.fog === BABYLON.Scene.FOGMODE_NONE && window._newTerrain) {
@@ -13320,8 +14216,8 @@ function applyWeatherLighting() {
     skyMat.mieCoefficient = 0.002;
   } else if (lightningActive) {
     sun.diffuse.set(.74,.9,1);
-    sun.intensity = Math.max(sun.intensity, 3.4);
-    hemi.intensity = Math.max(hemi.intensity, 1.35);
+    sun.intensity = Math.max(sun.intensity, 3.4 * flashK);
+    hemi.intensity = Math.max(hemi.intensity, 1.35 * flashK);
     scene.clearColor.set(.7,.86,1,1);
   } else {
     skyMat.turbidity = 5;
@@ -13425,10 +14321,11 @@ function updateWeatherManager() {
     setWeatherMode(getNextWeatherMode(), false);
   }
 
-  if (WeatherManager.mode === 'storm' && now >= WeatherManager.nextLightningAt) {
+  const taleSky = WeatherManager.mode !== 'storm' && taleThunderSky(); // the Thunder Moon's heat lightning: further apart than a storm's
+  if ((WeatherManager.mode === 'storm' || taleSky) && now >= WeatherManager.nextLightningAt) {
     WeatherManager.lightningUntil = now + 380;
     WeatherManager.thunderCueUntil = now + 2200;
-    WeatherManager.nextLightningAt = now + 4200 + Math.random() * 7200;
+    WeatherManager.nextLightningAt = now + (taleSky ? 7000 + Math.random() * 9000 : 4200 + Math.random() * 7200);
     triggerDistantLightning();
     playWeatherThunderAudio(WeatherManager.nextLightningAt);
   }
@@ -17840,6 +18737,7 @@ function updateSmallVillageAntPopulation(dt) {
     const forcedLocomotion = selectedAnimationName && isSmallAntLocomotionAnimationName(selectedAnimationName);
     const canMoveForAnimation = !selectedAnimationName || forcedLocomotion;
     if (NPCManager.paused || meta.dialogueOpen || beingDragged || pauseForAdminEdit) {
+      if (meta.dialogueOpen && charMesh) turnNPCToward(root, Math.atan2(charMesh.position.x - root.position.x, charMesh.position.z - root.position.z), Math.min(dt, .05) * 1.7); // faces you while you talk
       updateSmallAntAnimationState(root, false, selectedAnimationName);
       counterSmallAntVisualRootMotion(root);
       updateSmallAntAccentPlacement(root, true);
@@ -17921,20 +18819,30 @@ function findNPCAnimationGroup(meta, state) {
 // a bow when it finishes, a nod when the talk moved a quest on. NPCs without the clip just skip it.
 const NPC_GESTURE_CLIPS = { greet:'wave_short', bye:'bow', yes:'nod_yes', cheer:'clapping' };
 // a forged NPC at a party hold (spot cheer: the Beach / Block Party dances): one of its lively clips at a time, each
-// played to its end; an NPC without them (a placeholder ant) hops
-const NPC_PARTY_CLIPS = ['clapping', 'rallying', 'jump', 'waving', 'yelling', 'wave_short'];
+// played to its end; an NPC without them (a placeholder ant) hops. No arms-overhead clips (waving, rallying): on the
+// Chumpz / Saints rigs they pull the sweater / fur up with the arms
+const NPC_PARTY_CLIPS = ['clapping', 'jump', 'yelling', 'wave_short'];
+// NPCs rigged since v2.29 carry the games pack's four dances: at a party they dance them (now and then a clap or a jump)
+const NPC_PARTY_DANCES = ['dance_house', 'dance_wave', 'dance_tut', 'dance_gangnam'];
 function playNPCPartyMove(root) {
   const meta = root?.metadata;
   if (!meta || meta.gestureGroup?.isPlaying || meta.partyHop) return false;
-  const clips = meta.modelLoaded && Array.isArray(meta.animationGroups) ? NPC_PARTY_CLIPS.filter(c => meta.animationGroups.some(g => g.name.toLowerCase().endsWith(c))) : [];
+  const has = c => meta.animationGroups.some(g => g.name.toLowerCase().endsWith(c));
+  const loaded = meta.modelLoaded && Array.isArray(meta.animationGroups);
+  const dances = loaded ? NPC_PARTY_DANCES.filter(has) : [], others = loaded ? NPC_PARTY_CLIPS.filter(has) : [];
+  const clips = dances.length && (Math.random() < .8 || !others.length) ? dances : others;
   if (clips.length) return playNPCGesture(root, 'party', clips[Math.floor(Math.random() * clips.length)]);
+  // a model without party clips (the placeholder ants) grooves as a whole: a bounce on every beat of the house song (125 a
+  // minute), a sway side to side and a turn, for two bars' worth of beats
   const vis = meta.modelRoot || root.getChildren?.().find(n => n.getChildMeshes?.().length);
   if (!vis) return false;
-  const y0 = vis.position.y, t0 = performance.now();
+  const y0 = vis.position.y, x0 = vis.position.x, q0 = vis.rotationQuaternion?.clone() || null, ry0 = vis.rotation.y, t0 = performance.now(), D = 1920;
   meta.partyHop = scene.onBeforeRenderObservable.add(() => {
-    const t = (performance.now() - t0) / 520;
-    if (t >= 1 || vis.isDisposed?.()) { vis.position.y = y0; scene.onBeforeRenderObservable.remove(meta.partyHop); meta.partyHop = null; return; }
-    vis.position.y = y0 + Math.sin(t * Math.PI) * .7;
+    const u = (performance.now() - t0) / D;
+    if (u >= 1 || vis.isDisposed?.()) { vis.position.y = y0; vis.position.x = x0; if (q0) vis.rotationQuaternion = q0; else vis.rotation.y = ry0; scene.onBeforeRenderObservable.remove(meta.partyHop); meta.partyHop = null; return; }
+    const b = u * D / 1000 * 2.0833 * Math.PI * 2, e = Math.min(1, u * 5, (1 - u) * 5), yaw = Math.sin(b / 4) * .45 * e;
+    vis.position.y = y0 + Math.abs(Math.sin(b)) * .3 * e; vis.position.x = x0 + Math.sin(b / 2) * .18 * e;
+    if (q0) vis.rotationQuaternion = q0.multiply(BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, yaw)); else vis.rotation.y = ry0 + yaw;
   });
   return true;
 }
@@ -18054,6 +18962,9 @@ function updateNPCPopulation(dt) {
       if (villageOnKitDeck(root.position.x, root.position.z)) { const y = getNPCGroundHeightAt(root.position.x, root.position.z); if (Number.isFinite(y) && Math.abs(y - root.position.y) > .03) root.position.y = y; }
     }
     if (meta.dialogueOpen) {
+      // the one you talk to turns to face you (Oct 17, Miguel: "have all the characters turn towards you when you interact
+      // with them in any village"); a 'still' quest place turns back to its watch afterwards (returnNPCToBaseRotation)
+      if (charMesh) turnNPCToward(root, Math.atan2(charMesh.position.x - root.position.x, charMesh.position.z - root.position.z), Math.min(dt, .05) * 1.7);
       updateNPCAnimationState(root, false, now);
       return;
     }
@@ -23273,12 +24184,12 @@ function stripForgeClothTracks(groups) {
 }
 let animState = -1, animGroups = [];
 // One-shot move on a Forge Rigger bundle; returns to idle when the clip ends. Returns false if the clip isn't in this GLB.
-function playForgeRigAction(slot, thenSlot, force) {
+function playForgeRigAction(slot, thenSlot, force, skipMs = 0) {
   const g = animGroups[slot];
   if (!g || !walkMode) return false;
   if (!force && animState >= 3 && animGroups[animState] && animGroups[animState].isPlaying) return true;   // let the current move finish
   switchAnim(slot, false);
-  const ms = Math.max(300, ((g.to - g.from) / 60) * 1000 / (g.speedRatio || 1) - 80);
+  const ms = Math.max(300, ((g.to - g.from) / 60) * 1000 / (g.speedRatio || 1) - 80 - skipMs);   // skipMs: started part-way in
   clearTimeout(window._forgeRigActionTimer);
   window._forgeRigActionTimer = setTimeout(() => {
     if (animState !== slot) return;
@@ -23500,6 +24411,7 @@ const _forgeSingleGlb = activeCharacter.singleGlb ? await latestForgeRigUrl(acti
         if (!mat.albedoTexture && !(_forgeSingleGlb && (activeCharacter.collectionKey || 'battle_for_colony') !== 'battle_for_colony')) {
           const ci = r.meshes.indexOf(m);
           const cols = [new BABYLON.Color3(.08,.15,.38),new BABYLON.Color3(.22,.12,.08),new BABYLON.Color3(.55,.45,.12),new BABYLON.Color3(.06,.06,.08),new BABYLON.Color3(.28,.18,.06)];
+          if (mat.albedoColor) mat._forgedAlbedo = mat.albedoColor.clone(); // the rig's own colour (the Gloves panel offers it)
           mat.albedoColor = cols[ci%cols.length]; mat.metallic=ci%3===0?.7:.1; mat.roughness=.6;
         }
       }
@@ -23539,6 +24451,8 @@ const _forgeSingleGlb = activeCharacter.singleGlb ? await latestForgeRigUrl(acti
       jab: 16, cross_punch: 17, hook_punch: 18, elbow_punch: 19, fight_idle: 20, hit_reaction: 21, knockdown: 22, get_up: 23 };
     window._forgeClipSlots = _slot; // mini-games play moves by name
     window._playerImport = r;       // ... and lend weapons to its hands
+    PlayerGloves.attach(r.meshes);   // the player's glove colours (Gloves in the Rebel panel)
+    setTimeout(() => { if (window._playerImport === r) loadGamesPack(); }, 15000); // the games pack, once the village has settled
     window._forgeIdleOrig = null; window._forgeFightStance = false;
     r.animationGroups.forEach(g => {
       g.stop();
@@ -25477,7 +26391,7 @@ document.addEventListener('keydown', async e => {
   const key = e.key.toLowerCase();
 
   if (document.getElementById('photoOverlay')?.classList.contains('on')) { if (key === 'escape' || key === 'p' || key === 'enter') { e.preventDefault(); closeVillagePhoto(); } return; }
-  if (MiniGames.on) { miniGameKey(e, true); return; }
+  if (MiniGames.on && (!MiniGames.roam || miniGameRoamKey(e, true))) { if (!MiniGames.roam) miniGameKey(e, true); return; }
   if (key === 'p' && !adminMode && walkMode && !e.repeat && !DanceOff.on && !SkillBar.on) { e.preventDefault(); takeVillagePhoto(); return; }
   if (DanceOff.choosing) { if (key === 'escape') closeDanceOff(); else { const lv = { 1:'easy', 2:'normal', 3:'hard' }[key]; if (lv) { e.preventDefault(); pickDanceLevel(lv); } } return; }
   if (DanceOff.on && DANCE_KEYS[key] !== undefined) { e.preventDefault(); if (!e.repeat) pressDance(DANCE_KEYS[key]); return; }
@@ -25663,7 +26577,8 @@ document.addEventListener('keydown', async e => {
 });
 
 document.addEventListener('keyup', e => {
-  if (MiniGames.on) { miniGameKey(e, false); return; }
+  if (MiniGames.on && !MiniGames.roam) { miniGameKey(e, false); return; }
+  if (MiniGames.on) miniGameRoamKey(e, false);
   const key = e.key.toLowerCase();
   if (key === 'w' || e.key === 'ArrowUp') moveForward = false;
   if (key === 's' || e.key === 'ArrowDown') moveBackward = false;
@@ -25704,9 +26619,9 @@ function getCameraOccluders() {
   return _camOcc.list;
 }
 // walking is camera-relative: tools steer by turning the orbit (headless walk tests)
-window._walkCamera = { get yaw() { return _orbitAngleH; }, set yaw(a) { _orbitAngleH = a; } };
+window._walkCamera = { get yaw() { return _orbitAngleH; }, set yaw(a) { _orbitAngleH = a; }, set moveYaw(a) { _moveRefYaw = a; } };
 scene.onPointerObservable.add(evt=>{
-  if(!walkMode||MiniGames.on)return;
+  if(!walkMode||(MiniGames.on&&!MiniGames.roam))return;
   if(evt.type===BABYLON.PointerEventTypes.POINTERDOWN){_orbitDragging=true;_orbitLastX=scene.pointerX;_orbitLastY=scene.pointerY;}
   else if(evt.type===BABYLON.PointerEventTypes.POINTERUP){_orbitDragging=false;}
   else if(evt.type===BABYLON.PointerEventTypes.POINTERMOVE&&_orbitDragging){const dx=scene.pointerX-_orbitLastX,dy=scene.pointerY-_orbitLastY;_orbitLastX=scene.pointerX;_orbitLastY=scene.pointerY;_orbitAngleH+=dx*0.008;_orbitAngleV=Math.max(0.08,Math.min(0.85,_orbitAngleV+dy*0.006));if(Math.abs(dx)+Math.abs(dy)>0)_camManualUntil=performance.now()+1800;}
@@ -26721,7 +27636,9 @@ function addKitDeckSurfaces(node, surfaces) {
 // Railed stairs (the Saints fire escapes): both long sides of every flight and landing hold a walker standing on the
 // stairs at that height (1 m pieces, from .7 under the tread to 1.2 over it), so nobody steps off into the air; under the
 // stairs and beside them on the ground nothing holds. The ends stay open (the foot, the roof at the top).
-const KIT_STAIR_RAILS = new Set(['kit_stairs_fire']);
+// The Buke footbridges too (Miguel, Oct 17: chasing the thief he fell off a bridge into the canal and could not get out):
+// their stone parapets hold like rails.
+const KIT_STAIR_RAILS = new Set(['kit_stairs_fire', 'buke_footbridge']);
 function addKitStairRails(node, blockers) {
   const yaw = node.rotation?.y || 0, c = Math.cos(yaw), sn = Math.sin(yaw);
   const sx = Math.abs(node.scaling?.x || 1), sy = Math.abs(node.scaling?.y || sx), sz = Math.abs(node.scaling?.z || sx);
@@ -26733,14 +27650,22 @@ function addKitStairRails(node, blockers) {
       const h = node.position.y + (Number.isFinite(d.y1) ? d.y0 + (d.y1 - d.y0) * t : (d.y ?? 0)) * sy;
       for (const side of [-1, 1]) {
         const lx = side * (d.halfX + .12);
+        const ox = side * (d.halfX + .8); // a point just outside the rail: a floor there at the rail's level opens it
         items.push({ kind: 'obb', type: 'kit_rail', name: `${node.name}_rail_${di}_${k}_${side}`, centerX: node.position.x + (lx * sx * c + lz * sz * sn), centerZ: node.position.z + (-lx * sx * sn + lz * sz * c),
-          axisX, axisZ, yaw, halfX: .1, halfZ: (z1 - z0) / n * sz / 2 + .02, minY: h - .7, maxY: h + 1.2 });
+          axisX, axisZ, yaw, halfX: .1, halfZ: (z1 - z0) / n * sz / 2 + .02, minY: h - .7, maxY: h + 1.2,
+          floorY: h, outX: node.position.x + (ox * sx * c + lz * sz * sn), outZ: node.position.z + (-ox * sx * sn + lz * sz * c) });
       }
     }
   });
   if (!items.length) return;
   const r = Math.max(...items.map(b => Math.hypot(b.centerX - node.position.x, b.centerZ - node.position.z))) + 1;
-  blockers.push({ kind: 'group', x: node.position.x, z: node.position.z, r, items, name: node.name + '_rails', auto: true });
+  blockers.push({ kind: 'group', x: node.position.x, z: node.position.z, r, items, name: node.name + '_rails', auto: true, stairRails: true });
+}
+// once every floor is known: a rail gives way where a floor meets the stair at the rail's own level (a step up or down),
+// so the roof beside a fire escape's top landing is stepped onto (Miguel, Oct 17: at the top he could not get onto the
+// roof, "a step he can't get over": the landing's rail stood between them)
+function openKitStairRails(blockers) {
+  blockers.forEach(g => { if (g.stairRails) g.items = g.items.filter(b => !getVillageWalkableSurfaceHeightsAt(b.outX, b.outZ).some(y => Math.abs(y - b.floorY) <= .5)); });
 }
 
 // The Hub's model buildings (GLBs, not kit pieces) get floors and walls from tables measured in the models (floors set
@@ -26853,6 +27778,7 @@ function rebuildVillageCollisionBlockers() {
   villageCollisionBlockers = blockers;
   const _kitDecksBefore = villageWalkableSurfaces.filter(sf => sf.type === 'kit_deck').length;
   villageWalkableSurfaces = walkableSurfaces;
+  openKitStairRails(blockers);
   villageLastBlockerRebuild = performance.now();
   // new decks (the layout just loaded): let the player settle onto one it already stands in
   if (walkableSurfaces.filter(sf => sf.type === 'kit_deck').length > _kitDecksBefore) { _playerDeckSnapUntil = performance.now() + 1500; _playerGroundCache = null; }
@@ -26907,11 +27833,89 @@ function villageOnKitDeck(x, z) {
   return on;
 }
 function villageSeaBlocks(x, z) {
-  return !!window._newTerrain?.seaBlocks?.(x, z) && !Number.isFinite(getVillageWalkableSurfaceHeightAt(x, z));
+  if (!window._newTerrain?.seaBlocks?.(x, z) || Number.isFinite(getVillageWalkableSurfaceHeightAt(x, z))) return false;
+  return !(_villageSwimmer && villageSwimAllowedAt(x, z)); // the player wades in and swims; NPCs stay out of the water
+}
+// Swimming (Oct 17, Miguel: "i think it will be cool if he goes in any deep water to swim through it"): the Rebel wades into
+// the sea, a lake or a pond from its shore (slower in the water) and past chest depth swims: the games pack's front crawl
+// (game_swim), the hips held just under the surface, slower than a walk (R a little quicker), rings on the water round it.
+// The open sea more than SWIM.maxR from the village's middle stays out of bounds, and during a game the water stops the
+// player as before (a run or a chase never swims across the bay). Rebels without the crawl stand in it up to the chest.
+var _villageSwimmer = false; // the player's own move is being resolved
+const SWIM = { in:1.7, out:1.4, wade:.35, maxR:180, on:false, wading:false, waterY:null, base:null, slot:null, speed0:null, ringAt:0, rings:[] };
+window._swim = SWIM; // tests
+function villageWaterSurfaceAt(x, z) {
+  const NT = window._newTerrain; if (!NT) return null;
+  let y = null;
+  if (NT.sea && Number.isFinite(NT.seaY) && NT.heightAt(x, z) < NT.seaY) y = NT.seaY;
+  for (const p of NT.recipe?.village?.pools || []) { // canals, ponds, a moat (as waterSoundAt reads them)
+    let inside;
+    if (p.c) { const rho = Math.hypot(x - p.c[0], z - p.c[1]); inside = p.ring ? rho >= p.ring[0] && rho <= p.ring[1] : rho <= p.c[2]; }
+    else { const [x0, z0, x1, z1] = p.r; inside = x >= x0 && x <= x1 && z >= z0 && z <= z1; }
+    if (inside && Number.isFinite(p.y) && (y == null || p.y > y)) y = p.y;
+  }
+  return y;
+}
+function villageSwimAllowedAt(x, z) { return !MiniGames.on && Math.hypot(x, z) <= SWIM.maxR; }
+// the player in the water: the sea bed's steep edges under it (the dredged harbour's lip, a moat's sides) are no walls;
+// a quay or a bank still holds where the ground comes within wading depth of the surface (the Wokou west beach's
+// harbour lip stopped a Rebel wading in, 0.5 m deep)
+function villageSwimmerUnderwater(x, z) {
+  if (!_villageSwimmer || !villageSwimAllowedAt(x, z)) return false;
+  const w = villageWaterSurfaceAt(x, z), g = w == null ? NaN : window._newTerrain.heightAt(x, z);
+  return Number.isFinite(g) && w - g > SWIM.wade;
+}
+// how fast the player moves on foot / in the water (x the walk)
+function playerMoveSpeedK() { return SWIM.on ? (runKey ? .8 : .55) : SWIM.wading ? (runKey ? .95 : .62) : runKey ? 2 : 1; }
+// the floor the player stands at this frame: the ground, or the swimming height while in deep water
+function updatePlayerSwim(groundY, dt) {
+  const p = charMesh.position, now = performance.now();
+  const w = walkMode && !ActiveInterior && Number.isFinite(groundY) && villageSwimAllowedAt(p.x, p.z) ? villageWaterSurfaceAt(p.x, p.z) : null;
+  const depth = w == null ? 0 : w - groundY, was = SWIM.on;
+  SWIM.on = depth > (was ? SWIM.out : SWIM.in); SWIM.wading = !SWIM.on && depth > SWIM.wade; SWIM.waterY = w;
+  updateSwimRings(dt);
+  if (!SWIM.on) { if (was) leavePlayerSwim(); return groundY; }
+  if (!was) { if (!GamesPack.ready) loadGamesPack(); MoonTaleSounds.fx('splash'); SWIM.base = null; swimRing(p.x, w, p.z, 1.6); }
+  const slot = miniGameClipSlot('game_swim');
+  SWIM.slot = slot != null && animGroups[slot] ? slot : null;
+  // the hips just under the surface while the crawl plays (from where they are drawn); without it, chest-deep
+  const hips = SWIM.slot != null && animState === SWIM.slot ? getPlayerBoneWorld('Hips') : null;
+  let base = SWIM.base ?? Math.max(groundY, w - 1.5);
+  base += hips ? (w - .12 - hips.y) * Math.min(1, dt * 8) : (w - 1.5 - base) * Math.min(1, dt * 6);
+  SWIM.base = Math.max(groundY, base);
+  const moving = Math.abs(charMesh._vel || 0) > .01;
+  if (now > SWIM.ringAt) { SWIM.ringAt = now + (moving ? 420 : 950); swimRing(p.x, w, p.z, moving ? 1 : .7); }
+  return SWIM.base;
+}
+function leavePlayerSwim() {
+  SWIM.base = null; const g = SWIM.slot != null ? animGroups[SWIM.slot] : null;
+  if (g) { if (SWIM.speed0 != null) g.speedRatio = SWIM.speed0; if (animState === SWIM.slot) { if (g.isPlaying) g.stop(); animState = -1; switchAnim(0, true); } }
+  SWIM.speed0 = null; SWIM.slot = null;
+}
+// the crawl while swimming (idle: slower, treading water); called where the walk picks its clip
+function playPlayerSwimClip(moving) {
+  const g = animGroups[SWIM.slot]; if (!g) return false;
+  if (SWIM.speed0 == null) SWIM.speed0 = g.speedRatio;
+  if (animState !== SWIM.slot) { if (animState >= 3) return true; switchAnim(SWIM.slot, true); } // a move (a jump) finishes first
+  g.speedRatio = moving ? (runKey ? 1.3 : 1) : .45;
+  return true;
+}
+// rings that spread on the water round the swimmer (a few torus meshes that grow and fade)
+function swimRing(x, y, z, big) {
+  const m = BABYLON.MeshBuilder.CreateTorus('swimRing', { diameter:.6, thickness:.05, tessellation:24 }, scene);
+  m.material = holdShowMats().ring; m.isPickable = false; m.position.set(x, y + .03, z);
+  SWIM.rings.push({ m, t:0, big }); while (SWIM.rings.length > 6) SWIM.rings.shift().m.dispose();
+}
+function updateSwimRings(dt) {
+  for (let i = SWIM.rings.length - 1; i >= 0; i--) {
+    const g = SWIM.rings[i]; g.t += dt; const k = g.t / 1.6, s = 1 + k * 5 * g.big;
+    g.m.scaling.set(s, 1, s); g.m.visibility = Math.max(0, 1 - k);
+    if (k >= 1) { g.m.dispose(); SWIM.rings.splice(i, 1); }
+  }
 }
 function villagePointBlocked(x, z, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING) {
   const onDeck = villageOnKitDeck(x, z); // piers run over the quay wall and the water, bridges over the ravine
-  if (!onDeck && window._newTerrain?.decorBlocksPoint(x, z, padding)) return true; // scattered pines and rocks
+  if (!onDeck && !villageSwimmerUnderwater(x, z) && window._newTerrain?.decorBlocksPoint(x, z, padding)) return true; // scattered pines and rocks
   if (villageSeaBlocks(x, z)) return true; // no wading into the sea
   const cachedBlockerHit = villageCollisionBlockers.some(blocker => {
     if (blocker.kind === 'group') {
@@ -26961,7 +27965,7 @@ window._walkProbe = {
 var _villageWalkerY = NaN;
 function villageSegmentBlocked(startX, startZ, endX, endZ, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING) {
   const onDeck = villageOnKitDeck(endX, endZ);
-  if (!onDeck && window._newTerrain?.decorBlocksPoint(endX, endZ, padding)) return true;
+  if (!onDeck && !villageSwimmerUnderwater(endX, endZ) && window._newTerrain?.decorBlocksPoint(endX, endZ, padding)) return true;
   if (villageSeaBlocks(endX, endZ)) return true;
   const cachedBlockerHit = villageCollisionBlockers.some(blocker => {
     if (blocker.kind === 'group') {
@@ -27228,7 +28232,7 @@ function resolveVillagePlayerCollision(currentPosition, proposedPosition) {
   if (ActiveInterior) return resolveInteriorPlayerCollision(currentPosition, proposedPosition);
   refreshVillageCollisionBlockersIfNeeded();
   const cx = currentPosition.x, cz = currentPosition.z, wy = charMesh?._terrainY;
-  const stops = (x, z) => { _villageWalkerY = Number.isFinite(wy) ? wy : NaN; try { return villageSegmentBlocked(cx, cz, x, z) || villageLedgeBlocks(cx, cz, x, z); } finally { _villageWalkerY = NaN; } };
+  const stops = (x, z) => { _villageWalkerY = Number.isFinite(wy) ? wy : NaN; _villageSwimmer = true; try { return villageSegmentBlocked(cx, cz, x, z) || villageLedgeBlocks(cx, cz, x, z); } finally { _villageWalkerY = NaN; _villageSwimmer = false; } };
 
   if (!stops(proposedPosition.x, proposedPosition.z)) {
     return { x: proposedPosition.x, z: proposedPosition.z, blocked: false };
@@ -27538,7 +28542,7 @@ engine.runRenderLoop(()=>{
     if(!charMesh._vel)charMesh._vel=0;
     const actionMovementSuppressed = isForgeActionMovementSuppressed();
     // turning right round (more than ~90 degrees still to go): nearly on the spot, then off at full speed
-    const tv=actionMovementSuppressed||!hasDir?0:moveSpeed*(runKey?2:1)*(Math.abs(_turnRest)>1.6?0.25:1);
+    const tv=actionMovementSuppressed||!hasDir?0:moveSpeed*playerMoveSpeedK()*(Math.abs(_turnRest)>1.6?0.25:1); // slower wading and swimming
     const _lf=tv!==0?0.22:0.28; charMesh._vel+=(tv-charMesh._vel)*_lf;
     if(Math.abs(charMesh._vel)>0.0001){
       const _currentPos = charMesh.position.clone();
@@ -27549,13 +28553,19 @@ engine.runRenderLoop(()=>{
       if (_resolvedPos.blocked) charMesh._vel *= 0.2;
     }
     if (ActiveInterior) updateInteriorDeckY();
-    const _terrainY = ActiveInterior ? getActiveInteriorPlayerFloorY() : getVillagePlayerGroundHeightAt(charMesh.position.x, charMesh.position.z);
+    // a game can hold the feet at its own height (ctx.player.float: a surfboard on the sea)
+    // in deep water the player swims at the surface (updatePlayerSwim)
+    const _terrainY = ActiveInterior ? getActiveInteriorPlayerFloorY() : MiniGames.on && MiniGames.floatY != null ? MiniGames.floatY : updatePlayerSwim(getVillagePlayerGroundHeightAt(charMesh.position.x, charMesh.position.z), dt);
     if (Number.isFinite(_terrainY)) {
       groundPlayableVisualToTerrain(_terrainY);
       // Slope tilt removed — character stays upright
     }
-    if(animState!==2&&animState<3){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
-    if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8*(window._walkLightK??1);updateSandFootprints(_terrainY);}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
+    // a roam game's own walk (ctx.player.walkAs: the sneak walk) takes the walk's place; running stays the run
+    const _ws = MiniGames.on ? MiniGames.walkSlot : null;
+    if (SWIM.on && SWIM.slot != null && !MiniGames.on) playPlayerSwimClip(moveForward||moveBackward||turnLeft||turnRight||runKey);
+    else if (_ws != null && animGroups[_ws]) { if (animState === _ws || animState < 3) { const mv = moveForward||moveBackward||turnLeft||turnRight; if (mv && runKey) { if (animState !== 2) switchAnim(2, true); } else if (mv) { if (animState !== _ws) switchAnim(_ws, true); } else if (animState !== 0) switchAnim(0, true); } }
+    else if(animState!==2&&animState<3){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
+    if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8*(window._walkLightK??1)*(MiniGames.on?(MiniGames.walkLight??1):1);updateSandFootprints(SWIM.on ? NaN : _terrainY);}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
     // the camera swings round behind the character while it moves (about two seconds for a half turn at a walk, quicker
     // running), unless the mouse just turned it: walking out of a doorway toward the camera, it comes round behind
     if (hasDir && Math.abs(charMesh._vel) > .01 && performance.now() > _camManualUntil && !DanceOff.on) {
@@ -27565,7 +28575,7 @@ engine.runRenderLoop(()=>{
     _orbitDist+=((runKey?13.5:9)-_orbitDist)*0.06;
     let dc=new BABYLON.Vector3(charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
     const _camTarget = new BABYLON.Vector3(charMesh.position.x,charMesh.position.y+2.8,charMesh.position.z);
-    if (MiniGames.on) { /* the game drives the camera */ }
+    if (MiniGames.on && !MiniGames.roam) { /* the game drives the camera */ }
     else if (!ActiveInterior) {
       // a building between the head and the camera pulls the camera in front of it (snaps in, eases back out)
       const head = new BABYLON.Vector3(charMesh.position.x, charMesh.position.y + 2.4, charMesh.position.z), toCam = dc.subtract(head), full = toCam.length();
@@ -27585,12 +28595,13 @@ engine.runRenderLoop(()=>{
         setPlayerCameraFade(_camOcc.dist < 2.4 ? .35 : 1);
       }
     } else { _camOcc.dist = null; setPlayerCameraFade(1); }
-    if (!MiniGames.on) {
+    if (!MiniGames.on || MiniGames.roam) {
       walk.position=BABYLON.Vector3.Lerp(walk.position,ActiveInterior?clipInteriorCameraPosition(dc,_camTarget):dc,0.1);
       walk.setTarget(_camTarget);
     }
   }
   updateFootstepAudio();
+  GrandRelay.tick(); // the relay's clock and gate beam
   if (MiniGames.on) updateMiniGame(dt);
   else {
     updateInteractionPrompt();
@@ -27602,13 +28613,13 @@ engine.runRenderLoop(()=>{
     updateDanceOff();
   }
   { const wantPhoto = walkMode && !adminMode; if (document.body.classList.contains('walk-photo') !== wantPhoto) document.body.classList.toggle('walk-photo', wantPhoto); }
-  if (!MiniGames.on) { tryAutoOpenVillageGateFromWalkthrough(); updateCollectiblesSafe(dt); }
+  if (!MiniGames.on && !MiniGames.busy) { tryAutoOpenVillageGateFromWalkthrough(); updateCollectiblesSafe(dt); } // busy: a game is loading (the relay's finish card, at the gate)
   updateWeatherManager();
   updateNPCPopulation(dt);
   updateSmallVillageAntPopulation(dt);
   runVillagePerformancePass(false);
   updatePerformanceDebugPanel();
-  if (!MiniGames.on) try { window.VillageHud?.update(); } catch (e) {}
+  if (!MiniGames.on || MiniGames.roam) try { window.VillageHud?.update(); } catch (e) {}
   applyFakeLightState(false);
   enforceInteriorIsolation();
   if (window._gpuMode === 'webgpu') {
@@ -27769,7 +28780,11 @@ async function initWorldLayout() {
   setSt('Village: loading saved layout...');
   let remote = null;
   try {
-    const resp = await fetch(`/api/world-layout?village=${encodeURIComponent(CURRENT_VILLAGE_ID)}`);
+    // a layout service that never answers must not hold the village on its loading screen: with no answer in 15 s the
+    // cached (or shipped) layout loads instead; once it answers, the layout itself takes as long as it takes to arrive
+    const ctl = typeof AbortController === 'function' ? new AbortController() : null, timer = ctl && setTimeout(() => ctl.abort(), 15000);
+    const resp = await fetch(`/api/world-layout?village=${encodeURIComponent(CURRENT_VILLAGE_ID)}`, ctl ? { signal:ctl.signal } : undefined);
+    clearTimeout(timer);
     if (resp.ok) {
       const d = await resp.json();
       if (d.ok && Array.isArray(d.layout)) remote = { layout: d.layout, sha: d.sha || null };
@@ -27847,6 +28862,10 @@ function initVillageHud() {
       isWalking: () => walkMode && !adminMode,
       inInterior: () => !!ActiveInterior,
       questTarget: () => {
+        // a roam game (a run, a chase): where it wants you next
+        if (MiniGames.on && MiniGames.roam) { try { return MiniGames.inst?.target?.() || null; } catch (e) { return null; } }
+        // the Grand Relay: this village's gate
+        if (GrandRelay.on() && !MiniGames.on) { const g = GrandRelay.target(); if (g) return g; }
         // a run or walk on the way: its next point
         const rq = getRaceNextPoint(); if (rq) return { x: rq[0], z: rq[1] };
         // the auto guide's target (wired steps), else the quest's own glowing marker or its NPC (looked up twice a second)
@@ -27874,9 +28893,34 @@ function initVillageHud() {
           window.SamuraiKit?.setLightFactor?.(getFakeLightStateFactor());
           scene.incrementRenderId();
         }
-      }
+      },
+      onMapBuilt: (canvas, R) => { if (R === 320 && canvas.toBlob) canvas.toBlob(b => { if (b) minimapCache('readwrite', st => st.put(b, CURRENT_VILLAGE_ID)).catch(() => {}); }, 'image/webp', .82); }
     });
+    showSavedMinimap();
   } catch (e) { console.warn('Village HUD failed to start', e); }
+}
+// The minimap's live picture takes a while on the first frames (every material's top-down shader compiles first), so the
+// picture from the last visit (IndexedDB rebelAntsMinimap, one per village) shows at once; the live render replaces it as
+// soon as it is ready
+function minimapCache(mode, fn) {
+  return new Promise((res, rej) => {
+    if (!window.indexedDB) return rej(new Error('no IndexedDB'));
+    const rq = indexedDB.open('rebelAntsMinimap', 1);
+    rq.onupgradeneeded = () => rq.result.createObjectStore('maps');
+    rq.onerror = () => rej(rq.error);
+    rq.onsuccess = () => {
+      const db = rq.result; let r = null;
+      try { const tx = db.transaction('maps', mode); r = fn(tx.objectStore('maps')); tx.oncomplete = () => { db.close(); res(r?.result); }; tx.onerror = () => { db.close(); rej(tx.error); }; }
+      catch (e) { db.close(); rej(e); }
+    };
+  });
+}
+function showSavedMinimap() {
+  const S = window._minimapSaved = { at: performance.now() }; // what the saved picture did (tests)
+  const use = img => { S.img = !!img; if (img && !window.VillageHud?.isBuilt?.()) S.set = window.VillageHud?.setMapImage?.(img, 320); };
+  minimapCache('readonly', st => st.get(CURRENT_VILLAGE_ID))
+    .then(b => { S.blob = b ? b.size : 0; return b && window.createImageBitmap ? createImageBitmap(b).then(use) : null; })
+    .catch(e => { S.error = String(e?.message || e); });
 }
 // the minimap's picture: one top-down render once walking starts, and again a little later for models that load late
 function buildVillageHudMap() {

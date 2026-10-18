@@ -25836,7 +25836,7 @@
       "holdSeconds": 20,
       "label": "Dance with the block",
       "questId": "saints-la-20",
-      "sound": "funk",
+      "sound": "hiphop",
       "holdLines": [
         "The DJ drops the needle. The whole block cheers.",
         "The Court Regular busts out a spin move.",
@@ -25847,8 +25847,8 @@
       "dance": {
         "notes": 12,
         "need": 27,
-        "every": 1,
-        "lead": 2,
+        "every": 1.2,
+        "lead": 2.4,
         "title": "Dance-off on the court",
         "pattern": [
           "x.x.",
@@ -25867,7 +25867,7 @@
           "xxxx",
           "x..."
         ],
-        "beat": 0.5,
+        "beat": 0.6,
         "loops": 2,
         "window": 0.24,
         "levels": true
@@ -27027,7 +27027,11 @@
           6
         ],
         "side": 3,
-        "seconds": 60
+        "seconds": 60,
+        "hide": [
+          "sl_streetlight",
+          "sl_planter"
+        ]
       }
     }
   },
@@ -27397,6 +27401,538 @@
         "pass": 60,
         "points": 60,
         "questOn": "pass"
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_sl-downtown-sprint",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -25,
+      "y": 0,
+      "z": -45
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "saints-la",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "sl-downtown-sprint",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "course",
+        "id": "sl-downtown-sprint",
+        "title": "Downtown Sprint",
+        "points": 60,
+        "questOn": "pass",
+        "gates": [
+          [
+            -62,
+            -45
+          ],
+          [
+            -62,
+            88
+          ],
+          [
+            0,
+            92
+          ],
+          [
+            62,
+            88
+          ],
+          [
+            62,
+            -45
+          ],
+          [
+            20,
+            -45
+          ],
+          [
+            0,
+            -18
+          ],
+          [
+            0,
+            30
+          ],
+          [
+            0,
+            48
+          ]
+        ],
+        "start": [
+          -26.6,
+          -45
+        ],
+        "path": [
+          [
+            -35.5,
+            -44.5
+          ],
+          [
+            -38.5,
+            -44.5
+          ],
+          [
+            -39,
+            -45
+          ],
+          [
+            -39.5,
+            -45.5
+          ],
+          [
+            -40,
+            -46
+          ],
+          [
+            -61.5,
+            -45.5
+          ],
+          [
+            -62,
+            -45
+          ],
+          [
+            -63,
+            -3.5
+          ],
+          [
+            -62.5,
+            87.5
+          ],
+          [
+            -62,
+            88
+          ],
+          [
+            0,
+            92
+          ],
+          [
+            62,
+            88
+          ],
+          [
+            63,
+            58.5
+          ],
+          [
+            63,
+            -44
+          ],
+          [
+            62,
+            -45
+          ],
+          [
+            20,
+            -45
+          ],
+          [
+            9,
+            -36.5
+          ],
+          [
+            8.5,
+            -36
+          ],
+          [
+            8,
+            -35.5
+          ],
+          [
+            6,
+            -28.5
+          ],
+          [
+            0,
+            -18
+          ],
+          [
+            0,
+            30
+          ],
+          [
+            0,
+            48
+          ]
+        ],
+        "medals": [
+          78,
+          91,
+          117
+        ],
+        "radius": 3,
+        "cloth": [
+          0.169,
+          0.31,
+          0.604
+        ],
+        "text": "Round the whole block, then up the steps to the HQ",
+        "length": 571.4
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_sl-lowrider-hop",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 30,
+      "y": 0,
+      "z": -55
+    },
+    "rotation": {
+      "x": 0,
+      "y": -0.7854,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "saints-la",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "sl-lowrider-hop",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "dance",
+        "id": "sl-lowrider-hop",
+        "title": "Lowrider Hop",
+        "points": 60,
+        "pass": 0,
+        "questOn": "pass",
+        "song": "saints-la",
+        "car": "sl_car_gold",
+        "floor": [
+          0.39,
+          0.616,
+          1
+        ],
+        "camR": 12,
+        "camY": 4.2,
+        "camT": [
+          -1,
+          0.3,
+          0
+        ],
+        "packMoves": [
+          "dance_wave",
+          "dance_tut",
+          "dance_house",
+          "dance_gangnam"
+        ]
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_sl-street-art",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -14.5,
+      "y": 0,
+      "z": -32.5
+    },
+    "rotation": {
+      "x": 0,
+      "y": -1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "saints-la",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "sl-street-art",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "id": "sl-street-art",
+        "title": "Street Art",
+        "points": 60,
+        "questOn": "pass",
+        "type": "mural",
+        "wall": 6.5,
+        "pass": 100
       }
     }
   }

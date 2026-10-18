@@ -4,9 +4,16 @@
 // narrows the band and quickens the hammer. Last, the quench: stop the sweep in the narrow moonlight band. The blade's
 // quality is the score.
 // def: { folds: 6, pass, points }
+// Oct 17 (Miguel: "it just needs the animation of him swinging the hammer down"): with the games pack the hammer is in
+// the Rebel's right hand and each strike is an overhand swing down onto the anvil (game_throw from its wind-up's top).
+// Oct 17 (Miguel: "needs better timing and a better angle so the hammer looks like its really hitting the item, it also
+// needs sounds", keeping this swing): the Rebel stands where the swing's head comes down on the steel; the ring of the
+// anvil and the sparks come as the head reaches it, the head then rests on the steel until the hand lifts it, and the
+// camera moves in beside the anvil for the strikes. The hammer goes up as the ring appears and waits at the top of the
+// wind-up, so a press brings it straight down (the head on the steel about 0.12 s later, not 0.33 s).
 (function () {
   const G = {
-    title: "The Swordsmith's Forge",
+    title: "The Swordsmith's Forge", moves: true,
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, U = ctx.util, scene = ctx.scene, def = ctx.def;
       const FOLDS = def.folds || 6;
@@ -27,17 +34,33 @@
       const hammerPiv = keep(new B.TransformNode('forgeHammer', scene)); hammerPiv.position.set(-.55, 1.5, 2.95);
       box('forgeHammerHandle', .07, .07, 1, woodM, 0, 0, .5, hammerPiv); box('forgeHammerHead', .22, .22, .36, ironM, 0, 0, 1.0, hammerPiv);
       hammerPiv.rotation.y = Math.atan2(.55, -.95); hammerPiv.rotation.x = -.9;
-      const ring = keep(B.MeshBuilder.CreateTorus('forgeRing', { diameter: 1, thickness: .035, tessellation: 32 }, scene)); ring.material = ringM; ring.position.set(0, 1.18, 2); ring.setEnabled(false);
-      const goal = keep(B.MeshBuilder.CreateTorus('forgeGoal', { diameter: .36, thickness: .05, tessellation: 32 }, scene)); goal.material = goalM; goal.position.set(0, 1.17, 2); goal.setEnabled(false);
+      // with the games pack the hammer rides the right hand: the handle runs on from the forearm through the fist
+      const PACK = !!ctx.player.has?.('game_throw'), HAMMER = PACK;
+      // the swing's head comes back down to the steel's height (TOP: the head's centre resting on the steel) REACH in front
+      // of the Rebel and SIDE to its right (measured on the move, frame by frame), so it stands that far back and to the
+      // left of the steel (AT)
+      const AT = 2, TOP = 1.34, REACH = 3.12, SIDE = .32, L = 1, STEEL = new V3(0, TOP, AT);
+      const inHand = () => { const h = ctx.player.bone('RightHand'), f = ctx.player.bone('RightForeArm'); if (!h || !f) return false;
+        const lh = ctx.toLocal(h); let d = lh.subtract(ctx.toLocal(f)).normalize(); hammerPiv.position.copyFrom(lh.subtract(d.scale(.12)));
+        st.head = hammerPiv.position.add(d.scale(L)); // where the swing alone puts the head
+        // after a blow the head rests on the steel (the grip sliding a little on the handle) until the hand lifts it off
+        if (st.pin) { const v = st.pin.subtract(hammerPiv.position), n = v.length(); if (n > L * 1.12 || n < L * .78 || st.phase === 'heat') st.pin = null; else { d = v.scale(1 / n); hammerPiv.position.copyFrom(st.pin.subtract(d.scale(L))); } }
+        hammerPiv.rotation.y = Math.atan2(d.x, d.z); hammerPiv.rotation.x = -Math.asin(Math.max(-1, Math.min(1, d.y))); if (st.track) st.track.push({ t: st.blow ? +st.blow.t.toFixed(3) : null, hand: lh.asArray().map(v => +v.toFixed(3)), head: st.head.asArray().map(v => +v.toFixed(3)) }); return true; };
+      const ring = keep(B.MeshBuilder.CreateTorus('forgeRing', { diameter: 1, thickness: .035, tessellation: 32 }, scene)); ring.material = ringM; ring.position.set(0, 1.18, AT); ring.setEnabled(false);
+      const goal = keep(B.MeshBuilder.CreateTorus('forgeGoal', { diameter: .36, thickness: .05, tessellation: 32 }, scene)); goal.material = goalM; goal.position.set(0, 1.17, AT); goal.setEnabled(false);
       const sparks = []; const sSpark = keep(B.MeshBuilder.CreateBox('forgeSpark', { size: .04 }, scene)); sSpark.material = coalM; sSpark.isVisible = false;
-      const spark = (n) => { for (let k = 0; k < n; k++) { const s = sSpark.createInstance('forgeSparkI'); s.parent = ctx.frame; ctx.add(s); s.position.set(0, 1.2, 2); const a = Math.random() * Math.PI * 2; sparks.push({ s, v: new V3(Math.cos(a) * (1 + Math.random() * 2), 2 + Math.random() * 3, Math.sin(a) * (1 + Math.random() * 2)), t: 0 }); } };
+      const spark = (n) => { for (let k = 0; k < n; k++) { const s = sSpark.createInstance('forgeSparkI'); s.parent = ctx.frame; ctx.add(s); s.position.set(0, 1.2, AT); const a = Math.random() * Math.PI * 2; sparks.push({ s, v: new V3(Math.cos(a) * (1 + Math.random() * 2), 2 + Math.random() * 3, Math.sin(a) * (1 + Math.random() * 2)), t: 0 }); } };
       // the glow of hot steel: 0 cold grey .. 1 white
       const glow = (h) => { const c = h < .3 ? [.3 + h * 1.5, .3 - h * .5, .32 - h * .9] : h < .55 ? [.75 + (h - .3), .15 + (h - .3) * 1.2, .05] : h < .8 ? [1, .45 + (h - .55) * 1.6, .1 + (h - .55) * .4] : [1, .85 + (h - .8) * .7, .2 + (h - .8) * 3.5];
         steelM.diffuseColor.set(...c.map(v => Math.min(1, v * .6))); steelM.emissiveColor.set(...c.map(v => Math.min(1, v) * Math.min(1, h * 1.6))); };
       const st = { phase: 'intro', wait: 1.3, fold: 0, heat: 0, quality: 0, log: [], strikes: 0, ring: null, hit: [], quench: 0, held: false, msgT: 0, hammer: 0 };
       const band = () => { const w = .2 - st.fold * .02; return [.66 - w / 2, .66 + w / 2]; };
-      ctx.player.place(.2, 3.35, Math.PI);
-      const look = () => ctx.look([.9, 2.9, -2.4], [-.2, 1.1, 2.3], def.fov || .85);
+      if (HAMMER) ctx.player.place(SIDE, AT + REACH, Math.PI); else ctx.player.place(.2, 3.35, Math.PI);
+      // the camera: the whole smithy for the heat and the quench, in beside the anvil for the strikes (eased between)
+      const CAM = { wide: [[.9, 2.9, -2.4], [-.2, 1.1, 2.3]], anvil: def.anvilCam || [[-4, 3.6, 2], [0, 1.5, 3.1]] }; // the swing in profile, the ring still open from above
+      const camP = new V3(...CAM.wide[0]), camT = new V3(...CAM.wide[1]);
+      const look = (dt) => { const k = HAMMER && /^(move|strike|gap|fold)$/.test(st.phase) ? CAM.anvil : CAM.wide, a = dt == null ? 1 : 1 - Math.exp(-dt * 3);
+        camP.addInPlace(new V3(...k[0]).subtract(camP).scale(a)); camT.addInPlace(new V3(...k[1]).subtract(camT).scale(a)); ctx.look(camP.asArray(), camT.asArray(), def.fov || .85); };
       look();
       H.title(def.title || "The Swordsmith's Forge"); H.score(0);
       const info = () => H.info(`Fold ${Math.min(FOLDS, st.fold + 1)} / ${FOLDS}${st.log.length ? ' · ' + st.log.map(l => l.q).join(' + ') : ''}`);
@@ -50,15 +73,23 @@
         st.cur = { heat: Math.round(q), strikes: [] }; H.meter(null); H.msg(note, 800);
         st.phase = 'move'; st.t = 0; H.hint('');
       }
-      function nextStrike() { st.phase = 'strike'; const sp = 1.15 + st.fold * .12; st.ring = { t: 0, dur: 1 / sp, size: 1.2 }; ring.setEnabled(true); goal.setEnabled(true); H.hint('Strike (<kbd>Space</kbd> or click) as the ring meets the gold circle.'); }
+      // the wind-up: the throw from .72 s rises to its top (.87 s), where it waits (all but stopped) for the press
+      const TOPAT = .87, raise = () => { if (!PACK) return; ctx.player.clip('game_throw', { from: .72 }); st.raiseT = TOPAT - .72; };
+      function nextStrike() { st.phase = 'strike'; const sp = 1.15 + st.fold * .12; st.ring = { t: 0, dur: 1 / sp, size: 1.2 }; ring.setEnabled(true); goal.setEnabled(true); H.hint('Strike (<kbd>Space</kbd> or click) as the ring meets the gold circle.'); raise(); }
       function strike() {
         if (st.phase !== 'strike' || !st.ring) return;
         const r = st.ring, s = 1.2 - (1.2 - .36) * (r.t / r.dur), err = Math.abs(s - .36) / (1.2 - .36) * r.dur; // seconds off the gold circle
-        const q = err < .06 ? 10 : err < .14 ? 6 : err < .24 ? 3 : 0; st.cur.strikes.push(q); st.hammer = .22; ctx.player.clip('cross_punch');
-        ctx.sound('thock'); spark(q >= 6 ? 14 : 6); H.msg(q === 10 ? 'Perfect' : q === 6 ? 'Good' : q ? 'Rough' : 'Miss', 450);
-        steel.scaling.z = 1 + st.cur.strikes.length * .12; st.heat = Math.max(0, st.heat - .07);
+        const q = err < .06 ? 10 : err < .14 ? 6 : err < .24 ? 3 : 0; st.cur.strikes.push(q); st.hammer = .22;
+        // with the hammer the blow lands as the head comes down to the steel (land(), from update), else at once
+        if (PACK) { st.raiseT = 0; ctx.player.clip('game_throw', { from: TOPAT, speed: 1.35 }); st.pin = null; st.blow = { t: 0, q, n: st.cur.strikes.length }; } else { ctx.player.clip('cross_punch'); land({ q, n: st.cur.strikes.length }); }
+        st.heat = Math.max(0, st.heat - .07);
         ring.setEnabled(false); goal.setEnabled(false); st.ring = null;
         if (st.cur.strikes.length >= 3) { st.phase = 'fold'; st.t = 0; } else { st.phase = 'gap'; st.t = 0; }
+      }
+      function land(b) {
+        st.landed = (st.landed || 0) + 1; ctx.sound('anvil'); if (b.q >= 6) ctx.sound('clang'); spark(b.q === 10 ? 18 : b.q >= 6 ? 12 : 5);
+        H.msg(b.q === 10 ? 'Perfect' : b.q === 6 ? 'Good' : b.q ? 'Rough' : 'Miss', 450); steel.scaling.z = 1 + b.n * .12;
+        if (HAMMER) st.pin = STEEL.clone(); st.blow = null;
       }
       function endFold() {
         const q = st.cur.heat + st.cur.strikes.reduce((a, b) => a + b, 0); st.log.push({ q }); st.quality += q; H.score(st.quality); st.fold++; info();
@@ -74,13 +105,18 @@
       }
       return {
         update(dt) {
-          look(); st.t = (st.t || 0) + dt;
+          look(dt); st.t = (st.t || 0) + dt;
           for (let k = sparks.length - 1; k >= 0; k--) { const s = sparks[k]; s.t += dt; s.v.y -= 9.8 * dt; s.s.position.addInPlace(s.v.scale(dt)); if (s.t > .7) { s.s.dispose(); sparks.splice(k, 1); } }
           coals.material.emissiveColor.set(1, .3 + (st.held && st.phase === 'heat' ? .25 : 0) + Math.sin(st.t * 7) * .04, .06);
-          if (st.hammer > 0) { st.hammer = Math.max(0, st.hammer - dt); const u = st.hammer > .11 ? 1 - (st.hammer - .11) / .11 : st.hammer / .11; hammerPiv.rotation.x = -.9 + 1.15 * u; } else hammerPiv.rotation.x = -.9 + Math.sin(st.t * 2) * .03;
+          if (PACK && inHand()) st.hammer = 0;
+          if (st.raiseT > 0 && (st.raiseT -= dt) <= 0 && st.phase === 'strike') ctx.player.clip('game_throw', { from: TOPAT, hold: true, speed: .01 }); // held up
+          // the blow lands when the swing brings the head back down to the steel's height after the wind-up has lifted it
+          // over the shoulder (or after .7 s regardless)
+          if (st.blow) { st.blow.t += dt; if (st.head && st.head.y > TOP + 1.2) st.blow.up = true; if (st.blow.t > .7 || (st.blow.up && st.head && st.head.y <= TOP)) land(st.blow); }
+          else if (st.hammer > 0) { st.hammer = Math.max(0, st.hammer - dt); const u = st.hammer > .11 ? 1 - (st.hammer - .11) / .11 : st.hammer / .11; hammerPiv.rotation.x = -.9 + 1.15 * u; } else hammerPiv.rotation.x = -.9 + Math.sin(st.t * 2) * .03;
           if (st.phase === 'intro' && (st.wait -= dt) <= 0) startHeat();
           if (st.phase === 'heat') { st.heat = Math.max(0, Math.min(1, st.heat + (st.held ? .32 + st.fold * .03 : -.05) * dt)); bellows.scaling.y = st.held ? .7 + Math.abs(Math.sin(st.t * 9)) * .5 : 1; glow(st.heat); H.meter({ label: 'Heat', fill: st.heat, value: st.heat, zone: band() }); }
-          if (st.phase === 'move') { const u = Math.min(1, st.t / .45); steel.position.set(-2 + 2 * u, 1.02 + .12 + Math.sin(u * Math.PI) * .4, 2.4 - .4 * u); st.heat = Math.max(0, st.heat - .04 * dt); glow(st.heat); if (u >= 1) { steel.position.set(0, 1.2, 2); nextStrike(); } }
+          if (st.phase === 'move') { const u = Math.min(1, st.t / .45); steel.position.set(-2 + 2 * u, 1.02 + .12 + Math.sin(u * Math.PI) * .4, 2.4 - .4 * u); st.heat = Math.max(0, st.heat - .04 * dt); glow(st.heat); if (u >= 1) { steel.position.set(0, 1.2, AT); nextStrike(); } }
           if (st.phase === 'strike' && st.ring) { const r = st.ring; r.t += dt; const s = Math.max(.05, 1.2 - (1.2 - .36) * (r.t / r.dur)); ring.scaling.set(s, 1, s); if (r.t > r.dur * 1.35) { st.cur.strikes.push(0); ring.setEnabled(false); goal.setEnabled(false); st.ring = null; H.msg('Miss', 450); st.phase = st.cur.strikes.length >= 3 ? 'fold' : 'gap'; st.t = 0; } st.heat = Math.max(0, st.heat - .05 * dt); glow(st.heat); }
           if (st.phase === 'gap' && st.t > .35) nextStrike();
           if (st.phase === 'fold') { const u = Math.min(1, st.t / .5); steel.rotation.y = u * Math.PI; steel.scaling.z = 1.36 - .36 * u; if (u >= 1) { steel.scaling.z = 1; endFold(); } }
@@ -101,7 +137,7 @@
           if (evt.type === T.POINTERDOWN) { st.held = true; if (st.phase === 'strike') strike(); else if (st.phase === 'quench') quench(); }
           else if (evt.type === T.POINTERUP) { const was = st.held; st.held = false; if (st.phase === 'heat' && was) toAnvil(); }
         },
-        _test: { st, band, toAnvil, strike, quench, setHeat: h => { st.heat = h; }, toGoal: () => st.ring ? st.ring.dur - st.ring.t : null },
+        _test: { st, band, toAnvil, strike, quench, HAMMER, CAM, setHeat: h => { st.heat = h; }, toGoal: () => st.ring ? st.ring.dur - st.ring.t : null },
         dispose() { nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); sparks.forEach(s => { try { s.s.dispose(); } catch (e) {} }); }
       };
     }

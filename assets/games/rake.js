@@ -1,7 +1,9 @@
 // The Raking Path (Oct 15, Sohei training yard): the old monk's test. Rake every square of sand in one unbroken line,
 // starting where the rake stands, never crossing a raked square and never touching the rocks. Move with the arrows /
 // WASD or click the next square; step back onto the last square (or press U) to lift the rake, R starts again.
-// Levels 5 x 5 to 8 x 8, the last ones with only one or two ways through. A level opens when the one before is done.
+// Levels 5 x 5 to 9 x 9, the later ones with only one to six ways through. A level opens when the one before is done.
+// Oct 17: How to play (the rules in a few lines) and Restart beside Quit; Restart and R now start the level as it was
+// picked (the steps-back count too, which R used to keep adding to).
 // def: { at: [x, z] (board middle, frame coordinates), size: board width (m), player: [x, z, yaw], cam, look, levels, pass, points }
 (function () {
   const LEVELS = [
@@ -9,19 +11,35 @@
     { rows: ['..S.#.', '..#...', '......', '......', '....#.', '#.....'] },
     { rows: ['#......', '.......', '..S.##.', '.......', '.......', '..##...', '...#...'] },
     { rows: ['.......', '.......', '##....#', '...#...', '..S....', '#...#..', '.......'] },
-    { rows: ['..S..#..', '.#......', '......#.', '.#......', '.......#', '#.##....', '........', '........'] }
+    { rows: ['..S..#..', '.#......', '......#.', '.#......', '.......#', '#.##....', '........', '........'] },
+    // levels 6-10 (scratchpad rake/gen10.mjs, ways counted exactly by rake/verify10.mjs), ordered by how long a solver searches
+    { rows: ['........', '....#...', '.....#..', '........', '#...#.#.', '#..#....', '..S#....', '....#...'], ways: 3 },
+    { rows: ['........', '......#.', '#.#.....', '........', '....##..', '........', '.#...S##', '........'], ways: 1 },
+    { rows: ['S.......', '..##....', '........', '..###...', '........', '.......#', '##......', '........'], ways: 6 },
+    { rows: ['#..#...#', '.....#..', '#.......', '...S....', '......#.', '........', '.....#..', '..#.....'], ways: 3 },
+    { rows: ['....#....', '..##.....', '.......#.', '.#..#....', '....#....', '.........', '......#..', '..S.#..#.', '.........'], ways: 4 }
   ];
-  const SCORE = [20, 40, 70, 100, 130];
+  const WAYS = [1, 1, 2, 2, 2]; // ways through levels 1-5
+  const SCORE = [20, 40, 70, 100, 130, 160, 190, 220, 260, 300];
   const D = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
   const G = {
     title: 'The Raking Path',
+    howTo: { lines: [
+      'Rake every square of sand in one unbroken line, starting where the rake stands (the small stone ring).',
+      'The line moves one square at a time: up, down, left or right, never on a slant. It may never cross a square already raked, and never touch a rock.',
+      'Move with the arrows / W A S D, or click (tap) the square next to the rake.',
+      'Stepping back the way you came (or U) takes back the last square. R (or Restart) smooths the sand and starts again.',
+      'From level 3 the message at the start tells how many ways through there are: the later gardens have only one to six.',
+      'Tip: a square with only one free neighbour is a dead end, so the line has to finish there. Plan the route to end on it.'],
+      img: 'howto/rake.png', caption: 'A solved 5 x 5 garden: one line from the stone ring through every square of sand, ending in the dead end between two rocks. It is the only way.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, AT = def.at || [0, 0], W = def.size || 7.2;
       const KEY = 'rebelAntsRakeProgress:' + (def.id || 'rake');
       let solvedUpTo = 0; try { solvedUpTo = Math.max(0, Math.min(LV.length, Number(localStorage.getItem(KEY)) || 0)); } catch (e) {}
       const mat = (k, c, em, spec = .1) => ctx.mat(k, n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(...c); m.specularColor = new B.Color3(spec, spec, spec); if (em) m.emissiveColor = new B.Color3(...em); return m; });
-      const M = { rock: mat('rock', [.34, .34, .33], [.04, .04, .04]), moss: mat('moss', [.28, .4, .2], [.03, .05, .02]), wood: mat('wood', [.5, .36, .22], [.07, .05, .03]), rim: mat('rim', [.3, .24, .18], [.04, .03, .02]) };
+      const M = { rock: mat('rock', [.34, .34, .33], [.04, .04, .04]), moss: mat('moss', [.28, .4, .2], [.03, .05, .02]), wood: mat('wood', [.5, .36, .22], [.07, .05, .03]), rim: mat('rim', [.3, .24, .18], [.04, .03, .02]),
+        bamboo: mat('bamboo', [.78, .72, .42], [.12, .11, .06]), node: mat('bambooNode', [.55, .5, .26], [.07, .06, .03]), rope: mat('rope', [.82, .74, .56], [.12, .1, .07]) };
       // the sand: a speckled base painted once, the raked line drawn over it after every move
       const base = document.createElement('canvas'); base.width = base.height = 1024;
       { const g = base.getContext('2d'); g.fillStyle = '#e4d6b4'; g.fillRect(0, 0, 1024, 1024); for (let i = 0; i < 9000; i++) { const v = 180 + Math.random() * 60 | 0; g.fillStyle = `rgba(${v},${v - 14},${v - 40},.35)`; g.fillRect(Math.random() * 1024, Math.random() * 1024, 2, 2); } }
@@ -75,11 +93,18 @@
         cells.forEach((r, y) => r.forEach((ch, x) => { if (ch !== '#') return; const p = posOf(x, y);
           const rk = keep(B.MeshBuilder.CreatePolyhedron('rkRock', { type: 3, size: C * .28 }, scene)); rk.material = M.rock; rk.position.set(p.x, C * .16, p.z); rk.scaling.set(1.1, .62, .9); rk.rotation.set(x * .9, y * 1.7, .3); rk.isPickable = false;
           const ms = keep(B.MeshBuilder.CreateSphere('rkMoss', { diameter: C * .34, segments: 6 }, scene)); ms.material = M.moss; ms.position.set(p.x + C * .08, C * .3, p.z - C * .05); ms.scaling.y = .35; ms.isPickable = false; }));
-        // the rake: a wooden head with teeth on a long handle
-        const parts = [B.MeshBuilder.CreateBox('rkHead', { width: C * .7, height: .08, depth: .1 }, scene)];
-        for (let t = 0; t < 6; t++) { const tooth = B.MeshBuilder.CreateBox('rkTooth', { width: .03, height: .14, depth: .03 }, scene); tooth.position.set((t - 2.5) * C * .12, -.09, 0); parts.push(tooth); }
-        const handle = B.MeshBuilder.CreateCylinder('rkHandle', { height: 1.9, diameter: .05, tessellation: 6 }, scene); handle.rotation.x = -1.05; handle.position.set(0, .8, -.47); parts.push(handle);
-        const rake = B.Mesh.MergeMeshes(parts, true); rake.name = 'rkRake'; rake.material = M.wood; rake.isPickable = false; keep(rake); bd.rake = rake;
+        // the rake (Oct 17, Miguel: "make the rake look better"): a zen-garden rake, a capped wooden head with eight tapered
+        // pegs, a bamboo handle with its nodes, two braces and a rope lashing at the joint
+        const rake = new B.TransformNode('rkRake', scene); keep(rake); bd.rake = rake;
+        const RW = C * .78, part = (m, mt, x, y, z, rx = 0, rz = 0, par = rake) => { m.material = mt; m.parent = par; m.position.set(x, y, z); m.rotation.set(rx, 0, rz); m.isPickable = false; ctx.add(m); return m; };
+        part(B.MeshBuilder.CreateBox('rkHead', { width: RW, height: .07, depth: .085 }, scene), M.wood, 0, 0, 0);
+        part(B.MeshBuilder.CreateBox('rkHeadCap', { width: RW * .97, height: .022, depth: .06 }, scene), M.rim, 0, .046, 0);
+        for (let t = 0; t < 8; t++) part(B.MeshBuilder.CreateCylinder('rkTooth', { height: .15, diameterTop: .032, diameterBottom: .012, tessellation: 6 }, scene), M.wood, (t - 3.5) * RW / 8, -.105, 0);
+        const shaft = new B.TransformNode('rkShaft', scene); shaft.parent = rake; shaft.position.set(0, .03, -.02); shaft.rotation.x = -1.05; ctx.add(shaft); // leaning up and back
+        part(B.MeshBuilder.CreateCylinder('rkPole', { height: 1.9, diameter: .055, tessellation: 10 }, scene), M.bamboo, 0, .95, 0, 0, 0, shaft);
+        for (let k = 1; k <= 4; k++) part(B.MeshBuilder.CreateTorus('rkNode', { diameter: .062, thickness: .014, tessellation: 12 }, scene), M.node, 0, k * .4, 0, 0, 0, shaft);
+        part(B.MeshBuilder.CreateTorus('rkRope', { diameter: .09, thickness: .024, tessellation: 14 }, scene), M.rope, 0, .12, 0, 0, 0, shaft);
+        for (const sd of [-1, 1]) part(B.MeshBuilder.CreateCylinder('rkBrace', { height: .46, diameter: .022, tessellation: 6 }, scene), M.bamboo, sd * RW * .2, .17, -.13, -.95, sd * .72);
         const p0 = posOf(sx, sy); rake.position.set(p0.x, .2, p0.z); bd.rakeYaw = 0;
         paint(); info(); st.stuckShown = false;
       }
@@ -99,14 +124,15 @@
         return true;
       }
       function undo() { if (st.phase !== 'play' || bd.path.length < 2) return false; bd.path.pop(); bd.undos++; const a = bd.path[bd.path.length - 1], b = bd.path[bd.path.length - 2]; if (b) bd.rakeYaw = Math.atan2(a[0] - b[0], -(a[1] - b[1])); ctx.note(262, 'bell'); paint(); info(); return true; }
-      function restart() { if (st.phase !== 'play') return; bd.path.length = 1; bd.undos++; paint(); info(); H.msg('Smooth sand again', 700); }
+      // R and Restart beside Quit: the level as it was picked (smooth sand, the rake at the start, no steps back)
+      function restart() { if (st.phase !== 'play' || !bd) return; build(bd.k); H.msg('Smooth sand again', 700); }
       // the picker
       const hud = document.getElementById('gameHud'), pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(380px,90vw);background:rgba(30,22,12,.94);border:1px solid rgba(216,179,92,.7);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 380) + 'px,92vw);background:rgba(30,22,12,.94);border:1px solid rgba(216,179,92,.7);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
       pick.innerHTML = `<div style="font:700 13px/1.2 Georgia,serif;letter-spacing:.14em;text-transform:uppercase;color:#d8b35c;margin-bottom:10px">The Raking Path</div><div style="margin-bottom:12px;color:#bbb">Rake every square of sand in one unbroken line. Never cross your own line; never touch a rock.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo, n = L.rows.length; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:10px 4px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${done ? 'rgba(216,179,92,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? `Level ${k + 1}<div style="font:12px Georgia,serif;color:#c9b88a">${n} × ${n}</div>` : '🔒'}${done ? ' ✓' : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 2},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo, n = L.rows.length; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:10px 4px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${done ? 'rgba(216,179,92,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? `Level ${k + 1}<div style="font:12px Georgia,serif;color:#c9b88a">${n} × ${n}</div>` : '🔒'}${done ? ' ✓' : ''}</button>`; }).join('')}</div>`;
       pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); });
-      function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); H.msg(`Level ${k + 1}`, 900, k >= 2 ? 'only one or two ways through' : ''); }
+      function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); const w = LV[k].ways ?? WAYS[k]; H.msg(`Level ${k + 1}`, 900, k >= 2 && w ? (w === 1 ? 'only one way through' : `only ${w} ways through`) : ''); }
       hud.appendChild(pick);
       const P0 = def.player || [AT[0] - W / 2 - 1.5, AT[1] - 1.5, Math.PI / 2]; ctx.player.place(P0[0], P0[1], P0[2]);
       const cam = def.cam || [AT[0], 7.6, AT[1] - W * .62 - 2.4], look = def.look || [AT[0], 0, AT[1] + .1];
@@ -126,7 +152,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return;
           const dir = { arrowup: 'up', w: 'up', arrowdown: 'down', s: 'down', arrowleft: 'left', a: 'left', arrowright: 'right', d: 'right' }[k];
           if (dir) step(...D[dir]); else if (k === 'u' || k === 'backspace') undo(); else if (k === 'r') restart();
@@ -137,6 +163,7 @@
           const p = ctx.toLocal(hit.pickedPoint), x = Math.round((p.x - AT[0]) / bd.C + (bd.n - 1) / 2), y = Math.round((bd.n - 1) / 2 - (p.z - AT[1]) / bd.C);
           const [hx, hy] = bd.path[bd.path.length - 1]; if (Math.abs(x - hx) + Math.abs(y - hy) === 1) step(x - hx, y - hy);
         },
+        restart,
         _test: { st, choose, step, undo, restart, posOf: (x, y) => posOf(x, y), get bd() { return bd; } },
         dispose() { pick.remove(); if (bd) bd.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };

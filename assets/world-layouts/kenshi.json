@@ -26074,11 +26074,11 @@
         "type": "skip",
         "id": "kenshi-stone-skipping",
         "title": "Stone Skipping",
-        "pass": 150,
+        "pass": 400,
         "points": 50,
         "questOn": "pass",
         "seaY": -1.2,
-        "stones": 5
+        "stones": 10
       }
     }
   },
@@ -26200,6 +26200,776 @@
         "pass": 60,
         "points": 60,
         "questOn": "pass"
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_kenshi-dojo-circuit",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -15,
+      "y": 0.06,
+      "z": -50
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "kenshi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "kenshi-dojo-circuit",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "course",
+        "id": "kenshi-dojo-circuit",
+        "title": "Dojo Circuit",
+        "points": 60,
+        "questOn": "pass",
+        "gates": [
+          [
+            -55,
+            -38
+          ],
+          [
+            -56,
+            18
+          ],
+          [
+            -48,
+            51
+          ],
+          [
+            -38,
+            80
+          ],
+          [
+            38,
+            80
+          ],
+          [
+            46,
+            51
+          ],
+          [
+            56,
+            0
+          ],
+          [
+            15,
+            -50
+          ]
+        ],
+        "start": [
+          -16.53,
+          -49.54
+        ],
+        "path": [
+          [
+            -44.5,
+            -40.5
+          ],
+          [
+            -55,
+            -38
+          ],
+          [
+            -55.5,
+            5.5
+          ],
+          [
+            -56,
+            18
+          ],
+          [
+            -57.5,
+            25
+          ],
+          [
+            -57.5,
+            39.5
+          ],
+          [
+            -50,
+            47
+          ],
+          [
+            -49.5,
+            47.5
+          ],
+          [
+            -49,
+            48
+          ],
+          [
+            -48,
+            51
+          ],
+          [
+            -48.5,
+            51.5
+          ],
+          [
+            -49,
+            52
+          ],
+          [
+            -49,
+            52.5
+          ],
+          [
+            -44.5,
+            58
+          ],
+          [
+            -40,
+            63
+          ],
+          [
+            -39.5,
+            63.5
+          ],
+          [
+            -39,
+            64
+          ],
+          [
+            -38,
+            65.5
+          ],
+          [
+            -38,
+            80
+          ],
+          [
+            -13.5,
+            83.5
+          ],
+          [
+            34.5,
+            83.5
+          ],
+          [
+            38,
+            80
+          ],
+          [
+            45,
+            54
+          ],
+          [
+            45,
+            52
+          ],
+          [
+            45.5,
+            51.5
+          ],
+          [
+            46,
+            51
+          ],
+          [
+            46.5,
+            50.5
+          ],
+          [
+            47,
+            50
+          ],
+          [
+            49,
+            48
+          ],
+          [
+            49.5,
+            47.5
+          ],
+          [
+            50,
+            47
+          ],
+          [
+            57.5,
+            36
+          ],
+          [
+            57,
+            1
+          ],
+          [
+            56,
+            0
+          ],
+          [
+            55.5,
+            -16
+          ],
+          [
+            55,
+            -16.5
+          ],
+          [
+            54.5,
+            -17
+          ],
+          [
+            26,
+            -40.5
+          ],
+          [
+            25.5,
+            -41
+          ],
+          [
+            25,
+            -41.5
+          ],
+          [
+            24.5,
+            -42
+          ],
+          [
+            15,
+            -50
+          ]
+        ],
+        "medals": [
+          55,
+          64,
+          83
+        ],
+        "radius": 3,
+        "cloth": [
+          0.122,
+          0.341,
+          0.325
+        ],
+        "text": "Up the side stairs and round the dojo terrace",
+        "length": 400.4
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_kenshi-blade-kata",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -32,
+      "y": 0.1,
+      "z": -22
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.7489,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "kenshi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "kenshi-blade-kata",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "dance",
+        "id": "kenshi-blade-kata",
+        "title": "Blade Kata",
+        "points": 60,
+        "pass": 0,
+        "questOn": "pass",
+        "song": "kenshi",
+        "moves": [
+          "cross_punch",
+          "jump",
+          "hook_punch",
+          "elbow_punch"
+        ],
+        "floor": [
+          0.315,
+          0.666,
+          0.64
+        ],
+        "packMoves": [
+          "dance_wave",
+          "dance_tut",
+          "dance_house",
+          "dance_gangnam"
+        ]
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_kenshi-stolen-blade",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -35,
+      "y": 0.1,
+      "z": -35
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "kenshi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "kenshi-stolen-blade",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "chase",
+        "id": "kenshi-stolen-blade",
+        "title": "The Stolen Blade",
+        "points": 60,
+        "questOn": "pass",
+        "loop": [
+          [
+            -35,
+            -35
+          ],
+          [
+            34,
+            -36
+          ],
+          [
+            35,
+            -35
+          ],
+          [
+            40,
+            10
+          ],
+          [
+            5.5,
+            1
+          ],
+          [
+            -33,
+            3
+          ],
+          [
+            -40,
+            10
+          ]
+        ],
+        "medals": [
+          63,
+          79,
+          104
+        ],
+        "look": "thief",
+        "carry": "sword",
+        "color": [
+          0.06,
+          0.12,
+          0.12
+        ],
+        "trim": [
+          0.2,
+          0.55,
+          0.5
+        ],
+        "name": "the thief",
+        "text": "A thief took a blade from the dojo"
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_kenshi-bamboo-cut",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 36,
+      "y": 0.1,
+      "z": -18
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "kenshi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "kenshi-bamboo-cut",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "id": "kenshi-bamboo-cut",
+        "title": "Bamboo Cut",
+        "points": 60,
+        "questOn": "pass",
+        "type": "bamboo",
+        "pass": 50
       }
     }
   }

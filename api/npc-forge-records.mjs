@@ -1,4 +1,5 @@
-// NPC Forge records (admin): every NPC in the NPC Forge list (name, key, collection, renders, build, rig, checks), kept
+// NPC Forge records (admin): every NPC in the NPC Forge list (name, key, collection, renders, build, rig, checks; a Cute &
+// Creepy kit request keeps its art and notes), kept
 // on the server so the list is the same on any computer and survives a cleared browser. rig.at / rig.worker = when and
 // by which worker image it was rigged; hands = { at, doneAt } of the last Apply hands.
 //   GET                                   -> { ok, records: [record, ...] }   newest first
@@ -47,6 +48,7 @@ function clean(r) {
     meshy: r.meshy && typeof r.meshy === 'object' ? { p: num(r.meshy.p), glb: url(r.meshy.glb), thumb: url(r.meshy.thumb) } : null,
     rig: r.rig && typeof r.rig === 'object' ? { url: url(r.rig.url), thumb: url(r.rig.thumb), p: num(r.rig.p), step: text(r.rig.step, 40), qa: r.rig.qa && typeof r.rig.qa === 'object' ? r.rig.qa : null, ...(r.rig.handFit ? { handFit: handFit(r.rig.handFit) } : {}), ...(iso(r.rig.at) ? { at: r.rig.at } : {}), ...(/^[\w.-]{1,64}$/.test(String(r.rig.worker || '')) ? { worker: String(r.rig.worker) } : {}) } : null,
     ...(r.handFit ? { handFit: handFit(r.handFit) } : {}),
+    ...(r.notes ? { notes: text(r.notes, 2000) } : {}),   // a Cute & Creepy kit request: what Claude builds it from
     ...(r.hands && iso(r.hands.at) ? { hands: { at: r.hands.at, ...(iso(r.hands.doneAt) ? { doneAt: r.hands.doneAt } : {}) } } : {}),
     updatedAt: num(r.updatedAt) || Date.now()
   };

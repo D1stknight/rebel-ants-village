@@ -2,12 +2,28 @@
 // path glows for a moment (stone by stone), then the mist closes in: walk it from memory (W / ↑ ahead, A D / ← → aside,
 // S / ↓ back, or click the next stone). A wrong stone sinks you back to the start and the path shows once more; three
 // falls and the mist wins. Three levels, longer paths and fewer looks; a level opens when the one before is crossed.
+// Oct 17: How to play (the rules) and Restart (back on the ledge, the same path shown again, no falls).
+// Oct 17: a step off the field's side (A on the left column, D on the right) or S on the first stone is a bump: it
+// used to hop onto a stone that is not there, and the fall after it stopped the game ("The game hit a snag").
 // def: { at: [x, z] (the field's near middle, frame coordinates; rows run along +z), pitch: m between stones, levels, cam, look, pass, points }
 (function () {
-  const LEVELS = [{ cols: 5, rows: 6, show: 1.1, twists: 2 }, { cols: 5, rows: 8, show: .85, twists: 4 }, { cols: 6, rows: 9, show: .6, twists: 6 }];
-  const SCORE = [30, 60, 100];
+  // Oct 17 (Miguel: "make it 10 levels"): wider and longer fields, the path shown quicker and twisting more
+  const LEVELS = [{ cols: 5, rows: 6, show: 1.1, twists: 2 }, { cols: 5, rows: 8, show: .85, twists: 4 }, { cols: 6, rows: 9, show: .6, twists: 6 },
+    { cols: 6, rows: 10, show: .55, twists: 7 }, { cols: 6, rows: 10, show: .48, twists: 8 }, { cols: 7, rows: 11, show: .45, twists: 9 },
+    { cols: 7, rows: 11, show: .4, twists: 10 }, { cols: 7, rows: 12, show: .38, twists: 11 }, { cols: 8, rows: 12, show: .34, twists: 12 },
+    { cols: 8, rows: 12, show: .3, twists: 14 }];
+  const SCORE = [30, 60, 100, 120, 140, 160, 185, 210, 240, 270];
   const G = {
     title: 'The Misty Stones',
+    howTo: { lines: [
+      'Only some stepping stones hold. The safe path glows for a moment, stone by stone, from the near ledge to the far one; then the mist closes in.',
+      'Walk it from memory: W or ↑ steps ahead, A D or ← → step aside, S or ↓ steps back, or click (tap) the next stone.',
+      'From the ledge, W steps onto the stone in front of you (A and D move you along the ledge first), or click any stone of the first row.',
+      'The path goes one stone at a time, ahead or to the side: never on a slant and never back toward the ledge. Stepping back onto the stone you came from is safe.',
+      'A wrong stone sinks you back to the start and the path shows once more; three falls and the mist wins. Restart puts you back on the ledge, no falls, the same path shown again.',
+      'Every fall you are spared is worth 5 more points.',
+      'Tip: say the path to yourself as it glows, like "ahead, ahead, left, ahead".'],
+      img: 'howto/stones.png', caption: 'Level 1\'s size: the path glows 1 to 8, and the keys walk it (W ahead, A and D aside). A step onto any other stone, like the crossed one, sinks.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, AT = def.at || [0, 1.5], P = def.pitch || 1.5;
@@ -35,9 +51,9 @@
         }
         return Array.from({ length: L.rows }, (_, r) => [Math.floor(L.cols / 2), r]);
       }
-      function build(k) {
+      function build(k, path) { // path: the level's own path again (Restart), else a new one
         if (lv) lv.nodes.forEach(n => { try { n.dispose(); } catch (e) {} });
-        const L = LV[k]; lv = { k, cols: L.cols, rows: L.rows, path: makePath(L), stones: [], pos: -1, falls: 0, shows: 0, nodes: [], show: L.show };
+        const L = LV[k]; lv = { k, cols: L.cols, rows: L.rows, path: path || makePath(L), stones: [], pos: -1, falls: 0, shows: 0, nodes: [], show: L.show };
         const ledge = keep(B.MeshBuilder.CreateBox('stLedge', { width: L.cols * P + .6, height: .3, depth: 1.4 }, scene)); ledge.position.set(AT[0], .15, AT[1] - .2); ledge.material = M.start; ledge.isPickable = false;
         const far = keep(B.MeshBuilder.CreateBox('stFar', { width: L.cols * P + .6, height: .3, depth: 1.4 }, scene)); far.position.set(AT[0], .15, AT[1] + (L.rows + 1) * P + .2); far.material = M.start; far.isPickable = false;
         for (let r = 0; r < L.rows; r++) { lv.stones.push([]); for (let c = 0; c < L.cols; c++) {
@@ -54,14 +70,14 @@
         if (st.phase !== 'play' || st.hop > 0) return;
         const cur = lv.pos < 0 ? null : lv.path[lv.pos];
         const adj = cur ? Math.abs(cur[0] - c) + Math.abs(cur[1] - r) === 1 : r === 0;
-        if (!adj) { ctx.sound('thock'); return; }
+        if (!adj || !lv.stones[r]?.[c]) { ctx.sound('thock'); return; } // off the field's side, or back off the first stone: no stone there
         if (cur && lv.pos > 0 && lv.path[lv.pos - 1][0] === c && lv.path[lv.pos - 1][1] === r) { hopTo(stonePos(c, r)); lv.pos--; return; } // back along the path
         const p = stonePos(c, r); hopTo(p);
         if (lv.path[lv.pos + 1] && lv.path[lv.pos + 1][0] === c && lv.path[lv.pos + 1][1] === r) { lv.pos++; lv.stones[r][c].material = M.walked; ctx.note(523 + lv.pos * 25, 'bell');
           if (lv.pos === lv.path.length - 1) { st.finishIn = .5; } }
         else { st.fallIn = .32; st.fallStone = lv.stones[r][c]; }
       }
-      function hopTo(p) { st.from = [st.at[0], st.at[1]]; st.at = [p.x, p.z]; st.hop = .28; ctx.player.face(Math.atan2(p.x - st.from[0], p.z - st.from[1])); ctx.player.clip('jump'); }
+      function hopTo(p) { st.from = [st.at[0], st.at[1]]; st.at = [p.x, p.z]; st.hop = .28; ctx.player.face(Math.atan2(p.x - st.from[0], p.z - st.from[1])); if (ctx.player.hop) ctx.player.hop(.28); else ctx.player.clip('jump'); }
       function move(dc, dr) { if (!lv) return; const cur = lv.pos < 0 ? null : lv.path[lv.pos]; if (!cur) { if (dr > 0) { /* from the ledge: the stone ahead of where the Rebel stands */ const c = Math.max(0, Math.min(lv.cols - 1, Math.round((st.at[0] - AT[0]) / P + (lv.cols - 1) / 2) + dc)); stepTo(c, 0); } else if (dc) { st.at = [Math.max(AT[0] - (lv.cols - 1) / 2 * P, Math.min(AT[0] + (lv.cols - 1) / 2 * P, st.at[0] + dc * P)), st.at[1]]; ctx.player.place(st.at[0], st.at[1], 0); } return; }
         stepTo(cur[0] + dc, cur[1] + dr); }
       // the picker
@@ -71,15 +87,20 @@
         + `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:10px 4px;border-radius:9px;border:1px solid ${open ? '#9fd8ff' : '#444'};background:${done ? 'rgba(140,210,255,.2)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? 'Level ' + (k + 1) : '🔒'}${done ? ' ✓' : ''}</button>`; }).join('')}</div>`;
       pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); });
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); build(k); }
+      // Restart (the button beside Quit): back on the ledge, the same path shown again from its first stone, no falls yet
+      function restart() { if (!lv || (st.phase !== 'show' && st.phase !== 'play')) return; st.hop = 0; st.fallIn = 0; st.finishIn = 0; st.fallStone = null; build(lv.k, lv.path); H.msg('Start again', 1000, 'watch the stones'); }
       hud.appendChild(pick);
       ctx.player.place(AT[0], AT[1] - .2, 0);
-      const cam = def.cam || [AT[0] + 1.2, 9.5, AT[1] - 6.5], look = def.look || [AT[0], 0, AT[1] + 6];
+      // the camera backs off and looks further out for the longer fields (past 9 rows)
+      const far = () => lv ? Math.max(0, (lv.rows - 9) * P) : 0;
+      let cam = def.cam || [AT[0] + 1.2, 9.5, AT[1] - 6.5], look = def.look || [AT[0], 0, AT[1] + 6];
+      const frameCam = () => { if (def.cam) return; const f = far(); cam = [AT[0] + 1.2, 9.5 + f * .6, AT[1] - 6.5 - f * .35]; look = [AT[0], 0, AT[1] + 6 + f * .5]; };
       ctx.look(cam, look, def.fov || .85);
       H.title(def.title || 'The Misty Stones'); H.score(''); info();
       H.hint('Watch the path, then cross: <kbd>W</kbd>/<kbd>↑</kbd> ahead, <kbd>A</kbd><kbd>D</kbd>/<kbd>←</kbd><kbd>→</kbd> aside, <kbd>S</kbd>/<kbd>↓</kbd> back, or click the next stone.');
       return {
         update(dt) {
-          ctx.look(cam, look);
+          frameCam(); ctx.look(cam, look);
           if (!lv) return;
           lv.nodes.forEach(n => { if (n.metadata?.drift != null) { n.position.x = AT[0] + Math.sin(performance.now() / (2600 + n.metadata.drift * 700) + n.metadata.drift) * .6; } });
           if (st.phase === 'show') { // the path lights stone by stone, then goes dark (walked stones stay lit)
@@ -103,7 +124,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return;
           // the camera looks along +z: left on screen is -x
           if (k === 'w' || k === 'arrowup') move(0, 1); else if (k === 's' || k === 'arrowdown') move(0, -1); else if (k === 'a' || k === 'arrowleft') move(-1, 0); else if (k === 'd' || k === 'arrowright') move(1, 0);
@@ -112,6 +133,7 @@
           if (evt.type !== B.PointerEventTypes.POINTERDOWN || st.phase !== 'play') return;
           const hit = scene.pickWithRay(ctx.ray(), m => !!m.metadata?.stStone); if (hit?.hit) stepTo(...hit.pickedMesh.metadata.stStone);
         },
+        restart,
         _test: { st, choose, stepTo, move, get lv() { return lv; } },
         dispose() { pick.remove(); if (lv) lv.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };

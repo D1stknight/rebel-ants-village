@@ -169,8 +169,11 @@ for c, lim in (('idle', 6.0), ('walk', 8.0), ('run', 10.0), ('roundhouse_kick', 
 VW = V0 @ Mw[:3, :3].T
 H = float(np.ptp(VW[:, 2])) or 1.0; Wd = float(np.percentile(VW[:, 0], 99.9) - np.percentile(VW[:, 0], 0.1)); Dp = float(np.percentile(VW[:, 1], 99.9) - np.percentile(VW[:, 1], 0.1))
 if Wd > 1.2 * H or Dp > 0.7 * H: fails.append(f'rest pose too wide ({Wd / H:.2f} x {Dp / H:.2f} of height)')
+# v2.25 Chumpz / Saints: fur at the wrist (Big Chain) or a sleeve cuff makes the raw ring wide; the glove cuff is kept to
+# the wrist's own size anyway, so it is not a body pick-up there
+SPECIES = os.environ.get('FORGE_NPC_SPECIES', '') if NPC else ''
 for m_ in re.finditer(r'hand length ([\d.]+) .*?wrist girth [\d.]+ \(raw ([\d.]+)\)', log):
-    if float(m_.group(2)) > 0.6 * float(m_.group(1)): fails.append('hands: the wrist ring picked up the body'); break
+    if not SPECIES and float(m_.group(2)) > 0.6 * float(m_.group(1)): fails.append('hands: the wrist ring picked up the body'); break
 if NPC:
     # villagers stand, talk and gesture: pieces torn free, leftover glove parts, a sitting / leaning body, sinking into
     # the floor or a head that snaps are what a player notices (each one was seen on the old villagers)

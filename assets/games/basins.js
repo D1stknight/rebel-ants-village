@@ -3,17 +3,35 @@
 // the other is full), or the canal to empty it; click the canal first (or press C) and then a basin to fill it from the
 // canal. Levels without the canal start with one basin full. A level opens when the one before is done.
 // def: { at: [x, z] (the middle basin, frame coordinates), canal: [x0, z0, x1, z1] (the clickable strip), player, cam, look, pass, points }
+// Oct 17 (Miguel: the puzzles need a how-to, every board a Restart): howTo (the rules + measuring 1 with a 5 and a 3
+// worked through, howto/basins.png; not level 1's way) and inst.restart = R.
 (function () {
   const LEVELS = [
     { caps: [3, 5], start: [0, 0], canal: true, goal: { any: 4 }, best: 6 },
     { caps: [8, 5, 3], start: [8, 0, 0], goal: { split: [4, 4] }, best: 7 },
     { caps: [7, 11], start: [0, 0], canal: true, goal: { any: 6 }, best: 10 },
     { caps: [12, 7, 5], start: [12, 0, 0], goal: { split: [6, 6] }, best: 11 },
-    { caps: [16, 11, 6], start: [16, 0, 0], goal: { split: [8, 8] }, best: 14 }
+    { caps: [16, 11, 6], start: [16, 0, 0], goal: { split: [8, 8] }, best: 14 },
+    // Oct 17 (Miguel: "make it 10 levels"): scratchpad basins/gen10.mjs, the fewest moves by BFS (15 up to 26)
+    { caps: [13, 9, 4], start: [0, 0, 0], canal: true, goal: { split: [6, 6] }, best: 15 },
+    { caps: [19, 12, 7], start: [0, 0, 0], canal: true, goal: { any: 13 }, best: 17 },
+    { caps: [15, 11, 4], start: [0, 0, 0], canal: true, goal: { split: [6, 6] }, best: 19 },
+    { caps: [17, 7], start: [0, 0], canal: true, goal: { any: 12 }, best: 22 },
+    { caps: [17, 16], start: [0, 0], canal: true, goal: { any: 7 }, best: 26 }
   ];
-  const SCORE = [20, 30, 50, 70, 100];
+  const SCORE = [20, 30, 50, 70, 100, 115, 130, 150, 175, 200];
   const G = {
     title: "The Engineer's Basins",
+    howTo: {
+      lines: ['Measure the water exactly. The goal is on the info line: "Measure exactly 4" (any basin holding 4) or "Split the water 4 and 4" (two basins with 4 each, any other basin empty).',
+        'The tag over each basin shows its water / its size. A pour cannot be stopped by eye: the water runs until the first basin is empty or the second is full.',
+        'Click a basin (or press its number) to pick it up: its rim glows gold. Then click another basin to pour into it. Click the picked basin again (or press X) to put it down.',
+        'Where there is a canal: click it (or press C), then a basin, to fill that basin to the top; or pick a basin up and click the canal to empty it.',
+        'Levels without a canal start with one basin full, and that water is all there is.',
+        'R (or Restart) starts the level again. Measuring in the fewest moves earns +10; the result card shows the fewest.',
+        'Tip: a full basin poured into a smaller empty one leaves the difference behind: a full 5 into an empty 3 leaves 2.'],
+      img: 'howto/basins.png', caption: 'A 5 and a 3 by the canal: fill the 3, pour it into the 5, fill it again, pour again. The 5 fills up and 1 stays in the 3.'
+    },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, AT = def.at || [0, 0], CN = def.canal || [AT[0] - 5, AT[1] - 3.4, AT[0] + 5, AT[1] - 2];
@@ -91,9 +109,9 @@
       function restart() { if (st.phase !== 'play') return; lv.vol = LV[lv.k].start.slice(); lv.moves = 0; st.sel = null; refresh(); info(); H.msg('Back to the start', 700); }
       // the picker
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(400px,92vw);background:rgba(18,22,14,.94);border:1px solid rgba(216,179,92,.7);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 400) + 'px,92vw);background:rgba(18,22,14,.94);border:1px solid rgba(216,179,92,.7);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
       pick.innerHTML = `<div style="font:700 13px/1.2 Georgia,serif;letter-spacing:.14em;text-transform:uppercase;color:#d8b35c;margin-bottom:10px">The Engineer's Basins</div><div style="margin-bottom:12px;color:#bbb">The basins carry no marks but their size. Pour, fill and empty until the water is measured true.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:9px 4px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${ok ? 'rgba(216,179,92,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? `Level ${k + 1}<div style="font:12px Georgia,serif;color:#c9b88a">${L.caps.join(' · ')}${L.canal ? ' · canal' : ''}</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 2},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:9px 4px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${ok ? 'rgba(216,179,92,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? `Level ${k + 1}<div style="font:12px Georgia,serif;color:#c9b88a">${L.caps.join(' · ')}${L.canal ? ' · canal' : ''}</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
       pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); });
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); H.msg(`Level ${k + 1}`, 1100, goalText(LV[k])); }
       hud.appendChild(pick);
@@ -118,7 +136,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return;
           const n = parseInt(k, 10); if (n >= 1 && n <= lv.caps.length) click(n - 1); else if (k === 'c') click('canal'); else if (k === 'r') restart(); else if (k === 'x' || k === 'backspace') { st.sel = null; refresh(); }
         },
@@ -127,6 +145,7 @@
           const hit = scene.pickWithRay(ctx.ray(), m => m.metadata?.bsBasin !== undefined || (!!m.metadata?.bsCanal && m.isEnabled())); if (!hit?.hit) return;
           click(hit.pickedMesh.metadata.bsCanal ? 'canal' : hit.pickedMesh.metadata.bsBasin);
         },
+        restart, // the HUD's Restart button (as R)
         _test: { st, choose, click, restart, done: () => lv && done(), get lv() { return lv; } },
         dispose() { pick.remove(); tags.forEach(t => t.remove()); if (st.stream) st.stream.dispose(); if (lv) lv.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };

@@ -1,23 +1,47 @@
 // The Witch's Brew (Oct 15, the Cute & Creepy witch's cottage): the Lunar Witch's recipe is a page of riddles, one line
 // per ingredient. Eight jars float on a shelf by the cauldron; pour them in the recipe's order (click a jar, or press its
 // number). A wrong jar makes the brew hiss and costs one of three tries; the third spoils it. Each brew is a new recipe
-// (five of the eight ingredients, each with its own riddle).
+// (five of the eight ingredients on the shelf, each with one of its riddles); the shelf holds eight of the witch's
+// sixteen ingredients, a new eight every brew.
+// Oct 17: How to play (the rules) and Restart (the same recipe from its first line, three tries again).
+// Oct 17 (Miguel: every board game needs an image example and fuller rules): howTo with howto/brew.png (a page line and
+// the jar it points at; scratchpad agents/htC/brew/draw.py + check.py, the riddles read from POOL by pool.mjs).
 // def: { cauldron: [x, z] (frame coords), rim: brew height, shelf: [x, y, z] (its middle), playerAt: [x, z], cam, at, pass, points }
 (function () {
-  const ING = [
-    { id: 'bat', name: 'Bat Wing', c: [.42, .2, .62], lines: ['Torn from one who flies by night but is no bird.', 'The sail of a night flyer who sees with its ears.'] },
-    { id: 'moon', name: 'Moonwater', c: [.62, .8, 1], lines: ['What the moon weeps into the old well.', 'The silver drink the Harvest Moon pours.'] },
-    { id: 'toad', name: 'Toadstool', c: [.9, .18, .14], lines: ['A red roof that grows in the dark, dotted white.', 'A little house no one lives in, under the dead tree.'] },
-    { id: 'silk', name: 'Spider Silk', c: [.92, .92, .9], lines: ['The thread that catches whatever flies.', 'A net spun without hands, between the graves.'] },
-    { id: 'seed', name: 'Pumpkin Seeds', c: [1, .55, .12], lines: ['The heart of every lantern on the hill.', 'What the grinning lantern keeps inside.'] },
-    { id: 'raven', name: 'Raven Feather', c: [.12, .12, .18], lines: ['The black pen the sky lends the night.', 'Dropped by the one who croaks "nevermore".'] },
-    { id: 'pepper', name: 'Ghost Pepper', c: [1, .32, .1], lines: ['Hot enough to scare a ghost away.', 'A little fire that grows on a stem.'] },
-    { id: 'star', name: 'Star Dust', c: [1, .86, .4], lines: ['What falls when a wish is made.', 'Light that came down from the sky to sleep in a jar.'] }
+  // the witch's stores: sixteen ingredients, six riddles each; a brew puts eight of them on the shelf (Oct 17, Miguel: "give
+  // it a lot of riddles its such a great game, it make me want to play it a lot of times")
+  const POOL = [
+    { id: 'bat', name: 'Bat Wing', c: [.42, .2, .62], lines: ['Torn from one who flies by night but is no bird.', 'The sail of a night flyer who sees with its ears.', 'It hangs upside down all day and folds its cloak at dawn.', 'Leather that learned to fly.', 'A small umbrella that squeaks.', "The cave's cloak, borrowed for a night."] },
+    { id: 'moon', name: 'Moonwater', c: [.62, .8, 1], lines: ['What the moon weeps into the old well.', 'The silver drink the Harvest Moon pours.', 'A bowl of water that held the full moon until morning.', 'Rain that fell through moonbeams and kept their shine.', 'The silver in it is not metal but moonlight.', "The well's water on the night the sky's lamp was full."] },
+    { id: 'toad', name: 'Toadstool', c: [.9, .18, .14], lines: ['A red roof that grows in the dark, dotted white.', 'A little house no one lives in, under the dead tree.', 'An umbrella for a frog, spotted and poisonous.', 'It grows in a ring where the fairies dance.', 'A stool no one should sit on and no one should eat.', 'Born after rain in the shade, it never flowers.'] },
+    { id: 'silk', name: 'Spider Silk', c: [.92, .92, .9], lines: ['The thread that catches whatever flies.', 'A net spun without hands, between the graves.', 'Eight legs wove it; the morning dew strings it with pearls.', 'Finer than hair, stronger than it looks, sticky as a promise.', 'A rope a spinner lets herself down from the ceiling on.', "The lace on the crypt's door that no tailor made."] },
+    { id: 'seed', name: 'Pumpkin Seeds', c: [1, .55, .12], lines: ['The heart of every lantern on the hill.', 'What the grinning lantern keeps inside.', 'Scooped out so that a face can be carved.', 'Plant one in spring and a lantern grows by autumn.', 'Flat and pale, from the belly of the orange giant.', "Jack's insides, roasted."] },
+    { id: 'raven', name: 'Raven Feather', c: [.12, .12, .18], lines: ['The black pen the sky lends the night.', 'Dropped by the one who croaks "nevermore".', 'A quill from the bird that sits on the gallows.', "The darkest plume of the wisest bird.", 'It fell from a black wing over the graveyard and does not shine.', "The old gods' messenger left it on the gate."] },
+    { id: 'pepper', name: 'Ghost Pepper', c: [1, .32, .1], lines: ['Hot enough to scare a ghost away.', 'A little fire that grows on a stem.', 'One bite and smoke comes out of your ears.', 'Red, wrinkled and wicked: it burns twice.', 'The spirit that haunts your tongue.', 'Grown in the garden, it bites back.'] },
+    { id: 'star', name: 'Star Dust', c: [1, .86, .4], lines: ['What falls when a wish is made.', 'Light that came down from the sky to sleep in a jar.', 'Swept from the tail of a shooting star.', 'Glitter the night sky shed.', "The sky's sugar, sprinkled on dreams.", 'A pinch of heaven that twinkles in the dark.'] },
+    { id: 'moss', name: 'Graveyard Moss', c: [.32, .52, .22], lines: ['The green blanket the old stones wear.', 'It grows over the names nobody reads anymore.', 'Soft and damp, it creeps over the tombs.', 'A carpet the dead never walk on.', 'Scraped from the north side of a headstone.', 'It needs no seed, only shade, rain and silence.'] },
+    { id: 'howl', name: 'Wolf Howl', c: [.55, .62, .76], lines: ['A song sung to the full moon from the hilltop, corked tight.', 'What echoes through the woods on the round-moon nights.', 'Caught in a bottle before it could reach the valley.', 'The sound that makes the villagers lock their doors.', "The grey hunter's call, kept for later.", 'A long, lonely note from a furry throat.'] },
+    { id: 'whisker', name: 'Black Cat Whisker', c: [.3, .28, .34], lines: ['It measures the gap before the night hunter slips through.', 'Lost from the face of the one whose crossing brings bad luck.', 'A stiff hair from a purring shadow.', "The witch's companion shed it on her broom.", 'From the cheek of one with nine lives.', 'It tickles your hand when the mouser comes to say hello.'] },
+    { id: 'wax', name: 'Candle Wax', c: [.95, .9, .74], lines: ['The tears a flame cries as it burns.', 'It melts while it works and hardens when it rests.', 'It drips from every window on Halloween night.', 'What is left on the altar by morning when the light has gone out.', 'Bees made it first; the chandler gave it a wick.', "Soft and pale, it seals the witch's letters."] },
+    { id: 'blood', name: "Dragon's Blood", c: [.55, .04, .06], lines: ['A red resin that bleeds from a tree, named for a beast that breathes fire.', "Red as a beast's wound, but it came from bark.", 'The tree that bleeds when you cut it gives this.', 'Not from a scaly beast at all, though its name says so.', 'Burned for strength in old spells: crimson and smoky.', "The fire-breather's namesake, dried in a jar."] },
+    { id: 'hazel', name: 'Witch Hazel', c: [.85, .82, .25], lines: ['A shrub that flowers in winter, with a witch in its name.', 'Its forked twig finds water when you walk with it.', 'A yellow bloom on bare branches, while everything else sleeps.', "The cottage owner's namesake, soothing for scrapes.", 'Bark and leaves steeped clear, cool on a bruise.', "A dowser's fork is cut from it."] },
+    { id: 'slime', name: 'Snail Slime', c: [.55, .85, .7], lines: ['The silver road a slow traveller leaves behind.', 'It glistens on the garden path after rain: a trail with no footprints.', 'Carried by one who wears its house on its back.', 'The slowest one in the garden leaves it everywhere it goes.', 'Slippery, shiny and kind to the skin, they say.', "The shell-bearer's shine."] },
+    { id: 'shadow', name: 'Shadow Ink', c: [.1, .04, .16], lines: ['Wrung from the dark under the bed.', 'Spill it and the floor forgets the lamp.', 'The darkest blot, squeezed from the corner no lamp reaches.', 'What a shadow bleeds when you step on it.', 'It pools where the light cannot follow.', 'Darkness thick enough to pour.'] }
   ];
   const G = {
     title: "The Witch's Brew",
+    howTo: { lines: [
+      "Brew the Lunar Witch's recipe. Its page is a list of riddles, one line for each ingredient; the line to answer now shows on the page at the top.",
+      'Eight jars stand on the shelf by the cauldron, each with a tag under it: its number and its name. Read the line, work out which ingredient it means and pour that jar: click it or press its number.',
+      "Pour the lines in order: a poured line shows its ingredient's name on the page and the next line comes up. Five lines make the brew.",
+      'A wrong jar hisses and costs one of your three tries (the stars on the page); the third wrong jar spoils the brew.',
+      'Fewer wrong jars score more: 100 for a perfect brew, 15 less for each wrong jar (a spoiled brew pays 12 a poured line). Restart brews the same recipe again from its first line, with three tries.',
+      "Every brew is a new recipe: eight of the witch's sixteen ingredients on the shelf, each with six riddles, so the lines change from brew to brew.",
+      'Tip: a riddle points at one jar by what the ingredient is, what it does or where it comes from. When unsure, rule out the jars it cannot be.'],
+      img: 'howto/brew.png', caption: 'Line 2 of 5: "Eight legs wove it; the morning dew strings it with pearls" points at jar 4, the Spider Silk. Moonwater went in on line 1; one wrong jar has cost a star.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
+      const ING = POOL.slice().sort(() => Math.random() - .5).slice(0, 8); // this brew's shelf
       const CA = def.cauldron || [0, -3.6], RIM = def.rim || 1.45, SH = def.shelf || [-2.7, 2.15, -3.1], STEPS = Math.min(6, def.steps || 5), TRIES = def.tries || 3;
       const mat = (k, c, em, alpha) => ctx.mat(k, n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(...c); m.specularColor = new B.Color3(.3, .3, .3); if (em) m.emissiveColor = new B.Color3(...em); if (alpha != null) { m.alpha = alpha; m.backFaceCulling = false; } return m; });
       const glass = mat('glass', [.7, .8, .85], [.08, .1, .12], .38), cork = mat('cork', [.5, .34, .18]), plank = mat('plank', [.25, .16, .1], [.05, .02, .08]);
@@ -89,6 +113,8 @@
         }
         drawPage(); info();
       }
+      // Restart (the button beside Quit): the same recipe from its first line, three tries again; a jar in the air goes home
+      function restart() { if (st.phase !== 'play') return; if (st.busy) { st.busy.j.root.rotation.z = 0; st.busy = null; } st.step = 0; st.tries = TRIES; st.mistakes = 0; want = BASE.slice(); drawPage(); info(); H.msg('A fresh brew', 1000, 'the same recipe, from the first line'); }
       function spark(up) { const s = sparkSrc.createInstance('brewS'); s.parent = ctx.frame; ctx.add(s); const a = Math.random() * 6.28, r = Math.random() * .5; s.position.set(CA[0] + Math.cos(a) * r, RIM + .1, CA[1] + Math.sin(a) * r); st.sparks.push({ s, v: new V3((Math.random() - .5) * .5, 1 + Math.random() * up, (Math.random() - .5) * .5), t: 0 }); }
       function puff() { const p = puffSrc.createInstance('brewP'); p.parent = ctx.frame; ctx.add(p); const a = Math.random() * 6.28; p.position.set(CA[0] + Math.cos(a) * .3, RIM + .2, CA[1] + Math.sin(a) * .3); st.puffs.push({ p, v: new V3(Math.cos(a) * .4, .8 + Math.random() * .6, Math.sin(a) * .4), t: 0 }); }
       const PA = def.playerAt || [1.9, CA[1] + 1.1];
@@ -130,6 +156,7 @@
           const hit = scene.pickWithRay(ctx.ray(), m => m.metadata?.brewJar !== undefined);
           if (hit && hit.hit) pour(hit.pickedMesh.metadata.brewJar);
         },
+        restart,
         _test: { st, recipe, pour, jars },
         dispose() {
           page.remove(); tags.forEach(t => t.remove()); lights.forEach((l, i) => l.diffuse.copyFrom(lightWas[i]));

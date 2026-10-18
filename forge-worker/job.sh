@@ -18,8 +18,13 @@ R="$FW/rigger"; O="$FORGE_OUT"
 # "headfix" get the head levelling like a Rebel's.
 NPC="${FORGE_NPC:-}"; MOVES="$FW/anim/clips.json"
 # v2.23 NPC species (FORGE_NPC_SPECIES, set by the NPC Forge for its Chumpz and Saints collections only): apes and humans
-# keep their own hands (the sculpt's: furry ape hands, human hands) instead of the Rebel gloves; Rebel villagers (unset)
-# are rigged exactly as before
+# get their wrist from the hand length (landmarks); Rebel villagers (unset) are rigged exactly as before.
+# v2.25 they wear the Rebel gloves too (Miguel: their own sculpted hands came out too big and could not move); the
+# glove takes the sculpted hand's colour and a set share of the height (handswap)
+# v2.28 bare arms (Chumpz in shorts): normalize keeps the vertex colours, landmarks moves the wrist up to where the arm's
+# colour turns into the sculpted hand's (the hand-length wrist left the palm on the arm beside the glove)
+# v2.29 NPCs dance at the parties: the games pack's four dances (dance_wave / tut / house / gangnam) are NPC clips too,
+# when the worker has their files (optional moves in anim/clips_npc.json)
 SPECIES="${FORGE_NPC_SPECIES:-}"
 if [ -n "$NPC" ]; then
   MOVES="$FW/anim/clips_npc.json"
@@ -63,14 +68,47 @@ step hands;      run "$R/handfix.py" -- "$O/weighted.blend" "$O/weighted_hf.blen
 if [ "${FORGE_SKIRTFIX:-0}" = "1" ]; then run "$R/skirtfix.py" -- "$O/weighted_hf.blend" "$O/weighted_hf.blend"; fi
 step cloth;      run "$R/clothbones.py" -- "$O/weighted_hf.blend" "$O/weighted_cb.blend"
 step animate;    run "$R/retarget.py" -- "$O/weighted_cb.blend" "$O/anim6.blend"
-step moves;      if [ -n "$NPC" ]; then for f in $(grep -o '"file": *"[^"]*"' "$MOVES" | sed 's/.*"\([^"]*\)"$/\1/'); do
-                   [ -f "$FORGE_PACK/$f" ] || { echo "NPC gesture pack missing: $f (upload it in the NPC Forge, then rebuild the worker)" >> "$JOB/log"; false; }; done; fi
+step moves;      if [ -n "$NPC" ]; then
+                   # v2.29 the four party dances (optional: the games pack's files): a worker image without them rigs without them
+                   "$PY" - "$MOVES" "$FORGE_PACK" "$O/moves_npc.json" >> "$JOB/log" 2>&1 <<'PY'
+import json, os, sys
+moves, pack, out = sys.argv[1:4]; keep = []
+for c in json.load(open(moves)):
+    if os.path.exists(os.path.join(pack, c['file'])): keep.append(c)
+    elif c.get('optional'): print('NPC move skipped (not in the worker):', c['file'])
+    else: print('NPC gesture pack missing:', c['file'], '(upload it in the NPC Forge, then rebuild the worker)'); sys.exit(1)
+json.dump(keep, open(out, 'w'), indent=1)
+PY
+                   MOVES="$O/moves_npc.json"; fi
                  run "$FW/anim/retarget_bvh.py" -- "$O/anim6.blend" "$O/anim6_ma.blend" "$MOVES"
 # v2.11 weapon moves (sword / twin blades / bow, Mixamo): retargeted like the other moves, cleaned up with them, shipped
 # in their own moves.glb (the rig.glb keeps its 24 clips)
 if [ -z "$NPC" ]; then
 export FORGE_WEAPON_CLIPS="$FW/anim/clips_weapons.json"
 step weapons;    run "$FW/anim/retarget_bvh.py" -- "$O/anim6_ma.blend" "$O/anim6_ma.blend" "$FORGE_WEAPON_CLIPS"
+fi
+# v2.24 games pack (Miguel's Mixamo moves for the village games: fishing, digging, planting, throws, the axe, cheering,
+# pushing, four dances): retargeted and cleaned up with the other moves, shipped in their own games.glb (rig.glb and
+# moves.glb are unchanged). They keep their own head motion (headfix would level the look down at a shovel). A worker
+# built before the pack was uploaded makes no games.glb and everything else as before.
+# v2.30 Miguel's second set (rope pull, hammer, unarmed + shield blocks, jump shot, dribble, bowling throw, swim): a file
+# the image lacks leaves out only its own moves (logged "games pack missing: <file>"); the pack lists what it holds
+# (result.json gamesClips), so the NPC Forge can tell an older pack from a current one.
+GAMES=""
+if [ -z "$NPC" ]; then
+  export FORGE_GAME_CLIPS="$O/clips_games.json"
+  "$PY" - "$FW/anim/clips_games.json" "$FORGE_PACK" "$FORGE_GAME_CLIPS" >> "$JOB/log" 2>&1 <<'PY'
+import json, os, sys
+src, pack, out = sys.argv[1:4]; cl = json.load(open(src)); have = [c for c in cl if os.path.isfile(os.path.join(pack, c['file']))]
+for f in sorted(set(c['file'] for c in cl) - set(c['file'] for c in have)):
+    print(f'games pack missing: {f} (upload it in the Rig worker box, then rebuild the worker); its moves are left out')
+json.dump(have, open(out, 'w'), indent=1)
+PY
+  if [ "$("$PY" -c 'import json, sys; print(len(json.load(open(sys.argv[1]))))' "$FORGE_GAME_CLIPS")" -gt 0 ]; then GAMES=1; fi
+  if [ -n "$GAMES" ]; then
+    export FORGE_HEAD_SKIP="${FORGE_HEAD_SKIP-cartwheel,backflip,front_flip,flip_kick,spin_flip_kick,knockdown,get_up},$("$PY" -c 'import json, sys; print(",".join(c["name"] for c in json.load(open(sys.argv[1]))))' "$FORGE_GAME_CLIPS")"
+step games;      run "$FW/anim/retarget_bvh.py" -- "$O/anim6_ma.blend" "$O/anim6_ma.blend" "$FORGE_GAME_CLIPS"
+  fi
 fi
 step cleanup;    run "$R/fixarm.py" -- "$O/anim6_ma.blend" "$O/anim6_fix.blend"
                  run "$R/footfix.py" -- "$O/anim6_fix.blend" "$O/anim6_ff0.blend"
@@ -81,19 +119,22 @@ step cleanup;    run "$R/fixarm.py" -- "$O/anim6_ma.blend" "$O/anim6_fix.blend"
                  run "$R/armpitfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v1.9c no shards under the arms
                  run "$R/armorfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # re-assert after the cloth cleanups
                  run "$R/seamfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v1.9d cut fingertips fused to the thigh
-if [ -z "$SPECIES" ]; then run "$R/handswap.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"  # v2.0 standard 5-finger hands + hand poses; v2.18 NPCs: centred, one size, FORGE_HAND_FIT (v2.20 + cuff size / length)
-else run "$R/handkeep.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"; fi   # v2.23 apes / humans keep their own hands; loose nails / fingertips ride the hand
+if [ -n "$SPECIES" ]; then run "$R/handkeep.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"; fi   # v2.23 loose nails / fingertips ride the hand (v2.25: so the glove swap takes them off with it)
+                 run "$R/handswap.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"  # v2.0 standard 5-finger hands + hand poses; v2.18 NPCs: centred, one size, FORGE_HAND_FIT (v2.20 + cuff size / length)
                  run "$R/shoulderfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"  # v2.0 sleeves ride the arm
                  run "$R/antennafix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"  # v2.1 jointed antennae with follow-through
 if [ -n "$NPC" ]; then run "$R/npcarms.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v2.16 NPC arms: no elbow flick, pointing line, wave rebuilt on the villager's own arm (flat shoulder pad, palm forward), claps meet
                        run "$R/handfloor.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v2.13 NPC hands on the floor
                        run "$R/npcstance.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v2.14 NPCs stand tall, head up in the run
-                       if [ -z "$SPECIES" ]; then run "$R/cufftwist.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"; fi; fi  # v2.21 NPC cuffs follow the hand's twist only (after every hand step); no cuffs on own hands
+                       run "$R/cufftwist.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"; fi  # v2.21 NPC cuffs follow the hand's twist only (after every hand step)
 step export;     FORGE_NAME="$NAME" FORGE_DECIMATE="${FORGE_DECIMATE:-0.35}" FORGE_TEX_BASE=$([ -n "$NPC" ] && echo 1024 || echo 2048) FORGE_TEX_OTHER=512 run "$R/export.py" -- "$O/anim6_ff.blend" "$JOB/rig.glb"
 # v2.12 head cloth: skully-wrap flaps / bandana tails get spring chains (cloth_flap_*), on the finished GLB. Optional.
 step headcloth;  run "$R/headcloth.py" "$JOB/rig.glb" "$JOB/rig.glb" --report "$JOB/headcloth.json" || echo "headcloth failed (non-fatal)" >> "$JOB/log"
 if [ -z "$NPC" ]; then
 step movespack;  run "$R/exp_moves.py" -- "$O/anim6_ff.blend" "$FORGE_WEAPON_CLIPS" "$JOB/moves.glb"
+fi
+if [ -n "$GAMES" ]; then
+step gamespack;  run "$R/exp_moves.py" -- "$O/anim6_ff.blend" "$FORGE_GAME_CLIPS" "$JOB/games.glb"
 fi
 step qa;         run "$FW/qa_job.py" -- "$O/anim6_ff.blend" "$JOB/rig.glb" "$JOB/qa.json" "$JOB/log"
 step thumb;      "$PY" "$FW/thumb.py" -- "$JOB/rig.glb" "$JOB/thumb.jpg" 640 >> "$JOB/log" 2>&1 || echo "thumb failed (non-fatal)" >> "$JOB/log"
@@ -102,7 +143,9 @@ SECS=$(( $(date +%s) - T0 ))
 import json, os, sys
 job, secs = sys.argv[1], int(sys.argv[2])
 qa = json.load(open(os.path.join(job, 'qa.json')))
-mv = os.path.join(job, 'moves.glb')
-json.dump({'ok': True, 'seconds': secs, 'bytes': os.path.getsize(os.path.join(job, 'rig.glb')), 'thumb': os.path.exists(os.path.join(job, 'thumb.jpg')), 'moves': os.path.getsize(mv) if os.path.exists(mv) else 0, 'qa': qa}, open(os.path.join(job, 'result.json'), 'w'))
+mv, gm = os.path.join(job, 'moves.glb'), os.path.join(job, 'games.glb')
+gc = os.environ.get('FORGE_GAME_CLIPS', '')   # v2.30 the moves this games pack holds
+gnames = [c['name'] for c in json.load(open(gc))] if os.path.exists(gm) and gc and os.path.exists(gc) else []
+json.dump({'ok': True, 'seconds': secs, 'bytes': os.path.getsize(os.path.join(job, 'rig.glb')), 'thumb': os.path.exists(os.path.join(job, 'thumb.jpg')), 'moves': os.path.getsize(mv) if os.path.exists(mv) else 0, 'games': os.path.getsize(gm) if os.path.exists(gm) else 0, 'gamesClips': gnames, 'qa': qa}, open(os.path.join(job, 'result.json'), 'w'))
 PY
 echo done > "$JOB/progress"

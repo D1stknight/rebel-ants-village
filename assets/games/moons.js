@@ -4,6 +4,12 @@
 // the big ones need "what if this were a moon?" reasoning). Click a square for a moon, again for a sun, again to clear
 // (right click the other way), drag to paint; arrows move, M / S place, 0 clears. The numbers beside each line count
 // the moons and suns still to place. H hint (no clean bonus). Score: the board x 20, +10 without a hint.
+// Oct 17: How to play (the rules in a few lines) and Restart (the board as picked: the givens only, no undo, hints or time).
+// Oct 17 (Miguel: "all board games need to be 10 or 15 [levels] with the image example"): three more boards, the
+// Crypt Stair (12 x 12) and two 14 x 14s, made by a new generator (scratchpad agents/lvB/moons: gen.mjs, a climb in
+// harden.mjs) and graded by the what-ifs a careful player needs on top of the line rules (the Eclipse 18; new 23, 28,
+// 33). Each has one answer by the generator's search and by a SAT model of the rules written apart from it
+// (agents/lvB/moons/check.py; all ten pass). How to play has a worked picture (howto/moons.png).
 // def: { levels, pass, points }
 (function () {
   const LEVELS = [
@@ -13,10 +19,24 @@
     { name: "The Graveyard Gate", n: 8, givens: 'm....s.m..mm....m..........m..s.....s..........s...s..m.m..s....', sol: 'mssmmssmssmmsmmsmmssmsmssmsmsmsmmsmssmsmsmsmmsmssmmssmmsmsmsmssm' },
     { name: "The Harvest Moon", n: 10, givens: '...............s.......ss.....m.ss.....mm....s.m.m.......m...s...s......m....s.s.s.s............s..s', sol: 'ssmmsmmssmmssmmssmmssmmssmmsmsmmssmsmssmmssmmssmsmsmmssmsmmsmssmmsmssmsmmsmsmsmsmsmssmsmsmsmsmsmsmms' },
     { name: "The Manor Clock", n: 10, givens: 's.....m........m..sm........m.......s..s.m......m.m......m..m.s..mm....s......s.......m........m.m..', sol: 'smsmmsmsmsmsmssmsmsmsmssmsmsmmmsmmsmsmsssmmsmsmsmsmmssmssmsmmssmsmmsmsssmsmmsmsmmmsmssmssmssmmsmsmms' },
-    { name: "The Eclipse", n: 12, givens: '...s.m.ss..s.....s.sm....mm.......s...m.....m......s...s.m...m..........s..s.mm..........m..s..s..s.............ss...s...mm.........s......s.m..', sol: 'msmssmmssmmsmssmmsmsmssmsmmsmssmsmsmssmmsmsmmsmsmmssmsmssmsmmmsmmssmssmsssmssmmsmsmmmsmmsmsmsmsssmssmssmmsmmmssmssmsmsmmsmmsmmsmsmsssmsmsmmsmmss' }
+    { name: "The Eclipse", n: 12, givens: '...s.m.ss..s.....s.sm....mm.......s...m.....m......s...s.m...m..........s..s.mm..........m..s..s..s.............ss...s...mm.........s......s.m..', sol: 'msmssmmssmmsmssmmsmsmssmsmmsmssmsmsmssmmsmsmmsmsmmssmsmssmsmmmsmmssmssmsssmssmmsmsmmmsmmsmsmsmsssmssmssmmsmmmssmssmsmsmmsmmsmmsmsmsssmsmsmmsmmss' },
+    // Oct 17: a harder 12 x 12 and two 14 x 14s, 23 / 28 / 33 what-ifs (scratchpad agents/lvB/moons)
+    { name: "The Crypt Stair", n: 12, givens: '.........ss...s...m.m..m............ms.smm.s......m..mm........s.....s.....................s..sss....s...m....m....m...m...mm..m....ss....s..s..', sol: 'msmssmsmmssmsmsmssmsmmsmmmssmssmsmmsmsmsmmssmsmsssmmsmmssmsmmmssmsmmssmsssmsmssmmsmmmmsmsmmssmsssmsmmsmsmmssmsmssmsmssmmsmsmmsmmsmssssmmsmssmsmm' },
+    { name: "The Blue Moon", n: 14, givens: '...m.s.m.s.mm.............m.........m....s......m..s.m.s.......m......sm...m.ss......m.s.....m.m.........s.......s..m....s.........m....m...s................m..m..m...s...m......mm....s.....s....s', sol: 'mssmmssmmssmmsssmssmmssmmsmmmmssmmssmmsmssmsmmssmmssmmssssmsmssmmsmsmmsmsmsmmssmssmmmmssmmsmsmsmssssmmssmsmsmsmmmsmsmmsmmssmsssmsmsmmssmmssmsmmsmssmssmsmmmsmmssmsmmsmsssmsmsmssmsmmsmmmssmsmmsmssms' },
+    { name: "The Longest Night", n: 14, givens: 'm...s.......m.m.......sm.......m..m...s.m...s.....s..s.s....s..s.......ss..m.......m.............m..m..m..............ss.....s.m.......m.....m...m..........s.s.......s........s.....smm.s.m........', sol: 'mssmssmmssmsmmmmssmmsmsmsmssssmmssmsmmssmmmmsmmssmssmsmssmmssmmsmsmmssmssmsmssmmsmsmssmsmsmmssmsmmsmmsmmsmmssmssmssmsmssmmsmmssmmsmsmssmmssmsmmsmmsmssmsmsmssmssmsmmsmsmssmmssmsmmsmmsmmssmmsmssmssm' }
   ];
   const G = {
     title: 'Moons and Suns',
+    howTo: { lines: [
+      'Fill every square of the night board with a moon or a sun. The lighter squares with a gold edge are given and stay as they are.',
+      'Never three of the same side by side in a row or a column (two together are fine).',
+      'Every row and every column holds as many moons as suns: three of each on a 6 x 6, seven of each on a 14 x 14.',
+      'No two rows may be exactly alike, and no two columns.',
+      'The numbers beside each row and under each column count the moons (silver) and suns (gold) still to place there. A broken rule shows in red.',
+      'Click a square for a moon, again for a sun, again to clear (right click goes the other way); drag to paint several. Arrows move the gold frame, M or S places, 0 clears, Space flips. On a touch screen use the Moon / Sun buttons.',
+      'U undoes; H gives a hint with its reason, or clears a wrong square (no +10 clean bonus then). Restart starts the board again.',
+      'Tip: two alike side by side take the other kind at both ends, a square between two alike takes the other kind, and a line with all its moons fills up with suns.'],
+      img: 'howto/moons.png', caption: 'A 6 x 6 night, solved but for two squares: never three alike side by side, three of each in every line, no two rows or columns the same.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsMoonsProgress:' + (def.id || 'moons');
@@ -47,7 +67,7 @@
         const L = LV[k], n = L.n, N = n * n, CS = (TEX - 90) / (n + .9), X0 = (TEX - CS * (n + .9)) / 2, Y0 = (TEX - CS * (n + .9)) / 2;
         const giv = Int8Array.from(L.givens, ch => ch === 'm' ? 0 : ch === 's' ? 1 : -1);
         bd = { k, L, n, N, h: n / 2, lines: LINES(n), giv, sol: Int8Array.from(L.sol, ch => ch === 's' ? 1 : 0), g: Int8Array.from(giv), hints: 0, time: 0, cur: 0, undo: [], flash: null, X0, Y0, CS, ...sprites(CS) }; st.warned = '';
-        draw(); info();
+        view(n); draw(); info();
       }
       const filled = () => { let k = 0; for (const v of bd.g) if (v !== -1) k++; return k; };
       const info = () => H.info(bd ? `Board ${bd.k + 1} / ${LV.length} · ${bd.L.name} · ${bd.n} × ${bd.n} · filled ${filled()} / ${bd.N} · ${fmt(bd.time)}${bd.hints ? ` · hints ${bd.hints}` : ''}` : 'Pick a board');
@@ -91,6 +111,8 @@
       function place(v) { if (st.phase !== 'play') return; const rec = []; if (bd.giv[bd.cur] !== -1) { H.msg('A given square', 700); return; } setCell(bd.cur, v, rec); commit(rec); }
       function undo() { if (st.phase !== 'play') return; const rec = bd.undo.pop(); if (!rec) return; for (let j = rec.length - 1; j >= 0; j--) bd.g[rec[j][0]] = rec[j][1]; ctx.note(330, 'lantern'); draw(); info(); }
       function restart() { if (st.phase !== 'play') return; const rec = []; for (let i = 0; i < bd.N; i++) setCell(i, -1, rec); commit(rec); }
+      // the HUD's Restart: the board as it was picked (the givens only; no undo, hints or time either)
+      function startOver() { if (st.phase !== 'play' || !bd) return; st.drag = null; build(bd.k); H.msg('Start again', 900); }
       // a square the line rules settle from what is on the board now (pairs, gaps, full counts), with the reason
       function ruleStep() { const { g, n, h, lines } = bd, nm = v => v ? 'suns' : 'moons', one = v => v ? 'sun' : 'moon';
         for (const Ln of lines) for (let k = 0; k + 1 < n; k++) { const a = g[Ln[k]]; if (a === -1 || a !== g[Ln[k + 1]]) continue;
@@ -111,10 +133,10 @@
         if (bd.k + 1 > solvedUpTo) { solvedUpTo = bd.k + 1; try { localStorage.setItem(KEY, String(solvedUpTo)); } catch (e) {} } return true; }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(430px,92vw);background:rgba(22,14,32,.95);border:1px solid rgba(190,160,240,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 430) + 'px,92vw);background:rgba(22,14,32,.95);border:1px solid rgba(190,160,240,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#cdb6f5;margin-bottom:10px">Moons and Suns</div><div style="margin-bottom:12px;color:#bbb">Fill every square with a moon or a sun. Never three alike in a line, half of each in every row and column, and no two rows or columns the same.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#cdb6f5' : '#444'};background:${ok ? 'rgba(205,182,245,.18)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}${ok ? ' ✓' : ''}<div style="font:500 11px system-ui;color:#c4b5dd">${L.n} × ${L.n}</div>` : `${k + 1}<div style="font:500 11px system-ui">locked</div>`}</button>`; }).join('')}</div>`
-          + `<div style="margin-top:10px;font-size:12px;color:#998">Keys 1-${LV.length} pick a board</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 4},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#cdb6f5' : '#444'};background:${ok ? 'rgba(205,182,245,.18)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}${ok ? ' ✓' : ''}<div style="font:500 11px system-ui;color:#c4b5dd">${L.n} × ${L.n}</div>` : `${k + 1}<div style="font:500 11px system-ui">locked</div>`}</button>`; }).join('')}</div>`
+          + `<div style="margin-top:10px;font-size:12px;color:#998">Keys ${LV.length > 9 ? '1-9 and 0' : '1-' + LV.length} pick a board</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       const pads = document.createElement('div');
       pads.style.cssText = 'position:absolute;bottom:62px;right:14px;display:none;gap:6px;pointer-events:auto';
@@ -123,6 +145,8 @@
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'flex'; H.msg(`Board ${k + 1}`, 900, `${LV[k].name}: ${LV[k].n} × ${LV[k].n}`); }
       hud.append(pick, pads); drawPick();
       const cam = [0, TY + 6.3, -3.4], at = [0, TY, -.3];
+      // the 14 x 14 boards: a higher, more top-down camera, so the far rows and their counts stay readable
+      const view = n => { const big = n >= 14; cam[1] = TY + (big ? 7.6 : 6.3); cam[2] = big ? -1.7 : -3.4; at[2] = big ? -.1 : -.3; };
       ctx.player.place(0, -(S / 2 + 1.6), 0); // on the camera's side of the table, out of the picture
       ctx.look(cam, at, def.fov || .8);
       { const g = tex.getContext(); g.fillStyle = '#231a33'; g.fillRect(0, 0, TEX, TEX); tex.update(); }
@@ -141,7 +165,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return; const n = bd.n, r = Math.floor(bd.cur / n), c = bd.cur % n;
           const dirs = { arrowup: [-1, 0], arrowdown: [1, 0], arrowleft: [0, -1], arrowright: [0, 1] };
           if (k in dirs) { const [dr, dc] = dirs[k], nr = r + dr, nc = c + dc; if (nr >= 0 && nc >= 0 && nr < n && nc < n) { bd.cur = nr * n + nc; draw(); } }
@@ -155,7 +179,8 @@
           else if (evt.type === T.POINTERMOVE && st.drag) { const i = at2(); if (i != null) dragTo(i); }
           else if (evt.type === T.POINTERUP) st.drag = null;
         },
-        _test: { st, choose, tap, dragTo, place, undo, hint, restart, faults, ruleStep, get bd() { return bd; }, LV, draw: () => { st.dirty = false; paint(); }, end() { st.drag = null; }, unlock(k) { solvedUpTo = k; drawPick(); } },
+        restart: startOver,
+        _test: { st, choose, tap, dragTo, place, undo, hint, restart, startOver, faults, ruleStep, get bd() { return bd; }, LV, draw: () => { st.dirty = false; paint(); }, end() { st.drag = null; }, unlock(k) { solvedUpTo = k; drawPick(); } },
         dispose() { pick.remove(); pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); } catch (e) {} }
       };
     }

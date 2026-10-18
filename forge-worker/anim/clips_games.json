@@ -1,0 +1,216 @@
+[
+ {
+  "name": "game_cast",
+  "file": "mixamo/gm_fishing_cast.npz",
+  "t0": 0.3,
+  "t1": 3.0,
+  "pack": "games"
+ },
+ {
+  "name": "game_reel",
+  "file": "mixamo/gm_fishing_cast.npz",
+  "t0": 5.13,
+  "t1": 5.9,
+  "pack": "games"
+ },
+ {
+  "name": "game_fish_wait",
+  "file": "mixamo/gm_fishing_idle.npz",
+  "t0": 0.0,
+  "t1": 3.5,
+  "pack": "games"
+ },
+ {
+  "name": "game_dig",
+  "file": "mixamo/gm_digging.npz",
+  "t0": 0.0,
+  "t1": 4.83,
+  "pack": "games"
+ },
+ {
+  "name": "game_plant",
+  "file": "mixamo/gm_plant.npz",
+  "t0": 2.43,
+  "t1": 5.73,
+  "pack": "games",
+  "loop": true
+ },
+ {
+  "name": "game_pick_up",
+  "file": "mixamo/gm_throw_object.npz",
+  "t0": 0.2,
+  "t1": 1.8,
+  "pack": "games"
+ },
+ {
+  "name": "game_throw",
+  "file": "mixamo/gm_throw_object.npz",
+  "t0": 1.5,
+  "t1": 3.6,
+  "pack": "games"
+ },
+ {
+  "name": "game_throw_far",
+  "file": "mixamo/gm_goalie_throw.npz",
+  "t0": 0.3,
+  "t1": 3.0,
+  "pack": "games"
+ },
+ {
+  "name": "game_chop",
+  "file": "mixamo/gm_axe_combo.npz",
+  "t0": 0.0,
+  "t1": 2.7,
+  "pack": "games"
+ },
+ {
+  "name": "game_cheer",
+  "file": "mixamo/gm_cheering.npz",
+  "t0": 0.0,
+  "t1": 2.9,
+  "pack": "games"
+ },
+ {
+  "name": "game_push",
+  "file": "mixamo/gm_pushing.npz",
+  "t0": 0.0,
+  "t1": 2.67,
+  "pack": "games"
+ },
+ {
+  "name": "game_push_walk",
+  "file": "mixamo/gm_push.npz",
+  "t0": 2.83,
+  "t1": 4.5,
+  "pack": "games",
+  "loop": true
+ },
+ {
+  "name": "dance_wave",
+  "file": "mixamo/gm_dance_wave.npz",
+  "t0": 3.9,
+  "t1": 9.37,
+  "pack": "games",
+  "loop": true
+ },
+ {
+  "name": "dance_tut",
+  "file": "mixamo/gm_dance_tut.npz",
+  "t0": 1.7,
+  "t1": 7.0,
+  "pack": "games",
+  "loop": true
+ },
+ {
+  "name": "dance_house",
+  "file": "mixamo/gm_dance_house.npz",
+  "t0": 6.67,
+  "t1": 11.07,
+  "pack": "games",
+  "loop": true
+ },
+ {
+  "name": "dance_gangnam",
+  "file": "mixamo/gm_dance_gangnam.npz",
+  "t0": 7.83,
+  "t1": 11.17,
+  "pack": "games",
+  "loop": true
+ },
+ {
+  "name": "game_shoot",
+  "file": "mixamo/gm_goalkeeper_catch.npz",
+  "t0": 0.33,
+  "t1": 1.45,
+  "reverse": true,
+  "airborne": true,
+  "pack": "games"
+ },
+ {
+  "name": "game_dribble",
+  "file": "mixamo/gm_dribble.npz",
+  "t0": 0.07,
+  "t1": 1.47,
+  "pack": "games"
+ },
+ {
+  "name": "game_bowl",
+  "file": "mixamo/gm_throwing.npz",
+  "t0": 0.6,
+  "t1": 3.0,
+  "in_place": false,
+  "pack": "games"
+ },
+ {
+  "name": "game_block",
+  "file": "mixamo/gm_center_block.npz",
+  "t0": 0.0,
+  "t1": 1.58,
+  "pack": "games"
+ },
+ {
+  "name": "game_hammer_up",
+  "file": "mixamo/gm_melee_down.npz",
+  "t0": 0.0,
+  "t1": 0.27,
+  "pack": "games"
+ },
+ {
+  "name": "game_hammer",
+  "file": "mixamo/gm_melee_down.npz",
+  "t0": 0.27,
+  "t1": 1.29,
+  "pack": "games"
+ },
+ {
+  "name": "game_rope_pull",
+  "file": "mixamo/gm_pulling_rope.npz",
+  "t0": 4.2,
+  "t1": 5.9,
+  "pack": "games"
+ },
+ {
+  "name": "game_shield_idle",
+  "file": "mixamo/gm_shield_idle.npz",
+  "t0": 0.0,
+  "t1": 3.67,
+  "pack": "games"
+ },
+ {
+  "name": "game_shield_block",
+  "file": "mixamo/gm_shield_block.npz",
+  "t0": 0.0,
+  "t1": 0.54,
+  "pack": "games"
+ },
+ {
+  "name": "game_shield_impact",
+  "file": "mixamo/gm_shield_impact.npz",
+  "t0": 0.0,
+  "t1": 0.75,
+  "pack": "games"
+ },
+ {
+  "name": "game_shield_hit",
+  "file": "mixamo/gm_shield_hit.npz",
+  "t0": 0.0,
+  "t1": 0.96,
+  "pack": "games"
+ },
+ {
+  "name": "game_swim",
+  "file": "mixamo/gm_swimming.npz",
+  "t0": 0.0,
+  "t1": 4.5,
+  "grounded": false,
+  "pack": "games"
+ },
+ {
+  "name": "game_sneak",
+  "file": "mixamo/gm_sneak_walk.npz",
+  "t0": 0.0,
+  "t1": 0.87,
+  "pack": "games",
+  "loop": true
+ }
+]

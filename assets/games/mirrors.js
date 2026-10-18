@@ -2,17 +2,36 @@
 // one, or move the ring with the arrows / WASD and press Space) so it lights every crystal. The first two levels show the
 // beam as you work; in the last two the sun is behind the clouds: strike the gong (G, or the button) to let it shine for
 // a moment, three times at most, so the route has to be worked out first. A level opens when the one before is solved.
+// Oct 17: How to play (the rules + a lit 5 x 5, howto/mirrors.png) and Restart (the level as picked: its mirrors, turns
+// and gong strikes).
 // def: { at: [x, z] (frame coords of the board's middle), cell: 1.45, levels: [{ rows, hidden, best }], pass, points }
 (function () {
   const LEVELS = [
     { rows: ['......', 'R./...', '......', '.\\*...', '..*...', '../#..'], best: 1 },
     { rows: ['..\\..\\', '....\\*', 'R*\\..*', '../..\\', '..#..#', '......'], best: 2 },
     { rows: ['.\\#\\../', '...*..*', '.#..\\..', '....\\.\\', 'R..\\...', '....*..', '.../\\.#'], best: 5, hidden: true },
-    { rows: ['./...##', './.\\\\..', '...\\../', '...*.#*', 'R./\\./*', '.......', '../..*/'], best: 4, hidden: true }
+    { rows: ['./...##', './.\\\\..', '...\\../', '...*.#*', 'R./\\./*', '.......', '../..*/'], best: 4, hidden: true },
+    // Oct 17 (Miguel: "make it 10 levels"): scratchpad mirrors/gen10.mjs, bigger boards with more turns and decoys
+    // (best = the fewest turns, by trying every way the mirrors can face); 7 to 10 under clouds
+    { rows: ['../..#.', 'R../.\\.', '...*\\.\\', '../..#.', '.../.*/', '...#...', '../**./'], best: 3 },
+    { rows: ['..\\**/\\', '.#*....', 'R.\\/.\\.', '....\\./', '..#..#.', '.../*./', '.....//'], best: 5 },
+    { rows: ['........', '.#./..*/', '....\\#/*', 'R.//.\\*/', '..*/\\./.', '../.*\\..', '...#....', '.....#..'], best: 5, hidden: true },
+    { rows: ['.\\..\\**/', '.\\/.....', 'R*.*\\/.\\', '.#......', '.#./././', '....../.', '..#\\#...', '.....\\*/'], best: 6, hidden: true },
+    { rows: ['....\\.\\..', '.../*....', 'R.*./..\\.', '....\\.\\##', '../..#...', '..*#/./..', '....\\\\*..', '.../...\\.', '.#/..*\\\\.'], best: 7, hidden: true },
+    { rows: ['...\\../..', '..#...*..', '....\\./..', './\\/.*/..', '.#\\*/.*..', '...#..../', '..*.*..#.', 'R.\\\\/./..', '../#.\\\\.\\'], best: 8, hidden: true }
   ];
   const DIRS = { R: [1, 0], L: [-1, 0], U: [0, -1], D: [0, 1] };
   const G = {
     title: 'The Sun Mirrors',
+    howTo: { lines: [
+      'A beam of sunlight leaves the lantern and runs straight across the board. Each mirror turns it a quarter turn; a stone block, the lantern or the board\'s edge stops it.',
+      'Turn the mirrors so that the one beam passes through every crystal: they light up gold as it reaches them.',
+      'Click a mirror to flip it the other way, / or \\ (or move the gold ring with the arrows or WASD and press Space).',
+      'On levels 3, 4 and 7 to 10 the sun hides behind clouds: strike the gong (G, or its button) to let it shine for a moment. Mirrors cannot be turned while it shines.',
+      'You have three strikes there: if the third shows the route still wrong, the sun sets and the level is lost.',
+      'Few turns earn a bonus; under the clouds every strike left over earns one. Restart puts the level back as it was picked.',
+      'Tip: work backwards from a crystal: which mirror could send the beam through it? Under the clouds, trace the whole route before you strike.'],
+      img: 'howto/mirrors.png', caption: 'A lit board: four mirrors turn the one beam through all four crystals, and a stone stops it.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, C = def.cell || 1.45, AT = def.at || [0, 0], SHINES = def.shines || 3, Y = 1.25;
@@ -97,9 +116,9 @@
       // the picker, the gong button
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(360px,90vw);background:rgba(16,10,18,.94);border:1px solid rgba(216,179,92,.7);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 360) + 'px,92vw);background:rgba(16,10,18,.94);border:1px solid rgba(216,179,92,.7);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:700 13px/1.2 Georgia,serif;letter-spacing:.14em;text-transform:uppercase;color:#d8b35c;margin-bottom:10px">The Sun Mirrors</div><div style="margin-bottom:12px;color:#bbb">Turn the mirrors so the sunbeam lights every crystal.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:10px 4px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${done ? 'rgba(216,179,92,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? 'Level ' + (k + 1) : '🔒'}${done ? ' ✓' : ''}${L.hidden && open ? '<div style="font:12px Georgia,serif;color:#c9b88a">sun behind clouds</div>' : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 2},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:10px 4px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${done ? 'rgba(216,179,92,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? 'Level ' + (k + 1) : '🔒'}${done ? ' ✓' : ''}${L.hidden && open ? '<div style="font:12px Georgia,serif;color:#c9b88a">sun behind clouds</div>' : ''}</button>`; }).join('')}</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       const gong = document.createElement('button'); gong.type = 'button'; gong.textContent = 'Strike the gong (G)';
       gong.style.cssText = 'position:absolute;bottom:62px;right:16px;display:none;padding:10px 14px;border-radius:10px;border:1px solid #d8b35c;background:rgba(30,20,10,.88);color:#ffe9b0;font:700 14px Georgia,serif;cursor:pointer;pointer-events:auto';
@@ -128,7 +147,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return;
           if (k === 'arrowup' || k === 'w') st.cy = Math.max(0, st.cy - 1); else if (k === 'arrowdown' || k === 's') st.cy = Math.min(lv.H - 1, st.cy + 1);
           else if (k === 'arrowleft' || k === 'a') st.cx = Math.max(0, st.cx - 1); else if (k === 'arrowright' || k === 'd') st.cx = Math.min(lv.W - 1, st.cx + 1);
@@ -139,6 +158,8 @@
           const hit = scene.pickWithRay(ctx.ray(), m => !!m.metadata?.mirCell);
           if (hit && hit.hit) turn(...hit.pickedMesh.metadata.mirCell);
         },
+        // Restart: the level as it was picked (the mirrors' first turns, no turns counted, every gong strike back)
+        restart() { if (st.phase !== 'play' || !lv) return; st.shine = 0; st.outIn = 0; build(lv.k); H.msg('Start again', 900); },
         _test: { st, choose, turn, shine, get lv() { return lv; }, route: () => route(), allLit: () => lv && allLit() },
         dispose() { pick.remove(); gong.remove(); st.beamNodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };

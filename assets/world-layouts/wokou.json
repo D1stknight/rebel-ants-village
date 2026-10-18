@@ -24780,8 +24780,9 @@
               "face": 0,
               "tries": 8,
               "playerAt": [
-                2.6,
-                -3.3
+                0.4,
+                -3.6,
+                2.31
               ],
               "cam": [
                 3.9,
@@ -27268,6 +27269,872 @@
         "pass": 60,
         "points": 60,
         "questOn": "pass"
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_wok-pier-run",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -32,
+      "y": 0,
+      "z": -5
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "wokou",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "wok-pier-run",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "course",
+        "id": "wok-pier-run",
+        "title": "Pier Run",
+        "points": 60,
+        "questOn": "pass",
+        "gates": [
+          [
+            -48,
+            -20
+          ],
+          [
+            -22,
+            -44
+          ],
+          [
+            8,
+            -25
+          ],
+          [
+            33,
+            -58
+          ],
+          [
+            45,
+            -15
+          ],
+          [
+            0,
+            62
+          ],
+          [
+            -40,
+            40
+          ],
+          [
+            -30,
+            8
+          ]
+        ],
+        "start": [
+          -33.17,
+          -6.09
+        ],
+        "path": [
+          [
+            -39,
+            -7
+          ],
+          [
+            -45.5,
+            -12.5
+          ],
+          [
+            -46,
+            -13
+          ],
+          [
+            -46.5,
+            -13.5
+          ],
+          [
+            -48,
+            -20
+          ],
+          [
+            -46.5,
+            -13.5
+          ],
+          [
+            -46,
+            -13
+          ],
+          [
+            -45.5,
+            -12.5
+          ],
+          [
+            -38,
+            -7.5
+          ],
+          [
+            -37.5,
+            -7
+          ],
+          [
+            -37,
+            -6.5
+          ],
+          [
+            -33.5,
+            -6.5
+          ],
+          [
+            -32.5,
+            -7.5
+          ],
+          [
+            -32,
+            -8
+          ],
+          [
+            -31.5,
+            -8.5
+          ],
+          [
+            -31,
+            -9
+          ],
+          [
+            -24.5,
+            -20
+          ],
+          [
+            -23.5,
+            -21
+          ],
+          [
+            -23,
+            -21.5
+          ],
+          [
+            -22.5,
+            -22
+          ],
+          [
+            -22,
+            -22.5
+          ],
+          [
+            -22,
+            -44
+          ],
+          [
+            -20.5,
+            -29
+          ],
+          [
+            -20,
+            -28.5
+          ],
+          [
+            -19.5,
+            -28
+          ],
+          [
+            -8.5,
+            -25
+          ],
+          [
+            -5,
+            -25.5
+          ],
+          [
+            -4.5,
+            -26
+          ],
+          [
+            7,
+            -26
+          ],
+          [
+            8,
+            -25
+          ],
+          [
+            8.5,
+            -26
+          ],
+          [
+            9,
+            -26.5
+          ],
+          [
+            9.5,
+            -27
+          ],
+          [
+            21.5,
+            -28
+          ],
+          [
+            22,
+            -28.5
+          ],
+          [
+            22.5,
+            -29
+          ],
+          [
+            25.5,
+            -56
+          ],
+          [
+            26,
+            -56.5
+          ],
+          [
+            26.5,
+            -57
+          ],
+          [
+            30,
+            -57
+          ],
+          [
+            30.5,
+            -57.5
+          ],
+          [
+            33,
+            -58
+          ],
+          [
+            30.5,
+            -57.5
+          ],
+          [
+            30,
+            -57
+          ],
+          [
+            26.5,
+            -57
+          ],
+          [
+            26,
+            -56.5
+          ],
+          [
+            25.5,
+            -56
+          ],
+          [
+            25.5,
+            -29
+          ],
+          [
+            26,
+            -28.5
+          ],
+          [
+            26.5,
+            -28
+          ],
+          [
+            33.5,
+            -27
+          ],
+          [
+            34,
+            -26.5
+          ],
+          [
+            34.5,
+            -26
+          ],
+          [
+            45,
+            -15
+          ],
+          [
+            33.5,
+            -3.5
+          ],
+          [
+            5.5,
+            23
+          ],
+          [
+            5,
+            23.5
+          ],
+          [
+            4.5,
+            24
+          ],
+          [
+            3.5,
+            43.5
+          ],
+          [
+            0,
+            62
+          ],
+          [
+            -4.5,
+            47
+          ],
+          [
+            -5,
+            46.5
+          ],
+          [
+            -5.5,
+            46
+          ],
+          [
+            -6.5,
+            45.5
+          ],
+          [
+            -7,
+            45
+          ],
+          [
+            -7.5,
+            44.5
+          ],
+          [
+            -13.5,
+            46
+          ],
+          [
+            -18.5,
+            46
+          ],
+          [
+            -19,
+            46.5
+          ],
+          [
+            -20,
+            46.5
+          ],
+          [
+            -20.5,
+            46
+          ],
+          [
+            -21,
+            45.5
+          ],
+          [
+            -24,
+            34.5
+          ],
+          [
+            -24.5,
+            34
+          ],
+          [
+            -25,
+            33.5
+          ],
+          [
+            -25.5,
+            33
+          ],
+          [
+            -40,
+            24.5
+          ],
+          [
+            -40.5,
+            25
+          ],
+          [
+            -41,
+            25.5
+          ],
+          [
+            -41,
+            39
+          ],
+          [
+            -40,
+            40
+          ],
+          [
+            -41,
+            33
+          ],
+          [
+            -41,
+            25.5
+          ],
+          [
+            -39,
+            17
+          ],
+          [
+            -30,
+            8
+          ]
+        ],
+        "medals": [
+          62,
+          73,
+          94
+        ],
+        "radius": 3,
+        "cloth": [
+          0.11,
+          0.165,
+          0.298
+        ],
+        "text": "Out along both piers, then up through the harbour",
+        "length": 455.1
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_wok-sea-shanty",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 15,
+      "y": 0,
+      "z": 12
+    },
+    "rotation": {
+      "x": 0,
+      "y": 2.7489,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "wokou",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "wok-sea-shanty",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "dance",
+        "id": "wok-sea-shanty",
+        "title": "Sea Shanty",
+        "points": 60,
+        "pass": 0,
+        "questOn": "pass",
+        "song": "wokou",
+        "moves": [
+          "cartwheel",
+          "jump",
+          "front_flip",
+          "roundhouse_kick"
+        ],
+        "floor": [
+          0.296,
+          0.384,
+          0.597
+        ],
+        "packMoves": [
+          "dance_wave",
+          "dance_tut",
+          "dance_house",
+          "dance_gangnam"
+        ]
+      }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_wok-harbour-fishing",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -21.5,
+      "y": 0.1,
+      "z": -44
+    },
+    "rotation": {
+      "x": 0,
+      "y": 1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "wokou",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "wok-harbour-fishing",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "id": "wok-harbour-fishing",
+        "title": "Harbour Fishing",
+        "points": 60,
+        "questOn": "pass",
+        "type": "fishing",
+        "seaY": -3,
+        "reach": [
+          8,
+          26
+        ],
+        "fish": [
+          {
+            "name": "a rusty chain",
+            "pts": 2,
+            "fight": 0.05,
+            "size": 0.4,
+            "col": [
+              0.36,
+              0.24,
+              0.16
+            ],
+            "far": 0,
+            "boot": true
+          },
+          {
+            "name": "a horse mackerel",
+            "pts": 10,
+            "fight": 0.22,
+            "size": 0.3,
+            "col": [
+              0.55,
+              0.65,
+              0.72
+            ],
+            "far": 0
+          },
+          {
+            "name": "a sea bream",
+            "pts": 22,
+            "fight": 0.38,
+            "size": 0.42,
+            "col": [
+              0.85,
+              0.45,
+              0.45
+            ],
+            "far": 0.3
+          },
+          {
+            "name": "an octopus",
+            "pts": 35,
+            "fight": 0.55,
+            "size": 0.5,
+            "col": [
+              0.72,
+              0.3,
+              0.35
+            ],
+            "far": 0.5
+          },
+          {
+            "name": "a yellowtail",
+            "pts": 50,
+            "fight": 0.66,
+            "size": 0.7,
+            "col": [
+              0.75,
+              0.8,
+              0.5
+            ],
+            "far": 0.7
+          },
+          {
+            "name": "a bluefin tuna",
+            "pts": 80,
+            "fight": 0.85,
+            "size": 1.05,
+            "col": [
+              0.18,
+              0.25,
+              0.45
+            ],
+            "far": 0.9
+          },
+          {
+            "name": "the raider's pearl",
+            "pts": 150,
+            "fight": 0.95,
+            "size": 0.5,
+            "col": [
+              1,
+              0.92,
+              0.78
+            ],
+            "far": 1,
+            "gold": true
+          }
+        ],
+        "pass": 60
       }
     }
   }

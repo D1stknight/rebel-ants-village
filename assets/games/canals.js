@@ -4,6 +4,14 @@
 // 9 x 9 Grand Canal, each with one answer (checked by a solver). Click marks with the brush (Tab switches canal /
 // land, right click the other), drag paints. A pool is outlined red, an island too big or holding two numbers turns
 // its number red. H hint (no clean bonus). Score: the map x 20, +10 without a hint. def: { levels, pass, points }
+// Oct 17: How to play (the rules + a solved 5 x 5, howto/canals.png) and Restart (the map as picked: only the
+// numbered land, no marks, undo, hints or time).
+// Oct 17 (Miguel: "all board games need to be 10 or 15 [levels]"): three more maps, all 10 x 10, made by a new
+// generator (scratchpad agents/lvB/canals/gen.mjs: a carved answer, numbers repaired toward one answer, then moved
+// inside their islands toward harder maps in harden.mjs) and graded by what a player needs on top of the usual rules:
+// single what-ifs, then a what-if inside a what-if where those stall (the Grand Canal 25 + 4; new 18 + 6, 31 + 10,
+// 24 + 12). Each has one answer by the generator's search and by a SAT model of the rules written apart from it
+// (agents/lvB/canals/check.py; all ten pass).
 (function () {
   const LEVELS = [
     { name: "The Reed Bed", r: 5, c: 5, clues: [[12,2],[19,3],[3,3],[1,5]], sol: '0010001110010110101011100' },
@@ -12,10 +20,23 @@
     { name: "The Rice Terraces", r: 7, c: 7, clues: [[29,5],[44,3],[42,2],[16,5],[7,5],[34,2]], sol: '0000111011110111000011011111100001001111100100011' },
     { name: "The Engineer's Locks", r: 8, c: 8, clues: [[7,3],[56,4],[12,4],[46,3],[0,8],[23,5],[62,5],[41,2]], sol: '0011100000100111001011000010100011111111100100010111111000010000' },
     { name: "The Inner Colony", r: 8, c: 8, clues: [[56,4],[15,6],[0,3],[16,6],[43,5],[4,2],[37,2],[60,3],[39,3]], sol: '0001010011110100001011000010011100101010111010100011111000100011' },
-    { name: "The Grand Canal", r: 9, c: 9, clues: [[74,8],[30,5],[79,6],[3,3],[32,6],[15,2],[77,5],[13,2],[9,5]], sol: '010011111010101001011101111010010001010010001111011111001110100000100100000100100' }
+    { name: "The Grand Canal", r: 9, c: 9, clues: [[74,8],[30,5],[79,6],[3,3],[32,6],[15,2],[77,5],[13,2],[9,5]], sol: '010011111010101001011101111010010001010010001111011111001110100000100100000100100' },
+    // Oct 17: three 10 x 10s, 6 / 10 / 12 deep what-ifs (scratchpad agents/lvB/canals)
+    { name: "The Floodgates", r: 10, c: 10, clues: [[31,5],[71,3],[48,2],[60,1],[93,4],[69,2],[52,3],[97,1],[15,8],[86,2],[18,7],[56,8],[99,2]], sol: '0111110000010000100001100111110010010101111111010110001001100111100010100011101111111001100000111010' },
+    { name: "The Archive Moat", r: 10, c: 10, clues: [[41,5],[38,8],[70,3],[50,1],[24,4],[87,5],[45,3],[89,3],[92,2],[10,4],[13,2],[84,2],[64,5],[8,1]], sol: '0010111101001010011111110011001001110100100010010001111111001100000111011111101001010100100101010010' },
+    { name: "The Trident Delta", r: 10, c: 10, clues: [[92,7],[58,5],[99,2],[1,6],[47,1],[75,2],[5,4],[25,3],[61,5],[63,5],[8,3],[23,3],[38,4]], sol: '0010001000001101111101101001000100101100111111101100100011010010011001011110101111001010100000011110' }
   ];
   const G = {
     title: 'The Canal Islands',
+    howTo: { lines: [
+      'Dig canals to split the map into islands. Every island holds exactly one number, and that number is its size in squares; every square of land belongs to a numbered island.',
+      'All the canal squares join into one waterway (side to side), and no 2 x 2 block may be all canal: a standing pool is outlined red.',
+      'Islands never touch each other side to side (corner to corner is fine). The numbered squares are always land; a number turns red when its island is too big or holds two numbers, and fades once its island is closed at the right size.',
+      'Click a square to mark it with the brush, again to clear it: Tab (or the Canal / Land button) switches canal / land, right click marks the other, drag paints. A dot marks land you are sure of.',
+      'Keys: arrows or WASD move, Space or Enter marks with the brush, Q digs, E marks land, 0 or Backspace clears. The map is done when every canal square is dug: squares left unmarked count as land.',
+      'U undoes; H fixes one square (no +10 clean bonus then). Restart takes the map back to its numbers.',
+      'Tip: a square between two numbers is always canal, since two numbers never share an island; a 1 is ringed with canal; and a square no island can reach is canal.'],
+      img: 'howto/canals.png', caption: 'A solved 5 x 5 map: one joined waterway, no pools, and every island the size of its number.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsCanalsProgress:' + (def.id || 'canals');
@@ -75,7 +96,9 @@
         const want = bd.mark[i] === v ? 0 : v, rec = []; setMark(i, want, rec); bd.cur = i; st.drag = { want, last: i, rec }; commit(rec); return true; }
       function dragTo(i) { if (!st.drag || i === st.drag.last) return; st.drag.last = i; bd.cur = i; const rec = st.drag.rec; if (setMark(i, st.drag.want, rec)) { if (!bd.undo.includes(rec)) bd.undo.push(rec); draw(); info(); check(); } else draw(); }
       function undo() { if (st.phase !== 'play') return; const rec = bd.undo.pop(); if (!rec) return; for (let j = rec.length - 1; j >= 0; j--) bd.mark[rec[j][0]] = rec[j][1]; ctx.note(330, 'lantern'); draw(); info(); }
-      function restart() { if (st.phase !== 'play') return; const rec = []; for (let i = 0; i < bd.N; i++) if (!bd.num[i] && bd.mark[i]) setMark(i, 0, rec); commit(rec); }
+      // Restart (the button beside Quit): the map as it was picked (only the numbered land; no marks, undo, hints or
+      // time), kept in the same board object (the tests hold it); only while it is being played
+      function restart() { if (st.phase !== 'play' || !bd) return; const b = bd; build(b.k); bd = Object.assign(b, bd); st.drag = null; H.msg('Start again', 900); }
       function hint() {
         if (st.phase !== 'play') return;
         let i = -1; for (let j = 0; j < bd.N; j++) if (bd.mark[j] && !bd.num[j] && (bd.mark[j] === 1) !== !!bd.sol[j]) { i = j; break; }
@@ -91,10 +114,10 @@
         if (bd.k + 1 > solvedUpTo) { solvedUpTo = bd.k + 1; try { localStorage.setItem(KEY, String(solvedUpTo)); } catch (e) {} } return true; }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,92vw);background:rgba(16,14,10,.95);border:1px solid rgba(216,179,92,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 420) + 'px,92vw);background:rgba(16,14,10,.95);border:1px solid rgba(216,179,92,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#d8b35c;margin-bottom:10px">The Canal Islands</div><div style="margin-bottom:12px;color:#bbb">Dig one joined waterway. Each number keeps an island of that many squares; no 2 × 2 pools.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${ok ? 'rgba(216,179,92,.2)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}${ok ? ' ✓' : ''}<div style="font:500 11px system-ui;color:#c9b88f">${L.r} × ${L.c}</div>` : `${k + 1}<div style="font:500 11px system-ui">locked</div>`}</button>`; }).join('')}</div>`
-          + `<div style="margin-top:10px;font-size:12px;color:#998">Keys 1-${LV.length} pick a map</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 4},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${ok ? 'rgba(216,179,92,.2)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}${ok ? ' ✓' : ''}<div style="font:500 11px system-ui;color:#c9b88f">${L.r} × ${L.c}</div>` : `${k + 1}<div style="font:500 11px system-ui">locked</div>`}</button>`; }).join('')}</div>`
+          + `<div style="margin-top:10px;font-size:12px;color:#998">Keys ${LV.length > 9 ? '1-9 and 0' : '1-' + LV.length} pick a map</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       const pads = document.createElement('div');
       pads.style.cssText = 'position:absolute;bottom:62px;right:14px;display:none;gap:6px;pointer-events:auto';
@@ -121,7 +144,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return; const { R, C } = bd, x = bd.cur % C, y = Math.floor(bd.cur / C);
           if (k === 'arrowup' || k === 'w') { bd.cur = ((y - 1 + R) % R) * C + x; draw(); } else if (k === 'arrowdown' || k === 's') { bd.cur = ((y + 1) % R) * C + x; draw(); }
           else if (k === 'arrowleft' || k === 'a') { bd.cur = y * C + (x - 1 + C) % C; draw(); } else if (k === 'arrowright' || k === 'd') { bd.cur = y * C + (x + 1) % C; draw(); }
@@ -135,6 +158,7 @@
           else if (evt.type === T.POINTERMOVE && st.drag) { const i = cellAt(); if (i != null) dragTo(i); }
           else if (evt.type === T.POINTERUP) st.drag = null;
         },
+        restart,
         _test: { st, choose, press, dragTo, undo, hint, restart, toggleMode, pools, islands, get bd() { return bd; }, LV, draw: () => { st.dirty = false; paint(); }, end() { st.drag = null; }, unlock(k) { solvedUpTo = k; drawPick(); } },
         dispose() { pick.remove(); pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { boardM.dispose(); tex.dispose(); } catch (e) {} }
       };

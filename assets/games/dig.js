@@ -4,6 +4,21 @@
 // one to three chests; the dig limits come from a solver (level 4 leaves no dig to waste). Score: the beach x 20, +5
 // for every dig left.
 // def: { at: [x, z] (frame coords of the beach's middle), cell: 1.2, levels: [{ n, chests, digs, rocks: [index] }], pass, points }
+// Oct 17 (Miguel: the puzzles need a how-to with an example, every board a Restart): howTo (the rules + two stakes that
+// pin a chest, howto/dig.png) and inst.restart (the same beach and digs, the chests buried again elsewhere: the old stakes
+// would give them away).
+// Oct 17 (Miguel: "make this one 10"): beaches 7-10, all 10 x 10 (all the room the west beach has: two big boulders
+// stand 9-10 m off the spot, and at 11 x 11 one would sit on the sand), three chests and then four, with 7 to 12 rocks.
+// Each limit is checked by an exact search over every placement of the chests (scratchpad lv/dig; no square dug twice,
+// stakes as in the game): it found a way of digging that always finds every chest within 10, 10, 16 and 16 digs, so
+// every beach can always be won, and the first beach of each chest count gets one dig more (11, 10, 17, 16). A careful
+// player (the old sandbox bot: dig where the worst stake leaves the fewest places) can need 12, 12, 17 and 17, but
+// finishes 99.9%, 98.3%, 100% and over 99.9% of the placements in time. The same search on the first six beaches:
+// always winnable in 3, 3, 7, 3, 7 and 11 digs (never fewer for 1-5, so beach 4 has a dig over the best way). The
+// camera sits a little farther back and aims nearer: the near rope sat under the hint bar.
+// Oct 17 (Miguel: "its not using the digging animation"): with the Rebel's games pack each dig is the pack's dig
+// (game_dig) beside the square, a shovel through both hands while it lasts; without one, the old quick chop. The
+// village's grass and flowers under the beach step aside while it is played (they poked up through the sand squares).
 (function () {
   const LEVELS = [
     { n: 6, chests: 1, digs: 6 },
@@ -11,10 +26,23 @@
     { n: 8, chests: 2, digs: 9 },
     { n: 8, chests: 1, digs: 4 },
     { n: 10, chests: 2, digs: 8, rocks: [23, 24, 45, 66, 67, 74] },
-    { n: 9, chests: 3, digs: 11, rocks: [12, 30, 41, 50, 68] }
+    { n: 9, chests: 3, digs: 11, rocks: [12, 30, 41, 50, 68] },
+    // Oct 17: 10 x 10 (all the room the west beach has), three chests then four (scratchpad lv/dig)
+    { n: 10, chests: 3, digs: 11, rocks: [31, 32, 43, 57, 61, 65, 75] },
+    { n: 10, chests: 3, digs: 10, rocks: [16, 22, 31, 42, 44, 46, 48, 62, 65, 68, 75] },
+    { n: 10, chests: 4, digs: 17, rocks: [46, 52, 65, 71, 72, 74, 77, 86] },
+    { n: 10, chests: 4, digs: 16, rocks: [14, 17, 25, 31, 33, 45, 48, 51, 62, 65, 73, 75] }
   ];
   const G = {
-    title: 'The Buried Chest',
+    title: 'The Buried Chest', moves: true,
+    howTo: {
+      lines: ['Chests are buried somewhere on this beach. Find all of them before your digs run out (the info line counts both).',
+        'Click a square to dig it, or move the gold frame with the arrow keys and press Space.',
+        'An empty dig leaves a stake with a number: how many squares away the nearest chest still buried is, counted across plus up and down (never on a slant).',
+        'So a 1 means a chest lies right beside it, above or below it. Rocks can\'t be dug.',
+        'Tip: read two or three stakes together: only a few squares fit all their numbers. Every dig you have left over is worth 5 points.'],
+      img: 'howto/dig.png', caption: 'Two stakes say 3 and 4: only one square fits both, and the chest is there.'
+    },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, CELL = def.cell || 1.2, AT = def.at || [0, 0];
@@ -37,12 +65,43 @@
       const sRope = src(B.MeshBuilder.CreateBox('digRope', { width: CELL, height: .04, depth: .04 }, scene), ropeM);
       const sel = B.MeshBuilder.CreateTorus('digSel', { diameter: CELL * 1.18, thickness: .06, tessellation: 4 }, scene); sel.material = selM; sel.rotation.y = Math.PI / 4; sel.parent = ctx.frame; sel.isPickable = false; ctx.add(sel); sel.setEnabled(false);
       let board = null; // { k, n, rocks:Set, chests:[], found:Set, dug:Map(i -> number|'X'), digs, nodes[], sel }
-      const st = { phase: 'pick', wait: 0, anim: null };
+      const st = { phase: 'pick', wait: 0, anim: null, digT: 0 };
+      // the shovel (games pack): only while a dig lasts, its handle through both hands, the blade below the lower one
+      const shovel = new B.TransformNode('digShovel', scene); ctx.add(shovel); shovel.parent = null; shovel.setEnabled(false);
+      { const h = B.MeshBuilder.CreateCylinder('digShovelHandle', { height: 1.7, diameter: .07, tessellation: 8 }, scene); h.material = mat('shovelWood', [.45, .28, .14], [.06, .04, .02]); h.parent = shovel; h.position.y = .25; h.isPickable = false;
+        const bl = B.MeshBuilder.CreateBox('digShovelBlade', { width: .36, height: .44, depth: .04 }, scene); bl.material = mat('shovelIron', [.3, .3, .32], [.04, .04, .05]); bl.parent = shovel; bl.position.y = -.82; bl.isPickable = false; }
+      // the village's grass and flowers on the beach and its rope step aside while it is played (thin instances, put back
+      // after; as under the Rice Planting paddy)
+      let unclear = null;
+      function clearGrass(n) {
+        unclear?.(); unclear = null;
+        const half = n * CELL / 2 + .9, inv = B.Matrix.Invert(ctx.frame.getWorldMatrix()), m0 = inv.m, saved = [];
+        for (const m of scene.meshes) {
+          if (!/^terrain(Grass|Flower)/.test(m.name) || !m.thinInstanceCount) continue;
+          const buf = m._thinInstanceDataStorage?.matrixData; if (!buf) continue;
+          let orig = null;
+          for (let i = 0; i < m.thinInstanceCount; i++) {
+            const x = buf[i * 16 + 12], y = buf[i * 16 + 13], z = buf[i * 16 + 14];
+            const lx = x * m0[0] + y * m0[4] + z * m0[8] + m0[12] - AT[0], lz = x * m0[2] + y * m0[6] + z * m0[10] + m0[14] - AT[1];
+            if (Math.abs(lx) > half || Math.abs(lz) > half) continue;
+            if (!orig) orig = buf.slice(); for (let k = 0; k < 12; k++) buf[i * 16 + k] = 0;
+          }
+          if (orig) { m.thinInstanceSetBuffer('matrix', buf, 16, true); saved.push({ m, orig }); }
+        }
+        unclear = () => saved.forEach(({ m, orig }) => { try { if (!m.isDisposed()) m.thinInstanceSetBuffer('matrix', orig, 16, true); } catch (e) {} });
+      }
+      const UP = new V3(0, 1, 0);
+      function poseShovel() {
+        const r = ctx.player.bone('RightHand'), l = ctx.player.bone('LeftHand'); if (!r || !l) { shovel.setEnabled(false); return; }
+        const hi = r.y > l.y ? r : l, lo = r.y > l.y ? l : r, d = hi.subtract(lo); if (d.length() < .05) return; d.normalize();
+        shovel.position.copyFrom(lo.add(d.scale(-.1))); const ax = V3.Cross(UP, d), an = Math.acos(Math.max(-1, Math.min(1, V3.Dot(UP, d))));
+        shovel.rotationQuaternion = ax.length() < 1e-6 ? B.Quaternion.Identity() : B.Quaternion.RotationAxis(ax.normalize(), an);
+      }
       const posOf = i => new V3(AT[0] + (i % board.n - (board.n - 1) / 2) * CELL, 0, AT[1] + ((board.n - 1) / 2 - Math.floor(i / board.n)) * CELL);
       const dist = (a, b) => Math.abs(a % board.n - b % board.n) + Math.abs(Math.floor(a / board.n) - Math.floor(b / board.n));
       function build(k) {
         if (board) board.nodes.forEach(n => { try { n.dispose(); } catch (e) {} });
-        const L = LV[k], n = L.n, rocks = new Set(L.rocks || []);
+        const L = LV[k], n = L.n, rocks = new Set(L.rocks || []); clearGrass(n);
         const free = [...Array(n * n).keys()].filter(i => !rocks.has(i)), chests = [];
         while (chests.length < L.chests) { const c = free[Math.floor(Math.random() * free.length)]; if (!chests.includes(c)) chests.push(c); }
         board = { k, n, rocks, chests, found: new Set(), dug: new Map(), digs: L.digs, nodes: [], sel: Math.floor(n / 2) * n + Math.floor(n / 2) };
@@ -53,7 +112,9 @@
         for (let y = 0; y < n; y++) for (const xx of [-1, n]) { const p = new V3(AT[0] + (xx - (n - 1) / 2 + (xx < 0 ? .5 : -.5)) * CELL, 0, AT[1] + ((n - 1) / 2 - y) * CELL); const r = put(sRope, p, .55); r.rotation.y = Math.PI / 2; }
         sel.setEnabled(true); moveSel(0, 0);
         const sp = posOf(board.sel); ctx.player.place(AT[0] - CELL * (n / 2 + 1.2), AT[1] - CELL * (n / 2 + .8), Math.PI / 4);
-        const span = n * CELL; st.cam = [AT[0], span * 1.15 + 3.5, AT[1] - span * .62 - 1.8]; st.at = [AT[0], 0, AT[1] + .4];
+        // a little farther and aimed 16% of the beach nearer: the near rope clears the hint bar (it sat under it at every
+        // size) and the far stakes stay under the title bar (scratchpad lv/cam: y 54 .. 435 of 540 for 6 x 6 .. 12 x 12)
+        const span = n * CELL; st.cam = [AT[0], span * 1.2 + 3.6, AT[1] - span * .8 - 2.3]; st.at = [AT[0], 0, AT[1] - span * .16];
         info();
       }
       const info = () => H.info(board ? `Beach ${board.k + 1} / ${LV.length} · chests ${board.found.size} / ${board.chests.length} · digs left ${board.digs}` : 'Pick a beach');
@@ -61,7 +122,8 @@
       function dig(i) {
         if (st.phase !== 'play' || st.anim || i == null || board.rocks.has(i) || board.dug.has(i) || board.digs <= 0) return false;
         board.sel = i; moveSel(0, 0); board.digs--;
-        const p = posOf(i); ctx.player.place(p.x - CELL * .55, p.z - CELL * .55, Math.PI / 4); ctx.player.clip('cross_punch'); ctx.sound('thock');
+        const p = posOf(i); ctx.player.place(p.x - CELL * .55, p.z - CELL * .55, Math.PI / 4); ctx.sound('thock');
+        if (ctx.player.has?.('game_dig')) { ctx.player.clip('game_dig', { from: .6, hold: true }); shovel.setEnabled(true); st.digT = 1.3; poseShovel(); } else ctx.player.clip('cross_punch');
         const put = (s, y, name) => { const m = s.createInstance(name || 'digPart'); m.parent = ctx.frame; ctx.add(m); m.position.set(p.x, y, p.z); board.nodes.push(m); return m; };
         put(sHole, .115); const md = put(sMound, .14); md.position.x += CELL * .32; md.position.z += CELL * .3;
         const left = board.chests.filter(c => !board.found.has(c));
@@ -81,9 +143,9 @@
       function restart() { if (st.phase !== 'play') return; build(board.k); H.msg('A new beach', 700, 'the chests are buried elsewhere'); }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(390px,90vw);background:rgba(16,12,8,.94);border:1px solid rgba(216,179,92,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 390) + 'px,92vw);background:rgba(16,12,8,.94);border:1px solid rgba(216,179,92,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:700 13px/1.2 Georgia,serif;letter-spacing:.14em;text-transform:uppercase;color:#d8b35c;margin-bottom:10px">The Buried Chest</div><div style="margin-bottom:12px;color:#bbb">Each dig tells how many squares away the nearest chest is (no diagonals).</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${done ? 'rgba(216,179,92,.25)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px Georgia,serif;opacity:.75">${L.chests} chest${L.chests > 1 ? 's' : ''} · ${L.digs} digs</div>` : '🔒'}${done ? ' ✓' : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 3},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${done ? 'rgba(216,179,92,.25)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px Georgia,serif;opacity:.75">${L.chests} chest${L.chests > 1 ? 's' : ''} · ${L.digs} digs</div>` : '🔒'}${done ? ' ✓' : ''}</button>`; }).join('')}</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'grid'; H.msg(`Beach ${k + 1}`, 900, k === 3 ? 'no dig to waste' : k >= 4 ? 'a hard one' : ''); }
       const pads = document.createElement('div');
@@ -99,6 +161,7 @@
       return {
         update(dt) {
           ctx.look(st.cam, st.at);
+          if (st.digT > 0) { st.digT -= dt; poseShovel(); if (st.digT <= 0) { shovel.setEnabled(false); ctx.player.idle(); } }
           if ((st.phase === 'solved' || st.phase === 'lost') && (st.wait -= dt) <= 0) {
             const won = st.phase === 'solved', k = board.k; st.phase = 'done'; H.hint('');
             const score = won ? (k + 1) * 20 + board.digs * 5 : 0;
@@ -107,7 +170,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (k === 'arrowup' || k === 'w') moveSel(0, -1); else if (k === 'arrowdown' || k === 's') moveSel(0, 1); else if (k === 'arrowleft' || k === 'a') moveSel(-1, 0); else if (k === 'arrowright' || k === 'd') moveSel(1, 0);
           else if (k === ' ' || k === 'enter') dig(board.sel);
         },
@@ -115,8 +178,9 @@
           if (evt.type !== B.PointerEventTypes.POINTERDOWN || st.phase !== 'play') return;
           const hit = scene.pickWithRay(ctx.ray(), m => m.metadata?.digCell != null); const i = hit?.pickedMesh?.metadata?.digCell; if (i != null) dig(i);
         },
+        restart, // the HUD's Restart button
         _test: { st, dig, choose, moveSel, dist, get board() { return board; }, LV },
-        dispose() { pick.remove(); pads.remove(); sel.dispose(); if (board) board.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
+        dispose() { pick.remove(); pads.remove(); sel.dispose(); unclear?.(); try { shovel.dispose(); } catch (e) {} if (board) board.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };
     }
   };

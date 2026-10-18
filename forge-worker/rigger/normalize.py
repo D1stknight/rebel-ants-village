@@ -27,11 +27,34 @@ print('verts',len(V),'tris',len(F),'bbox',V.min(0),V.max(0))
 import os as _os
 _skip=[s for s in _os.environ.get('FORGE_PROXY_SKIP_MAT','ARMOR_').split(',') if s]
 _mi={i for i,mt in enumerate(m.data.materials) if mt and any(mt.name.startswith(s) for s in _skip)}
+# v2.28 NPC species (Chumpz, Saints): each vertex's base colour (the texture under its UVs, loop average) goes into the npz
+# too; landmarks finds the wrist where the arm's colour turns into the sculpted hand's. Rebels and Rebel villagers: no C.
+_C=None
+if _os.environ.get('FORGE_NPC') and _os.environ.get('FORGE_NPC_SPECIES') and m.data.uv_layers.active is not None:
+    me=m.data; nl=len(me.loops); npo=len(me.polygons)
+    lv=np.zeros(nl,np.int64); me.loops.foreach_get('vertex_index',lv)
+    uv=np.zeros(nl*2,np.float32); me.uv_layers.active.data.foreach_get('uv',uv); uv=uv.reshape(-1,2)
+    pm=np.zeros(npo,np.int64); me.polygons.foreach_get('material_index',pm)
+    ps=np.zeros(npo,np.int64); me.polygons.foreach_get('loop_start',ps); pt=np.zeros(npo,np.int64); me.polygons.foreach_get('loop_total',pt)
+    lm=np.zeros(nl,np.int64); lm[np.repeat(ps,pt)+np.arange(nl)-np.repeat(np.cumsum(pt)-pt,pt)]=np.repeat(pm,pt)
+    col=np.zeros((len(V),3)); cnt=np.zeros(len(V))
+    for mi,mt in enumerate(me.materials):
+        img=None
+        if mt and mt.use_nodes:
+            for nd in mt.node_tree.nodes:
+                if nd.type=='TEX_IMAGE' and nd.image and any('Base Color' in l.to_socket.name for l in nd.outputs[0].links): img=nd.image
+        sel=lm==mi
+        if img is None or not sel.any() or not img.size[0]: continue
+        w_,h_=img.size; px=np.zeros(w_*h_*4,np.float32); img.pixels.foreach_get(px); I=px.reshape(h_,w_,4)[:,:,:3]
+        u_=np.clip((uv[sel,0]%1.0)*w_,0,w_-1).astype(int); v_=np.clip((uv[sel,1]%1.0)*h_,0,h_-1).astype(int)
+        np.add.at(col,lv[sel],I[v_,u_]); np.add.at(cnt,lv[sel],1)
+    if (cnt>0).any():
+        _C=(col/np.maximum(cnt,1)[:,None]).astype(np.float32); print('vertex colours (wrist): textured',int((cnt>0).sum()),'of',len(V))
 if _mi:
     keepF=np.array([p.vertices[:] for p in m.data.polygons if len(p.vertices)==3 and p.material_index not in _mi])
     used=np.unique(keepF); remap=-np.ones(len(V),int); remap[used]=np.arange(len(used))
     print('landmarks from body only: tris',len(keepF),'of',len(F))
-    np.savez(out+'.npz',V=V[used],F=remap[keepF])
+    np.savez(out+'.npz',V=V[used],F=remap[keepF],**({'C':_C[used]} if _C is not None else {}))
 else:
-    np.savez(out+'.npz',V=V,F=F)
+    np.savez(out+'.npz',V=V,F=F,**({'C':_C} if _C is not None else {}))
 bpy.ops.wm.save_as_mainfile(filepath=out+'.blend')

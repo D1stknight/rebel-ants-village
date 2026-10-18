@@ -3,11 +3,13 @@
 // drop from the roof on a rope or run along a line across the hall; click or tap one (or Space at the reticle) to throw
 // a star. A hit is 10, near the middle 15, a moving or hanging target 5 more; hits in a row raise the multiplier
 // (x2 from 3, x3 from 6). The blue targets with the Rebel emblem are friends: hitting one costs 15 and the streak.
+// Oct 17 (Miguel: "we need an animation that throws the stars out"): with the games pack the Rebel throws each star
+// (game_throw, its arm already whipping forward as the star leaves the hand: no wait on the throw); else punches.
 (function () {
   const RS = { HX: 18, HY: 15, H: 9 };
   const T_R = .55;
   const G = {
-    title: 'Shuriken',
+    title: 'Shuriken', moves: true,
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LINE = { x: 0, z: 6, ...(def.line || {}) }, DUR = def.seconds || 45;
@@ -104,9 +106,10 @@
           P = ctx.toWorld(o.x + dir.x * tt, o.y + dir.y * tt, o.z + dir.z * tt);
         }
         st.hand ^= 1; st.throws++;
-        ctx.player.clip(st.hand ? 'cross_punch' : 'jab', { speed: 1.6 });
+        const pack = !!ctx.player.has?.('game_throw'); if (pack) st.hand = 1; // the throw is right-handed
+        if (pack) ctx.player.clip('game_throw', { from: .78, speed: 1.5 }); else ctx.player.clip(st.hand ? 'cross_punch' : 'jab', { speed: 1.6 });
         const from = ctx.player.bone(st.hand ? 'RightHand' : 'LeftHand') || ctx.toWorld(LINE.x + (st.hand ? .5 : -.5), 2.4, LINE.z - .6);
-        const s = star.createInstance('shuriFly'); s.position.copyFrom(from);
+        const s = star.createInstance('shuriFly'); s.parent = null; s.position.copyFrom(from); // world coordinates (a copy takes its source's parent, the game frame)
         const dist = V3.Distance(from, P), dur = Math.max(.12, dist / 34);
         st.flying.push({ s, from, to: P, t: 0, dur, hit: best, spin: Math.random() * 6 });
         ctx.sound('whoosh');

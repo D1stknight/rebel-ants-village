@@ -32,7 +32,8 @@ h2:first-child{margin-top:0}
 .card.sel{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal) inset}
 .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .grow{flex:1}
-input,select{background:#0d1020;border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:6px 8px;font:inherit;min-width:0}
+input,select,textarea{background:#0d1020;border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:6px 8px;font:inherit;min-width:0}
+textarea{width:100%;min-height:54px;resize:vertical;margin-top:6px}
 input[type=file]{display:none}
 button{background:#1d2336;border:1px solid #33405e;color:var(--txt);border-radius:6px;padding:6px 10px;font:500 12px Inter,sans-serif;cursor:pointer}
 button:hover{border-color:var(--teal)}
@@ -62,6 +63,14 @@ th{color:var(--dim);font-weight:500}
 .bad{color:var(--red)} .warn{color:var(--amber)} .ok{color:var(--green)}
 .info{font-size:11px;color:var(--dim);margin-top:5px;line-height:1.55}.info:empty{display:none}.info b{color:var(--txt);font-weight:600}
 .thumb{width:44px;height:44px;border-radius:6px;object-fit:cover;background:#0d1020}
+details.grp{margin-bottom:8px}
+details.grp>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:#0e1222;font-weight:600;user-select:none}
+details.grp>summary::-webkit-details-marker{display:none}
+details.grp>summary::before{content:'▸';color:var(--gold);display:inline-block;transition:transform .15s}
+details.grp[open]>summary::before{transform:rotate(90deg)}
+details.grp>summary .cnt{margin-left:auto;color:var(--dim);font-weight:500;font-size:11px}
+details.grp>.gbody{padding-top:8px}
+.kitbadge{display:inline-block;font-size:10px;font-weight:600;padding:1px 7px;border-radius:9px;background:#24163a;color:#cfa6ff;border:1px solid #5a3a7a}
 #toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#1d2336;border:1px solid var(--teal);padding:8px 14px;border-radius:8px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9}
 #toast.on{opacity:1}
 dialog{background:var(--panel);color:var(--txt);border:1px solid var(--teal);border-radius:10px;padding:16px;width:min(420px,92vw)}
@@ -75,10 +84,10 @@ small{color:var(--dim)}
 <body>
 <div id="gate">Checking admin access...</div>
 <div id="app">
-  <header><h1>NPC FORGE</h1><span class="sub">Your renders → Rebel Forge sculpt → Forge Rigger (NPC clips) → test → approve</span><span id="workerPill"></span><a href="admin.html">← Admin Hub</a></header>
+  <header><h1>NPC FORGE</h1><span class="sub">Your renders → Rebel Forge sculpt → Forge Rigger (NPC clips) → test → approve · Cute &amp; Creepy: built in the kit</span><span id="workerPill"></span><a href="admin.html">← Admin Hub</a></header>
   <aside id="side">
     <h2>NPCs</h2>
-    <div class="row" style="margin-bottom:8px"><button class="gold" onclick="addNPC()">+ New NPC</button><button class="teal" id="forgeAllBtn" onclick="forgeAll()">Forge all ready</button></div>
+    <div class="row" style="margin-bottom:8px"><button class="teal" id="forgeAllBtn" onclick="forgeAll()">Forge all ready</button></div>
     <div id="npcList"></div>
     <h2>Approved (in the village)</h2>
     <div id="approvedList" class="state">Loading...</div>
@@ -146,13 +155,37 @@ const VILLAGERS = ['ashigaru', 'ronin', 'samurai', 'shogun', 'bushi', 'warrior',
 // chumpz_bartender). New NPCs for a collection get its prefix (chumpz_..., saints_...).
 const COLLECTIONS = {
   rebel: { label: 'Rebel Ants', species: 'ant', village: '', npcs: Object.fromEntries(VILLAGERS.map((v) => [`${v}_villager`, `${v[0].toUpperCase()}${v.slice(1)} Villager`])) },
-  chumpz: { label: 'Chumpz', species: 'ape', village: 'chumpz', prefix: 'chumpz_', npcs: { chumpz_bartender: 'Big Chain', chumpz_fisher: 'Pengu', chumpz_dealer: 'Peely', chumpz_villager: 'Banana Band', chumpz_barnacle: 'Barnacle' } },
+  chumpz: { label: 'Chumpz', species: 'ape', village: 'chumpz', prefix: 'chumpz_', npcs: { chumpz_bartender: 'Big Chain', chumpz_fisher: 'Pengu', chumpz_dealer: 'Peely', chumpz_villager: 'Banana Band', chumpz_racer: 'Racer', chumpz_barnacle: 'Barnacle' } },
   saints: { label: 'Saints', species: 'human', village: 'saints-la', prefix: 'saints_', npcs: { saints_greeter: 'Saints Greeter', saints_mechanic: 'Shop Mechanic', saints_hooper: 'Court Regular', saints_librarian: 'Librarian', saints_dj: 'DJ', saints_shopkeeper: 'Shopkeeper' } }
 };
 const colOf = (n) => COLLECTIONS[n?.collection] || COLLECTIONS.rebel;
+// Oct 16 (Miguel): both lists grouped by what the NPCs are, Rebels with Rebels, Chumpz with Chumpz, Saints with Saints.
+// An approved key's group comes from its prefix (chumpz_, saints_; the rest are Rebel villager keys).
+const GROUPS = [['rebel', 'Rebel Ants'], ['chumpz', 'Chumpz'], ['saints', 'Saints'], ['cc', 'Cute & Creepy']];
+// Cute & Creepy NPCs (the Mystic Moons, Oct 4) are made another way: Claude builds each one in the building kit
+// (assets/samurai-kit.js) from Miguel's art, as code (the body, the face drawn from the art, the props and its own little
+// moves), and the village draws that same kit model (layout fallbackType 'kit:<type>'). No Rebel Forge sculpt, no Forge
+// Rigger, nothing to approve: their cards show the live kit model, and a new one starts as a request with the art that
+// Claude builds from.
+const CC_KIT = {
+  cc_mamoru: { name: 'Mamoru', npcId: 'cc-mamoru', moon: 'Harvest Moon', where: 'keeps watch at the gate', moves: 'breathes, waves a paw, the skull candle flickers' },
+  cc_flower_moon: { name: 'Kokeshi Flower Moon', npcId: 'cc-flower-moon', moon: 'Flower Moon', where: 'by the great tree', moves: 'rocks gently' },
+  cc_mochi: { name: 'Mochi', npcId: 'cc-mochi', moon: 'Pink Moon', where: 'at the game hall', moves: 'breathes, beckons with a paw, the rose quartz pendant glows like a heartbeat' },
+  cc_ostara: { name: 'Ostara', npcId: 'cc-ostara', moon: 'Hare Moon', where: 'at the library, on the Moon Ledge from Moon Tales 13', moves: 'rocks gently' },
+  cc_nariko: { name: 'Nariko', npcId: 'cc-nariko', moon: 'Thunder Moon', where: 'in the graveyard, at the stone circle from Moon Tales 17', moves: 'rocks gently, the storm orb pulses' }
+};
+const CC_PLANNED = { cc_lunar_witch: { name: 'Lunar Witch', why: "Mochi's tale (Moon Tales 05-08) waits on her art." } };
+const isKit = (n) => n?.collection === 'cc';
+const KIT_KEY = /^(cc_|mystic_moons_)/;   // keys of kit-built NPCs: never a forged model (it would replace the kit look)
+const groupOf = (n) => (isKit(n) ? 'cc' : COLLECTIONS[n?.collection] ? n.collection : 'rebel');
+const keyGroup = (k) => (KIT_KEY.test(k) ? 'cc' : Object.entries(COLLECTIONS).find(([, c]) => c.prefix && k.startsWith(c.prefix))?.[0] || 'rebel');
+const GKEY = 'npcForge:groups';   // which groups are folded (per browser)
+let grpOpen = (() => { try { return JSON.parse(localStorage.getItem(GKEY) || '{}') || {}; } catch (e) { return {}; } })();
+function grpToggle(el) { grpOpen[el.dataset.g] = el.open; try { localStorage.setItem(GKEY, JSON.stringify(grpOpen)); } catch (e) {} }
+const grp = (g, label, count, body) => `<details class="grp" data-g="${g}" ${grpOpen[g] === false ? '' : 'open'} ontoggle="grpToggle(this)"><summary>${esc(label)}<span class="cnt">${count}</span></summary><div class="gbody">${body}</div></details>`;
 const NPC_CLIPS = ['idle', 'walk', 'run', 'talking', 'talking2', 'waving', 'wave_short', 'bow', 'pointing', 'pick_up', 'nod_yes', 'shake_no', 'clapping', 'rallying', 'yelling', 'look_around', 'idle_looking'];
 const PHASES = { draft: 'Draft', uploading: 'Uploading renders', building: 'Starting build', sculpting: 'Rebel Forge is sculpting', storing: 'Saving the sculpt', rigging: 'Forge Rigger', done: 'Forged', failed: 'Stopped' };
-let st = { npcs: [] }; let selId = null; let approved = {}, approvedLoaded = false;
+let st = { npcs: [] }; let selId = null, selKit = null; let approved = {}, approvedLoaded = false;
 function toast(m, ms) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), ms || 2600); }
 // dates as "Oct 9, 2:32 PM" (this browser's clock and language)
 function when(t) { const d = new Date(t || NaN); return isNaN(d) ? '' : d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
@@ -202,20 +235,25 @@ async function api(path, body, method) {
 async function twice(fn) { const waits = [3000, 9000, 20000]; for (let k = 0; ; k++) { try { return await fn(); } catch (e) { if ((e.status && e.status < 500 && e.status !== 408) || k >= waits.length) throw e; await sleep(waits[k]); } } }
 
 /* ---------- NPC records ---------- */
-function addNPC() {
-  const n = { id: 'n' + Date.now().toString(36), name: '', key: '', factionId: '', role: 'villager', refs: {}, phase: 'draft' };
-  st.npcs.unshift(n); save(); renderList(); select(n.id);
+function addNPC(col = 'rebel') {
+  const n = { id: 'n' + Date.now().toString(36), name: '', key: '', collection: col, factionId: '', role: 'villager', refs: {}, phase: 'draft' };
+  grpOpen[col] = true; st.npcs.unshift(n); save(); renderList(); select(n.id);
 }
 function npc(id) { return st.npcs.find((n) => n.id === id); }
-function setField(id, f, v) { const n = npc(id); if (!n) return; n[f] = v; if ((f === 'name' || f === 'collection') && !n.keyTouched) n.key = guessKey(n.name, n.collection); if (f === 'key') { n.key = slug(v); n.keyTouched = true; } save(); setTimeout(renderList, 0); }   // not inside the input's own change / blur
+function setField(id, f, v) {
+  const n = npc(id); if (!n) return; n[f] = v; if ((f === 'name' || f === 'collection') && !n.keyTouched) n.key = guessKey(n.name, n.collection); if (f === 'key') { n.key = slug(v); n.keyTouched = true; }
+  if (f === 'collection') grpOpen[v] = true;   // it moves to that group: keep it in view
+  save(); setTimeout(renderList, 0);   // not inside the input's own change / blur
+}
 function guessKey(name, col) {
   const s = slug(name); const c = COLLECTIONS[col] || COLLECTIONS.rebel; if (!s) return '';
+  if (col === 'cc') return s.startsWith('cc_') ? s : 'cc_' + s;   // the kit type it will be built as
   if (!c.prefix) { const f = VILLAGERS.find((v) => s.startsWith(v)); return f && /villager|^[a-z]+$/.test(s) ? `${f}_villager` : s; }
   const hit = Object.keys(c.npcs).find((k) => slug(c.npcs[k]) === s);   // a known NPC of that village by its name
   return hit || (s.startsWith(c.prefix) ? s : c.prefix + s);
 }
 function removeNPC(id) { if (!confirm('Remove this NPC from the forge list? (Approved NPCs stay in the village.)')) return; st.npcs = st.npcs.filter((n) => n.id !== id); delete synced[id]; api('/api/npc-forge-records', { action: 'remove', id }).catch(() => {}); save(); renderList(); if (selId === id) { selId = null; clearViewer(); } }
-function ready(n) { return n.name && n.key && SLOTS.every((s) => n.refs[s]); }
+function ready(n) { return !isKit(n) && n.name && n.key && SLOTS.every((s) => n.refs[s]); }   // (kit requests never go to the Rebel Forge)
 function pick(id, slot) { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/png,image/jpeg,image/webp'; inp.onchange = () => inp.files[0] && setImage(id, slot, inp.files[0]); inp.click(); }
 async function setImage(id, slot, file) {
   const n = npc(id); if (!n) return;
@@ -247,7 +285,7 @@ function ids(n) { return { tokenId: n.key, rebelId: `npc_${n.key}`, collectionKe
 function refConcept(n) { const f = n.refs.front.url; return { id: `${n.id}_front`, conceptId: `${n.id}_front`, ...ids(n), imageUrl: f, backImageUrl: n.refs.back.url, imageStorage: 'vercel_blob', conceptType: 'production_reference', forgeMode: 'production_reference', createdAt: new Date().toISOString() }; }
 function gi(n) { return { ...ids(n), name: n.name, species: colOf(n).species, referenceImage: true, npc: true }; }
 async function forgeOne(id, opts = {}) {
-  const n = npc(id); if (!n || running.has(id)) return; if (!ready(n)) { toast('Add a name, a key and all four renders first'); return; }
+  const n = npc(id); if (!n || isKit(n) || running.has(id)) return; if (!ready(n)) { toast('Add a name, a key and all four renders first'); return; }
   if (workerBuilding && !opts.batch && !confirm('The rig worker is still rebuilding: this NPC would be rigged by the old worker. Go ahead anyway?')) return;
   // a sculpt the Rebel Forge failed can't be polled back to life: Retry starts a fresh sculpt from the same renders
   const sculptFailed = n.phase === 'failed' && n.buildId && !n.meshy?.glb && /^Rebel Forge: /.test(n.err || '');
@@ -265,19 +303,27 @@ async function forgeOne(id, opts = {}) {
       if (!j.imageUrl) throw new Error('Upload returned no image URL');
       n.refs[s] = { url: j.imageUrl }; save(); renderList();
     }
-    // 2. build record + 3. Meshy (front + back + both sides)
+    // 2. build record + 3. Meshy (front + back + both sides). Oct 17: a build whose sculpt never started (the create call
+    // failed once) starts it on Retry; it used to poll for ever and stop at "Missing Rebel Forge sculpt task ID"
+    const c = refConcept(n);
     if (!n.buildId) {
       n.phase = 'building'; save(); renderList();
-      const c = refConcept(n);
       const j = await twice(() => api('/api/forge-build-3d-character', { generationInput: gi(n), selectedConcept: c, productionReference: c }));
       n.buildId = j.buildRequest?.buildId; if (!n.buildId) throw new Error('The forge returned no build id');
+      save();
+    }
+    if (!n.meshy) {
+      n.phase = 'building'; save(); renderList();
       await twice(() => api('/api/forge-3d-engine-meshy-create', { buildId: n.buildId, generationInput: gi(n), productionReference: c, selectedConcept: c, sideImageUrls: [n.refs.left.url, n.refs.right.url] }));
       n.meshy = { p: 0 }; save();
     }
     if (!n.meshy?.glb) {
       n.phase = 'sculpting'; save(); renderList(); let errs = 0;
       for (;;) {
-        let d; try { d = await api('/api/forge-3d-engine-meshy-status', { buildId: n.buildId }); errs = 0; } catch (e) { if (++errs > 10) throw e; await sleep(8000); continue; }
+        let d; try { d = await api('/api/forge-3d-engine-meshy-status', { buildId: n.buildId }); errs = 0; } catch (e) {
+          // no sculpt task on this build (made before the fix above): start the sculpt on the next Retry
+          if (/sculpt task ID/i.test(e.message || '')) { n.meshy = null; save(); throw new Error('The Rebel Forge sculpt never started for this build: press Retry to start it.'); }
+          if (++errs > 10) throw e; await sleep(8000); continue; }
         const r = d.meshyResponse || {}; n.meshy.p = Math.max(n.meshy.p || 0, Number(r.progress || 0)); if (r.thumbnail_url) n.meshy.thumb = r.thumbnail_url;
         if (d.glbUrl) { n.meshy.glb = d.glbUrl; n.meshy.p = 100; break; }
         if (['FAILED', 'CANCELED', 'EXPIRED'].includes(String(d.meshyStatus || '').toUpperCase())) {
@@ -333,29 +379,109 @@ function stateLine(n) {
 }
 function pct(n) { return n.phase === 'done' ? 100 : n.phase === 'rigging' ? 60 + 0.4 * (n.rig?.p || 0) : n.phase === 'storing' ? 58 : n.phase === 'sculpting' ? 8 + 0.5 * (n.meshy?.p || 0) : n.phase === 'building' ? 6 : n.phase === 'uploading' ? 3 : 0; }
 function renderList() {
-  const el = $('#npcList');
-  if (!st.npcs.length) { el.innerHTML = '<div class="state">No NPCs yet. Add one, give it a name and drop your four renders (front, back, left, right).</div>'; renderApproved(); return; }
-  el.innerHTML = st.npcs.map((n) => {
-    const busy = running.has(n.id); const qa = n.rig?.qa?.verdict;
-    const slots = SLOTS.map((s) => { const r = n.refs[s] || {}; const src = r.url || r.local; const up = r.uploading ? '<i class="up">uploading…</i>' : ''; return `<div class="slot" onclick="pick('${n.id}','${s}')" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="dropTo(event,'${n.id}','${s}')">${src ? `<img src="${src}" alt="">` : '+'}<b>${s}</b>${up}</div>`; }).join('');
-    return `<div class="card ${n.id === selId ? 'sel' : ''}" onclick="if(!event.target.closest('input,select,button,.slot'))select('${n.id}')">
-      <div class="row">${n.rig?.thumb ? `<img class="thumb" src="${n.rig.thumb}" alt="">` : ''}<input class="grow" placeholder="Name (e.g. Samurai Villager)" value="${esc(n.name)}" onchange="setField('${n.id}','name',this.value)" ${busy ? 'disabled' : ''}>
-        ${qa ? `<span class="verdict v-${qa}">${qa}</span>` : ''}</div>
-      <div class="row" style="margin-top:6px"><select onchange="setField('${n.id}','collection',this.value)" ${busy || n.buildId ? 'disabled' : ''} title="Collection">${Object.entries(COLLECTIONS).map(([k, c]) => `<option value="${k}" ${k === (n.collection || 'rebel') ? 'selected' : ''}>${c.label}</option>`).join('')}</select><input class="grow" placeholder="library key" value="${esc(n.key)}" onchange="setField('${n.id}','key',this.value)" ${busy || n.buildId ? 'disabled' : ''} title="Library key (samurai_villager replaces that villager's placeholder; chumpz_bartender replaces Big Chain)"></div>
-      ${n.buildId ? '' : `<div class="slots">${slots}</div>`}
-      ${n.buildId || colOf(n).species === 'ant' ? '' : `<div class="info">Renders for ${colOf(n).label}: A-pose, a clear gap between each arm and the body all the way down (background showing under the armpits) and the hands open, away from the hips. Arms or hands touching the body are fused in the sculpt and tear when they move.</div>`}
-      <div class="state">${stateLine(n)}</div><div class="bar"><i style="width:${pct(n)}%"></i></div>
-      <div class="info" id="info_${n.id}">${statusLines(n).join('<br>')}</div>
-      ${n.err ? `<div class="err">${esc(n.err)}</div>` : ''}
-      <div class="row" style="margin-top:8px">
-        ${n.phase === 'done' ? `<button class="teal" onclick="select('${n.id}')">Test</button><button onclick="reRig('${n.id}')" title="Run the Forge Rigger again on the same sculpt">Re-rig</button>` : `<button class="gold" onclick="forgeOne('${n.id}')" ${busy || !ready(n) ? 'disabled' : ''}>${n.phase === 'failed' ? 'Retry' : ['uploading', 'building', 'sculpting', 'storing', 'rigging'].includes(n.phase) && !busy ? 'Continue' : 'Forge'}</button>`}
-        ${n.buildId && !busy ? `<button onclick="if(confirm('Sculpt this NPC again from the same renders? (a new Rebel Forge sculpt)'))forgeOne('${n.id}',{resculpt:true})">Re-sculpt</button>` : ''}
-        ${!n.buildId && Object.keys(n.refs).length ? '' : ''}
-        <button class="red" style="margin-left:auto" onclick="removeNPC('${n.id}')" ${busy ? 'disabled' : ''}>Remove</button></div></div>`;
+  $('#npcList').innerHTML = GROUPS.map(([g, label]) => {
+    const list = st.npcs.filter((n) => groupOf(n) === g);
+    if (g === 'cc') return kitGroup(list);
+    const body = `<div class="row" style="margin-bottom:8px"><button class="gold" onclick="addNPC('${g}')">+ New ${esc(label)} NPC</button></div>`
+      + (list.length ? list.map(card).join('') : `<div class="state">No ${esc(label)} NPCs yet: + New, give it a name and drop your four renders (front, back, left, right).</div>`);
+    return grp(g, label, list.length, body);
   }).join('');
   paintStatus(); renderApproved();
 }
-function select(id) { selId = id; renderList(); showNPC(id); }
+function card(n) {
+  const busy = running.has(n.id); const qa = n.rig?.qa?.verdict;
+  const slots = SLOTS.map((s) => { const r = n.refs[s] || {}; const src = r.url || r.local; const up = r.uploading ? '<i class="up">uploading…</i>' : ''; return `<div class="slot" onclick="pick('${n.id}','${s}')" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="dropTo(event,'${n.id}','${s}')">${src ? `<img src="${src}" alt="">` : '+'}<b>${s}</b>${up}</div>`; }).join('');
+  return `<div class="card ${n.id === selId ? 'sel' : ''}" onclick="if(!event.target.closest('input,select,button,.slot'))select('${n.id}')">
+    <div class="row">${n.rig?.thumb ? `<img class="thumb" src="${n.rig.thumb}" alt="">` : ''}<input class="grow" placeholder="Name (e.g. Samurai Villager)" value="${esc(n.name)}" onchange="setField('${n.id}','name',this.value)" ${busy ? 'disabled' : ''}>
+      ${qa ? `<span class="verdict v-${qa}">${qa}</span>` : ''}</div>
+    <div class="row" style="margin-top:6px"><select onchange="setField('${n.id}','collection',this.value)" ${busy || n.buildId ? 'disabled' : ''} title="Collection">${Object.entries(COLLECTIONS).map(([k, c]) => `<option value="${k}" ${k === (n.collection || 'rebel') ? 'selected' : ''}>${c.label}</option>`).join('')}</select><input class="grow" placeholder="library key" value="${esc(n.key)}" onchange="setField('${n.id}','key',this.value)" ${busy || n.buildId ? 'disabled' : ''} title="Library key (samurai_villager replaces that villager's placeholder; chumpz_bartender replaces Big Chain)"></div>
+    ${n.buildId ? '' : `<div class="slots">${slots}</div>`}
+    ${n.buildId || colOf(n).species === 'ant' ? '' : `<div class="info">Renders for ${colOf(n).label}: A-pose, a clear gap between each arm and the body all the way down (background showing under the armpits) and the hands open, away from the hips. Arms or hands touching the body are fused in the sculpt and tear when they move.</div>`}
+    <div class="state">${stateLine(n)}</div><div class="bar"><i style="width:${pct(n)}%"></i></div>
+    <div class="info" id="info_${n.id}">${statusLines(n).join('<br>')}</div>
+    ${n.err ? `<div class="err">${esc(n.err)}</div>` : ''}
+    <div class="row" style="margin-top:8px">
+      ${n.phase === 'done' ? `<button class="teal" onclick="select('${n.id}')">Test</button><button onclick="reRig('${n.id}')" title="Run the Forge Rigger again on the same sculpt">Re-rig</button>` : `<button class="gold" onclick="forgeOne('${n.id}')" ${busy || !ready(n) ? 'disabled' : ''}>${n.phase === 'failed' ? 'Retry' : ['uploading', 'building', 'sculpting', 'storing', 'rigging'].includes(n.phase) && !busy ? 'Continue' : 'Forge'}</button>`}
+      ${n.buildId && !busy ? `<button onclick="if(confirm('Sculpt this NPC again from the same renders? (a new Rebel Forge sculpt)'))forgeOne('${n.id}',{resculpt:true})">Re-sculpt</button>` : ''}
+      ${!n.buildId && Object.keys(n.refs).length ? '' : ''}
+      <button class="red" style="margin-left:auto" onclick="removeNPC('${n.id}')" ${busy ? 'disabled' : ''}>Remove</button></div></div>`;
+}
+function select(id) { selId = id; selKit = null; renderList(); showNPC(id); }
+
+/* ---------- Cute & Creepy: kit-built NPCs ---------- */
+function kitGroup(list) {
+  const reqs = list.filter((n) => !CC_KIT[n.key]);   // (once Claude has built one, its kit card shows it)
+  const planned = Object.entries(CC_PLANNED).filter(([k]) => !CC_KIT[k] && !list.some((n) => n.key === k));
+  const body = `<div class="info" style="margin:0 0 8px">Made another way: Claude builds each one in the building kit from your art (body, face, props and its own little moves), like the Mystic Moons. No Rebel Forge sculpt, no Forge Rigger, nothing to approve: the village draws the kit model you see here.</div>`
+    + Object.entries(CC_KIT).map(([t, c]) => `<div class="card ${selKit === t ? 'sel' : ''}" onclick="if(!event.target.closest('button'))selectKit('${t}')">
+      <div class="row"><b class="grow">${esc(c.name)}</b><span class="kitbadge">kit-built</span></div>
+      <div class="info" style="margin-top:4px">${esc(c.moon)} · ${esc(c.where)}<br>Moves: ${esc(c.moves)}<br><span class="ok">In the village ✓</span> · ${t}</div>
+      <div class="row" style="margin-top:6px"><button class="teal" onclick="selectKit('${t}')">View</button></div></div>`).join('')
+    + reqs.map(kitReqCard).join('')
+    + planned.map(([k, p]) => `<div class="card"><div class="row"><b class="grow">${esc(p.name)}</b><span class="kitbadge">planned</span></div><div class="info">${esc(p.why)}</div><div class="row" style="margin-top:6px"><button class="gold" onclick="addKitNPC('${k}')">Add the art</button></div></div>`).join('')
+    + `<div class="row"><button class="gold" onclick="addKitNPC()">+ New Cute &amp; Creepy NPC</button></div>`;
+  return grp('cc', 'Cute & Creepy', `${Object.keys(CC_KIT).length} built${reqs.length ? ` · ${reqs.length} waiting` : ''}`, body);
+}
+function kitReqCard(n) {   // a new C&C NPC: the art and notes Claude builds it from
+  const art = SLOTS.filter((s) => n.refs[s]?.url), up = SLOTS.some((s) => n.refs[s]?.uploading);
+  const slots = SLOTS.map((s, i) => { const r = n.refs[s] || {}, src = r.url || r.local; return `<div class="slot" onclick="pick('${n.id}','${s}')" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="dropTo(event,'${n.id}','${s}')">${src ? `<img src="${src}" alt="">` : '+'}<b>${i ? s : 'art'}</b>${r.uploading ? '<i class="up">uploading…</i>' : ''}</div>`; }).join('');
+  return `<div class="card ${n.id === selId ? 'sel' : ''}" onclick="if(!event.target.closest('input,textarea,button,.slot'))select('${n.id}')">
+    <div class="row"><input class="grow" placeholder="Name (e.g. Lunar Witch)" value="${esc(n.name)}" onchange="setField('${n.id}','name',this.value)"><span class="kitbadge">kit request</span></div>
+    <div class="slots">${slots}</div>
+    <textarea placeholder="Notes for Claude: the moon, colours, what they hold, how they move, anything from the tale" onchange="setField('${n.id}','notes',this.value)">${esc(n.notes)}</textarea>
+    <div class="state">${art.length ? 'Art ready: Claude builds it in the kit next' : up ? 'Uploading the art…' : 'Add the art (your image; more views help)'}</div>
+    <div class="info">Kit type <b>${esc(n.key || 'cc_…')}</b>. Press Copy for Claude and paste it in the chat: Claude builds it in the kit from this card, the way the Mystic Moons were made, and it shows here once built.</div>
+    <div class="row" style="margin-top:8px"><button class="teal" onclick="copyKitRequest('${n.id}')" ${art.length ? '' : 'disabled'}>Copy for Claude</button><button class="red" style="margin-left:auto" onclick="removeNPC('${n.id}')">Remove</button></div></div>`;
+}
+function addKitNPC(key) {
+  const n = { id: 'n' + Date.now().toString(36), name: (key && CC_PLANNED[key]?.name) || '', key: key || '', keyTouched: !!key, collection: 'cc', factionId: 'cute-creepy', role: 'villager', refs: {}, phase: 'draft' };
+  grpOpen.cc = true; st.npcs.unshift(n); save(); renderList(); select(n.id);
+}
+function kitRequestText(n) {
+  return ['Build this Cute & Creepy NPC in the building kit, the way the Mystic Moons were made (not the Rebel Forge sculpt or the Forge Rigger).',
+    `Name: ${n.name || '(no name yet)'}`, `Kit type: ${n.key || '(give it a name)'}`, n.notes ? `Notes: ${n.notes}` : '',
+    ...SLOTS.filter((s) => n.refs[s]?.url).map((s) => `${s === 'front' ? 'Art' : s[0].toUpperCase() + s.slice(1) + ' view'}: ${n.refs[s].url}`)].filter(Boolean).join('\n');
+}
+async function copyKitRequest(id) {
+  const n = npc(id); if (!n) return; const txt = kitRequestText(n);
+  try { await navigator.clipboard.writeText(txt); toast('Copied: paste it in the chat with Claude'); } catch (e) { window.prompt('Copy this for Claude:', txt); }
+}
+function selectKit(t) { selId = null; selKit = t; renderList(); viewKit(t); }
+// the viewer builds the kit model with the village's own building kit (loaded on first use), so it is the same model
+let kitLoad = null, kitNightOn = false;
+function loadKit() {
+  return kitLoad || (kitLoad = new Promise((res, rej) => {
+    if (window.SamuraiKit) return res();
+    const s = document.createElement('script'); s.src = 'assets/samurai-kit.js';
+    s.onload = () => (window.SamuraiKit ? res() : rej(new Error('The building kit did not start')));
+    s.onerror = () => { kitLoad = null; rej(new Error('Could not load the building kit')); };
+    document.head.appendChild(s);
+  }));
+}
+async function viewKit(t) {
+  const c = CC_KIT[t]; clearViewer(); $('#viewMsg').style.display = ''; $('#viewMsg').textContent = `Building ${c?.name || t} from the kit...`; kitDock(t);
+  try { await loadKit(); } catch (e) { $('#viewMsg').textContent = e.message; return; }
+  if (selKit !== t && npc(selId)?.key !== t) return;   // another pick meanwhile
+  const holder = new BABYLON.TransformNode('kitView_' + t, scene); holder.rotation.y = Math.PI;   // kit fronts face -z; the front view looks from +z (the village turns them the same way)
+  if (!window.SamuraiKit.types.includes(t) || !window.SamuraiKit.build(holder, t, scene, null, true)) { holder.dispose(); $('#viewMsg').textContent = `The kit has no ${t} yet.`; return; }
+  holder.getChildMeshes(false).forEach((m) => m.computeWorldMatrix(true)); const b = holder.getHierarchyBoundingVectors(true);
+  Object.assign(view, { kit: holder, url: 'kit:' + t, H: Math.max(0.5, b.max.y - b.min.y) || 2 });
+  $('#viewMsg').style.display = 'none'; camView('front', true); kitDock(t);
+}
+function kitDock(t) {   // the dock for a kit character: its moves, no checks, nothing to approve, its own hands
+  const c = t && CC_KIT[t];
+  $('#clips').innerHTML = c ? `<span class="state">Kit characters move by code, all the time (no clips to pick): ${esc(c.moves)}.</span><button id="kitNightBtn" class="${kitNightOn ? 'on' : ''}" onclick="kitNight()">Night look</button>` : '<span class="state">Not built yet.</span>';
+  $('#clipInfo').textContent = '';
+  $('#qaBox').innerHTML = `<span class="state">Kit-built: no sculpt and no rig, so no rig checks. ${c ? `The village draws this same model (${esc(c.where)}).` : 'Claude builds it in the kit from the art on its card.'}</span>`;
+  $('#handsCtl').style.display = 'none'; $('#handsMsg').textContent = 'Kit characters keep the paws and hands drawn in the kit.';
+  paintStatus();
+}
+function kitNight(on = !kitNightOn) {   // the village is always night (22:30): candle, orb and pendant glow
+  kitNightOn = on; try { window.SamuraiKit?.setLightFactor(on ? 1 : 0.04); } catch (e) {}
+  hemi.intensity = on ? 0.32 : 1.05; sun.intensity = on ? 0.22 : 1.2;
+  scene.clearColor = on ? new BABYLON.Color4(0.04, 0.03, 0.08, 1) : new BABYLON.Color4(0.08, 0.1, 0.15, 1);
+  document.getElementById('kitNightBtn')?.classList.toggle('on', on);
+}
 
 /* ---------- what is done already: rig time + worker, hands applied, in the village since ---------- */
 let workerCommit = null;   // the commit the rig worker image was built from (a rig by another commit = an older worker)
@@ -389,6 +515,10 @@ function statusLines(n) {
   return L;
 }
 function paintStatus() {   // the selected NPC's Approve and Apply hands buttons say what is done already
+  if (selKit || isKit(npc(selId))) {   // kit-built: in the village as built, nothing to approve
+    const c = CC_KIT[selKit || npc(selId)?.key], ab = $('#approveBtn'); ab.disabled = true; ab.textContent = c ? 'In the village ✓' : 'Not built yet'; ab.classList.toggle('done', !!c);
+    $('#approveInfo').innerHTML = c ? 'Kit-built: nothing to approve' : ''; $('#handsState').innerHTML = ''; return;
+  }
   const n = npc(selId), v = n && villageOf(n), ab = $('#approveBtn');
   ab.textContent = v?.current ? 'Approved ✓' : 'Approve → village'; ab.classList.toggle('done', !!v?.current);
   if (n && running.has(n.id)) ab.disabled = true;   // (showNPC enables it again with the new rig)
@@ -448,11 +578,15 @@ function clearViewer() {
   try { view.hands?.dispose?.(); } catch (e) {}
   Object.values(view.groups).forEach((g) => { try { g.stop(); g.dispose(); } catch (e) {} });
   try { view.root?.dispose(false, true); } catch (e) {}
-  Object.assign(view, { root: null, groups: {}, cur: null, cloth: null, url: null, fit: null, hands: null });
+  try { view.kit?.dispose(false, false); } catch (e) {}   // (the kit's materials stay: other kit models share them)
+  if (kitNightOn) kitNight(false);
+  Object.assign(view, { root: null, groups: {}, cur: null, cloth: null, url: null, fit: null, hands: null, kit: null });
   $('#clips').innerHTML = '<span class="state">No NPC loaded.</span>'; $('#viewMsg').style.display = ''; $('#approveBtn').disabled = true; $('#clipInfo').textContent = '';
 }
 async function showNPC(id) {
-  const n = npc(id); renderQA(n);
+  const n = npc(id);
+  if (isKit(n)) { if (CC_KIT[n.key]) viewKit(n.key); else { clearViewer(); $('#viewMsg').textContent = 'Not built yet: Claude builds it in the kit from the art (Copy for Claude on its card).'; kitDock(null); } return; }
+  renderQA(n);
   $('#approveBtn').disabled = !(n && n.phase === 'done' && n.rig?.url);
   if (!n || !n.rig?.url) { clearViewer(); $('#viewMsg').textContent = n ? 'Forge this NPC to test its animations.' : 'Pick a forged NPC to test its animations.'; renderQA(n); renderHands(); return; }
   if (view.url === n.rig.url) return;
@@ -580,7 +714,7 @@ function handFitNow(n) { return n.handFit || (n.handFit = { Left: { ...HF0 }, Ri
 function renderHands() {
   const n = npc(selId), on = !!(n && view.hands && n.rig?.url);
   $('#handsCtl').style.display = on ? '' : 'none';
-  $('#handsMsg').textContent = !n ? 'Pick a forged NPC to fit its hands.' : !n.rig?.url ? 'Forge this NPC first.' : !view.hands ? (colOf(n).species !== 'ant' ? `${colOf(n).label} NPCs keep their own hands from the sculpt (no Forge gloves).` : 'This rig has no Forge gloves to fit.') : 'Move, resize or recolour the gloves and check them on any animation.';
+  $('#handsMsg').textContent = !n ? 'Pick a forged NPC to fit its hands.' : !n.rig?.url ? 'Forge this NPC first.' : !view.hands ? (colOf(n).species !== 'ant' ? `This rig is from before Rigger 2.25 and keeps the sculpt's own hands. Rebuild the worker, then Re-rig: ${colOf(n).label} NPCs now get Forge gloves you can fit here.` : 'This rig has no Forge gloves to fit.') : 'Move, resize or recolour the gloves and check them on any animation.';
   if (!on) return;
   const h = handFitNow(n); const f = fitOf(h, handSide === 'both' ? 'Right' : handSide);
   [['hfAlong', f.along], ['hfThumb', f.thumb], ['hfBack', f.back]].forEach(([id, v]) => { $('#' + id).value = Math.round(v / HF_STEP); $('#' + id + 'V').textContent = (v > 0 ? '+' : '') + Math.round(v / HF_STEP); });
@@ -654,7 +788,8 @@ function applyHands() {
 /* ---------- approve -> NPC library (the village) ---------- */
 function openApprove() {
   const n = npc(selId); if (!n?.rig?.url) return;
-  const c = colOf(n); const pres = Object.values(COLLECTIONS).map((x) => x.prefix).filter(Boolean);
+  if (isKit(n)) return;
+  const c = colOf(n); const pres = [...Object.values(COLLECTIONS).map((x) => x.prefix).filter(Boolean), 'cc_', 'mystic_moons_'];
   const mine = (k) => (c.prefix ? k.startsWith(c.prefix) : !pres.some((p) => k.startsWith(p)));   // approved keys of this collection
   const sel = $('#apKey'); const keys = [...Object.keys(c.npcs), ...Object.keys(approved).filter((k) => !(k in c.npcs) && mine(k))];
   sel.innerHTML = keys.map((k) => `<option value="${k}">${k}${c.npcs[k] && c.prefix ? ' · ' + esc(c.npcs[k]) : ''}${approved[k] ? ' (replace approved)' : ''}</option>`).join('') + '<option value="__new">New key…</option>';
@@ -667,6 +802,7 @@ async function doApprove() {
   const n = npc(selId); if (!n) return;
   const key = $('#apKey').value === '__new' ? slug($('#apNewKey').value) : $('#apKey').value;
   if (!/^[a-z0-9_]{2,60}$/.test(key)) { toast('Key: 2-60 of a-z, 0-9, _'); return; }
+  if (KIT_KEY.test(key)) { toast('Cute & Creepy NPCs are built in the kit: a forged model cannot take their key', 6000); return; }
   const qa = n.rig?.qa ? { verdict: n.rig.qa.verdict, reasons: n.rig.qa.reasons || [] } : null;
   if (qa?.verdict === 'fail' && !confirm(`The checks failed for this NPC:\n\n${qa.reasons[0] || ''}\n\nApprove anyway?`)) return;
   const cur = approved[key];
@@ -684,20 +820,39 @@ async function loadApproved() {
 function renderApproved() {   // (with the list: a re-rig there shows here as a newer rig waiting)
   if (!approvedLoaded) return;
   const keys = Object.keys(approved).sort();
-  $('#approvedList').innerHTML = keys.length ? keys.map((k) => {
+  const row = (k) => {
     const e = approved[k], rec = st.npcs.find((n) => n.rig?.url === e.modelUrl) || st.npcs.find((n) => n.approvedKey === k);
     const newer = rec && rec.rig?.url && rec.rig.url !== e.modelUrl;   // re-rigged since: approve again to send it
     return `<div class="card row">${e.thumbUrl ? `<img class="thumb" src="${e.thumbUrl}" alt="">` : ''}<div class="grow"><b>${esc(e.displayName)}</b><br><small>${k} · ${esc(e.role || '')}${e.qa?.verdict ? ` · checks ${e.qa.verdict}` : ''}</small><div class="info" style="margin-top:2px">Approved <b>${when(e.approvedAt)}</b>${newer ? ` · <span class="warn">newer rig${rec.rig.at ? ' ' + when(rec.rig.at) : ''}: approve again</span>` : ''}</div></div><button class="red" onclick="unapprove('${k}')">Remove</button></div>`;
-  }).join('') : '<div class="state">None yet: the village shows placeholders.</div>';
+  };
+  $('#approvedList').innerHTML = GROUPS.map(([g, label]) => {
+    const mine = keys.filter((k) => keyGroup(k) === g), c = COLLECTIONS[g];
+    if (g === 'cc') {   // always in the village, as built in the kit
+      const warn = mine.length ? '<div class="err" style="margin-bottom:8px">A forged model under a Cute &amp; Creepy key replaces that kit character in the village: remove it.</div>' : '';
+      return grp('a:cc', label, Object.keys(CC_KIT).length + mine.length, warn + Object.entries(CC_KIT).map(([t, k]) => `<div class="card row"><div class="grow"><b>${esc(k.name)}</b> <span class="kitbadge">kit-built</span><br><small>${t} · ${esc(k.where)}</small></div><button onclick="selectKit('${t}')">View</button></div>`).join('') + mine.map(row).join(''));
+    }
+    // the collection's own NPCs that are not in the village yet (the Chumpz keep their kit apes until then)
+    const left = Object.entries(c.npcs).filter(([k]) => !approved[k]).map(([, nm]) => nm);
+    const still = left.length ? `<div class="state" style="margin:0 0 8px">Not forged yet: ${left.map(esc).join(', ')} (${g === 'chumpz' ? 'kit apes' : 'placeholders'} in the village)</div>` : '';
+    return grp('a:' + g, label, mine.length, still + (mine.map(row).join('') || `<div class="state">None yet.</div>`));
+  }).join('');
 }
 async function unapprove(k) { if (!confirm(`Remove ${k} from the village? NPCs with that key go back to placeholders.`)) return; try { await api('/api/npc-library', { action: 'remove', key: k }); toast('Removed'); loadApproved(); } catch (e) { toast(e.message); } }
 
 /* ---------- rig worker: NPC gesture pack + rebuild ---------- */
 const NPC_PACK = ['talking', 'talking2', 'waving', 'wave_short', 'bow', 'pointing', 'pick_up', 'nod_yes', 'shake_no', 'clapping', 'rallying', 'yelling', 'look_around', 'idle_looking'].map((c) => `mixamo/${c}.npz`);
-let workerPoll = null, workerSetup = null, workerBuilding = false;
+// v2.24 the Rebels' games pack (Miguel's Mixamo moves for the village games), uploaded here with the same button
+const GAMES_PACK = ['fishing_cast', 'fishing_idle', 'digging', 'plant', 'throw_object', 'goalie_throw', 'axe_combo', 'cheering', 'pushing', 'push', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam',
+  // v2.30 Miguel's second set (games-pack-moves-2.zip)
+  'goalkeeper_catch', 'dribble', 'throwing', 'center_block', 'melee_down', 'pulling_rope', 'shield_idle', 'shield_block', 'shield_impact', 'shield_hit', 'swimming',
+  // v2.31 the sneak walk (Silent Steps)
+  'sneak_walk'].map((c) => `mixamo/gm_${c}.npz`);
+// the moves of a pack made before v2.30 (no move list stored with it)
+const GAMES_V1 = ['game_cast', 'game_reel', 'game_fish_wait', 'game_dig', 'game_plant', 'game_pick_up', 'game_throw', 'game_throw_far', 'game_chop', 'game_cheer', 'game_push', 'game_push_walk', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam'];
+let workerPoll = null, workerSetup = null, workerBuilding = false, workerInfo = null, packUploaded = new Set();
 // setup.sh prints these step markers; the last one in the log tail is the current step (progress floor, %)
 const SETUP_STEPS = [['== system libs', 'Installing system libraries', 3], ['== python 3.13 + bpy', 'Installing Blender (the longest step)', 8], ['== worker code', 'Loading the rigger code', 80], ['== mocap pack', 'Loading the animation pack', 86], ['== self test', 'Testing the worker', 94]];
-const SETUP_SECONDS = 600;   // a rebuild takes about 10 minutes
+const SETUP_SECONDS = 60;   // a rebuild takes about a minute (35-47 s, Oct 2026)
 function setupProgress(s) {
   const log = s.logTail || ''; let label = 'Starting the build machine', floor = 1, next = SETUP_STEPS[0][2];
   SETUP_STEPS.forEach(([m, l, p], i) => { if (log.includes(m)) { label = l; floor = p; next = (SETUP_STEPS[i + 1] || [0, 0, 99])[2]; } });
@@ -712,24 +867,111 @@ function paintSetup() {
   const p = setupProgress(workerSetup);
   pill.style.display = 'flex'; pill.innerHTML = `Rig worker rebuilding ${p.pct}% <span class="bar"><i style="width:${p.pct}%"></i></span>`;
   const box = $('#workerProgress');
-  if (box) box.innerHTML = `<div class="state"><b style="color:var(--amber)">Rebuilding the rig worker</b> · ${esc(p.label)} · ${mmss(p.secs)} (about ${SETUP_SECONDS / 60} min)</div><div class="bar"><i style="width:${p.pct}%"></i></div><div class="state" style="margin-top:4px">Forges and re-rigs started now still use the old worker. Keep this page open (or come back later): it finishes the rebuild when it checks in.</div>`;
+  if (box) box.innerHTML = `<div class="state"><b style="color:var(--amber)">Rebuilding the rig worker</b> · ${esc(p.label)} · ${mmss(p.secs)} (about a minute)</div><div class="bar"><i style="width:${p.pct}%"></i></div><div class="state" style="margin-top:4px">Forges and re-rigs started now still use the old worker. Keep this page open (or come back later): it finishes the rebuild when it checks in.</div>`;
 }
 setInterval(paintSetup, 1000);
 async function loadWorker() {
   let d; try { d = await api('/api/forge-rig-worker'); } catch (e) { $('#workerBox').innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
-  const w = d.worker || {}; const have = new Set(d.packPaths || []); const miss = NPC_PACK.filter((p) => !have.has(p)); const s = w.setup || {};
+  const w = d.worker || {}; const have = new Set(d.packPaths || []); const miss = NPC_PACK.filter((p) => !have.has(p)), gmiss = GAMES_PACK.filter((p) => !have.has(p)); const s = w.setup || {};
   const was = workerBuilding; const building = s.status === 'running';
-  workerBuilding = building; workerSetup = s;
+  workerBuilding = building; workerSetup = s; workerInfo = w; packUploaded = have;
+  // Oct 16: what the worker image itself holds (its setup self test): files uploaded after the last rebuild are not in it
+  const inImage = (info, all, warnUnknown) => !w.snapshotId || !all ? '' : !info ? (warnUnknown ? ' · <span class="warn">not known for this worker image: press Rebuild worker once</span>' : '')
+    : info.have >= info.of ? ' · in the worker ✓' : ` · <span class="bad">in the worker: ${info.have} of ${info.of}: press Rebuild worker</span>`;
   const wc = w.snapshotId ? w.commit || null : null; if (wc !== workerCommit) { workerCommit = wc; renderList(); }
   if (was && !building) toast(s.status === 'done' ? 'Rig worker rebuilt. New forges and re-rigs use it now.' : 'The rig worker rebuild failed (see the log in the Rig worker box).');
   $('#workerBox').innerHTML = `<div class="state">Worker image: ${w.snapshotId ? `built ${w.builtAt ? new Date(w.builtAt).toLocaleString() : ''} from ${esc(String(w.commit || '').slice(0, 7))}` : 'not built'}${s.status === 'failed' && !building ? ' · <span class="bad">last rebuild failed</span>' : ''}</div>
     ${building ? '<div id="workerProgress" style="margin-top:6px"></div>' : ''}
-    <div class="state" style="margin-top:4px">NPC gesture pack: ${NPC_PACK.length - miss.length} of ${NPC_PACK.length}${miss.length ? ` · missing ${miss.map((m) => m.replace('mixamo/', '').replace('.npz', '')).join(', ')}` : ' ✓'}</div>
-    <div class="row" style="margin-top:8px"><button onclick="uploadPack()">Upload gesture files (.npz)</button><button class="teal" onclick="rebuildWorker()" ${building ? 'disabled' : ''}>${building ? 'Rebuilding…' : 'Rebuild worker'}</button></div>
-    <div class="state" style="margin-top:4px">Rebuild after uploading the pack or after a worker update (about 10 minutes). NPC jobs need all ${NPC_PACK.length} gesture files in the worker.</div>
-    ${s.logTail && (building || s.status === 'failed') ? `<pre style="white-space:pre-wrap;font-size:10px;color:${building ? 'var(--dim)' : 'var(--red)'};max-height:120px;overflow:auto">${esc(s.logTail)}</pre>` : ''}`;
-  paintSetup();
+    <div class="state" style="margin-top:4px">NPC gesture pack: ${NPC_PACK.length - miss.length} of ${NPC_PACK.length} uploaded${miss.length ? ` · missing ${miss.map((m) => m.replace('mixamo/', '').replace('.npz', '')).join(', ')}` : ' ✓'}${inImage(w.npc, !miss.length, false)}</div>
+    <div class="state" style="margin-top:2px">Games pack (Rebels): ${GAMES_PACK.length - gmiss.length} of ${GAMES_PACK.length} uploaded${gmiss.length ? ` · missing ${gmiss.map((m) => m.replace('mixamo/', '').replace('.npz', '')).join(', ')}` : ' ✓'}${inImage(w.games, !gmiss.length, true)}</div>
+    <div class="row" style="margin-top:8px"><button onclick="uploadPack()">Upload pack files (.npz)</button><button class="teal" onclick="rebuildWorker()" ${building ? 'disabled' : ''}>${building ? 'Rebuilding…' : 'Rebuild worker'}</button></div>
+    <div class="state" style="margin-top:4px">Rebuild after uploading pack files or after a worker update (about a minute): jobs only use files uploaded before the last rebuild. NPC jobs need all ${NPC_PACK.length} gesture files in the worker.</div>
+    ${s.logTail && (building || s.status === 'failed') ? `<pre style="white-space:pre-wrap;font-size:10px;color:${building ? 'var(--dim)' : 'var(--red)'};max-height:120px;overflow:auto">${esc(s.logTail)}</pre>` : ''}
+    <div id="gamesBox" style="margin-top:10px;border-top:1px solid rgba(255,255,255,.08);padding-top:8px"></div>`;
+  paintSetup(); paintGames();
   clearTimeout(workerPoll); if (building) workerPoll = setTimeout(loadWorker, 10000);
+}
+// Games packs for the Rebels in play (v2.24): each Rebel's active rig gets games.glb from a moves re-run on its own
+// sculpt (/api/forge-rig-moves; the rig is not touched). Needs a worker rebuilt with the games pack files.
+let gamesList = null, gamesMoves = null; const gamesRun = { on: false, active: new Map(), note: '' };
+const gamesReady = () => { const g = workerInfo?.games; return !!(g && g.have >= g.of); };   // the worker image holds every games move
+// v2.30 a pack without every current move (made before the second set) is made again; the move list is the deployed one
+const packMoves = (r) => r.gamesClips || GAMES_V1;
+const packOld = (r) => !!r.games && !!gamesMoves && gamesMoves.some((n) => !packMoves(r).includes(n));
+const packTodo = (r) => !r.games || packOld(r);
+async function loadGamesPacks() {
+  try { gamesList = (await api('/api/forge-games-packs')).rebels || []; } catch (e) { const b = $('#gamesBox'); if (b) b.innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
+  try { gamesMoves = (await (await fetch('/forge-worker/anim/clips_games.json', { cache: 'no-store' })).json()).map((c) => c.name); } catch (e) { gamesMoves = null; }
+  paintGames();
+  // jobs still running (started on this or another computer): watch them, so they finish and none is started twice
+  const running = gamesList.filter((r) => packTodo(r) && r.job?.status === 'running');
+  if (running.length && !gamesRun.on) runGamesJobs(running);
+}
+function paintGames() {
+  const box = $('#gamesBox'); if (!box) return;
+  if (!gamesList) { box.innerHTML = `<button onclick="loadGamesPacks()">Rebels' games packs</button>`; return; }
+  const have = gamesList.filter((r) => r.games && !packOld(r)).length, todo = gamesList.filter(packTodo), old = todo.filter((r) => r.games).length;
+  const line = (r) => {
+    if (gamesRun.active.has(r.buildId)) return `making · ${esc(gamesRun.active.get(r.buildId))}`;
+    if (r.games && packOld(r)) return `<span class="bad">older pack (${packMoves(r).length} of ${gamesMoves.length} moves): make again</span>`;
+    if (r.games) return '✓';
+    const j = r.job; if (!j || !j.gamesOnly) return 'none yet';   // (a weapon-moves run is not a games run)
+    if (j.status === 'failed') return `<span class="bad">failed: ${esc(j.error || '')}</span>`;
+    if (j.status === 'running') return `running · started ${when(j.startedAt)}`;
+    if (j.gamesError) return `<span class="bad">made but not saved: ${esc(j.gamesError)}</span>`;
+    return `<span class="bad">made on a worker image without the games moves${j.gamesMissing?.length ? ` (${j.gamesMissing.length} of ${GAMES_PACK.length} missing)` : ''}: make again</span>`;
+  };
+  const what = old ? (old === todo.length ? `the ${old} older` : `${todo.length}`) : `the missing ${todo.length}`;
+  const label = gamesRun.on ? (gamesRun.note ? 'Rebuilding the worker…' : 'Making…') : gamesReady() ? `Make ${what}` : `Rebuild worker, then make ${what}`;
+  box.innerHTML = `<div class="state"><b>Games packs</b>: ${have} of ${gamesList.length} Rebels in play${old ? ` · ${old} older (without the new moves)` : ''}${gamesRun.note ? ` · ${esc(gamesRun.note)}` : gamesRun.on ? ` · making ${gamesRun.active.size} now` : ''}</div>
+    <div style="max-height:180px;overflow:auto;margin-top:4px">${gamesList.map((r) => `<div class="state">${esc(r.name || '#' + r.tokenId)} <span style="opacity:.6">${esc(r.collectionKey)} ${esc(r.tokenId)}</span> · ${line(r)}</div>`).join('') || '<div class="state">No Rebels with a Forge rig in play.</div>'}</div>
+    <div class="row" style="margin-top:6px"><button class="teal" onclick="makeGamesPacks()" ${gamesRun.on || !todo.length ? 'disabled' : ''}>${label}</button><button onclick="loadGamesPacks()" ${gamesRun.on ? 'disabled' : ''}>Refresh</button></div>
+    <div class="state" style="margin-top:4px">Each one re-runs the Rigger on that Rebel's own sculpt (about 4 minutes, two at a time) and keeps only the games moves; the rig and its weapon moves are not changed. Keep this page open while they run.</div>`;
+}
+async function makeGamesPacks() {
+  if (gamesRun.on || !gamesList) return;
+  const todo = gamesList.filter(packTodo); if (!todo.length) return;
+  // Oct 16: never on a worker image without the games moves (the Oct 16 runs were made on an image built before the upload)
+  const gmiss = GAMES_PACK.filter((p) => !packUploaded.has(p));
+  if (gmiss.length) { toast(`Upload the games files first: ${gmiss.length} of ${GAMES_PACK.length} missing (the gm_*.npz files from games-pack-moves.zip and games-pack-moves-2.zip)`, 8000); return; }
+  if (workerBuilding) { toast('The rig worker is rebuilding: make the packs once it says rebuilt.', 6000); return; }
+  const g = workerInfo?.games, ready = gamesReady();
+  if (!confirm(`${ready ? '' : `The rig worker ${g ? `has ${g.have} of ${g.of} games moves` : 'was built before it could report its games moves'}, so it is rebuilt first (about a minute).\n\n`}Make the games pack for ${todo.length} Rebel${todo.length > 1 ? 's' : ''}? Each runs the Rigger for about 4 minutes, two at a time. Their rigs are not changed.`)) return;
+  if (!ready) {
+    gamesRun.on = true; gamesRun.note = 'rebuilding the worker first'; paintGames();
+    const stop = (msg) => { gamesRun.on = false; gamesRun.note = ''; paintGames(); toast(msg, 8000); };
+    try { await api('/api/forge-rig-worker', { action: 'setup' }); } catch (e) { stop('Rebuild failed: ' + e.message); return; }
+    await loadWorker();
+    for (let k = 0; k < 90 && workerBuilding; k++) await sleep(10000);   // loadWorker checks in every 10 s while it builds
+    const g2 = workerInfo?.games;
+    if (workerBuilding) { stop('The worker rebuild is taking long: make the packs once it says rebuilt.'); return; }
+    if (!gamesReady()) { stop(`The rebuilt worker has ${g2 ? g2.have : 0} of ${GAMES_PACK.length} games moves: check the uploads in the Rig worker box.`); return; }
+    gamesRun.note = '';
+    todo.forEach((r) => { if (r.job?.status === 'running') r.job = null; });   // jobs on the old image: start them again
+  }
+  await runGamesJobs(todo);
+  const made = todo.filter((r) => r.games && !packOld(r)).length;
+  toast(made === todo.length ? `Games packs: all ${made} made. Each Rebel plays its new moves on its next village visit.` : `Games packs: ${made} of ${todo.length} made; the list says why for the others.`, 8000);
+}
+async function runGamesJobs(list) {   // two at a time; a Rebel whose job is still running is watched, not started again
+  gamesRun.on = true; paintGames();
+  const one = async (r) => {
+    const watch = r.job?.status === 'running';
+    gamesRun.active.set(r.buildId, watch ? 'running' : 'starting'); paintGames();
+    try {
+      if (!watch) await api('/api/forge-rig-moves', { buildId: r.buildId, gamesOnly: true });
+      for (let k = 0; k < 140; k++) {   // polls every 15 s, up to 35 minutes
+        await sleep(15000);
+        const j = (await twice(() => api('/api/forge-rig-moves?buildId=' + encodeURIComponent(r.buildId)))).job || {};
+        if (j.status === 'done' || j.status === 'failed') { r.job = { ...j, gamesOnly: true }; if (j.games) { r.games = j.games; r.gamesClips = j.gamesClips || null; } break; }
+        gamesRun.active.set(r.buildId, j.progress || 'running'); paintGames();
+      }
+    } catch (e) { r.job = { status: 'failed', gamesOnly: true, error: e.message }; }
+    gamesRun.active.delete(r.buildId); paintGames();
+  };
+  const queue = list.slice();
+  await Promise.all([0, 1].map(async () => { while (queue.length) await one(queue.shift()); }));
+  gamesRun.on = false; paintGames();
 }
 function uploadPack() {
   const inp = document.createElement('input'); inp.type = 'file'; inp.multiple = true; inp.accept = '.npz';
@@ -741,13 +983,15 @@ function uploadPack() {
       const b64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(f); });
       try { await api('/api/forge-rig-worker', { action: 'pack-put', path: `mixamo/${name}.npz`, dataBase64: b64 }); ok++; toast(`Uploaded ${ok} / ${inp.files.length}`); } catch (e) { toast(`${f.name}: ${e.message}`); }
     }
-    loadWorker();
+    await loadWorker();
+    // the worker image only holds files uploaded before its build: offer the rebuild right away
+    if (ok && !workerBuilding && confirm(`Uploaded ${ok} of ${inp.files.length} file${inp.files.length > 1 ? 's' : ''}. The rig worker uses them only after a rebuild (about a minute). Rebuild it now?`)) rebuildWorker(false);
   };
   inp.click();
 }
-async function rebuildWorker() {
-  if (!confirm('Rebuild the rig worker from the deployed code? Rebel forges keep working; jobs started during the rebuild use the old image.')) return;
-  try { await api('/api/forge-rig-worker', { action: 'setup' }); toast('Worker rebuild started (about 10 minutes)'); } catch (e) { toast('Rebuild failed: ' + e.message); }
+async function rebuildWorker(ask = true) {
+  if (ask && !confirm('Rebuild the rig worker from the deployed code? Rebel forges keep working; jobs started during the rebuild use the old image.')) return;
+  try { await api('/api/forge-rig-worker', { action: 'setup' }); toast('Worker rebuild started (about a minute)'); } catch (e) { toast('Rebuild failed: ' + e.message); }
   loadWorker();
 }
 
@@ -758,7 +1002,7 @@ async function rebuildWorker() {
   $('#gate').style.display = 'none'; $('#app').style.display = 'grid'; engine.resize();
   load(); renderList(); loadApproved(); loadWorker();
   // resume NPCs that were forging here when the page closed (ones forged on another computer show Continue)
-  st.npcs.filter((n) => ['uploading', 'building', 'sculpting', 'storing', 'rigging'].includes(n.phase)).forEach((n) => forgeOne(n.id, { batch: true }));
+  st.npcs.filter((n) => !isKit(n) && ['uploading', 'building', 'sculpting', 'storing', 'rigging'].includes(n.phase)).forEach((n) => forgeOne(n.id, { batch: true }));
   if (st.npcs[0]) select(st.npcs[0].id);
   await syncDown(); if (!selId && st.npcs[0]) select(st.npcs[0].id);
   fillRigInfo();

@@ -5,6 +5,9 @@
 // right; a faint ghost shows where the piece will land. Clear 25 rows in one run to clear the cabinet.
 // Every square is a thin instance of one box (one draw call for the well, one for the ghost), so a move only rewrites
 // a small buffer. def: { lines (rows to clear, default 25), points }
+// Oct 17: How to play (the rules) and Restart (a new run: an empty well, level 1, 0 points; the best stays).
+// Oct 17 (Miguel: every board game needs an image example and fuller rules): howTo with howto/blocks.png (a stack of real
+// pieces, a long piece, its ghost and a Skyline; scratchpad agents/htC/blocks/draw.py + check.py).
 (function () {
   const W = 10, Hh = 20, CS = .12;
   const SHAPES = { I: [[0, 1], [1, 1], [2, 1], [3, 1]], O: [[1, 0], [2, 0], [1, 1], [2, 1]], T: [[1, 0], [0, 1], [1, 1], [2, 1]], S: [[1, 0], [2, 0], [0, 1], [1, 1]], Z: [[0, 0], [1, 0], [1, 1], [2, 1]], J: [[0, 0], [0, 1], [1, 1], [2, 1]], L: [[2, 0], [0, 1], [1, 1], [2, 1]] };
@@ -14,6 +17,15 @@
   function rot(cells, n, k) { let c = cells; for (let i = 0; i < ((k % 4) + 4) % 4; i++) c = c.map(([x, y]) => [n - 1 - y, x]); return c; }
   const G = {
     title: 'Skyline Blocks',
+    howTo: { lines: [
+      'Clear 25 rows in one run to clear the cabinet (then keep going for points). Press Start (or Enter): pieces of four squares fall one at a time into the well, ten squares wide and twenty high.',
+      'A row filled from wall to wall clears, and everything above it drops down a row.',
+      '← → (A D) move the piece, ↑ (W or X) turns it and Z (Q) turns it the other way; ↓ (S) drops it faster and Space drops it straight down. Held keys repeat; on a touch screen use the buttons at the bottom right.',
+      'A piece that lands can still slide or turn for half a second before it locks in place.',
+      'Points: 100 for one row, 300 for two, 500 for three and 800 for four at once (a Skyline), times the level; a soft drop pays 1 a square, a hard drop 2.',
+      'Every 10 rows the level rises and the pieces fall faster. The run ends when a new piece has no room at the top. Restart starts a new run (your best stays).',
+      'Tip: the next piece shows in the box at the top right, and a faint ghost shows where this one will land. Every seven pieces bring one of each shape, so keep one column open for the long piece.'],
+      img: 'howto/blocks.png', caption: 'A long piece drops into the one open column: the ghost shows where it lands, and four full rows clear at once, a Skyline.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def, GOAL = def.lines || 25, BEST = 'rebelAntsBlocksBest:' + (def.id || 'blocks');
       const mat = (k, c, em) => ctx.mat(k, n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(...c); m.specularColor = new B.Color3(.1, .1, .1); if (em) m.emissiveColor = new B.Color3(...em); return m; });
@@ -80,6 +92,8 @@
       const startBtn = document.createElement('button'); startBtn.type = 'button'; startBtn.textContent = 'Start'; startBtn.style.cssText = 'position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);padding:12px 28px;border-radius:12px;border:1px solid #c79bff;background:rgba(40,14,70,.92);color:#fff;font:800 18px system-ui;letter-spacing:.08em;cursor:pointer;pointer-events:auto';
       startBtn.onclick = (e) => { e.stopPropagation(); startBtn.blur(); begin(); };
       function begin() { if (st.phase !== 'ready') return; startBtn.remove(); st.phase = 'play'; pads.style.display = 'grid'; reset(); H.msg('Go', 700, `clear ${GOAL} rows`); }
+      // Restart (the button beside Quit): a new run (the best stays as it was); before Start or once topped out it waits
+      function restart() { if (st.phase !== 'play') return; st.held = {}; st.rep = {}; st.goal = false; reset(); H.msg('Go', 700, `a new run: clear ${GOAL} rows`); }
       hud.append(pads, startBtn);
       // held keys repeat on their own (left / right / down), after a short wait
       function press(k, down) { if (down) { if (st.held[k]) return; st.held[k] = true; st.rep[k] = .17; if (k === 'left') move(-1); else if (k === 'right') move(1); else if (k === 'down') soft(); } else st.held[k] = false; }
@@ -111,6 +125,7 @@
           else if (down && !e.repeat) { if (k === 'arrowup' || k === 'w' || k === 'x') turn(1); else if (k === 'z' || k === 'q') turn(-1); else if (k === ' ') hard(); }
         },
         pointer() {},
+        restart,
         _test: { st, begin, move, turn, soft, hard, press, fits, cellsOf, get grid() { return grid; }, set grid(g) { grid = g; render(); }, get cur() { return cur; }, setCur(p) { cur = p; render(); }, get lines() { return lines; }, get score() { return score; }, get level() { return level; }, over, render, W, Hh },
         dispose() { pads.remove(); startBtn.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { cellM.dispose(); ghostM.dispose(); } catch (e) {} }
       };
