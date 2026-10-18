@@ -4096,6 +4096,7 @@ const MoonTaleSounds = (() => {
     gutter: { fx:t0 => { noise(t0, 1.4, .12, 'lowpass', 120, 1); noise(t0, .3, .08, 'bandpass', 600, 2); } },
     whoosh: { fx:t0 => { noise(t0, .18, .22, 'bandpass', 2600, 1.5); glide(1800, 600, t0, .16, .025, 'sawtooth'); } },
     thock: { fx:t0 => { noise(t0, .09, .42, 'bandpass', 900, 2); tone(210, t0, .14, .1, [[1, 1, 1]]); } },
+    knock: { fx:t0 => { noise(t0, .07, .55, 'bandpass', 480, 2.6); tone(118, t0, .16, .22, [[1, 1, 1], [2.31, .35, .5]]); } }, // a rap on a wooden door
     paper: { fx:t0 => { noise(t0, .2, .26, 'highpass', 2800); noise(t0 + .03, .12, .16, 'bandpass', 1400, 1.2); } },
     gamewin: { fx:t0 => { [['C5', 0], ['E5', .11], ['G5', .22], ['C6', .36]].forEach(([n, d]) => tone(N[n], t0 + d, .9, .16, PAN)); } },
     // 3/4 at 0.5 s a beat, 24 beats: E G A | G E D | C D E | D . . | E G A | C' A G | E D C | C . .

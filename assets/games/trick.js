@@ -5,6 +5,9 @@
 // crypt always plays one. Knock on them all for a bonus of 50 and the seconds left.
 // def: { doors: [[x, z, yaw, name, kind?], ...] (world: where to stand to knock and the way to face the door;
 //   kind 'manor' | 'witch' | 'crypt'), seconds: 120, pass, text }
+// Oct 18 (Miguel: "Do we need a knocking animation for treat or trick?"): three raps on the door, each a short quick jab
+// (the arm out at the door and back) with a knock on wood and a "knock" by the door; the games pack's own knock
+// (game_knock, from Mixamo's Knocking) plays instead once a Rebel's pack has it.
 (function () {
   const G = {
     title: 'Trick or Treat Night', roam: true,
@@ -37,7 +40,13 @@
         if (st.phase !== 'run' || st.act || st.frozen > 0) return;
         const { d, dist } = near(); if (!d || dist > KNOCK) { H.msg('Find a door with a lit pumpkin', 900); return; }
         st.act = { d, t: 0, step: 0 }; ctx.player.hold(true); ctx.player.placeWorld(ctx.player.world().x, ctx.player.world().z, d.yaw);
-        ctx.player.clip('jab'); ctx.sound('thock');
+        rap(d, 0);
+      }
+      // one rap: the knock move (or a quick jab, restarted for each rap), a knock on wood, a word by the door
+      const OWN = !!ctx.player.has?.('game_knock');
+      function rap(d, k) {
+        if (OWN) { if (k === 0) ctx.player.clip('game_knock'); } else ctx.player.clip('jab', { speed: 1.7 });
+        ctx.sound('knock'); popAt(d.x + Math.sin(d.yaw) * 1.5, d.y + 2.1 + k * .25, d.z + Math.cos(d.yaw) * 1.5, k === 2 ? 'knock!' : 'knock');
       }
       // what the door does
       function answer(d) {
@@ -104,7 +113,7 @@
             if (st.t <= .4) { st.phase = 'run'; ctx.player.hold(false); }
           } else if (st.phase === 'run') {
             st.left -= dt;
-            if (st.act) { const a = st.act; a.t += dt; if (a.step === 0 && a.t > .35) { a.step = 1; ctx.sound('thock'); } if (a.t > .9) { st.act = null; ctx.player.hold(st.frozen > 0); answer(a.d); if (st.phase !== 'run') return; } }
+            if (st.act) { const a = st.act; a.t += dt; if (a.step < 2 && a.t > .32 * (a.step + 1)) { a.step++; rap(a.d, a.step); } if (a.t > 1.15) { st.act = null; ctx.player.hold(st.frozen > 0); answer(a.d); if (st.phase !== 'run') return; } }
             if (st.frozen > 0) { st.frozen -= dt; ctx.player.hold(true); if (st.frozen <= 0) { st.frozen = 0; if (!st.act) ctx.player.hold(false); } }
             if (st.left <= 0) { st.left = 0; finish(false); return; }
             hud();
