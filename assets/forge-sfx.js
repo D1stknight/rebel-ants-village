@@ -214,8 +214,9 @@
     land: () => [mix(scale(taiko(75, 0.4), 0.8), scale(expDec(lp(noise(0.08), 600), 0.015), 0.6), at(scale(paper(0.15, 40), 0.1), 0.02)), 'room', 0.15, 0, -4],
     step_soft: () => [mix(expDec(lp(noise(0.05), 700), 0.01), scale(taiko(130, 0.12), 0.3)), 'room', 0.12, 0, -12],
     /* weapons (cued by RebelWeapon.sfx at the moment of each swing / draw / loose) */
-    blade_draw: () => [mix(mul(scrape(0.34, 1600, 6200), (t) => (t / 0.34) ** 1.3), at(scale(steelRing(1240, 0.9), 0.55), 0.32), at(scale(bladeWhoosh(0.3, 900, 3600), 0.35), 0.3)), 'room', 0.14, 0, -4],
-    blade_sheathe: () => [mix(mul(scrape(0.3, 5600, 1500), (t) => 0.4 + 0.6 * t / 0.3), at(knock(210, 0.14), 0.29), at(scale(steelRing(980, 0.4, 0.5), 0.18), 0.29)), 'room', 0.14, 0, -5],
+    // (Oct 18, Miguel: the draw and the sheathe are a swoosh only: the steel ring read as a bell on every draw)
+    blade_draw: () => [bladeWhoosh(0.34, 800, 3800, 1.6, 0.2), 'room', 0.12, 0, -5],
+    blade_sheathe: () => [bladeWhoosh(0.3, 3600, 900, 1.6, 0.15), 'room', 0.12, 0, -6],
     blade_swing: () => [bladeWhoosh(0.26, 750, 4000, 1.8), 'room', 0.1, 0, -6],
     kick_swish: () => [mix(whoosh(0.3, 450, 2400, 1.3), scale(arch(lp(paper(0.3, 50), 3000), 2), 0.35)), 'room', 0.08, 0, -8],
     blade_swing_heavy: () => [mix(bladeWhoosh(0.42, 320, 3000, 1.3, 0.3), scale(arch(lp(noise(0.42), 260), 2), 0.45)), 'room', 0.12, 0, -4],
