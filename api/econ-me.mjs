@@ -8,7 +8,9 @@ import { enforceRateLimit } from './_guard.mjs';
 import { econReady, econSessionOf, clearEconCookie, econResolve } from './_econ.mjs';
 import { payOwed, today, claimed, recent } from './_econ-ledger.mjs';
 
-const avatarUrl = (s) => (s.a && /^[A-Za-z0-9_]+$/.test(s.a) ? `https://cdn.discordapp.com/avatars/${s.d}/${s.a}.png?size=64` : null);
+// the Discord picture, or Discord's own default one (an account without a picture: index (id >> 22) % 6)
+const avatarUrl = (s) => (s.a && /^[A-Za-z0-9_]+$/.test(s.a) ? `https://cdn.discordapp.com/avatars/${s.d}/${s.a}.png?size=64`
+  : `https://cdn.discordapp.com/embed/avatars/${Number((BigInt(s.d) >> 22n) % 6n)}.png`);
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
