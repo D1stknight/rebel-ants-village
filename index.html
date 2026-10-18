@@ -539,7 +539,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
   </div>
 </div>
 
-<!-- News ticker -->
+<!-- News ticker: these lines until the admin's own (Admin Hub > Announcements, /api/site-ticker) arrive -->
 <div id="ticker">
   <span id="ticker-inner">
     ✦ REBEL ANTS — THE HIDDEN VILLAGE &nbsp;&nbsp;&nbsp;
@@ -549,6 +549,19 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
     ✦ Hold your ant. Enter the village. &nbsp;&nbsp;&nbsp;
   </span>
 </div>
+<script>
+// the admin's announcements (Oct 18): plain text lines, each after a ✦, one loop in the saved number of seconds
+(async () => {
+  try {
+    const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 4000);
+    const d = await (await fetch('/api/site-ticker', { signal: ac.signal })).json(); clearTimeout(tm);
+    if (!d?.ok || !Array.isArray(d.items) || !d.items.length) return;
+    const el = document.getElementById('ticker-inner'); if (!el) return;
+    el.textContent = d.items.map(t => '✦ ' + t).join('\u00a0\u00a0\u00a0\u00a0') + '\u00a0\u00a0\u00a0\u00a0';
+    if (d.seconds) el.style.animationDuration = d.seconds + 's';
+  } catch (e) {}
+})();
+</script>
 
 <div id="version">v0.1 DEV</div>
 
