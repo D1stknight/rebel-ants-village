@@ -12281,7 +12281,7 @@ void main() {
 }`;
     BABYLON.Effect.ShadersStore.villagePortalFragmentShader = `precision highp float;
 varying vec2 vUV; varying float vFog;
-uniform float time; uniform float seed; uniform float gain; uniform vec3 colA; uniform vec3 colB; uniform vec3 colC;
+uniform float time; uniform float seed; uniform float gain; uniform float base; uniform vec3 colA; uniform vec3 colB; uniform vec3 colC;
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y); }
@@ -12291,20 +12291,22 @@ void main() {
   float a = atan(p.y, p.x), t = time;
   float sw = a * 2.0 + log(max(r, .015)) * 4.4 + t * 1.7 + seed;          // log-spiral arms winding in
   float n = fbm(vec2(cos(sw), sin(sw)) * (1.2 + r * 2.2) + vec2(t * .21, -t * .13) + seed);
-  float arms = .5 + .5 * sin(sw + n * 3.4), swirl = smoothstep(.2, 1.0, arms * .55 + n * .85);
-  float rim = smoothstep(.64, .985, r) * (1.0 - smoothstep(.975, 1.0, r));
-  float core = exp(-r * r * 60.0), body = mix(.28, 1.0, smoothstep(.05, .92, r));
-  vec3 col = mix(colA, colB, swirl) * (.12 + .78 * swirl) * body;           // deep blue between bright arms (additive layers: no white-out)
-  col += colC * rim * (.85 + .35 * sin(t * 3.1 + a * 3.0));
-  col += vec3(.8, .93, 1.0) * core * .5;
-  gl_FragColor = vec4(col * gain * (1.0 - smoothstep(.94, 1.0, r)) * vFog, 1.0);
+  float arms = pow(.5 + .5 * sin(sw + n * 3.4), 3.0);                       // thin bright arms over a deep blue disc
+  float rim = smoothstep(.7, .985, r) * (1.0 - smoothstep(.975, 1.0, r));
+  float core = exp(-r * r * 60.0), body = mix(.45, 1.0, smoothstep(.05, .92, r));
+  vec3 col = colA * (.25 + .4 * n) * body + colB * arms * (.35 + .55 * n) * body; // the three layers add up: kept well under white
+  col += colC * rim * (.6 + .25 * sin(t * 3.1 + a * 3.0));
+  col += vec3(.8, .93, 1.0) * core * .4;
+  float edge = 1.0 - smoothstep(.94, 1.0, r);
+  if (base > .5) gl_FragColor = vec4(col * gain, edge * .95 * vFog); // the solid disc behind (blended over the scene: reads by day too)
+  else gl_FragColor = vec4(col * gain * edge * vFog, 1.0);           // the glow layers in front of it (added)
 }`;
   }
   function vortexMat(name, scene, o) {
     ensureShaders();
     const m = new BABYLON.ShaderMaterial(name, scene, { vertex: 'villagePortal', fragment: 'villagePortal' },
-      { attributes: ['position', 'uv'], uniforms: ['world', 'view', 'viewProjection', 'time', 'seed', 'gain', 'colA', 'colB', 'colC', 'fogInfo'], needAlphaBlending: true });
-    m.backFaceCulling = false; m.alphaMode = BABYLON.Engine.ALPHA_ADD; m.disableDepthWrite = true;
+      { attributes: ['position', 'uv'], uniforms: ['world', 'view', 'viewProjection', 'time', 'seed', 'gain', 'base', 'colA', 'colB', 'colC', 'fogInfo'], needAlphaBlending: true });
+    m.backFaceCulling = false; m.alphaMode = o.base ? BABYLON.Engine.ALPHA_COMBINE : BABYLON.Engine.ALPHA_ADD; m.disableDepthWrite = true; m.setFloat('base', o.base ? 1 : 0);
     m.setFloat('seed', o.seed || 0); m.setFloat('gain', o.gain ?? 1); m.setFloat('time', 0);
     m.setColor3('colA', o.a || new BABYLON.Color3(.05, .22, .55)); m.setColor3('colB', o.b || new BABYLON.Color3(.25, .95, 1)); m.setColor3('colC', o.c || new BABYLON.Color3(.75, .35, 1));
     m.setVector4('fogInfo', new BABYLON.Vector4(0, 0, 0, 0));
@@ -12391,13 +12393,14 @@ function buildVillageGate(root) {
     const sh = attachEffect(BABYLON.MeshBuilder.CreateRibbon(`${root.name}_shide_${i}`, { pathArray: [L, R], sideOrientation: BABYLON.Mesh.DOUBLESIDE }, scene)); sh.material = paperMat;
   });
 
-  // the vortex filling the opening: three layers (behind, middle, in front), each its own turn of the swirl
+  // the vortex filling the opening: a solid disc behind (blended, so it reads by day) and two glow layers added in front,
+  // each its own turn of the swirl
   const layers = [
-    { z: .2, s: .9, seed: 3.1, gain: .45, speed: .7 },
-    { z: 0, s: 1, seed: 0, gain: .85, speed: 1 },
-    { z: -.16, s: 1.03, seed: 7.4, gain: .25, speed: 1.35 }
+    { z: .2, s: 1, seed: 3.1, gain: 1, speed: .7, base: true },
+    { z: 0, s: .98, seed: 0, gain: .42, speed: 1 },
+    { z: -.16, s: 1.02, seed: 7.4, gain: .16, speed: 1.35 }
   ].map((cfg, i) => {
-    const m = VILLAGE_PORTAL.vortexMat(`${root.name}_portalVortex_${i}`, scene, { seed: cfg.seed, gain: cfg.gain });
+    const m = VILLAGE_PORTAL.vortexMat(`${root.name}_portalVortex_${i}`, scene, { seed: cfg.seed, gain: cfg.gain, base: cfg.base });
     const pl = attachEffect(BABYLON.MeshBuilder.CreatePlane(`${root.name}_portalVortex_${i}`, { width: 4.15 * cfg.s, height: 4.6 * cfg.s, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, scene));
     pl.position.set(0, 2.42, cfg.z); pl.material = m; pl.alwaysSelectAsActiveMesh = false;
     return { mesh: pl, mat: m, speed: cfg.speed };
