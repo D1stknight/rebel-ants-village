@@ -2155,6 +2155,38 @@ const glFull = (h) => ({ Left: glFitOf(h, 'Left'), Right: glFitOf(h, 'Right'), g
 const glKey = (h) => JSON.stringify(['Left', 'Right'].map((s) => GL_KEYS.map((k) => Math.round(glFitOf(h, s)[k] * 1000))).concat([(h && h.glove) || null, (h && h.cuff) || null]));
 const glSame = (a, b) => glKey(a) === glKey(b);
 const glHex = (lin) => lin.toGammaSpace().toHexString().toLowerCase();
+// the glove's own origin G, which the rigger sizes the glove about and narrows / widens the cuff round, and the hand
+// length L0 its fit is measured in. The rigger puts it on the wrist joint + the fit's along x L0 down the forearm (the
+// glove's tip is 0.939 of 0.95 of the glove's length past it, x the size: L0 = tip / (along + 0.988 size)), and across
+// on the middle of the glove's wrist tube just in front of it (round in the template, never reshaped there): the
+// joint's own axis unless the rigger re-centred the glove in a loose sleeve or the fit moved it forward / outward. Not
+// the cuff: it follows the sleeve's shape (3.5 mm off on #262) and a fitted cuff's front edge is ragged (2 cm off on a
+// re-fit). Rigs from before Sept 29 (no cuff of their own, no fit): the wrist joint. Done again once the rig's fit is
+// known (its status call can come after the rig).
+function glOrigin(H, built) {
+  const V3 = BABYLON.Vector3, C = 0.939 / 0.95;
+  for (const [s, f] of Object.entries(H.frames)) {
+    const b = H.oldCuff ? GL0 : glFitOf(built, s), si = s === 'Left' ? 0 : 1;
+    f.L0 = f.Lw / (b.along + C * b.size); f.s = f.L0 * b.size / 0.95;
+    const a0 = b.along * f.L0, lo = a0 + 0.01 * f.s, hi = a0 + 0.055 * f.s, c = V3.Zero(); let n = 0;
+    if (!H.oldCuff) for (const p of H.parts) for (let i = 0; i < p.side.length; i++) {
+      if (p.side[i] !== si) continue;
+      const v = new V3(p.P0[3 * i], p.P0[3 * i + 1], p.P0[3 * i + 2]), a = V3.Dot(v.subtract(f.W), f.x);
+      if (a > lo && a < hi) { c.addInPlace(v); n++; }
+    }
+    const e = f.thumb.scale(b.thumb * f.L0).add(f.z.scale(b.back * f.L0));   // the fit's forward / outward
+    let o = e;
+    if (n > 20) { const q = c.scale(1 / n).subtract(f.W), qp = q.subtract(f.x.scale(V3.Dot(q, f.x))); if (qp.subtract(e).length() > 0.012 * f.L0) o = qp; }   // (the tube reads within ~1 mm)
+    f.G = f.W.add(f.x.scale(a0)).add(o); f.L = f.Lw - a0;
+  }
+  // the points behind the origin are the cuff (the rigger shapes the template behind it; the material seam runs a
+  // little behind that: those points stood 2 cm proud of a 10 % cuff)
+  for (const p of H.parts) for (let i = 0; i < p.side.length; i++) {
+    const f = H.frames[p.side[i] ? 'Right' : 'Left'], G = f.G;
+    p.cuff[i] = (p.P0[3 * i] - G.x) * f.x.x + (p.P0[3 * i + 1] - G.y) * f.x.y + (p.P0[3 * i + 2] - G.z) * f.x.z < 0 ? 1 : 0;
+  }
+  H.builtKey = glKey(built);
+}
 function glPrepare(meshes) {
   const gm = meshes.filter((m) => !m.isDisposed() && /^Glove/.test(m.material?.name || '') && m.getTotalVertices() > 0);
   const sk = gm[0]?.skeleton || meshes.find((m) => m.skeleton)?.skeleton; if (!gm.length || !sk) return null;
@@ -2166,7 +2198,7 @@ function glPrepare(meshes) {
     const W = bindOf(hb), E = bindOf(fb), x = W.subtract(E).normalize();
     const out = new V3(Math.sign(W.x - hips.x) || (side === 'Left' ? 1 : -1), 0, 0);
     const z = out.subtract(x.scale(V3.Dot(out, x))).normalize(), y = V3.Cross(z, x);
-    frames[side] = { hb, W, x, z, thumb: side === 'Left' ? y.scale(-1) : y, c: V3.Zero(), n: 0, L: 0, front: -Infinity, T: { k: 1, u: V3.Zero() } };
+    frames[side] = { hb, W, x, z, thumb: side === 'Left' ? y.scale(-1) : y, Lw: 0, T: { k: 1, u: V3.Zero() } };
   }
   // the bones under each Hand (the hand and its fingers): a vertex's weight on them follows the preview's Hand transform
   const idxOf = (b) => (typeof b.getIndex === 'function' ? b.getIndex() : sk.bones.indexOf(b)), under = new Map();
@@ -2185,36 +2217,17 @@ function glPrepare(meshes) {
       const v = new V3(P0[3 * i], P0[3 * i + 1], P0[3 * i + 2]);
       const s = sw[0] || sw[1] ? (sw[0] >= sw[1] ? 0 : 1) : (V3.DistanceSquared(v, frames.Left.W) < V3.DistanceSquared(v, frames.Right.W) ? 0 : 1);
       side[i] = s; wh[i] = sw[s];
-      const f = frames[s ? 'Right' : 'Left'];
-      if (cuff) { f.c.addInPlace(v); f.n++; } else f.L = Math.max(f.L, V3.Dot(v.subtract(f.W), f.x));
+      if (!cuff) { const f = frames[s ? 'Right' : 'Left']; f.Lw = Math.max(f.Lw, V3.Dot(v.subtract(f.W), f.x)); }   // the glove's tip
     }
-    const cuffV = new Uint8Array(nv);
-    if (cuff) cuffV.fill(1);
-    else if (oldCuff) for (let i = 0; i < nv; i++) { const f = frames[side[i] ? 'Right' : 'Left']; cuffV[i] = (P0[3 * i] - f.W.x) * f.x.x + (P0[3 * i + 1] - f.W.y) * f.x.y + (P0[3 * i + 2] - f.W.z) * f.x.z < 0 ? 1 : 0; }
-    return { m, P0, side, wh, cuff: cuffV };
+    return { m, P0, side, wh, cuff: new Uint8Array(nv) };   // (the points the cuff shaping moves: glOrigin)
   });
-  for (const f of Object.values(frames)) { if (f.n) f.c.scaleInPlace(1 / f.n); else f.c.copyFrom(f.W); }
-  // the glove's own origin, which the rigger sizes the glove about and narrows / widens the cuff round (the hand length is
-  // measured from there: a glove moved out of the sleeve is not a longer hand): level with the wrist joint, on the axis
-  // through the middle of the cuff's front ring (round in the glove's template). Not the cuff's centroid: the cuff follows
-  // the sleeve's shape (3.5 mm off on #262, so a 10 % cuff came out 3 mm off). It is the joint's own axis unless the
-  // rigger moved the glove off the joint (loose sleeves)
-  for (const { m, P0, side } of parts) if (/Cuff/.test(m.material.name)) for (let i = 0; i < side.length; i++) { const f = frames[side[i] ? 'Right' : 'Left']; f.front = Math.max(f.front, (P0[3 * i] - f.c.x) * f.x.x + (P0[3 * i + 1] - f.c.y) * f.x.y + (P0[3 * i + 2] - f.c.z) * f.x.z); }
-  for (const { m, P0, side } of parts) if (/Cuff/.test(m.material.name)) for (let i = 0; i < side.length; i++) {
-    const f = frames[side[i] ? 'Right' : 'Left'], v = new V3(P0[3 * i], P0[3 * i + 1], P0[3 * i + 2]);
-    if (V3.Dot(v.subtract(f.c), f.x) > f.front - 0.02 * f.L) { f.rc = (f.rc || V3.Zero()).addInPlace(v); f.rn = (f.rn || 0) + 1; }
-  }
-  for (const f of Object.values(frames)) {
-    f.G = f.W.clone(); if (!f.rn) continue;
-    const o = f.rc.scale(1 / f.rn).subtract(f.W), off = o.subtract(f.x.scale(V3.Dot(o, f.x)));
-    if (off.length() > 0.012 * f.L) f.G.addInPlace(off);
-  }
+  const O = { parts, frames, oldCuff }; glOrigin(O, GL.built);
   // old rigs: the cuff's triangles (the rigger's rule: middle behind 0.012 of the glove's scale) into a submesh of their
   // own with a copy of the material, so a cuff colour shows before it is forged
   if (oldCuff) for (const p of parts) {
     const m = p.m, I = m.getIndices(), keep = [], cf = [];
     for (let t = 0; t < I.length; t += 3) {
-      const f = frames[p.side[I[t]] ? 'Right' : 'Left'], lim = -0.012 * f.L / 0.95;
+      const f = frames[p.side[I[t]] ? 'Right' : 'Left'], lim = -0.012 * f.s;
       let a = 0; for (let q = 0; q < 3; q++) { const j = 3 * I[t + q]; a += (p.P0[j] - f.W.x) * f.x.x + (p.P0[j + 1] - f.W.y) * f.x.y + (p.P0[j + 2] - f.W.z) * f.x.z; }
       (a / 3 < lim ? cf : keep).push(I[t], I[t + 1], I[t + 2]);
     }
@@ -2241,7 +2254,7 @@ function glPrepare(meshes) {
     if (p.cuffMat) { mats.glove = mats.glove || { mat: p.gloveMat, c0: col0(p.gloveMat) }; mats.cuff = mats.cuff || { mat: p.cuffMat, c0: col0(p.gloveMat), old: true }; continue; }
     const k = /Cuff/.test(p.m.material.name) ? 'cuff' : 'glove'; if (!mats[k]) { p.m.material.unfreeze?.(); mats[k] = { mat: p.m.material, c0: col0(p.m.material) }; }
   }
-  return { parts, frames, mats, oldCuff, sk, dispose() { scene.onBeforeRenderObservable.remove(obs); try { gm.forEach((m) => { if (!m.isDisposed()) m.skeleton = sk; }); sk2.dispose(); } catch (e) {} } };
+  return { parts, frames, mats, oldCuff, sk, builtKey: O.builtKey, dispose() { scene.onBeforeRenderObservable.remove(obs); try { gm.forEach((m) => { if (!m.isDisposed()) m.skeleton = sk; }); sk2.dispose(); } catch (e) {} } };
 }
 // the colour a choice shows: a colour, or Forged = the sculpt's own (the rig's, unless the rig was forged with another;
 // an old rig's cuff becomes the sleeve's colour when it is forged again)
@@ -2289,12 +2302,13 @@ function glForgedHex(k) { const c = glColour(k, null); return c ? glHex(c) : '#3
 function glPreview(h = GL.fit, asIs = false) {
   const H = GL.hands; if (!H || !h) return;
   const V3 = BABYLON.Vector3, built = GL.built;
+  if (H.builtKey !== glKey(built)) glOrigin(H, built);
   const tf = ['Left', 'Right'].map((s) => {
-    const f = H.frames[s], now = glFitOf(h, s), was = glFitOf(built, s), Ld = f.L / (was.size || 1), k = now.size / (was.size || 1);
+    const f = H.frames[s], now = glFitOf(h, s), was = glFitOf(built, s), Ld = f.L0, k = now.size / (was.size || 1);
     const d = f.x.scale((now.along - was.along) * Ld).add(f.thumb.scale((now.thumb - was.thumb) * Ld)).add(f.z.scale((now.back - was.back) * Ld));
     const u = f.G.scale(1 - k).add(d);   // bind space: T(p) = k p + u, sized about the glove's origin, then moved
     f.T = { k, u: V3.TransformCoordinates(f.G, f.inv).scale(1 - k).add(V3.TransformNormal(d, f.inv)) };   // the same in the hand's space
-    return { f, k, d, u, sL: f.L / 0.95, cs: now.cuffSize / (was.cuffSize || 1), cl: now.cuffLen / (was.cuffLen || 1), cl0: was.cuffLen || 1 };
+    return { f, k, d, u, sL: f.s, cs: now.cuffSize / (was.cuffSize || 1), cl: now.cuffLen / (was.cuffLen || 1), cl0: was.cuffLen || 1 };
   });
   for (const { m, P0, side, wh, cuff } of H.parts) {
     if (m.isDisposed()) continue;
