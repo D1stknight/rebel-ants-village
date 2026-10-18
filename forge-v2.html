@@ -117,6 +117,56 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 .chip{border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:12px;color:#d6ccb8;transition:all .2s}
 .chip.on{border-color:var(--jade);color:var(--jade);background:rgba(79,184,255,.08)}
 .wchips .chip{cursor:pointer;background:none;font-family:inherit}.wchips .chip:hover{border-color:var(--glow);color:var(--ice)}
+/* gloves 手袋 (Oct 18): fit the gloves on the awakened Rebel, then forge them */
+.gl-sum{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:13px;color:#e4ddcf}
+.gl-dot{flex:0 0 auto;width:18px;height:18px;border-radius:50%;border:1px solid rgba(255,255,255,.22);box-shadow:inset 0 2px 3px rgba(255,255,255,.28),inset 0 -3px 5px rgba(0,0,0,.35)}
+.gl-dot+.gl-dot{margin-left:-14px}
+.gl-run{margin-top:10px}.gl-run .bar{margin:8px 0 2px}
+.gl-seg{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:4px;margin-top:16px;padding:4px;border-radius:13px;background:rgba(239,230,210,.04);border:1px solid rgba(239,230,210,.08)}
+.gl-seg button{padding:9px 6px;border-radius:9px;font-family:Cinzel,serif;font-weight:700;font-size:11px;letter-spacing:.14em;color:var(--washi-dim);transition:all .25s var(--ease)}
+.gl-seg button:hover{color:var(--washi)}
+.gl-seg button.on{color:#fff;background:linear-gradient(160deg,#A9DCFF,var(--glow) 45%,#2F5FE8);box-shadow:0 6px 18px -8px rgba(79,184,255,.9),inset 0 1px 0 rgba(255,255,255,.45)}
+.gl-row{display:grid;grid-template-columns:108px 1fr 46px;align-items:center;gap:10px;margin-top:12px}
+.gl-row label{font-family:Cinzel,serif;font-size:10.5px;font-weight:700;letter-spacing:.16em;color:var(--washi-dim);white-space:nowrap}
+.gl-row b{font-family:Cinzel,serif;font-size:12.5px;font-weight:700;color:var(--ice);text-align:right;font-variant-numeric:tabular-nums}
+.gl-row b.chg{color:#fff;text-shadow:0 0 10px rgba(79,184,255,.8)}
+.gl-r{-webkit-appearance:none;appearance:none;width:100%;height:26px;margin:0;background:transparent;cursor:pointer;touch-action:pan-y;--a:50%;--b:50%;--z:50%}
+.gl-r:focus{outline:none}
+.gl-r::-webkit-slider-runnable-track{height:4px;border-radius:4px;background:linear-gradient(90deg,transparent calc(var(--z) - 1px),rgba(226,240,255,.55) calc(var(--z) - 1px),rgba(226,240,255,.55) calc(var(--z) + 1px),transparent calc(var(--z) + 1px)),linear-gradient(90deg,rgba(239,230,210,.12) var(--a),var(--azure) var(--a),var(--glow) var(--b),rgba(239,230,210,.12) var(--b))}
+.gl-r::-moz-range-track{height:4px;border-radius:4px;background:linear-gradient(90deg,rgba(239,230,210,.12) var(--a),var(--azure) var(--a),var(--glow) var(--b),rgba(239,230,210,.12) var(--b))}
+.gl-r::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-7px;border-radius:50%;border:2px solid #fff;background:radial-gradient(circle at 35% 30%,#fff,#8FD0FF 40%,#2F5FE8);box-shadow:0 0 12px rgba(79,184,255,.85),0 2px 6px rgba(0,0,0,.5);transition:transform .15s}
+.gl-r:active::-webkit-slider-thumb{transform:scale(1.18)}
+.gl-r::-moz-range-thumb{width:14px;height:14px;border-radius:50%;border:2px solid #fff;background:radial-gradient(circle at 35% 30%,#fff,#8FD0FF 40%,#2F5FE8);box-shadow:0 0 12px rgba(79,184,255,.85)}
+.gl-r:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px rgba(226,240,255,.6),0 0 14px rgba(79,184,255,.9)}
+.gl-more{margin-top:12px;border-top:1px solid var(--line)}
+.gl-more summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-family:Cinzel,serif;font-size:10.5px;font-weight:700;letter-spacing:.24em;color:var(--washi-dim);padding:12px 0 2px}
+.gl-more summary::-webkit-details-marker{display:none}
+.gl-more summary::after{content:'+';font-size:16px;line-height:1;color:var(--glow)}
+.gl-more[open] summary::after{content:'\2212'}
+.gl-more summary:hover{color:var(--washi)}
+.gl-cap{display:flex;justify-content:space-between;align-items:center;margin-top:16px;gap:10px}
+.gl-part{display:flex;gap:4px}
+.gl-part button{display:flex;align-items:center;gap:7px;padding:5px 10px 5px 6px;border-radius:999px;border:1px solid var(--line);font-family:Cinzel,serif;font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--washi-dim);white-space:nowrap;transition:all .2s}
+@media (max-width:480px){.gl-part button{padding:4px 8px 4px 5px;letter-spacing:.05em;gap:5px}.gl-cap span{letter-spacing:.14em}.gl-row{grid-template-columns:96px 1fr 42px}}
+.gl-part button i{width:14px;height:14px;border-radius:50%;box-shadow:inset 0 1px 2px rgba(255,255,255,.3),inset 0 -2px 3px rgba(0,0,0,.35)}
+.gl-part button.on{color:var(--ice);border-color:var(--glow);background:rgba(79,184,255,.1)}
+.gl-cap span{font-family:Cinzel,serif;font-size:10.5px;font-weight:700;letter-spacing:.24em;color:var(--washi-dim)}
+.gl-cap em{font-style:normal;font-size:12px;color:var(--ice)}
+.gl-sw{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px;align-items:center}
+.gl-sw button,.gl-sw .any{position:relative;width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,.22);box-shadow:inset 0 2px 3px rgba(255,255,255,.28),inset 0 -3px 5px rgba(0,0,0,.35);transition:transform .18s var(--ease),box-shadow .2s}
+.gl-sw button:hover,.gl-sw .any:hover{transform:translateY(-2px) scale(1.08)}
+.gl-sw .on{box-shadow:0 0 0 2px #06070A,0 0 0 4px var(--glow),0 0 16px rgba(79,184,255,.7)!important}
+.gl-sw button.forged{width:auto;padding:0 11px 0 30px;border-radius:999px;font-family:Cinzel,serif;font-size:10px;font-weight:700;letter-spacing:.14em;color:var(--washi);background:rgba(239,230,210,.05)}
+.gl-sw button.forged i{position:absolute;left:4px;top:3px;width:18px;height:18px;border-radius:50%;box-shadow:inset 0 2px 3px rgba(255,255,255,.28),inset 0 -3px 5px rgba(0,0,0,.35)}
+.gl-sw .any{display:inline-block;background:conic-gradient(#ff5a5a,#ffd25a,#5aff8f,#5ad2ff,#7a5cff,#ff5ad2,#ff5a5a);cursor:pointer;overflow:hidden}
+.gl-sw .any input{position:absolute;inset:-4px;width:calc(100% + 8px);height:calc(100% + 8px);opacity:0;cursor:pointer;border:0;padding:0}
+.gl-tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.gl-tools .ctl{height:30px;font-family:Cinzel,serif;letter-spacing:.1em;font-size:10.5px}
+.gl-tools .ctl[disabled]{opacity:.35;pointer-events:none}
+.gl-tools .ctl.held{color:var(--ice);border-color:var(--glow);background:rgba(79,184,255,.12)}
+.gl-poses{display:flex;gap:4px;margin-left:auto}
+.gl-poses .ctl.on{color:var(--jade);border-color:rgba(79,184,255,.5)}
+.gl-done{display:grid;place-items:center;width:76px;height:76px;margin:6px auto 2px;border-radius:50%;font-family:Shojumaru,serif;font-size:34px;color:#fff;background:radial-gradient(circle at 50% 40%,rgba(143,208,255,.9),rgba(61,110,240,.85) 60%,rgba(20,40,120,.9));box-shadow:0 0 34px rgba(79,184,255,.65),inset 0 1px 0 rgba(255,255,255,.5)}
 .checks{display:grid;gap:8px;margin-top:6px}
 .check{display:flex;gap:10px;align-items:center;font-size:13px;color:#d6ccb8}
 .check b{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:rgba(79,184,255,.14);color:var(--jade);font-size:11px}
@@ -885,7 +935,7 @@ async function latestRigUrl(url) {
   try { const ac = new AbortController(); const t = setTimeout(() => ac.abort(), 1500); const j = await (await fetch('/api/forge-rig-latest?url=' + encodeURIComponent(url), { signal: ac.signal })).json(); clearTimeout(t); return (j && j.url) || url; } catch (e) { return url; }
 }
 async function loadRebel(url) {
-  url = await latestRigUrl(url);
+  url = await latestRigUrl(url); rebel.url = url;
   const res = await BABYLON.SceneLoader.ImportMeshAsync('', '', url, scene, null, '.glb');
   const root = res.meshes[0];
   res.animationGroups.forEach((g) => g.stop());
@@ -953,7 +1003,7 @@ async function wearWeapon(pick) {
 const WEAPON_GROUP = 4;
 async function armWeapon(w, my) {
   try {
-    const url = await RebelWeapon.movesFor(loadedUrl);
+    const url = await RebelWeapon.movesFor(rebel.url || loadedUrl);   // the pack made with the file in the viewer
     if (!url || my !== wpn.gen || !rebel.root) return;
     if (!wpn.movesUrl || wpn.movesUrl !== url) {
       Object.keys(rebel.groups).filter((k) => RebelWeapon.MOVE_NAMES[k]).forEach((k) => { rebel.groups[k].dispose(); delete rebel.groups[k]; });
@@ -1550,6 +1600,7 @@ async function loadAssets(t) {
     const actBuild = act && bs.find((b) => b.buildId === act.activeForgeBuildId && b.output?.forgeRigGlbUrl);
     const rig = actBuild || bs.find((b) => b.output?.forgeRigGlbUrl);
     if (rig) { out.glb = rig.output.forgeRigGlbUrl; out.thumb = rig.output.forgeRigThumbUrl || null; out.buildId = rig.buildId; out.front = rig.sourceImage?.imageUrl || null; out.back = rig.sourceImage?.backImageUrl || null; }
+    out.activeBuildId = act?.activeForgeBuildId || null;
   } catch (e) {}
   return out;
 }
@@ -1981,9 +2032,10 @@ function loadRebelOnce(url) {
   if (!url || loadedUrl === url) return Promise.resolve(rebel);
   unarm(); wpn.movesUrl = null;
   if (wpn.cur) { wpn.cur.dispose(); wpn.cur = null; } wpn.gen++;
+  if (GL.hands) { GL.hands.dispose(); GL.hands = null; }
   if (rebel.root) { rebel.root.getChildMeshes(false).forEach((m) => m.dispose()); rebel.root.dispose(); Object.values(rebel.groups).forEach((g) => g.dispose()); rebel.cloth?.dispose?.(); rebel.groups = {}; rebel.cur = null; rebel.root = null; rebel.meshes = []; }
-  loadedUrl = url; rebel.ready = false;
-  return loadRebel(url).catch((e) => { console.warn(e); loadedUrl = null; toast('Could not load the 3D model'); });
+  loadedUrl = url; rebel.ready = false; rebel.url = null;
+  return loadRebel(url).then((r) => { if (state.awakened) glBox(); return r; }).catch((e) => { console.warn(e); loadedUrl = null; toast('Could not load the 3D model'); });
 }
 function awakenExisting() {
   if (!state.assets?.glb) return;
@@ -2031,12 +2083,13 @@ function showAwakened(instant) {
     <div class="sep"></div>
     <div class="traits">${(state.meta?.traits || []).slice(0, 6).map((t) => `<div class="trait locked"><span class="tt"><i></i>${esc(t.trait_type)}</span><span class="tv">${esc(t.value)}</span></div>`).join('')}</div>
     <div class="wbox"><div class="sep"></div><div class="eyebrow">WEAPON · WORN ON THE BACK${canForge() ? '' : ' · PREVIEW'}</div><div class="chips wchips" id="wpnChips"></div></div>
+    ${glBoxHTML()}
     <div class="cta">${canForge() ? '<button class="btn shu wide" id="makeMine">MAKE THIS MY REBEL</button>' : ''}<button class="btn${canForge() ? '' : ' fire wide'}" id="enterV">ENTER VILLAGE →</button></div>
     ${canForge() ? '' : '<div class="note">Only the wallet that holds this Rebel can make it its character. You can walk the village with it.</div>'}
     <div class="note">Keys: ← → moves · Space pause · L loop · S speed · K perform all kata</div>
   `);
   if ($('#makeMine')) $('#makeMine').onclick = makeMine;
-  renderWeaponChips();
+  renderWeaponChips(); glBox(); glCheck();
   // Enter Village: for the holder this Rebel becomes their character (same as Make this my Rebel); anyone else walks
   // in with it for this visit. Either way the village opens with this Rebel.
   $('#enterV').onclick = async () => { const b = $('#enterV'); b.disabled = true; b.textContent = 'ENTERING…'; if (canForge()) { if (!state.mine) await makeMine(); } else rememberSelected(null); location.href = `/village.html`; };
@@ -2069,6 +2122,419 @@ function rememberSelected(ac, buildId, url) {
         characterSource: ac ? 'forge_glb' : undefined, updatedAt: new Date().toISOString()
       }));
     } catch (e) {}
+}
+
+/* =========================================================
+   Gloves 手袋 (Oct 18). The holder fits the Rebel's gloves (size, cuff width and length, placement, glove and cuff
+   colours) with a live preview, then forges them: the rig is made again from the same sculpt with that fit (rigger 2.33
+   FORGE_HAND_FIT, /api/forge-rig-start {gloves}); no forge used. Anyone may try the sliders, only the holder (or an
+   admin) forges. Never #001.
+   The preview ports the NPC Forge Hands panel: the gloves get their own copy of the skeleton whose Hand bones carry the
+   resize and move, so the fingers move with the glove as in the re-forged rig. A Rebel's Hand bone stays at the wrist
+   (the NPCs' moves to the glove), so the whole move is applied in the hand's own space.
+   ========================================================= */
+const GL_STEP = 0.025, GL0 = { along: 0, thumb: 0, back: 0, size: 1, cuffSize: 1, cuffLen: 1 }, GL_KEYS = Object.keys(GL0);
+const GL_PRESETS = [['Ink', '#1b1b1f'], ['Bone', '#e9e2d0'], ['Crimson', '#8c1c1c'], ['Ember', '#d9622b'], ['Gold', '#d8b35c'], ['Moss', '#4f6b3a'],
+  ['Jade', '#2f8a6b'], ['Teal', '#1f5753'], ['Sky', '#4f8fd6'], ['Navy', '#1d2b4f'], ['Plum', '#5f1d45'], ['Rose', '#d98ba6']];   // the village's glove presets
+const GL_SIZE = [['size', 'SIZE', 70, 140], ['cuffSize', 'CUFF WIDTH', 50, 150], ['cuffLen', 'CUFF LENGTH', 40, 160]];
+const GL_PLACE = [['along', 'OUT OF SLEEVE'], ['thumb', 'FORWARD'], ['back', 'OUTWARD']];
+const GL_POSES = [['idle', 'CALM'], ['fight_idle', 'GUARD'], ['cross_punch', 'STRIKE'], ['walk', 'WALK']];
+// the rig job's steps (forge-rig-status) in four stages
+const GL_STAGES = [
+  { k: '断', n: 'Old gloves off', d: 'Your sculpt set on its 65 bones again', steps: ['starting', 'download', 'armor', 'head', 'normalize', 'landmarks', 'skeleton', 'weights', 'bind', 'hands'] },
+  { k: '型', n: 'Kata', d: 'Every move taught again', steps: ['cloth', 'animate', 'moves', 'weapons', 'games'] },
+  { k: '手', n: 'New gloves', d: 'Cut, sized and fitted to your hands', steps: ['cleanup'] },
+  { k: '銘', n: 'Signed', d: 'Checked, polished and signed', steps: ['export', 'headcloth', 'movespack', 'gamespack', 'qa', 'thumb', 'done', 'saving'] }
+];
+const GL_EST = 300;   // seconds: a Rebel's rig job takes 200-350 s
+const GL = { open: false, view: 'fit', side: 'both', part: 'glove', fit: null, fitFor: null, built: null, auto: {}, hands: null, sleeve: null, buildId: null, job: null, poll: 0, err: null, step: 'starting', pct: 0, checked: null };
+window.__gloves = GL;   // tests
+const glMaster = () => COL === 'battle_for_colony' && /^0*1$/.test(String(state.token || ''));
+const glFitOf = (h, s) => ({ ...GL0, ...((h && h[s]) || {}) });
+const glFull = (h) => ({ Left: glFitOf(h, 'Left'), Right: glFitOf(h, 'Right'), glove: (h && h.glove) || null, cuff: (h && h.cuff) || null });
+const glKey = (h) => JSON.stringify(['Left', 'Right'].map((s) => GL_KEYS.map((k) => Math.round(glFitOf(h, s)[k] * 1000))).concat([(h && h.glove) || null, (h && h.cuff) || null]));
+const glSame = (a, b) => glKey(a) === glKey(b);
+const glHex = (lin) => lin.toGammaSpace().toHexString().toLowerCase();
+function glPrepare(meshes) {
+  const gm = meshes.filter((m) => !m.isDisposed() && /^Glove/.test(m.material?.name || '') && m.getTotalVertices() > 0);
+  const sk = gm[0]?.skeleton || meshes.find((m) => m.skeleton)?.skeleton; if (!gm.length || !sk) return null;
+  const V3 = BABYLON.Vector3, bone = (nm) => sk.bones.find((x) => x.name === 'mixamorig_' + nm);
+  const bindOf = (b) => { const M = b.getAbsoluteInverseBindMatrix().clone(); M.invert(); return M.getTranslation(); };
+  const hipsB = bone('Hips'), hips = hipsB ? bindOf(hipsB) : V3.Zero(), frames = {};
+  for (const side of ['Left', 'Right']) {
+    const hb = bone(side + 'Hand'), fb = bone(side + 'ForeArm'); if (!hb || !fb || !hb.getTransformNode()) return null;
+    const W = bindOf(hb), E = bindOf(fb), x = W.subtract(E).normalize();
+    const out = new V3(Math.sign(W.x - hips.x) || (side === 'Left' ? 1 : -1), 0, 0);
+    const z = out.subtract(x.scale(V3.Dot(out, x))).normalize(), y = V3.Cross(z, x);
+    frames[side] = { hb, W, x, z, thumb: side === 'Left' ? y.scale(-1) : y, c: V3.Zero(), n: 0, L: 0, front: -Infinity, T: { k: 1, u: V3.Zero() } };
+  }
+  // the bones under each Hand (the hand and its fingers): a vertex's weight on them follows the preview's Hand transform
+  const idxOf = (b) => (typeof b.getIndex === 'function' ? b.getIndex() : sk.bones.indexOf(b)), under = new Map();
+  for (const b of sk.bones) for (let p = b; p; p = p.getParent()) { if (p === frames.Left.hb) { under.set(idxOf(b), 0); break; } if (p === frames.Right.hb) { under.set(idxOf(b), 1); break; } }
+  const VB = BABYLON.VertexBuffer;
+  // rigs forged before Sept 29 have one Glove material for the glove and its cuff: their cuff is the glove behind its
+  // origin (the wrist joint on those rigs), as the rigger builds it
+  const oldCuff = !gm.some((m) => /Cuff/.test(m.material.name));
+  const parts = gm.map((m) => {
+    const P0 = Float32Array.from(m.getVerticesData(VB.PositionKind)), nv = P0.length / 3, cuff = /Cuff/.test(m.material.name);
+    const sets = [[m.getVerticesData(VB.MatricesIndicesKind), m.getVerticesData(VB.MatricesWeightsKind)], [m.getVerticesData(VB.MatricesIndicesExtraKind), m.getVerticesData(VB.MatricesWeightsExtraKind)]];
+    const side = new Uint8Array(nv), wh = new Float32Array(nv);
+    for (let i = 0; i < nv; i++) {
+      const sw = [0, 0];
+      for (const [I, Wt] of sets) { if (!I || !Wt) continue; for (let k = 0; k < 4; k++) { const s = under.get(I[4 * i + k]); if (s !== undefined) sw[s] += Wt[4 * i + k]; } }
+      const v = new V3(P0[3 * i], P0[3 * i + 1], P0[3 * i + 2]);
+      const s = sw[0] || sw[1] ? (sw[0] >= sw[1] ? 0 : 1) : (V3.DistanceSquared(v, frames.Left.W) < V3.DistanceSquared(v, frames.Right.W) ? 0 : 1);
+      side[i] = s; wh[i] = sw[s];
+      const f = frames[s ? 'Right' : 'Left'];
+      if (cuff) { f.c.addInPlace(v); f.n++; } else f.L = Math.max(f.L, V3.Dot(v.subtract(f.W), f.x));
+    }
+    const cuffV = new Uint8Array(nv);
+    if (cuff) cuffV.fill(1);
+    else if (oldCuff) for (let i = 0; i < nv; i++) { const f = frames[side[i] ? 'Right' : 'Left']; cuffV[i] = (P0[3 * i] - f.W.x) * f.x.x + (P0[3 * i + 1] - f.W.y) * f.x.y + (P0[3 * i + 2] - f.W.z) * f.x.z < 0 ? 1 : 0; }
+    return { m, P0, side, wh, cuff: cuffV };
+  });
+  for (const f of Object.values(frames)) { if (f.n) f.c.scaleInPlace(1 / f.n); else f.c.copyFrom(f.W); }
+  // the glove's own origin, which the rigger sizes the glove about: the front of the cuff, on its axis (the hand length is
+  // measured from there: a glove moved out of the sleeve is not a longer hand)
+  for (const { m, P0, side } of parts) if (/Cuff/.test(m.material.name)) for (let i = 0; i < side.length; i++) { const f = frames[side[i] ? 'Right' : 'Left']; f.front = Math.max(f.front, (P0[3 * i] - f.c.x) * f.x.x + (P0[3 * i + 1] - f.c.y) * f.x.y + (P0[3 * i + 2] - f.c.z) * f.x.z); }
+  for (const f of Object.values(frames)) { f.G = Number.isFinite(f.front) ? f.c.add(f.x.scale(f.front)) : f.W.clone(); f.L -= V3.Dot(f.G.subtract(f.W), f.x); }
+  // old rigs: the cuff's triangles (the rigger's rule: middle behind 0.012 of the glove's scale) into a submesh of their
+  // own with a copy of the material, so a cuff colour shows before it is forged
+  if (oldCuff) for (const p of parts) {
+    const m = p.m, I = m.getIndices(), keep = [], cf = [];
+    for (let t = 0; t < I.length; t += 3) {
+      const f = frames[p.side[I[t]] ? 'Right' : 'Left'], lim = -0.012 * f.L / 0.95;
+      let a = 0; for (let q = 0; q < 3; q++) { const j = 3 * I[t + q]; a += (p.P0[j] - f.W.x) * f.x.x + (p.P0[j + 1] - f.W.y) * f.x.y + (p.P0[j + 2] - f.W.z) * f.x.z; }
+      (a / 3 < lim ? cf : keep).push(I[t], I[t + 1], I[t + 2]);
+    }
+    if (!cf.length) continue;
+    m.setIndices(keep.concat(cf)); m.subMeshes = []; const nv = m.getTotalVertices();
+    new BABYLON.SubMesh(0, 0, nv, 0, keep.length, m); new BABYLON.SubMesh(1, 0, nv, keep.length, cf.length, m);
+    const mm = new BABYLON.MultiMaterial(m.material.name + '_cuff', scene), cm = m.material.clone('GloveCuff_preview');
+    mm.subMaterials.push(m.material, cm); p.cuffMat = cm; p.gloveMat = m.material; m.material = mm;
+  }
+  // (always drawn: a culling box from one pose dropped a moved glove once the hand went up)
+  const sk2 = sk.clone(sk.name + '_gloves'); gm.forEach((m) => { m.skeleton = sk2; m.alwaysSelectAsActiveMesh = true; });
+  for (const f of Object.values(frames)) { f.hb2 = sk2.bones[sk.bones.indexOf(f.hb)]; f.node = f.hb.getTransformNode(); f.hb2.linkTransformNode(null); f.inv = f.hb.getAbsoluteInverseBindMatrix().clone(); }
+  // every frame, after the animation: each glove Hand bone = the animated hand x the preview's resize + move
+  const quatOf = (n) => n.rotationQuaternion || BABYLON.Quaternion.FromEulerVector(n.rotation);
+  const obs = scene.onBeforeRenderObservable.add(() => {
+    for (const f of Object.values(frames)) {
+      const n = f.node, q = quatOf(n), s0 = n.scaling, u = f.T.u;
+      f.hb2.position = n.position.add(new V3(s0.x * u.x, s0.y * u.y, s0.z * u.z).applyRotationQuaternion(q));
+      f.hb2.rotationQuaternion = q; f.hb2.scaling = s0.scale(f.T.k);
+    }
+  });
+  const mats = {}, col0 = (mt) => (mt.albedoColor || mt.diffuseColor || BABYLON.Color3.White()).clone();
+  for (const p of parts) {
+    if (p.cuffMat) { mats.glove = mats.glove || { mat: p.gloveMat, c0: col0(p.gloveMat) }; mats.cuff = mats.cuff || { mat: p.cuffMat, c0: col0(p.gloveMat), old: true }; continue; }
+    const k = /Cuff/.test(p.m.material.name) ? 'cuff' : 'glove'; if (!mats[k]) { p.m.material.unfreeze?.(); mats[k] = { mat: p.m.material, c0: col0(p.m.material) }; }
+  }
+  return { parts, frames, mats, oldCuff, sk, dispose() { scene.onBeforeRenderObservable.remove(obs); try { gm.forEach((m) => { if (!m.isDisposed()) m.skeleton = sk; }); sk2.dispose(); } catch (e) {} } };
+}
+// the colour a choice shows: a colour, or Forged = the sculpt's own (the rig's, unless the rig was forged with another;
+// an old rig's cuff becomes the sleeve's colour when it is forged again)
+function glColour(k, v) {
+  const e = GL.hands?.mats[k]; if (!e) return null;
+  const lin = (h) => BABYLON.Color3.FromHexString(h).toLinearSpace();
+  if (v) return lin(v);
+  if (!GL.built?.[k] && !e.old) return e.c0;
+  const a = GL.auto[k] || (k === 'cuff' && GL.sleeve) || null;
+  return a ? lin(a) : e.c0;
+}
+// the sleeve's colour at the wrist, as the rigger takes it for a cuff (the median of the sleeve's texture just behind the
+// wrist): what Forged shows on an old rig's cuff before it has one of its own
+async function glSleeve(H) {
+  try {
+    const body = rebel.meshes.find((m) => !m.isDisposed() && m.skeleton && !/^Glove/.test(m.material?.name || '') && m.material?.albedoTexture && m.getTotalVertices() > 2000);
+    const tex = body?.material.albedoTexture; if (!tex) return null;
+    const px = await tex.readPixels(); const { width: w, height: h } = tex.getSize(); if (!px || !w) return null;
+    const VB = BABYLON.VertexBuffer, P = body.getVerticesData(VB.PositionKind), UV = body.getVerticesData(VB.UVKind);
+    const sets = [[body.getVerticesData(VB.MatricesIndicesKind), body.getVerticesData(VB.MatricesWeightsKind)], [body.getVerticesData(VB.MatricesIndicesExtraKind), body.getVerticesData(VB.MatricesWeightsExtraKind)]];
+    const arm = body.skeleton.bones.map((b) => /(Hand|ForeArm)/.test(b.name));
+    const samp = [];
+    for (const f of Object.values(H.frames)) {
+      const cand = [];
+      for (let i = 0; i < P.length / 3; i++) {
+        let aw = 0; for (const [I, Wt] of sets) { if (!I || !Wt) continue; for (let k = 0; k < 4; k++) if (arm[I[4 * i + k]]) aw += Wt[4 * i + k]; }
+        if (aw <= 0.5) continue;
+        const rx = P[3 * i] - f.W.x, ry = P[3 * i + 1] - f.W.y, rz = P[3 * i + 2] - f.W.z, tt = rx * f.x.x + ry * f.x.y + rz * f.x.z;
+        if (tt < -0.08 || tt > 0.03) continue;
+        cand.push([i, tt, Math.hypot(rx - tt * f.x.x, ry - tt * f.x.y, rz - tt * f.x.z)]);
+      }
+      const ring = cand.filter((c) => Math.abs(c[1]) < 0.015).map((c) => c[2]).sort((a, b) => a - b);
+      const girth = Math.min(0.32 * f.L, Math.max(0.14 * f.L, ring.length > 10 ? ring[Math.floor(ring.length * 0.92)] : 0.16 * f.L));
+      for (const [i, tt, rr] of cand) if (tt > -0.03 && rr > 0.5 * girth) {
+        const u = UV[2 * i] - Math.floor(UV[2 * i]), v = UV[2 * i + 1] - Math.floor(UV[2 * i + 1]);
+        const j = 4 * (Math.min(h - 1, Math.floor(v * h)) * w + Math.min(w - 1, Math.floor(u * w))); samp.push([px[j], px[j + 1], px[j + 2]]);
+      }
+    }
+    if (samp.length < 10) return null;
+    const med = (c) => { const a = samp.map((x) => x[c]).sort((p, q) => p - q); return a[a.length >> 1]; };
+    return '#' + [0, 1, 2].map((c) => med(c).toString(16).padStart(2, '0')).join('');
+  } catch (e) { console.warn('sleeve colour', e); return null; }
+}
+function glForgedHex(k) { const c = glColour(k, null); return c ? glHex(c) : '#3a3a40'; }
+function glPreview(h = GL.fit, asIs = false) {
+  const H = GL.hands; if (!H || !h) return;
+  const V3 = BABYLON.Vector3, built = GL.built;
+  const tf = ['Left', 'Right'].map((s) => {
+    const f = H.frames[s], now = glFitOf(h, s), was = glFitOf(built, s), Ld = f.L / (was.size || 1), k = now.size / (was.size || 1);
+    const d = f.x.scale((now.along - was.along) * Ld).add(f.thumb.scale((now.thumb - was.thumb) * Ld)).add(f.z.scale((now.back - was.back) * Ld));
+    const u = f.G.scale(1 - k).add(d);   // bind space: T(p) = k p + u, sized about the glove's origin, then moved
+    f.T = { k, u: V3.TransformCoordinates(f.G, f.inv).scale(1 - k).add(V3.TransformNormal(d, f.inv)) };   // the same in the hand's space
+    return { f, k, d, u, sL: f.L / 0.95, cs: now.cuffSize / (was.cuffSize || 1), cl: now.cuffLen / (was.cuffLen || 1), cl0: was.cuffLen || 1 };
+  });
+  for (const { m, P0, side, wh, cuff } of H.parts) {
+    if (m.isDisposed()) continue;
+    const P = new Float32Array(P0.length);
+    for (let i = 0; i < side.length; i++) {
+      const t = tf[side[i]], f = t.f, G = f.G, x = f.x, j = 3 * i, w = wh[i], X = P0[j], Y = P0[j + 1], Z = P0[j + 2];
+      // where the re-forged rig has this point at rest: the glove sized and moved (T); the cuff moved, its length following
+      // the glove's size x the cuff length, its width the glove's near the hand and the sleeve's x the cuff width deeper in
+      let tx = t.k * X + t.u.x, ty = t.k * Y + t.u.y, tz = t.k * Z + t.u.z;
+      if (cuff[i]) {
+        const rx = X - G.x, ry = Y - G.y, rz = Z - G.z, a = rx * x.x + ry * x.y + rz * x.z;
+        const kk = Math.min(1, Math.max(0, -a / (0.07 * t.sL * t.cl0))), kr = (1 - kk) * t.k + kk * t.cs, ax = a * t.k * t.cl;
+        tx = G.x + t.d.x + x.x * ax + (rx - x.x * a) * kr; ty = G.y + t.d.y + x.y * ax + (ry - x.y * a) * kr; tz = G.z + t.d.z + x.z * ax + (rz - x.z * a) * kr;
+      }
+      // the glove's Hand bone moves its share w of the point by T: solve w T(P) + (1 - w) P = target
+      const den = 1 - w + w * t.k;
+      P[j] = (tx - w * t.u.x) / den; P[j + 1] = (ty - w * t.u.y) / den; P[j + 2] = (tz - w * t.u.z) / den;
+    }
+    m.setVerticesData(BABYLON.VertexBuffer.PositionKind, P, true); m.refreshBoundingInfo(true);
+  }
+  // asIs: the gloves as the rig has them now (an old rig's cuff in the glove's colour)
+  for (const k of ['glove', 'cuff']) { const e = H.mats[k]; if (!e) continue; const c = asIs ? e.c0 : glColour(k, h[k]); if (e.mat.albedoColor) e.mat.albedoColor = c.clone(); else if (e.mat.diffuseColor) e.mat.diffuseColor = c.clone(); }
+}
+// the rig in the viewer has gloves to fit (rigs from before the Forge gloves have none)
+function glReady() {
+  if (!rebel.ready || !rebel.root) return false;
+  if (!GL.hands || GL.hands.parts.some((p) => p.m.isDisposed())) {
+    GL.hands?.dispose(); GL.hands = null; GL.sleeve = null;
+    try { GL.hands = glPrepare(rebel.meshes); } catch (e) { console.warn('gloves preview', e); }
+    const H = GL.hands; if (H && GL.open && !GL.job) glPreview();
+    if (H) glSleeve(H).then((c) => { if (GL.hands !== H) return; GL.sleeve = c; if (GL.open && !GL.job && GL.view === 'fit') { glPreview(); glRender(true); } });
+  }
+  return !!GL.hands;
+}
+// what this build's rig was forged with, and a gloves job still running (a reload or another device started it)
+async function glCheck() {
+  const id = state.assets?.buildId; if (!id || glMaster()) return;
+  let d = null; try { d = await api(`/api/forge-rig-status?buildId=${encodeURIComponent(id)}`); } catch (e) { return; }
+  if (state.assets?.buildId !== id) return;
+  const fr = d.forgeRig || {};
+  GL.buildId = id; GL.checked = fr; GL.built = fr.options?.handFit || null; GL.auto = fr.autoColors || {};
+  if (!GL.fit || GL.fitFor !== id) { GL.fit = glFull(GL.built); GL.fitFor = id; }   // slider changes are kept while this Rebel's page is open
+  if (fr.status === 'running' && fr.gloves && !GL.job) { GL.job = { startedAt: fr.gloves.startedAt, t0: Date.parse(fr.gloves.startedAt) || Date.now() }; GL.step = fr.progress || 'starting'; glPoll(); }
+  glBox();
+}
+// the awakened card's Gloves box
+function glBoxHTML() {
+  if (glMaster()) return '';
+  return `<div class="gbox" id="glBox"><div class="sep"></div><div class="eyebrow">GLOVES · <span class="jp">手袋</span>${canForge() ? '' : ' · PREVIEW'}</div><div id="glBoxIn"></div></div>`;
+}
+function glBox() {
+  const el = $('#glBoxIn'); if (!el) return;
+  if (rebel.ready && !glReady()) { $('#glBox')?.remove(); return; }
+  if (GL.job) {
+    const p = Math.round(GL.pct || 0);
+    el.innerHTML = `<div class="gl-run"><div class="note live" style="margin-top:0"><b>Forging new gloves</b> · ${p}%</div><div class="bar"><i style="width:${p}%"></i></div></div><div class="cta" style="margin-top:10px"><button class="btn wide" id="glOpen">WATCH THE GLOVES →</button></div>`;
+  } else {
+    const h = GL.built, f = glFitOf(h, 'Right'), fl = glFitOf(h, 'Left');
+    const what = !h || glSame(h, null) ? 'The gloves your Rebel was forged with.' : `Forged to fit · size ${Math.round(f.size * 100)}%${fl.size !== f.size ? ' / ' + Math.round(fl.size * 100) + '%' : ''} · cuff ${Math.round(f.cuffSize * 100)}%`;
+    const dot = (k) => (GL.hands?.mats[k] ? glHex(GL.hands.mats[k].c0) : '#2a2a30');   // the gloves as the rig has them
+    el.innerHTML = `<div class="gl-sum"><i class="gl-dot" style="background:${dot('glove')}"></i><i class="gl-dot" style="background:${dot('cuff')}"></i><span>${esc(what)}</span></div>
+      <div class="cta" style="margin-top:10px"><button class="btn wide" id="glOpen" ${rebel.ready ? '' : 'disabled'}>${rebel.ready ? 'FIT THE GLOVES →' : 'THE BODY IS COOLING…'}</button></div>`;
+  }
+  const b = $('#glOpen'); if (b) b.onclick = () => glOpen();
+}
+// the camera on the hands: both from the front, or one hand from its outer side
+function glCam(side, d = 1.2) {
+  const P = [], V3 = BABYLON.Vector3;
+  for (const s of side === 'both' ? ['Left', 'Right'] : [side]) { const n = GL.hands?.frames[s]?.node; if (n) { n.computeWorldMatrix(true); P.push(n.getAbsolutePosition()); } }
+  const c = P.length ? P.reduce((a, p) => a.addInPlace(p), V3.Zero()).scale(1 / P.length) : new V3(0, 0.95, 0);
+  const one = side !== 'both', drop = MOBILE ? (one ? 0.24 : 0.32) : 0;   // phones: the card covers the lower half, so the hands sit higher in the view
+  const a = one ? Math.PI / 2 + (c.x > 0 ? -0.6 : 0.6) : Math.PI / 2;
+  gsap.to(cam, { alpha: a, beta: one ? 1.36 : 1.4, radius: one ? (MOBILE ? 1.9 : 1.35) : (MOBILE ? 3.1 : 2.35), duration: d, ease: 'power3.inOut' });
+  gsap.to(cam.target, { x: one ? c.x : 0, y: c.y - drop, z: one ? c.z : 0, duration: d, ease: 'power3.inOut' });
+}
+function glOpen() {
+  if (!glReady()) { toast(rebel.ready ? 'This rig has no gloves to fit' : 'The body is still cooling…'); return; }
+  GL.open = true; GL.buildId = state.assets?.buildId || GL.buildId;
+  if (!GL.fit) { GL.fit = glFull(GL.built); GL.fitFor = GL.buildId; }
+  cam.useAutoRotationBehavior = false; cam.lowerRadiusLimit = 0.9;
+  $('#dock').classList.remove('show'); gsap.to('#reveal', { opacity: 0, duration: 0.5 });   // the hands get the stage (poses are on the card)
+  Snd.play('swish_light');
+  if (!rebel.cur || !['idle', 'fight_idle'].includes(rebel.cur.name)) glPose('idle');
+  glRender(); glCam(GL.side);
+  if (!GL.job) glPreview();
+}
+function glClose() {
+  GL.open = false; clearTimeout(GL.cmp);
+  if (!GL.job) glPreview(glFull(GL.built), true);   // the viewer shows the gloves as forged again (the sliders are kept for next time)
+  gsap.to('#reveal', { opacity: 1, duration: 0.6 });
+  cam.lowerRadiusLimit = 2.2;
+  gsap.to(cam.target, { x: 0, z: 0, duration: 1.2, ease: 'power3.inOut' });
+  showAwakened(true);
+}
+function glPose(clip) { const i = ALL_MOVES.findIndex((m) => m.clip === clip); if (i >= 0) { stopKata(); selectMove(i); } }
+function glSet(k, v, render) {
+  const h = GL.fit; (GL.side === 'both' ? ['Left', 'Right'] : [GL.side]).forEach((s) => { h[s] = { ...glFitOf(h, s), [k]: v }; });
+  glPreview(); if (render) glRender(true); else glPaint();
+}
+// slider fill from the forged value (the tick) to the slider
+function glTrack(inp, z) { const lo = +inp.min, hi = +inp.max, p = (v) => ((v - lo) / (hi - lo) * 100) + '%', v = +inp.value; inp.style.setProperty('--a', p(Math.min(v, z))); inp.style.setProperty('--b', p(Math.max(v, z))); inp.style.setProperty('--z', p(z)); }
+function glPaint() {
+  const f = glFitOf(GL.fit, GL.side === 'both' ? 'Right' : GL.side), was = glFitOf(GL.built, GL.side === 'both' ? 'Right' : GL.side);
+  for (const [k] of GL_SIZE) { const i = $('#gl_' + k); if (!i) continue; i.value = Math.round(f[k] * 100); glTrack(i, 100); const b = $('#gl_' + k + 'V'); b.textContent = Math.round(f[k] * 100) + '%'; b.classList.toggle('chg', Math.round(f[k] * 100) !== Math.round(was[k] * 100)); }
+  for (const [k] of GL_PLACE) { const i = $('#gl_' + k); if (!i) continue; const n = Math.round(f[k] / GL_STEP); i.value = n; glTrack(i, 0); const b = $('#gl_' + k + 'V'); b.textContent = (n > 0 ? '+' : '') + n; b.classList.toggle('chg', n !== Math.round(was[k] / GL_STEP)); }
+  const nameOf = (v) => !v ? 'Forged' : (GL_PRESETS.find((x) => x[1] === v)?.[0] || v.toUpperCase());
+  card.querySelectorAll('.gl-part button').forEach((b) => { const k = b.dataset.k, c = glColour(k, GL.fit[k] || null); b.classList.toggle('on', k === GL.part); b.querySelector('i').style.background = c ? glHex(c) : '#333'; b.querySelector('em').textContent = nameOf(GL.fit[k] || null); });
+  const row = card.querySelector('.gl-sw');
+  if (row) {
+    const v = GL.fit[GL.part] || null; row.querySelector('.forged i').style.background = glForgedHex(GL.part);
+    row.querySelectorAll('button').forEach((b) => b.classList.toggle('on', (b.dataset.v || null) === v));
+    const any = row.querySelector('.any'); any.classList.toggle('on', !!v && !GL_PRESETS.some((x) => x[1] === v)); if (v) any.querySelector('input').value = v;
+  }
+  const same = glSame(GL.fit, GL.built), fb = $('#glForge');
+  if (fb) { fb.disabled = same || !canForge(); fb.querySelector('span:last-child').textContent = same ? 'THESE ARE YOUR GLOVES' : 'HOLD TO FORGE THE GLOVES'; }
+  const cb = $('#glCompare'); if (cb) cb.disabled = same;
+  const rb = $('#glReset'); if (rb) rb.disabled = glSame(GL.fit, null);
+}
+function glRender(quiet) {
+  if (!GL.open) return;
+  if (GL.job) return glRenderForging(quiet);
+  if (GL.view === 'done') return glRenderDone(quiet);
+  const sides = [['both', 'BOTH HANDS'], ['Left', 'LEFT'], ['Right', 'RIGHT']];
+  if (GL.part === 'cuff' && !GL.hands?.mats.cuff) GL.part = 'glove';
+  const parts = ['glove', 'cuff'].filter((k) => GL.hands?.mats[k]);
+  const colours = `<div class="gl-cap"><span>COLOUR</span><div class="gl-part">${parts.map((k) => `<button data-k="${k}"><i></i>${k === 'glove' ? 'GLOVE' : 'CUFF'} · <em style="font-style:normal"></em></button>`).join('')}</div></div>
+    <div class="gl-sw"><button class="forged" data-v="" title="Forged: the colour from your Rebel’s sculpt"><i></i>FORGED</button>
+      ${GL_PRESETS.map(([n, c]) => `<button data-v="${c}" title="${n}" style="background:${c}"></button>`).join('')}
+      <label class="any" title="Any colour"><input type="color" value="#4fb8ff"></label></div>`;
+  renderCard(`
+    <div class="eyebrow">STEP 5 / 5 · GLOVES <span class="jp">手袋</span></div>
+    <h1>Fit the gloves<span class="tag">${canForge() ? 'Forged to your Rebel’s hands' : 'Preview · only the holder forges them'}</span></h1>
+    <p class="lead">They change on your Rebel as you go.</p>
+    <div class="gl-seg" id="glSide">${sides.map(([s, n]) => `<button data-s="${s}" class="${GL.side === s ? 'on' : ''}">${n}</button>`).join('')}</div>
+    ${GL_SIZE.map(([k, n, lo, hi]) => `<div class="gl-row"><label for="gl_${k}">${n}</label><input class="gl-r" type="range" id="gl_${k}" min="${lo}" max="${hi}" step="1" data-k="${k}"><b id="gl_${k}V"></b></div>`).join('')}
+    <details class="gl-more" ${GL_PLACE.some(([k]) => glFitOf(GL.fit, 'Left')[k] || glFitOf(GL.fit, 'Right')[k]) ? 'open' : ''}><summary>PLACEMENT</summary>
+      ${GL_PLACE.map(([k, n]) => `<div class="gl-row"><label for="gl_${k}">${n}</label><input class="gl-r" type="range" id="gl_${k}" min="-12" max="12" step="1" data-k="${k}" data-p="1"><b id="gl_${k}V"></b></div>`).join('')}
+    </details>
+    ${colours}
+    ${GL.hands?.oldCuff ? '<div class="note">Forged before gloves had cuffs of their own: once forged, the cuffs take your sleeve’s colour or the one you pick.</div>' : ''}
+    <div class="gl-tools"><button class="ctl" id="glCompare" title="Hold to see the gloves your Rebel has now">HOLD · BEFORE</button><button class="ctl" id="glReset" title="Back to the gloves your Rebel was forged with">RESET</button>
+      <div class="gl-poses">${GL_POSES.map(([c, n]) => `<button class="ctl${rebel.cur?.name === c ? ' on' : ''}" data-c="${c}">${n}</button>`).join('')}</div></div>
+    ${GL.err ? `<div class="errbox"><b>THE GLOVES WERE NOT FORGED</b><span>${esc(GL.err)} Your Rebel keeps the gloves it has.</span></div>` : ''}
+    <div class="cta">${canForge() ? `<button class="btn fire wide hold" id="glForge"><span class="fill"></span><span>HOLD TO FORGE THE GLOVES</span></button>` : `<button class="btn fire wide" id="glSign">${state.own?.wallet ? 'ONLY THE HOLDER CAN FORGE' : 'SIGN IN TO FORGE THEM'}</button>`}<button class="btn" id="glBack">← BACK</button></div>
+    <div class="note">${canForge() ? 'Forged again from the same sculpt with these gloves · about 5 min · no forge used · 3 a day. Worn in the lobby and the village.' : 'Only the wallet that holds this Rebel can forge its gloves. Everyone can try them on.'}</div>
+  `, quiet);
+  card.querySelectorAll('#glSide button').forEach((b) => b.onclick = () => { GL.side = b.dataset.s; card.querySelectorAll('#glSide button').forEach((x) => x.classList.toggle('on', x === b)); glPaint(); glCam(GL.side); Snd.play('select', { vol: 0.6 }); });
+  card.querySelectorAll('.gl-r').forEach((i) => { i.oninput = () => glSet(i.dataset.k, i.dataset.p ? +i.value * GL_STEP : +i.value / 100); i.onchange = () => Snd.play('pluck' + (1 + ((Math.random() * 6) | 0)), { vol: 0.35 }); });
+  card.querySelectorAll('.gl-part button').forEach((b) => b.onclick = () => { GL.part = b.dataset.k; glPaint(); Snd.play('select', { vol: 0.4 }); });
+  const row = card.querySelector('.gl-sw');
+  if (row) {
+    row.querySelectorAll('button').forEach((b) => b.onclick = () => { GL.fit[GL.part] = b.dataset.v || null; glPreview(); glPaint(); Snd.play('select', { vol: 0.5 }); });
+    const inp = row.querySelector('input'); inp.oninput = () => { GL.fit[GL.part] = inp.value.toLowerCase(); glPreview(); glPaint(); };
+  }
+  card.querySelectorAll('.gl-poses .ctl').forEach((b) => b.onclick = () => { glPose(b.dataset.c); card.querySelectorAll('.gl-poses .ctl').forEach((x) => x.classList.toggle('on', x === b)); });
+  const cb = $('#glCompare');
+  const cmp = (on) => { if (on) { glPreview(glFull(GL.built), true); cb.classList.add('held'); } else { glPreview(); cb.classList.remove('held'); } };
+  cb.onpointerdown = (e) => { e.preventDefault(); cmp(true); }; cb.onpointerup = cb.onpointerleave = () => cmp(false);
+  cb.onkeydown = (e) => { if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) cmp(true); }; cb.onkeyup = () => cmp(false);
+  $('#glReset').onclick = () => { GL.fit = glFull(null); glPreview(); glRender(true); Snd.play('swish_light', { vol: 0.6 }); };
+  $('#glBack').onclick = glClose;
+  const sg = $('#glSign'); if (sg) sg.onclick = async () => { if (state.own?.wallet) { toast('This Rebel is held by another wallet'); return; } if (!window.ethereum) { toast('Connect your wallet in the lobby, then come back through the Forge door'); return; } try { await window.RebelWallet.connectAndSignIn(); state.own = await loadOwn(); glRender(true); } catch (e) { toast(e.message || 'Sign-in failed'); } };
+  holdButton($('#glForge'), 1300, glForge);
+  glPaint();
+}
+// the sculpt's own glove colours, kept by the server the first time (the rig still shows them)
+function glAuto() { const o = {}; for (const k of ['glove', 'cuff']) { const e = GL.hands?.mats[k]; if (e && !GL.built?.[k]) o[k] = e.old ? GL.sleeve : glHex(e.c0); } return o; }
+async function glForge() {
+  const id = GL.buildId || state.assets?.buildId; if (!id) { toast('Nothing forged to fit yet'); return; }
+  GL.err = null; Snd.play('charge');
+  try {
+    const d = await api('/api/forge-rig-start', { buildId: id, gloves: { ...glFull(GL.fit), auto: glAuto() } });
+    const fr = d.forgeRig || {};
+    if (d.alreadyDone) { toast('Your Rebel already wears these gloves'); glRender(true); return; }
+    GL.job = { startedAt: fr.gloves?.startedAt || fr.startedAt, t0: Date.now() }; GL.step = fr.progress || 'starting'; GL.pct = 0;
+    flash(0.4, 0.8); shake(6); burst(1.0, 260); Snd.play('forge_start'); Snd.loop('forge_loop', 0.25);
+    glRender(); glPoll();
+  } catch (e) {
+    toast(e.message || 'Could not start the forge'); Snd.play('error'); glRender(true);
+  }
+}
+function glStage() { const i = GL_STAGES.findIndex((g) => g.steps.includes(GL.step)); return i < 0 ? 0 : i; }
+function glRenderForging(quiet) {
+  const si = glStage();
+  renderCard(`
+    <div class="eyebrow">STEP 5 / 5 · GLOVES <span class="jp">手袋</span></div>
+    <h1>Forging the gloves<span class="tag">The hammer sings</span></h1>
+    <div class="pct" id="glPct">${Math.round(GL.pct)}<small>%</small></div>
+    <div class="bar"><i id="glBar" style="width:${GL.pct}%"></i></div>
+    <div class="note live" id="glEta"></div>
+    <div class="sep"></div>
+    <div class="stages">${GL_STAGES.map((g, i) => `<div class="stg ${i < si ? 'ok' : i === si ? 'run' : ''}"><span class="sk">${g.k}</span><div><div class="sn">${g.n}</div><div class="sd">${g.d}</div></div><span class="ss">${i < si ? 'DONE' : i === si ? 'FORGING' : 'WAIT'}</span></div>`).join('')}</div>
+    <div class="note">You can close this page: the gloves keep forging, and your Rebel wears them when they are done. The preview shows what is being forged.</div>
+    <div class="cta"><button class="btn" id="glBack">← BACK</button></div>
+  `, quiet);
+  $('#glBack').onclick = glClose;
+  glProgressUI();
+}
+function glProgressUI(stepPct) {
+  if (!GL.job) return;
+  const el = (Date.now() - GL.job.t0) / 1000, tp = Math.min(95, el / GL_EST * 100);
+  GL.pct = Math.max(GL.pct || 0, Math.min(99, Math.max(stepPct || 0, tp)));
+  const p = $('#glPct'), b = $('#glBar'), e = $('#glEta');
+  if (p) p.innerHTML = `${Math.floor(GL.pct)}<small>%</small>`; if (b) b.style.width = GL.pct + '%';
+  if (e) { const left = Math.max(30, GL_EST - el); e.innerHTML = `<b>${esc(GL_STAGES[glStage()].n)}…</b> about ${fmtMin(left)} left`; }
+  if (GL.open) { const si = glStage(); card.querySelectorAll('.stg').forEach((r, i) => { r.classList.toggle('ok', i < si); r.classList.toggle('run', i === si); r.querySelector('.ss').textContent = i < si ? 'DONE' : i === si ? 'FORGING' : 'WAIT'; }); }
+  glBox();
+  if (GL.open && Date.now() - lastStrike > 4000 + Math.random() * 4000) { lastStrike = Date.now(); burst(0.9, 120); Snd.anvil(); }
+}
+async function glPoll() {
+  clearTimeout(GL.poll); if (!GL.job) return;
+  const id = GL.buildId || state.assets?.buildId;
+  let d = null; try { d = await api(`/api/forge-rig-status?buildId=${encodeURIComponent(id)}`); } catch (e) { GL.poll = setTimeout(glPoll, 9000); return; }
+  const fr = d.forgeRig || {};
+  if (fr.status === 'running') { GL.step = fr.progress || GL.step; glProgressUI(d.percent); GL.poll = setTimeout(glPoll, 5000); return; }
+  const g = fr.gloves || {}; Snd.stop('forge_loop');
+  GL.job = null; GL.built = fr.options?.handFit || null; GL.auto = fr.autoColors || GL.auto; GL.checked = fr;
+  if (g.failedAt && !g.doneAt) { GL.err = g.error || 'The forge stopped.'; GL.view = 'fit'; Snd.play('error'); glPreview(); if (GL.open) glRender(); else { toast('The gloves were not forged'); glBox(); } return; }
+  const url = d.forgeRigGlbUrl || fr.forgeRigGlbUrl;
+  if (url) await glWear(url, fr);
+}
+// the new rig: into the viewer, the saved character and this browser's selected Rebel
+async function glWear(url, fr) {
+  const id = GL.buildId || state.assets?.buildId;
+  state.assets = { ...(state.assets || {}), glb: url, thumb: fr.thumbUrl || state.assets?.thumb, buildId: id };
+  if (S && S.picked === id) { S.rigUrl = url; S.thumbUrl = fr.thumbUrl || S.thumbUrl; saveS(); }
+  GL.view = 'done'; GL.fit = glFull(GL.built);
+  if (GL.open) glRenderDone();
+  const clip = rebel.cur?.name || 'idle';
+  await loadRebelOnce(url);
+  rebel.meshes.forEach((m) => { m.visibility = 1; }); rebel.cur = null; play(rebel.groups[clip] ? clip : rebel.groups.fight_idle ? 'fight_idle' : 'idle', true);
+  GL.hands = null; glReady();
+  if (GL.open && GL.view === 'done') glRenderDone(true);
+  flash(0.7, 1.3); shake(10); burst(1.0, 500); steam.manualEmitCount = 160; Snd.hiss(); Snd.play('forged', { delay: 0.4 });
+  if (!GL.open) toast('New gloves forged');
+  glBox();
+  // the holder's saved character follows the new rig (the old file also leads here, forge-rig-latest)
+  if (canForge() && (state.mine || state.assets.activeBuildId === id)) {
+    try { const ad = await api('/api/forge-active-character-save', { buildId: id, tokenId: String(state.token), rebelId: GI().rebelId, collectionKey: COL, activeGlbUrl: url, activeCharacterModelType: 'rigged_forge_glb', build: { buildId: id, tokenId: String(state.token), rebelId: GI().rebelId, collectionKey: COL } }); if (ad.activeCharacter) rememberSelected(ad.activeCharacter, id, url); } catch (e) { console.warn('re-save character', e); }
+  } else { const sel = selectedRebel(); if (sel && sel.buildId === id) rememberSelected(sel.activeForgeCharacter || { activeGlbUrl: url }, id, url); }
+}
+function glRenderDone(quiet) {
+  renderCard(`
+    <div class="eyebrow">STEP 5 / 5 · GLOVES <span class="jp">手袋</span></div>
+    <div class="gl-done">手</div>
+    <h1>Gloves forged<span class="tag">Worn in the lobby and the village</span></h1>
+    <p class="lead">${rebel.ready ? 'Your Rebel wears its new gloves. Drag to turn it and try a few moves.' : 'Bringing your Rebel back with its new gloves…'}</p>
+    <div class="cta"><button class="btn fire wide" id="glBack">BACK TO YOUR REBEL</button><button class="btn" id="glAgain">FIT AGAIN</button></div>
+  `, quiet);
+  $('#glBack').onclick = () => { GL.view = 'fit'; glClose(); };
+  $('#glAgain').onclick = () => { GL.view = 'fit'; GL.err = null; glRender(); glPreview(); };
 }
 
 /* =========================================================
