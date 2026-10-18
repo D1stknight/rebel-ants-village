@@ -523,6 +523,18 @@ body.walk-photo #photoBtn{display:block}
 .journal-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .journal-card{border:1px solid rgba(94,207,202,.18);background:rgba(255,255,255,.035);border-radius:6px;padding:10px}
 .journal-card.full{grid-column:1/-1}
+.econ-card{border-color:rgba(214,175,92,.35);background:linear-gradient(135deg,rgba(214,175,92,.09),rgba(255,255,255,.025))}
+.econ-card strong{color:#d6af5c}
+.econ-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.econ-num{flex:1;min-width:150px;display:grid;gap:2px}
+.econ-num b{font-family:'Cinzel Decorative',serif;font-size:24px;color:#ffd166;letter-spacing:1px;line-height:1.1}
+.econ-num small{font-size:11px;color:rgba(255,255,255,.62);line-height:1.35}
+.econ-av{width:38px;height:38px;border-radius:50%;border:1px solid rgba(214,175,92,.5)}
+.econ-btn{font-family:inherit;font-size:11px;font-weight:600;line-height:1;letter-spacing:1.5px;text-transform:uppercase;padding:9px 13px;border-radius:5px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.06);color:#eee;cursor:pointer}
+.econ-btn:hover{background:rgba(255,255,255,.12)}
+.econ-btn.econ-discord{background:#5865f2;border-color:#5865f2;color:#fff}
+.econ-btn.econ-discord:hover{background:#4752c4}
+.econ-meta{margin-top:8px;font-size:11px;color:rgba(255,255,255,.6);line-height:1.4}
 .journal-card strong{display:block;color:#5ecfca;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
 .journal-card span{color:rgba(255,255,255,.72);font-size:12px;line-height:1.35}
 .journal-section-title{grid-column:1/-1;color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:12px;letter-spacing:2px;margin:6px 0 2px}
@@ -5085,14 +5097,14 @@ function renderProgressionJournal() {
     ['Completed Quests', ProgressionState.completedQuests.length],
     ['Villages Visited', ProgressionState.villagesVisited.length],
     ['Chests Opened', ProgressionState.chestsOpened.length],
-    ['Rebel Points', (Number(ProgressionState.rebelPoints) || 0).toLocaleString('en-US')],
     ['Collectibles Found', `${totalCollectibles} / ${COLLECTIBLE_TOTAL}`],
     ['Secrets Found', `${ProgressionState.secretsFound.length} / ${SECRET_TOTAL}`],
     ['Games Cleared', `${GAME_LIST.filter(([id]) => ProgressionState.games?.[id]?.cleared).length} / ${GAME_LIST.length}`],
     ['Ecosystem Actions', ecosystemCount],
     ['Badges Earned', earnedActiveBadges.length ? earnedActiveBadges.length : 'None yet']
   ];
-  grid.innerHTML = cards.map(([label, value]) => `<div class="journal-card"><strong>${label}</strong><span>${value}</span></div>`).join('');
+  grid.innerHTML = econJournalCard() + cards.map(([label, value]) => `<div class="journal-card"><strong>${label}</strong><span>${value}</span></div>`).join('');
+  refreshEcon();                                        // the balance changes in other games too (throttled)
 }
 
 function closeProgressionJournal() {
@@ -8909,8 +8921,129 @@ function setInteractionPrompt(text, visible) {
   prompt.classList.toggle('on', visible === true);
 }
 
+// ── The Rebel Economy link (api/econ-*; plans v2, Oct 18) ──
+// Signed in with Discord, the player's Rebel points go to their economy account (the points that buy forges) and the
+// village's server decides every award (api/econ-award: each chest, first clear and place riddle once per account, at
+// most 2,000 a day; more is held and paid on a later day). A guest's points are practice points, kept on this device
+// (ProgressionState.rebelPoints) and never carried over. While signed in, which chests are looted and which riddles are
+// solved follows the account, so a chest first opened as a guest still pays the account once.
+const Econ = { checked:false, configured:false, on:false, name:'', avatar:null, balance:null, today:0, cap:2000, owed:0, claimed:new Set(), hinted:false };
+const ECON_PENDING_KEY = 'rebelAntsEconPending:v1';   // awards the server didn't take (offline, signed out): sent again
+const econClaimed = (kind, id) => Econ.claimed.has(`${kind}:${id}`);
+let econCheckAt = 0;
+async function refreshEcon(force) {
+  if (!force && Date.now() - econCheckAt < 8000) return;
+  econCheckAt = Date.now();
+  let d = null;
+  try { const r = await fetch('/api/econ-me', { credentials:'same-origin', cache:'no-store' }); d = await r.json(); } catch (e) { return; }
+  if (!d?.ok) return;
+  const was = Econ.on, wasClaimed = [...Econ.claimed].sort().join('|');
+  Object.assign(Econ, { checked:true, configured:!!d.configured, on:!!d.signedIn, name:d.name || '', avatar:d.avatar || null,
+    balance:d.signedIn ? (d.balance ?? Econ.balance) : null, today:d.today || 0, cap:d.cap || 2000, owed:d.owed || 0, claimed:new Set(d.claimed || []) });
+  if (d.paidNow) showToast(`+${Number(d.paidNow).toLocaleString('en-US')} Rebel points held from an earlier day went to your account.`, 6000);
+  if (was !== Econ.on || wasClaimed !== [...Econ.claimed].sort().join('|')) refreshEconWorld();
+  if (Econ.on) flushEconPending();
+  renderJournalIfOpen();
+}
+function renderJournalIfOpen() { if (document.getElementById('progressionOverlay')?.classList.contains('on')) renderProgressionJournal(); }
+// signed in or out (or progress from another device): the chests show this player's looted state
+function refreshEconWorld() {
+  try {
+    getTreasureChestRoots().forEach(root => {
+      const looted = isChestLooted(root.metadata.chestId);
+      if (looted === (root.metadata.opened === true)) return;
+      root.metadata.opened = looted;
+      if (root.metadata._chestLidPivot) root.metadata._chestLidPivot.rotation.x = looted ? 1.05 : 0;
+      root.metadata._chestGlow?.setEnabled(looted);
+    });
+  } catch (e) {}
+}
+function econSignIn() {
+  const url = '/api/econ-discord-login?return=' + encodeURIComponent(location.pathname + location.search);
+  let w = null;
+  try { w = window.open(url + '&popup=1', 'rebelEconSignIn', 'width=520,height=760'); } catch (e) {}
+  if (!w) location.href = url;                              // popups blocked: sign in in this tab, it comes back here
+}
+async function econSignOut() {
+  try { await fetch('/api/econ-me', { method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ action:'logout' }) }); } catch (e) {}
+  Object.assign(Econ, { on:false, name:'', avatar:null, balance:null, today:0, owed:0, claimed:new Set() });
+  refreshEconWorld(); renderJournalIfOpen();
+  showToast('Signed out. Points are practice points on this device until you sign in again.', 5000);
+}
+function queueEconPending(kind, id) {
+  try {
+    const list = JSON.parse(localStorage.getItem(ECON_PENDING_KEY) || '[]').filter(p => Date.now() - (p.at || 0) < 7 * 864e5);
+    if (kind === 'find' || !list.some(p => p.kind === kind && p.id === id)) list.push({ kind, id, at:Date.now() });
+    localStorage.setItem(ECON_PENDING_KEY, JSON.stringify(list.slice(-60)));
+  } catch (e) {}
+}
+let econFlushing = false;
+async function flushEconPending() {
+  if (econFlushing || !Econ.on) return;
+  let list = []; try { list = JSON.parse(localStorage.getItem(ECON_PENDING_KEY) || '[]'); } catch (e) {}
+  if (!list.length) return;
+  econFlushing = true;
+  try { localStorage.removeItem(ECON_PENDING_KEY); } catch (e) {}
+  try { for (const p of list) await econAward(p.kind, p.id, { quiet:true }); } finally { econFlushing = false; }
+}
+// one award for the signed-in player: the server decides and says what it paid (the pop shows that)
+async function econAward(kind, id, opt = {}) {
+  let r = null, d = {};
+  try {
+    r = await fetch('/api/econ-award', { method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ kind, id }) });
+    d = await r.json().catch(() => ({}));
+  } catch (e) { queueEconPending(kind, id); return null; }
+  if (r.status === 401) {
+    queueEconPending(kind, id); Econ.on = false; refreshEconWorld(); renderJournalIfOpen();
+    showToast('You were signed out: sign in again in the Journal to keep these points.', 6000);
+    return null;
+  }
+  if (!d.ok) { if (d.retry !== false) queueEconPending(kind, id); return null; }
+  if (kind !== 'find') Econ.claimed.add(`${kind}:${id}`);
+  if (d.balance != null) Econ.balance = d.balance;
+  if (d.today != null) Econ.today = d.today;
+  if (d.cap) Econ.cap = d.cap;
+  if (d.owed != null) Econ.owed = d.owed;
+  if (!opt.quiet) {
+    if (d.paid) showRebelPointsPop(d.paid);
+    else if (d.held) showToast(`+${d.held} Rebel points held: that's today's ${Econ.cap.toLocaleString('en-US')} points. They go to your account when you play tomorrow.`, 7000);
+    else if (d.capped) showToast("That's today's Rebel points from this game. More tomorrow.", 4500);
+  }
+  try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ kind, id, points:d.paid || 0, held:d.held || 0, account:true, total:Econ.balance } })); } catch (e) {}
+  renderJournalIfOpen();
+  return d;
+}
+// a guest's first practice points of the visit say how to keep them
+function econPracticeHint() {
+  if (!Econ.configured || Econ.on || Econ.hinted) return;
+  Econ.hinted = true;
+  setTimeout(() => showToast('Practice points stay on this device. Sign in with Discord in the Journal to earn real Rebel points.', 7000), 2800);
+}
+// the account card at the top of the journal
+function econJournalCard() {
+  const local = (Number(ProgressionState.rebelPoints) || 0).toLocaleString('en-US');
+  if (!Econ.configured) return `<div class="journal-card"><strong>Rebel Points</strong><span>${local}</span></div>`;
+  if (!Econ.on) return `<div class="journal-card full econ-card"><strong>Practice Points</strong><div class="econ-row"><div class="econ-num"><b>${local}</b>`
+    + `<small>Practice points stay on this device and don't carry over.</small></div><button type="button" class="econ-btn econ-discord" onclick="econSignIn()">Sign in with Discord</button></div>`
+    + `<div class="econ-meta">Signed in, every chest, first game clear and riddle pays real Rebel points to your account: the points that forge your Rebel.</div></div>`;
+  const pct = Math.min(100, Math.round(100 * (Econ.today || 0) / (Econ.cap || 2000)));
+  const bal = Econ.balance == null ? '—' : Number(Econ.balance).toLocaleString('en-US');
+  return `<div class="journal-card full econ-card on"><strong>Rebel Points · your account</strong><div class="econ-row">`
+    + (Econ.avatar ? `<img class="econ-av" src="${escapeHTML(Econ.avatar)}" alt="">` : '')
+    + `<div class="econ-num"><b>${bal}</b><small>Signed in as ${escapeHTML(Econ.name || 'Rebel')} (Discord)</small></div>`
+    + `<button type="button" class="econ-btn" onclick="econSignOut()">Sign out</button></div>`
+    + `<div class="econ-meta">Earned today ${(Econ.today || 0).toLocaleString('en-US')} of ${(Econ.cap || 2000).toLocaleString('en-US')}${Econ.owed ? ` · ${Number(Econ.owed).toLocaleString('en-US')} held for tomorrow` : ''}</div>`
+    + `<div class="journal-progress"><div style="width:${pct}%"></div></div></div>`;
+}
+try { const bc = new BroadcastChannel('ra-econ'); bc.onmessage = () => refreshEcon(true); } catch (e) {}
+window.addEventListener('storage', e => { if (e.key === 'raEconPing') refreshEcon(true); });
+window.addEventListener('focus', () => refreshEcon());
+Object.assign(window, { econSignIn, econSignOut });
+window._econ = { state:Econ, refresh:refreshEcon, award:econAward }; // tests
+refreshEcon(true);
+
 // Chest tiers: what a chest pays in Rebel points and how it looks. Each chest pays once per player
-// (ProgressionState.chestsOpened); a looted chest stays open and empty.
+// (ProgressionState.chestsOpened; signed in, once per account: Econ.claimed); a looted chest stays open and empty.
 const CHEST_TIERS = {
   wood:     { points:10,   label:'Wooden Chest',   body:[.46,.21,.075], band:[.22,.22,.25], trim:[.9,.56,.14],  coins:6 },
   iron:     { points:25,   label:'Iron Chest',     body:[.30,.16,.07],  band:[.48,.5,.54],  trim:[.62,.64,.68], coins:9 },
@@ -8923,7 +9056,7 @@ function getChestTier(meta = {}) { return CHEST_TIERS[meta.chestTier] ? meta.che
 function getChestPoints(meta = {}) {
   return meta.rewardType === 'rebel_points' && Number(meta.rewardAmount) > 0 ? Number(meta.rewardAmount) : CHEST_TIERS[getChestTier(meta)].points;
 }
-function isChestLooted(chestId) { return !!chestId && (ProgressionState.chestsOpened || []).includes(chestId); }
+function isChestLooted(chestId) { return !!chestId && (Econ.on ? econClaimed('chest', chestId) : (ProgressionState.chestsOpened || []).includes(chestId)); }
 
 function getDefaultTreasureChestMetadata(source = {}) {
   return {
@@ -9974,14 +10107,19 @@ function openTreasureChest(chest) {
     chestId:chestKey,
     targetObjectId:chestKey
   });
-  if (firstTime) {
-    // Rebel points: kept locally (rebelPointsLog) until the Rebel economy link sends them on.
-    const points = getChestPoints(chest.metadata), tier = getChestTier(chest.metadata);
+  const points = getChestPoints(chest.metadata), tier = getChestTier(chest.metadata);
+  if (Econ.on) {
+    // signed in: the account's own record decides, and the server says what it paid (its pop)
+    if (econClaimed('chest', chestKey)) showToast('This chest is empty.');
+    else { Econ.claimed.add(`chest:${chestKey}`); spawnRebelCoinBurst(chest, CHEST_TIERS[tier].coins, points, false); econAward('chest', chestKey).then(d => { if (!d) Econ.claimed.delete(`chest:${chestKey}`); }); }
+  } else if (firstTime) {
+    // a guest: practice points on this device (rebelPointsLog), never sent on
     ProgressionState.rebelPoints = (Number(ProgressionState.rebelPoints) || 0) + points;
     if (!Array.isArray(ProgressionState.rebelPointsLog)) ProgressionState.rebelPointsLog = [];
     ProgressionState.rebelPointsLog.push({ chestId:chestKey, villageId:CURRENT_VILLAGE_ID, tier, points, at:Date.now(), synced:false });
     saveProgressionState();
     spawnRebelCoinBurst(chest, CHEST_TIERS[tier].coins, points);
+    econPracticeHint();
     try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ chestId:chestKey, points, total:ProgressionState.rebelPoints } })); } catch(e) {}
   } else {
     showToast('This chest is empty.');
@@ -9992,7 +10130,7 @@ function openTreasureChest(chest) {
 
 // Coins burst out of an opened chest, hang in the air for a moment, then fly to the player one by one.
 // One shared coin mesh (thin instances would also do; instances keep it simple), removed when done.
-function spawnRebelCoinBurst(chest, count, points) {
+function spawnRebelCoinBurst(chest, count, points, pop = true) {
   const origin = chest.getAbsolutePosition().add(new BABYLON.Vector3(0, 1.6 * CHEST_MODEL_SCALE * Math.abs(chest.scaling?.y || 1), 0));
   if (!spawnRebelCoinBurst.base || spawnRebelCoinBurst.base.isDisposed?.()) {
     const mat = new BABYLON.StandardMaterial('rebelCoinMat', scene);
@@ -10026,13 +10164,16 @@ function spawnRebelCoinBurst(chest, count, points) {
       scene.onBeforeRenderObservable.remove(obs);
     }
   });
-  showRebelPointsPop(points);
+  if (pop) showRebelPointsPop(points);                 // signed in, the server's answer pops instead (econAward)
 }
 
 function showRebelPointsPop(points) {
   let el = document.getElementById('rebelPointsPop');
   if (!el) { el = document.createElement('div'); el.id = 'rebelPointsPop'; document.body.appendChild(el); }
-  el.innerHTML = `<b>+${points}</b><span>Rebel Points</span><em>Total ${(Number(ProgressionState.rebelPoints) || 0).toLocaleString('en-US')}</em>`;
+  // signed in: the account's balance; a guest (when sign-in is set up): practice points on this device
+  const label = Econ.on || !Econ.configured ? 'Rebel Points' : 'Practice Points';
+  const total = Econ.on ? (Econ.balance == null ? 'Sent to your account' : `Your account ${Number(Econ.balance).toLocaleString('en-US')}`) : `Total ${(Number(ProgressionState.rebelPoints) || 0).toLocaleString('en-US')}`;
+  el.innerHTML = `<b>+${points}</b><span>${label}</span><em>${total}</em>`;
   el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
   clearTimeout(showRebelPointsPop._t); showRebelPointsPop._t = setTimeout(() => el.classList.remove('on'), 2600);
 }
@@ -10634,6 +10775,8 @@ const GAME_POINTS_X = 2;
 // first time); a wrong one only says so, or starts the riddle over when it resets
 function readPlaceRiddle(cfg) {
   const R = cfg.riddle, all = (ProgressionState.riddles ||= {}), r = (all[R.id] ||= { asked:false, part:0, solved:false });
+  // signed in, solved follows the account: a riddle solved here as a guest can be solved once more for it
+  if (r.solved && Econ.on && R.points && !econClaimed('riddle', R.id)) Object.assign(r, { solved:false, part:0 });
   if (r.solved) { queueQuestCelebration({ kicker:'Riddle Solved', title:R.title, body:escapeHTML(R.solvedText || 'You found every answer.'), chips:[], duration:6000 }); return true; }
   r.asked = true; r.part = Math.min(r.part || 0, R.parts.length - 1); r.at = Date.now();
   if (R.travels) r.def = { id:R.id, title:R.title, parts:R.parts, points:R.points, solvedText:R.solvedText, reset:R.reset, travels:true };
@@ -10664,17 +10807,19 @@ function answerPlaceRiddle(cfg) {
   if (r.part < R.parts.length) { saveProgressionState(); if (A.text) showToast(A.text, 4500); showPlaceRiddlePart(R, r.part); return true; }
   r.solved = true; r.solvedAt = Date.now();
   const pts = (R.points || 0) * GAME_POINTS_X;
-  if (pts) {
+  if (pts && Econ.on) { if (!econClaimed('riddle', R.id)) setTimeout(() => econAward('riddle', R.id), 600); }   // the account (the server pays)
+  else if (pts) {
     ProgressionState.rebelPoints = (Number(ProgressionState.rebelPoints) || 0) + pts;
     if (!Array.isArray(ProgressionState.rebelPointsLog)) ProgressionState.rebelPointsLog = [];
     ProgressionState.rebelPointsLog.push({ riddleId:R.id, villageId:CURRENT_VILLAGE_ID, points:pts, at:Date.now(), synced:false });
     try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ riddleId:R.id, points:pts, total:ProgressionState.rebelPoints } })); } catch (e) {}
     setTimeout(() => showRebelPointsPop(pts), 600);
+    econPracticeHint();
   }
   saveProgressionState();
   try { window.dispatchEvent(new CustomEvent('rebelAntsRiddle', { detail:{ riddleId:R.id, villageId:CURRENT_VILLAGE_ID } })); } catch (e) {}
   MoonTaleSounds.fx?.('gamewin');
-  queueQuestCelebration({ kicker:'Riddle Solved', title:R.title, body:escapeHTML(A.text || R.solvedText || ''), chips:pts ? [{ label:`+${pts} Rebel points`, tone:'gold' }] : [], duration:7000 });
+  queueQuestCelebration({ kicker:'Riddle Solved', title:R.title, body:escapeHTML(A.text || R.solvedText || ''), chips:pts ? [{ label:`+${pts} ${Econ.on || !Econ.configured ? 'Rebel' : 'practice'} points`, tone:'gold' }] : [], duration:7000 });
   return true;
 }
 window._placeRiddles = { read:readPlaceRiddle, answer:answerPlaceRiddle }; // tests
@@ -10999,6 +11144,7 @@ function showMiniGameHowTo() {
   RebelGames.HUD.howTo({ title: MiniGames.def?.title || MiniGames.impl.title, lines: how.lines, img: how.img ? 'assets/games/' + how.img : null, caption: how.caption });
 }
 function grantMiniGameRebelPoints(def, points, cap) {
+  if (Econ.on) { econAward('find', def.id); return Math.round(points) || 0; }    // the account: the server keeps the day's cap
   const day = new Date().toISOString().slice(0, 10), key = `${def.id}:${day}`;
   const got = ProgressionState.gamePointsDay?.[key] || 0, give = Math.max(0, Math.min(Math.round(points) || 0, cap - got));
   if (!give) return 0;
@@ -11007,7 +11153,7 @@ function grantMiniGameRebelPoints(def, points, cap) {
   ProgressionState.rebelPoints = (Number(ProgressionState.rebelPoints) || 0) + give;
   if (!Array.isArray(ProgressionState.rebelPointsLog)) ProgressionState.rebelPointsLog = [];
   ProgressionState.rebelPointsLog.push({ gameId:def.id, found:true, villageId:CURRENT_VILLAGE_ID, points:give, at:Date.now(), synced:false });
-  saveProgressionState(); showRebelPointsPop(give);
+  saveProgressionState(); showRebelPointsPop(give); econPracticeHint();
   try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ gameId:def.id, points:give, total:ProgressionState.rebelPoints } })); } catch(e) {}
   return give;
 }
@@ -11336,24 +11482,28 @@ function finishMiniGame(r) {
   const prevBest = rec.best || 0, newBest = rec.plays > 0 && done && (low ? !prevBest || score < prevBest : score > prevBest);
   rec.plays = (rec.plays || 0) + 1; rec.best = low ? (done ? (prevBest ? Math.min(prevBest, score) : score) : prevBest) : Math.max(prevBest, score); rec.last = score; rec.at = Date.now();
   if (low) rec.low = true;
-  let points = 0, firstClear = false;
-  if (passed && !rec.cleared) {
-    rec.cleared = true; rec.clearedAt = Date.now(); points = (def.points || 0) * GAME_POINTS_X; firstClear = true;
-    if (points) {
-      ProgressionState.rebelPoints = (Number(ProgressionState.rebelPoints) || 0) + points;
-      if (!Array.isArray(ProgressionState.rebelPointsLog)) ProgressionState.rebelPointsLog = [];
-      ProgressionState.rebelPointsLog.push({ gameId:def.id, villageId:CURRENT_VILLAGE_ID, points, at:Date.now(), synced:false });
-      try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ gameId:def.id, points, total:ProgressionState.rebelPoints } })); } catch (e) {}
-    }
+  let points = 0, firstClear = false, toAccount = false;
+  if (passed && !rec.cleared) { rec.cleared = true; rec.clearedAt = Date.now(); firstClear = true; }
+  const clearPts = (def.points || 0) * GAME_POINTS_X;
+  if (passed && clearPts && Econ.on) {
+    // signed in: the account's first clear (one cleared here as a guest still pays it once); the server pays
+    if (!econClaimed('game', def.id)) { points = clearPts; toAccount = true; Econ.claimed.add(`game:${def.id}`); setTimeout(() => econAward('game', def.id).then(d => { if (!d) Econ.claimed.delete(`game:${def.id}`); }), 600); }
+  } else if (firstClear && clearPts) {
+    points = clearPts;
+    ProgressionState.rebelPoints = (Number(ProgressionState.rebelPoints) || 0) + points;
+    if (!Array.isArray(ProgressionState.rebelPointsLog)) ProgressionState.rebelPointsLog = [];
+    ProgressionState.rebelPointsLog.push({ gameId:def.id, villageId:CURRENT_VILLAGE_ID, points, at:Date.now(), synced:false });
+    try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ gameId:def.id, points, total:ProgressionState.rebelPoints } })); } catch (e) {}
+    econPracticeHint();
   }
   saveProgressionState();
   if (firstClear) checkAutoBadges(); // a first clear can finish a village's games (the card waits for the game to end)
   if (passed && def.questOn === 'pass') miniGameQuestHook();
   if (passed && GamesPack.slots?.game_cheer && !MiniGames.roam) playMiniGameClip('game_cheer'); // a Rebel with the games pack cheers a clear
   try { window.dispatchEvent(new CustomEvent('rebelAntsGameEnd', { detail:{ game:def.id, score, passed, best:rec.best, newBest, points } })); } catch (e) {}
-  if (points) setTimeout(() => showRebelPointsPop(points), 600);
+  if (points && !toAccount) setTimeout(() => showRebelPointsPop(points), 600);
   if (MiniGames.roam) { moveForward = moveBackward = turnLeft = turnRight = runKey = false; if (charMesh) charMesh._vel = 0; }
-  const extra = [r.extra || '', points ? `First clear: +${points} Rebel points.` : (!passed && def.pass ? (r.solved ? `${def.pass} points clears the game: try a harder level.` : `Score ${def.pass} to clear it.`) : '')].filter(Boolean).join(' ');
+  const extra = [r.extra || '', points ? `First clear: +${points} ${toAccount ? 'Rebel points to your account' : Econ.configured ? 'practice points (sign in to keep your points)' : 'Rebel points'}.` : (!passed && def.pass ? (r.solved ? `${def.pass} points clears the game: try a harder level.` : `Score ${def.pass} to clear it.`) : '')].filter(Boolean).join(' ');
   const clock = t => t >= 60 ? `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}` : t.toFixed(1); // a minute or more as m:ss.s
   const nextLevel = r.next !== undefined ? r.next : (r.solved || passed) && MiniGames.level != null && MiniGames.level + 1 < (MiniGames.levels || 0) ? MiniGames.level + 1 : null;
   RebelGames.showResult({ kicker: r.kicker || (passed ? 'Cleared' : r.solved ? (r.solvedWord || 'Solved') : 'Game over'), title: def.title || MiniGames.impl?.title || '', score: low ? (done ? clock(score) : '—') : score, label: r.label || (low ? (done && score >= 60 ? 'time' : 'seconds') : 'points'), best: low ? (rec.best ? (rec.best >= 60 ? clock(rec.best) : rec.best.toFixed(1) + ' s') : null) : rec.best, newBest, extra,
