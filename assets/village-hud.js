@@ -17,6 +17,9 @@
 #rebelHudBtn .dot{position:absolute;right:1px;top:1px;width:13px;height:13px;border-radius:50%;background:#f0503c;border:2px solid #0a0d16;display:none}
 #rebelHudBtn.has-news .dot{display:block}
 #rebelHudBtn:hover img{filter:brightness(1.12)}
+#rebelHudBtn .econ{position:absolute;right:-3px;bottom:-3px;width:23px;height:23px;border-radius:50%;background:#5865f2;border:2px solid #5865f2;
+  box-shadow:0 0 0 2px rgba(5,10,28,.92);overflow:hidden;display:none}
+#rebelHudBtn .econ img{position:static;width:100%;height:100%;border:none;border-radius:50%;object-fit:cover;background:#5865f2}
 #questLine{position:fixed;top:90px;left:100px;max-width:212px;padding:6px 11px 7px;background:rgba(5,10,28,.72);border:1px solid rgba(232,197,106,.28);
   border-radius:8px;z-index:12;pointer-events:none;font-family:'Cinzel',serif;display:none}
 #questLine b{display:block;color:${GOLD};font-size:10px;letter-spacing:.6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -35,7 +38,8 @@ body.rebel-panel-open #questLine{display:none!important}
     // the Rebel button: portrait in a gold ring, a thin ring for the next badge, a red dot for news (a new objective)
     const b = document.createElement('button'); b.id = 'rebelHudBtn'; b.type = 'button'; b.title = 'Your Rebel (Tab)';
     b.innerHTML = '<svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="27.5" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="4"/>' +
-      '<circle id="rebelHudRing" cx="30" cy="30" r="27.5" fill="none" stroke="' + TEAL + '" stroke-width="4" stroke-linecap="round" stroke-dasharray="0 999"/></svg><img alt=""><span class="dot"></span>';
+      '<circle id="rebelHudRing" cx="30" cy="30" r="27.5" fill="none" stroke="' + TEAL + '" stroke-width="4" stroke-linecap="round" stroke-dasharray="0 999"/></svg><img alt=""><span class="dot"></span>' +
+      '<span class="econ"><img alt=""></span>';
     document.body.appendChild(b);
     b.addEventListener('click', e => { e.stopPropagation(); HUD.togglePanel(); b.blur(); });
     const q = document.createElement('div'); q.id = 'questLine'; q.innerHTML = '<b></b><span></span>'; document.body.appendChild(q);
@@ -62,8 +66,16 @@ body.rebel-panel-open #questLine{display:none!important}
   // keep the button and the quest line in step with the panel (portrait, badge progress, active quest)
   function syncButton() {
     const b = document.getElementById('rebelHudBtn'); if (!b) return;
-    const src = document.getElementById('selectedRebelImage')?.getAttribute('src'), img = b.querySelector('img');
+    const src = document.getElementById('selectedRebelImage')?.getAttribute('src'), img = b.querySelector(':scope > img');
     if (src && img.getAttribute('src') !== src) img.setAttribute('src', src);
+    // signed in with Discord (the panel's Discord circle): the Discord picture on the button's lower right
+    const eb = document.getElementById('econBadge'), signed = !!eb?.classList.contains('on'), ei = signed ? eb.querySelector('img') : null, m = b.querySelector('.econ');
+    if (m) {
+      const es = ei?.getAttribute('src') || '';
+      m.style.display = es ? 'block' : 'none';
+      if (es && m.firstChild.getAttribute('src') !== es) m.firstChild.setAttribute('src', es);
+      b.title = signed ? 'Your Rebel (Tab) · ' + eb.title : 'Your Rebel (Tab)';
+    }
     const fill = parseFloat(document.getElementById('hudProgressFill')?.style.width) || 0, C = 2 * Math.PI * 27.5;
     document.getElementById('rebelHudRing')?.setAttribute('stroke-dasharray', `${(C * Math.max(0, Math.min(100, fill)) / 100).toFixed(1)} ${C.toFixed(1)}`);
     const tr = document.getElementById('questTrackerObjective'), on = document.getElementById('questTracker');
