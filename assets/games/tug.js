@@ -77,13 +77,9 @@
       const rigs = { me: null, npc: null, fistMe: [], fistNpc: [], seek: 0 };
       // the ring: swells to full once a cycle; a pull near the top counts
       const hud = document.getElementById('gameHud'), ringBox = document.createElement('div');
-      // high on the side away from the opponent (Oct 18: at mid right it covered him on most screens); see ringSide
-      ringBox.style.cssText = 'position:absolute;right:max(16px,4vw);top:max(72px,12vh);width:150px;height:150px;pointer-events:none';
-      const ringSide = () => { // projected with the game camera itself (0..1 across the view)
-        const cam = scene.activeCamera; if (!cam) return;
-        const o = npc ? npc.getAbsolutePosition() : ctx.toWorld(0, 1.5, GAP / 2), v = V3.Project(o, B.Matrix.Identity(), cam.getViewMatrix().multiply(cam.getProjectionMatrix()), new B.Viewport(0, 0, 1, 1));
-        const left = v.z > 0 && v.z < 1 && v.x > .5; st.ringLeft = left;
-        ringBox.style.left = left ? 'max(16px,4vw)' : ''; ringBox.style.right = left ? '' : 'max(16px,4vw)'; };
+      // top centre, over the middle of the rope between the two heads (Oct 18: at mid right it covered the opponent; on
+      // the side away from him it sat over the Rebel once they faced each other)
+      ringBox.style.cssText = 'position:absolute;left:50%;top:max(64px,9vh);width:150px;height:150px;margin-left:-75px;pointer-events:none';
       ringBox.innerHTML = '<div class="tg-target" style="position:absolute;inset:0;border-radius:50%;border:5px solid rgba(255,216,119,.5);box-sizing:border-box"></div><div class="tg-ring" style="position:absolute;inset:6px;border-radius:50%;transform:scale(.2)"></div><div class="tg-word" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 20px Georgia,serif;color:#fff;text-shadow:0 1px 4px #000"></div>';
       hud.appendChild(ringBox); const ringEl = ringBox.querySelector('.tg-ring'), wordEl = ringBox.querySelector('.tg-word'), targetEl = ringBox.querySelector('.tg-target');
       const flash = document.createElement('div'); flash.style.cssText = 'position:absolute;inset:0;pointer-events:none;opacity:0;background:rgba(170,20,20,.35);transition:opacity .3s'; hud.appendChild(flash);
@@ -239,7 +235,6 @@
             const end = st.b >= 1 ? 'won' : st.b <= -1 ? 'lost' : st.left <= 0 ? (st.b > 0 ? 'won' : 'lost') : null;
             if (end) { st.phase = end; st.wait = 1.8; ctx.sound(end === 'won' ? 'gamewin' : 'thock'); H.msg(end === 'won' ? 'Over the line!' : 'Pulled over…', 1500); }
           }
-          if ((st.sideT = (st.sideT || 0) - dt) <= 0) { st.sideT = .5; ringSide(); }
           // the opponent pulls in rhythm: reach out along the rope, then draw it in leaning back (quicker in a heave)
           st.pull = (st.pull + dt / (st.heave > 0 ? .62 : 1.3)) % 1; st.s = .5 - .5 * Math.cos(Math.PI * 2 * st.pull);
           st.kick = Math.max(0, st.kick - dt * .6); drawRing(); place();
