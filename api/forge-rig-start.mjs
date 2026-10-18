@@ -5,9 +5,12 @@
 // e.g. image-to-3D of the head crop, that replaces the body's own head before rigging), armorUrl + anchorsUrl (part-built
 // characters: a separately generated armour set fitted onto the body) and cutBridges (cut hand-to-robe bridge faces).
 // One rig per build (idempotent). Re-rigging an already rigged build (force) is admin-only.
+// Rebel Forge gloves (Oct 18, rigger 2.33): POST {buildId, gloves: {Left, Right, glove, cuff}} (the NPC Forge hand fit)
+// re-rigs a rigged Rebel with its holder's glove fit: same sculpt and rig options, today's worker, no Rebel Forge credits
+// and no forge used (3 a day per Rebel). The Rebel's holder or an admin; never #001. A re-rig keeps the fit.
 import { isAdminRequest } from './_admin-auth.mjs';
 import { getToken } from './_nft.mjs';
-import { requireForgeStep } from './_wallet.mjs';
+import { requireForgeStep, walletOf, holderOf } from './_wallet.mjs';
 import { enforceRateLimit } from './_guard.mjs';
 import { Sandbox, creds, WORKER_KEY, FW, JOB_DIR, JOB_TIMEOUT_MS, redis, getJson, loadBuild, updateRigging, sourceGlbUrl, sanitize, body } from './_forge-rig.mjs';
 
@@ -47,16 +50,106 @@ function handFitEnv(hf) {
   const fit = { ...(hf.Left ? { Left: hf.Left } : {}), ...(hf.Right ? { Right: hf.Right } : {}) };
   return { ...(Object.keys(fit).length ? { FORGE_HAND_FIT: JSON.stringify(fit) } : {}), ...(hf.glove ? { FORGE_GLOVE_RGB: srgb01(hf.glove) } : {}), ...(hf.cuff ? { FORGE_CUFF_RGB: srgb01(hf.cuff) } : {}) };
 }
+// the job's env for a build's rig options
+function optionEnv({ skirtfix, up, headUrl, armorUrl, anchorsUrl, cutBridges, hs, headAuto, npc, npcSpecies, hf }) {
+  return { ...(skirtfix ? { FORGE_SKIRTFIX: '1', FORGE_KEEP_TEAR: '', FORGE_KEEP_BRIDGE: '' } : {}), ...(up ? { FORGE_HEAD_UP: String(up) } : {}), ...(headUrl ? { FORGE_HEAD_URL: String(headUrl) } : {}), ...(armorUrl ? { FORGE_ARMOR_URL: String(armorUrl), FORGE_ANCHORS_URL: String(anchorsUrl) } : {}), ...(cutBridges && !skirtfix ? { FORGE_KEEP_TEAR: '', FORGE_KEEP_BRIDGE: '' } : {}), ...(hs !== null ? { FORGE_HEAD_SCALE: String(hs) } : {}), ...(headAuto ? { FORGE_HEAD_AUTO: '1' } : {}), ...(npc ? { FORGE_NPC: '1' } : {}), ...(npcSpecies ? { FORGE_NPC_SPECIES: npcSpecies } : {}), ...handFitEnv(hf) };
+}
+// one rig job in a fresh sandbox from the worker image
+async function runJob(worker, buildId, src, name, env) {
+  const sandbox = await Sandbox.create({
+    source: { type: 'snapshot', snapshotId: worker.snapshotId },
+    persistent: false,
+    resources: { vcpus: 2 },
+    timeout: JOB_TIMEOUT_MS,
+    tags: { purpose: 'forge-rig-job', build: String(buildId).slice(0, 200) },
+    ...creds()
+  });
+  const cmd = await sandbox.runCommand({
+    cmd: 'bash',
+    args: ['-c', `mkdir -p ${JOB_DIR} && bash ${FW}/job.sh "$SRC_URL" "$RIG_NAME" ${JOB_DIR}`],
+    env: { SRC_URL: src, RIG_NAME: name, ...env },
+    sudo: true,
+    detached: true
+  });
+  return { sandbox, cmd };
+}
+
+// ---- Rebel Forge gloves ----
+const GLOVES_DAILY = Math.max(1, parseInt(process.env.FORGE_GLOVES_DAILY || '3', 10));   // glove re-rigs per Rebel per day
+const BLOB = /^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\//;
+const fitKey = (h) => JSON.stringify(cleanHandFit(h));   // null = the automatic gloves
+const hexOf = (v) => (/^#[0-9a-f]{6}$/i.test(String(v || '')) ? String(v).toLowerCase() : null);
+// #001 is the master: its gloves are never refitted
+const isMaster = (rec) => (rec.collectionKey || 'battle_for_colony') === 'battle_for_colony' && /^0*1$/.test(String(rec.tokenId || ''));
+async function startGloves(req, res, rec, buildId, admin, gloves) {
+  const cur = rec.forgeRig || {}, rigUrl = rec.output?.forgeRigGlbUrl || '';
+  if (cur.options?.npc) return res.status(400).json({ ok: false, error: 'NPC hands are fitted in the NPC Forge' });
+  if (isMaster(rec)) return res.status(403).json({ ok: false, error: 'Rebel #001 keeps its gloves', code: 'master' });
+  if (!BLOB.test(rigUrl)) return res.status(409).json({ ok: false, error: 'Forge this Rebel first', code: 'no_rig' });
+  if (cur.status === 'running') return res.status(200).json({ ok: true, forgeRig: cur, alreadyRunning: true });
+  const hf = cleanHandFit(gloves);
+  if (fitKey(hf) === fitKey(cur.options?.handFit)) return res.status(200).json({ ok: true, forgeRig: cur, alreadyDone: true });
+  const col = rec.collectionKey || 'battle_for_colony', tok = String(rec.tokenId || '');
+  if (!admin) {
+    const wallet = walletOf(req);
+    if (!wallet) return res.status(401).json({ ok: false, error: 'Sign in with your wallet to forge its gloves', code: 'wallet_required' });
+    if (!/^\d{1,78}$/.test(tok)) return res.status(400).json({ ok: false, error: 'This build has no Rebel token', code: 'bad_token' });
+    const h = await holderOf(col, tok, wallet, { fresh: true });
+    if (!h.holder) return res.status(403).json({ ok: false, error: 'Only the wallet that holds this Rebel (or its delegate.xyz delegate) can forge its gloves', code: 'not_owner' });
+    if (!(await enforceRateLimit(req, res, 'rig-gloves', 6, 86400, 'glove forgings today'))) return;
+    const day = new Date().toISOString().slice(0, 10), rk = `forge:gloves:count:${col}:${tok}:${day}`, gk = `forge:rig:count:${day}`;
+    const [n, , g] = await redis([['INCR', rk], ['EXPIRE', rk, 172800], ['INCR', gk], ['EXPIRE', gk, 172800]]);
+    if (Number(n?.result || 0) > GLOVES_DAILY) return res.status(429).json({ ok: false, error: `A Rebel's gloves can be forged ${GLOVES_DAILY} times a day. Try again tomorrow.`, code: 'gloves_daily' });
+    if (Number(g?.result || 0) > DAILY_LIMIT) return res.status(429).json({ ok: false, error: 'Daily rig limit reached, try again tomorrow' });
+  }
+  const lockKey = `forge:rig:start-lock:${buildId}`;
+  const [lock] = await redis([['SET', lockKey, '1', 'NX', 'EX', 60]]);
+  if (lock?.result !== 'OK') return res.status(409).json({ ok: false, error: 'These gloves are already being forged', code: 'starting' });
+  try {
+    const worker = await getJson(WORKER_KEY);
+    if (!worker?.snapshotId) throw Object.assign(new Error('Rig worker is not built yet'), { status: 503 });
+    // the rig as it was made (options, source), only the gloves new
+    const o = cur.options || {}, hs = o.headScale == null || o.headScale === '' ? null : Number(o.headScale);
+    const src = cur.sourceGlbUrl || sourceGlbUrl(rec);
+    if (!src) throw Object.assign(new Error('Build has no stored GLB'), { status: 409 });
+    const headAuto = hs === null ? await headAutoFor(rec) : false;
+    const up = Number(o.headUp || 0);
+    const { sandbox, cmd } = await runJob(worker, buildId, src, `rebel${sanitize(rec.tokenId || rec.rebelId, 'x')}`,
+      optionEnv({ skirtfix: o.skirtfix, up, headUrl: o.headUrl, armorUrl: o.armorUrl, anchorsUrl: o.anchorsUrl, cutBridges: o.cutBridges, hs, headAuto, npc: false, npcSpecies: '', hf }));
+    // prev: the rig as it is, put back if the job fails; rigHistory: every rig this build had, linked to the new one when
+    // it is done (saved characters keep the URL they were saved with)
+    const prev = { ...cur }; delete prev.gloves;
+    const at = new Date().toISOString();
+    // the sculpt's own glove / cuff colours (the Forge's "Forged" swatch once a rig has other colours): sent by the page
+    // while the rig still has them
+    const was = cur.options?.handFit || {}, sent = (gloves && typeof gloves === 'object' && gloves.auto) || {};
+    const autoColors = { glove: cur.autoColors?.glove || (!was.glove && hexOf(sent.glove)) || null, cuff: cur.autoColors?.cuff || (!was.cuff && hexOf(sent.cuff)) || null };
+    const next = await updateRigging(buildId, {
+      engine: 'forge-rigger', status: 'running', progress: 'starting', sandboxName: sandbox.name, cmdId: cmd.cmdId,
+      workerCommit: worker.commit || null, sourceGlbUrl: src,
+      options: { ...o, headUp: up, headScale: hs, headAuto, npc: false, handFit: hf, species: null },
+      gloves: { from: rigUrl, by: admin ? 'admin' : 'holder', startedAt: at, prev },
+      rigHistory: [...new Set([...(cur.rigHistory || []), rigUrl])].filter((u) => BLOB.test(u)).slice(-20), autoColors,
+      startedAt: at, finishedAt: null, error: null
+    });
+    try { await redis([['SADD', 'forge:pending:v1', String(buildId)]]); } catch (e) {}
+    const { prev: _p, ...g } = next.forgeRig.gloves;
+    return res.status(200).json({ ok: true, forgeRig: { ...next.forgeRig, gloves: g } });
+  } catch (err) {
+    try { await redis([['DEL', lockKey]]); } catch (e) {}
+    return res.status(err.status || 500).json({ ok: false, error: err?.message || String(err) });
+  }
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
-  const { buildId, force, sourceUrl, skirtfix, headUp, headUrl, armorUrl, anchorsUrl, cutBridges, headScale, npc, handFit, species } = body(req);
+  const { buildId, force, sourceUrl, skirtfix, headUp, headUrl, armorUrl, anchorsUrl, cutBridges, headScale, npc, handFit, species, gloves } = body(req);
   if (!buildId) return res.status(400).json({ ok: false, error: 'Missing buildId' });
   try {
     const rec = await loadBuild(buildId);
     const admin = isAdminRequest(req);
+    if (gloves !== undefined) return await startGloves(req, res, rec, buildId, admin, gloves);
     if ((sourceUrl || skirtfix || headUp || headUrl || armorUrl || anchorsUrl || cutBridges || headScale || npc || handFit) && !admin) return res.status(401).json({ ok: false, error: 'sourceUrl / skirtfix / headUp / headUrl / armorUrl / anchorsUrl / cutBridges / headScale / npc / handFit require admin' });
-    const hf = npc ? cleanHandFit(handFit) : null;
     const hs = headScale == null || headScale === '' ? null : Number(headScale); if (hs !== null && (!Number.isFinite(hs) || hs < 0.8 || hs > 1.1)) return res.status(400).json({ ok: false, error: 'headScale must be 0.8..1.1' });
     const up = Number(headUp || 0); if (!Number.isFinite(up) || up < -20 || up > 25) return res.status(400).json({ ok: false, error: 'headUp must be -20..25 degrees' });
     if (sourceUrl && !SOURCE_OK.test(String(sourceUrl))) return res.status(400).json({ ok: false, error: 'sourceUrl must be a GLB in this repo or our Blob store' });
@@ -66,6 +159,8 @@ export default async function handler(req, res) {
     const src = sourceUrl || sourceGlbUrl(rec);
     if (!src) return res.status(409).json({ ok: false, error: 'Build has no stored GLB yet (run forge-3d-store-glb first)' });
     const cur = rec.forgeRig || {};
+    // v2.18 the NPC Forge's hand fit; a Rebel's re-rig keeps the gloves its holder forged (Rebel Forge gloves)
+    const hf = npc ? cleanHandFit(handFit) : cleanHandFit(handFit !== undefined ? handFit : cur.options?.handFit);
     if (cur.status === 'running' && !(force && admin)) return res.status(200).json({ ok: true, forgeRig: cur, alreadyRunning: true });
     if (cur.status === 'succeeded' && !(force && admin)) return res.status(200).json({ ok: true, forgeRig: cur, alreadyDone: true });
     if (force && !admin) return res.status(401).json({ ok: false, error: 'Re-rigging requires admin' });
@@ -89,21 +184,7 @@ export default async function handler(req, res) {
     // v2.23 NPC species (the NPC Forge's collection): Chumpz are apes, Saints are humans, from the page or the NPC's key
     // (chumpz_ / saints_). Only those get FORGE_NPC_SPECIES; Rebel villagers (ants) run exactly as before.
     const npcSpecies = !npc ? '' : ['ape', 'human'].includes(String(species)) ? String(species) : String(species) === 'ant' ? '' : /^chumpz_/.test(rec.tokenId || '') ? 'ape' : /^saints_/.test(rec.tokenId || '') ? 'human' : '';
-    const sandbox = await Sandbox.create({
-      source: { type: 'snapshot', snapshotId: worker.snapshotId },
-      persistent: false,
-      resources: { vcpus: 2 },
-      timeout: JOB_TIMEOUT_MS,
-      tags: { purpose: 'forge-rig-job', build: String(buildId).slice(0, 200) },
-      ...creds()
-    });
-    const cmd = await sandbox.runCommand({
-      cmd: 'bash',
-      args: ['-c', `mkdir -p ${JOB_DIR} && bash ${FW}/job.sh "$SRC_URL" "$RIG_NAME" ${JOB_DIR}`],
-      env: { SRC_URL: src, RIG_NAME: name, ...(skirtfix ? { FORGE_SKIRTFIX: '1', FORGE_KEEP_TEAR: '', FORGE_KEEP_BRIDGE: '' } : {}), ...(up ? { FORGE_HEAD_UP: String(up) } : {}), ...(headUrl ? { FORGE_HEAD_URL: String(headUrl) } : {}), ...(armorUrl ? { FORGE_ARMOR_URL: String(armorUrl), FORGE_ANCHORS_URL: String(anchorsUrl) } : {}), ...(cutBridges && !skirtfix ? { FORGE_KEEP_TEAR: '', FORGE_KEEP_BRIDGE: '' } : {}), ...(hs !== null ? { FORGE_HEAD_SCALE: String(hs) } : {}), ...(headAuto ? { FORGE_HEAD_AUTO: '1' } : {}), ...(npc ? { FORGE_NPC: '1' } : {}), ...(npcSpecies ? { FORGE_NPC_SPECIES: npcSpecies } : {}), ...handFitEnv(hf) },
-      sudo: true,
-      detached: true
-    });
+    const { sandbox, cmd } = await runJob(worker, buildId, src, name, optionEnv({ skirtfix, up, headUrl, armorUrl, anchorsUrl, cutBridges, hs, headAuto, npc, npcSpecies, hf }));
     const next = await updateRigging(buildId, {
       engine: 'forge-rigger',
       status: 'running',
