@@ -12253,6 +12253,82 @@ let _villageGateNumberBuffer = '';
 let _villageGateNumberTimer = null;
 let _lastVillageGateAutoOpenAt = 0;
 
+// The portal between villages (Oct 18, Miguel: "make the portal door look like a real portal in all the villages and
+// update the admin one so if i spawn any other its the same"): every village's gate and every one spawned in admin is
+// built here. A red-lacquer torii (round pillars on stone bases, the curved kasagi with its black cap, the nuki, a gold
+// plaque, a straw shimenawa with paper shide) holding a vortex: a swirl shader (log-spiral arms over noise, a bright rim,
+// darker deep in the middle round a white core; additive, fogged like the scene) on three layers a little apart, so it
+// has depth from any angle; sparks spiral in from the rim and go out at the core; a rune circle turns on the ground.
+// The frame pieces stay the gate's pick proxies (admin), the light pulses as before.
+const VILLAGE_PORTAL = (() => {
+  let shaders = false, dotTex = null, runeTex = null;
+  function ensureShaders() {
+    if (shaders) return; shaders = true;
+    BABYLON.Effect.ShadersStore.villagePortalVertexShader = `precision highp float;
+attribute vec3 position; attribute vec2 uv;
+uniform mat4 world; uniform mat4 view; uniform mat4 viewProjection; uniform vec4 fogInfo;
+varying vec2 vUV; varying float vFog;
+void main() {
+  vec4 wp = world * vec4(position, 1.0); vUV = uv; gl_Position = viewProjection * wp;
+  float d = length((view * wp).xyz), f = 1.0;
+  if (fogInfo.x == 1.0) f = exp(-d * fogInfo.w);
+  else if (fogInfo.x == 2.0) f = exp(-pow(d * fogInfo.w, 2.0));
+  else if (fogInfo.x == 3.0) f = (fogInfo.z - d) / max(.001, fogInfo.z - fogInfo.y);
+  vFog = clamp(f, 0.0, 1.0);
+}`;
+    BABYLON.Effect.ShadersStore.villagePortalFragmentShader = `precision highp float;
+varying vec2 vUV; varying float vFog;
+uniform float time; uniform float seed; uniform float gain; uniform vec3 colA; uniform vec3 colB; uniform vec3 colC;
+float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float noise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y); }
+float fbm(vec2 p) { float v = 0.0, a = .5; for (int i = 0; i < 4; i++) { v += a * noise(p); p = p * 2.03 + vec2(1.7, 9.2); a *= .5; } return v; }
+void main() {
+  vec2 p = vUV * 2.0 - 1.0; float r = length(p); if (r > 1.0) discard;
+  float a = atan(p.y, p.x), t = time;
+  float sw = a * 2.0 + log(max(r, .015)) * 4.4 + t * 1.7 + seed;          // log-spiral arms winding in
+  float n = fbm(vec2(cos(sw), sin(sw)) * (1.2 + r * 2.2) + vec2(t * .21, -t * .13) + seed);
+  float arms = .5 + .5 * sin(sw + n * 3.4), swirl = smoothstep(.2, 1.0, arms * .55 + n * .85);
+  float rim = smoothstep(.64, .985, r) * (1.0 - smoothstep(.975, 1.0, r));
+  float core = exp(-r * r * 60.0), body = mix(.28, 1.0, smoothstep(.05, .92, r));
+  vec3 col = mix(colA, colB, swirl) * (.12 + .78 * swirl) * body;           // deep blue between bright arms (additive layers: no white-out)
+  col += colC * rim * (.85 + .35 * sin(t * 3.1 + a * 3.0));
+  col += vec3(.8, .93, 1.0) * core * .5;
+  gl_FragColor = vec4(col * gain * (1.0 - smoothstep(.94, 1.0, r)) * vFog, 1.0);
+}`;
+  }
+  function vortexMat(name, scene, o) {
+    ensureShaders();
+    const m = new BABYLON.ShaderMaterial(name, scene, { vertex: 'villagePortal', fragment: 'villagePortal' },
+      { attributes: ['position', 'uv'], uniforms: ['world', 'view', 'viewProjection', 'time', 'seed', 'gain', 'colA', 'colB', 'colC', 'fogInfo'], needAlphaBlending: true });
+    m.backFaceCulling = false; m.alphaMode = BABYLON.Engine.ALPHA_ADD; m.disableDepthWrite = true;
+    m.setFloat('seed', o.seed || 0); m.setFloat('gain', o.gain ?? 1); m.setFloat('time', 0);
+    m.setColor3('colA', o.a || new BABYLON.Color3(.05, .22, .55)); m.setColor3('colB', o.b || new BABYLON.Color3(.25, .95, 1)); m.setColor3('colC', o.c || new BABYLON.Color3(.75, .35, 1));
+    m.setVector4('fogInfo', new BABYLON.Vector4(0, 0, 0, 0));
+    m.metadata = { perfKeepLive: true };
+    return m;
+  }
+  // a soft round spark, and the rune circle (canvas textures made once)
+  function sparkTexture(scene) {
+    if (dotTex && !dotTex.isDisposed?.()) return dotTex;
+    const t = new BABYLON.DynamicTexture('villagePortalSpark', { width: 64, height: 64 }, scene, false), c = t.getContext(), g = c.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.25, 'rgba(190,250,255,.85)'); g.addColorStop(1, 'rgba(120,200,255,0)');
+    c.fillStyle = g; c.fillRect(0, 0, 64, 64); t.update(); t.hasAlpha = true; return dotTex = t;
+  }
+  function runeTexture(scene) {
+    if (runeTex && !runeTex.isDisposed?.()) return runeTex;
+    const S = 512, t = new BABYLON.DynamicTexture('villagePortalRunes', { width: S, height: S }, scene, true), c = t.getContext(), C = S / 2;
+    c.clearRect(0, 0, S, S); c.strokeStyle = 'rgba(150,245,255,1)'; c.lineCap = 'round';
+    for (const [r, w] of [[244, 7], [226, 3], [150, 4], [138, 2]]) { c.lineWidth = w; c.beginPath(); c.arc(C, C, r, 0, Math.PI * 2); c.stroke(); }
+    c.lineWidth = 5; // twelve marks between the rings, each a little different
+    for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; c.save(); c.translate(C + Math.cos(a) * 188, C + Math.sin(a) * 188); c.rotate(a + Math.PI / 2);
+      c.beginPath(); c.moveTo(-12, -16); c.lineTo(0, 16); c.lineTo(12, -16); if (i % 3 === 0) { c.moveTo(-14, 0); c.lineTo(14, 0); } if (i % 2) { c.moveTo(0, -18); c.lineTo(0, 4); } c.stroke(); c.restore(); }
+    c.lineWidth = 3; for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + .26; c.beginPath(); c.moveTo(C + Math.cos(a) * 138, C + Math.sin(a) * 138); c.lineTo(C + Math.cos(a + 2.1) * 138, C + Math.sin(a + 2.1) * 138); c.stroke(); }
+    t.update(); t.hasAlpha = true; return runeTex = t;
+  }
+  return { vortexMat, sparkTexture, runeTexture };
+})();
+
 function buildVillageGate(root) {
   if (!root) return;
   root.metadata = {
@@ -12260,20 +12336,16 @@ function buildVillageGate(root) {
     type: 'village_gate',
     villageId: root.metadata?.villageId || CURRENT_VILLAGE_ID
   };
-  const redMat = pbr(new BABYLON.Color3(.72,.08,.04), { r:.58, m:.08 });
-  const darkMat = mat(new BABYLON.Color3(.075,.065,.075), { e:new BABYLON.Color3(.012,.01,.016) });
-  const goldMat = pbr(new BABYLON.Color3(.95,.68,.18), { r:.34, m:.45, e:new BABYLON.Color3(.14,.08,.01), ei:.35 });
-  const glowMat = mat(new BABYLON.Color3(.35,.95,.92), { e:new BABYLON.Color3(.18,.95,.9), a:.28 });
+  const redMat = pbr(new BABYLON.Color3(.66,.07,.04), { r:.42, m:.05 });
+  const darkMat = pbr(new BABYLON.Color3(.05,.045,.05), { r:.5, m:.1 });
+  const goldMat = pbr(new BABYLON.Color3(.95,.68,.18), { r:.3, m:.6, e:new BABYLON.Color3(.14,.08,.01), ei:.35 });
+  const stoneMat = pbr(new BABYLON.Color3(.42,.41,.39), { r:.92 });
+  const strawMat = pbr(new BABYLON.Color3(.78,.66,.38), { r:.95 });
+  const paperMat = mat(new BABYLON.Color3(.96,.95,.9), { e:new BABYLON.Color3(.42,.42,.4) });
+  paperMat.backFaceCulling = false;
+  const glowMat = mat(new BABYLON.Color3(.35,.95,.92), { e:new BABYLON.Color3(.18,.95,.9), a:.32 });
   glowMat.backFaceCulling = false;
   glowMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
-  const coreMat = mat(new BABYLON.Color3(.12,1,.92), { e:new BABYLON.Color3(.2,1.2,1.1), a:.34 });
-  coreMat.backFaceCulling = false;
-  coreMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
-  const purpleMat = mat(new BABYLON.Color3(.82,.22,1), { e:new BABYLON.Color3(.95,.24,1.2), a:.24 });
-  purpleMat.backFaceCulling = false;
-  purpleMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
-  const starMat = mat(new BABYLON.Color3(1,.9,1), { e:new BABYLON.Color3(.95,1.2,1.25), a:.72 });
-  starMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
 
   function attach(mesh) {
     mesh.parent = root;
@@ -12293,105 +12365,89 @@ function buildVillageGate(root) {
     return mesh;
   }
 
+  // the torii: pillars on stone bases with black feet, the nuki through them, the gold plaque on its strut, the kasagi
+  // (curving up at the ends) under its black cap
   [-1,1].forEach(side => {
-    attach(box(.55,6.4,.55,redMat,[side*2.45,3.1,0]));
-    attach(box(.85,.36,.85,darkMat,[side*2.45,.18,0]));
-    attach(box(.72,.38,.72,goldMat,[side*2.45,6.45,0]));
+    attach(box(1.0,.34,1.0,stoneMat,[side*2.45,.17,0]));
+    attach(cyl(.56,.66,6.0,24,redMat,[side*2.45,3.3,0]));
+    attach(cyl(.74,.76,.55,24,darkMat,[side*2.45,.6,0]));
+    const end = attach(box(1.55,.4,.72,redMat,[side*3.42,6.38,0])); end.rotation.z = side * .15;
+    const cap = attach(box(1.7,.17,.84,darkMat,[side*3.48,6.66,0])); cap.rotation.z = side * .15;
   });
-  attach(box(6.2,.48,.6,redMat,[0,5.7,0]));
-  attach(box(7.1,.42,.74,redMat,[0,6.45,0]));
-  attach(box(1.25,.34,.64,goldMat,[0,6.02,0]));
-  const floorGlow = attachEffect(cyl(0,1.22,.06,40,glowMat,[0,.1,0],Math.PI/2));
-
-  const portalBack = attachEffect(BABYLON.MeshBuilder.CreatePlane(`${root.name}_portalBack`,{width:3.85,height:4.65},scene));
-  portalBack.position.y = 3.12;
-  portalBack.position.z = .035;
-  portalBack.material = coreMat;
-
-  const portalCore = attachEffect(BABYLON.MeshBuilder.CreateDisc(`${root.name}_portalCore`,{radius:1.72,tessellation:64},scene));
-  portalCore.position.y = 3.08;
-  portalCore.position.z = .06;
-  portalCore.scaling.y = 1.24;
-  portalCore.material = coreMat;
-
-  const aura = attachEffect(BABYLON.MeshBuilder.CreateTorus(`${root.name}_portalAura`,{diameter:3.65,thickness:.09,tessellation:72},scene));
-  aura.position.y = 3.08;
-  aura.position.z = .09;
-  aura.scaling.y = 1.24;
-  aura.material = glowMat;
-
-  const innerAura = attachEffect(BABYLON.MeshBuilder.CreateTorus(`${root.name}_portalInnerAura`,{diameter:2.35,thickness:.055,tessellation:72},scene));
-  innerAura.position.y = 3.08;
-  innerAura.position.z = .11;
-  innerAura.scaling.y = 1.22;
-  innerAura.material = purpleMat;
-
-  const swirls = [];
-  [
-    { d:3.15, t:.035, sy:1.18, z:.14, mat:glowMat, speed:.48 },
-    { d:2.58, t:.028, sy:.88, z:.17, mat:purpleMat, speed:-.62 },
-    { d:1.86, t:.025, sy:1.36, z:.20, mat:glowMat, speed:.78 }
-  ].forEach((cfg, index) => {
-    const swirl = attachEffect(BABYLON.MeshBuilder.CreateTorus(`${root.name}_portalSwirl_${index}`,{diameter:cfg.d,thickness:cfg.t,tessellation:56},scene));
-    swirl.position.y = 3.08;
-    swirl.position.z = cfg.z;
-    swirl.scaling.y = cfg.sy;
-    swirl.rotation.z = index * .74;
-    swirl.material = cfg.mat;
-    swirls.push({ mesh: swirl, speed: cfg.speed, baseScaleY: cfg.sy });
+  attach(box(6.3,.38,.42,redMat,[0,5.05,0]));
+  attach(box(5.5,.42,.72,redMat,[0,6.27,0]));
+  attach(box(5.5,.17,.84,darkMat,[0,6.56,0]));
+  attach(box(.36,.85,.32,redMat,[0,5.66,0]));
+  [-1,1].forEach(side => { attach(box(1.05,.74,.1,darkMat,[0,5.68,side*.2])); attach(box(.92,.62,.06,goldMat,[0,5.68,side*.26])); }); // the plaque, seen from both sides
+  // the shimenawa (a straw rope sagging between the pillars) and four paper shide
+  const ropePath = []; for (let i = 0; i <= 16; i++) { const f = i / 16; ropePath.push(new BABYLON.Vector3(-2.18 + 4.36 * f, 4.72 - Math.sin(Math.PI * f) * .32, -.05)); }
+  const shimenawa = attachEffect(BABYLON.MeshBuilder.CreateTube(`${root.name}_portalRope`, { path: ropePath, radius: .1, tessellation: 10, cap: BABYLON.Mesh.CAP_ALL }, scene)); shimenawa.material = strawMat;
+  [-1.4, -.47, .47, 1.4].forEach((x, i) => { // each a strip of paper folded in a zigzag, hanging from the rope
+    const y = 4.72 - Math.sin(Math.PI * ((x + 2.18) / 4.36)) * .32 - .08, L = [], R = [];
+    for (let k = 0; k <= 4; k++) { const px = x + (k % 2 ? .07 : -.03), py = y - k * .14; L.push(new BABYLON.Vector3(px - .045, py, -.08)); R.push(new BABYLON.Vector3(px + .045, py - .05, -.08)); }
+    const sh = attachEffect(BABYLON.MeshBuilder.CreateRibbon(`${root.name}_shide_${i}`, { pathArray: [L, R], sideOrientation: BABYLON.Mesh.DOUBLESIDE }, scene)); sh.material = paperMat;
   });
 
-  const orbiters = [];
-  for (let i = 0; i < 14; i++) {
-    const orb = attachEffect(BABYLON.MeshBuilder.CreateSphere(`${root.name}_portalOrb_${i}`,{diameter:i % 4 === 0 ? .115 : .07,segments:8},scene));
-    orb.material = i % 3 === 0 ? purpleMat : starMat;
-    orbiters.push({
-      mesh: orb,
-      radius: .42 + (i % 5) * .28,
-      speed: .55 + (i % 6) * .13,
-      phase: i * 1.73,
-      yScale: .92 + (i % 4) * .12
-    });
+  // the vortex filling the opening: three layers (behind, middle, in front), each its own turn of the swirl
+  const layers = [
+    { z: .2, s: .9, seed: 3.1, gain: .45, speed: .7 },
+    { z: 0, s: 1, seed: 0, gain: .85, speed: 1 },
+    { z: -.16, s: 1.03, seed: 7.4, gain: .25, speed: 1.35 }
+  ].map((cfg, i) => {
+    const m = VILLAGE_PORTAL.vortexMat(`${root.name}_portalVortex_${i}`, scene, { seed: cfg.seed, gain: cfg.gain });
+    const pl = attachEffect(BABYLON.MeshBuilder.CreatePlane(`${root.name}_portalVortex_${i}`, { width: 4.15 * cfg.s, height: 4.6 * cfg.s, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, scene));
+    pl.position.set(0, 2.42, cfg.z); pl.material = m; pl.alwaysSelectAsActiveMesh = false;
+    return { mesh: pl, mat: m, speed: cfg.speed };
+  });
+  const rim = attachEffect(BABYLON.MeshBuilder.CreateTorus(`${root.name}_portalAura`, { diameter: 4.12, thickness: .08, tessellation: 72 }, scene));
+  rim.rotation.x = Math.PI / 2; rim.position.set(0, 2.42, -.02); rim.scaling.set(1, 1, 4.56 / 4.12); rim.material = glowMat;
+
+  // sparks drawn in from the rim, going out at the core
+  const sparkMat = new BABYLON.StandardMaterial(`${root.name}_portalSparkMat`, scene);
+  sparkMat.diffuseTexture = VILLAGE_PORTAL.sparkTexture(scene); sparkMat.opacityTexture = sparkMat.diffuseTexture;
+  sparkMat.emissiveColor = new BABYLON.Color3(.75, 1, 1); sparkMat.disableLighting = true; sparkMat.alphaMode = BABYLON.Engine.ALPHA_ADD; sparkMat.backFaceCulling = false;
+  const sparks = [];
+  for (let i = 0; i < 26; i++) {
+    const sp = attachEffect(BABYLON.MeshBuilder.CreatePlane(`${root.name}_portalSpark_${i}`, { size: 1 }, scene));
+    sp.material = sparkMat; sp.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+    sparks.push({ mesh: sp, a0: i * 2.39996, u: (i * .618) % 1, rate: .3 + (i % 5) * .05, size: .1 + (i % 4) * .045, z: ((i * 7) % 5 - 2) * .06 });
   }
+  // the rune circle on the ground, turning slowly
+  const runeMat = new BABYLON.StandardMaterial(`${root.name}_portalRuneMat`, scene);
+  runeMat.diffuseTexture = VILLAGE_PORTAL.runeTexture(scene); runeMat.opacityTexture = runeMat.diffuseTexture;
+  runeMat.emissiveColor = new BABYLON.Color3(.3, .95, 1); runeMat.disableLighting = true; runeMat.alphaMode = BABYLON.Engine.ALPHA_ADD; runeMat.backFaceCulling = false;
+  const floorGlow = attachEffect(BABYLON.MeshBuilder.CreateGround(`${root.name}_portalRunes`, { width: 6.2, height: 6.2 }, scene));
+  floorGlow.position.y = .07; floorGlow.material = runeMat;
 
-  const light = new BABYLON.PointLight(`${root.name}_portalLight`, new BABYLON.Vector3(0,3.2,.2), scene);
-  light.diffuse = new BABYLON.Color3(.35,.95,.92);
+  const light = new BABYLON.PointLight(`${root.name}_portalLight`, new BABYLON.Vector3(0,2.6,-.4), scene);
+  light.diffuse = new BABYLON.Color3(.35,.95,.95);
   light.specular = new BABYLON.Color3(.35,.95,.92);
-  light.intensity = .78;
-  light.range = 11;
+  light.intensity = .85;
+  light.range = 12;
   light.parent = root;
 
+  const fog = new BABYLON.Vector4(0, 0, 0, 0);
   const observer = scene.onBeforeRenderObservable.add(() => {
     if (!root || root.isDisposed?.()) {
       scene.onBeforeRenderObservable.remove(observer);
       return;
     }
-    const now = performance.now() * .001;
-    const pulse = 1 + Math.sin(now * 2.4) * .055;
-    portalBack.scaling.set(1 + Math.sin(now * 1.5) * .018, 1 + Math.cos(now * 1.7) * .018, 1);
-    portalCore.rotation.z = now * .36;
-    portalCore.scaling.x = 1 + Math.sin(now * 1.9) * .035;
-    portalCore.scaling.y = 1.24 + Math.cos(now * 1.7) * .035;
-    aura.scaling.set(pulse,pulse,pulse);
-    aura.scaling.y = 1.24 * pulse;
-    innerAura.rotation.z = -now * .44;
-    innerAura.scaling.x = .98 + Math.sin(now * 2.1) * .035;
-    innerAura.scaling.y = 1.22 + Math.cos(now * 2.1) * .045;
-    swirls.forEach(s => {
-      s.mesh.rotation.z += s.speed * scene.getEngine().getDeltaTime() * .001;
-      s.mesh.scaling.x = 1 + Math.sin(now * 1.8 + s.speed) * .025;
-      s.mesh.scaling.y = s.baseScaleY + Math.cos(now * 1.6 + s.speed) * .035;
+    if (!root.isEnabled() || ActiveInterior) return;
+    const now = performance.now() * .001, dt = Math.min(.1, scene.getEngine().getDeltaTime() * .001);
+    fog.set(scene.fogEnabled === false ? 0 : scene.fogMode, scene.fogStart, scene.fogEnd, scene.fogDensity);
+    layers.forEach(l => { l.mat.setFloat('time', now * l.speed); l.mat.setVector4('fogInfo', fog); });
+    const pulse = 1 + Math.sin(now * 2.4) * .03;
+    rim.scaling.x = pulse; rim.scaling.z = pulse * 4.56 / 4.12;
+    sparks.forEach(sp => {
+      sp.u += dt * sp.rate; if (sp.u >= 1) { sp.u -= 1; sp.a0 += 1.3; }
+      const u = sp.u, r = 1 - u * u * (3 - 2 * u) * .97, ang = sp.a0 + u * 5.2;
+      sp.mesh.position.set(Math.cos(ang) * 2.02 * r, 2.42 + Math.sin(ang) * 2.25 * r, sp.z * (1 - u));
+      const k = Math.sin(Math.PI * Math.min(1, u * 1.15)) * (1 - u * .55); sp.mesh.scaling.setAll(Math.max(.001, sp.size * (.45 + k)));
+      sp.mesh.visibility = Math.max(0, k);
     });
-    orbiters.forEach(o => {
-      const angle = now * o.speed + o.phase;
-      o.mesh.position.x = Math.cos(angle) * o.radius;
-      o.mesh.position.y = 3.08 + Math.sin(angle) * o.radius * o.yScale;
-      o.mesh.position.z = .24 + Math.sin(angle * 1.7 + o.phase) * .04;
-      const flicker = .72 + Math.sin(now * 5.6 + o.phase) * .28;
-      o.mesh.scaling.set(flicker, flicker, flicker);
-    });
-    floorGlow.scaling.set(pulse,pulse,pulse);
-    light.intensity = .78 + Math.sin(now * 2.8) * .18;
+    floorGlow.rotation.y = now * .12;
+    runeMat.alpha = .55 + Math.sin(now * 1.7) * .15;
+    light.intensity = .85 + Math.sin(now * 2.8) * .2;
   });
   root.metadata._villageGateObserver = observer;
 
