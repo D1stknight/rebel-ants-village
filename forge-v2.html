@@ -2194,10 +2194,21 @@ function glPrepare(meshes) {
     return { m, P0, side, wh, cuff: cuffV };
   });
   for (const f of Object.values(frames)) { if (f.n) f.c.scaleInPlace(1 / f.n); else f.c.copyFrom(f.W); }
-  // the glove's own origin, which the rigger sizes the glove about: the front of the cuff, on its axis (the hand length is
-  // measured from there: a glove moved out of the sleeve is not a longer hand)
+  // the glove's own origin, which the rigger sizes the glove about and narrows / widens the cuff round (the hand length is
+  // measured from there: a glove moved out of the sleeve is not a longer hand): level with the wrist joint, on the axis
+  // through the middle of the cuff's front ring (round in the glove's template). Not the cuff's centroid: the cuff follows
+  // the sleeve's shape (3.5 mm off on #262, so a 10 % cuff came out 3 mm off). It is the joint's own axis unless the
+  // rigger moved the glove off the joint (loose sleeves)
   for (const { m, P0, side } of parts) if (/Cuff/.test(m.material.name)) for (let i = 0; i < side.length; i++) { const f = frames[side[i] ? 'Right' : 'Left']; f.front = Math.max(f.front, (P0[3 * i] - f.c.x) * f.x.x + (P0[3 * i + 1] - f.c.y) * f.x.y + (P0[3 * i + 2] - f.c.z) * f.x.z); }
-  for (const f of Object.values(frames)) { f.G = Number.isFinite(f.front) ? f.c.add(f.x.scale(f.front)) : f.W.clone(); f.L -= V3.Dot(f.G.subtract(f.W), f.x); }
+  for (const { m, P0, side } of parts) if (/Cuff/.test(m.material.name)) for (let i = 0; i < side.length; i++) {
+    const f = frames[side[i] ? 'Right' : 'Left'], v = new V3(P0[3 * i], P0[3 * i + 1], P0[3 * i + 2]);
+    if (V3.Dot(v.subtract(f.c), f.x) > f.front - 0.02 * f.L) { f.rc = (f.rc || V3.Zero()).addInPlace(v); f.rn = (f.rn || 0) + 1; }
+  }
+  for (const f of Object.values(frames)) {
+    f.G = f.W.clone(); if (!f.rn) continue;
+    const o = f.rc.scale(1 / f.rn).subtract(f.W), off = o.subtract(f.x.scale(V3.Dot(o, f.x)));
+    if (off.length() > 0.012 * f.L) f.G.addInPlace(off);
+  }
   // old rigs: the cuff's triangles (the rigger's rule: middle behind 0.012 of the glove's scale) into a submesh of their
   // own with a copy of the material, so a cuff colour shows before it is forged
   if (oldCuff) for (const p of parts) {
