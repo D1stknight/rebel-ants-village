@@ -11115,6 +11115,8 @@ function buildMiniGameCtx(def, src, frame) {
       clipTime(name) { const slot = miniGameClipSlot(name), g = slot != null ? animGroups[slot] : null, a = g?.isPlaying && g.animatables?.[0]; return a ? Math.max(0, (a.masterFrame - g.from) / 60) : null; },
       // how long a move's clip is at its own pace (seconds; null without it): a dance looped in time with a song
       clipLength(name) { const slot = miniGameClipSlot(name), g = slot != null ? animGroups[slot] : null; return g ? (g.to - g.from) / 60 : null; },
+      // the move's own animation group (read only: Tug of War carries the rope pull over onto its opponent); null without it
+      group(name) { const slot = miniGameClipSlot(name); return slot != null ? animGroups[slot] || null : null; },
       // stop the move playing now on its pose t seconds in (an axe's edge held in the log) until the next move; the bones
       // read that pose at once (bone, grip), so a game can search the moment something meets something. false when that
       // move is not the one on
@@ -19018,7 +19020,8 @@ function updateNPCAnimationState(root, moving, now) {
       if (meta.gestureGroup.isPlaying && !(moving && !meta.turningInPlace)) return;
       meta.gestureGroup = null;
     }
-    const wanted = meta.dialogueOpen ? 'talk' : (moving && !meta.turningInPlace ? 'walk' : 'idle');
+    // a game holding the NPC (Tug of War's opponent) picks its clip: not the talk a chat would play
+    const wanted = meta.gameHold ? (meta.gameHold.clip || 'idle') : meta.dialogueOpen ? 'talk' : (moving && !meta.turningInPlace ? 'walk' : 'idle');
     if (meta.activeAnimation !== wanted) {
       meta.animationGroups.forEach(group => group.stop());
       const group = findNPCAnimationGroup(meta, wanted);
@@ -19074,6 +19077,7 @@ function updateNPCPopulation(dt) {
       refreshVillageCollisionBlockersIfNeeded(); // decks are known after a rebuild (otherwise only when the player moves)
       if (villageOnKitDeck(root.position.x, root.position.z)) { const y = getNPCGroundHeightAt(root.position.x, root.position.z); if (Number.isFinite(y) && Math.abs(y - root.position.y) > .03) root.position.y = y; }
     }
+    if (meta.gameHold) { updateNPCAnimationState(root, false, now); return; } // a game places and turns it itself
     if (meta.dialogueOpen) {
       // the one you talk to turns to face you (Oct 17, Miguel: "have all the characters turn towards you when you interact
       // with them in any village"); a 'still' quest place turns back to its watch afterwards (returnNPCToBaseRotation)
