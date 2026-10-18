@@ -262,8 +262,10 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 #awakenBtn .lbl small{font-family:Cinzel,serif;font-size:10px;letter-spacing:.24em;color:var(--washi-dim);display:block;margin-top:6px}
 
 /* move dock */
-#dock{position:fixed;z-index:16;left:50%;bottom:20px;transform:translate(-50%,140%);width:min(980px,calc(100vw - 40px));background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.012) 50%,rgba(90,150,255,.035)),rgba(6,10,22,.25);backdrop-filter:blur(2.5px) saturate(1.35);-webkit-backdrop-filter:blur(2.5px) saturate(1.35);border:1px solid rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 30px 70px -24px rgba(0,0,0,.75);border-radius:22px;padding:12px 14px 12px;transition:transform .9s var(--ease)}
-#dock.show{transform:translate(-50%,0)}
+/* (left of the card on the right: it used to sit over the card's lower part in windows under ~1440 px) */
+#dock{position:fixed;z-index:16;--free:calc(100vw - 64px - min(400px,34vw));left:calc(20px + (var(--free) - min(980px,var(--free))) / 2);bottom:20px;transform:translateY(140%);width:min(980px,var(--free));background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.012) 50%,rgba(90,150,255,.035)),rgba(6,10,22,.25);backdrop-filter:blur(2.5px) saturate(1.35);-webkit-backdrop-filter:blur(2.5px) saturate(1.35);border:1px solid rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 30px 70px -24px rgba(0,0,0,.75);border-radius:22px;padding:12px 14px 12px;transition:transform .9s var(--ease)}
+#dock.show{transform:translateY(0)}
+@media (min-width:901px){body:has(#dock.show) #trail{bottom:calc(var(--dockH,140px) + 36px)}}   /* step 5 above the moves, not under them */
 #chooser{position:fixed;z-index:17;left:50%;bottom:22px;transform:translate(-50%,160%);display:grid;justify-items:center;gap:8px;padding:14px 18px 16px;border-radius:22px;background:linear-gradient(145deg,rgba(255,255,255,.06),rgba(255,255,255,.01) 50%),rgba(5,8,18,.8);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(79,184,255,.45);box-shadow:0 0 40px -6px rgba(61,123,255,.55),inset 0 1px 0 rgba(255,255,255,.3);transition:transform .8s var(--ease)}
 #chooser.show{transform:translate(-50%,0)}
 .chT{font-family:Cinzel,serif;font-weight:900;font-size:17px;letter-spacing:.2em;color:#fff;text-shadow:0 0 16px rgba(79,184,255,.7)}
@@ -338,7 +340,8 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
   #center{left:50%;top:38%;width:78vw}
   .scroll{width:88vw}
   #bigKanji{display:none}
-  #dock{bottom:10px;width:calc(100vw - 20px)}
+  #dock{left:10px;bottom:10px;width:calc(100vw - 20px)}
+  body:has(#dock.show) #panel{bottom:calc(var(--dockH,140px) + 18px);max-height:calc(58vh - var(--dockH,140px))}   /* the card above the moves */
   .mv{width:92px}
   #awakenBtn{bottom:50vh}
   .nowplaying{bottom:170px}
@@ -1571,6 +1574,7 @@ function antNow(instant, P) {
 }
 function placeAnt() { antNow(false); }
 addEventListener('resize', layoutTrail);
+try { new ResizeObserver(() => layoutTrail()).observe($('#trail')); } catch (e) { /* resize events only */ }   // the trail shortens over the moves dock
 
 function markNodes() {
   const live = active() ? liveStep() : -1;
@@ -2594,6 +2598,8 @@ function glRenderDone(quiet) {
    Move viewer
    ========================================================= */
 let curGroup = 0, curMove = ALL_MOVES.findIndex((m) => m.clip === 'fight_idle');
+// the dock's height, for the card that sits above it on phones
+try { new ResizeObserver(() => document.documentElement.style.setProperty('--dockH', $('#dock').offsetHeight + 'px')).observe($('#dock')); } catch (e) { /* the card keeps the 140 px guess */ }
 function buildDock() {
   const gEl = $('#groups');
   gEl.innerHTML = GROUPS.map((g, i) => `<button class="grp${i === curGroup ? ' on' : ''}" data-g="${i}"><span class="mon">${i + 1}</span>${g.n} <em>${g.moves.length}</em></button>`).join('');
