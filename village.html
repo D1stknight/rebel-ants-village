@@ -3498,6 +3498,7 @@ const PlaytestNote = (() => {
 // Rebel beside that game once the village is up: in front of its quest spot, or through its room's door (sealed doors
 // open with &rooms=open) and beside the room's hotspot. Press O there to play.
 const GameJump = (() => { const id = new URLSearchParams(location.search).get('game'); return id && /(-git-|^localhost$|^127\.0\.0\.1$)/.test(location.hostname) ? id : null; })();
+if (GameJump) window._gameJump = (tries = 1) => runGameJump(tries); // tests: jump again (from inside a room)
 function runGameJump(tries = 0) {
   if (!GameJump) return;
   // patient (Oct 17, Miguel: the Yabusame jump "still did not jump me"): a Rebel and its moves can take more than the 30 s
@@ -3510,6 +3511,9 @@ function runGameJump(tries = 0) {
   const roots = getQuestSpotRoots();
   const spot = roots.find(r => r.metadata?.spotConfig?.game?.id === GameJump) || roots.find(r => r.metadata?.spotConfig?.spotId === GameJump || r.name === 'questSpotRoot_' + GameJump);
   if (spot) {
+    // the spot is in the village: out of any room first (Oct 18, Miguel: the Trick or Treat link "did not jump me to the
+    // game": a room left open on an earlier visit had been put back on load, and the jump moved him into its empty space)
+    if (ActiveInterior) { if (!ActiveInterior.exiting) returnToVillageFromInterior(); return again(); }
     const p = spot.getAbsolutePosition(), yaw = spot.rotation?.y || 0, sc = spot.metadata.spotConfig;
     charMesh.position.x = p.x - Math.sin(yaw) * 1.4; charMesh.position.z = p.z - Math.cos(yaw) * 1.4; charMesh.rotation.y = yaw; _playerDeckSnapUntil = performance.now() + 1500;
     showToast(sc.game ? `Game jump: ${sc.game.title || GameJump}. Press O to play.` : `Jump: ${sc.riddle?.title || sc.label || GameJump}. Press O here.`, 7000); return;
@@ -3520,9 +3524,12 @@ function runGameJump(tries = 0) {
   const at = () => { const h = scene.getTransformNodeByName('interiorHotspotRoot_' + hotspot.hotspotId); if (!h) return false; const p = h.getAbsolutePosition();
     const toward = Math.atan2(-p.x, -p.z); charMesh.position.x = p.x + Math.sin(toward) * 1.3; charMesh.position.z = p.z + Math.cos(toward) * 1.3; charMesh.rotation.y = toward + Math.PI; _playerDeckSnapUntil = performance.now() + 1500;
     showToast(`Game jump: ${hotspot.game.title || GameJump}. Press O to play.`, 7000); return true; };
-  if (ActiveInterior) { if (!at()) again(); return; }
   // the door names the room's interior id; a rebuilt Hub room keeps its config under its own id (kitConfig: rebel_arcade_kit)
   const door = scene.transformNodes.find(n => n.metadata?.type === 'interior_entrance' && (n.metadata.targetInteriorId === room || n.metadata.interiorDefinition?.kitConfig === room));
+  if (ActiveInterior) { // in that room: beside the hotspot; in another one: out of it, then through the right door
+    if (door && ActiveInterior.entranceName === door.name) { if (!at()) again(); return; }
+    if (!ActiveInterior.exiting) returnToVillageFromInterior(); return again();
+  }
   if (!door) return showToast(`The door to ${room} is not in this village.`, 6000);
   enterInterior(door);
   const wait = (k = 0) => { if (ActiveInterior && at()) return; if (k < 40) setTimeout(() => wait(k + 1), 400); }; setTimeout(wait, 1200);
@@ -31307,6 +31314,8 @@ function restoreActiveInteriorSessionAfterStartup() {
   if (restoreActiveInteriorSessionAfterStartup._ran) return;
   restoreActiveInteriorSessionAfterStartup._ran = true;
   if (ActiveInterior) return;
+  // a game or playtest link decides where the Rebel starts: a room remembered from the last visit isn't put back
+  if (GameJump || PlaytestNote) { clearActiveInteriorSession(GameJump ? 'game jump' : 'playtest jump'); return; }
   const session = readInteriorSessionCandidate();
   if (!session?.interiorId) return;
   const entrance = getInteriorEntranceBySessionId(session.interiorId);
