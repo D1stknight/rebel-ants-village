@@ -2,13 +2,21 @@
 // plushie (the arrow keys / WASD, or the pads), then drop it (Space, Enter or DROP); it closes, lifts and carries what it
 // holds to the chute. Dead centre holds best; a grip off to the side can slip on the way up. Fifteen seconds a try, then
 // it drops by itself. The gold lucky cat is rare, slippery and worth the most.
+// Oct 18: the Hub Arcade's Ant Claw plays it too (set 'ants': the Rebel Ants plushies, the Golden Ant the rare one), and the
+// claw now steers by the camera (it used the room's x, which runs right to left when the camera looks down -z: the
+// Cute & Creepy machine moved left on the right arrow).
 // def: { box: [x0, z0, x1, z1] (the claw's reach, frame coords), floor: the pile's top, top: the claw's rest height,
-// chute: [x, z], tries: 5, seconds: 15, prizes: 6, playerAt: [x, z], cam, at, pass, points }
+// chute: [x, z], tries: 5, seconds: 15, prizes: 6, set: 'ants', playerAt: [x, z], cam, at, pass, points }
 (function () {
   const KINDS = [
     { id: 'ghost', name: 'Ghost', pts: 20, grip: 1 }, { id: 'pumpkin', name: 'Pumpkin', pts: 20, grip: 1 },
     { id: 'cat', name: 'Black Cat', pts: 20, grip: .95 }, { id: 'bat', name: 'Bat', pts: 25, grip: .85 },
     { id: 'lucky', name: 'Gold Lucky Cat', pts: 50, grip: .6 }
+  ];
+  const ANTS = [ // the Hub's Ant Claw: plush Rebel Ants (the gold one rare and slippery like the lucky cat)
+    { id: 'ant_red', name: 'Red Rebel Ant', pts: 20, grip: 1, c: [.82, .14, .12] }, { id: 'ant_teal', name: 'Teal Rebel Ant', pts: 20, grip: 1, c: [.22, .74, .72] },
+    { id: 'ant_violet', name: 'Violet Rebel Ant', pts: 20, grip: .95, c: [.5, .26, .8] }, { id: 'ant_ronin', name: 'Ronin Ant', pts: 25, grip: .85, c: [.09, .08, .1] },
+    { id: 'ant_gold', name: 'Golden Ant', pts: 50, grip: .6, c: [1, .8, .3] }
   ];
   const G = {
     title: 'Claw Machine',
@@ -16,6 +24,10 @@
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const BOX = def.box || [4.05, -10.05, 5.95, -8.15], FLOOR = def.floor || 1.72, TOP = def.top || 3.15, CH = def.chute || [4.35, -8.45];
       const TRIES = def.tries || 5, SECS = def.seconds || 15, R = .19;
+      // the camera (in front of the machine) and the steering it gives: up = away from it, right = its right
+      const cam = def.cam || [(BOX[0] + BOX[2]) / 2, TOP + .8, BOX[3] + 2.7], at = def.at || [(BOX[0] + BOX[2]) / 2, FLOOR + .25, (BOX[1] + BOX[3]) / 2];
+      const fl = Math.hypot(at[0] - cam[0], at[2] - cam[2]) || 1, FX = (at[0] - cam[0]) / fl, FZ = (at[2] - cam[2]) / fl, RX = FZ, RZ = -FX;
+      const HX = (BOX[0] + BOX[2]) / 2, HZ = (BOX[1] + BOX[3]) / 2 - FZ * .3, FACE = Math.atan2(-FX, -FZ); // the claw waits a little toward the glass; prizes face the camera
       const mat = (k, c, em, spec = .1) => ctx.mat(k, n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(...c); m.specularColor = new B.Color3(spec, spec, spec); if (em) m.emissiveColor = new B.Color3(...em); return m; });
       const M = {
         iron: mat('iron', [.35, .36, .4], [.06, .06, .07], .6), dark: mat('dark', [.05, .04, .06]), white: mat('white', [.95, .95, 1], [.3, .3, .34]),
@@ -36,17 +48,28 @@
         else if (k === 'pumpkin') { for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; sph('cp', .26, M.orange, n, Math.cos(a) * .08, 0, Math.sin(a) * .08, 1, .85, 1); } sph('cp', .08, M.stem, n, 0, .17, 0, .6, 1.4, .6); for (const s of [-1, 1]) sph('cp', .055, M.yellow, n, s * .07, .04, .17); }
         else if (k === 'cat' || k === 'lucky') { const fur = k === 'lucky' ? M.gold : M.black; sph('cp', .36, fur, n, 0, -.03, 0); sph('cp', .28, fur, n, 0, .2, .02); for (const s of [-1, 1]) { const e = B.MeshBuilder.CreateCylinder('cp', { height: .12, diameterTop: 0, diameterBottom: .1, tessellation: 4 }, scene); e.material = fur; e.parent = n; e.position.set(s * .08, .35, 0); e.rotation.z = -s * .3; e.isPickable = false; sph('cp', .05, k === 'lucky' ? M.eye : M.yellow, n, s * .06, .22, .14); }
           if (k === 'lucky') { const p = B.MeshBuilder.CreateCylinder('cp', { height: .02, diameter: .14, tessellation: 12 }, scene); p.material = M.red; p.parent = n; p.position.set(0, .08, .15); p.rotation.x = Math.PI / 2; p.isPickable = false; } }
+        else if (k.startsWith('ant_')) { // a plush ant: head, thorax and abdomen in a row, button eyes, antennae, stubby legs
+          const body = k === 'ant_gold' ? M.gold : mat(k, kind.c, kind.c.map(v => v * .22)), eyeW = k === 'ant_ronin' ? M.red : M.white;
+          sph('cp', .34, body, n, 0, -.02, -.17, 1, .9, 1.25); sph('cp', .2, body, n, 0, -.01, .03); sph('cp', .28, body, n, 0, .05, .22);
+          for (const s of [-1, 1]) {
+            sph('cp', .09, eyeW, n, s * .075, .1, .32); sph('cp', .045, M.eye, n, s * .078, .1, .36);
+            const an = B.MeshBuilder.CreateCylinder('cp', { height: .22, diameter: .025, tessellation: 5 }, scene); an.material = body; an.parent = n; an.position.set(s * .06, .25, .26); an.rotation.set(.45, 0, -s * .35); an.isPickable = false;
+            sph('cp', .055, body, n, s * .1, .35, .31);
+            for (const z of [-.07, .03, .13]) sph('cp', .09, body, n, s * .12, -.11, z, 1.5, .7, 1.1); // stubby plush feet
+          }
+          n.scaling.setAll(.85);
+        }
         else if (k === 'bat') { sph('cp', .32, M.purple, n, 0, 0, 0); for (const s of [-1, 1]) { const w = B.MeshBuilder.CreateDisc('cp', { radius: .2, tessellation: 3 }, scene); w.material = M.purple; w.parent = n; w.position.set(s * .2, .04, 0); w.rotation.z = s * .4; w.isPickable = false; w.material.backFaceCulling = false; sph('cp', .05, M.yellow, n, s * .06, .05, .14); } }
         n.getChildMeshes(false).forEach(m => ctx.add(m));
         return n;
       }
       const prizes = [];
-      const N = def.prizes || 6, kinds = [KINDS[4], ...Array.from({ length: N - 1 }, (_, i) => KINDS[i % 4])];
+      const KS = def.set === 'ants' ? ANTS : KINDS, N = def.prizes || 6, kinds = [KS[4], ...Array.from({ length: N - 1 }, (_, i) => KS[i % 4])];
       for (const kind of kinds) { // spread on the pile, not too close to one another or the chute
         let x, z, tries = 0;
         do { x = BOX[0] + .3 + Math.random() * (BOX[2] - BOX[0] - .6); z = BOX[1] + .3 + Math.random() * (BOX[3] - BOX[1] - .6); tries++; }
         while (tries < 60 && (prizes.some(p => Math.hypot(p.x - x, p.z - z) < .46) || Math.hypot(x - CH[0], z - CH[1]) < .6));
-        const n = plush(kind); n.position.set(x, FLOOR + R, z); n.rotation.y = (Math.random() - .5) * .8;
+        const n = plush(kind); n.position.set(x, FLOOR + R, z); n.rotation.y = FACE + (Math.random() - .5) * .8;
         prizes.push({ kind, n, x, z, y: FLOOR + R, st: 'pile', vy: 0 });
       }
       // the chute: a glowing frame in the front corner
@@ -63,7 +86,7 @@
         return arm; });
       const setOpen = o => prongs.forEach(a => { a.rotation.x = .25 - .7 * o; }); // closed: the tips in under the hub; open: out
       // ── state ──
-      const st = { phase: 'intro', wait: 1.3, tries: TRIES, t: SECS, x: (BOX[0] + BOX[2]) / 2, z: (BOX[1] + BOX[3]) / 2 + .3, y: TOP, open: 1, held: null, fate: null, won: [], score: 0, keys: {}, slipAt: 0, y0: 0 };
+      const st = { phase: 'intro', wait: 1.3, tries: TRIES, t: SECS, x: HX, z: HZ, y: TOP, open: 1, held: null, fate: null, won: [], score: 0, keys: {}, slipAt: 0, y0: 0 };
       const info = () => H.info(`Try ${Math.min(TRIES - st.tries + 1, TRIES)} / ${TRIES}${st.phase === 'aim' ? ' · ' + Math.ceil(st.t) + ' s' : ''}`);
       // the pads (phones): hold to steer, DROP
       const hud = document.getElementById('gameHud'), pads = document.createElement('div');
@@ -76,9 +99,8 @@
       hud.appendChild(pads);
       function drop() { if (st.phase !== 'aim') return; st.phase = 'down'; ctx.sound('thock'); }
       function under() { let best = null, bd = 1e9; for (const p of prizes) { if (p.st !== 'pile') continue; const d = Math.hypot(p.x - st.x, p.z - st.z); if (d < bd) { bd = d; best = p; } } return best && bd < .26 ? { p: best, d: bd } : null; }
-      const PA = def.playerAt || [6.75, BOX[3] + .75];
-      ctx.player.place(PA[0], PA[1], Math.atan2((BOX[0] + BOX[2]) / 2 + .2 - PA[0], BOX[3] + .35 - PA[1]));
-      const cam = def.cam || [(BOX[0] + BOX[2]) / 2, TOP + .8, BOX[3] + 2.7], at = def.at || [(BOX[0] + BOX[2]) / 2, FLOOR + .25, (BOX[1] + BOX[3]) / 2];
+      const PA = def.playerAt || [6.75, BOX[3] + .75], faceZ = (BOX[1] + BOX[3]) / 2 - FZ * ((BOX[3] - BOX[1]) / 2 + .35); // the glass in front
+      ctx.player.place(PA[0], PA[1], Math.atan2(HX - RX * .2 - PA[0], faceZ - PA[1]));
       ctx.look(cam, at, def.fov || .8);
       H.title(def.title || 'Claw Machine'); H.score(0); info();
       H.hint('Steer the claw: the arrows / <kbd>WASD</kbd> or the pads. <kbd>Space</kbd> or DROP to grab. Dead centre holds best.');
@@ -90,9 +112,9 @@
           ctx.look(cam, at);
           if (st.phase === 'intro' && (st.wait -= dt) <= 0) { st.phase = 'aim'; st.t = SECS; }
           if (st.phase === 'aim') {
-            const v = .9 * dt, K = st.keys;
-            st.x = Math.max(BOX[0] + .1, Math.min(BOX[2] - .1, st.x + ((K.right ? 1 : 0) - (K.left ? 1 : 0)) * v));
-            st.z = Math.max(BOX[1] + .1, Math.min(BOX[3] - .1, st.z + ((K.down ? 1 : 0) - (K.up ? 1 : 0)) * v));
+            const v = .9 * dt, K = st.keys, ix = (K.right ? 1 : 0) - (K.left ? 1 : 0), iy = (K.up ? 1 : 0) - (K.down ? 1 : 0);
+            st.x = Math.max(BOX[0] + .1, Math.min(BOX[2] - .1, st.x + (RX * ix + FX * iy) * v));
+            st.z = Math.max(BOX[1] + .1, Math.min(BOX[3] - .1, st.z + (RZ * ix + FZ * iy) * v));
             st.t -= dt; if (st.t <= 0) { H.msg('Time! It drops', 700); drop(); }
           } else if (st.phase === 'down') {
             const u = under(), stop = u ? u.p.y + .5 : FLOOR + .55;
@@ -117,7 +139,7 @@
             if ((st.wait -= dt) <= 0) st.phase = 'reset';
           } else if (st.phase === 'reset') {
             st.open = Math.min(1, st.open + dt / .3);
-            const hx = (BOX[0] + BOX[2]) / 2, hz = (BOX[1] + BOX[3]) / 2 + .3, dx = hx - st.x, dz = hz - st.z, d = Math.hypot(dx, dz), s = Math.min(d, 1.2 * dt);
+            const dx = HX - st.x, dz = HZ - st.z, d = Math.hypot(dx, dz), s = Math.min(d, 1.2 * dt);
             if (d > .01) { st.x += dx / d * s; st.z += dz / d * s; }
             else { st.tries--; if (st.tries <= 0 || !prizes.some(p => p.st === 'pile')) { st.phase = 'end'; st.wait = 1.2; } else { st.phase = 'aim'; st.t = SECS; } info(); }
           }
@@ -126,7 +148,7 @@
             if (p.st === 'held') { p.x = st.x; p.z = st.z; p.y = st.y - .5; }
             else if (p.st === 'fall') { p.vy -= 9.8 * dt; p.y += p.vy * dt; if (p.y <= FLOOR + R) { p.y = FLOOR + R; p.st = 'pile'; } }
             else if (p.st === 'chute') { p.vy -= 9.8 * dt; p.y += p.vy * dt; p.x += (CH[0] - p.x) * Math.min(1, dt * 8); p.z += (CH[1] - p.z) * Math.min(1, dt * 8);
-              if (p.y < FLOOR - .9) { p.st = 'won'; p.n.setEnabled(false); st.won.push(p.kind.name); st.score += p.kind.pts; H.score(st.score); H.msg(`You won the ${p.kind.name}!`, 1300, `+${p.kind.pts}`); ctx.sound(p.kind.id === 'lucky' ? 'gamewin' : 'wish'); } }
+              if (p.y < FLOOR - .9) { p.st = 'won'; p.n.setEnabled(false); st.won.push(p.kind.name); st.score += p.kind.pts; H.score(st.score); H.msg(`You won the ${p.kind.name}!`, 1300, `+${p.kind.pts}`); ctx.sound(p.kind.pts >= 50 ? 'gamewin' : 'wish'); } }
             p.n.position.set(p.x, p.y, p.z);
           }
           place(); if (st.phase === 'aim') info();
