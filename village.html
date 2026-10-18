@@ -234,6 +234,13 @@ body.walk-photo #photoBtn{display:block}
 #tt.on{opacity:1}
 #panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);width:480px;max-width:92vw;max-height:88vh;overflow-y:auto;background:rgba(5,10,28,.97);border:1px solid rgba(232,197,106,.5);padding:38px;z-index:30;opacity:0;pointer-events:none;transition:all .4s cubic-bezier(.16,1,.3,1);backdrop-filter:blur(22px)}
 #panel.on{opacity:1;pointer-events:all;transform:translate(-50%,-50%) scale(1)}
+#panel.reading{text-align:center;width:min(500px,90vw);padding:34px 34px 24px}
+#panel.reading #picon:empty,#panel.reading .psb:empty,#panel.reading .pl:empty{display:none}
+#panel.reading #ph2{font-size:18px;margin-bottom:8px}
+#panel.reading #pdesc{white-space:pre-line;font-size:14px;line-height:1.85;color:rgba(255,255,255,.86);margin:0 0 4px}
+#panel.reading .pl{justify-content:center}
+#panel .pread{display:none;margin-top:18px;font-size:9px;letter-spacing:2px;color:rgba(94,207,202,.55);text-transform:uppercase}
+#panel.reading .pread{display:block}
 #npcDialogueOverlay{position:fixed;inset:0;display:flex;align-items:flex-end;justify-content:center;padding:0 24px 82px;background:linear-gradient(to top,rgba(2,8,18,.62),rgba(2,8,18,0));opacity:0;pointer-events:none;z-index:60;transition:opacity .18s}
 #npcDialogueOverlay.on{opacity:1;pointer-events:all}
 #npcDialoguePanel{width:min(620px,92vw);background:rgba(5,10,28,.96);border:1px solid rgba(232,197,106,.55);box-shadow:0 18px 50px rgba(0,0,0,.45);padding:18px 20px;backdrop-filter:blur(18px)}
@@ -408,7 +415,7 @@ body.walk-photo #photoBtn{display:block}
 #assetPanel .perf-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:9px;color:#8aa;letter-spacing:1px}
 #assetPanel .perf-grid span{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:5px;padding:6px}
 @media (max-width:720px){#assetPanel{width:min(320px,88vw);min-width:0}#assetPanel .ap-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(5,10,28,.95);border:1px solid rgba(94,207,202,.6);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:10px 24px;opacity:0;transition:all .4s;pointer-events:none;z-index:50;white-space:nowrap}
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(5,10,28,.95);border:1px solid rgba(94,207,202,.6);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:10px 24px;opacity:0;transition:all .4s;pointer-events:none;z-index:50;width:max-content;max-width:min(640px,calc(100vw - 32px));text-align:center;line-height:1.6}
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 #questCelebration{position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-18px) scale(.96);z-index:98;width:min(620px,calc(100vw - 34px));pointer-events:none;opacity:0;transition:opacity .22s,transform .22s}
 #questCelebration.on{opacity:1;transform:translateX(-50%) translateY(0) scale(1);pointer-events:auto}
@@ -1729,6 +1736,7 @@ body.walk-photo #photoBtn{display:block}
   <div class="psb" id="psub">Rebel Ants</div>
   <p id="pdesc">—</p>
   <div class="pl" id="pact"></div>
+  <div class="pread">O or Esc to close</div>
 </div>
 
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
@@ -9860,6 +9868,7 @@ function getNearestWalkModeSignInRange(range = 5.8) {
 function openWalkModeSign(signData) {
   if (!signData) return false;
   openPanel(signData);
+  watchReadingPanel();
   return true;
 }
 
@@ -9871,6 +9880,7 @@ function tryOpenNearbySign() {
 function updateInteractionPrompt() {
   updateTreasureChestPrompt();
   if (window._danceOff?.on || window._danceOff?.choosing) { setInteractionPrompt('', false); return; } // the dance panel is up
+  if (walkMode && document.getElementById('panel')?.classList.contains('on')) { setInteractionPrompt('', false); return; } // a sign / reading card is open (O closes it)
 
   if (ActiveInterior && getNearestInteriorExitInRange()) {
     setInteractionPrompt('Exit', true);
@@ -10559,10 +10569,54 @@ function completeQuestSpot(root) {
     progressId: cfg.countBy === 'weather' ? `${cfg.spotId}:${weather}` : undefined
   });
   try { window.dispatchEvent(new CustomEvent('rebelAntsQuestSpot', { detail:{ spotId:cfg.spotId, action:cfg.action, villageId:CURRENT_VILLAGE_ID } })); } catch(e) {}
-  if (!secretNew && (cfg.text || setNote)) { const t = [cfg.text, setNote && `(${setNote})`].filter(Boolean).join(' '); showToast(t, Math.min(12000, Math.max(4500, t.length * 65))); }
+  const reading = !secretNew && cfg.action === 'read' ? questSpotReading(cfg, root) : null;
+  if (reading) { openReadingPanel(reading); if (setNote) showToast(`(${setNote})`); }
+  else if (!secretNew && (cfg.text || setNote)) { const t = [cfg.text, setNote && `(${setNote})`].filter(Boolean).join(' '); showToast(t, Math.min(12000, Math.max(4500, t.length * 65))); }
   else if (!secretNew && !advanced) showToast(cfg.action === 'listen' ? 'Only the wind.' : 'Nothing more to find here.');
   return true;
 }
+
+// Reading (Miguel, Oct 18): signs and read spots show their words as a paragraph in the middle of the screen (a toast ran
+// the whole text along one line, off the screen). O or Esc closes the card, and so does walking away from it.
+// A read spot beside a sign (the friend villages' welcome boards) reads that sign: its words are the sign's Description
+// (Admin > Sign), so editing the sign changes what is read; the spot's own text is only kept for a sign without one.
+const ReadingPanel = { at: null, timer: 0 };
+function signBesideSpot(root, range = 4) {
+  const p = root?.getAbsolutePosition?.(); if (!p) return null;
+  let best = null, bd = range;
+  scene.transformNodes.forEach((n) => {
+    if (n.metadata?.type !== 'wooden_sign' || !n.metadata.isClone || !n.metadata.signConfig?.label || n.isDisposed?.()) return;
+    const q = n.getAbsolutePosition(), d = Math.hypot(q.x - p.x, q.z - p.z);
+    if (d < bd) { bd = d; best = n; }
+  });
+  return best;
+}
+function questSpotReading(cfg, root) {
+  const sc = signBesideSpot(root)?.metadata.signConfig;
+  if (sc) return { icon: sc.icon || '', title: sc.label, sub: sc.sub || '', text: sc.desc || cfg.text || '' };
+  if (!cfg.text) return null;
+  const m = /\bthe\s+(.+)$/i.exec(String(cfg.label || ''));   // "Read the decree" -> "The decree"
+  return { title: m ? 'The ' + m[1] : (cfg.label || 'Written here'), text: cfg.text };
+}
+function openReadingPanel({ icon = '', title = '', sub = '', text = '' }) {
+  openPanel({ id: 'read_', reading: true, icon, title, sub, desc: text, actions: [] });
+  watchReadingPanel();
+}
+function watchReadingPanel() {   // the card closes once the Rebel walks 5 m away from where it was opened
+  const me = charMesh?.position; ReadingPanel.at = me ? { x: me.x, z: me.z } : null;
+  clearInterval(ReadingPanel.timer);
+  ReadingPanel.timer = setInterval(() => {
+    const p = charMesh?.position, el = document.getElementById('panel');
+    if (!el?.classList.contains('on')) { clearInterval(ReadingPanel.timer); ReadingPanel.timer = 0; return; }
+    if (p && ReadingPanel.at && Math.hypot(p.x - ReadingPanel.at.x, p.z - ReadingPanel.at.z) > 5) closeReadingPanel();
+  }, 400);
+}
+function closeReadingPanel() {
+  const el = document.getElementById('panel'); if (!el?.classList.contains('on')) return false;
+  el.classList.remove('on'); ReadingPanel.at = null; clearInterval(ReadingPanel.timer); ReadingPanel.timer = 0;
+  return true;
+}
+window.closeReadingPanel = closeReadingPanel;
 
 // Miguel (Oct 15): a first clear of a game or a place riddle pays double the points its layout lists
 const GAME_POINTS_X = 2;
@@ -26318,6 +26372,7 @@ function duplicateSelectedFence(){
 }
 function openPanel(b){
   handleSignQuestEvent(b);
+  panel.classList.toggle('reading', !!b.reading || String(b.id || '').startsWith('sign_'));
   document.getElementById('picon').textContent=b.icon;
   document.getElementById('ph2').textContent=b.title;
   document.getElementById('psub').textContent=b.sub;
@@ -26392,6 +26447,7 @@ document.addEventListener('keydown', async e => {
   const key = e.key.toLowerCase();
 
   if (document.getElementById('photoOverlay')?.classList.contains('on')) { if (key === 'escape' || key === 'p' || key === 'enter') { e.preventDefault(); closeVillagePhoto(); } return; }
+  if (document.getElementById('panel')?.classList.contains('on') && !adminMode && (key === 'escape' || (key === 'o' && walkMode))) { e.preventDefault(); closeReadingPanel(); return; }
   if (MiniGames.on && (!MiniGames.roam || miniGameRoamKey(e, true))) { if (!MiniGames.roam) miniGameKey(e, true); return; }
   if (key === 'p' && !adminMode && walkMode && !e.repeat && !DanceOff.on && !SkillBar.on) { e.preventDefault(); takeVillagePhoto(); return; }
   if (DanceOff.choosing) { if (key === 'escape') closeDanceOff(); else { const lv = { 1:'easy', 2:'normal', 3:'hard' }[key]; if (lv) { e.preventDefault(); pickDanceLevel(lv); } } return; }
