@@ -9,13 +9,18 @@ import { award, payOwed, ID, lookup } from './_econ-ledger.mjs';
 const KINDS = new Set(['chest', 'game', 'riddle', 'find']);
 
 // RAAP dev only: a player who shares confirmed experiences with their Rebel gets this award written down as it
-// happened, once (_raap-universe-events.mjs). Loaded only when a RAAP connection is set; never changes the answer.
-async function shareExperience(u, kind, id, r, info) {
+// happened, once (_raap-universe-events.mjs), under the consent in force just before the claim (read first, checked
+// again at the append). Loaded only when a RAAP connection is set; never changes the award or the answer.
+const raapDeps = async () => ({ env: process.env, now: () => Math.floor(Date.now() / 1000), redis: (await import('./_raap-universe-http.mjs')).redis });
+async function consentBefore(u) {
+  try { return await (await import('./_raap-universe-events.mjs')).consentInForce(u, await raapDeps()); }
+  catch (e) { console.warn('[econ-award] shared experience consent', e.message); return null; }
+}
+async function shareExperience(u, kind, id, r, info, consent) {
   try {
-    const [{ recordClaim }, { redis }] = await Promise.all([import('./_raap-universe-events.mjs'), import('./_raap-universe-http.mjs')]);
-    await recordClaim({ u, kind, id, sourceId: kind === 'find' ? info.ikey.slice('village:find:'.length, -(u.length + 1)) : id, village: lookup(kind, id)?.village,
-      units: r.paid || r.held, settled: info.settled, transactionId: info.transactionId, at: Math.floor(info.at / 1000), origin: 'OWNER_PLAYED', requestId: null },
-      { env: process.env, now: () => Math.floor(Date.now() / 1000), redis });
+    await (await import('./_raap-universe-events.mjs')).recordClaim({ u, kind, id, sourceId: kind === 'find' ? info.ikey.slice('village:find:'.length, -(u.length + 1)) : id,
+      village: lookup(kind, id)?.village, units: r.paid || r.held, settled: info.settled, transactionId: info.transactionId, at: Math.floor(info.at / 1000),
+      origin: 'OWNER_PLAYED', requestId: null, consent }, await raapDeps());
   } catch (e) { console.warn('[econ-award] shared experience', e.message); }
 }
 
@@ -30,9 +35,10 @@ export default async function handler(req, res) {
     if (!KINDS.has(kind) || !ID.test(id)) return res.status(400).json({ ok: false, error: 'Unknown award' });
     if (!(await enforceRateLimit(req, res, `econ-award:${s.u}`, 400, 3600, 'awards'))) return;
     await payOwed(s.u).catch((e) => console.warn('[econ-award] owed', e.message));
+    const consent = process.env.RAAP_UNIVERSE_DEV_CONNECTION ? await consentBefore(s.u) : null;
     const info = {};
     const r = await award(s.u, kind, id, info);
-    if (info.settled && process.env.RAAP_UNIVERSE_DEV_CONNECTION) await shareExperience(s.u, kind, id, r, info);
+    if (info.settled && consent) await shareExperience(s.u, kind, id, r, info, consent);
     return res.status(200).json({ ok: true, signedIn: true, kind, id, ...r });
   } catch (e) {
     console.error('[econ-award]', e.message, e.code || '');

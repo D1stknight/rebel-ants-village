@@ -15,9 +15,10 @@ const deps = {
   contract: async (collectionKey) => (await getCollection(collectionKey))?.contract?.toLowerCase() || null,
   credit: (args) => econCredit(args),
   creditReady: () => !!(String(process.env.REBEL_ECONOMY_URL || '').trim() && String(process.env.REBEL_ECONOMY_SERVICE_KEY || '').trim()),
-  // a claimed chest becomes a shared experience when the player shares them (RAAP_APPROVED + the request id)
+  // a claimed chest becomes a shared experience when the player shares them (RAAP_APPROVED + the request id), under the
+  // consent read before the admit
   onClaim: (x) => recordClaim({ u: x.u, kind: 'chest', id: x.id, sourceId: x.id, village: x.village, units: x.units, settled: x.settled,
-    transactionId: x.transactionId, at: x.at, origin: 'RAAP_APPROVED', requestId: x.requestId }, deps)
+    transactionId: x.transactionId, at: x.at, origin: 'RAAP_APPROVED', requestId: x.requestId, consent: x.consent }, deps)
 };
 
 export default async function handler(req, res) {

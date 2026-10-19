@@ -326,7 +326,9 @@ export async function handleChestOperation(raw, deps) {
     await claimed(r, u, rec.acceptedAt, 'PAID', tx);
     return ok(fin);
   }
-  const claimed = async (r2, u, at, settled, tx) => { if (deps.onClaim) { try { await deps.onClaim({ c, u, kind: 'chest', id: r2.action.chestId, village: byId[r2.action.chestId]?.villageId, units: r2.economyEffect.units, settled, transactionId: tx, at, origin: 'RAAP_APPROVED', requestId: r2.requestId }); } catch (e) {} } };
+  // the experience feed gets the consent read before the admit (consent), never one read afterwards
+  let consent = null;
+  const claimed = async (r2, u, at, settled, tx) => { if (deps.onClaim && consent) { try { await deps.onClaim({ c, u, kind: 'chest', id: r2.action.chestId, village: byId[r2.action.chestId]?.villageId, units: r2.economyEffect.units, settled, transactionId: tx, at, origin: 'RAAP_APPROVED', requestId: r2.requestId, consent }); } catch (e) {} } };
 
   const prior = await deps.redis(['GET', rKey]);
   if (prior) return savedResult(prior);
@@ -345,6 +347,10 @@ export async function handleChestOperation(raw, deps) {
   if (s.claimed[0]) return decline('ALREADY_CLAIMED', live);
   if (r.state.version !== live.version || r.state.commitment !== live.commitment) return decline('STALE_STATE', live);
   if (!deps.creditReady()) return fail(503, 'TEMPORARILY_UNAVAILABLE');
+  // the sharing selection in force before the admit (the link pointer + record are checked by the admit itself)
+  if (deps.onClaim && c.events) {
+    try { const sRaw = await deps.redis(['GET', sharingKey(cur.rec.linkId)]); consent = sRaw ? { linkId: cur.rec.linkId, linkRaw: cur.raw, sharingRaw: sRaw } : null; } catch (e) { consent = null; }
+  }
 
   // admitted from here: the claim, the version and either the held record or the intent, in one script
   const e = lookup('chest', id), capped = capApplies('chest'), day = utcDay(now * 1000), version = (BigInt(s.version) + 1n).toString();
