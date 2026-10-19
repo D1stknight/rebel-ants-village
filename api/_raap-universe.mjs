@@ -5,7 +5,8 @@
 //   PREPARE  one exact WEAPON_EQUIP / WEAPON_UNEQUIP against that state (nothing reserved)
 //   EXECUTE  the owner-approved request (EIP-191 personal_sign), once: one guarded save of the weapon choice + receipt
 //   RECEIPT  the saved result of a request id, never executing again
-//   EVENTS   not enabled: no consent verifier, source key or wallet <-> Economy account mapping yet
+//   EVENTS   the confirmed experiences the player shares (_raap-universe-events.mjs): off without an events section,
+//            the player's link + sharing consent (raap-universe-link) and an installed source key
 // Zero charge, no Economy effect. New records only under raap:v1:dev:*. The one shared game key it writes is the Rebel's
 // weapon choice, the same record the Forge's weapon chips write, inside one Lua script that re-reads the exact raw bytes
 // the action was approved against (dev and production share Redis, so a version counter alone can't see a human write).
@@ -228,7 +229,12 @@ export async function handleOperation(raw, deps) {
 
   const c = connectionConfig(deps.env);
   if (deps.env.VERCEL_ENV === 'production' || !c) return fail(403, 'CONNECTION_UNAVAILABLE');
-  if (op.operation === 'EVENTS') return fail(403, 'OPERATION_NOT_ENABLED');
+  // shared experiences (_raap-universe-events.mjs): a read, so it stays readable after the connection closes
+  if (op.operation === 'EVENTS') {
+    if (!c.operations.includes('EVENTS') || !c.events || !deps.events) return fail(403, 'OPERATION_NOT_ENABLED');
+    if (canonical(op.target) !== canonical(targetOf(c))) return fail(403, 'NOT_AUTHORIZED');
+    return deps.events(c, op);
+  }
   if (!c.operations.includes(op.operation)) return fail(403, 'OPERATION_NOT_PERMITTED');
   const now = deps.now();
   // a closed connection keeps its saved results readable and takes nothing new

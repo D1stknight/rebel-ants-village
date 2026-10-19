@@ -6,6 +6,7 @@ import { ownerOf } from './_wallet.mjs';
 import { getCollection } from './_collections.mjs';
 import { econCredit } from './_econ.mjs';
 import { handleChestOperation } from './_raap-universe-chest.mjs';
+import { recordClaim } from './_raap-universe-events.mjs';
 import { rawBody, redis, send, refusal, devRateLimit, errorBody } from './_raap-universe-http.mjs';
 
 const deps = {
@@ -13,7 +14,10 @@ const deps = {
   owner: (collectionKey, tokenId) => ownerOf(collectionKey, tokenId),
   contract: async (collectionKey) => (await getCollection(collectionKey))?.contract?.toLowerCase() || null,
   credit: (args) => econCredit(args),
-  creditReady: () => !!(String(process.env.REBEL_ECONOMY_URL || '').trim() && String(process.env.REBEL_ECONOMY_SERVICE_KEY || '').trim())
+  creditReady: () => !!(String(process.env.REBEL_ECONOMY_URL || '').trim() && String(process.env.REBEL_ECONOMY_SERVICE_KEY || '').trim()),
+  // a claimed chest becomes a shared experience when the player shares them (RAAP_APPROVED + the request id)
+  onClaim: (x) => recordClaim({ u: x.u, kind: 'chest', id: x.id, sourceId: x.id, village: x.village, units: x.units, settled: x.settled,
+    transactionId: x.transactionId, at: x.at, origin: 'RAAP_APPROVED', requestId: x.requestId }, deps)
 };
 
 export default async function handler(req, res) {

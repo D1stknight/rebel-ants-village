@@ -6,13 +6,15 @@ import { ownerOf } from './_wallet.mjs';
 import { getToken } from './_nft.mjs';
 import { getCollection } from './_collections.mjs';
 import { handleOperation } from './_raap-universe.mjs';
+import { eventsPage } from './_raap-universe-events.mjs';
 import { rawBody, redis, send, refusal, devRateLimit, errorBody } from './_raap-universe-http.mjs';
 
 const deps = {
   env: process.env, now: () => Math.floor(Date.now() / 1000), redis,
   owner: (collectionKey, tokenId) => ownerOf(collectionKey, tokenId),
   trait: async (collectionKey, tokenId) => { const t = await getToken(collectionKey, tokenId); const w = (t.traits || []).find((x) => x.trait_type === 'Weapons'); return w ? String(w.value) : null; },
-  contract: async (collectionKey) => (await getCollection(collectionKey))?.contract?.toLowerCase() || null
+  contract: async (collectionKey) => (await getCollection(collectionKey))?.contract?.toLowerCase() || null,
+  events: (c, op) => eventsPage(c, op, deps)
 };
 
 export default async function handler(req, res) {
