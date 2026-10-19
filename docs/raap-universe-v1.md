@@ -34,7 +34,7 @@ connection format v2 (§2). The chest action, the wallet ↔ Economy account lin
 | | |
 |---|---|
 | Branch | `dev` |
-| Commits | `9406992` weapon table moved into `api/_weapon-catalog.mjs` (same exports, checked); `b2980e9` the connection (`api/_raap-universe.mjs`, `api/raap-universe.mjs`); this document + `docs/raap-universe-v1-examples.json` |
+| Commits | `9406992` weapon table moved into `api/_weapon-catalog.mjs` (same exports, checked); `b2980e9` the connection (`api/_raap-universe.mjs`, `api/raap-universe.mjs`); this document + `docs/raap-universe-v1-examples.json`; `e85996e` review fixes (retention, rate-limit namespace, connection v2); later commits: `docs/raap-universe-chest-v1.md` §1 |
 | Endpoint | `POST https://rebel-ants-village-git-dev-miguel-concepcions-projects.vercel.app/api/raap-universe` (behind Vercel Authentication: needs `x-vercel-protection-bypass`) |
 | Deployed | code only. Without its two settings every call answers `403 CONNECTION_UNAVAILABLE`. |
 | Live-observed | nothing. No real wallet, Rebel, key or shared record was used. |

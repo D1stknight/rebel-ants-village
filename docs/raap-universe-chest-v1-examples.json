@@ -1,0 +1,1440 @@
+{
+  "note": "Local bench output. PUBLIC TEST-ONLY keys: the owner signs with private key 0x00..02; facts are signed with the contract offline seed 0x01..01. .invalid origins, a local Redis, a fake Economy, a stand-in owner of #909. Not a live player, link, request, reward or authority.",
+  "connection": {
+    "schema": "universe.raap.connection.v2",
+    "environment": "dev",
+    "connectionId": "universe-dev-bench",
+    "connectionRevision": "1",
+    "issuer": "https://raap.invalid",
+    "audience": "https://universe.invalid",
+    "tenant": "bench-tenant",
+    "journalId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+    "wallet": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+    "asset": {
+      "chainId": 1,
+      "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+      "tokenId": "909"
+    },
+    "collectionKey": "battle_for_colony",
+    "account": "0x2222222222222222222222222222222222222222",
+    "controllerEpoch": 7,
+    "operations": [
+      "READ",
+      "PREPARE",
+      "EXECUTE",
+      "RECEIPT",
+      "EVENTS"
+    ],
+    "status": "ACTIVE",
+    "validUntil": 1792710008,
+    "retainUntil": 1792796408,
+    "chest": {
+      "operations": [
+        "READ",
+        "PREPARE",
+        "EXECUTE",
+        "RECEIPT",
+        "LINK_STATUS"
+      ],
+      "chests": [
+        "hub-chest-wood-2",
+        "hub-chest-legend-1",
+        "hub-chest-iron-1"
+      ]
+    },
+    "events": {
+      "keyId": "universe-dev-bench-key-1",
+      "eventKinds": [
+        "CHEST_OPENED",
+        "FIRST_GAME_CLEAR",
+        "PLACE_RIDDLE_SOLVED",
+        "TREASURE_DIG_FIND"
+      ]
+    }
+  },
+  "sourcePublicKey": "0x8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+  "pairs": {
+    "browser: PREPARE_LINK": {
+      "request": {
+        "operation": "PREPARE_LINK",
+        "target": {
+          "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+          "asset": {
+            "chainId": 1,
+            "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "tokenId": "909"
+          },
+          "connectionId": "universe-dev-bench"
+        }
+      },
+      "status": 200,
+      "response": {
+        "accounts": {
+          "asset": {
+            "chainId": 1,
+            "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "tokenId": "909"
+          },
+          "economy": {
+            "kind": "discord",
+            "name": "Example"
+          },
+          "wallet": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf"
+        },
+        "message": "RAAP approval\n\nLink my signed-in Universe Economy account to this wallet\nThis links the account just shown in Universe. It does not play, pay, spend points or share public history.\nApprove before (UTC): 2026-10-19T23:05:08.000Z\nLink ends (UTC): 2026-10-20T23:00:08.000Z\nThis is not an Ethereum transaction or NFT transfer.\n\nVerification details\nPlayer wallet: 0x2b5ad5c4795c026514f8317c7a215e218dccd6cf\nRebel: 0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221 #909\nNetwork chain ID: 1\nController epoch: 7\nGame: https://universe.invalid\nRAAP: https://raap.invalid\nEnvironment: dev\nConnection: universe-dev-bench / 1\nAccount link: 0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5 / 1\nAccount commitment: 0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e\nNonce: 0xec368b9134ce9a540842f51fca24fd4a083c529d2f0dceea473f0a6f50f25606\nRequest: 0x390ba18d834ec1b6abe535c63dc57b8234d4564faf92dd8b74b0b94466e7f774",
+        "replaces": null,
+        "request": {
+          "approveBefore": 1792451108,
+          "asset": {
+            "chainId": 1,
+            "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "tokenId": "909"
+          },
+          "audience": "https://raap.invalid",
+          "connectionId": "universe-dev-bench",
+          "connectionRevision": "1",
+          "controllerEpoch": 7,
+          "environment": "dev",
+          "issuedAt": 1792450808,
+          "issuer": "https://universe.invalid",
+          "link": {
+            "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+            "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+            "revision": "1"
+          },
+          "nonce": "0xec368b9134ce9a540842f51fca24fd4a083c529d2f0dceea473f0a6f50f25606",
+          "purpose": "LINK_UNIVERSE_ECONOMY_ACCOUNT",
+          "schema": "raap.universe.economy-link.v1",
+          "validUntil": 1792537208,
+          "wallet": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf"
+        },
+        "schema": "universe.raap.link-preparation.v1"
+      }
+    },
+    "browser: SAVE_LINK": {
+      "request": {
+        "operation": "SAVE_LINK",
+        "authorization": {
+          "schema": "raap.universe.authorized-economy-link.v1",
+          "request": {
+            "approveBefore": 1792451108,
+            "asset": {
+              "chainId": 1,
+              "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+              "tokenId": "909"
+            },
+            "audience": "https://raap.invalid",
+            "connectionId": "universe-dev-bench",
+            "connectionRevision": "1",
+            "controllerEpoch": 7,
+            "environment": "dev",
+            "issuedAt": 1792450808,
+            "issuer": "https://universe.invalid",
+            "link": {
+              "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+              "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+              "revision": "1"
+            },
+            "nonce": "0xec368b9134ce9a540842f51fca24fd4a083c529d2f0dceea473f0a6f50f25606",
+            "purpose": "LINK_UNIVERSE_ECONOMY_ACCOUNT",
+            "schema": "raap.universe.economy-link.v1",
+            "validUntil": 1792537208,
+            "wallet": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf"
+          },
+          "ownerApproval": {
+            "scheme": "eip191-personal-sign",
+            "signer": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+            "signature": "0x6ca038154f7ae4ec04193431c590485d1b4a2560a478ca527cb17461573abb7536c2871ce16019f48cbd85020dc95108c45a11f34aebe82f69d1920921db62871b"
+          }
+        }
+      },
+      "status": 200,
+      "response": {
+        "link": {
+          "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+          "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+          "revision": "1"
+        },
+        "schema": "universe.raap.link-saved.v1",
+        "status": "LINKED",
+        "validUntil": 1792537208
+      }
+    },
+    "browser: PREPARE_SHARING": {
+      "request": {
+        "operation": "PREPARE_SHARING",
+        "target": {
+          "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+          "asset": {
+            "chainId": 1,
+            "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "tokenId": "909"
+          },
+          "connectionId": "universe-dev-bench"
+        },
+        "link": {
+          "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+          "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+          "revision": "1"
+        },
+        "eventKinds": [
+          "CHEST_OPENED"
+        ]
+      },
+      "status": 200,
+      "response": {
+        "message": "RAAP approval\n\nShare confirmed Universe experiences with Rebel #909\nEvent types: CHEST_OPENED\nThese experiences may appear in this Rebel's public history. This does not authorize game actions or award extra points or XP.\nSelection: 0x9b64f2421361fe54971a99b0172fe1106d63ab47dee6fc51261dd0114aca5af8\nApprove before (UTC): 2026-10-19T23:05:08.000Z\nSharing ends (UTC): 2026-10-20T23:00:08.000Z\nThis is not an Ethereum transaction or NFT transfer.\n\nVerification details\nPlayer wallet: 0x2b5ad5c4795c026514f8317c7a215e218dccd6cf\nRebel: 0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221 #909\nNetwork chain ID: 1\nController epoch: 7\nGame: https://universe.invalid\nRAAP: https://raap.invalid\nEnvironment: dev\nConnection: universe-dev-bench / 1\nAccount link: 0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5 / 1\nAccount commitment: 0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e\nNonce: 0xc83bbc3c84180e8b4bb880afcee56f0e47f6778c0ae4e65425edec78b7f7f8af\nRequest: 0x32731de8fe469cb3017827e6574ccf672c7fa863cc55119df068e41f8c87932f",
+        "request": {
+          "approveBefore": 1792451108,
+          "asset": {
+            "chainId": 1,
+            "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "tokenId": "909"
+          },
+          "audience": "https://raap.invalid",
+          "connectionId": "universe-dev-bench",
+          "connectionRevision": "1",
+          "controllerEpoch": 7,
+          "environment": "dev",
+          "eventKinds": [
+            "CHEST_OPENED"
+          ],
+          "gameplayAuthority": false,
+          "issuedAt": 1792450808,
+          "issuer": "https://universe.invalid",
+          "link": {
+            "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+            "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+            "revision": "1"
+          },
+          "nonce": "0xc83bbc3c84180e8b4bb880afcee56f0e47f6778c0ae4e65425edec78b7f7f8af",
+          "publicExperienceConsent": true,
+          "purpose": "SHARE_CONFIRMED_UNIVERSE_EXPERIENCES",
+          "schema": "raap.universe.sharing-consent.v1",
+          "selectionId": "0x9b64f2421361fe54971a99b0172fe1106d63ab47dee6fc51261dd0114aca5af8",
+          "validUntil": 1792537208,
+          "wallet": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf"
+        },
+        "schema": "universe.raap.sharing-preparation.v1"
+      }
+    },
+    "browser: SAVE_SHARING": {
+      "request": {
+        "operation": "SAVE_SHARING",
+        "authorization": {
+          "schema": "raap.universe.authorized-sharing-consent.v1",
+          "request": {
+            "approveBefore": 1792451108,
+            "asset": {
+              "chainId": 1,
+              "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+              "tokenId": "909"
+            },
+            "audience": "https://raap.invalid",
+            "connectionId": "universe-dev-bench",
+            "connectionRevision": "1",
+            "controllerEpoch": 7,
+            "environment": "dev",
+            "eventKinds": [
+              "CHEST_OPENED"
+            ],
+            "gameplayAuthority": false,
+            "issuedAt": 1792450808,
+            "issuer": "https://universe.invalid",
+            "link": {
+              "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+              "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+              "revision": "1"
+            },
+            "nonce": "0xc83bbc3c84180e8b4bb880afcee56f0e47f6778c0ae4e65425edec78b7f7f8af",
+            "publicExperienceConsent": true,
+            "purpose": "SHARE_CONFIRMED_UNIVERSE_EXPERIENCES",
+            "schema": "raap.universe.sharing-consent.v1",
+            "selectionId": "0x9b64f2421361fe54971a99b0172fe1106d63ab47dee6fc51261dd0114aca5af8",
+            "validUntil": 1792537208,
+            "wallet": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf"
+          },
+          "ownerApproval": {
+            "scheme": "eip191-personal-sign",
+            "signer": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+            "signature": "0x2274dccb58b13f907ffce9edae1f55615e6fc66975a213784f2f5845f94ba9b42b2e2635ed277b35aaf69f43870f317374116089e00e85bfeb44d248280479981c"
+          }
+        }
+      },
+      "status": 200,
+      "response": {
+        "eventKinds": [
+          "CHEST_OPENED"
+        ],
+        "link": {
+          "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+          "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+          "revision": "1"
+        },
+        "schema": "universe.raap.sharing-saved.v1",
+        "selectionId": "0x9b64f2421361fe54971a99b0172fe1106d63ab47dee6fc51261dd0114aca5af8",
+        "status": "SHARING",
+        "validUntil": 1792537208
+      }
+    },
+    "browser: GET status (the wallet holder)": {
+      "request": null,
+      "status": 200,
+      "response": {
+        "connection": {
+          "asset": {
+            "chainId": 1,
+            "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "tokenId": "909"
+          },
+          "connectionId": "universe-dev-bench",
+          "connectionRevision": "1",
+          "controllerEpoch": 7,
+          "eventKinds": [
+            "CHEST_OPENED",
+            "FIRST_GAME_CLEAR",
+            "PLACE_RIDDLE_SOLVED",
+            "TREASURE_DIG_FIND"
+          ],
+          "game": "https://universe.invalid",
+          "raap": "https://raap.invalid",
+          "sharing": true,
+          "target": {
+            "asset": {
+              "chainId": 1,
+              "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+              "tokenId": "909"
+            },
+            "connectionId": "universe-dev-bench",
+            "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf"
+          },
+          "validUntil": 1792710008,
+          "wallet": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf"
+        },
+        "enabled": true,
+        "link": {
+          "account": {
+            "kind": "discord"
+          },
+          "link": {
+            "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+            "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+            "revision": "1"
+          },
+          "mine": true,
+          "status": "LINKED",
+          "validUntil": 1792537208
+        },
+        "now": 1792450808,
+        "revoke": {
+          "stopSharing": {
+            "message": "RAAP approval\n\nStop sharing Universe experiences\nThis stops future use of this permission. Existing game rewards and saved receipts are preserved.\nSelection: 0x9b64f2421361fe54971a99b0172fe1106d63ab47dee6fc51261dd0114aca5af8\nApprove before (UTC): 2026-10-19T23:05:08.000Z\nThis is not an Ethereum transaction or NFT transfer.\n\nVerification details\nPlayer wallet: 0x2b5ad5c4795c026514f8317c7a215e218dccd6cf\nRebel: 0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221 #909\nNetwork chain ID: 1\nController epoch: 7\nGame: https://universe.invalid\nRAAP: https://raap.invalid\nEnvironment: dev\nConnection: universe-dev-bench / 1\nAccount link: 0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5 / 1\nAccount commitment: 0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e\nNonce: 0x2ec659e0d14d5733d4ffc36e30b729a54296e83888e72e5f096358e9a38de59b\nRequest: 0xa9ae2b086d3089663c589d198069fe7e81b36de2350e8c50510edd575555e3bc",
+            "request": {
+              "asset": {
+                "chainId": 1,
+                "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+                "tokenId": "909"
+              },
+              "audience": "https://raap.invalid",
+              "connectionId": "universe-dev-bench",
+              "connectionRevision": "1",
+              "controllerEpoch": 7,
+              "environment": "dev",
+              "expiresAt": 1792451108,
+              "issuedAt": 1792450808,
+              "issuer": "https://universe.invalid",
+              "link": {
+                "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+                "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+                "revision": "1"
+              },
+              "nonce": "0x2ec659e0d14d5733d4ffc36e30b729a54296e83888e72e5f096358e9a38de59b",
+              "purpose": "STOP_SHARING_UNIVERSE_EXPERIENCES",
+              "schema": "raap.universe.revoke-consent.v1",
+              "selectionId": "0x9b64f2421361fe54971a99b0172fe1106d63ab47dee6fc51261dd0114aca5af8",
+              "wallet": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf"
+            }
+          },
+          "unlink": {
+            "message": "RAAP approval\n\nDisconnect my Universe Economy account link\nThis stops future use of this permission. Existing game rewards and saved receipts are preserved.\nSelection: all selections for this link\nApprove before (UTC): 2026-10-19T23:05:08.000Z\nThis is not an Ethereum transaction or NFT transfer.\n\nVerification details\nPlayer wallet: 0x2b5ad5c4795c026514f8317c7a215e218dccd6cf\nRebel: 0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221 #909\nNetwork chain ID: 1\nController epoch: 7\nGame: https://universe.invalid\nRAAP: https://raap.invalid\nEnvironment: dev\nConnection: universe-dev-bench / 1\nAccount link: 0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5 / 1\nAccount commitment: 0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e\nNonce: 0xfe25e460866eab7f7b25ff09e3b7450d6b5fcb62fe44360619ae769d7c4bbebc\nRequest: 0xb6f74d0b62b5827974cc92a054e8b9034ef3d853557c0a52c1433b2b388c44ea",
+            "request": {
+              "asset": {
+                "chainId": 1,
+                "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+                "tokenId": "909"
+              },
+              "audience": "https://raap.invalid",
+              "connectionId": "universe-dev-bench",
+              "connectionRevision": "1",
+              "controllerEpoch": 7,
+              "environment": "dev",
+              "expiresAt": 1792451108,
+              "issuedAt": 1792450808,
+              "issuer": "https://universe.invalid",
+              "link": {
+                "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+                "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+                "revision": "1"
+              },
+              "nonce": "0xfe25e460866eab7f7b25ff09e3b7450d6b5fcb62fe44360619ae769d7c4bbebc",
+              "purpose": "UNLINK_UNIVERSE_ECONOMY_ACCOUNT",
+              "schema": "raap.universe.revoke-consent.v1",
+              "selectionId": null,
+              "wallet": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf"
+            }
+          }
+        },
+        "schema": "universe.raap.link-page.v1",
+        "session": {
+          "economy": {
+            "kind": "discord",
+            "name": "Example"
+          },
+          "wallet": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+          "walletMatches": true
+        },
+        "sharing": {
+          "eventKinds": [
+            "CHEST_OPENED"
+          ],
+          "selectionId": "0x9b64f2421361fe54971a99b0172fe1106d63ab47dee6fc51261dd0114aca5af8",
+          "status": "SHARING",
+          "validUntil": 1792537208
+        }
+      }
+    },
+    "RAAP: LINK_STATUS": {
+      "request": {
+        "operation": "LINK_STATUS",
+        "target": {
+          "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+          "asset": {
+            "chainId": 1,
+            "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "tokenId": "909"
+          },
+          "connectionId": "universe-dev-bench"
+        }
+      },
+      "status": 200,
+      "response": {
+        "connectionRevision": "1",
+        "controllerEpoch": 7,
+        "link": {
+          "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+          "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+          "revision": "1"
+        },
+        "observedAt": 1792450808,
+        "schema": "universe.raap.link-status.v1",
+        "sharing": {
+          "eventKinds": [
+            "CHEST_OPENED"
+          ],
+          "selectionId": "0x9b64f2421361fe54971a99b0172fe1106d63ab47dee6fc51261dd0114aca5af8",
+          "status": "SHARING",
+          "validUntil": 1792537208
+        },
+        "status": "LINKED",
+        "target": {
+          "asset": {
+            "chainId": 1,
+            "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "tokenId": "909"
+          },
+          "connectionId": "universe-dev-bench",
+          "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf"
+        },
+        "validUntil": 1792537208
+      }
+    },
+    "RAAP: READ": {
+      "request": {
+        "operation": "READ",
+        "target": {
+          "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+          "asset": {
+            "chainId": 1,
+            "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "tokenId": "909"
+          },
+          "connectionId": "universe-dev-bench"
+        },
+        "link": {
+          "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+          "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+          "revision": "1"
+        }
+      },
+      "status": 200,
+      "response": {
+        "chests": [
+          {
+            "available": true,
+            "chestId": "hub-chest-iron-1",
+            "refusal": "NONE",
+            "rewardUnits": "25",
+            "villageId": "hub"
+          },
+          {
+            "available": true,
+            "chestId": "hub-chest-legend-1",
+            "refusal": "NONE",
+            "rewardUnits": "1000",
+            "villageId": "hub"
+          },
+          {
+            "available": true,
+            "chestId": "hub-chest-wood-2",
+            "refusal": "NONE",
+            "rewardUnits": "10",
+            "villageId": "hub"
+          }
+        ],
+        "configurationCommitment": "0x1a5c79b6a2c38220d3c7857a9a90f61a0102760f05449d2ef7a5cc3aebfba6c7",
+        "link": {
+          "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+          "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+          "revision": "1"
+        },
+        "observedAt": 1792450808,
+        "schema": "universe.raap.chest-inventory.v1",
+        "state": {
+          "commitment": "0xef5637ff2b6d6932ba01c723311e249e0c7ad5b13041204a74032b906308ba66",
+          "version": "0"
+        },
+        "target": {
+          "asset": {
+            "chainId": 1,
+            "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "tokenId": "909"
+          },
+          "connectionId": "universe-dev-bench",
+          "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf"
+        }
+      }
+    },
+    "RAAP: PREPARE": {
+      "request": {
+        "operation": "PREPARE",
+        "target": {
+          "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+          "asset": {
+            "chainId": 1,
+            "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "tokenId": "909"
+          },
+          "connectionId": "universe-dev-bench"
+        },
+        "link": {
+          "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+          "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+          "revision": "1"
+        },
+        "action": {
+          "kind": "CHEST_OPEN",
+          "chestId": "hub-chest-wood-2"
+        }
+      },
+      "status": 200,
+      "response": {
+        "action": {
+          "chestId": "hub-chest-wood-2",
+          "kind": "CHEST_OPEN"
+        },
+        "configurationCommitment": "0x1a5c79b6a2c38220d3c7857a9a90f61a0102760f05449d2ef7a5cc3aebfba6c7",
+        "economyEffect": {
+          "beneficiary": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+          "currency": "REBEL",
+          "idempotencyCommitment": "0x786e63d09bc5c40ed9bdbab94565a7364173a0d68b3572adc521a7030eb051ed",
+          "kind": "EXISTING_CHEST_REWARD",
+          "settlement": "EXISTING_DAILY_CAP",
+          "units": "10"
+        },
+        "expiresAt": 1792451708,
+        "link": {
+          "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+          "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+          "revision": "1"
+        },
+        "maximumCharge": {
+          "currency": "REBEL",
+          "units": "0"
+        },
+        "observedAt": 1792450808,
+        "schema": "universe.raap.chest-preparation.v1",
+        "state": {
+          "commitment": "0xda88f04ecbc259b3f22b5304340e0d2a02fd6748854d4b5de63185fd90e12b5c",
+          "version": "0"
+        },
+        "target": {
+          "asset": {
+            "chainId": 1,
+            "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "tokenId": "909"
+          },
+          "connectionId": "universe-dev-bench",
+          "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf"
+        }
+      }
+    },
+    "the readable message the owner signs (chest)": "RAAP approval\n\nOpen one Universe chest for Rebel #909\nChest ID: hub-chest-wood-2\nMaximum game charge: 0 REBEL. Existing chest reward: 10 REBEL points.\nThe game's daily cap may hold this reward for later. No other held rewards are included.\nThis approves one chest claim, not navigation, an Ethereum transaction or an NFT transfer.\nPlayer wallet: 0x2b5ad5c4795c026514f8317c7a215e218dccd6cf\nLinked account: 0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e\nExpires (UTC): 2026-10-19T23:15:08.000Z\n\nVerification details\nProtocol: RAAP Universe Chest / 1\nEnvironment: dev\nWebsite: https://raap.invalid\nGame: https://universe.invalid\nNetwork chain ID: 1\nCollection: 0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221\nController epoch: 7\nRebel account: 0x2222222222222222222222222222222222222222\nConnection: universe-dev-bench / 1\nAccount link: 0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5 / 1\nState version: 0\nJournal: 0x1111111111111111111111111111111111111111111111111111111111111111\nRequest ID: 0x1091d5bbf26ff2b7b612f7c95d4f8370a250490d566dc04d0f5997c2d8514d65\nRequest: 0xba90cd4a4eb10de219a3979b4f5681217dce1f85bf778b72da61a916f79824a4",
+    "RAAP: EXECUTE -> APPLIED + PAID": {
+      "request": {
+        "operation": "EXECUTE",
+        "authorization": {
+          "schema": "raap.universe.authorized-chest-action.v1",
+          "request": {
+            "schema": "raap.universe.chest-action.v1",
+            "environment": "dev",
+            "issuer": "https://raap.invalid",
+            "audience": "https://universe.invalid",
+            "tenant": "bench-tenant",
+            "journalId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+            "requestId": "0x1091d5bbf26ff2b7b612f7c95d4f8370a250490d566dc04d0f5997c2d8514d65",
+            "connectionId": "universe-dev-bench",
+            "connectionRevision": "1",
+            "player": {
+              "id": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+              "wallet": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+              "economyAccountId": null
+            },
+            "asset": {
+              "chainId": 1,
+              "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+              "tokenId": "909"
+            },
+            "controller": {
+              "address": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+              "epoch": 7
+            },
+            "account": "0x2222222222222222222222222222222222222222",
+            "contextCommitment": "0x4444444444444444444444444444444444444444444444444444444444444444",
+            "state": {
+              "commitment": "0xda88f04ecbc259b3f22b5304340e0d2a02fd6748854d4b5de63185fd90e12b5c",
+              "version": "0"
+            },
+            "configurationCommitment": "0x1a5c79b6a2c38220d3c7857a9a90f61a0102760f05449d2ef7a5cc3aebfba6c7",
+            "link": {
+              "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+              "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+              "revision": "1"
+            },
+            "action": {
+              "chestId": "hub-chest-wood-2",
+              "kind": "CHEST_OPEN"
+            },
+            "maximumCharge": {
+              "currency": "REBEL",
+              "units": "0"
+            },
+            "economyEffect": {
+              "beneficiary": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+              "currency": "REBEL",
+              "idempotencyCommitment": "0x786e63d09bc5c40ed9bdbab94565a7364173a0d68b3572adc521a7030eb051ed",
+              "kind": "EXISTING_CHEST_REWARD",
+              "settlement": "EXISTING_DAILY_CAP",
+              "units": "10"
+            },
+            "issuedAt": 1792450808,
+            "expiresAt": 1792451708
+          },
+          "ownerApproval": {
+            "scheme": "eip191-personal-sign",
+            "signer": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+            "signature": "0xaffaf0229b8a13fb1bce1192ef0a802bb78d8f31a68fbec095d83121e40689a730e057dbd43f6b32d5301a0e9cbb97e5a81265da5025e030b5cb6f4dcc487c5e1b"
+          }
+        }
+      },
+      "status": 200,
+      "response": {
+        "acceptedAt": 1792450808,
+        "action": {
+          "chestId": "hub-chest-wood-2",
+          "kind": "CHEST_OPEN"
+        },
+        "actualCharge": {
+          "currency": "REBEL",
+          "units": "0"
+        },
+        "after": {
+          "commitment": "0xef32263b05b633ded0490eb68fcb7c7547b535936497d4737d3204a7b28ce473",
+          "version": "1"
+        },
+        "asset": {
+          "chainId": 1,
+          "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+          "tokenId": "909"
+        },
+        "before": {
+          "commitment": "0xda88f04ecbc259b3f22b5304340e0d2a02fd6748854d4b5de63185fd90e12b5c",
+          "version": "0"
+        },
+        "committedAt": 1792450808,
+        "connectionId": "universe-dev-bench",
+        "controllerEpoch": 7,
+        "economyEffect": {
+          "beneficiary": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+          "currency": "REBEL",
+          "idempotencyCommitment": "0x786e63d09bc5c40ed9bdbab94565a7364173a0d68b3572adc521a7030eb051ed",
+          "kind": "EXISTING_CHEST_REWARD",
+          "settlement": "EXISTING_DAILY_CAP",
+          "units": "10"
+        },
+        "effects": [
+          {
+            "chestId": "hub-chest-wood-2",
+            "kind": "CHEST_CLAIM"
+          }
+        ],
+        "environment": "dev",
+        "link": {
+          "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+          "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+          "revision": "1"
+        },
+        "origin": "RAAP_APPROVED",
+        "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+        "reason": "NONE",
+        "receiptId": "0x9570180be68941cbdd5fbd0b18473d24f102f1940bc19bbabfb457a40d14a632",
+        "requestCommitment": "0xba90cd4a4eb10de219a3979b4f5681217dce1f85bf778b72da61a916f79824a4",
+        "requestId": "0x1091d5bbf26ff2b7b612f7c95d4f8370a250490d566dc04d0f5997c2d8514d65",
+        "reward": {
+          "economyTransactionId": "tx_5bcab728edf3",
+          "idempotencyCommitment": "0x786e63d09bc5c40ed9bdbab94565a7364173a0d68b3572adc521a7030eb051ed",
+          "recordCommitment": "0x195d4c3cc26c12325e5d2b474dbafc30d54168ba105aea843be18b38cd63fc6f",
+          "status": "PAID",
+          "units": "10"
+        },
+        "schema": "universe.raap.chest-receipt.v1",
+        "status": "APPLIED"
+      }
+    },
+    "RAAP: RECEIPT": {
+      "request": {
+        "operation": "RECEIPT",
+        "target": {
+          "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+          "asset": {
+            "chainId": 1,
+            "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "tokenId": "909"
+          },
+          "connectionId": "universe-dev-bench"
+        },
+        "link": {
+          "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+          "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+          "revision": "1"
+        },
+        "requestId": "0x1091d5bbf26ff2b7b612f7c95d4f8370a250490d566dc04d0f5997c2d8514d65",
+        "requestCommitment": "0xba90cd4a4eb10de219a3979b4f5681217dce1f85bf778b72da61a916f79824a4"
+      },
+      "status": 200,
+      "response": {
+        "receipt": {
+          "acceptedAt": 1792450808,
+          "action": {
+            "chestId": "hub-chest-wood-2",
+            "kind": "CHEST_OPEN"
+          },
+          "actualCharge": {
+            "currency": "REBEL",
+            "units": "0"
+          },
+          "after": {
+            "commitment": "0xef32263b05b633ded0490eb68fcb7c7547b535936497d4737d3204a7b28ce473",
+            "version": "1"
+          },
+          "asset": {
+            "chainId": 1,
+            "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "tokenId": "909"
+          },
+          "before": {
+            "commitment": "0xda88f04ecbc259b3f22b5304340e0d2a02fd6748854d4b5de63185fd90e12b5c",
+            "version": "0"
+          },
+          "committedAt": 1792450808,
+          "connectionId": "universe-dev-bench",
+          "controllerEpoch": 7,
+          "economyEffect": {
+            "beneficiary": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+            "currency": "REBEL",
+            "idempotencyCommitment": "0x786e63d09bc5c40ed9bdbab94565a7364173a0d68b3572adc521a7030eb051ed",
+            "kind": "EXISTING_CHEST_REWARD",
+            "settlement": "EXISTING_DAILY_CAP",
+            "units": "10"
+          },
+          "effects": [
+            {
+              "chestId": "hub-chest-wood-2",
+              "kind": "CHEST_CLAIM"
+            }
+          ],
+          "environment": "dev",
+          "link": {
+            "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+            "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+            "revision": "1"
+          },
+          "origin": "RAAP_APPROVED",
+          "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+          "reason": "NONE",
+          "receiptId": "0x9570180be68941cbdd5fbd0b18473d24f102f1940bc19bbabfb457a40d14a632",
+          "requestCommitment": "0xba90cd4a4eb10de219a3979b4f5681217dce1f85bf778b72da61a916f79824a4",
+          "requestId": "0x1091d5bbf26ff2b7b612f7c95d4f8370a250490d566dc04d0f5997c2d8514d65",
+          "reward": {
+            "economyTransactionId": "tx_5bcab728edf3",
+            "idempotencyCommitment": "0x786e63d09bc5c40ed9bdbab94565a7364173a0d68b3572adc521a7030eb051ed",
+            "recordCommitment": "0x195d4c3cc26c12325e5d2b474dbafc30d54168ba105aea843be18b38cd63fc6f",
+            "status": "PAID",
+            "units": "10"
+          },
+          "schema": "universe.raap.chest-receipt.v1",
+          "status": "APPLIED"
+        },
+        "requestId": "0x1091d5bbf26ff2b7b612f7c95d4f8370a250490d566dc04d0f5997c2d8514d65",
+        "schema": "universe.raap.chest-receipt-read.v1",
+        "status": "FOUND"
+      }
+    },
+    "RAAP: EXECUTE again (same request) -> the same receipt": {
+      "request": {
+        "operation": "EXECUTE",
+        "authorization": {
+          "schema": "raap.universe.authorized-chest-action.v1",
+          "request": {
+            "schema": "raap.universe.chest-action.v1",
+            "environment": "dev",
+            "issuer": "https://raap.invalid",
+            "audience": "https://universe.invalid",
+            "tenant": "bench-tenant",
+            "journalId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+            "requestId": "0x1091d5bbf26ff2b7b612f7c95d4f8370a250490d566dc04d0f5997c2d8514d65",
+            "connectionId": "universe-dev-bench",
+            "connectionRevision": "1",
+            "player": {
+              "id": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+              "wallet": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+              "economyAccountId": null
+            },
+            "asset": {
+              "chainId": 1,
+              "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+              "tokenId": "909"
+            },
+            "controller": {
+              "address": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+              "epoch": 7
+            },
+            "account": "0x2222222222222222222222222222222222222222",
+            "contextCommitment": "0x4444444444444444444444444444444444444444444444444444444444444444",
+            "state": {
+              "commitment": "0xda88f04ecbc259b3f22b5304340e0d2a02fd6748854d4b5de63185fd90e12b5c",
+              "version": "0"
+            },
+            "configurationCommitment": "0x1a5c79b6a2c38220d3c7857a9a90f61a0102760f05449d2ef7a5cc3aebfba6c7",
+            "link": {
+              "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+              "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+              "revision": "1"
+            },
+            "action": {
+              "chestId": "hub-chest-wood-2",
+              "kind": "CHEST_OPEN"
+            },
+            "maximumCharge": {
+              "currency": "REBEL",
+              "units": "0"
+            },
+            "economyEffect": {
+              "beneficiary": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+              "currency": "REBEL",
+              "idempotencyCommitment": "0x786e63d09bc5c40ed9bdbab94565a7364173a0d68b3572adc521a7030eb051ed",
+              "kind": "EXISTING_CHEST_REWARD",
+              "settlement": "EXISTING_DAILY_CAP",
+              "units": "10"
+            },
+            "issuedAt": 1792450808,
+            "expiresAt": 1792451708
+          },
+          "ownerApproval": {
+            "scheme": "eip191-personal-sign",
+            "signer": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+            "signature": "0xaffaf0229b8a13fb1bce1192ef0a802bb78d8f31a68fbec095d83121e40689a730e057dbd43f6b32d5301a0e9cbb97e5a81265da5025e030b5cb6f4dcc487c5e1b"
+          }
+        }
+      },
+      "status": 200,
+      "response": {
+        "acceptedAt": 1792450808,
+        "action": {
+          "chestId": "hub-chest-wood-2",
+          "kind": "CHEST_OPEN"
+        },
+        "actualCharge": {
+          "currency": "REBEL",
+          "units": "0"
+        },
+        "after": {
+          "commitment": "0xef32263b05b633ded0490eb68fcb7c7547b535936497d4737d3204a7b28ce473",
+          "version": "1"
+        },
+        "asset": {
+          "chainId": 1,
+          "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+          "tokenId": "909"
+        },
+        "before": {
+          "commitment": "0xda88f04ecbc259b3f22b5304340e0d2a02fd6748854d4b5de63185fd90e12b5c",
+          "version": "0"
+        },
+        "committedAt": 1792450808,
+        "connectionId": "universe-dev-bench",
+        "controllerEpoch": 7,
+        "economyEffect": {
+          "beneficiary": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+          "currency": "REBEL",
+          "idempotencyCommitment": "0x786e63d09bc5c40ed9bdbab94565a7364173a0d68b3572adc521a7030eb051ed",
+          "kind": "EXISTING_CHEST_REWARD",
+          "settlement": "EXISTING_DAILY_CAP",
+          "units": "10"
+        },
+        "effects": [
+          {
+            "chestId": "hub-chest-wood-2",
+            "kind": "CHEST_CLAIM"
+          }
+        ],
+        "environment": "dev",
+        "link": {
+          "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+          "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+          "revision": "1"
+        },
+        "origin": "RAAP_APPROVED",
+        "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+        "reason": "NONE",
+        "receiptId": "0x9570180be68941cbdd5fbd0b18473d24f102f1940bc19bbabfb457a40d14a632",
+        "requestCommitment": "0xba90cd4a4eb10de219a3979b4f5681217dce1f85bf778b72da61a916f79824a4",
+        "requestId": "0x1091d5bbf26ff2b7b612f7c95d4f8370a250490d566dc04d0f5997c2d8514d65",
+        "reward": {
+          "economyTransactionId": "tx_5bcab728edf3",
+          "idempotencyCommitment": "0x786e63d09bc5c40ed9bdbab94565a7364173a0d68b3572adc521a7030eb051ed",
+          "recordCommitment": "0x195d4c3cc26c12325e5d2b474dbafc30d54168ba105aea843be18b38cd63fc6f",
+          "status": "PAID",
+          "units": "10"
+        },
+        "schema": "universe.raap.chest-receipt.v1",
+        "status": "APPLIED"
+      }
+    },
+    "RAAP: EXECUTE after a human claimed it -> DECLINED ALREADY_CLAIMED": {
+      "request": {
+        "operation": "EXECUTE",
+        "authorization": {
+          "schema": "raap.universe.authorized-chest-action.v1",
+          "request": {
+            "schema": "raap.universe.chest-action.v1",
+            "environment": "dev",
+            "issuer": "https://raap.invalid",
+            "audience": "https://universe.invalid",
+            "tenant": "bench-tenant",
+            "journalId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+            "requestId": "0x2e2b1fefcc9241e391cd6889168f62f1f8e2a23e986bc92ffe1a95996fdfeb52",
+            "connectionId": "universe-dev-bench",
+            "connectionRevision": "1",
+            "player": {
+              "id": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+              "wallet": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+              "economyAccountId": null
+            },
+            "asset": {
+              "chainId": 1,
+              "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+              "tokenId": "909"
+            },
+            "controller": {
+              "address": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+              "epoch": 7
+            },
+            "account": "0x2222222222222222222222222222222222222222",
+            "contextCommitment": "0x4444444444444444444444444444444444444444444444444444444444444444",
+            "state": {
+              "commitment": "0xfdbae1c74a1137c2e7de65fe87fcebd03c924c34bcc339cbabf35d512776ff8d",
+              "version": "1"
+            },
+            "configurationCommitment": "0x1a5c79b6a2c38220d3c7857a9a90f61a0102760f05449d2ef7a5cc3aebfba6c7",
+            "link": {
+              "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+              "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+              "revision": "1"
+            },
+            "action": {
+              "chestId": "hub-chest-iron-1",
+              "kind": "CHEST_OPEN"
+            },
+            "maximumCharge": {
+              "currency": "REBEL",
+              "units": "0"
+            },
+            "economyEffect": {
+              "beneficiary": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+              "currency": "REBEL",
+              "idempotencyCommitment": "0x87c49f35d9207cc44b38eaa3b14c5f2be1af2db2ff14f50aaf4b4358dc9a526c",
+              "kind": "EXISTING_CHEST_REWARD",
+              "settlement": "EXISTING_DAILY_CAP",
+              "units": "25"
+            },
+            "issuedAt": 1792450808,
+            "expiresAt": 1792451708
+          },
+          "ownerApproval": {
+            "scheme": "eip191-personal-sign",
+            "signer": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+            "signature": "0x7f6ed51e3cb66bf7c4b3f7fefa8f61b30ea4d995ba7acce425094b7dd1a82b11293ba0172fac31f591dd5069228204ca638f217bdc4e07310e9477b19aae9aaf1b"
+          }
+        }
+      },
+      "status": 200,
+      "response": {
+        "acceptedAt": null,
+        "action": {
+          "chestId": "hub-chest-iron-1",
+          "kind": "CHEST_OPEN"
+        },
+        "actualCharge": {
+          "currency": "REBEL",
+          "units": "0"
+        },
+        "after": {
+          "commitment": "0x2ea04bce11a1aedcefa3096e4edfc8d2e8d99d2b87cabf50c0331fbe1704f4ed",
+          "version": "1"
+        },
+        "asset": {
+          "chainId": 1,
+          "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+          "tokenId": "909"
+        },
+        "before": {
+          "commitment": "0x2ea04bce11a1aedcefa3096e4edfc8d2e8d99d2b87cabf50c0331fbe1704f4ed",
+          "version": "1"
+        },
+        "committedAt": null,
+        "connectionId": "universe-dev-bench",
+        "controllerEpoch": 7,
+        "economyEffect": {
+          "beneficiary": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+          "currency": "REBEL",
+          "idempotencyCommitment": "0x87c49f35d9207cc44b38eaa3b14c5f2be1af2db2ff14f50aaf4b4358dc9a526c",
+          "kind": "EXISTING_CHEST_REWARD",
+          "settlement": "EXISTING_DAILY_CAP",
+          "units": "25"
+        },
+        "effects": [],
+        "environment": "dev",
+        "link": {
+          "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+          "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+          "revision": "1"
+        },
+        "origin": "RAAP_APPROVED",
+        "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+        "reason": "ALREADY_CLAIMED",
+        "receiptId": "0x65ecdd6d20ed6fc42295cc25c098ee6c1b8850132b2f0b0862f0f816bd01488d",
+        "requestCommitment": "0x49ca1b2ff1efd86d48b5bb57bca48b60bc765ae32d1a14676871c283e102277d",
+        "requestId": "0x2e2b1fefcc9241e391cd6889168f62f1f8e2a23e986bc92ffe1a95996fdfeb52",
+        "reward": {
+          "economyTransactionId": null,
+          "idempotencyCommitment": "0x87c49f35d9207cc44b38eaa3b14c5f2be1af2db2ff14f50aaf4b4358dc9a526c",
+          "recordCommitment": null,
+          "status": "NONE",
+          "units": "0"
+        },
+        "schema": "universe.raap.chest-receipt.v1",
+        "status": "DECLINED"
+      }
+    },
+    "RAAP: EXECUTE past the daily cap -> APPLIED + HELD": {
+      "request": {
+        "operation": "EXECUTE",
+        "authorization": {
+          "schema": "raap.universe.authorized-chest-action.v1",
+          "request": {
+            "schema": "raap.universe.chest-action.v1",
+            "environment": "dev",
+            "issuer": "https://raap.invalid",
+            "audience": "https://universe.invalid",
+            "tenant": "bench-tenant",
+            "journalId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+            "requestId": "0xbafe683caf35d0c7840c0ccab2ff4c1e00743663d50f800ec0678644889ae358",
+            "connectionId": "universe-dev-bench",
+            "connectionRevision": "1",
+            "player": {
+              "id": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+              "wallet": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+              "economyAccountId": null
+            },
+            "asset": {
+              "chainId": 1,
+              "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+              "tokenId": "909"
+            },
+            "controller": {
+              "address": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+              "epoch": 7
+            },
+            "account": "0x2222222222222222222222222222222222222222",
+            "contextCommitment": "0x4444444444444444444444444444444444444444444444444444444444444444",
+            "state": {
+              "commitment": "0x28e5aaf2472ef926a919429697f69e16d56e02e89ad0101039d2b1baef267093",
+              "version": "1"
+            },
+            "configurationCommitment": "0x1a5c79b6a2c38220d3c7857a9a90f61a0102760f05449d2ef7a5cc3aebfba6c7",
+            "link": {
+              "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+              "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+              "revision": "1"
+            },
+            "action": {
+              "chestId": "hub-chest-legend-1",
+              "kind": "CHEST_OPEN"
+            },
+            "maximumCharge": {
+              "currency": "REBEL",
+              "units": "0"
+            },
+            "economyEffect": {
+              "beneficiary": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+              "currency": "REBEL",
+              "idempotencyCommitment": "0x224f9284ea90084befb82739b6224ea3734989a5405036e1d89659c7dd0dd9b1",
+              "kind": "EXISTING_CHEST_REWARD",
+              "settlement": "EXISTING_DAILY_CAP",
+              "units": "1000"
+            },
+            "issuedAt": 1792450808,
+            "expiresAt": 1792451708
+          },
+          "ownerApproval": {
+            "scheme": "eip191-personal-sign",
+            "signer": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+            "signature": "0xcfa3f1b4e4d96265d03d04043e091df57c84fdc9022b931fdf5dd654b79e92f122e24cd9b81dbbd1bb8474c1ac5f25e1dd4dfeb3c0a6c9193789101d6a88ef4e1b"
+          }
+        }
+      },
+      "status": 200,
+      "response": {
+        "acceptedAt": 1792450808,
+        "action": {
+          "chestId": "hub-chest-legend-1",
+          "kind": "CHEST_OPEN"
+        },
+        "actualCharge": {
+          "currency": "REBEL",
+          "units": "0"
+        },
+        "after": {
+          "commitment": "0xfa8ad0896b4aaa60694467be1287c1dc2a70b1c8358d54524e9e1f73e4980104",
+          "version": "2"
+        },
+        "asset": {
+          "chainId": 1,
+          "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+          "tokenId": "909"
+        },
+        "before": {
+          "commitment": "0x28e5aaf2472ef926a919429697f69e16d56e02e89ad0101039d2b1baef267093",
+          "version": "1"
+        },
+        "committedAt": 1792450808,
+        "connectionId": "universe-dev-bench",
+        "controllerEpoch": 7,
+        "economyEffect": {
+          "beneficiary": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+          "currency": "REBEL",
+          "idempotencyCommitment": "0x224f9284ea90084befb82739b6224ea3734989a5405036e1d89659c7dd0dd9b1",
+          "kind": "EXISTING_CHEST_REWARD",
+          "settlement": "EXISTING_DAILY_CAP",
+          "units": "1000"
+        },
+        "effects": [
+          {
+            "chestId": "hub-chest-legend-1",
+            "kind": "CHEST_CLAIM"
+          }
+        ],
+        "environment": "dev",
+        "link": {
+          "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+          "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+          "revision": "1"
+        },
+        "origin": "RAAP_APPROVED",
+        "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+        "reason": "NONE",
+        "receiptId": "0x9f865ea95ed6f5e1fc5c2f65d4417c8db6a3b5f50db459c476cdb39cc8bd86b3",
+        "requestCommitment": "0x0c97ea4b41917e80973d098a060a31beb5bee34794d51f213a98a367a0e08112",
+        "requestId": "0xbafe683caf35d0c7840c0ccab2ff4c1e00743663d50f800ec0678644889ae358",
+        "reward": {
+          "economyTransactionId": null,
+          "idempotencyCommitment": "0x224f9284ea90084befb82739b6224ea3734989a5405036e1d89659c7dd0dd9b1",
+          "recordCommitment": "0x0fd3bfdf78d5953a893848473423b73038464261109ed5bf0b240c85fc045f67",
+          "status": "HELD",
+          "units": "1000"
+        },
+        "schema": "universe.raap.chest-receipt.v1",
+        "status": "APPLIED"
+      }
+    },
+    "RAAP: EXECUTE, the economy answer lost -> OUTCOME_UNKNOWN (never sent again)": {
+      "request": {
+        "operation": "EXECUTE",
+        "authorization": {
+          "schema": "raap.universe.authorized-chest-action.v1",
+          "request": {
+            "schema": "raap.universe.chest-action.v1",
+            "environment": "dev",
+            "issuer": "https://raap.invalid",
+            "audience": "https://universe.invalid",
+            "tenant": "bench-tenant",
+            "journalId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+            "requestId": "0x6be403fedc8279cc1ea2440e8fe8b2780eeaebde4933942ab4b01e8715f935af",
+            "connectionId": "universe-dev-bench",
+            "connectionRevision": "1",
+            "player": {
+              "id": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+              "wallet": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+              "economyAccountId": null
+            },
+            "asset": {
+              "chainId": 1,
+              "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+              "tokenId": "909"
+            },
+            "controller": {
+              "address": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+              "epoch": 7
+            },
+            "account": "0x2222222222222222222222222222222222222222",
+            "contextCommitment": "0x4444444444444444444444444444444444444444444444444444444444444444",
+            "state": {
+              "commitment": "0xda88f04ecbc259b3f22b5304340e0d2a02fd6748854d4b5de63185fd90e12b5c",
+              "version": "2"
+            },
+            "configurationCommitment": "0x1a5c79b6a2c38220d3c7857a9a90f61a0102760f05449d2ef7a5cc3aebfba6c7",
+            "link": {
+              "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+              "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+              "revision": "1"
+            },
+            "action": {
+              "chestId": "hub-chest-wood-2",
+              "kind": "CHEST_OPEN"
+            },
+            "maximumCharge": {
+              "currency": "REBEL",
+              "units": "0"
+            },
+            "economyEffect": {
+              "beneficiary": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+              "currency": "REBEL",
+              "idempotencyCommitment": "0x786e63d09bc5c40ed9bdbab94565a7364173a0d68b3572adc521a7030eb051ed",
+              "kind": "EXISTING_CHEST_REWARD",
+              "settlement": "EXISTING_DAILY_CAP",
+              "units": "10"
+            },
+            "issuedAt": 1792450808,
+            "expiresAt": 1792451708
+          },
+          "ownerApproval": {
+            "scheme": "eip191-personal-sign",
+            "signer": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+            "signature": "0x91f23517add07df8f848d25bdf3b0a3aa1b38b159a9f261b0be1556ecfc1f7de4e8286c6163ddcacdd74c486df42687393bf91effba7f2362be9c5c5fdc06b191b"
+          }
+        }
+      },
+      "status": 200,
+      "response": {
+        "acceptedAt": 1792450808,
+        "action": {
+          "chestId": "hub-chest-wood-2",
+          "kind": "CHEST_OPEN"
+        },
+        "actualCharge": null,
+        "after": null,
+        "asset": {
+          "chainId": 1,
+          "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+          "tokenId": "909"
+        },
+        "before": {
+          "commitment": "0xda88f04ecbc259b3f22b5304340e0d2a02fd6748854d4b5de63185fd90e12b5c",
+          "version": "2"
+        },
+        "committedAt": null,
+        "connectionId": "universe-dev-bench",
+        "controllerEpoch": 7,
+        "economyEffect": {
+          "beneficiary": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+          "currency": "REBEL",
+          "idempotencyCommitment": "0x786e63d09bc5c40ed9bdbab94565a7364173a0d68b3572adc521a7030eb051ed",
+          "kind": "EXISTING_CHEST_REWARD",
+          "settlement": "EXISTING_DAILY_CAP",
+          "units": "10"
+        },
+        "effects": [],
+        "environment": "dev",
+        "link": {
+          "accountCommitment": "0xd432d81800160509a647508977d3bb686491c412cbcd1649f7bf7bc9885ee76e",
+          "linkId": "0x0589944b589d2962f6408fadc746f1f4d7e94744d8920ec3d6e6fde029f0b6e5",
+          "revision": "1"
+        },
+        "origin": "RAAP_APPROVED",
+        "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+        "reason": "AWAITING_CONFIRMATION",
+        "receiptId": "0x6487726096c2bd9efa0b30d92a085fc983f75cfafefd39606aafd1aa3671fd31",
+        "requestCommitment": "0xf9a3b02420aaf690812b2f96f5a7a76fe927635071b305a3ab9299437b35c88f",
+        "requestId": "0x6be403fedc8279cc1ea2440e8fe8b2780eeaebde4933942ab4b01e8715f935af",
+        "reward": {
+          "economyTransactionId": null,
+          "idempotencyCommitment": "0x786e63d09bc5c40ed9bdbab94565a7364173a0d68b3572adc521a7030eb051ed",
+          "recordCommitment": null,
+          "status": "UNKNOWN",
+          "units": null
+        },
+        "schema": "universe.raap.chest-receipt.v1",
+        "status": "OUTCOME_UNKNOWN"
+      }
+    },
+    "RAAP: EVENTS (signed with the contract's public test seed 0x01..01)": {
+      "request": {
+        "operation": "EVENTS",
+        "target": {
+          "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+          "asset": {
+            "chainId": 1,
+            "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "tokenId": "909"
+          },
+          "connectionId": "universe-dev-bench"
+        },
+        "afterCursor": "0",
+        "limit": 25
+      },
+      "status": 200,
+      "response": {
+        "events": [
+          {
+            "asset": {
+              "chainId": 1,
+              "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+              "tokenId": "909"
+            },
+            "controllerEpoch": 7,
+            "cursor": "1",
+            "environment": "dev",
+            "eventId": "0x5c8104d22e4adbb88804fc3b65f664e20e3cbc8aa9e776ed24115930f0fbd832",
+            "facts": {
+              "locationId": "hub",
+              "result": "OPENED",
+              "rewards": [
+                {
+                  "id": "REBEL",
+                  "kind": "REBEL_POINTS",
+                  "quantity": "10"
+                }
+              ],
+              "subjectId": "hub-chest-wood-2"
+            },
+            "issuerId": "rebel.universe",
+            "keyId": "universe-dev-bench-key-1",
+            "kind": "CHEST_OPENED",
+            "observedAt": 1792450808,
+            "occurredAt": 1792450808,
+            "origin": "RAAP_APPROVED",
+            "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+            "requestId": "0x1091d5bbf26ff2b7b612f7c95d4f8370a250490d566dc04d0f5997c2d8514d65",
+            "schema": "rebel.universe.fact.v1",
+            "selectionId": "0x9b64f2421361fe54971a99b0172fe1106d63ab47dee6fc51261dd0114aca5af8",
+            "signature": "0xd52bdbe9ce534dade18145a347a14e18c3f2b01221827295110b6a4752ab98834002541492734d501857bf8ecc13853935f3a848f497cd3d7aabc7bd29ee2d0e",
+            "sourceRecordDigest": "0x117b2fd1d70e6d708ead359bb1ac3a91134b8978688257404c3ad69d05da499a",
+            "sourceRecordId": "0xc18002dbfbfffe8e97c96470a2909640c68c5cefecdb1340b8c4a8ebaed17599",
+            "wallet": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf"
+          },
+          {
+            "asset": {
+              "chainId": 1,
+              "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+              "tokenId": "909"
+            },
+            "controllerEpoch": 7,
+            "cursor": "2",
+            "environment": "dev",
+            "eventId": "0x6a46888c301defc0337dff3b9f4d800f968be67f259af8d7532e4e0d374259b9",
+            "facts": {
+              "locationId": "hub",
+              "result": "OPENED",
+              "rewards": [
+                {
+                  "id": "REBEL",
+                  "kind": "REBEL_POINTS",
+                  "quantity": "25"
+                }
+              ],
+              "subjectId": "hub-chest-iron-1"
+            },
+            "issuerId": "rebel.universe",
+            "keyId": "universe-dev-bench-key-1",
+            "kind": "CHEST_OPENED",
+            "observedAt": 1792450808,
+            "occurredAt": 1792450808,
+            "origin": "OWNER_PLAYED",
+            "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+            "requestId": null,
+            "schema": "rebel.universe.fact.v1",
+            "selectionId": "0x9b64f2421361fe54971a99b0172fe1106d63ab47dee6fc51261dd0114aca5af8",
+            "signature": "0x40c840217a2f25f430e218d4d85621bb16513892f52ce900c5a1ed99deafcee1c3975ce01c30ac18905da4c4209e5d2ccca73cd4240b7ebc917e30a76380450b",
+            "sourceRecordDigest": "0xe812f56d7a492853810affc2718f32bc04bdebffdeadb4f61af4e69fbc66cf0a",
+            "sourceRecordId": "0x357e01e09931124d4f1670cc833451399662e27fa128a79646ed2ecb9733b3a5",
+            "wallet": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf"
+          },
+          {
+            "asset": {
+              "chainId": 1,
+              "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+              "tokenId": "909"
+            },
+            "controllerEpoch": 7,
+            "cursor": "3",
+            "environment": "dev",
+            "eventId": "0x1ed90cedb099cd12935f77753af4e72d09f99311c8063916c08715e45c128feb",
+            "facts": {
+              "locationId": "hub",
+              "result": "OPENED",
+              "rewards": [],
+              "subjectId": "hub-chest-legend-1"
+            },
+            "issuerId": "rebel.universe",
+            "keyId": "universe-dev-bench-key-1",
+            "kind": "CHEST_OPENED",
+            "observedAt": 1792450808,
+            "occurredAt": 1792450808,
+            "origin": "RAAP_APPROVED",
+            "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+            "requestId": "0xbafe683caf35d0c7840c0ccab2ff4c1e00743663d50f800ec0678644889ae358",
+            "schema": "rebel.universe.fact.v1",
+            "selectionId": "0x9b64f2421361fe54971a99b0172fe1106d63ab47dee6fc51261dd0114aca5af8",
+            "signature": "0x4805f05f9888b66ecf117f2cb886b64f16174ccbc1807e49be2614027f748d155020f5761bb9fce9581c846d68d7c7cb2fcfccd18e83e8da2b98b54ec0f2a606",
+            "sourceRecordDigest": "0xb9c4c57d29815a28197d5d2e595d04f08f8a8274cbc6444e328f1564bc213d6e",
+            "sourceRecordId": "0x5961fad8ccd6d8e0c889452347806a5ea71ee6ba6d43d2fe18f0c68aae4b58f8",
+            "wallet": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf"
+          }
+        ],
+        "hasMore": false,
+        "nextCursor": "3",
+        "schema": "universe.raap.events.v1"
+      }
+    }
+  }
+}
