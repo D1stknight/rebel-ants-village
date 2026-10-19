@@ -28013,50 +28013,52 @@ function renderSelectedWalkSurfaceGuide() {
     });
 }
 
-// Placed trees block the player at their trunk. The trunk is found in the model itself (the cherry tree's trunk sits
-// well off its pivot and leans), as circles in the model's yaw-free frame at scale 1, then placed per tree.
+// Placed trees block the player at their trunk, as wide as the bark is at body height: the model's bark is cut at a few
+// heights above the ground (WalkGen.trunkCircles: metres, so a bigger tree is cut lower in its own units), the cuts'
+// outline kept as a ring of points and the inside as a few circles, in the model's yaw-free frame for this tilt, scale
+// and ground lift, then turned per tree. The
+// cherry trunk flares out wide at its foot and leans; circles from the median of a few low vertices sat well inside the
+// bark (Miguel, Oct 19: in the Hub the Rebel walked into the trunks until near their middle).
 const TREE_TRUNK_TYPES = new Set(['cherry_blossom']);
-const _treeLocalPoints = {}, _treeTrunkProfiles = {};
-// the model's vertices in its root's own (unrotated, unscaled) space, read once from the loaded source
-function getTreeLocalPoints(type) {
-  if (_treeLocalPoints[type]) return _treeLocalPoints[type];
+const _treeLocalTris = {}, _treeTrunkProfiles = {};
+// the bark's triangles in the model root's own (unrotated, unscaled) space, read once from the loaded source (the blossom
+// cards are left out; every mesh when none is named bark)
+function getTreeLocalTris(type) {
+  if (_treeLocalTris[type]) return _treeLocalTris[type];
   const src = _assetSources[type];
   if (!src || !isAssetSourceReady(type)) return null;
   src.computeWorldMatrix(true);
-  const inv = src.getWorldMatrix().clone().invert(), pts = [], v = new BABYLON.Vector3();
-  src.getChildMeshes(false).forEach(m => {
-    const p = m.getVerticesData?.(BABYLON.VertexBuffer.PositionKind); if (!p) return;
+  const inv = src.getWorldMatrix().clone().invert(), tris = [], v = new BABYLON.Vector3();
+  const all = src.getChildMeshes(false).filter(m => m.getTotalVertices?.() > 0), bark = all.filter(m => /bark|trunk/i.test(m.name));
+  (bark.length ? bark : all).forEach(m => {
+    const p = m.getVerticesData?.(BABYLON.VertexBuffer.PositionKind), ix = m.getIndices?.(); if (!p || !ix?.length) return;
     m.computeWorldMatrix(true);
     const W = m.getWorldMatrix().multiply(inv);
-    for (let i = 0; i < p.length; i += 3) { BABYLON.Vector3.TransformCoordinatesFromFloatsToRef(p[i], p[i + 1], p[i + 2], W, v); pts.push(v.x, v.y, v.z); }
+    for (let t = 0; t < ix.length; t++) { const i = ix[t] * 3; BABYLON.Vector3.TransformCoordinatesFromFloatsToRef(p[i], p[i + 1], p[i + 2], W, v); tris.push(v.x, v.y, v.z); }
   });
-  return pts.length ? (_treeLocalPoints[type] = new Float32Array(pts)) : null;
+  return tris.length ? (_treeLocalTris[type] = new Float32Array(tris)) : null;
 }
-// trunk circles for one tilt of the model (its pitch + roll; yaw and scale are applied per tree)
-function getTreeTrunkProfile(type, rx = 0, rz = 0) {
-  const key = type + '|' + rx.toFixed(3) + '|' + rz.toFixed(3);
+// trunk circles (metres) for one tilt of the model (its pitch + roll), scale and ground lift (the ground's height over the
+// pivot); yaw is applied per tree
+function getTreeTrunkProfile(type, rx = 0, rz = 0, s = 1, lift = 0) {
+  const key = [type, rx.toFixed(3), rz.toFixed(3), s.toFixed(3), lift.toFixed(2)].join('|');
   if (_treeTrunkProfiles[key]) return _treeTrunkProfiles[key];
-  const L = getTreeLocalPoints(type); if (!L) return null;
-  const R = BABYLON.Matrix.RotationYawPitchRoll(0, rx, rz), v = new BABYLON.Vector3(), P = new Float32Array(L.length);
-  let minY = Infinity, maxY = -Infinity;
-  for (let i = 0; i < L.length; i += 3) { BABYLON.Vector3.TransformCoordinatesFromFloatsToRef(L[i], L[i + 1], L[i + 2], R, v); P[i] = v.x; P[i + 1] = v.y; P[i + 2] = v.z; minY = Math.min(minY, v.y); maxY = Math.max(maxY, v.y); }
-  const H = maxY - minY, circles = [];
-  for (const [a, b, k] of [[0, .05, .8], [.05, .14, 1.1]]) { // root flare (a bit inside it) + the trunk at body height
-    const xs = [], zs = [];
-    for (let i = 0; i < P.length; i += 3) { const f = (P[i + 1] - minY) / H; if (f >= a && f < b) { xs.push(P[i]); zs.push(P[i + 2]); } }
-    if (!xs.length) continue;
-    const cx = xs.reduce((s, x) => s + x, 0) / xs.length, cz = zs.reduce((s, z) => s + z, 0) / zs.length;
-    const d = xs.map((x, i) => Math.hypot(x - cx, zs[i] - cz)).sort((p, q) => p - q);
-    circles.push({ x: cx, z: cz, r: Math.max(.4, d[Math.floor(d.length * .5)] * k) });
-  }
-  return (_treeTrunkProfiles[key] = circles);
+  const L = getTreeLocalTris(type); if (!L || !window.WalkGen?.trunkCircles) return null;
+  const R = BABYLON.Matrix.RotationYawPitchRoll(0, rx, rz), v = new BABYLON.Vector3(), T = new Float32Array(L.length);
+  for (let i = 0; i < L.length; i += 3) { BABYLON.Vector3.TransformCoordinatesFromFloatsToRef(L[i], L[i + 1], L[i + 2], R, v); T[i] = v.x; T[i + 1] = v.y; T[i + 2] = v.z; }
+  return (_treeTrunkProfiles[key] = window.WalkGen.trunkCircles(T, { scale: s, lift }));
 }
+// the village tests the body's centre: each circle (and outline point) widened by about the body's half-width keeps the
+// Rebel against the bark
+const TREE_TRUNK_BODY_MARGIN = 0.4;
 function addTreeTrunkBlockers(node, blockers) {
-  const r = node.rotation || BABYLON.Vector3.Zero();
-  const prof = getTreeTrunkProfile(node.metadata.type, r.x || 0, r.z || 0); if (!prof) return;
-  const yaw = r.y || 0, s = Math.abs(node.scaling?.x || 1), c = Math.cos(yaw), sn = Math.sin(yaw);
-  prof.forEach(t => blockers.push({ kind: 'circle', type: 'tree_trunk', name: node.name,
-    x: node.position.x + (t.x * c + t.z * sn) * s, z: node.position.z + (-t.x * sn + t.z * c) * s, radius: t.r * s }));
+  const r = node.rotation || BABYLON.Vector3.Zero(), s = Math.abs(node.scaling?.x || 1);
+  const lift = Math.min(1.5, Math.max(0, getVillageBaseGroundHeightAt(node.position.x, node.position.z) - node.position.y)) || 0;
+  const prof = getTreeTrunkProfile(node.metadata.type, r.x || 0, r.z || 0, s, lift); if (!prof?.length) return;
+  const yaw = r.y || 0, c = Math.cos(yaw), sn = Math.sin(yaw), x0 = node.position.x, z0 = node.position.z;
+  const items = prof.map(t => ({ x: x0 + t.x * c + t.z * sn, z: z0 - t.x * sn + t.z * c, radius: t.r + TREE_TRUNK_BODY_MARGIN }));
+  // one entry per tree (a ring of ~100 circles): tested only near it
+  blockers.push({ kind: 'circles', type: 'tree_trunk', name: node.name, x: x0, z: z0, r: Math.max(...items.map(b => Math.hypot(b.x - x0, b.z - z0) + b.radius)), items });
 }
 
 // A chest is solid: its footprint (body, bands, side ring and latch; the lid swings up over it), widened by about the
@@ -28380,6 +28382,10 @@ function villagePointBlocked(x, z, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PA
       const hitRadius = blocker.radius + padding;
       return dx * dx + dz * dz <= hitRadius * hitRadius;
     }
+    if (blocker.kind === 'circles') { // a tree trunk's ring
+      const dx = x - blocker.x, dz = z - blocker.z, rr = blocker.r + padding;
+      return dx * dx + dz * dz <= rr * rr && blocker.items.some(b => (x - b.x) ** 2 + (z - b.z) ** 2 <= (b.radius + padding) ** 2);
+    }
 
     if (blocker.kind === 'obb') {
       return !villageWalkerAboveBlocker(blocker) && villageObbContainsPoint(blocker, x, z, padding);
@@ -28419,16 +28425,17 @@ function villageSegmentBlocked(startX, startZ, endX, endZ, padding = VILLAGE_MAN
   const onDeck = villageOnKitDeck(endX, endZ);
   if (!onDeck && !villageSwimmerUnderwater(endX, endZ) && window._newTerrain?.decorBlocksPoint(endX, endZ, padding)) return true;
   if (villageSeaBlocks(endX, endZ)) return true;
+  let endHit; // what circles (and plain boxes) ask: the point test at the end, worked out once for the whole list
   const cachedBlockerHit = villageCollisionBlockers.some(blocker => {
     if (blocker.kind === 'group') {
       const dx = endX - blocker.x, dz = endZ - blocker.z, rr = blocker.r + padding + 1;
       // a generated wall the player already stands inside (spawned or set down there) does not hold it: it walks out
       return dx * dx + dz * dz <= rr * rr && blocker.items.some(b => !(blocker.auto && villageObbContainsPoint(b, startX, startZ, 0)) && !(Number.isFinite(_villageWalkerY) && (_villageWalkerY > b.maxY || _villageWalkerY < b.minY)) && villageSegmentIntersectsObb(b, startX, startZ, endX, endZ, padding));
     }
-    if (blocker.kind === 'circle') return villagePointBlocked(endX, endZ, padding);
+    if (blocker.kind === 'circle' || blocker.kind === 'circles') return endHit ??= villagePointBlocked(endX, endZ, padding);
     // a box the walker already stands inside (fell or was set down into it) does not hold it: it walks out
     if (blocker.kind === 'obb') return !villageWalkerAboveBlocker(blocker) && !villageObbContainsPoint(blocker, startX, startZ, 0) && villageSegmentIntersectsObb(blocker, startX, startZ, endX, endZ, padding);
-    return villagePointBlocked(endX, endZ, padding);
+    return endHit ??= villagePointBlocked(endX, endZ, padding);
   });
 
   if (walkMode && !isEditorVisualMode()) return cachedBlockerHit;
