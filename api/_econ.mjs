@@ -5,6 +5,8 @@
 // - Players sign in with the village's own Discord app (DISCORD_CLIENT_ID / _SECRET; redirect
 //   <origin>/api/econ-discord-callback). The session is the ra_econ cookie (HttpOnly, signed with
 //   VILLAGE_SESSION_SECRET): { u: economy userId, d: Discord id, un: Discord username, n: display name, a: avatar }.
+// - Players without Discord sign in with a name + PIN instead (api/econ-name-login -> the economy's
+//   /api/internal/name-auth: the casino's colony name accounts). Same cookie, d = "name:<slug>", un = the slug, no a.
 // - Production signs in on https://rebeluniverse.io, previews on their branch URL (the dev preview's is the second
 //   redirect registered with Discord), local runs on their own host.
 import crypto from 'crypto';
@@ -64,9 +66,12 @@ export const clearEconCookie = () => `${ECON_COOKIE}=; Path=/; HttpOnly; SameSit
 export function econSessionOf(req) {
   try {
     const p = unpackSigned('econ', readCookie(req, ECON_COOKIE));
-    return p && /^[A-Za-z0-9_-]{6,64}$/.test(p.u) && /^\d{5,24}$/.test(p.d) ? p : null;
+    return p && /^[A-Za-z0-9_-]{6,64}$/.test(p.u) && (/^\d{5,24}$/.test(p.d) || NAME_ID.test(p.d)) ? p : null;
   } catch (e) { return null; }
 }
+// a name + PIN account's id in the economy ("name:<slug>", the slug as the casino makes it)
+export const NAME_ID = /^name:[a-z0-9-]{1,32}$/;
+export const isNameSession = (s) => NAME_ID.test(String(s?.d || ''));
 
 // ---- the round trip to Discord: a one-time state, where to go back to, popup or not ----
 export function newStateCookie({ ret, popup }) {
@@ -147,6 +152,16 @@ export async function econResolve({ discordId, username, displayName }) {
   const { ok, status, data } = await econCall('/api/internal/resolve', { discordId, username, displayName: displayName || null });
   if (!ok || !data.userId) throw Object.assign(new Error(data.message || 'The Rebel Economy did not find your account'), { status: status === 401 ? 503 : 502, code: data.error });
   return { userId: String(data.userId), displayName: data.displayName || displayName || username, balance: Number(data.balance) || 0 };
+}
+// name + PIN: register or sign in -> the economy's answer as is ({ ok, status, data }: data.ok false = taken, wrong PIN...)
+export function econNameAuth({ action, name, pin, player }) {
+  return econCall('/api/internal/name-auth', { action, name, pin, player });
+}
+// a name account's balance (Discord players read theirs through econResolve)
+export async function econNameBalance(userId) {
+  const { ok, status, data } = await econCall('/api/internal/name-auth', { action: 'balance', userId });
+  if (!ok || !data.ok) throw Object.assign(new Error(data.message || 'The Rebel Economy did not find your account'), { status: status === 404 ? 502 : status, code: data.code || data.error });
+  return Number(data.balance) || 0;
 }
 // credit points (idempotencyKey: the same key never pays twice) -> { newBalance }
 export async function econCredit({ userId, amount, reason, metadata, idempotencyKey }) {

@@ -68,6 +68,9 @@
     },
     "api/econ-award.mjs": {
       "maxDuration": 30
+    },
+    "api/econ-name-login.mjs": {
+      "maxDuration": 30
     }
   },
   "crons": [
