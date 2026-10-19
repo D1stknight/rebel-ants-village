@@ -546,6 +546,15 @@ body.walk-photo #photoBtn{display:block}
 .econ-btn.econ-discord{background:#5865f2;border-color:#5865f2;color:#fff}
 .econ-btn.econ-discord:hover{background:#4752c4}
 .econ-meta{margin-top:8px;font-size:11px;color:rgba(255,255,255,.6);line-height:1.4}
+.econ-alt{margin-top:9px;font-size:11px;color:rgba(255,255,255,.55)}
+.econ-link{background:none;border:0;padding:0;color:#5ecfca;font:inherit;text-decoration:underline;cursor:pointer}
+.econ-name{display:grid;grid-template-columns:minmax(0,1fr) 128px;gap:8px;margin-top:10px}
+.econ-name input{min-width:0;font-family:inherit;font-size:13px;padding:9px 10px;border-radius:5px;border:1px solid rgba(255,255,255,.26);background:rgba(0,0,0,.35);color:#fff;outline:none}
+.econ-name input:focus{border-color:rgba(232,197,106,.75)}
+.econ-acts{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.econ-msg{grid-column:1/-1;min-height:15px;font-size:11px;line-height:1.35;color:#ffd166}
+.econ-msg.bad{color:#ff8b7b}
+@media (pointer:coarse){.econ-name input{font-size:16px}} /* phones zoom into smaller fields */
 .journal-card strong{display:block;color:#5ecfca;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
 .journal-card span{color:rgba(255,255,255,.72);font-size:12px;line-height:1.35}
 .journal-section-title{grid-column:1/-1;color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:12px;letter-spacing:2px;margin:6px 0 2px}
@@ -8939,7 +8948,7 @@ function setInteractionPrompt(text, visible) {
 // most 2,000 a day; more is held and paid on a later day). A guest's points are practice points, kept on this device
 // (ProgressionState.rebelPoints) and never carried over. While signed in, which chests are looted and which riddles are
 // solved follows the account, so a chest first opened as a guest still pays the account once.
-const Econ = { checked:false, configured:false, on:false, name:'', avatar:null, balance:null, today:0, cap:2000, owed:0, claimed:new Set(), hinted:false };
+const Econ = { checked:false, configured:false, on:false, kind:'', name:'', avatar:null, balance:null, today:0, cap:2000, owed:0, claimed:new Set(), hinted:false };
 const ECON_PENDING_KEY = 'rebelAntsEconPending:v1';   // awards the server didn't take (offline, signed out): sent again
 const econClaimed = (kind, id) => Econ.claimed.has(`${kind}:${id}`);
 let econCheckAt = 0;
@@ -8950,7 +8959,7 @@ async function refreshEcon(force) {
   try { const r = await fetch('/api/econ-me', { credentials:'same-origin', cache:'no-store' }); d = await r.json(); } catch (e) { return; }
   if (!d?.ok) return;
   const was = Econ.on, wasClaimed = [...Econ.claimed].sort().join('|');
-  Object.assign(Econ, { checked:true, configured:!!d.configured, on:!!d.signedIn, name:d.name || '', avatar:d.avatar || null,
+  Object.assign(Econ, { checked:true, configured:!!d.configured, on:!!d.signedIn, kind:d.signedIn ? (d.kind || 'discord') : '', name:d.name || '', avatar:d.avatar || null,
     balance:d.signedIn ? (d.balance ?? Econ.balance) : null, today:d.today || 0, cap:d.cap || 2000, owed:d.owed || 0, claimed:new Set(d.claimed || []) });
   renderEconBadge();
   if (d.paidNow) showToast(`+${Number(d.paidNow).toLocaleString('en-US')} Rebel points held from an earlier day went to your account.`, 6000);
@@ -8958,23 +8967,39 @@ async function refreshEcon(force) {
   if (Econ.on) flushEconPending();
   renderJournalIfOpen();
 }
-function renderJournalIfOpen() { if (document.getElementById('progressionOverlay')?.classList.contains('on')) renderProgressionJournal(); }
+function renderJournalIfOpen() {
+  if (!document.getElementById('progressionOverlay')?.classList.contains('on')) return;
+  const a = document.activeElement, typing = a && (a.id === 'econNameInput' || a.id === 'econPinInput') ? [a.id, a.selectionStart, a.selectionEnd] : null;
+  renderProgressionJournal();
+  const el = typing && document.getElementById(typing[0]);
+  if (el) { el.focus({ preventScroll:true }); try { el.setSelectionRange(typing[1], typing[2]); } catch (e) {} }
+}
 // the Discord circle on the Rebel panel (the round Rebel button shows the picture too: assets/village-hud.js):
 // signed in = the Discord picture with the Discord mark (opens the journal's account card), signed out = sign in
 const DISCORD_GLYPH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.028C.533 9.046-.32 13.58.099 18.058a.082.082 0 0 0 .031.056 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.042-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .078-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.009c.12.1.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.029 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.331c-1.183 0-2.157-1.086-2.157-2.42 0-1.332.956-2.418 2.157-2.418 1.21 0 2.176 1.095 2.157 2.419 0 1.333-.956 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.086-2.157-2.42 0-1.332.955-2.418 2.157-2.418 1.21 0 2.176 1.095 2.157 2.419 0 1.333-.946 2.419-2.157 2.419z"/></svg>';
+// a name + PIN account's picture: its first letter in a gold-ringed circle (an SVG, so every <img> can show it)
+function econNameAvatar(name) {
+  const ch = (String(name || '?').trim().match(/[\p{L}\p{N}]/u) || ['?'])[0].toUpperCase();
+  let h = 0; for (const c of String(name || '')) h = (h * 31 + c.codePointAt(0)) >>> 0;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="hsl(${h % 360},42%,24%)"/>`
+    + `<text x="32" y="43" text-anchor="middle" font-family="Georgia,serif" font-size="32" font-weight="700" fill="#e8c56a">${ch.replace(/[<>&"']/g, '')}</text></svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
+const econAvatar = () => Econ.avatar || (Econ.on && Econ.kind === 'name' ? econNameAvatar(Econ.name) : null);
 function renderEconBadge() {
   const b = document.getElementById('econBadge'); if (!b) return;
   b.classList.toggle('show', Econ.configured);
   b.classList.toggle('on', Econ.on);
-  const key = Econ.on ? 'on|' + (Econ.avatar || '') : 'off';
+  const pic = econAvatar(), discord = Econ.kind === 'discord';
+  const key = Econ.on ? 'on|' + Econ.kind + '|' + (pic || '') : 'off';
   if (b.dataset.k !== key) {
     b.dataset.k = key;
-    b.innerHTML = Econ.on ? DISCORD_GLYPH + (Econ.avatar ? `<img alt="" src="${escapeHTML(Econ.avatar)}" onerror="this.remove()">` : '') + `<span class="eb-d">${DISCORD_GLYPH}</span>` : DISCORD_GLYPH;
+    b.innerHTML = Econ.on ? DISCORD_GLYPH + (pic ? `<img alt="" src="${escapeHTML(pic)}" onerror="this.remove()">` : '') + (discord ? `<span class="eb-d">${DISCORD_GLYPH}</span>` : '') : DISCORD_GLYPH;
   }
   const bal = Econ.balance == null ? '' : ` · ${Number(Econ.balance).toLocaleString('en-US')} Rebel points`;
-  b.title = Econ.on ? `Signed in with Discord as ${Econ.name || 'Rebel'}${bal}` : 'Sign in with Discord to keep your Rebel points';
+  b.title = Econ.on ? `Signed in${discord ? ' with Discord' : ''} as ${Econ.name || 'Rebel'}${bal}` : 'Sign in to keep your Rebel points (Discord, or a name + PIN)';
   b.setAttribute('aria-label', b.title);
-  b.onclick = (e) => { e.stopPropagation(); b.blur(); if (Econ.on) openProgressionJournal(); else econSignIn(); };
+  b.onclick = (e) => { e.stopPropagation(); b.blur(); activeJournalTab = 'overview'; openProgressionJournal(); };
 }
 // signed in or out (or progress from another device): the chests show this player's looted state
 function refreshEconWorld() {
@@ -8994,9 +9019,34 @@ function econSignIn() {
   try { w = window.open(url + '&popup=1', 'rebelEconSignIn', 'width=520,height=760'); } catch (e) {}
   if (!w) location.href = url;                              // popups blocked: sign in in this tab, it comes back here
 }
+// name + PIN (players without Discord): the casino's colony name accounts, through the village's server
+const EconNameForm = { open:false, name:'', pin:'', msg:'', bad:false, busy:false };
+function econNameToggle(open) { EconNameForm.open = open !== false; EconNameForm.msg = ''; renderJournalIfOpen(); if (EconNameForm.open) setTimeout(() => document.getElementById('econNameInput')?.focus(), 30); }
+async function econNameSubmit(action) {
+  if (EconNameForm.busy) return;
+  const name = (document.getElementById('econNameInput')?.value ?? EconNameForm.name).trim(), pin = (document.getElementById('econPinInput')?.value ?? EconNameForm.pin).trim();
+  Object.assign(EconNameForm, { name, pin });
+  const say = (msg, bad) => { Object.assign(EconNameForm, { msg, bad: !!bad }); const m = document.getElementById('econNameMsg'); if (m) { m.textContent = msg; m.classList.toggle('bad', !!bad); } };
+  if (name.length < 3) return say('Your name needs at least 3 letters or numbers.', true);
+  if (!/^\d{4,6}$/.test(pin)) return say('Your PIN is 4 to 6 digits.', true);
+  EconNameForm.busy = true; say(action === 'register' ? 'Making your account…' : 'Signing in…');
+  let d = {};
+  try { const r = await fetch('/api/econ-name-login', { method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ action, name, pin }) }); d = await r.json().catch(() => ({})); }
+  catch (e) { d = { ok:false, message:'Could not reach the village. Check the connection and try again.' }; }
+  EconNameForm.busy = false;
+  if (!d.ok) {
+    if (d.code === 'pin_wrong' || d.code === 'locked') { EconNameForm.pin = ''; const p = document.getElementById('econPinInput'); if (p) p.value = ''; }
+    return say(d.message || d.error || 'Not signed in.', true);
+  }
+  Object.assign(EconNameForm, { open:false, name:'', pin:'', msg:'' });
+  showToast(d.created ? `Welcome, ${d.name}. Your Rebel points now go to your account.` : `Signed in as ${d.name}.`, 5000);
+  try { new BroadcastChannel('ra-econ').postMessage({ signedIn:true }); } catch (e) {}
+  try { localStorage.setItem('raEconPing', String(Date.now())); } catch (e) {}
+  await refreshEcon(true);
+}
 async function econSignOut() {
   try { await fetch('/api/econ-me', { method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ action:'logout' }) }); } catch (e) {}
-  Object.assign(Econ, { on:false, name:'', avatar:null, balance:null, today:0, owed:0, claimed:new Set() });
+  Object.assign(Econ, { on:false, kind:'', name:'', avatar:null, balance:null, today:0, owed:0, claimed:new Set() });
   refreshEconWorld(); renderJournalIfOpen(); renderEconBadge();
   showToast('Signed out. Points are practice points on this device until you sign in again.', 5000);
 }
@@ -9053,14 +9103,25 @@ function econPracticeHint() {
 function econJournalCard() {
   const local = (Number(ProgressionState.rebelPoints) || 0).toLocaleString('en-US');
   if (!Econ.configured) return `<div class="journal-card"><strong>Rebel Points</strong><span>${local}</span></div>`;
-  if (!Econ.on) return `<div class="journal-card full econ-card"><strong>Practice Points</strong><div class="econ-row"><div class="econ-num"><b>${local}</b>`
-    + `<small>Practice points stay on this device and don't carry over.</small></div><button type="button" class="econ-btn econ-discord" onclick="econSignIn()">Sign in with Discord</button></div>`
-    + `<div class="econ-meta">Signed in, every chest, first game clear and riddle pays real Rebel points to your account: the points that forge your Rebel.</div></div>`;
+  if (!Econ.on) {
+    const F = EconNameForm, esc = (v) => escapeHTML(String(v || ''));
+    const form = !F.open ? `<div class="econ-alt">No Discord? <button type="button" class="econ-link" onclick="econNameToggle(true)">Use a name and PIN</button></div>`
+      : `<form class="econ-name" novalidate onsubmit="event.preventDefault(); econNameSubmit('login')">`
+        + `<input id="econNameInput" type="text" maxlength="24" autocomplete="username" placeholder="Your name" value="${esc(F.name)}" oninput="EconNameForm.name=this.value">`
+        + `<input id="econPinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="current-password" placeholder="4-6 digit PIN" value="${esc(F.pin)}" oninput="EconNameForm.pin=this.value">`
+        + `<div class="econ-acts"><button type="submit" class="econ-btn">Sign in</button><button type="button" class="econ-btn" onclick="econNameSubmit('register')">New account</button>`
+        + `<button type="button" class="econ-link" onclick="econNameToggle(false)">Cancel</button></div>`
+        + `<div id="econNameMsg" class="econ-msg${F.bad ? ' bad' : ''}">${esc(F.msg)}</div></form>`;
+    return `<div class="journal-card full econ-card"><strong>Practice Points</strong><div class="econ-row"><div class="econ-num"><b>${local}</b>`
+      + `<small>Practice points stay on this device and don't carry over.</small></div><button type="button" class="econ-btn econ-discord" onclick="econSignIn()">Sign in with Discord</button></div>`
+      + form
+      + `<div class="econ-meta">Signed in, every chest, first game clear and riddle pays real Rebel points to your account: the points that forge your Rebel.</div></div>`;
+  }
   const pct = Math.min(100, Math.round(100 * (Econ.today || 0) / (Econ.cap || 2000)));
   const bal = Econ.balance == null ? '—' : Number(Econ.balance).toLocaleString('en-US');
   return `<div class="journal-card full econ-card on"><strong>Rebel Points · your account</strong><div class="econ-row">`
-    + (Econ.avatar ? `<img class="econ-av" src="${escapeHTML(Econ.avatar)}" alt="">` : '')
-    + `<div class="econ-num"><b>${bal}</b><small>Signed in as ${escapeHTML(Econ.name || 'Rebel')} (Discord)</small></div>`
+    + (econAvatar() ? `<img class="econ-av" src="${escapeHTML(econAvatar())}" alt="">` : '')
+    + `<div class="econ-num"><b>${bal}</b><small>Signed in as ${escapeHTML(Econ.name || 'Rebel')}${Econ.kind === 'discord' ? ' (Discord)' : ''}</small></div>`
     + `<button type="button" class="econ-btn" onclick="econSignOut()">Sign out</button></div>`
     + `<div class="econ-meta">Earned today ${(Econ.today || 0).toLocaleString('en-US')} of ${(Econ.cap || 2000).toLocaleString('en-US')}${Econ.owed ? ` · ${Number(Econ.owed).toLocaleString('en-US')} held for tomorrow` : ''}</div>`
     + `<div class="journal-progress"><div style="width:${pct}%"></div></div></div>`;
@@ -9068,7 +9129,7 @@ function econJournalCard() {
 try { const bc = new BroadcastChannel('ra-econ'); bc.onmessage = () => refreshEcon(true); } catch (e) {}
 window.addEventListener('storage', e => { if (e.key === 'raEconPing') refreshEcon(true); });
 window.addEventListener('focus', () => refreshEcon());
-Object.assign(window, { econSignIn, econSignOut });
+Object.assign(window, { econSignIn, econSignOut, econNameToggle, econNameSubmit, EconNameForm });
 window._econ = { state:Econ, refresh:refreshEcon, award:econAward }; // tests
 refreshEcon(true);
 
@@ -26974,7 +27035,7 @@ document.addEventListener('keyup', e => {
   if (key === 's' || e.key === 'ArrowDown') moveBackward = false;
   if (key === 'a' || e.key === 'ArrowLeft') turnLeft = false;
   if (key === 'd' || e.key === 'ArrowRight') turnRight = false;
-  if (key === 'r' && !adminMode && walkMode) { runKey=false; const mv=moveForward||moveBackward||turnLeft||turnRight; switchAnim(mv?1:0,true); }
+  if (key === 'r' && !adminMode && walkMode && runKey) { runKey=false; const mv=moveForward||moveBackward||turnLeft||turnRight; switchAnim(mv?1:0,true); }
 });
 let _orbitDragging=false, _orbitLastX=0, _orbitLastY=0;
 let _orbitAngleH=Math.PI, _orbitAngleV=0.35;
