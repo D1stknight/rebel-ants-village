@@ -52835,7 +52835,10 @@
         "points": 50,
         "questOn": "pass",
         "gap": 5.2,
-        "seconds": 40
+        "seconds": 40,
+        "hide": [
+          "war_torch"
+        ]
       }
     }
   },

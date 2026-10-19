@@ -50,6 +50,8 @@ HGT = float(co[:, 2].max() - co[:, 2].min())
 SPECIES = os.environ.get('FORGE_NPC_SPECIES', '') if NPCM else ''
 GLOVE_LEN = {'human': 0.106, 'ape': 0.118}
 # the NPC Forge hands panel: per side {along, thumb, back} (fractions of the hand length), size (x), v2.20 cuffSize and cuffLen (x)
+# v2.33 the Rebel Forge gloves panel too (Rebels). The fit moves only the glove: the crumbs of the old hand and the
+# sleeve-end caps are found round the wrist before the fit (W0, L0); a glove moved 2 cm out left 7 crumbs on #262
 try: FIT = json.loads(os.environ.get('FORGE_HAND_FIT') or '{}') or {}
 except Exception: FIT = {}
 L_NPC = None
@@ -165,10 +167,12 @@ for side in ('Left', 'Right'):
     fit = np.clip([float(f_.get(k, 0) or 0) for k in ('along', 'thumb', 'back')], -0.6, 0.6) * L
     size = float(np.clip(float(f_.get('size', 1) or 1), 0.6, 1.5))
     # v2.20 the cuff's own width (where it sits in the sleeve) and length (from the wrist back into the sleeve)
-    cuffw = float(np.clip(float(f_.get('cuffSize', 1) or 1), 0.5, 1.5)); cuffl = float(np.clip(float(f_.get('cuffLen', 1) or 1), 0.4, 1.6))
+    # v2.34 the width goes down to 0.1 (Rebel Forge: a slim cuff inside the guard)
+    cuffw = float(np.clip(float(f_.get('cuffSize', 1) or 1), 0.1, 1.5)); cuffl = float(np.clip(float(f_.get('cuffLen', 1) or 1), 0.4, 1.6))
     thumb_ax = -y if side == 'Left' else y     # the left glove is mirrored: its thumb is on -y
     if f_: print(f'handswap {side} hand fit: along {fit[0]:+.3f} thumb {fit[1]:+.3f} back {fit[2]:+.3f} size x{size:.2f} cuff x{cuffw:.2f} cuff length x{cuffl:.2f}')
-    plan[side] = dict(W=W + off[0] * y + off[1] * z + fit[0] * x + fit[1] * thumb_ax + fit[2] * z, x=x, y=y, z=z, L=L * size, girth=girth, bend=bend, col=col, ccol=ccol, prof=prof, mirror=(side == 'Left'), cuffw=cuffw, cuffl=cuffl)
+    plan[side] = dict(W=W + off[0] * y + off[1] * z + fit[0] * x + fit[1] * thumb_ax + fit[2] * z, x=x, y=y, z=z, L=L * size, girth=girth, bend=bend, col=col, ccol=ccol, prof=prof, mirror=(side == 'Left'), cuffw=cuffw, cuffl=cuffl,
+                      W0=W + off[0] * y + off[1] * z, L0=L)
     print(f'handswap {side}: hand length {L:.3f} (reach {reach:.3f}, forearm {fore:.3f}) wrist girth {girth:.3f} (raw {girth_raw:.3f}) '
           f'sleeve end {bend:+.3f} verts removed {int(rm.sum())} glove colour {np.round(col, 3).tolist()}')
 
@@ -189,8 +193,8 @@ for v0 in bm.verts:
     if len(comp) >= 400 or stack: continue
     c = np.mean([np.array((Bw @ v.co)[:]) for v in comp], 0)
     for pl in plan.values():
-        rel_ = c - pl['W']; t_ = rel_ @ pl['x']
-        if -0.01 < t_ < 1.6 * pl['L'] and np.linalg.norm(rel_ - t_ * pl['x']) < 0.8 * pl['L']:
+        rel_ = c - pl['W0']; t_ = rel_ @ pl['x']
+        if -0.01 < t_ < 1.6 * pl['L0'] and np.linalg.norm(rel_ - t_ * pl['x']) < 0.8 * pl['L0']:
             crumbs += comp; break
 if crumbs: bmesh.ops.delete(bm, geom=list(set(crumbs)), context='VERTS')
 print('handswap hand crumbs removed', len(set(crumbs)))
@@ -201,7 +205,7 @@ edges = []
 for e in bm.edges:
     if not e.is_boundary: continue
     c = np.array((Bw @ e.verts[0].co)[:])
-    if any(np.linalg.norm(c - pl['W']) < 0.9 * pl['L'] for pl in plan.values()): edges.append(e)
+    if any(np.linalg.norm(c - pl['W0']) < 0.9 * pl['L0'] for pl in plan.values()): edges.append(e)
 n0 = len(bm.faces)
 res = bmesh.ops.holes_fill(bm, edges=edges, sides=64) if edges else {'faces': []}
 for f in res['faces']:

@@ -47886,7 +47886,7 @@
     "signConfig": {
       "label": "CUTE & CREEPY",
       "sub": "Welcome, little Rebel",
-      "desc": "",
+      "desc": "Wipe your feet, mind the ghosts, and please do not wake the scarecrows.\n\nRebels welcome. Biting optional.\n\n— The Mystic Moons",
       "icon": "",
       "color": "#b06cff",
       "clickable": false,
@@ -48084,7 +48084,7 @@
       "spotId": "friend-welcome-cute-creepy",
       "action": "read",
       "label": "Read the welcome sign",
-      "text": "WELCOME TO CUTE & CREEPY. Wipe your feet, mind the ghosts, and please do not wake the scarecrows. Underneath, in small neat letters: Rebels welcome. Biting optional. The Mystic Moons.",
+      "text": "Wipe your feet, mind the ghosts, and please do not wake the scarecrows. Rebels welcome. Biting optional. — The Mystic Moons",
       "glint": "quest"
     }
   },

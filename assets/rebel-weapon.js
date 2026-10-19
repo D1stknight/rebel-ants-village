@@ -679,7 +679,7 @@
     bow_draw: [['bow_ready', .3]], bow_sheathe: [['bow_stow', .42]], bow_nock: [['arrow_draw', .32]], bow_aim: [['bow_creak', 0]],
     bow_kick: [['kick_swish', .36, .8]], bow_hit: [['impact_heavy', .06, .8]]
   };
-  const SFX_LEAD = { kick_swish: 0.15, blade_draw: 0.32, blade_sheathe: 0.29, blade_swing: 0.13, blade_swing_heavy: 0.21, blade_spin: 0.14, swish_light: 0.14, swish_heavy: 0.25, swish_spin: 0.15, bow_ready: 0.22, bow_stow: 0.2, arrow_draw: 0.08 };
+  const SFX_LEAD = { kick_swish: 0.15, blade_draw: 0.2, blade_sheathe: 0.14, blade_swing: 0.13, blade_swing_heavy: 0.21, blade_spin: 0.14, swish_light: 0.14, swish_heavy: 0.25, swish_spin: 0.15, bow_ready: 0.22, bow_stow: 0.2, arrow_draw: 0.08 };
   const SFX_KIND = { sword: ['blade_draw', 'blade_sheathe', 'blade_swing', 'blade_swing_heavy', 'blade_spin', 'blade_clang', 'swish_light', 'swish_spin', 'impact', 'impact_heavy', 'land'],
     bow: ['bow_ready', 'bow_stow', 'arrow_draw', 'arrow_nock', 'bow_creak', 'bow_release', 'arrow_fly', 'arrow_hit', 'kick_swish', 'impact_heavy'] };
   SFX_KIND.twin = SFX_KIND.sword;

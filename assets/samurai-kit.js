@@ -3912,7 +3912,8 @@
       blockers: [{ box: [-AR.HX, -14.1, -20.3, -3.9] }, { box: [-AR.HX, 3.9, -20.3, 14.1] }, { box: [20.3, -14.1, AR.HX, -3.9] }, { box: [20.3, 3.9, AR.HX, 14.1] },
         { box: [-8.6, -AR.HY, 8.6, -17.15] }, { circle: [-6.5, -16.2, .75] }, { circle: [6.5, -16.2, .75] }, ...AR.COLS.flatMap(z => [{ circle: [-15.5, z, .65] }, { circle: [15.5, z, .65] }]),
         { box: [-7, -12.1, -2, -10.9] }, { box: [2, -12.1, 7, -10.9] }, { box: [11.6, 13.6, 18.4, AR.HY] }, { box: [-16.3, 13.9, -13.7, 16.5] }, { circle: [7.6, 17.6, .9] }, { box: [-AR.HX, -15.85, -20.3, -14.15] },
-        ...[-1, 1].map(s => ({ box: [s * AR.ISL - 1.7, -4.6, s * AR.ISL + 1.7, 4.6] }))]
+        ...[-1, 1].map(s => ({ box: [s * AR.ISL - 1.7, -4.6, s * AR.ISL + 1.7, 4.6] }))],
+      parts: [{ type: 'room_cc_claw', p: [-15, 3.45, 15.2], anim: { bob: [.12, 4.2], sway: [.04, 3] } }] // the Ant Claw's claw
     },
     room_sam_library: {
       bounds: [-SL.HX, SL.HX, -SL.HY, SL.HY + .2], spawn: [0, 6.4, Math.PI], exit: [0, SL.HY + .3], ceil: SL.H,
@@ -4685,7 +4686,7 @@
       M.box('glass', [-15, 15.2, 2.35], [2.3, 2.3, 2.2]); for (const [x, y] of [[-1.1, -1.1], [1.1, -1.1], [1.1, 1.1], [-1.1, 1.1]]) M.block('lacquer_black', -15 + x, 15.2 + y, 1.2, .1, .1, 2.3);
       M.block('lacquer_black', -15, 15.2, 3.5, 2.5, 2.5, .3); M.quad('sign_claw', [[-16.2, 13.94, 3.52], [-13.8, 13.94, 3.52], [-13.8, 13.94, 3.78], [-16.2, 13.94, 3.78]]);
       for (let k = 0; k < 9; k++) M.sphere(['flower_pink', 'neon_cyan', 'banana', 'neon_purple', 'red', 'lime'][k % 6], [-15.7 + (k % 3) * .7, 14.5 + Math.floor(k / 3) * .7, 1.5], .3, 1, 8, 5);
-      M.rod('iron', [-15, 15.2, 3.45], [-15, 15.2, 2.6], .03, 4); for (let k = 0; k < 3; k++) { const a = k / 3 * Math.PI * 2; M.rod('iron', [-15, 15.2, 2.6], [-15 + Math.cos(a) * .25, 15.2 + Math.sin(a) * .25, 2.3], .025, 4); }
+      // (the claw hangs in it as a room part, so the Ant Claw game can put its own in its place)
     },
     // the Samurai Library: a scholar's hall. Both side walls are honeycombs of scroll cubbies, six low calligraphy desks wait
     // with ink and paper, and the back wall opens in a round moon window onto a small garden with a red maple and a lantern

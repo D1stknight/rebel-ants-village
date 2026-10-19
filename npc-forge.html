@@ -116,7 +116,7 @@ small{color:var(--dim)}
             <label>Size <input type="range" id="hfSize" min="70" max="140" step="1" value="100" oninput="handInput()"><b id="hfSizeV">100%</b></label>
           </div>
           <div class="row hands" style="margin-top:6px">
-            <label>Cuff size <input type="range" id="hfCuffS" min="50" max="150" step="1" value="100" oninput="handInput()"><b id="hfCuffSV">100%</b></label>
+            <label>Cuff size <input type="range" id="hfCuffS" min="10" max="150" step="1" value="100" oninput="handInput()"><b id="hfCuffSV">100%</b></label>
             <label>Cuff length <input type="range" id="hfCuffL" min="40" max="160" step="1" value="100" oninput="handInput()"><b id="hfCuffLV">100%</b></label>
           </div>
           <div class="row hands" style="margin-top:6px">
@@ -662,7 +662,7 @@ function prepareHands(meshes) {
     }
     const out = new V3(Math.sign(W.x - hips.x) || (side === 'Left' ? 1 : -1), 0, 0);
     const z = out.subtract(x.scale(V3.Dot(out, x))).normalize(); const y = V3.Cross(z, x);
-    frames[side] = { hb, fb, cb: cb && cb.getTransformNode() ? cb : null, W, x, z, thumb: side === 'Left' ? y.scale(-1) : y, c: V3.Zero(), n: 0, L: 0, front: -Infinity, T: { k: 1, u: V3.Zero(), dp: V3.Zero() } };
+    frames[side] = { hb, fb, cb: cb && cb.getTransformNode() ? cb : null, W, x, y, z, thumb: side === 'Left' ? y.scale(-1) : y, c: V3.Zero(), n: 0, L: 0, front: -Infinity, T: { k: 1, u: V3.Zero(), dp: V3.Zero() } };
   }
   // the bones under each Hand (the hand and its fingers): a vertex's weight on them follows the preview's Hand transform;
   // a weight on the cuff bone moves with the hand's pivot only
@@ -682,13 +682,32 @@ function prepareHands(meshes) {
       const f = frames[s ? 'Right' : 'Left'];
       if (cuff) { f.c.addInPlace(v); f.n++; } else f.L = Math.max(f.L, V3.Dot(v.subtract(f.W), f.x));
     }
-    return { m, P0, side, wh, wc, cuff };
+    return { m, P0, side, wh, wc, cuff: new Uint8Array(nv).fill(cuff ? 1 : 0) };
   });
   for (const f of Object.values(frames)) { if (f.n) f.c.scaleInPlace(1 / f.n); else f.c.copyFrom(f.W); }
   // the glove's own origin, which the rigger scales the glove about: the front of the cuff, on its axis
-  for (const { P0, side, cuff } of parts) if (cuff) for (let i = 0; i < side.length; i++) { const f = frames[side[i] ? 'Right' : 'Left']; f.front = Math.max(f.front, (P0[3 * i] - f.c.x) * f.x.x + (P0[3 * i + 1] - f.c.y) * f.x.y + (P0[3 * i + 2] - f.c.z) * f.x.z); }
+  for (const { m, P0, side } of parts) if (/Cuff/.test(m.material.name)) for (let i = 0; i < side.length; i++) { const f = frames[side[i] ? 'Right' : 'Left']; f.front = Math.max(f.front, (P0[3 * i] - f.c.x) * f.x.x + (P0[3 * i + 1] - f.c.y) * f.x.y + (P0[3 * i + 2] - f.c.z) * f.x.z); }
   // (rigger 2.21 puts the hand's pivot there exactly: rigs with a cuff bone use it)
   for (const f of Object.values(frames)) f.G = f.cb ? f.W.clone() : Number.isFinite(f.front) ? f.c.add(f.x.scale(f.front)) : f.W.clone();
+  // the glove's own points behind its origin narrow / widen with the cuff as well: the rigger's cuff is the glove's
+  // template behind its origin, and the material seam runs a little behind that (those seam points stood 2 cm proud of
+  // a 10 % cuff on the Saints hooper)
+  for (const p of parts) if (!/Cuff/.test(p.m.material.name)) for (let i = 0; i < p.side.length; i++) {
+    const f = frames[p.side[i] ? 'Right' : 'Left'], G = f.G;
+    p.cuff[i] = (p.P0[3 * i] - G.x) * f.x.x + (p.P0[3 * i + 1] - G.y) * f.x.y + (p.P0[3 * i + 2] - G.z) * f.x.z < 0 ? 1 : 0;
+  }
+  // each cuff point's 15 deg bin round the arm (the rigger's 24, from its y / z): the rigger gives the deep cuff one
+  // radius per bin (the sleeve's shape x the cuff size), which previewHands reads off the rig (cuffDeep)
+  for (const p of parts) {
+    p.bin = new Uint8Array(p.side.length);
+    for (let i = 0; i < p.side.length; i++) {
+      if (!p.cuff[i]) continue;
+      const f = frames[p.side[i] ? 'Right' : 'Left'], G = f.G, x = f.x;
+      const rx = p.P0[3 * i] - G.x, ry = p.P0[3 * i + 1] - G.y, rz = p.P0[3 * i + 2] - G.z, a = rx * x.x + ry * x.y + rz * x.z;
+      const px = rx - x.x * a, py = ry - x.y * a, pz = rz - x.z * a;
+      p.bin[i] = Math.floor((Math.atan2(px * f.z.x + py * f.z.y + pz * f.z.z, px * f.y.x + py * f.y.y + pz * f.y.z) + Math.PI) / (2 * Math.PI) * 24) % 24;
+    }
+  }
   // (always drawn: a box refreshed in one pose culled the moved glove once the hand went up, e.g. rallying)
   const sk2 = sk.clone(sk.name + '_hands'); gm.forEach((m) => { m.skeleton = sk2; m.alwaysSelectAsActiveMesh = true; });
   for (const f of Object.values(frames)) {
@@ -739,6 +758,24 @@ function handColour(k) {
   const n = npc(selId); if (!n) return; const h = handFitNow(n); const id = k === 'glove' ? 'hfGlove' : 'hfCuff';
   h[k] = $('#' + id + 'Auto').checked ? null : $('#' + id).value.toLowerCase(); save(); previewHands(); paintStatus();
 }
+// the deep cuff's radius per bin (past 0.07 of the glove's template into the sleeve, where the rigger makes it the
+// sleeve's shape x the cuff size): bins without a deep point take their neighbours'
+function cuffDeep(H, side, sL, cl0) {
+  const f = H.frames[side], si = side === 'Left' ? 0 : 1, G = f.G, x = f.x, per = [...Array(24)].map(() => []);
+  for (const p of H.parts) for (let i = 0; i < p.side.length; i++) {
+    if (p.side[i] !== si || !p.cuff[i]) continue;
+    const rx = p.P0[3 * i] - G.x, ry = p.P0[3 * i + 1] - G.y, rz = p.P0[3 * i + 2] - G.z, a = rx * x.x + ry * x.y + rz * x.z;
+    if (a < -0.07 * sL * cl0) per[p.bin[i]].push(Math.hypot(rx - x.x * a, ry - x.y * a, rz - x.z * a));
+  }
+  const med = per.map((v) => (v.length ? v.sort((p, q) => p - q)[v.length >> 1] : NaN)), have = med.map((v, b) => (Number.isFinite(v) ? b : -1)).filter((b) => b >= 0);
+  if (!have.length) return null;
+  return Float32Array.from(med, (v, b) => {
+    if (Number.isFinite(v)) return v;
+    let lo = have[0], hi = have[0];
+    for (const h of have) { if ((b - h + 24) % 24 < (b - lo + 24) % 24) lo = h; if ((h - b + 24) % 24 < (hi - b + 24) % 24) hi = h; }
+    const dl = (b - lo + 24) % 24, dh = (hi - b + 24) % 24; return dl + dh ? (med[lo] * dh + med[hi] * dl) / (dl + dh) : med[lo];
+  });
+}
 function previewHands() {
   const n = npc(selId), H = view.hands; if (!n || !H) return;
   const V3 = BABYLON.Vector3, h = handFitNow(n), built = (n.rig?.url && n.rig.url === view.url ? n.rig.handFit : view.fit) || null;
@@ -750,7 +787,10 @@ function previewHands() {
     f.T = { k, u: V3.TransformCoordinates(f.G, f.inv).scale(1 - k), dp: V3.TransformNormal(d, f.invF) };
     return { f, k, d, u, sL: f.L / 0.95, cs: now.cuffSize / (was.cuffSize || 1), cl: now.cuffLen / (was.cuffLen || 1), cl0: was.cuffLen || 1 };
   });
-  for (const { m, P0, side, wh, wc, cuff } of H.parts) {
+  // (the glove's tip is 0.939 of its template: the deep cuff starts 0.07 of it in)
+  const bk = tf.map((t) => `${t.cl0}:${t.f.L}`).join();
+  if (H.bKey !== bk) { tf.forEach((t, i) => { t.f.B = cuffDeep(H, i ? 'Right' : 'Left', t.f.L / 0.939, t.cl0); }); H.bKey = bk; }
+  for (const { m, P0, side, wh, wc, cuff, bin } of H.parts) {
     const P = new Float32Array(P0.length);
     for (let i = 0; i < side.length; i++) {
       const t = tf[side[i]], f = t.f, G = f.G, x = f.x, j = 3 * i, w = wh[i], wq = wc[i], X = P0[j], Y = P0[j + 1], Z = P0[j + 2];
@@ -758,10 +798,13 @@ function previewHands() {
       // following the glove's size x the cuff length, its width the glove's near the hand and the sleeve's x the cuff
       // size deeper in (the rigger fits the cuff to the sleeve)
       let tx = t.k * X + t.u.x, ty = t.k * Y + t.u.y, tz = t.k * Z + t.u.z;
-      if (cuff) {
+      if (cuff[i]) {
         const rx = X - G.x, ry = Y - G.y, rz = Z - G.z, a = rx * x.x + ry * x.y + rz * x.z;   // along the arm (<= 0 in the cuff)
-        const kk = Math.min(1, Math.max(0, -a / (0.07 * t.sL * t.cl0))), kr = (1 - kk) * t.k + kk * t.cs, ax = a * t.k * t.cl;
-        tx = G.x + t.d.x + x.x * ax + (rx - x.x * a) * kr; ty = G.y + t.d.y + x.y * ax + (ry - x.y * a) * kr; tz = G.z + t.d.z + x.z * ax + (rz - x.z * a) * kr;
+        const kk = Math.min(1, Math.max(0, -a / (0.07 * t.sL * t.cl0))), ax = a * t.k * t.cl;
+        // its radius r = (1 - kk) the glove's wrist + kk the deep radius B: the wrist part takes the size, B the cuff size
+        const px = rx - x.x * a, py = ry - x.y * a, pz = rz - x.z * a, r = Math.hypot(px, py, pz), B = f.B ? f.B[bin[i]] : r;
+        const kr = r > 1e-7 ? t.k + kk * (t.cs - t.k) * B / r : t.k;
+        tx = G.x + t.d.x + x.x * ax + px * kr; ty = G.y + t.d.y + x.y * ax + py * kr; tz = G.z + t.d.z + x.z * ax + pz * kr;
       }
       // the glove's Hand bone already moves its share w of the point by T and the cuff bone its share wq by the move d:
       // solve w T(P) + wq (P + d) + (1 - w - wq) P = target

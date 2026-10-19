@@ -1,0 +1,107 @@
+// What the village has paid each economy account (Redis), and the paying itself. The server decides every award:
+// the amount comes from api/_econ-catalog.mjs (tools/gen-econ-catalog.mjs), never from the browser.
+//   - a chest, a game's first clear and a place riddle pay once per account (claimed set; the economy's idempotency
+//     key village:<kind>:<id>:<user> makes sure a retry never pays twice either)
+//   - a game's finds (the Treasure Dig chests) pay up to their own amount a day per game
+//   - at most CAP points a day per account (UTC days); an award past it is held (owed) and paid on a later day, the
+//     first time the player is back (econ-me, or their next award)
+// Keys: econ:v1:claimed:<u> (set kind:id), econ:v1:day:<u>:<day> (paid that day), econ:v1:find:<u>:<game>:<day>,
+// econ:v1:owed:<u> (hash idempotency key -> award), econ:v1:log:<u> (the last 40 awards, newest first).
+import CATALOG from './_econ-catalog.mjs';
+import { redis, econCredit } from './_econ.mjs';
+
+export const CAP = Math.max(100, parseInt(process.env.ECON_DAILY_CAP || '2000', 10));
+// one-time awards (chests, first clears, riddles) can skip the cap; off until Miguel says yes (plans v2, question 4)
+export const ONE_TIME_UNCAPPED = process.env.ECON_ONE_TIME_UNCAPPED === '1';
+const P = 'econ:v1';
+const DAY_TTL = 60 * 60 * 24 * 3;
+export const catalog = () => CATALOG;
+export const utcDay = (t = Date.now()) => new Date(t).toISOString().slice(0, 10);
+const KIND = { chest: 'chests', game: 'games', riddle: 'riddles', find: 'digs' };
+export const ID = /^[A-Za-z0-9][A-Za-z0-9_:.-]{0,119}$/;
+const err = (status, message, code) => Object.assign(new Error(message), { status, code });
+
+// the award's catalog entry -> { amount, village, cap (finds), reason }
+export function lookup(kind, id) {
+  const table = catalog()[KIND[kind]];
+  const e = table && ID.test(String(id || '')) ? table[id] : null;
+  if (!e) return null;
+  const what = { chest: 'chest', game: 'first clear', riddle: 'riddle solved', find: 'find' }[kind];
+  return kind === 'find' ? { amount: e[0], cap: e[1], village: e[2], reason: `Rebel Ants Village · ${e[2]} · ${id} · ${what}` }
+    : { amount: e[0], village: e[1], reason: `Rebel Ants Village · ${e[1]} · ${id} · ${what}` };
+}
+
+async function credit(u, a) {
+  const r = await econCredit({ userId: u, amount: a.amount, reason: a.reason, metadata: { kind: a.kind, id: a.id, village: a.village }, idempotencyKey: a.ikey });
+  await redis([['LPUSH', `${P}:log:${u}`, JSON.stringify({ k: a.kind, id: a.id, v: a.village, p: a.amount, at: Date.now() })], ['LTRIM', `${P}:log:${u}`, '0', '39']]).catch(() => {});
+  return r;
+}
+
+// pay what was held on earlier days, oldest first, while today's cap has room
+export async function payOwed(u) {
+  const [all] = await redis([['HGETALL', `${P}:owed:${u}`]]);
+  const flat = Array.isArray(all?.result) ? all.result : [];
+  const items = [];
+  for (let i = 0; i + 1 < flat.length; i += 2) { try { items.push({ ikey: flat[i], ...JSON.parse(flat[i + 1]) }); } catch (e) {} }
+  items.sort((a, b) => (a.at || 0) - (b.at || 0));
+  const day = utcDay(), dk = `${P}:day:${u}:${day}`;
+  let paid = 0, balance = null;
+  for (const a of items) {
+    if (a.day === day) continue;                                       // held today: wait for tomorrow
+    const [t] = await redis([['INCRBY', dk, String(a.amount)], ['EXPIRE', dk, String(DAY_TTL)]]);
+    if (Number(t?.result) > CAP) { await redis([['DECRBY', dk, String(a.amount)]]); continue; }
+    try { balance = (await credit(u, a)).newBalance; paid += a.amount; await redis([['HDEL', `${P}:owed:${u}`, a.ikey]]); }
+    catch (e) { await redis([['DECRBY', dk, String(a.amount)]]).catch(() => {}); break; }
+  }
+  return { paid, balance };
+}
+
+// one award for the signed-in player u -> { paid, held, already, capped, balance, today, cap }
+export async function award(u, kind, id) {
+  const e = lookup(kind, id);
+  if (!e) throw err(400, 'Unknown award', 'unknown_award');
+  const day = utcDay(), dk = `${P}:day:${u}:${day}`, undo = [];
+  const a = { kind, id, village: e.village, amount: e.amount, reason: e.reason, day, at: Date.now() };
+  if (kind === 'find') {
+    const fk = `${P}:find:${u}:${id}:${day}`;
+    const [n] = await redis([['INCRBY', fk, String(e.amount)], ['EXPIRE', fk, String(DAY_TTL)]]);
+    if (Number(n?.result) > e.cap) { await redis([['DECRBY', fk, String(e.amount)]]); return { paid: 0, capped: true, ...(await today(u)) }; }
+    a.ikey = `village:find:${id}:${day}:${Number(n.result)}:${u}`;
+    undo.push(['DECRBY', fk, String(e.amount)]);
+  } else {
+    const [added] = await redis([['SADD', `${P}:claimed:${u}`, `${kind}:${id}`]]);
+    if (Number(added?.result) !== 1) return { paid: 0, already: true, ...(await today(u)) };
+    a.ikey = `village:${kind}:${id}:${u}`;
+    undo.push(['SREM', `${P}:claimed:${u}`, `${kind}:${id}`]);
+  }
+  if (!(ONE_TIME_UNCAPPED && kind !== 'find')) {
+    const [t] = await redis([['INCRBY', dk, String(e.amount)], ['EXPIRE', dk, String(DAY_TTL)]]);
+    if (Number(t?.result) > CAP) {
+      await redis([['DECRBY', dk, String(e.amount)], ['HSET', `${P}:owed:${u}`, a.ikey, JSON.stringify(a)]]);
+      return { paid: 0, held: e.amount, ...(await today(u)) };
+    }
+    undo.push(['DECRBY', dk, String(e.amount)]);
+  }
+  try {
+    const r = await credit(u, a);
+    return { paid: e.amount, balance: r.newBalance, ...(await today(u)) };
+  } catch (x) {
+    await redis(undo).catch(() => {});                                   // not paid: the award can be tried again
+    throw x;
+  }
+}
+
+// today's paid points, the cap, what is held, and every one-time award this account has had (kind:id)
+export async function today(u) {
+  const [d, o] = await redis([['GET', `${P}:day:${u}:${utcDay()}`], ['HVALS', `${P}:owed:${u}`]]);
+  const owed = (Array.isArray(o?.result) ? o.result : []).reduce((s, v) => { try { return s + (Number(JSON.parse(v).amount) || 0); } catch (e) { return s; } }, 0);
+  return { today: Number(d?.result) || 0, cap: CAP, owed };
+}
+export async function claimed(u) {
+  const [c] = await redis([['SMEMBERS', `${P}:claimed:${u}`]]);
+  return Array.isArray(c?.result) ? c.result.map(String) : [];
+}
+export async function recent(u) {
+  const [l] = await redis([['LRANGE', `${P}:log:${u}`, '0', '19']]);
+  return (Array.isArray(l?.result) ? l.result : []).map((s) => { try { return JSON.parse(s); } catch (e) { return null; } }).filter(Boolean);
+}

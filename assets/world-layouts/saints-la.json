@@ -16377,7 +16377,7 @@
     "signConfig": {
       "label": "SAINTS LA",
       "sub": "Welcome to the city",
-      "desc": "",
+      "desc": "City of wings. Keep it clean, keep it loud, and if you can hoop, the court is yours.\n\n— The Saints",
       "icon": "",
       "color": "#e8c56a",
       "clickable": false,
@@ -16575,7 +16575,7 @@
       "spotId": "friend-welcome-saints-la",
       "action": "read",
       "label": "Read the welcome sign",
-      "text": "WELCOME TO SAINTS, LOS ANGELES. City of wings. Keep it clean, keep it loud, and if you can hoop, the court is yours. The Saints.",
+      "text": "City of wings. Keep it clean, keep it loud, and if you can hoop, the court is yours. — The Saints",
       "glint": "quest"
     }
   },

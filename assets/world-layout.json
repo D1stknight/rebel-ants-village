@@ -18363,7 +18363,7 @@
     },
     "signConfig": {
       "label": "HUB VILLAGE",
-      "sub": "Welcome to the HUb",
+      "sub": "Welcome to the Hub",
       "desc": "Here you will interact with various Ashigarus, find them all and complete all quests.",
       "icon": "🐜",
       "color": "#b1ffff",
@@ -44988,6 +44988,68 @@
             "requires": {
               "time": "night",
               "hint": "This cabinet is dead: no light, no sound. The arcade regulars say it only wakes at midnight."
+            }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_claw",
+            "linkName": "Ant Claw",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Steer the claw over a Rebel plushie and drop it. The Golden Ant is in there somewhere: rare, slippery and worth the most.",
+            "enabled": true,
+            "position": {
+              "x": -15,
+              "y": 2.1,
+              "z": 13.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            },
+            "game": {
+              "type": "claw",
+              "id": "hub-ant-claw",
+              "title": "Ant Claw",
+              "set": "ants",
+              "pass": 40,
+              "points": 40,
+              "questOn": "pass",
+              "box": [
+                -16,
+                14.2,
+                -14,
+                16.2
+              ],
+              "floor": 1.8,
+              "top": 3.2,
+              "chute": [
+                -15.7,
+                14.5
+              ],
+              "cam": [
+                -14.1,
+                3.6,
+                12
+              ],
+              "at": [
+                -15,
+                2.05,
+                15.2
+              ],
+              "playerAt": [
+                -13.1,
+                13.3
+              ],
+              "tries": 5,
+              "seconds": 15,
+              "prizes": 6
             }
           }
         ],

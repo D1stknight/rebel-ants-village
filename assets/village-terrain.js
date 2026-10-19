@@ -35,7 +35,9 @@ function saintsCity() {
   for (const sz of SZ) for (const sd of [-1, 1]) for (let x = -232; x <= 232; x += 24) {
     if (nearStreet(x, SX, 15)) continue;
     (Math.abs(sz - 20) < 100 || r() < .6 ? tallPalms : palms).push([x + (r() - .5) * 3, sz + sd * 9.4, r() * 6.28, .85 + r() * .3]);
-    if (onCrossing(x + 12, sz)) {} else if (sd < 0) poles.push([x + 12, sz - 9.8, 0, 1]); else if ((x / 24 | 0) % 2 === 0) lights.push([x + 12, sz + 8.6, Math.PI, 1]);
+    // the lamp arm reaches toward the piece's -z: yaw 0 on the north sidewalk puts the lamp over the street (yaw pi had
+    // it over the sidewalk; Oct 18, Miguel: "some of the street lights ... pointing the wrong way")
+    if (onCrossing(x + 12, sz)) {} else if (sd < 0) poles.push([x + 12, sz - 9.8, 0, 1]); else if ((x / 24 | 0) % 2 === 0) lights.push([x + 12, sz + 8.6, 0, 1]);
     if (Math.abs(x) < 150 && Math.abs(sz - 20) < 160 && r() < .55) cars[carKinds[Math.floor(r() * 6)]].push([x + 6, sz + sd * 5.2, sd < 0 ? 0 : Math.PI, 1]);
   }
   const E = (kit, at, o = {}) => ({ kit, at, count: Math.max(1, at.length), minSq: 0, maxSq: 360, road: 0, ...o });

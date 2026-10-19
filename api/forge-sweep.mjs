@@ -34,7 +34,8 @@ async function loadBuild(buildId) {
 async function sweepOne(buildId) {
   let rec = await loadBuild(buildId);
   if (!rec) return { buildId, done: true, note: 'gone' };
-  const age = Date.now() - Date.parse(rec.createdAt || rec.updatedAt || 0);
+  // a rig job's age counts from its start (a gloves re-rig of an old build would be dropped before it is collected)
+  const age = Date.now() - Date.parse((rec.forgeRig?.status === 'running' && rec.forgeRig.startedAt) || rec.createdAt || rec.updatedAt || 0);
   const steps = [];
   // 1. the sculpt
   if (rec.engine?.taskId && !rec.output?.rebelGlbUrl) {

@@ -59,6 +59,18 @@
     },
     "api/forge-weapon.mjs": {
       "maxDuration": 300
+    },
+    "api/econ-discord-callback.mjs": {
+      "maxDuration": 30
+    },
+    "api/econ-me.mjs": {
+      "maxDuration": 30
+    },
+    "api/econ-award.mjs": {
+      "maxDuration": 30
+    },
+    "api/econ-name-login.mjs": {
+      "maxDuration": 30
     }
   },
   "crons": [

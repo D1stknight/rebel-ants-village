@@ -74,6 +74,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   letter-spacing:1px;
   text-transform:uppercase;
 }
+#selectedRebelLabel,#selectedRebelName,#selectedRebelForm{padding-right:36px}
+/* the Discord circle (top right of the panel): signed in = the player's Discord picture, else a sign-in button */
+#econBadge{position:absolute;top:9px;right:9px;width:30px;height:30px;padding:0;border-radius:50%;cursor:pointer;display:none;
+  background:rgba(88,101,242,.14);border:1px solid rgba(88,101,242,.65);color:#aab3ff}
+#econBadge.show{display:grid;place-items:center}
+#econBadge svg{width:17px;height:17px;display:block}
+#econBadge:hover{background:#5865f2;color:#fff}
+#econBadge.on{background:#5865f2;border:2px solid #5865f2;color:#fff}
+#econBadge.on img{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover}
+#econBadge .eb-d{position:absolute;right:-4px;bottom:-4px;width:15px;height:15px;border-radius:50%;background:#5865f2;border:2px solid #050a1c;display:grid;place-items:center}
+#econBadge .eb-d svg{width:9px;height:9px}
 #selectedRebelWorldStatus{
   margin-top:7px;
   padding-top:7px;
@@ -234,6 +245,13 @@ body.walk-photo #photoBtn{display:block}
 #tt.on{opacity:1}
 #panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);width:480px;max-width:92vw;max-height:88vh;overflow-y:auto;background:rgba(5,10,28,.97);border:1px solid rgba(232,197,106,.5);padding:38px;z-index:30;opacity:0;pointer-events:none;transition:all .4s cubic-bezier(.16,1,.3,1);backdrop-filter:blur(22px)}
 #panel.on{opacity:1;pointer-events:all;transform:translate(-50%,-50%) scale(1)}
+#panel.reading{text-align:center;width:min(500px,90vw);padding:34px 34px 24px}
+#panel.reading #picon:empty,#panel.reading .psb:empty,#panel.reading .pl:empty{display:none}
+#panel.reading #ph2{font-size:18px;margin-bottom:8px}
+#panel.reading #pdesc{white-space:pre-line;font-size:14px;line-height:1.85;color:rgba(255,255,255,.86);margin:0 0 4px}
+#panel.reading .pl{justify-content:center}
+#panel .pread{display:none;margin-top:18px;font-size:9px;letter-spacing:2px;color:rgba(94,207,202,.55);text-transform:uppercase}
+#panel.reading .pread{display:block}
 #npcDialogueOverlay{position:fixed;inset:0;display:flex;align-items:flex-end;justify-content:center;padding:0 24px 82px;background:linear-gradient(to top,rgba(2,8,18,.62),rgba(2,8,18,0));opacity:0;pointer-events:none;z-index:60;transition:opacity .18s}
 #npcDialogueOverlay.on{opacity:1;pointer-events:all}
 #npcDialoguePanel{width:min(620px,92vw);background:rgba(5,10,28,.96);border:1px solid rgba(232,197,106,.55);box-shadow:0 18px 50px rgba(0,0,0,.45);padding:18px 20px;backdrop-filter:blur(18px)}
@@ -408,7 +426,7 @@ body.walk-photo #photoBtn{display:block}
 #assetPanel .perf-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:9px;color:#8aa;letter-spacing:1px}
 #assetPanel .perf-grid span{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:5px;padding:6px}
 @media (max-width:720px){#assetPanel{width:min(320px,88vw);min-width:0}#assetPanel .ap-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(5,10,28,.95);border:1px solid rgba(94,207,202,.6);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:10px 24px;opacity:0;transition:all .4s;pointer-events:none;z-index:50;white-space:nowrap}
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(5,10,28,.95);border:1px solid rgba(94,207,202,.6);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:10px 24px;opacity:0;transition:all .4s;pointer-events:none;z-index:50;width:max-content;max-width:min(640px,calc(100vw - 32px));text-align:center;line-height:1.6}
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 #questCelebration{position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-18px) scale(.96);z-index:98;width:min(620px,calc(100vw - 34px));pointer-events:none;opacity:0;transition:opacity .22s,transform .22s}
 #questCelebration.on{opacity:1;transform:translateX(-50%) translateY(0) scale(1);pointer-events:auto}
@@ -500,7 +518,8 @@ body.walk-photo #photoBtn{display:block}
 #progressionOverlay.on{opacity:1;pointer-events:all}
 #progressionPanel{width:min(760px,94vw);max-height:86vh;overflow:auto;background:rgba(5,10,28,.96);border:1px solid rgba(232,197,106,.52);box-shadow:0 0 60px rgba(94,207,202,.12);padding:24px}
 #progressionPanel h2{font-family:'Cinzel Decorative',serif;font-size:17px;color:#e8c56a;letter-spacing:3px;text-align:center;margin-bottom:12px}
-.journal-tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(84px,1fr));gap:5px;margin-bottom:12px}
+.journal-tabs{display:grid;grid-auto-flow:column;grid-auto-columns:auto;gap:5px;margin-bottom:12px}
+@media (max-width:820px){.journal-tabs{grid-auto-flow:row;grid-template-columns:repeat(4,minmax(0,1fr))}}
 .tale-page{padding:14px 16px}
 .tale-head{display:flex;align-items:center;gap:12px}
 .tale-head b{display:block;color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:12px;letter-spacing:1.4px;line-height:1.35}
@@ -510,11 +529,32 @@ body.walk-photo #photoBtn{display:block}
 .tale-text{margin-top:12px;color:rgba(255,255,255,.86);font-size:13.5px;line-height:1.65}
 .tale-text p+p{margin-top:9px}
 .tale-locked{margin-top:8px;color:rgba(255,255,255,.45);font-size:12px;font-style:italic}
-.journal-tab{border:1px solid rgba(94,207,202,.22);background:rgba(255,255,255,.035);color:rgba(255,255,255,.7);font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:1.4px;padding:8px 5px;cursor:pointer}
+.journal-tab{border:1px solid rgba(94,207,202,.22);background:rgba(255,255,255,.035);color:rgba(255,255,255,.7);font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:1.4px;padding:8px 9px;white-space:nowrap;text-align:center;cursor:pointer}
 .journal-tab.active{border-color:rgba(232,197,106,.65);color:#e8c56a;background:rgba(232,197,106,.1)}
 .journal-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .journal-card{border:1px solid rgba(94,207,202,.18);background:rgba(255,255,255,.035);border-radius:6px;padding:10px}
 .journal-card.full{grid-column:1/-1}
+.econ-card{border-color:rgba(214,175,92,.35);background:linear-gradient(135deg,rgba(214,175,92,.09),rgba(255,255,255,.025))}
+.econ-card strong{color:#d6af5c}
+.econ-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.econ-num{flex:1;min-width:150px;display:grid;gap:2px}
+.econ-num b{font-family:'Cinzel Decorative',serif;font-size:24px;color:#ffd166;letter-spacing:1px;line-height:1.1}
+.econ-num small{font-size:11px;color:rgba(255,255,255,.62);line-height:1.35}
+.econ-av{width:38px;height:38px;border-radius:50%;border:1px solid rgba(214,175,92,.5)}
+.econ-btn{font-family:inherit;font-size:11px;font-weight:600;line-height:1;letter-spacing:1.5px;text-transform:uppercase;padding:9px 13px;border-radius:5px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.06);color:#eee;cursor:pointer}
+.econ-btn:hover{background:rgba(255,255,255,.12)}
+.econ-btn.econ-discord{background:#5865f2;border-color:#5865f2;color:#fff}
+.econ-btn.econ-discord:hover{background:#4752c4}
+.econ-meta{margin-top:8px;font-size:11px;color:rgba(255,255,255,.6);line-height:1.4}
+.econ-alt{margin-top:9px;font-size:11px;color:rgba(255,255,255,.55)}
+.econ-link{background:none;border:0;padding:0;color:#5ecfca;font:inherit;text-decoration:underline;cursor:pointer}
+.econ-name{display:grid;grid-template-columns:minmax(0,1fr) 128px;gap:8px;margin-top:10px}
+.econ-name input{min-width:0;font-family:inherit;font-size:13px;padding:9px 10px;border-radius:5px;border:1px solid rgba(255,255,255,.26);background:rgba(0,0,0,.35);color:#fff;outline:none}
+.econ-name input:focus{border-color:rgba(232,197,106,.75)}
+.econ-acts{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.econ-msg{grid-column:1/-1;min-height:15px;font-size:11px;line-height:1.35;color:#ffd166}
+.econ-msg.bad{color:#ff8b7b}
+@media (pointer:coarse){.econ-name input{font-size:16px}} /* phones zoom into smaller fields */
 .journal-card strong{display:block;color:#5ecfca;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
 .journal-card span{color:rgba(255,255,255,.72);font-size:12px;line-height:1.35}
 .journal-section-title{grid-column:1/-1;color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:12px;letter-spacing:2px;margin:6px 0 2px}
@@ -1691,6 +1731,7 @@ body.walk-photo #photoBtn{display:block}
 </div>
 
 <div id="selectedRebelPanel">
+  <button id="econBadge" type="button" aria-label="Discord"></button>
   <img id="selectedRebelImage" src="assets/lobby/ant_1.JPG" alt="Selected Rebel">
   <div id="selectedRebelMeta">
     <div id="selectedRebelLabel">Selected Rebel</div>
@@ -1728,6 +1769,7 @@ body.walk-photo #photoBtn{display:block}
   <div class="psb" id="psub">Rebel Ants</div>
   <p id="pdesc">—</p>
   <div class="pl" id="pact"></div>
+  <div class="pread">O or Esc to close</div>
 </div>
 
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
@@ -3489,6 +3531,7 @@ const PlaytestNote = (() => {
 // Rebel beside that game once the village is up: in front of its quest spot, or through its room's door (sealed doors
 // open with &rooms=open) and beside the room's hotspot. Press O there to play.
 const GameJump = (() => { const id = new URLSearchParams(location.search).get('game'); return id && /(-git-|^localhost$|^127\.0\.0\.1$)/.test(location.hostname) ? id : null; })();
+if (GameJump) window._gameJump = (tries = 1) => runGameJump(tries); // tests: jump again (from inside a room)
 function runGameJump(tries = 0) {
   if (!GameJump) return;
   // patient (Oct 17, Miguel: the Yabusame jump "still did not jump me"): a Rebel and its moves can take more than the 30 s
@@ -3501,6 +3544,9 @@ function runGameJump(tries = 0) {
   const roots = getQuestSpotRoots();
   const spot = roots.find(r => r.metadata?.spotConfig?.game?.id === GameJump) || roots.find(r => r.metadata?.spotConfig?.spotId === GameJump || r.name === 'questSpotRoot_' + GameJump);
   if (spot) {
+    // the spot is in the village: out of any room first (Oct 18, Miguel: the Trick or Treat link "did not jump me to the
+    // game": a room left open on an earlier visit had been put back on load, and the jump moved the Rebel into its empty space)
+    if (ActiveInterior) { if (!ActiveInterior.exiting) returnToVillageFromInterior(); return again(); }
     const p = spot.getAbsolutePosition(), yaw = spot.rotation?.y || 0, sc = spot.metadata.spotConfig;
     charMesh.position.x = p.x - Math.sin(yaw) * 1.4; charMesh.position.z = p.z - Math.cos(yaw) * 1.4; charMesh.rotation.y = yaw; _playerDeckSnapUntil = performance.now() + 1500;
     showToast(sc.game ? `Game jump: ${sc.game.title || GameJump}. Press O to play.` : `Jump: ${sc.riddle?.title || sc.label || GameJump}. Press O here.`, 7000); return;
@@ -3511,8 +3557,12 @@ function runGameJump(tries = 0) {
   const at = () => { const h = scene.getTransformNodeByName('interiorHotspotRoot_' + hotspot.hotspotId); if (!h) return false; const p = h.getAbsolutePosition();
     const toward = Math.atan2(-p.x, -p.z); charMesh.position.x = p.x + Math.sin(toward) * 1.3; charMesh.position.z = p.z + Math.cos(toward) * 1.3; charMesh.rotation.y = toward + Math.PI; _playerDeckSnapUntil = performance.now() + 1500;
     showToast(`Game jump: ${hotspot.game.title || GameJump}. Press O to play.`, 7000); return true; };
-  if (ActiveInterior) { if (!at()) again(); return; }
-  const door = scene.transformNodes.find(n => n.metadata?.type === 'interior_entrance' && n.metadata.targetInteriorId === room);
+  // the door names the room's interior id; a rebuilt Hub room keeps its config under its own id (kitConfig: rebel_arcade_kit)
+  const door = scene.transformNodes.find(n => n.metadata?.type === 'interior_entrance' && (n.metadata.targetInteriorId === room || n.metadata.interiorDefinition?.kitConfig === room));
+  if (ActiveInterior) { // in that room: beside the hotspot; in another one: out of it, then through the right door
+    if (door && ActiveInterior.entranceName === door.name) { if (!at()) again(); return; }
+    if (!ActiveInterior.exiting) returnToVillageFromInterior(); return again();
+  }
   if (!door) return showToast(`The door to ${room} is not in this village.`, 6000);
   enterInterior(door);
   const wait = (k = 0) => { if (ActiveInterior && at()) return; if (k < 40) setTimeout(() => wait(k + 1), 400); }; setTimeout(wait, 1200);
@@ -4086,6 +4136,7 @@ const MoonTaleSounds = (() => {
     gutter: { fx:t0 => { noise(t0, 1.4, .12, 'lowpass', 120, 1); noise(t0, .3, .08, 'bandpass', 600, 2); } },
     whoosh: { fx:t0 => { noise(t0, .18, .22, 'bandpass', 2600, 1.5); glide(1800, 600, t0, .16, .025, 'sawtooth'); } },
     thock: { fx:t0 => { noise(t0, .09, .42, 'bandpass', 900, 2); tone(210, t0, .14, .1, [[1, 1, 1]]); } },
+    knock: { fx:t0 => { noise(t0, .07, .55, 'bandpass', 480, 2.6); tone(118, t0, .16, .22, [[1, 1, 1], [2.31, .35, .5]]); } }, // a rap on a wooden door
     paper: { fx:t0 => { noise(t0, .2, .26, 'highpass', 2800); noise(t0 + .03, .12, .16, 'bandpass', 1400, 1.2); } },
     gamewin: { fx:t0 => { [['C5', 0], ['E5', .11], ['G5', .22], ['C6', .36]].forEach(([n, d]) => tone(N[n], t0 + d, .9, .16, PAN)); } },
     // 3/4 at 0.5 s a beat, 24 beats: E G A | G E D | C D E | D . . | E G A | C' A G | E D C | C . .
@@ -5067,14 +5118,14 @@ function renderProgressionJournal() {
     ['Completed Quests', ProgressionState.completedQuests.length],
     ['Villages Visited', ProgressionState.villagesVisited.length],
     ['Chests Opened', ProgressionState.chestsOpened.length],
-    ['Rebel Points', (Number(ProgressionState.rebelPoints) || 0).toLocaleString('en-US')],
     ['Collectibles Found', `${totalCollectibles} / ${COLLECTIBLE_TOTAL}`],
     ['Secrets Found', `${ProgressionState.secretsFound.length} / ${SECRET_TOTAL}`],
     ['Games Cleared', `${GAME_LIST.filter(([id]) => ProgressionState.games?.[id]?.cleared).length} / ${GAME_LIST.length}`],
     ['Ecosystem Actions', ecosystemCount],
     ['Badges Earned', earnedActiveBadges.length ? earnedActiveBadges.length : 'None yet']
   ];
-  grid.innerHTML = cards.map(([label, value]) => `<div class="journal-card"><strong>${label}</strong><span>${value}</span></div>`).join('');
+  grid.innerHTML = econJournalCard() + cards.map(([label, value]) => `<div class="journal-card"><strong>${label}</strong><span>${value}</span></div>`).join('');
+  refreshEcon();                                        // the balance changes in other games too (throttled)
 }
 
 function closeProgressionJournal() {
@@ -8891,8 +8942,199 @@ function setInteractionPrompt(text, visible) {
   prompt.classList.toggle('on', visible === true);
 }
 
+// ── The Rebel Economy link (api/econ-*; plans v2, Oct 18) ──
+// Signed in with Discord, the player's Rebel points go to their economy account (the points that buy forges) and the
+// village's server decides every award (api/econ-award: each chest, first clear and place riddle once per account, at
+// most 2,000 a day; more is held and paid on a later day). A guest's points are practice points, kept on this device
+// (ProgressionState.rebelPoints) and never carried over. While signed in, which chests are looted and which riddles are
+// solved follows the account, so a chest first opened as a guest still pays the account once.
+const Econ = { checked:false, configured:false, on:false, kind:'', name:'', avatar:null, balance:null, today:0, cap:2000, owed:0, claimed:new Set(), hinted:false };
+const ECON_PENDING_KEY = 'rebelAntsEconPending:v1';   // awards the server didn't take (offline, signed out): sent again
+const econClaimed = (kind, id) => Econ.claimed.has(`${kind}:${id}`);
+let econCheckAt = 0;
+async function refreshEcon(force) {
+  if (!force && Date.now() - econCheckAt < 8000) return;
+  econCheckAt = Date.now();
+  let d = null;
+  try { const r = await fetch('/api/econ-me', { credentials:'same-origin', cache:'no-store' }); d = await r.json(); } catch (e) { return; }
+  if (!d?.ok) return;
+  const was = Econ.on, wasClaimed = [...Econ.claimed].sort().join('|');
+  Object.assign(Econ, { checked:true, configured:!!d.configured, on:!!d.signedIn, kind:d.signedIn ? (d.kind || 'discord') : '', name:d.name || '', avatar:d.avatar || null,
+    balance:d.signedIn ? (d.balance ?? Econ.balance) : null, today:d.today || 0, cap:d.cap || 2000, owed:d.owed || 0, claimed:new Set(d.claimed || []) });
+  renderEconBadge();
+  if (d.paidNow) showToast(`+${Number(d.paidNow).toLocaleString('en-US')} Rebel points held from an earlier day went to your account.`, 6000);
+  if (was !== Econ.on || wasClaimed !== [...Econ.claimed].sort().join('|')) refreshEconWorld();
+  if (Econ.on) flushEconPending();
+  renderJournalIfOpen();
+}
+function renderJournalIfOpen() {
+  if (!document.getElementById('progressionOverlay')?.classList.contains('on')) return;
+  const a = document.activeElement, typing = a && (a.id === 'econNameInput' || a.id === 'econPinInput') ? [a.id, a.selectionStart, a.selectionEnd] : null;
+  renderProgressionJournal();
+  const el = typing && document.getElementById(typing[0]);
+  if (el) { el.focus({ preventScroll:true }); try { el.setSelectionRange(typing[1], typing[2]); } catch (e) {} }
+}
+// the Discord circle on the Rebel panel (the round Rebel button shows the picture too: assets/village-hud.js):
+// signed in = the Discord picture with the Discord mark (opens the journal's account card), signed out = sign in
+const DISCORD_GLYPH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.028C.533 9.046-.32 13.58.099 18.058a.082.082 0 0 0 .031.056 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.042-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .078-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.009c.12.1.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.029 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.331c-1.183 0-2.157-1.086-2.157-2.42 0-1.332.956-2.418 2.157-2.418 1.21 0 2.176 1.095 2.157 2.419 0 1.333-.956 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.086-2.157-2.42 0-1.332.955-2.418 2.157-2.418 1.21 0 2.176 1.095 2.157 2.419 0 1.333-.946 2.419-2.157 2.419z"/></svg>';
+// a name + PIN account's picture: its first letter in a gold-ringed circle (an SVG, so every <img> can show it)
+function econNameAvatar(name) {
+  const ch = (String(name || '?').trim().match(/[\p{L}\p{N}]/u) || ['?'])[0].toUpperCase();
+  let h = 0; for (const c of String(name || '')) h = (h * 31 + c.codePointAt(0)) >>> 0;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="hsl(${h % 360},42%,24%)"/>`
+    + `<text x="32" y="43" text-anchor="middle" font-family="Georgia,serif" font-size="32" font-weight="700" fill="#e8c56a">${ch.replace(/[<>&"']/g, '')}</text></svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
+const econAvatar = () => Econ.avatar || (Econ.on && Econ.kind === 'name' ? econNameAvatar(Econ.name) : null);
+function renderEconBadge() {
+  const b = document.getElementById('econBadge'); if (!b) return;
+  b.classList.toggle('show', Econ.configured);
+  b.classList.toggle('on', Econ.on);
+  const pic = econAvatar(), discord = Econ.kind === 'discord';
+  const key = Econ.on ? 'on|' + Econ.kind + '|' + (pic || '') : 'off';
+  if (b.dataset.k !== key) {
+    b.dataset.k = key;
+    b.innerHTML = Econ.on ? DISCORD_GLYPH + (pic ? `<img alt="" src="${escapeHTML(pic)}" onerror="this.remove()">` : '') + (discord ? `<span class="eb-d">${DISCORD_GLYPH}</span>` : '') : DISCORD_GLYPH;
+  }
+  const bal = Econ.balance == null ? '' : ` · ${Number(Econ.balance).toLocaleString('en-US')} Rebel points`;
+  b.title = Econ.on ? `Signed in${discord ? ' with Discord' : ''} as ${Econ.name || 'Rebel'}${bal}` : 'Sign in to keep your Rebel points (Discord, or a name + PIN)';
+  b.setAttribute('aria-label', b.title);
+  b.onclick = (e) => { e.stopPropagation(); b.blur(); activeJournalTab = 'overview'; openProgressionJournal(); };
+}
+// signed in or out (or progress from another device): the chests show this player's looted state
+function refreshEconWorld() {
+  try {
+    getTreasureChestRoots().forEach(root => {
+      const looted = isChestLooted(root.metadata.chestId);
+      if (looted === (root.metadata.opened === true)) return;
+      root.metadata.opened = looted;
+      if (root.metadata._chestLidPivot) root.metadata._chestLidPivot.rotation.x = looted ? 1.05 : 0;
+      root.metadata._chestGlow?.setEnabled(looted);
+    });
+  } catch (e) {}
+}
+function econSignIn() {
+  const url = '/api/econ-discord-login?return=' + encodeURIComponent(location.pathname + location.search);
+  let w = null;
+  try { w = window.open(url + '&popup=1', 'rebelEconSignIn', 'width=520,height=760'); } catch (e) {}
+  if (!w) location.href = url;                              // popups blocked: sign in in this tab, it comes back here
+}
+// name + PIN (players without Discord): the casino's colony name accounts, through the village's server
+const EconNameForm = { open:false, name:'', pin:'', msg:'', bad:false, busy:false };
+function econNameToggle(open) { EconNameForm.open = open !== false; EconNameForm.msg = ''; renderJournalIfOpen(); if (EconNameForm.open) setTimeout(() => document.getElementById('econNameInput')?.focus(), 30); }
+async function econNameSubmit(action) {
+  if (EconNameForm.busy) return;
+  const name = (document.getElementById('econNameInput')?.value ?? EconNameForm.name).trim(), pin = (document.getElementById('econPinInput')?.value ?? EconNameForm.pin).trim();
+  Object.assign(EconNameForm, { name, pin });
+  const say = (msg, bad) => { Object.assign(EconNameForm, { msg, bad: !!bad }); const m = document.getElementById('econNameMsg'); if (m) { m.textContent = msg; m.classList.toggle('bad', !!bad); } };
+  if (name.length < 3) return say('Your name needs at least 3 letters or numbers.', true);
+  if (!/^\d{4,6}$/.test(pin)) return say('Your PIN is 4 to 6 digits.', true);
+  EconNameForm.busy = true; say(action === 'register' ? 'Making your account…' : 'Signing in…');
+  let d = {};
+  try { const r = await fetch('/api/econ-name-login', { method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ action, name, pin }) }); d = await r.json().catch(() => ({})); }
+  catch (e) { d = { ok:false, message:'Could not reach the village. Check the connection and try again.' }; }
+  EconNameForm.busy = false;
+  if (!d.ok) {
+    if (d.code === 'pin_wrong' || d.code === 'locked') { EconNameForm.pin = ''; const p = document.getElementById('econPinInput'); if (p) p.value = ''; }
+    return say(d.message || d.error || 'Not signed in.', true);
+  }
+  Object.assign(EconNameForm, { open:false, name:'', pin:'', msg:'' });
+  showToast(d.created ? `Welcome, ${d.name}. Your Rebel points now go to your account.` : `Signed in as ${d.name}.`, 5000);
+  try { new BroadcastChannel('ra-econ').postMessage({ signedIn:true }); } catch (e) {}
+  try { localStorage.setItem('raEconPing', String(Date.now())); } catch (e) {}
+  await refreshEcon(true);
+}
+async function econSignOut() {
+  try { await fetch('/api/econ-me', { method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ action:'logout' }) }); } catch (e) {}
+  Object.assign(Econ, { on:false, kind:'', name:'', avatar:null, balance:null, today:0, owed:0, claimed:new Set() });
+  refreshEconWorld(); renderJournalIfOpen(); renderEconBadge();
+  showToast('Signed out. Points are practice points on this device until you sign in again.', 5000);
+}
+function queueEconPending(kind, id) {
+  try {
+    const list = JSON.parse(localStorage.getItem(ECON_PENDING_KEY) || '[]').filter(p => Date.now() - (p.at || 0) < 7 * 864e5);
+    if (kind === 'find' || !list.some(p => p.kind === kind && p.id === id)) list.push({ kind, id, at:Date.now() });
+    localStorage.setItem(ECON_PENDING_KEY, JSON.stringify(list.slice(-60)));
+  } catch (e) {}
+}
+let econFlushing = false;
+async function flushEconPending() {
+  if (econFlushing || !Econ.on) return;
+  let list = []; try { list = JSON.parse(localStorage.getItem(ECON_PENDING_KEY) || '[]'); } catch (e) {}
+  if (!list.length) return;
+  econFlushing = true;
+  try { localStorage.removeItem(ECON_PENDING_KEY); } catch (e) {}
+  try { for (const p of list) await econAward(p.kind, p.id, { quiet:true }); } finally { econFlushing = false; }
+}
+// one award for the signed-in player: the server decides and says what it paid (the pop shows that)
+async function econAward(kind, id, opt = {}) {
+  let r = null, d = {};
+  try {
+    r = await fetch('/api/econ-award', { method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ kind, id }) });
+    d = await r.json().catch(() => ({}));
+  } catch (e) { queueEconPending(kind, id); return null; }
+  if (r.status === 401) {
+    queueEconPending(kind, id); Econ.on = false; refreshEconWorld(); renderJournalIfOpen(); renderEconBadge();
+    showToast('You were signed out: sign in again in the Journal to keep these points.', 6000);
+    return null;
+  }
+  if (!d.ok) { if (d.retry !== false) queueEconPending(kind, id); return null; }
+  if (kind !== 'find') Econ.claimed.add(`${kind}:${id}`);
+  if (d.balance != null) Econ.balance = d.balance;
+  if (d.today != null) Econ.today = d.today;
+  if (d.cap) Econ.cap = d.cap;
+  if (d.owed != null) Econ.owed = d.owed;
+  if (!opt.quiet) {
+    if (d.paid) showRebelPointsPop(d.paid);
+    else if (d.held) showToast(`+${d.held} Rebel points held: that's today's ${Econ.cap.toLocaleString('en-US')} points. They go to your account when you play tomorrow.`, 7000);
+    else if (d.capped) showToast("That's today's Rebel points from this game. More tomorrow.", 4500);
+  }
+  try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ kind, id, points:d.paid || 0, held:d.held || 0, account:true, total:Econ.balance } })); } catch (e) {}
+  renderJournalIfOpen(); renderEconBadge();
+  return d;
+}
+// a guest's first practice points of the visit say how to keep them
+function econPracticeHint() {
+  if (!Econ.configured || Econ.on || Econ.hinted) return;
+  Econ.hinted = true;
+  setTimeout(() => showToast('Practice points stay on this device. Sign in with Discord in the Journal to earn real Rebel points.', 7000), 2800);
+}
+// the account card at the top of the journal
+function econJournalCard() {
+  const local = (Number(ProgressionState.rebelPoints) || 0).toLocaleString('en-US');
+  if (!Econ.configured) return `<div class="journal-card"><strong>Rebel Points</strong><span>${local}</span></div>`;
+  if (!Econ.on) {
+    const F = EconNameForm, esc = (v) => escapeHTML(String(v || ''));
+    const form = !F.open ? `<div class="econ-alt">No Discord? <button type="button" class="econ-link" onclick="econNameToggle(true)">Use a name and PIN</button></div>`
+      : `<form class="econ-name" novalidate onsubmit="event.preventDefault(); econNameSubmit('login')">`
+        + `<input id="econNameInput" type="text" maxlength="24" autocomplete="username" placeholder="Your name" value="${esc(F.name)}" oninput="EconNameForm.name=this.value">`
+        + `<input id="econPinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="current-password" placeholder="4-6 digit PIN" value="${esc(F.pin)}" oninput="EconNameForm.pin=this.value">`
+        + `<div class="econ-acts"><button type="submit" class="econ-btn">Sign in</button><button type="button" class="econ-btn" onclick="econNameSubmit('register')">New account</button>`
+        + `<button type="button" class="econ-link" onclick="econNameToggle(false)">Cancel</button></div>`
+        + `<div id="econNameMsg" class="econ-msg${F.bad ? ' bad' : ''}">${esc(F.msg)}</div></form>`;
+    return `<div class="journal-card full econ-card"><strong>Practice Points</strong><div class="econ-row"><div class="econ-num"><b>${local}</b>`
+      + `<small>Practice points stay on this device and don't carry over.</small></div><button type="button" class="econ-btn econ-discord" onclick="econSignIn()">Sign in with Discord</button></div>`
+      + form
+      + `<div class="econ-meta">Signed in, every chest, first game clear and riddle pays real Rebel points to your account: the points that forge your Rebel.</div></div>`;
+  }
+  const pct = Math.min(100, Math.round(100 * (Econ.today || 0) / (Econ.cap || 2000)));
+  const bal = Econ.balance == null ? '—' : Number(Econ.balance).toLocaleString('en-US');
+  return `<div class="journal-card full econ-card on"><strong>Rebel Points · your account</strong><div class="econ-row">`
+    + (econAvatar() ? `<img class="econ-av" src="${escapeHTML(econAvatar())}" alt="">` : '')
+    + `<div class="econ-num"><b>${bal}</b><small>Signed in as ${escapeHTML(Econ.name || 'Rebel')}${Econ.kind === 'discord' ? ' (Discord)' : ''}</small></div>`
+    + `<button type="button" class="econ-btn" onclick="econSignOut()">Sign out</button></div>`
+    + `<div class="econ-meta">Earned today ${(Econ.today || 0).toLocaleString('en-US')} of ${(Econ.cap || 2000).toLocaleString('en-US')}${Econ.owed ? ` · ${Number(Econ.owed).toLocaleString('en-US')} held for tomorrow` : ''}</div>`
+    + `<div class="journal-progress"><div style="width:${pct}%"></div></div></div>`;
+}
+try { const bc = new BroadcastChannel('ra-econ'); bc.onmessage = () => refreshEcon(true); } catch (e) {}
+window.addEventListener('storage', e => { if (e.key === 'raEconPing') refreshEcon(true); });
+window.addEventListener('focus', () => refreshEcon());
+Object.assign(window, { econSignIn, econSignOut, econNameToggle, econNameSubmit, EconNameForm });
+window._econ = { state:Econ, refresh:refreshEcon, award:econAward }; // tests
+refreshEcon(true);
+
 // Chest tiers: what a chest pays in Rebel points and how it looks. Each chest pays once per player
-// (ProgressionState.chestsOpened); a looted chest stays open and empty.
+// (ProgressionState.chestsOpened; signed in, once per account: Econ.claimed); a looted chest stays open and empty.
 const CHEST_TIERS = {
   wood:     { points:10,   label:'Wooden Chest',   body:[.46,.21,.075], band:[.22,.22,.25], trim:[.9,.56,.14],  coins:6 },
   iron:     { points:25,   label:'Iron Chest',     body:[.30,.16,.07],  band:[.48,.5,.54],  trim:[.62,.64,.68], coins:9 },
@@ -8905,7 +9147,7 @@ function getChestTier(meta = {}) { return CHEST_TIERS[meta.chestTier] ? meta.che
 function getChestPoints(meta = {}) {
   return meta.rewardType === 'rebel_points' && Number(meta.rewardAmount) > 0 ? Number(meta.rewardAmount) : CHEST_TIERS[getChestTier(meta)].points;
 }
-function isChestLooted(chestId) { return !!chestId && (ProgressionState.chestsOpened || []).includes(chestId); }
+function isChestLooted(chestId) { return !!chestId && (Econ.on ? econClaimed('chest', chestId) : (ProgressionState.chestsOpened || []).includes(chestId)); }
 
 function getDefaultTreasureChestMetadata(source = {}) {
   return {
@@ -9859,6 +10101,7 @@ function getNearestWalkModeSignInRange(range = 5.8) {
 function openWalkModeSign(signData) {
   if (!signData) return false;
   openPanel(signData);
+  watchReadingPanel();
   return true;
 }
 
@@ -9870,6 +10113,7 @@ function tryOpenNearbySign() {
 function updateInteractionPrompt() {
   updateTreasureChestPrompt();
   if (window._danceOff?.on || window._danceOff?.choosing) { setInteractionPrompt('', false); return; } // the dance panel is up
+  if (walkMode && document.getElementById('panel')?.classList.contains('on')) { setInteractionPrompt('', false); return; } // a sign / reading card is open (O closes it)
 
   if (ActiveInterior && getNearestInteriorExitInRange()) {
     setInteractionPrompt('Exit', true);
@@ -9954,14 +10198,19 @@ function openTreasureChest(chest) {
     chestId:chestKey,
     targetObjectId:chestKey
   });
-  if (firstTime) {
-    // Rebel points: kept locally (rebelPointsLog) until the Rebel economy link sends them on.
-    const points = getChestPoints(chest.metadata), tier = getChestTier(chest.metadata);
+  const points = getChestPoints(chest.metadata), tier = getChestTier(chest.metadata);
+  if (Econ.on) {
+    // signed in: the account's own record decides, and the server says what it paid (its pop)
+    if (econClaimed('chest', chestKey)) showToast('This chest is empty.');
+    else { Econ.claimed.add(`chest:${chestKey}`); spawnRebelCoinBurst(chest, CHEST_TIERS[tier].coins, points, false); econAward('chest', chestKey).then(d => { if (!d) Econ.claimed.delete(`chest:${chestKey}`); }); }
+  } else if (firstTime) {
+    // a guest: practice points on this device (rebelPointsLog), never sent on
     ProgressionState.rebelPoints = (Number(ProgressionState.rebelPoints) || 0) + points;
     if (!Array.isArray(ProgressionState.rebelPointsLog)) ProgressionState.rebelPointsLog = [];
     ProgressionState.rebelPointsLog.push({ chestId:chestKey, villageId:CURRENT_VILLAGE_ID, tier, points, at:Date.now(), synced:false });
     saveProgressionState();
     spawnRebelCoinBurst(chest, CHEST_TIERS[tier].coins, points);
+    econPracticeHint();
     try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ chestId:chestKey, points, total:ProgressionState.rebelPoints } })); } catch(e) {}
   } else {
     showToast('This chest is empty.');
@@ -9972,7 +10221,7 @@ function openTreasureChest(chest) {
 
 // Coins burst out of an opened chest, hang in the air for a moment, then fly to the player one by one.
 // One shared coin mesh (thin instances would also do; instances keep it simple), removed when done.
-function spawnRebelCoinBurst(chest, count, points) {
+function spawnRebelCoinBurst(chest, count, points, pop = true) {
   const origin = chest.getAbsolutePosition().add(new BABYLON.Vector3(0, 1.6 * CHEST_MODEL_SCALE * Math.abs(chest.scaling?.y || 1), 0));
   if (!spawnRebelCoinBurst.base || spawnRebelCoinBurst.base.isDisposed?.()) {
     const mat = new BABYLON.StandardMaterial('rebelCoinMat', scene);
@@ -10006,13 +10255,16 @@ function spawnRebelCoinBurst(chest, count, points) {
       scene.onBeforeRenderObservable.remove(obs);
     }
   });
-  showRebelPointsPop(points);
+  if (pop) showRebelPointsPop(points);                 // signed in, the server's answer pops instead (econAward)
 }
 
 function showRebelPointsPop(points) {
   let el = document.getElementById('rebelPointsPop');
   if (!el) { el = document.createElement('div'); el.id = 'rebelPointsPop'; document.body.appendChild(el); }
-  el.innerHTML = `<b>+${points}</b><span>Rebel Points</span><em>Total ${(Number(ProgressionState.rebelPoints) || 0).toLocaleString('en-US')}</em>`;
+  // signed in: the account's balance; a guest (when sign-in is set up): practice points on this device
+  const label = Econ.on || !Econ.configured ? 'Rebel Points' : 'Practice Points';
+  const total = Econ.on ? (Econ.balance == null ? 'Sent to your account' : `Your account ${Number(Econ.balance).toLocaleString('en-US')}`) : `Total ${(Number(ProgressionState.rebelPoints) || 0).toLocaleString('en-US')}`;
+  el.innerHTML = `<b>+${points}</b><span>${label}</span><em>${total}</em>`;
   el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
   clearTimeout(showRebelPointsPop._t); showRebelPointsPop._t = setTimeout(() => el.classList.remove('on'), 2600);
 }
@@ -10169,7 +10421,7 @@ function getSecretVillageTotal(villageId) {
 
 // The Games tab: every mini-game in the villages (GAME_LIST: [id, title, village], written by tools/gen-game-list.mjs
 // from the layouts); the ones played show their best score and a tick once cleared, the rest stay unnamed until found
-const GAME_LIST = [["hub-shell-game","Mini Ant Shell Game","hub"],["hub-archivist-riddles","The Archivist's Riddles","hub"],["hub-emblem-match","Emblem Match","hub"],["hub-sorting-crates","Sorting the Crates","hub"],["hub-colony-corners","Colony Corners","hub"],["hub-courtyard-circuit","Courtyard Circuit","hub"],["hub-rebel-groove","Rebel Groove","hub"],["hub-mini-ant-tag","Mini Ant Tag","hub"],["hub-root-seal","Root Seal","hub"],["grand-relay","The Grand Relay","hub"],["hub-dummy-drill","Dummy Drill","hub"],["ashi-log-split","Log Split","ashigaru"],["ashi-sprout-field","Sprout Field","ashigaru"],["ashi-lookout","The Lookout","ashigaru"],["ashi-keeper-questions","The Archive Keeper's Questions","ashigaru"],["ashi-farmers-fields","The Farmer's Fields","ashigaru"],["ashi-irrigation-channels","The Irrigation Channels","ashigaru"],["ashi-palisade-run","Palisade Run","ashigaru"],["ashi-rice-planting-song","Rice Planting Song","ashigaru"],["ashi-loose-chickens","Loose Chickens","ashigaru"],["ashi-harvest-run","Harvest Run","ashigaru"],["ashi-rice-planting","Rice Planting","ashigaru"],["buke-shield-wall","Shield Wall","buke"],["buke-engineer-puzzles","The Engineer's Puzzles","buke"],["buke-canal-gates","The Canal Gates","buke"],["buke-canal-ferry","The Canal Ferry","buke"],["buke-canal-islands","The Canal Islands","buke"],["buke-canal-run","Canal Run","buke"],["buke-trident-march","Trident March","buke"],["buke-archive-thief","Archive Thief","buke"],["buke-canal-lanterns","Canal Lanterns","buke"],["buke-engineer-basins","The Engineer's Basins","buke"],["bushi-signal-fires","Signal Fires","bushi"],["bushi-strategist-question","The Strategist's Question","bushi"],["bushi-cavalry-ride","The Cavalry Ride","bushi"],["bushi-spys-code","The Spy's Code","bushi"],["bushi-war-camp","The War Camp","bushi"],["bushi-beacon-relay","Beacon Relay","bushi"],["bushi-war-fan-dance","War Fan Dance","bushi"],["bushi-catch-the-spy","Catch the Spy","bushi"],["bushi-long-shot","Long Shot","bushi"],["bushi-banners","The Tactician's Banners","bushi"],["chz-coconut-toss","Coconut Toss","chumpz"],["chz-high-low","High-Low with Peely","chumpz"],["chz-beer-pong","Beer Pong","chumpz"],["chumpz-peely-riddles","Peely's Riddles","chumpz"],["chz-pier-fishing","Pier Fishing","chumpz"],["chz-banana-merge","Banana Merge","chumpz"],["chz-banana-drop","Banana Drop","chumpz"],["chz-jungle-run","Jungle Run","chumpz"],["chz-calypso-cove","Calypso Cove","chumpz"],["chz-sneaky-crab","Sneaky Crab","chumpz"],["chz-treasure-dig","Treasure Dig","chumpz"],["chz-surf-the-cove","Surf the Cove","chumpz"],["cc-ghost-catch","Ghost Catch","cute-creepy"],["cc-mochi-riddles","Mochi's Lucky Riddles","cute-creepy"],["cc-potion-shelf","The Potion Shelf","cute-creepy"],["cc-restless-graves","The Restless Graves","cute-creepy"],["cc-moons-and-suns","Moons and Suns","cute-creepy"],["cc-graveyard-run","Graveyard Run","cute-creepy"],["cc-monster-mash","Monster Mash","cute-creepy"],["cc-lantern-thief","Lantern Thief","cute-creepy"],["cc-trick-or-treat","Trick or Treat Night","cute-creepy"],["cc-witch-brew","The Witch's Brew","cute-creepy"],["cc-claw-machine","Claw Machine","cute-creepy"],["kenshi-raked-stones","Raked Stones","kenshi"],["kenshi-duelist-questions","The Duelist's Questions","kenshi"],["kenshi-archivist-stones","The Archivist's Stones","kenshi"],["kenshi-stone-skipping","Stone Skipping","kenshi"],["kenshi-sacred-rope","The Sacred Rope","kenshi"],["kenshi-dojo-circuit","Dojo Circuit","kenshi"],["kenshi-blade-kata","Blade Kata","kenshi"],["kenshi-stolen-blade","The Stolen Blade","kenshi"],["kenshi-bamboo-cut","Bamboo Cut","kenshi"],["kenshi-quick-draw","The Quick Draw","kenshi"],["ronin-stone-court","The Stone Court","ronin"],["ronin-watcher-trial","The Watcher's Trial","ronin"],["ronin-silent-path","The Silent Path","ronin"],["ronin-watchmans-lanterns","The Watchman's Lanterns","ronin"],["ronin-ronins-shadows","The Ronin's Shadows","ronin"],["ronin-fortress-run","Fortress Run","ronin"],["ronin-shadow-chase","Shadow Chase","ronin"],["ronin-watch-fires","Watch Fires","ronin"],["ronin-silent-steps","Silent Steps","ronin"],["ronin-debt-marker-stones","The Debt Marker","ronin"],["ronin-shuriken","Shuriken","ronin"],["sl-three-point","3-Point Contest","saints-la"],["saints-librarian-riddles","The Librarian's Riddles","saints-la"],["sl-free-throws","Free Throws","saints-la"],["sl-crosswalk-rush","Crosswalk Rush","saints-la"],["sl-valet-parking","Valet Parking","saints-la"],["sl-skyline-blocks","Skyline Blocks","saints-la"],["sl-skyline-view","Skyline View","saints-la"],["sl-downtown-sprint","Downtown Sprint","saints-la"],["sl-lowrider-hop","Lowrider Hop","saints-la"],["sl-street-art","Street Art","saints-la"],["sl-bowling","Bowling","saints-la"],["sam-yabusame","Yabusame Range","samurai"],["sam-tameshigiri","Tameshigiri","samurai"],["samurai-captain-riddles","The Captain's Riddles","samurai"],["sam-swordsmith-forge","The Swordsmith's Forge","samurai"],["sam-ancestors-grid","The Ancestor's Grid","samurai"],["sam-tile-garden","The Tile Garden","samurai"],["sam-terrace-run","Terrace Run","samurai"],["sam-taiko-thunder","Taiko Thunder","samurai"],["sam-lantern-night","Lantern Night","samurai"],["sam-messenger-run","Messenger Run","samurai"],["shogun-sun-mirrors","The Sun Mirrors","shogun"],["shogun-lords-puzzles","The Lord's Puzzles","shogun"],["shogun-lacquer-floor","The Lacquer Floor","shogun"],["shogun-garden-bridges","The Garden Bridges","shogun"],["shogun-land-grants","The Land Grants","shogun"],["shogun-castle-run","Castle Run","shogun"],["shogun-court-fan-dance","Court Fan Dance","shogun"],["shogun-keep-thief","Keep Thief","shogun"],["shogun-koi-feeding","Koi Feeding","shogun"],["shogun-broken-seal","The Broken Seal","shogun"],["sohei-bell-song","Bell Song","sohei"],["sohei-monk-koan","The Monk's Koan","sohei"],["sohei-raking-path","The Raking Path","sohei"],["sohei-maple-catch","Maple Catch","sohei"],["sohei-temple-scales","The Temple Scales","sohei"],["sohei-temple-abacus","The Temple Abacus","sohei"],["sohei-temple-steps","Temple Steps","sohei"],["sohei-temple-drum","Temple Drum","sohei"],["sohei-temple-lamps","Temple Lamps","sohei"],["sohei-water-bowl","Water Bowl","sohei"],["warrior-cracked-circle","The Cracked Circle","warrior"],["war-spear-throw","Spear Throw","warrior"],["war-tug-of-war","Tug of War","warrior"],["war-siege-engine","The Siege Engine","warrior"],["war-war-banner","The War Banner","warrior"],["war-war-drums","The War Drums","warrior"],["war-obstacle-course","Obstacle Course","warrior"],["war-war-dance","War Dance","warrior"],["war-spy-in-the-fort","Spy in the Fort","warrior"],["war-fighting-ring","Fighting Ring","warrior"],["wok-cargo-crane","Cargo Crane","wokou"],["wok-swivel-gun","Swivel Gun","wokou"],["wokou-broker-wagers","The Broker's Wagers","wokou"],["wok-buried-chest","The Buried Chest","wokou"],["wok-fleet-chart","The Fleet Chart","wokou"],["wok-pearl-route","The Pearl Route","wokou"],["wok-pier-run","Pier Run","wokou"],["wok-sea-shanty","Sea Shanty","wokou"],["wok-harbour-fishing","Harbour Fishing","wokou"],["wok-strongbox","The Broker's Strongbox","wokou"],["yam-spirit-lanterns","Spirit Lanterns","yamabushi"],["yam-misty-stones","The Misty Stones","yamabushi"],["yam-cairn-stack","Cairn Stack","yamabushi"],["yam-herbalist-questions","The Herbalist's Questions","yamabushi"],["yam-hermits-pegs","The Hermit's Pegs","yamabushi"],["yam-pilgrims-path","The Pilgrim's Path","yamabushi"],["yam-before-the-mist","Before the Mist","yamabushi"],["yam-spirit-dance","Spirit Dance","yamabushi"],["yam-spirit-chase","Spirit Chase","yamabushi"],["yam-prayer-flags","Prayer Flags","yamabushi"]];
+const GAME_LIST = [["hub-shell-game","Mini Ant Shell Game","hub"],["hub-archivist-riddles","The Archivist's Riddles","hub"],["hub-emblem-match","Emblem Match","hub"],["hub-sorting-crates","Sorting the Crates","hub"],["hub-colony-corners","Colony Corners","hub"],["hub-courtyard-circuit","Courtyard Circuit","hub"],["hub-rebel-groove","Rebel Groove","hub"],["hub-mini-ant-tag","Mini Ant Tag","hub"],["hub-root-seal","Root Seal","hub"],["grand-relay","The Grand Relay","hub"],["hub-ant-claw","Ant Claw","hub"],["hub-dummy-drill","Dummy Drill","hub"],["ashi-log-split","Log Split","ashigaru"],["ashi-sprout-field","Sprout Field","ashigaru"],["ashi-lookout","The Lookout","ashigaru"],["ashi-keeper-questions","The Archive Keeper's Questions","ashigaru"],["ashi-farmers-fields","The Farmer's Fields","ashigaru"],["ashi-irrigation-channels","The Irrigation Channels","ashigaru"],["ashi-palisade-run","Palisade Run","ashigaru"],["ashi-rice-planting-song","Rice Planting Song","ashigaru"],["ashi-loose-chickens","Loose Chickens","ashigaru"],["ashi-harvest-run","Harvest Run","ashigaru"],["ashi-rice-planting","Rice Planting","ashigaru"],["buke-shield-wall","Shield Wall","buke"],["buke-engineer-puzzles","The Engineer's Puzzles","buke"],["buke-canal-gates","The Canal Gates","buke"],["buke-canal-ferry","The Canal Ferry","buke"],["buke-canal-islands","The Canal Islands","buke"],["buke-canal-run","Canal Run","buke"],["buke-trident-march","Trident March","buke"],["buke-archive-thief","Archive Thief","buke"],["buke-canal-lanterns","Canal Lanterns","buke"],["buke-engineer-basins","The Engineer's Basins","buke"],["bushi-signal-fires","Signal Fires","bushi"],["bushi-strategist-question","The Strategist's Question","bushi"],["bushi-cavalry-ride","The Cavalry Ride","bushi"],["bushi-spys-code","The Spy's Code","bushi"],["bushi-war-camp","The War Camp","bushi"],["bushi-beacon-relay","Beacon Relay","bushi"],["bushi-war-fan-dance","War Fan Dance","bushi"],["bushi-catch-the-spy","Catch the Spy","bushi"],["bushi-long-shot","Long Shot","bushi"],["bushi-banners","The Tactician's Banners","bushi"],["chz-coconut-toss","Coconut Toss","chumpz"],["chz-high-low","High-Low with Peely","chumpz"],["chz-beer-pong","Beer Pong","chumpz"],["chumpz-peely-riddles","Peely's Riddles","chumpz"],["chz-pier-fishing","Pier Fishing","chumpz"],["chz-banana-merge","Banana Merge","chumpz"],["chz-banana-drop","Banana Drop","chumpz"],["chz-jungle-run","Jungle Run","chumpz"],["chz-calypso-cove","Calypso Cove","chumpz"],["chz-sneaky-crab","Sneaky Crab","chumpz"],["chz-treasure-dig","Treasure Dig","chumpz"],["chz-surf-the-cove","Surf the Cove","chumpz"],["cc-ghost-catch","Ghost Catch","cute-creepy"],["cc-mochi-riddles","Mochi's Lucky Riddles","cute-creepy"],["cc-potion-shelf","The Potion Shelf","cute-creepy"],["cc-restless-graves","The Restless Graves","cute-creepy"],["cc-moons-and-suns","Moons and Suns","cute-creepy"],["cc-graveyard-run","Graveyard Run","cute-creepy"],["cc-monster-mash","Monster Mash","cute-creepy"],["cc-lantern-thief","Lantern Thief","cute-creepy"],["cc-trick-or-treat","Trick or Treat Night","cute-creepy"],["cc-witch-brew","The Witch's Brew","cute-creepy"],["cc-claw-machine","Claw Machine","cute-creepy"],["kenshi-raked-stones","Raked Stones","kenshi"],["kenshi-duelist-questions","The Duelist's Questions","kenshi"],["kenshi-archivist-stones","The Archivist's Stones","kenshi"],["kenshi-stone-skipping","Stone Skipping","kenshi"],["kenshi-sacred-rope","The Sacred Rope","kenshi"],["kenshi-dojo-circuit","Dojo Circuit","kenshi"],["kenshi-blade-kata","Blade Kata","kenshi"],["kenshi-stolen-blade","The Stolen Blade","kenshi"],["kenshi-bamboo-cut","Bamboo Cut","kenshi"],["kenshi-quick-draw","The Quick Draw","kenshi"],["ronin-stone-court","The Stone Court","ronin"],["ronin-watcher-trial","The Watcher's Trial","ronin"],["ronin-silent-path","The Silent Path","ronin"],["ronin-watchmans-lanterns","The Watchman's Lanterns","ronin"],["ronin-ronins-shadows","The Ronin's Shadows","ronin"],["ronin-fortress-run","Fortress Run","ronin"],["ronin-shadow-chase","Shadow Chase","ronin"],["ronin-watch-fires","Watch Fires","ronin"],["ronin-silent-steps","Silent Steps","ronin"],["ronin-debt-marker-stones","The Debt Marker","ronin"],["ronin-shuriken","Shuriken","ronin"],["sl-three-point","3-Point Contest","saints-la"],["saints-librarian-riddles","The Librarian's Riddles","saints-la"],["sl-free-throws","Free Throws","saints-la"],["sl-crosswalk-rush","Crosswalk Rush","saints-la"],["sl-valet-parking","Valet Parking","saints-la"],["sl-skyline-blocks","Skyline Blocks","saints-la"],["sl-skyline-view","Skyline View","saints-la"],["sl-downtown-sprint","Downtown Sprint","saints-la"],["sl-lowrider-hop","Lowrider Hop","saints-la"],["sl-street-art","Street Art","saints-la"],["sl-bowling","Bowling","saints-la"],["sam-yabusame","Yabusame Range","samurai"],["sam-tameshigiri","Tameshigiri","samurai"],["samurai-captain-riddles","The Captain's Riddles","samurai"],["sam-swordsmith-forge","The Swordsmith's Forge","samurai"],["sam-ancestors-grid","The Ancestor's Grid","samurai"],["sam-tile-garden","The Tile Garden","samurai"],["sam-terrace-run","Terrace Run","samurai"],["sam-taiko-thunder","Taiko Thunder","samurai"],["sam-lantern-night","Lantern Night","samurai"],["sam-messenger-run","Messenger Run","samurai"],["shogun-sun-mirrors","The Sun Mirrors","shogun"],["shogun-lords-puzzles","The Lord's Puzzles","shogun"],["shogun-lacquer-floor","The Lacquer Floor","shogun"],["shogun-garden-bridges","The Garden Bridges","shogun"],["shogun-land-grants","The Land Grants","shogun"],["shogun-castle-run","Castle Run","shogun"],["shogun-court-fan-dance","Court Fan Dance","shogun"],["shogun-keep-thief","Keep Thief","shogun"],["shogun-koi-feeding","Koi Feeding","shogun"],["shogun-broken-seal","The Broken Seal","shogun"],["sohei-bell-song","Bell Song","sohei"],["sohei-monk-koan","The Monk's Koan","sohei"],["sohei-raking-path","The Raking Path","sohei"],["sohei-maple-catch","Maple Catch","sohei"],["sohei-temple-scales","The Temple Scales","sohei"],["sohei-temple-abacus","The Temple Abacus","sohei"],["sohei-temple-steps","Temple Steps","sohei"],["sohei-temple-drum","Temple Drum","sohei"],["sohei-temple-lamps","Temple Lamps","sohei"],["sohei-water-bowl","Water Bowl","sohei"],["warrior-cracked-circle","The Cracked Circle","warrior"],["war-spear-throw","Spear Throw","warrior"],["war-tug-of-war","Tug of War","warrior"],["war-siege-engine","The Siege Engine","warrior"],["war-war-banner","The War Banner","warrior"],["war-war-drums","The War Drums","warrior"],["war-obstacle-course","Obstacle Course","warrior"],["war-war-dance","War Dance","warrior"],["war-spy-in-the-fort","Spy in the Fort","warrior"],["war-fighting-ring","Fighting Ring","warrior"],["wok-cargo-crane","Cargo Crane","wokou"],["wok-swivel-gun","Swivel Gun","wokou"],["wokou-broker-wagers","The Broker's Wagers","wokou"],["wok-buried-chest","The Buried Chest","wokou"],["wok-fleet-chart","The Fleet Chart","wokou"],["wok-pearl-route","The Pearl Route","wokou"],["wok-pier-run","Pier Run","wokou"],["wok-sea-shanty","Sea Shanty","wokou"],["wok-harbour-fishing","Harbour Fishing","wokou"],["wok-strongbox","The Broker's Strongbox","wokou"],["yam-spirit-lanterns","Spirit Lanterns","yamabushi"],["yam-misty-stones","The Misty Stones","yamabushi"],["yam-cairn-stack","Cairn Stack","yamabushi"],["yam-herbalist-questions","The Herbalist's Questions","yamabushi"],["yam-hermits-pegs","The Hermit's Pegs","yamabushi"],["yam-pilgrims-path","The Pilgrim's Path","yamabushi"],["yam-before-the-mist","Before the Mist","yamabushi"],["yam-spirit-dance","Spirit Dance","yamabushi"],["yam-spirit-chase","Spirit Chase","yamabushi"],["yam-prayer-flags","Prayer Flags","yamabushi"]];
 function renderGamesJournal() {
   const rec = ProgressionState.games || {}, played = GAME_LIST.filter(([id]) => rec[id]?.plays).length, cleared = GAME_LIST.filter(([id]) => rec[id]?.cleared).length;
   const rows = Object.values(VILLAGE_REGISTRY).map(village => {
@@ -10558,10 +10810,54 @@ function completeQuestSpot(root) {
     progressId: cfg.countBy === 'weather' ? `${cfg.spotId}:${weather}` : undefined
   });
   try { window.dispatchEvent(new CustomEvent('rebelAntsQuestSpot', { detail:{ spotId:cfg.spotId, action:cfg.action, villageId:CURRENT_VILLAGE_ID } })); } catch(e) {}
-  if (!secretNew && (cfg.text || setNote)) { const t = [cfg.text, setNote && `(${setNote})`].filter(Boolean).join(' '); showToast(t, Math.min(12000, Math.max(4500, t.length * 65))); }
+  const reading = !secretNew && cfg.action === 'read' ? questSpotReading(cfg, root) : null;
+  if (reading) { openReadingPanel(reading); if (setNote) showToast(`(${setNote})`); }
+  else if (!secretNew && (cfg.text || setNote)) { const t = [cfg.text, setNote && `(${setNote})`].filter(Boolean).join(' '); showToast(t, Math.min(12000, Math.max(4500, t.length * 65))); }
   else if (!secretNew && !advanced) showToast(cfg.action === 'listen' ? 'Only the wind.' : 'Nothing more to find here.');
   return true;
 }
+
+// Reading (Miguel, Oct 18): signs and read spots show their words as a paragraph in the middle of the screen (a toast ran
+// the whole text along one line, off the screen). O or Esc closes the card, and so does walking away from it.
+// A read spot beside a sign (the friend villages' welcome boards) reads that sign: its words are the sign's Description
+// (Admin > Sign), so editing the sign changes what is read; the spot's own text is only kept for a sign without one.
+const ReadingPanel = { at: null, timer: 0 };
+function signBesideSpot(root, range = 4) {
+  const p = root?.getAbsolutePosition?.(); if (!p) return null;
+  let best = null, bd = range;
+  scene.transformNodes.forEach((n) => {
+    if (n.metadata?.type !== 'wooden_sign' || !n.metadata.isClone || !n.metadata.signConfig?.label || n.isDisposed?.()) return;
+    const q = n.getAbsolutePosition(), d = Math.hypot(q.x - p.x, q.z - p.z);
+    if (d < bd) { bd = d; best = n; }
+  });
+  return best;
+}
+function questSpotReading(cfg, root) {
+  const sc = signBesideSpot(root)?.metadata.signConfig;
+  if (sc) return { icon: sc.icon || '', title: sc.label, sub: sc.sub || '', text: sc.desc || cfg.text || '' };
+  if (!cfg.text) return null;
+  const m = /\bthe\s+(.+)$/i.exec(String(cfg.label || ''));   // "Read the decree" -> "The decree"
+  return { title: m ? 'The ' + m[1] : (cfg.label || 'Written here'), text: cfg.text };
+}
+function openReadingPanel({ icon = '', title = '', sub = '', text = '' }) {
+  openPanel({ id: 'read_', reading: true, icon, title, sub, desc: text, actions: [] });
+  watchReadingPanel();
+}
+function watchReadingPanel() {   // the card closes once the Rebel walks 5 m away from where it was opened
+  const me = charMesh?.position; ReadingPanel.at = me ? { x: me.x, z: me.z } : null;
+  clearInterval(ReadingPanel.timer);
+  ReadingPanel.timer = setInterval(() => {
+    const p = charMesh?.position, el = document.getElementById('panel');
+    if (!el?.classList.contains('on')) { clearInterval(ReadingPanel.timer); ReadingPanel.timer = 0; return; }
+    if (p && ReadingPanel.at && Math.hypot(p.x - ReadingPanel.at.x, p.z - ReadingPanel.at.z) > 5) closeReadingPanel();
+  }, 400);
+}
+function closeReadingPanel() {
+  const el = document.getElementById('panel'); if (!el?.classList.contains('on')) return false;
+  el.classList.remove('on'); ReadingPanel.at = null; clearInterval(ReadingPanel.timer); ReadingPanel.timer = 0;
+  return true;
+}
+window.closeReadingPanel = closeReadingPanel;
 
 // Miguel (Oct 15): a first clear of a game or a place riddle pays double the points its layout lists
 const GAME_POINTS_X = 2;
@@ -10570,6 +10866,8 @@ const GAME_POINTS_X = 2;
 // first time); a wrong one only says so, or starts the riddle over when it resets
 function readPlaceRiddle(cfg) {
   const R = cfg.riddle, all = (ProgressionState.riddles ||= {}), r = (all[R.id] ||= { asked:false, part:0, solved:false });
+  // signed in, solved follows the account: a riddle solved here as a guest can be solved once more for it
+  if (r.solved && Econ.on && R.points && !econClaimed('riddle', R.id)) Object.assign(r, { solved:false, part:0 });
   if (r.solved) { queueQuestCelebration({ kicker:'Riddle Solved', title:R.title, body:escapeHTML(R.solvedText || 'You found every answer.'), chips:[], duration:6000 }); return true; }
   r.asked = true; r.part = Math.min(r.part || 0, R.parts.length - 1); r.at = Date.now();
   if (R.travels) r.def = { id:R.id, title:R.title, parts:R.parts, points:R.points, solvedText:R.solvedText, reset:R.reset, travels:true };
@@ -10600,17 +10898,19 @@ function answerPlaceRiddle(cfg) {
   if (r.part < R.parts.length) { saveProgressionState(); if (A.text) showToast(A.text, 4500); showPlaceRiddlePart(R, r.part); return true; }
   r.solved = true; r.solvedAt = Date.now();
   const pts = (R.points || 0) * GAME_POINTS_X;
-  if (pts) {
+  if (pts && Econ.on) { if (!econClaimed('riddle', R.id)) setTimeout(() => econAward('riddle', R.id), 600); }   // the account (the server pays)
+  else if (pts) {
     ProgressionState.rebelPoints = (Number(ProgressionState.rebelPoints) || 0) + pts;
     if (!Array.isArray(ProgressionState.rebelPointsLog)) ProgressionState.rebelPointsLog = [];
     ProgressionState.rebelPointsLog.push({ riddleId:R.id, villageId:CURRENT_VILLAGE_ID, points:pts, at:Date.now(), synced:false });
     try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ riddleId:R.id, points:pts, total:ProgressionState.rebelPoints } })); } catch (e) {}
     setTimeout(() => showRebelPointsPop(pts), 600);
+    econPracticeHint();
   }
   saveProgressionState();
   try { window.dispatchEvent(new CustomEvent('rebelAntsRiddle', { detail:{ riddleId:R.id, villageId:CURRENT_VILLAGE_ID } })); } catch (e) {}
   MoonTaleSounds.fx?.('gamewin');
-  queueQuestCelebration({ kicker:'Riddle Solved', title:R.title, body:escapeHTML(A.text || R.solvedText || ''), chips:pts ? [{ label:`+${pts} Rebel points`, tone:'gold' }] : [], duration:7000 });
+  queueQuestCelebration({ kicker:'Riddle Solved', title:R.title, body:escapeHTML(A.text || R.solvedText || ''), chips:pts ? [{ label:`+${pts} ${Econ.on || !Econ.configured ? 'Rebel' : 'practice'} points`, tone:'gold' }] : [], duration:7000 });
   return true;
 }
 window._placeRiddles = { read:readPlaceRiddle, answer:answerPlaceRiddle }; // tests
@@ -10935,6 +11235,7 @@ function showMiniGameHowTo() {
   RebelGames.HUD.howTo({ title: MiniGames.def?.title || MiniGames.impl.title, lines: how.lines, img: how.img ? 'assets/games/' + how.img : null, caption: how.caption });
 }
 function grantMiniGameRebelPoints(def, points, cap) {
+  if (Econ.on) { econAward('find', def.id); return Math.round(points) || 0; }    // the account: the server keeps the day's cap
   const day = new Date().toISOString().slice(0, 10), key = `${def.id}:${day}`;
   const got = ProgressionState.gamePointsDay?.[key] || 0, give = Math.max(0, Math.min(Math.round(points) || 0, cap - got));
   if (!give) return 0;
@@ -10943,7 +11244,7 @@ function grantMiniGameRebelPoints(def, points, cap) {
   ProgressionState.rebelPoints = (Number(ProgressionState.rebelPoints) || 0) + give;
   if (!Array.isArray(ProgressionState.rebelPointsLog)) ProgressionState.rebelPointsLog = [];
   ProgressionState.rebelPointsLog.push({ gameId:def.id, found:true, villageId:CURRENT_VILLAGE_ID, points:give, at:Date.now(), synced:false });
-  saveProgressionState(); showRebelPointsPop(give);
+  saveProgressionState(); showRebelPointsPop(give); econPracticeHint();
   try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ gameId:def.id, points:give, total:ProgressionState.rebelPoints } })); } catch(e) {}
   return give;
 }
@@ -11058,6 +11359,8 @@ function buildMiniGameCtx(def, src, frame) {
       clipTime(name) { const slot = miniGameClipSlot(name), g = slot != null ? animGroups[slot] : null, a = g?.isPlaying && g.animatables?.[0]; return a ? Math.max(0, (a.masterFrame - g.from) / 60) : null; },
       // how long a move's clip is at its own pace (seconds; null without it): a dance looped in time with a song
       clipLength(name) { const slot = miniGameClipSlot(name), g = slot != null ? animGroups[slot] : null; return g ? (g.to - g.from) / 60 : null; },
+      // the move's own animation group (read only: Tug of War carries the rope pull over onto its opponent); null without it
+      group(name) { const slot = miniGameClipSlot(name); return slot != null ? animGroups[slot] || null : null; },
       // stop the move playing now on its pose t seconds in (an axe's edge held in the log) until the next move; the bones
       // read that pose at once (bone, grip), so a game can search the moment something meets something. false when that
       // move is not the one on
@@ -11270,24 +11573,28 @@ function finishMiniGame(r) {
   const prevBest = rec.best || 0, newBest = rec.plays > 0 && done && (low ? !prevBest || score < prevBest : score > prevBest);
   rec.plays = (rec.plays || 0) + 1; rec.best = low ? (done ? (prevBest ? Math.min(prevBest, score) : score) : prevBest) : Math.max(prevBest, score); rec.last = score; rec.at = Date.now();
   if (low) rec.low = true;
-  let points = 0, firstClear = false;
-  if (passed && !rec.cleared) {
-    rec.cleared = true; rec.clearedAt = Date.now(); points = (def.points || 0) * GAME_POINTS_X; firstClear = true;
-    if (points) {
-      ProgressionState.rebelPoints = (Number(ProgressionState.rebelPoints) || 0) + points;
-      if (!Array.isArray(ProgressionState.rebelPointsLog)) ProgressionState.rebelPointsLog = [];
-      ProgressionState.rebelPointsLog.push({ gameId:def.id, villageId:CURRENT_VILLAGE_ID, points, at:Date.now(), synced:false });
-      try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ gameId:def.id, points, total:ProgressionState.rebelPoints } })); } catch (e) {}
-    }
+  let points = 0, firstClear = false, toAccount = false;
+  if (passed && !rec.cleared) { rec.cleared = true; rec.clearedAt = Date.now(); firstClear = true; }
+  const clearPts = (def.points || 0) * GAME_POINTS_X;
+  if (passed && clearPts && Econ.on) {
+    // signed in: the account's first clear (one cleared here as a guest still pays it once); the server pays
+    if (!econClaimed('game', def.id)) { points = clearPts; toAccount = true; Econ.claimed.add(`game:${def.id}`); setTimeout(() => econAward('game', def.id).then(d => { if (!d) Econ.claimed.delete(`game:${def.id}`); }), 600); }
+  } else if (firstClear && clearPts) {
+    points = clearPts;
+    ProgressionState.rebelPoints = (Number(ProgressionState.rebelPoints) || 0) + points;
+    if (!Array.isArray(ProgressionState.rebelPointsLog)) ProgressionState.rebelPointsLog = [];
+    ProgressionState.rebelPointsLog.push({ gameId:def.id, villageId:CURRENT_VILLAGE_ID, points, at:Date.now(), synced:false });
+    try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ gameId:def.id, points, total:ProgressionState.rebelPoints } })); } catch (e) {}
+    econPracticeHint();
   }
   saveProgressionState();
   if (firstClear) checkAutoBadges(); // a first clear can finish a village's games (the card waits for the game to end)
   if (passed && def.questOn === 'pass') miniGameQuestHook();
   if (passed && GamesPack.slots?.game_cheer && !MiniGames.roam) playMiniGameClip('game_cheer'); // a Rebel with the games pack cheers a clear
   try { window.dispatchEvent(new CustomEvent('rebelAntsGameEnd', { detail:{ game:def.id, score, passed, best:rec.best, newBest, points } })); } catch (e) {}
-  if (points) setTimeout(() => showRebelPointsPop(points), 600);
+  if (points && !toAccount) setTimeout(() => showRebelPointsPop(points), 600);
   if (MiniGames.roam) { moveForward = moveBackward = turnLeft = turnRight = runKey = false; if (charMesh) charMesh._vel = 0; }
-  const extra = [r.extra || '', points ? `First clear: +${points} Rebel points.` : (!passed && def.pass ? (r.solved ? `${def.pass} points clears the game: try a harder level.` : `Score ${def.pass} to clear it.`) : '')].filter(Boolean).join(' ');
+  const extra = [r.extra || '', points ? `First clear: +${points} ${toAccount ? 'Rebel points to your account' : Econ.configured ? 'practice points (sign in to keep your points)' : 'Rebel points'}.` : (!passed && def.pass ? (r.solved ? `${def.pass} points clears the game: try a harder level.` : `Score ${def.pass} to clear it.`) : '')].filter(Boolean).join(' ');
   const clock = t => t >= 60 ? `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}` : t.toFixed(1); // a minute or more as m:ss.s
   const nextLevel = r.next !== undefined ? r.next : (r.solved || passed) && MiniGames.level != null && MiniGames.level + 1 < (MiniGames.levels || 0) ? MiniGames.level + 1 : null;
   RebelGames.showResult({ kicker: r.kicker || (passed ? 'Cleared' : r.solved ? (r.solvedWord || 'Solved') : 'Game over'), title: def.title || MiniGames.impl?.title || '', score: low ? (done ? clock(score) : '—') : score, label: r.label || (low ? (done && score >= 60 ? 'time' : 'seconds') : 'points'), best: low ? (rec.best ? (rec.best >= 60 ? clock(rec.best) : rec.best.toFixed(1) + ' s') : null) : rec.best, newBest, extra,
@@ -12197,6 +12504,84 @@ let _villageGateNumberBuffer = '';
 let _villageGateNumberTimer = null;
 let _lastVillageGateAutoOpenAt = 0;
 
+// The portal between villages (Oct 18, Miguel: "make the portal door look like a real portal in all the villages and
+// update the admin one so if i spawn any other its the same"): every village's gate and every one spawned in admin is
+// built here. A red-lacquer torii (round pillars on stone bases, the curved kasagi with its black cap, the nuki, a gold
+// plaque, a straw shimenawa with paper shide) holding a vortex: a swirl shader (log-spiral arms over noise, a bright rim,
+// darker deep in the middle round a white core; additive, fogged like the scene) on three layers a little apart, so it
+// has depth from any angle; sparks spiral in from the rim and go out at the core; a rune circle turns on the ground.
+// The frame pieces stay the gate's pick proxies (admin), the light pulses as before.
+const VILLAGE_PORTAL = (() => {
+  let shaders = false, dotTex = null, runeTex = null;
+  function ensureShaders() {
+    if (shaders) return; shaders = true;
+    BABYLON.Effect.ShadersStore.villagePortalVertexShader = `precision highp float;
+attribute vec3 position; attribute vec2 uv;
+uniform mat4 world; uniform mat4 view; uniform mat4 viewProjection; uniform vec4 fogInfo;
+varying vec2 vUV; varying float vFog;
+void main() {
+  vec4 wp = world * vec4(position, 1.0); vUV = uv; gl_Position = viewProjection * wp;
+  float d = length((view * wp).xyz), f = 1.0;
+  if (fogInfo.x == 1.0) f = exp(-d * fogInfo.w);
+  else if (fogInfo.x == 2.0) f = exp(-pow(d * fogInfo.w, 2.0));
+  else if (fogInfo.x == 3.0) f = (fogInfo.z - d) / max(.001, fogInfo.z - fogInfo.y);
+  vFog = clamp(f, 0.0, 1.0);
+}`;
+    BABYLON.Effect.ShadersStore.villagePortalFragmentShader = `precision highp float;
+varying vec2 vUV; varying float vFog;
+uniform float time; uniform float seed; uniform float gain; uniform float base; uniform vec3 colA; uniform vec3 colB; uniform vec3 colC;
+float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float noise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y); }
+float fbm(vec2 p) { float v = 0.0, a = .5; for (int i = 0; i < 4; i++) { v += a * noise(p); p = p * 2.03 + vec2(1.7, 9.2); a *= .5; } return v; }
+void main() {
+  vec2 p = vUV * 2.0 - 1.0; float r = length(p); if (r > 1.0) discard;
+  float a = atan(p.y, p.x), t = time;
+  float sw = a * 2.0 + log(max(r, .015)) * 4.4 + t * 1.7 + seed;          // log-spiral arms winding in
+  float n = fbm(vec2(cos(sw), sin(sw)) * (1.2 + r * 2.2) + vec2(t * .21, -t * .13) + seed);
+  float arms = pow(.5 + .5 * sin(sw + n * 3.4), 3.0);                       // thin bright arms over a deep blue disc
+  float rim = smoothstep(.7, .985, r) * (1.0 - smoothstep(.975, 1.0, r));
+  float core = exp(-r * r * 60.0), body = mix(.45, 1.0, smoothstep(.05, .92, r));
+  vec3 col = colA * (.25 + .4 * n) * body + colB * arms * (.35 + .55 * n) * body; // the three layers add up: kept well under white
+  col += colC * rim * (.6 + .25 * sin(t * 3.1 + a * 3.0));
+  col += vec3(.8, .93, 1.0) * core * .4;
+  float edge = 1.0 - smoothstep(.94, 1.0, r);
+  if (base > .5) gl_FragColor = vec4(col * gain, edge * .95 * vFog); // the solid disc behind (blended over the scene: reads by day too)
+  else gl_FragColor = vec4(col * gain * edge * vFog, 1.0);           // the glow layers in front of it (added)
+}`;
+  }
+  function vortexMat(name, scene, o) {
+    ensureShaders();
+    const m = new BABYLON.ShaderMaterial(name, scene, { vertex: 'villagePortal', fragment: 'villagePortal' },
+      { attributes: ['position', 'uv'], uniforms: ['world', 'view', 'viewProjection', 'time', 'seed', 'gain', 'base', 'colA', 'colB', 'colC', 'fogInfo'], needAlphaBlending: true });
+    m.backFaceCulling = false; m.alphaMode = o.base ? BABYLON.Engine.ALPHA_COMBINE : BABYLON.Engine.ALPHA_ADD; m.disableDepthWrite = true; m.setFloat('base', o.base ? 1 : 0);
+    m.setFloat('seed', o.seed || 0); m.setFloat('gain', o.gain ?? 1); m.setFloat('time', 0);
+    m.setColor3('colA', o.a || new BABYLON.Color3(.05, .22, .55)); m.setColor3('colB', o.b || new BABYLON.Color3(.25, .95, 1)); m.setColor3('colC', o.c || new BABYLON.Color3(.75, .35, 1));
+    m.setVector4('fogInfo', new BABYLON.Vector4(0, 0, 0, 0));
+    m.metadata = { perfKeepLive: true };
+    return m;
+  }
+  // a soft round spark, and the rune circle (canvas textures made once)
+  function sparkTexture(scene) {
+    if (dotTex && !dotTex.isDisposed?.()) return dotTex;
+    const t = new BABYLON.DynamicTexture('villagePortalSpark', { width: 64, height: 64 }, scene, false), c = t.getContext(), g = c.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.25, 'rgba(190,250,255,.85)'); g.addColorStop(1, 'rgba(120,200,255,0)');
+    c.fillStyle = g; c.fillRect(0, 0, 64, 64); t.update(); t.hasAlpha = true; return dotTex = t;
+  }
+  function runeTexture(scene) {
+    if (runeTex && !runeTex.isDisposed?.()) return runeTex;
+    const S = 512, t = new BABYLON.DynamicTexture('villagePortalRunes', { width: S, height: S }, scene, true), c = t.getContext(), C = S / 2;
+    c.clearRect(0, 0, S, S); c.strokeStyle = 'rgba(150,245,255,1)'; c.lineCap = 'round';
+    for (const [r, w] of [[244, 7], [226, 3], [150, 4], [138, 2]]) { c.lineWidth = w; c.beginPath(); c.arc(C, C, r, 0, Math.PI * 2); c.stroke(); }
+    c.lineWidth = 5; // twelve marks between the rings, each a little different
+    for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; c.save(); c.translate(C + Math.cos(a) * 188, C + Math.sin(a) * 188); c.rotate(a + Math.PI / 2);
+      c.beginPath(); c.moveTo(-12, -16); c.lineTo(0, 16); c.lineTo(12, -16); if (i % 3 === 0) { c.moveTo(-14, 0); c.lineTo(14, 0); } if (i % 2) { c.moveTo(0, -18); c.lineTo(0, 4); } c.stroke(); c.restore(); }
+    c.lineWidth = 3; for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + .26; c.beginPath(); c.moveTo(C + Math.cos(a) * 138, C + Math.sin(a) * 138); c.lineTo(C + Math.cos(a + 2.1) * 138, C + Math.sin(a + 2.1) * 138); c.stroke(); }
+    t.update(); t.hasAlpha = true; return runeTex = t;
+  }
+  return { vortexMat, sparkTexture, runeTexture };
+})();
+
 function buildVillageGate(root) {
   if (!root) return;
   root.metadata = {
@@ -12204,20 +12589,16 @@ function buildVillageGate(root) {
     type: 'village_gate',
     villageId: root.metadata?.villageId || CURRENT_VILLAGE_ID
   };
-  const redMat = pbr(new BABYLON.Color3(.72,.08,.04), { r:.58, m:.08 });
-  const darkMat = mat(new BABYLON.Color3(.075,.065,.075), { e:new BABYLON.Color3(.012,.01,.016) });
-  const goldMat = pbr(new BABYLON.Color3(.95,.68,.18), { r:.34, m:.45, e:new BABYLON.Color3(.14,.08,.01), ei:.35 });
-  const glowMat = mat(new BABYLON.Color3(.35,.95,.92), { e:new BABYLON.Color3(.18,.95,.9), a:.28 });
+  const redMat = pbr(new BABYLON.Color3(.66,.07,.04), { r:.42, m:.05 });
+  const darkMat = pbr(new BABYLON.Color3(.05,.045,.05), { r:.5, m:.1 });
+  const goldMat = pbr(new BABYLON.Color3(.95,.68,.18), { r:.3, m:.6, e:new BABYLON.Color3(.14,.08,.01), ei:.35 });
+  const stoneMat = pbr(new BABYLON.Color3(.42,.41,.39), { r:.92 });
+  const strawMat = pbr(new BABYLON.Color3(.78,.66,.38), { r:.95 });
+  const paperMat = mat(new BABYLON.Color3(.96,.95,.9), { e:new BABYLON.Color3(.42,.42,.4) });
+  paperMat.backFaceCulling = false;
+  const glowMat = mat(new BABYLON.Color3(.35,.95,.92), { e:new BABYLON.Color3(.18,.95,.9), a:.32 });
   glowMat.backFaceCulling = false;
   glowMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
-  const coreMat = mat(new BABYLON.Color3(.12,1,.92), { e:new BABYLON.Color3(.2,1.2,1.1), a:.34 });
-  coreMat.backFaceCulling = false;
-  coreMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
-  const purpleMat = mat(new BABYLON.Color3(.82,.22,1), { e:new BABYLON.Color3(.95,.24,1.2), a:.24 });
-  purpleMat.backFaceCulling = false;
-  purpleMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
-  const starMat = mat(new BABYLON.Color3(1,.9,1), { e:new BABYLON.Color3(.95,1.2,1.25), a:.72 });
-  starMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
 
   function attach(mesh) {
     mesh.parent = root;
@@ -12237,105 +12618,90 @@ function buildVillageGate(root) {
     return mesh;
   }
 
+  // the torii: pillars on stone bases with black feet, the nuki through them, the gold plaque on its strut, the kasagi
+  // (curving up at the ends) under its black cap
   [-1,1].forEach(side => {
-    attach(box(.55,6.4,.55,redMat,[side*2.45,3.1,0]));
-    attach(box(.85,.36,.85,darkMat,[side*2.45,.18,0]));
-    attach(box(.72,.38,.72,goldMat,[side*2.45,6.45,0]));
+    attach(box(1.0,.34,1.0,stoneMat,[side*2.45,.17,0]));
+    attach(cyl(.56,.66,6.0,24,redMat,[side*2.45,3.3,0]));
+    attach(cyl(.74,.76,.55,24,darkMat,[side*2.45,.6,0]));
+    const end = attach(box(1.55,.4,.72,redMat,[side*3.42,6.38,0])); end.rotation.z = side * .15;
+    const cap = attach(box(1.7,.17,.84,darkMat,[side*3.48,6.66,0])); cap.rotation.z = side * .15;
   });
-  attach(box(6.2,.48,.6,redMat,[0,5.7,0]));
-  attach(box(7.1,.42,.74,redMat,[0,6.45,0]));
-  attach(box(1.25,.34,.64,goldMat,[0,6.02,0]));
-  const floorGlow = attachEffect(cyl(0,1.22,.06,40,glowMat,[0,.1,0],Math.PI/2));
-
-  const portalBack = attachEffect(BABYLON.MeshBuilder.CreatePlane(`${root.name}_portalBack`,{width:3.85,height:4.65},scene));
-  portalBack.position.y = 3.12;
-  portalBack.position.z = .035;
-  portalBack.material = coreMat;
-
-  const portalCore = attachEffect(BABYLON.MeshBuilder.CreateDisc(`${root.name}_portalCore`,{radius:1.72,tessellation:64},scene));
-  portalCore.position.y = 3.08;
-  portalCore.position.z = .06;
-  portalCore.scaling.y = 1.24;
-  portalCore.material = coreMat;
-
-  const aura = attachEffect(BABYLON.MeshBuilder.CreateTorus(`${root.name}_portalAura`,{diameter:3.65,thickness:.09,tessellation:72},scene));
-  aura.position.y = 3.08;
-  aura.position.z = .09;
-  aura.scaling.y = 1.24;
-  aura.material = glowMat;
-
-  const innerAura = attachEffect(BABYLON.MeshBuilder.CreateTorus(`${root.name}_portalInnerAura`,{diameter:2.35,thickness:.055,tessellation:72},scene));
-  innerAura.position.y = 3.08;
-  innerAura.position.z = .11;
-  innerAura.scaling.y = 1.22;
-  innerAura.material = purpleMat;
-
-  const swirls = [];
-  [
-    { d:3.15, t:.035, sy:1.18, z:.14, mat:glowMat, speed:.48 },
-    { d:2.58, t:.028, sy:.88, z:.17, mat:purpleMat, speed:-.62 },
-    { d:1.86, t:.025, sy:1.36, z:.20, mat:glowMat, speed:.78 }
-  ].forEach((cfg, index) => {
-    const swirl = attachEffect(BABYLON.MeshBuilder.CreateTorus(`${root.name}_portalSwirl_${index}`,{diameter:cfg.d,thickness:cfg.t,tessellation:56},scene));
-    swirl.position.y = 3.08;
-    swirl.position.z = cfg.z;
-    swirl.scaling.y = cfg.sy;
-    swirl.rotation.z = index * .74;
-    swirl.material = cfg.mat;
-    swirls.push({ mesh: swirl, speed: cfg.speed, baseScaleY: cfg.sy });
+  attach(box(6.3,.38,.42,redMat,[0,5.05,0]));
+  attach(box(5.5,.42,.72,redMat,[0,6.27,0]));
+  attach(box(5.5,.17,.84,darkMat,[0,6.56,0]));
+  attach(box(.36,.85,.32,redMat,[0,5.66,0]));
+  [-1,1].forEach(side => { attach(box(1.05,.74,.1,darkMat,[0,5.68,side*.2])); attach(box(.92,.62,.06,goldMat,[0,5.68,side*.26])); }); // the plaque, seen from both sides
+  // the shimenawa (a straw rope sagging between the pillars) and four paper shide
+  const ropePath = []; for (let i = 0; i <= 16; i++) { const f = i / 16; ropePath.push(new BABYLON.Vector3(-2.18 + 4.36 * f, 4.72 - Math.sin(Math.PI * f) * .32, -.05)); }
+  const shimenawa = attachEffect(BABYLON.MeshBuilder.CreateTube(`${root.name}_portalRope`, { path: ropePath, radius: .1, tessellation: 10, cap: BABYLON.Mesh.CAP_ALL }, scene)); shimenawa.material = strawMat;
+  [-1.4, -.47, .47, 1.4].forEach((x, i) => { // each a strip of paper folded in a zigzag, hanging from the rope
+    const y = 4.72 - Math.sin(Math.PI * ((x + 2.18) / 4.36)) * .32 - .08, L = [], R = [];
+    for (let k = 0; k <= 4; k++) { const px = x + (k % 2 ? .07 : -.03), py = y - k * .14; L.push(new BABYLON.Vector3(px - .045, py, -.08)); R.push(new BABYLON.Vector3(px + .045, py - .05, -.08)); }
+    const sh = attachEffect(BABYLON.MeshBuilder.CreateRibbon(`${root.name}_shide_${i}`, { pathArray: [L, R], sideOrientation: BABYLON.Mesh.DOUBLESIDE }, scene)); sh.material = paperMat;
   });
 
-  const orbiters = [];
-  for (let i = 0; i < 14; i++) {
-    const orb = attachEffect(BABYLON.MeshBuilder.CreateSphere(`${root.name}_portalOrb_${i}`,{diameter:i % 4 === 0 ? .115 : .07,segments:8},scene));
-    orb.material = i % 3 === 0 ? purpleMat : starMat;
-    orbiters.push({
-      mesh: orb,
-      radius: .42 + (i % 5) * .28,
-      speed: .55 + (i % 6) * .13,
-      phase: i * 1.73,
-      yScale: .92 + (i % 4) * .12
-    });
+  // the vortex filling the opening: a solid disc behind (blended, so it reads by day) and two glow layers added in front,
+  // each its own turn of the swirl
+  const layers = [
+    { z: .2, s: 1, seed: 3.1, gain: 1, speed: .7, base: true },
+    { z: 0, s: .98, seed: 0, gain: .42, speed: 1 },
+    { z: -.16, s: 1.02, seed: 7.4, gain: .16, speed: 1.35 }
+  ].map((cfg, i) => {
+    const m = VILLAGE_PORTAL.vortexMat(`${root.name}_portalVortex_${i}`, scene, { seed: cfg.seed, gain: cfg.gain, base: cfg.base });
+    const pl = attachEffect(BABYLON.MeshBuilder.CreatePlane(`${root.name}_portalVortex_${i}`, { width: 4.15 * cfg.s, height: 4.6 * cfg.s, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, scene));
+    pl.position.set(0, 2.42, cfg.z); pl.material = m; pl.alwaysSelectAsActiveMesh = false;
+    return { mesh: pl, mat: m, speed: cfg.speed };
+  });
+  const rim = attachEffect(BABYLON.MeshBuilder.CreateTorus(`${root.name}_portalAura`, { diameter: 4.12, thickness: .08, tessellation: 72 }, scene));
+  rim.rotation.x = Math.PI / 2; rim.position.set(0, 2.42, -.02); rim.scaling.set(1, 1, 4.56 / 4.12); rim.material = glowMat;
+
+  // sparks drawn in from the rim, going out at the core
+  const sparkMat = new BABYLON.StandardMaterial(`${root.name}_portalSparkMat`, scene);
+  sparkMat.diffuseTexture = VILLAGE_PORTAL.sparkTexture(scene); sparkMat.opacityTexture = sparkMat.diffuseTexture;
+  sparkMat.emissiveColor = new BABYLON.Color3(.75, 1, 1); sparkMat.disableLighting = true; sparkMat.alphaMode = BABYLON.Engine.ALPHA_ADD; sparkMat.backFaceCulling = false;
+  const sparks = [];
+  for (let i = 0; i < 26; i++) {
+    const sp = attachEffect(BABYLON.MeshBuilder.CreatePlane(`${root.name}_portalSpark_${i}`, { size: 1 }, scene));
+    sp.material = sparkMat; sp.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+    sparks.push({ mesh: sp, a0: i * 2.39996, u: (i * .618) % 1, rate: .3 + (i % 5) * .05, size: .1 + (i % 4) * .045, z: ((i * 7) % 5 - 2) * .06 });
   }
+  // the rune circle on the ground, turning slowly
+  const runeMat = new BABYLON.StandardMaterial(`${root.name}_portalRuneMat`, scene);
+  runeMat.diffuseTexture = VILLAGE_PORTAL.runeTexture(scene); runeMat.opacityTexture = runeMat.diffuseTexture;
+  runeMat.emissiveColor = new BABYLON.Color3(.3, .95, 1); runeMat.disableLighting = true; runeMat.alphaMode = BABYLON.Engine.ALPHA_ADD; runeMat.backFaceCulling = false;
+  const floorGlow = attachEffect(BABYLON.MeshBuilder.CreateGround(`${root.name}_portalRunes`, { width: 6.2, height: 6.2 }, scene));
+  floorGlow.position.y = .07; floorGlow.material = runeMat;
 
-  const light = new BABYLON.PointLight(`${root.name}_portalLight`, new BABYLON.Vector3(0,3.2,.2), scene);
-  light.diffuse = new BABYLON.Color3(.35,.95,.92);
+  const light = new BABYLON.PointLight(`${root.name}_portalLight`, new BABYLON.Vector3(0,2.6,-.4), scene);
+  light.diffuse = new BABYLON.Color3(.35,.95,.95);
   light.specular = new BABYLON.Color3(.35,.95,.92);
-  light.intensity = .78;
-  light.range = 11;
+  light.intensity = .85;
+  light.range = 12;
   light.parent = root;
 
+  const fog = new BABYLON.Vector4(0, 0, 0, 0);
   const observer = scene.onBeforeRenderObservable.add(() => {
     if (!root || root.isDisposed?.()) {
       scene.onBeforeRenderObservable.remove(observer);
       return;
     }
-    const now = performance.now() * .001;
-    const pulse = 1 + Math.sin(now * 2.4) * .055;
-    portalBack.scaling.set(1 + Math.sin(now * 1.5) * .018, 1 + Math.cos(now * 1.7) * .018, 1);
-    portalCore.rotation.z = now * .36;
-    portalCore.scaling.x = 1 + Math.sin(now * 1.9) * .035;
-    portalCore.scaling.y = 1.24 + Math.cos(now * 1.7) * .035;
-    aura.scaling.set(pulse,pulse,pulse);
-    aura.scaling.y = 1.24 * pulse;
-    innerAura.rotation.z = -now * .44;
-    innerAura.scaling.x = .98 + Math.sin(now * 2.1) * .035;
-    innerAura.scaling.y = 1.22 + Math.cos(now * 2.1) * .045;
-    swirls.forEach(s => {
-      s.mesh.rotation.z += s.speed * scene.getEngine().getDeltaTime() * .001;
-      s.mesh.scaling.x = 1 + Math.sin(now * 1.8 + s.speed) * .025;
-      s.mesh.scaling.y = s.baseScaleY + Math.cos(now * 1.6 + s.speed) * .035;
+    if (!root.isEnabled() || ActiveInterior) return;
+    const now = performance.now() * .001, dt = Math.min(.1, scene.getEngine().getDeltaTime() * .001);
+    fog.set(scene.fogEnabled === false ? 0 : scene.fogMode, scene.fogStart, scene.fogEnd, scene.fogDensity);
+    layers.forEach(l => { l.mat.setFloat('time', now * l.speed); l.mat.setVector4('fogInfo', fog); });
+    const pulse = 1 + Math.sin(now * 2.4) * .03;
+    rim.scaling.x = pulse; rim.scaling.z = pulse * 4.56 / 4.12;
+    sparks.forEach(sp => {
+      sp.u += dt * sp.rate; if (sp.u >= 1) { sp.u -= 1; sp.a0 += 1.3; }
+      const u = sp.u, r = 1 - u * u * (3 - 2 * u) * .97, ang = sp.a0 + u * 5.2;
+      sp.mesh.position.set(Math.cos(ang) * 2.02 * r, 2.42 + Math.sin(ang) * 2.25 * r, sp.z * (1 - u));
+      const k = Math.sin(Math.PI * Math.min(1, u * 1.15)) * (1 - u * .55); sp.mesh.scaling.setAll(Math.max(.001, sp.size * (.45 + k)));
+      sp.mesh.visibility = Math.max(0, k);
     });
-    orbiters.forEach(o => {
-      const angle = now * o.speed + o.phase;
-      o.mesh.position.x = Math.cos(angle) * o.radius;
-      o.mesh.position.y = 3.08 + Math.sin(angle) * o.radius * o.yScale;
-      o.mesh.position.z = .24 + Math.sin(angle * 1.7 + o.phase) * .04;
-      const flicker = .72 + Math.sin(now * 5.6 + o.phase) * .28;
-      o.mesh.scaling.set(flicker, flicker, flicker);
-    });
-    floorGlow.scaling.set(pulse,pulse,pulse);
-    light.intensity = .78 + Math.sin(now * 2.8) * .18;
+    floorGlow.rotation.y = now * .12;
+    runeMat.alpha = .55 + Math.sin(now * 1.7) * .15;
+    light.intensity = .85 + Math.sin(now * 2.8) * .2;
   });
   root.metadata._villageGateObserver = observer;
 
@@ -18905,7 +19271,8 @@ function updateNPCAnimationState(root, moving, now) {
       if (meta.gestureGroup.isPlaying && !(moving && !meta.turningInPlace)) return;
       meta.gestureGroup = null;
     }
-    const wanted = meta.dialogueOpen ? 'talk' : (moving && !meta.turningInPlace ? 'walk' : 'idle');
+    // a game holding the NPC (Tug of War's opponent) picks its clip: not the talk a chat would play
+    const wanted = meta.gameHold ? (meta.gameHold.clip || 'idle') : meta.dialogueOpen ? 'talk' : (moving && !meta.turningInPlace ? 'walk' : 'idle');
     if (meta.activeAnimation !== wanted) {
       meta.animationGroups.forEach(group => group.stop());
       const group = findNPCAnimationGroup(meta, wanted);
@@ -18961,6 +19328,7 @@ function updateNPCPopulation(dt) {
       refreshVillageCollisionBlockersIfNeeded(); // decks are known after a rebuild (otherwise only when the player moves)
       if (villageOnKitDeck(root.position.x, root.position.z)) { const y = getNPCGroundHeightAt(root.position.x, root.position.z); if (Number.isFinite(y) && Math.abs(y - root.position.y) > .03) root.position.y = y; }
     }
+    if (meta.gameHold) { updateNPCAnimationState(root, false, now); return; } // a game places and turns it itself
     if (meta.dialogueOpen) {
       // the one you talk to turns to face you (Oct 17, Miguel: "have all the characters turn towards you when you interact
       // with them in any village"); a 'still' quest place turns back to its watch afterwards (returnNPCToBaseRotation)
@@ -25597,8 +25965,89 @@ function newTerrainLayoutFromSaved(data) {
     }).catch(e => console.warn('Terrain decor failed', e)), 50);
     if (NT.water || NT.falls?.length || NT.recipe.village?.pools) startNewTerrainWaterSound(NT); // streams, cliff waterfalls, canals
     if (NT.sea && NT.recipe.sea.surf !== false) startNewTerrainSurfSound(NT); // lakes: surf 'calm' (lapping)
+    if (CURRENT_VILLAGE_ID === 'saints-la') setTimeout(() => startSaintsTraffic(NT), 1500); // cars on the city streets
   }
   return out;
+}
+// Saints of LA traffic (Oct 18, Miguel: "can we add driving cars in saints?"): kit cars in the parked cars' six colours
+// drive the street grid (village-terrain.js saintsCity: streets every 132 m / 144 m, 14 m wide, cars parked 5.2 m out)
+// round the Saints' block and its four neighbours. Each loop runs clockwise 2 m inside its block's streets, the
+// right-hand lane, turning right at every corner, so loops never cross (each keeps to its own corner of a crossing) and
+// every street has a lane each way. A car eases off behind the one ahead on its loop, slows into the corners, stops for
+// you when you step into its lane (and honks if you stay), climbs and tips with the ground, and can't be walked through.
+// Hidden (and still) in rooms and while a game is on: Crosswalk Rush, the Lowrider Hop and Valet Parking use the streets.
+const SaintsTraffic = { on: false, cars: [] };
+function startSaintsTraffic(NT) {
+  if (SaintsTraffic.on || !window.SamuraiKit || CURRENT_VILLAGE_ID !== 'saints-la') return; SaintsTraffic.on = true;
+  const LANE = 2.0, R = 6.5, HL = 3.9, HW = 1.45; // lane from the street's middle, corner radius, the car's half length / width
+  const KINDS = ['sl_car_red', 'sl_car_blue', 'sl_car_white', 'sl_car_gold', 'sl_car_black', 'sl_car_purple'];
+  const loopOf = (bx, bz) => { // the closed path round a block: points every ~1.5 m, arcs flagged
+    const x0 = bx - 66 + LANE, x1 = bx + 66 - LANE, z0 = bz - 72 + LANE, z1 = bz + 72 - LANE, pts = [];
+    const seg = (a, b) => { const L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.ceil(L / 1.5)); for (let i = 0; i < n; i++) pts.push([a[0] + (b[0] - a[0]) * i / n, a[1] + (b[1] - a[1]) * i / n, 0]); };
+    const arc = (c, a0, a1) => { for (let i = 0; i < 10; i++) { const a = a0 + (a1 - a0) * i / 10; pts.push([c[0] + Math.cos(a) * R, c[1] + Math.sin(a) * R, 1]); } };
+    seg([x0 + R, z1], [x1 - R, z1]); arc([x1 - R, z1 - R], Math.PI / 2, 0);          // north side going east, the NE corner
+    seg([x1, z1 - R], [x1, z0 + R]); arc([x1 - R, z0 + R], 0, -Math.PI / 2);         // east side going south
+    seg([x1 - R, z0], [x0 + R, z0]); arc([x0 + R, z0 + R], -Math.PI / 2, -Math.PI);  // south side going west
+    seg([x0, z0 + R], [x0, z1 - R]); arc([x0 + R, z1 - R], Math.PI, Math.PI / 2);    // west side going north
+    const cum = [0]; for (let i = 1; i <= pts.length; i++) { const a = pts[i - 1], b = pts[i % pts.length]; cum.push(cum[i - 1] + Math.hypot(b[0] - a[0], b[1] - a[1])); }
+    return { pts, cum, len: cum[pts.length] };
+  };
+  const at = (L, s) => { // position, direction and whether a corner is near, a distance s along a loop
+    s = ((s % L.len) + L.len) % L.len; let lo = 0, hi = L.pts.length; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (L.cum[m] <= s) lo = m; else hi = m; }
+    const a = L.pts[lo], b = L.pts[(lo + 1) % L.pts.length], f = (s - L.cum[lo]) / Math.max(1e-6, L.cum[lo + 1] - L.cum[lo]);
+    const dx = b[0] - a[0], dz = b[1] - a[1], d = Math.hypot(dx, dz) || 1;
+    return { x: a[0] + dx * f, z: a[1] + dz * f, dx: dx / d, dz: dz / d, idx: lo };
+  };
+  const cornerAhead = (L, s, ahead) => { for (let k = 0; k <= ahead; k += 3) if (L.pts[at(L, s + k).idx][2]) return k; return null; };
+  const loops = [[0, 20, 3], [-132, 20, 2], [132, 20, 2], [0, -124, 2], [0, 164, 2]].map(([bx, bz, n]) => ({ L: loopOf(bx, bz), n }));
+  const ground = (x, z) => { const h = NT.heightAt?.(x, z); return Number.isFinite(h) ? h : 0; };
+  let k = 0;
+  loops.forEach((lp, li) => { for (let i = 0; i < lp.n; i++) {
+    const node = new BABYLON.TransformNode('saintsTrafficCar_' + k, scene);
+    window.SamuraiKit.build(node, KINDS[(k + li) % KINDS.length], scene, null, false);
+    node.getChildMeshes(false).forEach(m => { m.isPickable = false; m.metadata = { ...(m.metadata || {}), camSkip: true, saintsTraffic: true }; try { shadows.addShadowCaster(m); } catch (e) {} });
+    SaintsTraffic.cars.push({ node, loop: lp, s: lp.L.len * (i + .37 * li) / lp.n, v: 6 + Math.random() * 3, top: 8.5 + Math.random() * 2, honkAt: 0, waitT: 0, box: null });
+    k++;
+  } });
+  const honk = (car, dist) => { // two horn tones, quieter further off
+    const m = MoonTaleSounds.mix(); if (!m) return; const { ctx, out } = m, t = ctx.currentTime, g = ctx.createGain(), lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 1800; g.connect(lp).connect(out);
+    const lvl = .5 / (1 + dist * .08); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(lvl, t + .02); g.gain.setValueAtTime(lvl, t + .22); g.gain.linearRampToValueAtTime(0, t + .3);
+    g.gain.setValueAtTime(0, t + .38); g.gain.linearRampToValueAtTime(lvl, t + .4); g.gain.setValueAtTime(lvl, t + .7); g.gain.linearRampToValueAtTime(0, t + .8);
+    for (const f of [392, 494]) { const o = ctx.createOscillator(); o.type = 'square'; o.frequency.value = f; o.connect(g); o.start(t); o.stop(t + .85); }
+    setTimeout(() => { try { out.disconnect(); } catch (e) {} }, 1200);
+  };
+  scene.onBeforeRenderObservable.add(() => {
+    const show = !ActiveInterior && !MiniGames.on && !adminMode, dt = Math.min(.1, engine.getDeltaTime() / 1000), P = charMesh?.position, now = performance.now();
+    for (const c of SaintsTraffic.cars) {
+      if (!show) { if (c.node.isEnabled()) c.node.setEnabled(false); c.box = null; continue; }
+      const L = c.loop.L, here = at(L, c.s);
+      let want = c.top; const corner = cornerAhead(L, c.s, 15); if (corner != null) want = Math.min(want, 4.5 + corner * .35);
+      for (const o of SaintsTraffic.cars) if (o !== c && o.loop === c.loop) { const gap = ((o.s - c.s) % L.len + L.len) % L.len; if (gap < 22) want = Math.min(want, Math.max(0, (gap - 11) * 1.2)); }
+      let forYou = false;
+      if (P) { const rx = P.x - here.x, rz = P.z - here.z, ahead = rx * here.dx + rz * here.dz, side = Math.abs(rx * here.dz - rz * here.dx);
+        if (side < HW + 1.3 && ahead > -HL - .6 && ahead < 16) { forYou = ahead > 0; want = Math.min(want, Math.max(0, (ahead - HL - 2.2) * 1.1)); } }
+      c.v += Math.max(-9 * dt, Math.min(3 * dt, want - c.v)); if (c.v < .05 && want <= 0) c.v = 0;
+      c.waitT = c.v === 0 && forYou ? c.waitT + dt : 0;
+      if (c.waitT > 1.4 && now - c.honkAt > 5000 && P) { c.honkAt = now; honk(c, Math.hypot(P.x - here.x, P.z - here.z)); }
+      c.s = (c.s + c.v * dt) % L.len;
+      const p = at(L, c.s), far = P ? Math.hypot(P.x - p.x, P.z - p.z) > 300 : false;
+      if (c.node.isEnabled() === far) c.node.setEnabled(!far);
+      const yb = ground(p.x - p.dx * 2.6, p.z - p.dz * 2.6), yf = ground(p.x + p.dx * 2.6, p.z + p.dz * 2.6), yl = ground(p.x - p.dz * 1.2, p.z + p.dx * 1.2), yr = ground(p.x + p.dz * 1.2, p.z - p.dx * 1.2);
+      c.node.position.set(p.x, (yb + yf + yl + yr) / 4 + .02, p.z);
+      // facing along the lane (the kit car's front is its local -x), nose and sides following the ground's slope
+      c.node.rotationQuaternion = BABYLON.Quaternion.RotationYawPitchRoll(Math.atan2(p.dz, -p.dx), 0, Math.atan2(yb - yf, 5.2)).multiply(BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, Math.atan2(yl - yr, 2.4)));
+      c.box = { x: p.x, z: p.z, dx: p.dx, dz: p.dz };
+    }
+  });
+  window._saintsTraffic = SaintsTraffic; // tests
+}
+// is (x, z) inside a moving car (padded)? a car you stand inside already (it drove into you) lets you walk out
+function saintsTrafficBlocks(x, z, pad = 0) {
+  if (!SaintsTraffic.on) return false;
+  const inside = (b, px, pz, e) => { const rx = px - b.x, rz = pz - b.z, a = Math.abs(rx * b.dx + rz * b.dz), s = Math.abs(rx * b.dz - rz * b.dx); return a < 3.9 + e && s < 1.45 + e; };
+  const P = charMesh?.position;
+  return SaintsTraffic.cars.some(c => c.box && inside(c.box, x, z, pad) && !(P && inside(c.box, P.x, P.z, 0)));
 }
 // Running water: soft filtered noise made in the browser (no sound file), louder near the waterfall and the stream.
 // Follows the Master and Ambience sliders; starts on the first click or key press (browsers block sound before that).
@@ -26317,6 +26766,7 @@ function duplicateSelectedFence(){
 }
 function openPanel(b){
   handleSignQuestEvent(b);
+  panel.classList.toggle('reading', !!b.reading || String(b.id || '').startsWith('sign_'));
   document.getElementById('picon').textContent=b.icon;
   document.getElementById('ph2').textContent=b.title;
   document.getElementById('psub').textContent=b.sub;
@@ -26391,6 +26841,7 @@ document.addEventListener('keydown', async e => {
   const key = e.key.toLowerCase();
 
   if (document.getElementById('photoOverlay')?.classList.contains('on')) { if (key === 'escape' || key === 'p' || key === 'enter') { e.preventDefault(); closeVillagePhoto(); } return; }
+  if (document.getElementById('panel')?.classList.contains('on') && !adminMode && (key === 'escape' || (key === 'o' && walkMode))) { e.preventDefault(); closeReadingPanel(); return; }
   if (MiniGames.on && (!MiniGames.roam || miniGameRoamKey(e, true))) { if (!MiniGames.roam) miniGameKey(e, true); return; }
   if (key === 'p' && !adminMode && walkMode && !e.repeat && !DanceOff.on && !SkillBar.on) { e.preventDefault(); takeVillagePhoto(); return; }
   if (DanceOff.choosing) { if (key === 'escape') closeDanceOff(); else { const lv = { 1:'easy', 2:'normal', 3:'hard' }[key]; if (lv) { e.preventDefault(); pickDanceLevel(lv); } } return; }
@@ -26584,7 +27035,7 @@ document.addEventListener('keyup', e => {
   if (key === 's' || e.key === 'ArrowDown') moveBackward = false;
   if (key === 'a' || e.key === 'ArrowLeft') turnLeft = false;
   if (key === 'd' || e.key === 'ArrowRight') turnRight = false;
-  if (key === 'r' && !adminMode && walkMode) { runKey=false; const mv=moveForward||moveBackward||turnLeft||turnRight; switchAnim(mv?1:0,true); }
+  if (key === 'r' && !adminMode && walkMode && runKey) { runKey=false; const mv=moveForward||moveBackward||turnLeft||turnRight; switchAnim(mv?1:0,true); }
 });
 let _orbitDragging=false, _orbitLastX=0, _orbitLastY=0;
 let _orbitAngleH=Math.PI, _orbitAngleV=0.35;
@@ -26609,7 +27060,7 @@ function getCameraOccluders() {
   _camOcc.at = now;
   const p = charMesh.position, pr = scene.getTransformNodeByName('playerRoot');
   _camOcc.list = scene.meshes.filter(m => {
-    if (!m.isEnabled() || !m.isVisible || m.visibility < .5 || !m.getTotalVertices?.() || m.metadata?.keepInInteriors || m.isAnInstance === false && m.metadata?.samKitTemplate) return false;
+    if (!m.isEnabled() || !m.isVisible || m.visibility < .5 || !m.getTotalVertices?.() || m.metadata?.keepInInteriors || m.metadata?.camSkip || m.isAnInstance === false && m.metadata?.samKitTemplate) return false;
     if (CAM_OCC_SKIP.test(m.name || '') || CAM_OCC_SKIP.test(m.material?.name || '')) return false;
     for (let n = m.parent; n; n = n.parent) if (n === pr) return false;
     const bb = m.getBoundingInfo().boundingBox, c = bb.centerWorld, e = bb.extendSizeWorld;
@@ -27917,6 +28368,7 @@ function villagePointBlocked(x, z, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PA
   const onDeck = villageOnKitDeck(x, z); // piers run over the quay wall and the water, bridges over the ravine
   if (!onDeck && !villageSwimmerUnderwater(x, z) && window._newTerrain?.decorBlocksPoint(x, z, padding)) return true; // scattered pines and rocks
   if (villageSeaBlocks(x, z)) return true; // no wading into the sea
+  if (saintsTrafficBlocks(x, z, padding)) return true; // the Saints' moving cars
   const cachedBlockerHit = villageCollisionBlockers.some(blocker => {
     if (blocker.kind === 'group') {
       const dx = x - blocker.x, dz = z - blocker.z, rr = blocker.r + padding;
@@ -29049,8 +29501,7 @@ function renderSignTexture(clone, cfg) {
     ctx.shadowColor=color; ctx.shadowBlur=8;
     ctx.fillText(cfg.sub, 256, cfg.icon ? 175 : 165, 470); ctx.shadowBlur=0;
   }
-  ctx.font='italic 16px serif'; ctx.fillStyle='rgba(232,197,106,0.5)';
-  ctx.fillText('rebelants.io', 256, 220);
+  // (no web address under the words any more: Miguel, Oct 18, a sign in the world shouldn't carry one)
   ctx.restore(); dt.update();
 
   const signMat = new BABYLON.StandardMaterial('zoneSignMat_'+clone.name, scene);
@@ -31104,6 +31555,8 @@ function restoreActiveInteriorSessionAfterStartup() {
   if (restoreActiveInteriorSessionAfterStartup._ran) return;
   restoreActiveInteriorSessionAfterStartup._ran = true;
   if (ActiveInterior) return;
+  // a game or playtest link decides where the Rebel starts: a room remembered from the last visit isn't put back
+  if (GameJump || PlaytestNote) { clearActiveInteriorSession(GameJump ? 'game jump' : 'playtest jump'); return; }
   const session = readInteriorSessionCandidate();
   if (!session?.interiorId) return;
   const entrance = getInteriorEntranceBySessionId(session.interiorId);

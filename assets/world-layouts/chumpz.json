@@ -37573,7 +37573,7 @@
     "signConfig": {
       "label": "CHUMPZ",
       "sub": "Welcome to the beach",
-      "desc": "",
+      "desc": "No shoes, no shirt, no problem. The bananas are free, the fish are fresh and the dice are only a little bit loaded.\n\n— The Chumpz",
       "icon": "",
       "color": "#ffd23a",
       "clickable": false,
@@ -37771,7 +37771,7 @@
       "spotId": "friend-welcome-chumpz",
       "action": "read",
       "label": "Read the welcome sign",
-      "text": "WELCOME TO CHUMPZ. No shoes, no shirt, no problem. The bananas are free, the fish are fresh and the dice are only a little bit loaded. The Chumpz.",
+      "text": "No shoes, no shirt, no problem. The bananas are free, the fish are fresh and the dice are only a little bit loaded. — The Chumpz",
       "glint": "quest"
     }
   },
