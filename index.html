@@ -218,6 +218,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 #econMenu p{font-size:10px;line-height:1.5;letter-spacing:1px;color:#9fb6b8;margin-top:8px;}
 #econMenu button{width:100%;margin-top:12px;padding:10px 14px;border:1px solid rgba(138,122,90,0.45);background:transparent;color:#c8b68a;cursor:pointer;font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;text-transform:uppercase;}
 #econMenu button:hover{color:#fff;border-color:rgba(200,146,42,0.7);}
+#econMenu .em-discord{background:#5865f2;border-color:#5865f2;color:#fff;margin-top:2px;}
+#econMenu .em-discord:hover{background:#4752c4;border-color:#4752c4;}
+#econMenu .em-or{margin:14px 0 8px;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:#8a7a5a;text-align:center;}
+#econMenu .em-name{display:grid;grid-template-columns:minmax(0,1fr) 92px;gap:8px;}
+#econMenu .em-name input{min-width:0;padding:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(200,146,42,0.3);color:#f3e6bf;font-family:'Cinzel',serif;font-size:12px;letter-spacing:1px;outline:none;}
+#econMenu .em-name input:focus{border-color:rgba(200,146,42,0.75);}
+#econMenu .em-acts{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+#econMenu .em-acts button{margin-top:0;padding:10px 8px;letter-spacing:2px;}
+#econMenu .em-msg{grid-column:1/-1;min-height:14px;font-size:10px;letter-spacing:1px;line-height:1.4;color:#ffd166;}
+#econMenu .em-msg.bad{color:#ff8b8b;}
+@media (pointer:coarse){#econMenu .em-name input{font-size:16px;}} /* phones zoom into smaller fields */
 /* narrow screens: the big logo reaches the corner, so just the circle (and "Sign in" under it for guests) */
 @media (max-width:829px){
   #econChip{top:16px;left:16px;width:48px;padding:0;justify-content:center;border-radius:50%;}
@@ -1865,7 +1876,7 @@ window.addEventListener('load', () => {
 // ── DISCORD: the Rebel Economy account (api/econ-*, the same sign-in as the village journal). The lobby says whether
 // the player is signed in and how many Rebel points the account holds; signed out, one click signs in (a popup, or
 // this tab when popups are blocked; both come back here). Hidden on a deploy without the economy set up.
-const LobbyEcon = { on:false, configured:false, name:'', avatar:null, balance:null, today:0, cap:2000 };
+const LobbyEcon = { on:false, configured:false, kind:'', name:'', avatar:null, balance:null, today:0, cap:2000 };
 const LOBBY_DISCORD_GLYPH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.028C.533 9.046-.32 13.58.099 18.058a.082.082 0 0 0 .031.056 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.042-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .078-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.009c.12.1.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.029 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.331c-1.183 0-2.157-1.086-2.157-2.42 0-1.332.956-2.418 2.157-2.418 1.21 0 2.176 1.095 2.157 2.419 0 1.333-.956 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.086-2.157-2.42 0-1.332.955-2.418 2.157-2.418 1.21 0 2.176 1.095 2.157 2.419 0 1.333-.946 2.419-2.157 2.419z"/></svg>';
 const lobbyEsc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 let lobbyEconAt = 0;
@@ -1875,9 +1886,17 @@ async function refreshLobbyEcon(force) {
   let d = null;
   try { const r = await fetch('/api/econ-me', { credentials:'same-origin', cache:'no-store' }); d = await r.json(); } catch (e) { return; }
   if (!d || !d.ok) return;
-  Object.assign(LobbyEcon, { configured:!!d.configured, on:!!d.signedIn, name:d.name || '', avatar:d.avatar || null,
+  Object.assign(LobbyEcon, { configured:!!d.configured, on:!!d.signedIn, kind:d.signedIn ? (d.kind || 'discord') : '', name:d.name || '', avatar:d.avatar || null,
     balance:d.signedIn ? (d.balance ?? LobbyEcon.balance) : null, today:d.today || 0, cap:d.cap || 2000 });
   renderLobbyEcon();
+}
+// a name + PIN account's picture: its first letter (the village journal draws the same)
+function lobbyNameAvatar(name) {
+  const ch = (String(name || '?').trim().match(/[\p{L}\p{N}]/u) || ['?'])[0].toUpperCase();
+  let h = 0; for (const c of String(name || '')) h = (h * 31 + c.codePointAt(0)) >>> 0;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="hsl(${h % 360},42%,24%)"/>`
+    + `<text x="32" y="43" text-anchor="middle" font-family="Georgia,serif" font-size="32" font-weight="700" fill="#e8c56a">${ch.replace(/[<>&"']/g, '')}</text></svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
 function renderLobbyEcon() {
   const c = document.getElementById('econChip'), m = document.getElementById('econMenu'); if (!c) return;
@@ -1885,17 +1904,31 @@ function renderLobbyEcon() {
   c.classList.toggle('off', !LobbyEcon.on);
   const pts = LobbyEcon.balance == null ? '' : Number(LobbyEcon.balance).toLocaleString('en-US');
   if (!LobbyEcon.on) {
-    c.innerHTML = `<span class="ec-av">${LOBBY_DISCORD_GLYPH}</span><span class="ec-t"><b>Sign in with Discord</b><small>Keep your Rebel points</small></span>`;
-    c.title = 'Sign in with Discord: your Rebel points go to your account';
-    if (m) m.classList.remove('open');
+    c.innerHTML = `<span class="ec-av">${LOBBY_DISCORD_GLYPH}</span><span class="ec-t"><b>Sign in</b><small>Keep your Rebel points</small></span>`;
+    c.title = 'Sign in (Discord, or a name and PIN): your Rebel points go to your account';
+    // the sign-in card: built once while signed out, so a name half typed survives a refresh
+    if (m && m.dataset.mode !== 'out') {
+      m.dataset.mode = 'out';
+      m.innerHTML = `<div class="em-who"><div><b>Sign in</b><span>Keep your Rebel points</span></div></div>`
+        + `<button type="button" class="em-discord" onclick="lobbyEconSignIn()">Sign in with Discord</button>`
+        + `<div class="em-or">or with a name and PIN</div>`
+        + `<form class="em-name" novalidate onsubmit="event.preventDefault(); lobbyEconNameSubmit('login')">`
+        + `<input id="lobbyNameInput" type="text" maxlength="24" autocomplete="username" placeholder="Your name">`
+        + `<input id="lobbyPinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="current-password" placeholder="PIN">`
+        + `<div class="em-acts"><button type="submit">Sign in</button><button type="button" onclick="lobbyEconNameSubmit('register')">New account</button></div>`
+        + `<div id="lobbyNameMsg" class="em-msg"></div></form>`
+        + `<p>A new name gets a PIN of 4 to 6 digits. Signed out, points are practice points on this device only.</p>`;
+    }
   } else {
-    const pic = LobbyEcon.avatar ? `<img alt="" src="${lobbyEsc(LobbyEcon.avatar)}" onerror="this.remove()">` : '';
-    c.innerHTML = `<span class="ec-av">${LOBBY_DISCORD_GLYPH}${pic}<span class="ec-d">${LOBBY_DISCORD_GLYPH}</span></span>`
-      + `<span class="ec-t"><b>${lobbyEsc(LobbyEcon.name || 'Rebel')}</b><small>${pts ? pts + ' Rebel Points' : 'Signed in with Discord'}</small></span>`;
-    c.title = `Signed in with Discord as ${LobbyEcon.name || 'Rebel'}`;
+    const discord = LobbyEcon.kind === 'discord', av = LobbyEcon.avatar || (LobbyEcon.kind === 'name' ? lobbyNameAvatar(LobbyEcon.name) : null);
+    const pic = av ? `<img alt="" src="${lobbyEsc(av)}" onerror="this.remove()">` : '';
+    c.innerHTML = `<span class="ec-av">${LOBBY_DISCORD_GLYPH}${pic}${discord ? `<span class="ec-d">${LOBBY_DISCORD_GLYPH}</span>` : ''}</span>`
+      + `<span class="ec-t"><b>${lobbyEsc(LobbyEcon.name || 'Rebel')}</b><small>${pts ? pts + ' Rebel Points' : 'Signed in'}</small></span>`;
+    c.title = `Signed in${discord ? ' with Discord' : ''} as ${LobbyEcon.name || 'Rebel'}`;
     if (m) {
+      m.dataset.mode = 'in';
       const pct = Math.min(100, Math.round(100 * (LobbyEcon.today || 0) / (LobbyEcon.cap || 2000)));
-      m.innerHTML = `<div class="em-who">${LobbyEcon.avatar ? `<img alt="" src="${lobbyEsc(LobbyEcon.avatar)}" onerror="this.remove()">` : ''}<div><b>${lobbyEsc(LobbyEcon.name || 'Rebel')}</b><span>Signed in with Discord</span></div></div>`
+      m.innerHTML = `<div class="em-who">${pic}<div><b>${lobbyEsc(LobbyEcon.name || 'Rebel')}</b><span>${discord ? 'Signed in with Discord' : 'Signed in with your name'}</span></div></div>`
         + `<div class="em-pts">${pts || '—'}</div><div class="em-lbl">Rebel Points</div>`
         + `<div class="em-bar"><div style="width:${pct}%"></div></div>`
         + `<div class="em-lbl">Earned today ${(LobbyEcon.today || 0).toLocaleString('en-US')} of ${(LobbyEcon.cap || 2000).toLocaleString('en-US')}</div>`
@@ -1905,8 +1938,29 @@ function renderLobbyEcon() {
   }
 }
 function lobbyEconChip() {
-  if (!LobbyEcon.on) return lobbyEconSignIn();
-  const m = document.getElementById('econMenu'); if (m) m.classList.toggle('open');
+  const m = document.getElementById('econMenu'); if (!m) return;
+  m.classList.toggle('open');
+  // a mouse: straight to the name field (on a phone the keyboard would cover the Discord button)
+  if (!LobbyEcon.on && m.classList.contains('open') && matchMedia('(pointer: fine)').matches) setTimeout(() => document.getElementById('lobbyNameInput')?.focus({ preventScroll: true }), 30);
+}
+// name + PIN: the casino's colony name accounts, through this site's server (api/econ-name-login)
+let lobbyNameBusy = false;
+async function lobbyEconNameSubmit(action) {
+  const n = document.getElementById('lobbyNameInput'), p = document.getElementById('lobbyPinInput'), msg = document.getElementById('lobbyNameMsg');
+  const say = (t, bad) => { if (msg) { msg.textContent = t; msg.classList.toggle('bad', !!bad); } };
+  const name = (n?.value || '').trim(), pin = (p?.value || '').trim();
+  if (name.length < 3) return say('Your name needs at least 3 letters or numbers.', true);
+  if (!/^\d{4,6}$/.test(pin)) return say('Your PIN is 4 to 6 digits.', true);
+  if (lobbyNameBusy) return;
+  lobbyNameBusy = true; say(action === 'register' ? 'Making your account…' : 'Signing in…');
+  let d = {};
+  try { const r = await fetch('/api/econ-name-login', { method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ action, name, pin }) }); d = await r.json().catch(() => ({})); }
+  catch (e) { d = { ok:false, message:'Could not reach the site. Check the connection and try again.' }; }
+  lobbyNameBusy = false;
+  if (!d.ok) { if ((d.code === 'pin_wrong' || d.code === 'locked') && p) p.value = ''; return say(d.message || d.error || 'Not signed in.', true); }
+  try { new BroadcastChannel('ra-econ').postMessage({ signedIn:true }); } catch (e) {}
+  try { localStorage.setItem('raEconPing', String(Date.now())); } catch (e) {}
+  await refreshLobbyEcon(true);
 }
 function lobbyEconSignIn() {
   const url = '/api/econ-discord-login?return=' + encodeURIComponent(location.pathname + location.search);
@@ -1916,7 +1970,8 @@ function lobbyEconSignIn() {
 }
 async function lobbyEconSignOut() {
   try { await fetch('/api/econ-me', { method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ action:'logout' }) }); } catch (e) {}
-  Object.assign(LobbyEcon, { on:false, name:'', avatar:null, balance:null, today:0 });
+  Object.assign(LobbyEcon, { on:false, kind:'', name:'', avatar:null, balance:null, today:0 });
+  document.getElementById('econMenu')?.classList.remove('open');
   renderLobbyEcon();
 }
 document.addEventListener('click', (e) => { const m = document.getElementById('econMenu'); if (m && m.classList.contains('open') && !m.contains(e.target) && !document.getElementById('econChip')?.contains(e.target)) m.classList.remove('open'); });
