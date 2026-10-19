@@ -22,15 +22,9 @@ import { isAdminRequest } from './_admin-auth.mjs';
 import { enforceRateLimit } from './_guard.mjs';
 import { forgeImageEdit, fetchImageAsDataUrl } from './_forge-image.mjs';
 import { redis, walletOf, holderOf } from './_wallet.mjs';
+import { WEAPONS, weaponForTrait } from './_weapon-catalog.mjs';
+export { WEAPONS, weaponForTrait };
 
-export const WEAPONS = {
-  celestial_fang: { name: 'Celestial Fang', trait: 'Celestial-Fang', hilt: 'R', look: 'a PAIR of short swords (twin ninjato) in dark scabbards, hilts wrapped in green cord, carried crossed together' },
-  dawns_light_arrows: { name: "Dawn's Light Arrows", trait: "Dawn's-Light-Arrows", hilt: 'R', look: 'a quiver full of black-fletched arrows' },
-  eclipse_edge: { name: 'Eclipse Edge', trait: 'Eclipse-Edge', hilt: 'R', look: 'a single katana in a black scabbard, black wrapped hilt with a dark round guard' },
-  soulrender: { name: 'Soulrender', trait: 'Soulrender', hilt: 'L', look: 'a single sword in a dark red-brown scabbard' },
-  stormbringer_blade: { name: 'Stormbringer Blade', trait: 'Stormbringer-Blade', hilt: 'L', look: 'a katana in a dark red scabbard with a grey wrapped hilt' },
-  whisper_of_dawn: { name: 'Whisper of Dawn', trait: 'Whisper-of-Dawn', hilt: 'L', look: 'a katana in a blue scabbard with a dark wrapped hilt' }
-};
 // Drawn props (Sept 29, weapon moves): what the Rebel holds when the weapon is out. Made in the same studio, from the
 // weapon's own reference image. Katanas: the bare blade in the right hand (the scabbard model hides meanwhile);
 // Celestial Fang: one short sword in each hand; Dawn's Light Arrows: a bow in the left hand.
@@ -49,15 +43,6 @@ export const HELD = {
   whisper_of_dawn: { right: 'whisper_of_dawn_drawn' }, celestial_fang: { right: 'celestial_fang_drawn', left: 'celestial_fang_drawn' }, dawns_light_arrows: { left: 'dawns_light_bow' }
 };
 const ALL = { ...WEAPONS, ...PROPS };
-// NFT trait value -> { weaponId, side of the hilt (the character's own left / right shoulder) }
-export function weaponForTrait(value) {
-  const v = String(value || '');
-  const base = v.replace(/-2$/, '');
-  const id = Object.keys(WEAPONS).find((k) => WEAPONS[k].trait === base);
-  if (!id) return null;
-  const hilt = WEAPONS[id].hilt;
-  return { weaponId: id, hilt: /-2$/.test(v) ? (hilt === 'R' ? 'L' : 'R') : hilt };
-}
 
 const K = (id) => `forge:weapon:v1:${id}`;
 const CK = (c, t) => `forge:weapon-choice:v1:${c}:${t}`;
