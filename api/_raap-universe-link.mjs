@@ -186,6 +186,15 @@ export async function linkStatusPage(session, deps) {
   const cur = await currentLink(c, deps), rec = cur.rec, status = linkStatus(c, rec, now);
   const s = rec ? parse(await deps.redis(['GET', sharingKey(rec.linkId)])) : null, sStatus = sharingStatus(c, rec, s, now);
   const mine = !!(rec && session.econ && rec.economyUserId === session.econ.u);
+  // the link's details (reference, account kind, sharing, revocations) only for the wallet's holder or the linked account
+  if (session.wallet !== c.wallet && !mine) {
+    return ok({ schema: 'universe.raap.link-page.v1', enabled: true, now,
+      connection: { connectionId: c.connectionId, connectionRevision: c.connectionRevision, game: c.audience, raap: c.issuer, wallet: c.wallet, asset: c.asset,
+        controllerEpoch: c.controllerEpoch, validUntil: c.validUntil, sharing: !!c.events, eventKinds: c.events ? c.events.eventKinds : [], target: targetOf(c) },
+      session: { wallet: session.wallet || null, walletMatches: false, economy: session.econ ? accountOf(session.econ) : null },
+      link: { status, link: null, validUntil: null, account: null, mine: false }, sharing: { status: sStatus, selectionId: null, eventKinds: [], validUntil: null },
+      revoke: { unlink: null, stopSharing: null } });
+  }
   return ok({
     schema: 'universe.raap.link-page.v1', enabled: true, now,
     connection: { connectionId: c.connectionId, connectionRevision: c.connectionRevision, game: c.audience, raap: c.issuer, wallet: c.wallet, asset: c.asset,
