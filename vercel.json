@@ -30,6 +30,9 @@
     "api/forge-fix-reference.mjs": {
       "maxDuration": 300
     },
+    "api/raap-universe-chest.mjs": {
+      "maxDuration": 60
+    },
     "api/forge-rig-worker.mjs": {
       "maxDuration": 120
     },
