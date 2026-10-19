@@ -4,6 +4,11 @@ Prepared October 19, 2026, by the Universe chat, against raap-core branch `docs/
 (commit `1ad46ac`, `docs/integrations/universe-v1/`). Universe repository `D1stknight/rebel-ants-village`, branch `dev` only.
 Nothing here is on `main` / production, and no live action was performed.
 
+**Updated Oct 19 (later)** after RAAP's adapter review (`RAAP_ADAPTER_HANDBACK_20261019.md`): bounded retention
+(`retainUntil`, §2 / §6), the rate limit kept under `raap:v1:dev:rl:*` (§3), the direct-key wallet wording (§8), and the
+connection format v2 (§2). The chest action, the wallet ↔ Economy account link and experience sharing are in
+`docs/raap-universe-chest-v1.md`.
+
 ## In plain words (for Miguel)
 
 - **What was built:** a private door in the game's server that only RAAP's server can use (it needs a secret key).
@@ -21,7 +26,8 @@ Nothing here is on `main` / production, and no live action was performed.
 - **To switch it on (later, when you and the RAAP chat say so):** RAAP's operator makes a new secret key, you add two
   settings in Vercel → Project → Settings → Environment Variables, **Preview only** (§2). Nobody pastes the key in a chat.
 - **Cost:** no new service or subscription. Each call is a few database reads, one ownership check on the chain
-  (free read) and, for an approved change, one database write. Receipts are kept 90 days (~1–2 KB each).
+  (free read) and, for an approved change, one database write. RAAP's records (~1–2 KB each) are kept until a date set
+  when the connection is approved (`retainUntil`, §2), then they expire by themselves.
 
 ## 1. Where things are
 
@@ -45,7 +51,7 @@ Two Vercel variables, **Preview** scope (never Production):
 
 ```json
 {
-  "schema": "universe.raap.connection.v1",
+  "schema": "universe.raap.connection.v2",
   "environment": "dev",
   "connectionId": "<RAAP: id, [a-zA-Z0-9_.:-]{1,128}>",
   "connectionRevision": "1",
@@ -60,12 +66,21 @@ Two Vercel variables, **Preview** scope (never Production):
   "controllerEpoch": "<RAAP: current controller epoch, integer>",
   "operations": ["READ", "PREPARE", "EXECUTE", "RECEIPT"],
   "status": "ACTIVE",
-  "validUntil": "<RAAP: Unix seconds, no later than the approved access term>"
+  "validUntil": "<RAAP: Unix seconds, no later than the approved access term>",
+  "retainUntil": "<Miguel's operating decision: Unix seconds, >= validUntil>",
+  "chest": null,
+  "events": null
 }
 ```
 
-`controllerEpoch` and `validUntil` are numbers in the real value. Every field is required; an unknown field or a bad
-value makes the whole connection unavailable (403). A Vercel variable change needs a redeploy of `dev` to take effect.
+`controllerEpoch`, `validUntil` and `retainUntil` are numbers in the real value. Every field is required; an unknown
+field or a bad value makes the whole connection unavailable (403). `retainUntil` is the storage term: every
+`raap:v1:dev:*` record of this connection (receipts / request tombstones, the version counter) expires then. It must be
+at or after `validUntil`, and a request's tombstone never expires before that request's own `expiresAt` + 5 minutes, so
+a request id can never run again while its approval could still be valid. The weapon choice itself (a game record) never
+expires. Nothing older than this version used a 90-day term in a live record (none was ever written).
+`chest` / `events` stay `null` for the weapon-only connection (the chest, link and sharing sections are described in
+`docs/raap-universe-chest-v1.md`). `"operations"` may also list `"EVENTS"` there. A Vercel variable change needs a redeploy of `dev` to take effect.
 Disconnect = set `"status": "DISCONNECTED"` (or remove the variables): new READ/PREPARE/EXECUTE refused, saved results
 stay readable through RECEIPT.
 
@@ -77,7 +92,9 @@ stay readable through RECEIPT.
   fields, every field present) → else `400 MALFORMED`.
 - `Authorization: Bearer <RAAP_UNIVERSE_DEV_CONNECTION_KEY>` (constant-time compare); missing → `401 NOT_AUTHENTICATED`,
   wrong → `403 CONNECTION_UNAVAILABLE`. A request with an `Origin` header (a browser) is refused. `VERCEL_ENV=production`
-  is refused before anything else. 120 requests a minute per caller IP (existing guard, `rl:raap-universe:*`).
+  is refused before anything else. 120 requests a minute per caller, counted under
+  `raap:v1:dev:rl:universe:<caller hash>:<minute>` (expires after ~2 minutes; the game's own `rl:*` limits are untouched),
+  `429 {error: RATE_LIMITED}` past it.
 - Responses are canonical JSON too, `Cache-Control: private, no-store`.
 
 ## 4. Operations
@@ -114,7 +131,8 @@ origins, local Redis, a stand-in owner of #909 — **not** a live authority).
    equipped, or unequipping what is not).
 6. One Lua script (`EXECUTE_LUA`) re-reads, inside Redis: the request key (another copy may have saved first), the
    version, and the **exact raw bytes** of the weapon pick and the six weapon records the request was approved against,
-   then Redis time against issuedAt / expiresAt. Only then one `MSET` (pick, version, receipt) and `EXPIRE` on the receipt.
+   then Redis time against issuedAt / expiresAt. Only then one `MSET` (pick, version, receipt) and `EXPIREAT` (the
+   retention end) on the receipt and the version.
    A human change or a competing request in between → `DECLINED STALE_STATE` with the state as it now is.
 7. Lost answer from Redis → `OUTCOME_UNKNOWN` (`after: null`, `actualCharge: null`), HTTP 200. Query RECEIPT; never resend
    automatically. (Locally: the save happened, RECEIPT then showed APPLIED, a resend got that same receipt.)
@@ -151,11 +169,12 @@ origins, local Redis, a stand-in owner of #909 — **not** a live authority).
   bytes (each save writes a new `at` time), so the commitment — checked again inside the atomic save — catches them.
   RAAP must compare **both** version and commitment.
 - `configurationCommitment = H("universe.raap.configuration.v1", {...})` over: handler `universe-raap-weapon/1`, every
-  pinned connection field including `validUntil`, operations, actions, max lifetime 900, receipt retention, the six
+  pinned connection field including `validUntil`, operations, actions, max lifetime 900, the retention end, the six
   weapons (id, label, trait, side), the equipped rule, the record mapping, zero charge. No secret. Any change → old
   requests `RULES_CHANGED`.
 - New records (all `raap:v1:dev:*`, enforced in code): `raap:v1:dev:player:<playerHash>:version`,
-  `raap:v1:dev:request:<connectionId>:<requestId>` (the receipt; 90 days). Nothing else new.
+  `raap:v1:dev:request:<connectionId>:<requestId>` (the receipt), both until `retainUntil`;
+  `raap:v1:dev:rl:universe:<caller hash>:<minute>` (rate limit, ~2 minutes). Nothing else new.
 - Shared game records: **writes** `forge:weapon-choice:v1:battle_for_colony:909` only (EXECUTE, APPLIED);
   **reads** the six `forge:weapon:v1:<id>`, the NFT metadata cache `nft:meta:v1:battle_for_colony:909`, the chain owner.
   Never reads or writes the protected R7 appearance / writer / admission / receipt records, the Economy, or any balance.
@@ -180,7 +199,12 @@ Receipt reasons used: `NONE`, `EXPIRED`, `RULES_CHANGED`, `NOT_OWNED`, `STALE_ST
 Universe checks: the bearer connection, the pinned mapping, the owner's signature, the live on-chain owner (owner only),
 the game rules, the state. RAAP's worker must check immediately before dispatch: current controller and epoch, account
 context, revocation / pause, the exact action permission. Universe cannot verify `contextCommitment`; it is only bound
-by the signature. Contract wallets (ERC-1271), EIP-7702 and delegate profiles are not accepted here (low-s EOA only).
+by the signature.
+Signature profile: the **direct key of the pinned wallet** signs — EIP-191 `personal_sign`, low-s, `v` 27/28, recovered
+address = the wallet. The handler does not look at on-chain code, so an account that also carries EIP-7702 delegation
+code is not refused for that: this is RAAP's `EIP7702_DIRECT_V1` profile for e0d5 (the same direct key signs; RAAP
+proves the reviewed delegation code on its side). Not accepted: ERC-1271 / contract-wallet signatures, any validation
+that relies on delegation code, and delegate.xyz delegates (owner only).
 
 ## 9. Normal-play facts (EVENTS) — not enabled
 
@@ -236,7 +260,7 @@ character / selected / fence / admission keys and `GET` of exact receipt keys; a
 
 - RAAP's own `verify-fixtures.mjs` (ethers 6.17.0, ajv 8.20.0): PASS.
 - Bench (`redis-server` 7.0 behind an Upstash-style REST shim, the repo's real handlers, viem-signed requests from public
-  test keys, ajv against `schemas.json`): **77 / 77**. Covers: fixture canonical bytes / commitment / message / receipt id
+  test keys, ajv against `schemas.json`): **77 / 77** first, **82 / 82** after the review fixes. Covers: fixture canonical bytes / commitment / message / receipt id
   / signature through this module; tamper and high-s refused; 401 / 403 / production / browser / missing config;
   whitespace, key order, duplicate keys, extra field, oversize, float refused; READ / PREPARE / receipt schemas; equip
   applied, version 0 → 1, the game's own `choice` route shows it; same request again → identical receipt, nothing
@@ -247,7 +271,9 @@ character / selected / fence / admission keys and `GET` of exact receipt keys; a
   / changed after signing / other epoch / other journal / old version / old rules / Rebel sold (NOT_OWNED, READ offers
   nothing) / weapon unapproved; the trait weapon returns to its trait shoulder; a lost answer → OUTCOME_UNKNOWN, RECEIPT
   then APPLIED once, resend → same receipt; disconnected → reads refused, receipts readable; no keys outside the expected
-  set; receipts kept 90 days; protected stand-ins byte-identical.
+  set; protected stand-ins byte-identical. After the fixes: every receipt and the version expire at the pinned
+  `retainUntil` (no 90-day term), the weapon choice has no expiry, the rate limit writes only `raap:v1:dev:rl:*` (no
+  `rl:raap-universe:*`), a v1 connection and `retainUntil < validUntil` are refused.
 - Not verified: anything live (Vercel env, the real key, the real owner, Upstash scripting in production use — the same
   `EVAL` / `TIME` / `MSET` features run in the existing World save today), RAAP's adapter, the RAAP controller checks.
 
@@ -255,6 +281,6 @@ character / selected / fence / admission keys and `GET` of exact receipt keys; a
 
 - Off: remove (or never set) the two Preview variables, or set `"status": "DISCONNECTED"`; redeploy `dev`.
 - Code: `git revert b2980e9` (the connection) — `9406992` (catalog move) can stay, it changes no behaviour.
-- Data: only `raap:v1:dev:player:*:version` and `raap:v1:dev:request:<connectionId>:*` are new (exact keys, no wildcard
-  deletes needed). A weapon pick RAAP applied is undone by the owner choosing again in the Forge, or by a RAAP unequip /
+- Data: only `raap:v1:dev:player:*:version`, `raap:v1:dev:request:<connectionId>:*` (both expire at `retainUntil`)
+  and `raap:v1:dev:rl:universe:*` (minutes) are new (exact keys, no wildcard deletes needed). A weapon pick RAAP applied is undone by the owner choosing again in the Forge, or by a RAAP unequip /
   equip — never by restoring old bytes.
