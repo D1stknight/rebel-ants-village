@@ -163,11 +163,13 @@ export async function econNameBalance(userId) {
   if (!ok || !data.ok) throw Object.assign(new Error(data.message || 'The Rebel Economy did not find your account'), { status: status === 404 ? 502 : status, code: data.code || data.error });
   return Number(data.balance) || 0;
 }
-// credit points (idempotencyKey: the same key never pays twice) -> { newBalance }
+// credit points (idempotencyKey: the same key never pays twice) -> { newBalance, transactionId, userId, amount }
+// (a key the economy has seen answers with that first transaction: its id, user and amount)
 export async function econCredit({ userId, amount, reason, metadata, idempotencyKey }) {
   const { ok, status, data } = await econCall('/api/internal/credit', { userId, amount: Math.round(amount), type: 'game_reward', source: ECON_SOURCE, reason: String(reason || '').slice(0, 500), metadata, idempotencyKey });
-  if (!ok) throw Object.assign(new Error(data.message || 'The Rebel Economy did not take the points'), { status: status >= 500 ? 502 : status, code: data.error });
-  return { newBalance: Number(data.newBalance) || 0, transactionId: data.transactionId || null };
+  if (!ok) throw Object.assign(new Error(data.message || 'The Rebel Economy did not take the points'), { status: status >= 500 ? 502 : status, code: data.error, economyStatus: status });
+  return { newBalance: Number(data.newBalance) || 0, transactionId: data.transactionId || null,
+    userId: data.userId != null ? String(data.userId) : null, amount: data.amount != null ? String(data.amount) : null };
 }
 
 // ---- the page Discord sends the player back to ----
