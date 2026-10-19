@@ -181,14 +181,16 @@ const sameAsset = (a, b) => canonical(a) === canonical(b);
 const targetOf = (c) => ({ playerId: playerIdOf(c.wallet), asset: c.asset, connectionId: c.connectionId });
 
 // ---- owner approval: canonical low-s 65-byte ECDSA over the exact readable message, from the pinned wallet ----
-export async function ownerSigned(auth, wallet) {
-  const r = auth.request, a = auth.ownerApproval, sig = a.signature;
-  const rr = BigInt('0x' + sig.slice(2, 66)), ss = BigInt('0x' + sig.slice(66, 130));
+// (the direct key of the wallet; nothing here reads on-chain code, so ERC-1271 / delegation-code checks never apply)
+export async function signedBy(message, a, wallet) {
+  if (!exact(a, ['scheme', 'signer', 'signature']) || a.scheme !== 'eip191-personal-sign' || a.signer !== wallet || !str(a.signature, RX.sig)) return false;
+  const sig = a.signature, rr = BigInt('0x' + sig.slice(2, 66)), ss = BigInt('0x' + sig.slice(66, 130));
   if (rr === 0n || ss === 0n || ss > HALF_N) return false;
   let signer = null;
-  try { signer = (await recoverMessageAddress({ message: personalMessage(r), signature: sig })).toLowerCase(); } catch (e) { return false; }
-  return signer === a.signer && signer === wallet;
+  try { signer = (await recoverMessageAddress({ message, signature: sig })).toLowerCase(); } catch (e) { return false; }
+  return signer === wallet;
 }
+export const ownerSigned = (auth, wallet) => signedBy(personalMessage(auth.request), auth.ownerApproval, wallet);
 
 // One guarded save: same request id = the saved receipt; every authoritative record and the version must still be exactly
 // what the request was approved against; still inside its time. Checks first, then one MSET (nothing fallible after).
@@ -211,6 +213,9 @@ return {'APPLIED'}
 
 const fail = (status, error, extra) => ({ status, body: { schema: 'universe.raap.error.v1', error, ...(extra || {}) } });
 const ok = (body) => ({ status: 200, body });
+// shared with the chest, link and events modules
+export const V = { RX, isObj, exact, str, secs, isAsset, isState, isZero, isTarget, uniq };
+export { devKey, playerHash, targetOf, sameAsset, ABSENT, ZERO, fail, ok, parse, sha256 };
 
 // raw = the exact request bytes. deps = { env, now() (Unix s), redis(args) (one command), owner(collectionKey, tokenId)
 // (live owner, lowercase), trait(collectionKey, tokenId) (the NFT Weapons trait), contract(collectionKey) (lowercase) }.
