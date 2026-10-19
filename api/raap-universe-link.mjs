@@ -28,6 +28,7 @@ export default async function handler(req, res) {
     const out = await handleLinkOperation(op, session, deps);
     return send(res, out.status, out.body);
   } catch (e) {
-    return send(res, 503, errorBody('TEMPORARILY_UNAVAILABLE', { committed: false }));
+    // unexpected: no claim either way (a save may have gone through; GET shows the link as it is)
+    return send(res, 503, errorBody('TEMPORARILY_UNAVAILABLE'));
   }
 }

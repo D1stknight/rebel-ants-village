@@ -5,9 +5,11 @@
 //                commitment (the existing economy key village:chest:<id>:<user>, hashed: the user id stays here)
 //   EXECUTE      the owner-approved request, once. One Lua script saves the intent and claims the chest in the game's
 //                own ledger (the same claimed set a human claim uses), under the existing daily cap: past it the reward
-//                is held as an ordinary owed record (HELD). Else the intent is marked CREDITING and the economy credit
-//                is sent once with the existing key: PAID keeps its transaction id. Never pays other held rewards
-//                (no payOwed). A lost or unclear credit answer stays OUTCOME_UNKNOWN: it is never sent again from here.
+//                is held as an ordinary owed record (HELD). Else the same call marks the intent CREDITING and sends the
+//                economy credit once with the existing key: PAID keeps its transaction id. Never pays other held rewards
+//                (no payOwed). A lost or unclear credit answer stays OUTCOME_UNKNOWN, and an intent left ADMITTED (the
+//                call stopped before its credit) stays PENDING: neither is ever sent or finished from here. A repeated
+//                EXECUTE only reads the saved record back (continuing a held credit is an operator's decision).
 //   RECEIPT      the saved result (an admitted request reads PENDING, a credit in flight OUTCOME_UNKNOWN)
 //   LINK_STATUS  the current account link for the connection's Rebel (never the Economy user id)
 // Off unless RAAP_UNIVERSE_DEV_CONNECTION has a chest section whose chests are all in the catalog. Never production.
@@ -20,7 +22,6 @@ import { lookup, KEYS, oneTimeKey, capApplies, owedRecord, logEntry, CAP, DAY_TT
 
 const { RX, exact, str, secs, isAsset, isState, isZero, isTarget } = V;
 export const MAX_LIFETIME = 900;
-const RESUME_AFTER = 30;            // an ADMITTED intent older than this is picked up again by a repeated EXECUTE
 // economy answers that mean "not done" (it refused before writing anything)
 const DEFINITE = new Set(['user_not_found', 'user_not_active', 'economy_paused', 'invalid_amount', 'invalid_input', 'unauthorized', 'forbidden']);
 
@@ -261,33 +262,37 @@ export async function handleChestOperation(raw, deps) {
     && r.economyEffect.beneficiary === r.link.accountCommitment && auth.ownerApproval.signer === c.wallet;
   if (!pinned || !(await signedBy(chestMessage(r), auth.ownerApproval, c.wallet))) return fail(403, 'NOT_AUTHORIZED');
   const rc = requestCommitmentOf(r), rKey = requestKey(c, r.requestId), ic = r.economyEffect.idempotencyCommitment, retain = String(retainAt(c, r.expiresAt));
-  const savedResult = async (raw2) => {
-    const rec = parse(raw2);
-    if (!rec || (rec.requestCommitment !== rc)) return fail(409, 'REQUEST_ID_CONFLICT');
-    // an intent the first executor left behind before sending anything is finished now (never a second credit)
-    if (rec.status === 'ADMITTED' && now - rec.acceptedAt >= RESUME_AFTER) return settle(raw2, rec);
-    return ok(render(rec));
-  };
+  // A saved request is only ever read back: a repeated EXECUTE (like RECEIPT) answers with its final receipt or
+  // PENDING / OUTCOME_UNKNOWN and never starts, finishes or re-sends a credit, whatever the time, link or owner now.
+  const savedResult = (raw2) => { const rec = parse(raw2); return rec && rec.requestCommitment === rc ? ok(render(rec)) : fail(409, 'REQUEST_ID_CONFLICT'); };
+  // an answer that claims nothing either way (the request may have been admitted)
+  const unknown = () => ok(receiptOf(r, rc, { status: 'OUTCOME_UNKNOWN', reason: 'AWAITING_CONFIRMATION', before: r.state, after: null, effects: [], acceptedAt: null, committedAt: null, reward: UNKNOWN_REWARD(ic) }));
+  const readBack = async () => { try { const raw2 = await deps.redis(['GET', rKey]); return raw2 ? savedResult(raw2) : null; } catch (e) { return unknown(); } };
   // a definite refusal is kept like a success: the same request id always gets this answer
   const decline = async (reason, before) => {
     const d = receiptOf(r, rc, { status: 'DECLINED', reason, before, after: before, effects: [], acceptedAt: null, committedAt: null, reward: NONE_REWARD(ic) });
     let set;
-    try { set = await deps.redis(['SET', rKey, canonical(d), 'NX', 'EXAT', retain]); } catch (e) { return fail(503, 'RECEIPT_NOT_SAVED', { committed: false }); }
-    return set === 'OK' ? ok(d) : savedResult(await deps.redis(['GET', rKey]));
+    // not saved: no claim either way (another copy of this request id may have been admitted meanwhile)
+    try { set = await deps.redis(['SET', rKey, canonical(d), 'NX', 'EXAT', retain]); } catch (e) { return fail(503, 'RECEIPT_NOT_SAVED'); }
+    return set === 'OK' ? ok(d) : ((await readBack()) || unknown());
   };
-  // send the one credit for an admitted intent: ADMITTED -> CREDITING (nothing sent unless that write is confirmed)
+  // The one credit of the intent this very call has just admitted: ADMITTED -> CREDITING (nothing is sent unless that
+  // write is confirmed), then the credit. Never throws: anything unexpected after the admit answers with the saved
+  // record (PENDING / OUTCOME_UNKNOWN), never with a claim that nothing happened.
   async function settle(admittedRaw, rec) {
     const crediting = canonical({ ...rec, status: 'CREDITING', creditingAt: deps.now() });
     let mark;
-    try { mark = await deps.redis(['EVAL', CAS_LUA, '1', rKey, admittedRaw, crediting, retain]); } catch (e) { return ok(render(rec)); }   // still ADMITTED: PENDING
-    if (mark !== 'DONE') return ok(render(parse(await deps.redis(['GET', rKey])) || rec));
-    const lrec = parse(await deps.redis(['GET', linkKey(r.link.linkId)]));
-    const u = lrec?.economyUserId, x = byId[r.action.chestId] || { villageId: rec.village, rewardUnits: r.economyEffect.units };
-    if (!u) return ok(render(parse(crediting)));                         // cannot happen: the record outlives the request
+    try { mark = await deps.redis(['EVAL', CAS_LUA, '1', rKey, admittedRaw, crediting, retain]); } catch (e) { return (await readBack()) || unknown(); }
+    if (mark !== 'DONE') return (await readBack()) || unknown();
+    try { return await sendCredit(crediting, rec); } catch (e) { return ok(render(parse(crediting))); }
+  }
+  async function sendCredit(crediting, rec) {
+    // the beneficiary and the key were fixed at the admit (no link read here)
+    const u = rec.beneficiary.economyUserId, x = byId[r.action.chestId] || { villageId: rec.village, rewardUnits: r.economyEffect.units };
     let res, err = null;
     try {
       res = await deps.credit({ userId: u, amount: Number(r.economyEffect.units), reason: lookup('chest', r.action.chestId)?.reason || `Rebel Ants Village · ${x.villageId} · ${r.action.chestId} · chest`,
-        metadata: { kind: 'chest', id: r.action.chestId, village: x.villageId, origin: 'RAAP_APPROVED', requestId: r.requestId }, idempotencyKey: oneTimeKey('chest', r.action.chestId, u) });
+        metadata: { kind: 'chest', id: r.action.chestId, village: x.villageId, origin: 'RAAP_APPROVED', requestId: r.requestId }, idempotencyKey: rec.idempotencyKey });
     } catch (e) { err = e; }
     if (err) {
       if (!(err.economyStatus && DEFINITE.has(err.code))) return ok(render(parse(crediting)));        // no answer / unclear: OUTCOME_UNKNOWN, kept
@@ -335,11 +340,11 @@ export async function handleChestOperation(raw, deps) {
   const s = await readState(c, deps, cur, [id]), live = stateOf(c, cc, s, [id]);
   if (r.configurationCommitment !== cc || r.economyEffect.units !== x.rewardUnits) return decline('RULES_CHANGED', live);
   const own = await ownership(c, deps);
-  if (own === 'UNKNOWN') return fail(503, 'TEMPORARILY_UNAVAILABLE', { committed: false });
+  if (own === 'UNKNOWN') return fail(503, 'TEMPORARILY_UNAVAILABLE');
   if (own === 'NOT_OWNED') { await endLinkIfSold(c, deps, now); return decline('NOT_OWNED', live); }
   if (s.claimed[0]) return decline('ALREADY_CLAIMED', live);
   if (r.state.version !== live.version || r.state.commitment !== live.commitment) return decline('STALE_STATE', live);
-  if (!deps.creditReady()) return fail(503, 'TEMPORARILY_UNAVAILABLE', { committed: false });
+  if (!deps.creditReady()) return fail(503, 'TEMPORARILY_UNAVAILABLE');
 
   // admitted from here: the claim, the version and either the held record or the intent, in one script
   const e = lookup('chest', id), capped = capApplies('chest'), day = utcDay(now * 1000), version = (BigInt(s.version) + 1n).toString();
@@ -347,24 +352,24 @@ export async function handleChestOperation(raw, deps) {
   const afterWith = (owedRaw) => ({ version, commitment: chestStateCommitment(c, cc, { ...s, claimed: [true], owed: [owedRaw] }, [id]) });
   const held = receiptOf(r, rc, { status: 'APPLIED', reason: 'NONE', before: r.state, after: afterWith(owed), effects: [{ kind: 'CHEST_CLAIM', chestId: id }], acceptedAt: now, committedAt: now,
     reward: { status: 'HELD', units: x.rewardUnits, economyTransactionId: null, idempotencyCommitment: ic, recordCommitment: heldRecord(owed, ic, x.rewardUnits) } });
-  const intent = canonical({ schema: 'universe.raap.chest-intent.v1', status: 'ADMITTED', requestCommitment: rc, request: r, acceptedAt: now, after: afterWith(ABSENT),
-    capped, dayKey: day, village: e.village });
+  // the intent carries its own evidence: the signed request, the beneficiary and the exact economy key
+  const intent = canonical({ schema: 'universe.raap.chest-intent.v1', status: 'ADMITTED', requestCommitment: rc, request: r, ownerApproval: auth.ownerApproval,
+    acceptedAt: now, after: afterWith(ABSENT), capped, dayKey: day, village: e.village, beneficiary: { economyUserId: u, linkId: cur.rec.linkId },
+    idempotencyKey: ikey, units: x.rewardUnits });
   let res;
   try {
     res = await deps.redis(['EVAL', ADMIT_LUA, '7', rKey, versionKey(c), currentKey(c), linkKey(cur.rec.linkId), KEYS.claimed(u), KEYS.owed(u), KEYS.day(u, day),
       s.version, cur.rec.linkId, cur.raw, member(id), ikey, s.owed[0], String(r.issuedAt), String(r.expiresAt), capped ? '1' : '0', String(e.amount), String(CAP),
       String(DAY_TTL), version, intent, canonical(held), owed, retain]);
   } catch (err) { res = null; }
-  if (!Array.isArray(res)) {
-    // the admit may or may not have happened: read it back once; never claim twice
-    const back = await deps.redis(['GET', rKey]).catch(() => null);
-    return back ? savedResult(back) : ok(receiptOf(r, rc, { status: 'OUTCOME_UNKNOWN', reason: 'AWAITING_CONFIRMATION', before: r.state, after: null, effects: [], acceptedAt: null, committedAt: null, reward: UNKNOWN_REWARD(ic) }));
-  }
+  // the admit may or may not have happened: read it back once (an intent found then is left as it is: PENDING)
+  if (!Array.isArray(res)) return (await readBack()) || unknown();
   if (res[0] === 'RECORDED') return savedResult(res[1]);
   if (res[0] === 'EXPIRED') return decline('EXPIRED', live);
   if (res[0] === 'CLAIMED') return decline('ALREADY_CLAIMED', live);
   if (res[0] === 'LINK') return decline('NOT_AUTHORIZED', live);
   if (res[0] === 'STALE') { let now2 = live; try { const c2 = await currentLink(c, deps); if (c2.rec && c2.rec.linkId === cur.rec.linkId) now2 = stateOf(c, cc, await readState(c, deps, c2, [id]), [id]); } catch (e2) {} return decline('STALE_STATE', now2); }
   if (res[0] === 'HELD') { await claimed(r, u, now, 'HELD', null); return ok(held); }
+  if (res[0] !== 'ADMITTED') return unknown();
   return settle(intent, parse(intent));
 }

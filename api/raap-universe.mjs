@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     const out = await handleOperation(await rawBody(req), deps);
     return send(res, out.status, out.body);
   } catch (e) {
-    // a read or check failed before any game change: nothing was saved
-    return send(res, 503, errorBody('TEMPORARILY_UNAVAILABLE', { committed: false }));
+    // unexpected: no claim either way (RAAP reads RECEIPT, never resends)
+    return send(res, 503, errorBody('TEMPORARILY_UNAVAILABLE'));
   }
 }

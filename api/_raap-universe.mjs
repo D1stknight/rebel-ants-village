@@ -295,8 +295,12 @@ export async function handleOperation(raw, deps) {
   const decline = async (reason, before) => {
     const d = receipt('DECLINED', reason, before, before, [], null);
     let set;
-    try { set = await deps.redis(['SET', rKey, canonical(d), 'NX', 'EXAT', String(retainAt(c, r.expiresAt))]); } catch (e) { return fail(503, 'RECEIPT_NOT_SAVED', { committed: false }); }
-    return set === 'OK' ? ok(d) : savedResult(await deps.redis(['GET', rKey]));
+    // not saved: no claim either way (another copy of this request id may have been applied meanwhile)
+    try { set = await deps.redis(['SET', rKey, canonical(d), 'NX', 'EXAT', String(retainAt(c, r.expiresAt))]); } catch (e) { return fail(503, 'RECEIPT_NOT_SAVED'); }
+    if (set === 'OK') return ok(d);
+    let raw2 = null;
+    try { raw2 = await deps.redis(['GET', rKey]); } catch (e) {}
+    return raw2 ? savedResult(raw2) : ok(receipt('OUTCOME_UNKNOWN', 'AWAITING_CONFIRMATION', before, null, [], null));
   };
 
   const [s, trait, own] = await Promise.all([live(), deps.trait(c.collectionKey, c.asset.tokenId), owned()]);

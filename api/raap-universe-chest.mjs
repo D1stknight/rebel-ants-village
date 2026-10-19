@@ -30,7 +30,7 @@ export default async function handler(req, res) {
     const out = await handleChestOperation(await rawBody(req), deps);
     return send(res, out.status, out.body);
   } catch (e) {
-    // a read or check failed before the guarded admit: nothing was claimed or paid
-    return send(res, 503, errorBody('TEMPORARILY_UNAVAILABLE', { committed: false }));
+    // unexpected: no claim either way (after an admit the handler answers itself; RAAP reads RECEIPT, never resends)
+    return send(res, 503, errorBody('TEMPORARILY_UNAVAILABLE'));
   }
 }
