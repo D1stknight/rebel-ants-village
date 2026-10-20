@@ -215,6 +215,12 @@ for f in res['faces']:
         for l in f.loops:
             other = [ol for ol in l.vert.link_loops if ol.face is not f]
             if other: l[uvL].uv = other[0][uvL].uv
+        # v2.35 Chumpz / Saints: the rim's UVs come from several texture islands, so across the cap the texture ran
+        # through the atlas (orange / blue shards in the cuff once the wrist moved to the narrow forearm, Pengu): the
+        # whole cap takes one rim point's UV (the one nearest the rim's middle UV), one colour of the rim
+        if SPECIES and len(f.loops) > 2:
+            uvs = np.array([l[uvL].uv[:] for l in f.loops]); k = int(np.argmin(np.linalg.norm(uvs - np.median(uvs, 0), axis=1)))
+            for l in f.loops: l[uvL].uv = uvs[k]
 print('handswap sleeve-end caps', len(res['faces']), 'from boundary edges', len(edges))
 bm.to_mesh(me); bm.free(); me.update()
 # v2.21 NPCs: what is left of the arm at the wrist (sleeve / arm guard end) rides the forearm only. Its leftover hand
