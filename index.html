@@ -528,6 +528,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
   color: #07201f;
   box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 0 8px rgba(94,207,202,0.55);
 }
+.ant-card-badge.free {
+  background: #e8c35a;
+  color: #241a02;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 0 8px rgba(232,195,90,0.5);
+}
 .ant-card-badge.forged {
   background: rgba(200,146,42,0.92);
   color: #1c1305;
@@ -1101,6 +1106,18 @@ const FRIEND_PLAYABLES = [
   { id: 'chumpz_racer', rebelId: 'chumpz_900001', tokenId: '900001', name: 'Chumpz Racer', image: 'assets/lobby/chumpz_racer.jpg', collectionKey: 'chumpz', playerModel: 'kit:chz_ape_racer', formLabel: 'Chumpz Ape' }
 ];
 const loadFriendPlayables = () => Promise.all(FRIEND_PLAYABLES.map((r) => attachActiveForgeCharacter({ ...r })));
+// Oct 20 the Free to play roster (api/free-roster.mjs, ticked in the NPC Forge): forged Rebels anyone can play: guests,
+// wallets without a Rebel and holders whose own Rebels are not forged yet. Never #001 (the starter card) or #893.
+const FREE_NEVER = new Set(['1', '893']);
+async function loadFreeRoster() {
+  let tokens = null;
+  try { const d = await (await fetch('/api/free-roster', { headers: { accept: 'application/json' } })).json(); if (d && d.ok && Array.isArray(d.tokens)) tokens = d.tokens; } catch (e) {}
+  return (tokens || Object.keys(VILLAGE_RIGGED)).map(String).filter((t) => !FREE_NEVER.has(t));
+}
+const freeRosterCards = (tokens) => Promise.all(tokens.map((t) => attachActiveForgeCharacter({
+  id: 'rebel_' + t, rebelId: 'rebel_' + t, tokenId: t, name: 'Rebel #' + t, collectionKey: 'battle_for_colony', free: true,
+  image: `/api/nft-image?c=battle_for_colony&t=${t}&s=thumb`, imageFull: `/api/nft-image?c=battle_for_colony&t=${t}&s=full`
+})));
 function getRebelForgeStatus(rebel, hasForgeCharacter) {
   if (rebel.playerModel) return 'ready';
   const afc = rebel.activeForgeCharacter || {};
@@ -1142,12 +1159,12 @@ function buildCard(rebel) {
   const hasForgeCharacter = Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl);
   const status = getRebelForgeStatus(rebel, hasForgeCharacter);
   const tokenNumber = getRebelCardNumber(rebel);
-  card.title = [rebel.name, status === 'ready' ? 'Playable 3D character ready' : status === 'forged' ? '3D character forged' : ''].filter(Boolean).join(' · ');
+  card.title = [rebel.name, rebel.free ? 'Free to play: anyone can play this forged Rebel' : status === 'ready' ? 'Playable 3D character ready' : status === 'forged' ? '3D character forged' : ''].filter(Boolean).join(' · ');
   if (status) card.classList.add('is-' + status);
 
   const cardLabel = `
     ${tokenNumber ? `<div class="ant-card-num">#${tokenNumber}</div>` : ''}
-    ${status ? `<div class="ant-card-badge ${status}">${status === 'ready' ? 'Ready' : 'Forged'}</div>` : ''}
+    ${rebel.free ? '<div class="ant-card-badge free">Free</div>' : status ? `<div class="ant-card-badge ${status}">${status === 'ready' ? 'Ready' : 'Forged'}</div>` : ''}
   `;
 
   const forgeThumb = status === 'ready' ? getRebelForgeThumb(rebel) : '';
@@ -1174,12 +1191,9 @@ async function showDefaultCard() {
   };
 
   const defaultRebel = await attachActiveForgeCharacter(starterRebel);
-  // Guest mode: every Rebel with a finished Forge character gets its own card, loaded fresh from the server, so a
+  // Guest mode (and wallets without a Rebel): the Free to play roster, each card loaded fresh from the server, so a
   // new "Make this my Rebel" shows here right away. Older local copies of the same Rebel are dropped.
-  const showcase = await Promise.all(Object.keys(VILLAGE_RIGGED).map((t) => attachActiveForgeCharacter({
-    id: 'rebel_' + t, rebelId: 'rebel_' + t, tokenId: t, name: 'Rebel #' + t, collectionKey: 'battle_for_colony',
-    image: `/api/nft-image?c=battle_for_colony&t=${t}&s=thumb`, imageFull: `/api/nft-image?c=battle_for_colony&t=${t}&s=full`
-  })));
+  const showcase = await freeRosterCards(await loadFreeRoster());
   const showTokens = new Set(showcase.map((r) => String(r.tokenId)));
   const savedForgePlayables = (await loadSavedForgePlayableCards()).filter((r) => !showTokens.has(String(r.tokenId || '')));
   const friends = await loadFriendPlayables();
@@ -1254,12 +1268,19 @@ async function loadNFTs(walletAddress) {
 
     // the friend playables sit after the wallet's ready Rebels; they are never picked by default
     const firstNotReady = ownedRebels.findIndex((rebel) => getRebelForgeStatus(rebel) !== 'ready');
+    const walletReady = firstNotReady !== 0 && ownedRebels.length > 0;
     ownedRebels.splice(firstNotReady < 0 ? ownedRebels.length : firstNotReady, 0, ...(await loadFriendPlayables()));
+    // none of the wallet's Rebels is forged yet: the Free to play roster comes after them (never picked by default)
+    if (!walletReady) {
+      const held = new Set(ownedRebels.map((rebel) => String(rebel.tokenId || '')));
+      ownedRebels.push(...(await freeRosterCards((await loadFreeRoster()).filter((t) => !held.has(t)))));
+    }
     const forgedReadyRebel = ownedRebels.find((rebel) => {
-      if (rebel.playerModel) return false;
+      if (rebel.playerModel || rebel.free) return false;
       return Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl) || getRebelForgeStatus(rebel) === 'ready';
     });
-    const readyCount = ownedRebels.filter((rebel) => !rebel.playerModel && getRebelForgeStatus(rebel) === 'ready').length;
+    const readyCount = ownedRebels.filter((rebel) => !rebel.playerModel && !rebel.free && getRebelForgeStatus(rebel) === 'ready').length;
+    const freeCount = ownedRebels.filter((rebel) => rebel.free).length, ownCount = ownedRebels.length - freeCount;
 
     // the Rebel last picked here or set in the Forge ("Make this my Rebel") comes first, if this wallet holds it
     let storedSel = {};
@@ -1275,11 +1296,12 @@ async function loadNFTs(walletAddress) {
     await selectAnt(selectedAnt);
 
     setStatus(
-      ownedRebels.length +
+      ownCount +
       ' Rebel' +
-      (ownedRebels.length > 1 ? 's' : '') +
+      (ownCount > 1 ? 's' : '') +
       ' found' +
-      (readyCount ? ` — ${readyCount} ready to play` : '')
+      (readyCount ? ` — ${readyCount} ready to play` : '') +
+      (freeCount ? ` — ${freeCount} free to play` : '')
     );
 
     document.getElementById('btn-enter').disabled = false;
