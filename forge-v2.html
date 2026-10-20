@@ -171,6 +171,10 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 .check{display:flex;gap:10px;align-items:center;font-size:13px;color:#d6ccb8}
 .check b{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:rgba(79,184,255,.14);color:var(--jade);font-size:11px}
 .note{font-size:12px;color:var(--washi-dim);line-height:1.5;margin-top:12px}
+.np{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.np input{width:100%;box-sizing:border-box;border-radius:10px;border:1px solid var(--line);background:rgba(239,230,210,.05);color:inherit;padding:12px 14px;font:15px/1.2 system-ui,sans-serif}
+.np input:focus{outline:none;border-color:rgba(143,208,255,.7)}
+@media (pointer:coarse){.np input{font-size:16px}}
 .picker{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:12px}
 .picker button{aspect-ratio:1;border-radius:10px;overflow:hidden;border:1px solid var(--line);position:relative;transition:all .25s}
 .picker button img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.7) brightness(.8);transition:all .25s}
@@ -1166,18 +1170,91 @@ async function api(path, body) {
   catch (e) { clearTimeout(tm); const er = new Error(e.name === 'AbortError' ? 'The forge took too long to answer' : 'Network error'); er.status = 408; throw er; }
   clearTimeout(tm);
   let j = null; try { j = await r.json(); } catch (e) { j = { ok: false, error: `Server error (${r.status})` }; }
-  if (!r.ok || j.ok === false) { const e = new Error(j.error || j.detail || `Request failed (${r.status})`); e.status = r.status; throw e; }
+  if (!r.ok || j.ok === false) { const e = new Error(j.error || j.detail || `Request failed (${r.status})`); e.status = r.status; e.code = j.code || null; e.body = j; throw e; }
   return j;
 }
-// Phase 2: who may forge this Rebel. { wallet, owner, isOwner, admin, used, limit, left, open }
+// Phase 2: who may forge this Rebel. { wallet, owner, isOwner, admin, used, limit, left, open, price, lastCharge }
+// + acct: the player's Rebel Ants account (api/econ-me: signedIn, name, balance), which pays for the forge
 async function loadOwn(t = state.token) {
-  try { return await api(`/api/forge-start?tokenId=${encodeURIComponent(t)}&collectionKey=${COL}`); } catch (e) { return { error: e.message }; }
+  try {
+    const [own, acct] = await Promise.all([api(`/api/forge-start?tokenId=${encodeURIComponent(t)}&collectionKey=${COL}`),
+      fetch('/api/econ-me', { cache: 'no-store', credentials: 'same-origin' }).then((r) => r.json()).catch(() => null)]);
+    own.acct = acct && acct.ok ? acct : null;
+    return own;
+  } catch (e) { return { error: e.message }; }
+}
+// Oct 20: a forge costs Rebel Points (api/_forge-charge.mjs): taken when it begins, given back if it ends without a
+// character. Admin forges are free.
+const fmtPts = (v) => Number(v || 0).toLocaleString('en-US');
+const forgePrice = () => (state.own && !state.own.admin && !state.own.error ? Number(state.own.price) || 0 : 0);
+// this wallet's forge for the Rebel is still open (24 h from its start): carry on in it, nothing more to pay
+const openMine = () => !!(state.own && !state.own.admin && state.own.open?.mine);
+const openUntil = () => new Date(Date.parse(state.own.open.startedAt) + 24 * 3600e3).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+const pointsHave = () => (state.own?.acct?.signedIn && state.own.acct.balance != null ? Number(state.own.acct.balance) : null);
+function pointsNote() {
+  const p = forgePrice(); if (!p) return '';
+  if (openMine()) return ` Your forge for this Rebel is open until ${openUntil()}: carry on, nothing more to pay.`;
+  const lc = state.own.lastCharge, a = state.own.acct;
+  const last = lc?.status === 'refunded' || lc?.status === 'released' ? ` Your last forge ended without a character, so its ${fmtPts(lc.amount)} points came back.` : '';
+  if (!a?.signedIn) return ` A forge takes ${fmtPts(p)} Rebel Points from your Rebel Ants account (Discord, or a name and PIN).${last}`;
+  return ` A forge takes ${fmtPts(p)} Rebel Points; you have ${pointsHave() == null ? 'some' : fmtPts(pointsHave())}. If the forge ends without a character, they come back.${last}`;
+}
+// more points: the points packs (assets/points-packs.js when it is on this page), else the Rebel Economy shop
+function getPoints() {
+  const need = Math.max(0, forgePrice() - (pointsHave() || 0));
+  if (window.RebelPoints?.open) return window.RebelPoints.open({ need, why: 'forge' });
+  window.open(state.own?.acct?.shopUrl || 'https://economy.rebelants.io/shop', '_blank', 'noopener');
+}
+async function refreshPoints() { if (!state.token) return; state.own = await loadOwn(); if (state.step === 0) renderSummon(0, true); }
+try { new BroadcastChannel('ra-econ').onmessage = () => refreshPoints(); } catch (e) {}
+addEventListener('storage', (e) => { if (e.key === 'raEconPing') refreshPoints(); });
+// sign in to the Rebel Ants account that pays: Discord (a popup that tells this page when it is done), or a name + PIN
+function payDiscord() {
+  const url = '/api/econ-discord-login?return=' + encodeURIComponent(location.pathname + location.search);
+  let w = null;
+  try { w = window.open(url + '&popup=1', 'rebelEconSignIn', 'width=520,height=760'); } catch (e) {}
+  if (!w) location.href = url;
+}
+let payBusy = false;
+async function payNameSubmit(action) {
+  const n = $('#npName'), p = $('#npPin'), msg = $('#npMsg');
+  const say = (t, bad) => { if (msg) { msg.textContent = t; msg.style.color = bad ? '#ff9a8a' : ''; } };
+  const name = (n?.value || '').trim(), pin = (p?.value || '').trim();
+  if (name.length < 3) return say('Your name needs at least 3 letters or numbers.', true);
+  if (!/^\d{4,6}$/.test(pin)) return say('Your PIN is 4 to 6 digits.', true);
+  if (payBusy) return;
+  payBusy = true; say(action === 'register' ? 'Making your account…' : 'Signing in…');
+  let d = {};
+  try { const r = await fetch('/api/econ-name-login', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, name, pin }) }); d = await r.json().catch(() => ({})); }
+  catch (e) { d = { ok: false, message: 'Could not reach the site. Check the connection and try again.' }; }
+  payBusy = false;
+  if (!d.ok) { if ((d.code === 'pin_wrong' || d.code === 'locked') && p) p.value = ''; return say(d.message || d.error || 'Not signed in.', true); }
+  try { new BroadcastChannel('ra-econ').postMessage({ signedIn: true }); } catch (e) {}
+  try { localStorage.setItem('raEconPing', String(Date.now())); } catch (e) {}
+  toast(`Signed in as ${d.name || name}`);
+  state.own = await loadOwn(); renderSummon(0, true);
+}
+function renderPaySignIn() {
+  renderCard(`<div class="eyebrow">STEP 1 / 5</div><h1>Pay for the forge<span class="tag">Rebel Points</span></h1>
+    <p class="lead">A forge takes ${fmtPts(forgePrice())} Rebel Points from your Rebel Ants account, the same points as your other Rebel games. Sign in to pay; if the forge ends without a character, the points come back.</p>
+    <div class="cta"><button class="btn fire wide" id="payDc">SIGN IN WITH DISCORD</button></div>
+    <div class="sep"></div>
+    <form class="np" id="npForm" novalidate autocomplete="off"><div class="eyebrow">NO DISCORD? USE A NAME AND PIN</div>
+      <input id="npName" maxlength="24" placeholder="Name" autocapitalize="off" spellcheck="false" aria-label="Name">
+      <input id="npPin" maxlength="6" placeholder="PIN, 4 to 6 digits" inputmode="numeric" type="password" aria-label="PIN">
+      <div class="cta"><button class="btn wide" type="submit">SIGN IN</button><button class="btn wide" type="button" id="npNew">NEW ACCOUNT</button></div>
+      <div class="note" id="npMsg"></div></form>
+    <div class="cta"><button class="btn wide" id="payBack">← BACK</button></div>`);
+  $('#payDc').onclick = payDiscord;
+  $('#npForm').onsubmit = (e) => { e.preventDefault(); payNameSubmit('login'); };
+  $('#npNew').onclick = () => payNameSubmit('register');
+  $('#payBack').onclick = () => renderSummon(0, true);
 }
 const canForge = () => !!(state.own && (state.own.admin || state.own.isOwner));
 function allowanceNote() {
   const o = state.own || {};
   if (o.admin) return 'Admin: your forges do not use the Rebel\'s allowance.';
-  if (o.isOwner) return o.left > 0 ? `${o.left} of ${o.limit} forges left for you on this Rebel. It keeps forging if you close the page.` : `You have used all ${o.limit} of your forges for this Rebel.`;
+  if (o.isOwner) return (o.left > 0 ? `${o.left} of ${o.limit} forges left for you on this Rebel. It keeps forging if you close the page.` : `You have used all ${o.limit} of your forges for this Rebel.`) + pointsNote();
   if (o.wallet) return 'Only the wallet that holds this Rebel can forge it. You can still awaken and watch its forged form.';
   return 'Forging needs the wallet that holds this Rebel.';
 }
@@ -1700,8 +1777,11 @@ function renderSummon(prev, quiet) {
   if (active()) cta = `<button class="btn fire wide" id="watchBtn">WATCH THE FORGE →</button>`;
   else if (!state.summoned) cta = `<button class="btn fire wide" id="summonBtn">SUMMON YOUR REBEL</button>`;
   else if (!canForge()) cta = state.own?.wallet ? '' : `<button class="btn fire wide" id="signBtn">${window.ethereum ? 'SIGN IN WITH YOUR WALLET TO FORGE' : 'CONNECT YOUR WALLET IN THE LOBBY'}</button>`;
+  else if (openMine()) cta = `<button class="btn fire wide" id="beginBtn">CONTINUE YOUR FORGE · OPEN UNTIL ${openUntil()}</button>`;
   else if (!state.own.admin && state.own.left <= 0) cta = '';
-  else cta = `<button class="btn fire wide" id="beginBtn">${forged ? 'FORGE A NEW VERSION' : 'BEGIN THE FORGE'} · ABOUT ${Math.round(total / 60)} MIN</button>`;
+  else if (forgePrice() && !state.own.acct?.signedIn) cta = `<button class="btn fire wide" id="payInBtn">SIGN IN TO PAY FOR THE FORGE · ${fmtPts(forgePrice())} POINTS</button>`;
+  else if (forgePrice() && pointsHave() != null && pointsHave() < forgePrice()) cta = `<button class="btn fire wide" id="getPtsBtn">GET REBEL POINTS · YOU HAVE ${fmtPts(pointsHave())} OF ${fmtPts(forgePrice())}</button>`;
+  else cta = `<button class="btn fire wide" id="beginBtn">${forged ? 'FORGE A NEW VERSION' : 'BEGIN THE FORGE'} · ${forgePrice() ? `${fmtPts(forgePrice())} POINTS` : `ABOUT ${Math.round(total / 60)} MIN`}</button>`;
   if (forged && !active()) cta += `<button class="btn shu wide" id="awakenOld">AWAKEN MY FORGED REBEL</button>`;
   renderCard(`
     <div class="eyebrow">STEP 1 / 5</div>
@@ -1719,7 +1799,14 @@ function renderSummon(prev, quiet) {
   }
   card.querySelectorAll('.picker button').forEach((b) => b.onclick = () => selectToken(b.dataset.t));
   const sb = $('#summonBtn'); if (sb) sb.onclick = summon;
-  const bb = $('#beginBtn'); if (bb) bb.onclick = beginForge;
+  const bb = $('#beginBtn');
+  if (bb) bb.onclick = () => {                     // a paid forge asks once more before the points are taken
+    if (!forgePrice() || openMine() || bb.dataset.sure) return beginForge();
+    const was = bb.textContent; bb.dataset.sure = '1'; bb.textContent = `TAP AGAIN · TAKE ${fmtPts(forgePrice())} POINTS AND FORGE`;
+    setTimeout(() => { if (bb.isConnected && bb.dataset.sure) { delete bb.dataset.sure; bb.textContent = was; } }, 5000);
+  };
+  const pi = $('#payInBtn'); if (pi) pi.onclick = renderPaySignIn;
+  const gp = $('#getPtsBtn'); if (gp) gp.onclick = getPoints;
   const si = $('#signBtn'); if (si) si.onclick = signInForge;
   const wb = $('#watchBtn'); if (wb) wb.onclick = () => go(liveStep());
   const ao = $('#awakenOld'); if (ao) ao.onclick = awakenExisting;
@@ -1777,13 +1864,30 @@ let opening = false;
 async function beginForge() {
   if (active() || opening) return;
   if (!window.buildCharacterBlueprint) { toast('Forge tools are still loading, try again in a moment'); return; }
-  // Phase 2: the server checks the wallet holds this Rebel and uses one of its forges
-  opening = true; const bb = $('#beginBtn'); if (bb) { bb.disabled = true; bb.textContent = 'OPENING THE FORGE…'; }
-  try {
-    const d = await api('/api/forge-start', { tokenId: String(state.token), collectionKey: COL });
-    if (state.own && !d.admin) Object.assign(state.own, { used: d.used, left: d.left });
-  } catch (e) {
-    opening = false; toast(e.message || 'The forge could not open'); state.own = await loadOwn(); renderSummon(0, true); return;
+  // Phase 2: the server checks the wallet holds this Rebel and uses one of its forges (and takes its price); a forge this
+  // wallet still has open for the Rebel just carries on
+  const carry = openMine();
+  opening = true; const bb = $('#beginBtn'); if (bb) { bb.disabled = true; bb.textContent = forgePrice() && !carry ? 'TAKING THE POINTS…' : 'OPENING THE FORGE…'; }
+  if (!carry) {
+    try {
+      const quote = async () => (forgePrice() ? (await api(`/api/forge-start?tokenId=${encodeURIComponent(state.token)}&collectionKey=${COL}&quote=1`)).chargeId || null : null);
+      let chargeId = await quote(), d = null;
+      if (forgePrice() && !chargeId) throw new Error('Sign in to your Rebel Ants account to pay for the forge');
+      for (let tries = 0; ; tries++) {
+        try { d = await api('/api/forge-start', { tokenId: String(state.token), collectionKey: COL, chargeId }); break; }
+        catch (e) {
+          if ((e.code === 'econ_retry' || e.status === 408) && chargeId && tries < 3) { await new Promise((r) => setTimeout(r, 1500 * (tries + 1))); continue; }
+          if (e.code === 'quote_expired' && tries < 1) { chargeId = await quote(); continue; }
+          throw e;
+        }
+      }
+      if (state.own && !d.admin) Object.assign(state.own, { used: d.used, left: d.left });
+      if (d.charged) { if (state.own?.acct && d.balance != null) state.own.acct.balance = d.balance; toast(`${fmtPts(d.charged)} Rebel Points taken${d.balance != null ? ` · ${fmtPts(d.balance)} left` : ''}`); }
+    } catch (e) {
+      opening = false;
+      toast(e.code === 'not_enough_points' ? `Not enough Rebel Points: a forge takes ${fmtPts(e.body?.price || forgePrice())}` : (e.message || 'The forge could not open'));
+      state.own = await loadOwn(); renderSummon(0, true); if (e.code === 'econ_required') renderPaySignIn(); return;
+    }
   }
   opening = false;
   newSession(); state.maxStep = 1; flash(0.4, 0.8); Snd.play('stamp'); Snd.play('brush1', { delay: 0.5 });
