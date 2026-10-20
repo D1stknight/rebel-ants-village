@@ -43,7 +43,7 @@ export default async function handler(req, res) {
         ...(o.skirtfix ? { FORGE_SKIRTFIX: '1', FORGE_KEEP_TEAR: '', FORGE_KEEP_BRIDGE: '' } : {}), ...(o.headUp ? { FORGE_HEAD_UP: String(o.headUp) } : {}),
         ...(o.headUrl ? { FORGE_HEAD_URL: String(o.headUrl) } : {}), ...(o.armorUrl ? { FORGE_ARMOR_URL: String(o.armorUrl), FORGE_ANCHORS_URL: String(o.anchorsUrl) } : {}),
         ...(o.cutBridges && !o.skirtfix ? { FORGE_KEEP_TEAR: '', FORGE_KEEP_BRIDGE: '' } : {}), ...(o.headScale != null ? { FORGE_HEAD_SCALE: String(o.headScale) } : {}),
-        ...(o.headAuto ? { FORGE_HEAD_AUTO: '1' } : {}) };
+        ...(o.headAuto ? { FORGE_HEAD_AUTO: '1' } : {}), ...(o.friend ? { FORGE_FRIEND: String(o.friend) } : {}) };   // v2.36 a Chumpz / Saints player: the same skeleton as its rig
       const sandbox = await Sandbox.create({ source: { type: 'snapshot', snapshotId: worker.snapshotId }, persistent: false, resources: { vcpus: 2 }, timeout: JOB_TIMEOUT_MS,
         tags: { purpose: 'forge-moves-job', build: buildId.slice(0, 200) }, ...creds() });
       const cmd = await sandbox.runCommand({ cmd: 'bash', args: ['-c', `mkdir -p ${JOB_DIR} && bash ${FW}/job.sh "$SRC_URL" "$RIG_NAME" ${JOB_DIR}`], env, sudo: true, detached: true });
