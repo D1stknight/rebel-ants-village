@@ -996,8 +996,29 @@ const gamesReady = () => { const g = workerInfo?.games; return !!(g && g.have >=
 const packMoves = (r) => r.gamesClips || GAMES_V1;
 const packOld = (r) => !!r.games && !!gamesMoves && gamesMoves.some((n) => !packMoves(r).includes(n));
 const packTodo = (r) => !r.games || packOld(r);
+// Oct 20 the Free to play roster (api/free-roster.mjs): forged Rebels anyone can play from the lobby; ticked here
+let freeRoster = null;   // { tokens: Set, saved, busy }
+const FREE_NEVER = new Set(['1', '893']);
+async function loadFreeRoster() {
+  try { const d = await api('/api/free-roster'); freeRoster = { tokens: new Set(d.tokens || []), saved: !!d.saved, busy: false }; } catch (e) { freeRoster = null; }
+}
+async function setFreeRoster(body, undo) {
+  if (!freeRoster || freeRoster.busy) return;
+  freeRoster.busy = true; paintGames();
+  try { const d = await api('/api/free-roster', body); freeRoster.tokens = new Set(d.tokens || []); freeRoster.saved = !!d.saved; }
+  catch (e) { toast(e.message, 9000); if (undo) undo(); }
+  freeRoster.busy = false; paintGames();
+}
+function toggleFree(tok, on) {
+  if (!freeRoster) return;
+  const was = new Set(freeRoster.tokens), next = [...freeRoster.tokens].filter((t) => t !== tok);
+  if (on) next.push(tok);
+  freeRoster.tokens = new Set(next);
+  setFreeRoster({ tokens: next }, () => { freeRoster.tokens = was; });
+}
+function resetFree() { if (confirm('Put the Free to play roster back to the lobby\'s own showcase list?')) setFreeRoster({ reset: true }); }
 async function loadGamesPacks() {
-  try { gamesList = (await api('/api/forge-games-packs')).rebels || []; } catch (e) { const b = $('#gamesBox'); if (b) b.innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
+  try { [gamesList] = await Promise.all([api('/api/forge-games-packs').then((d) => d.rebels || []), loadFreeRoster()]); } catch (e) { const b = $('#gamesBox'); if (b) b.innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
   try { gamesMoves = (await (await fetch('/forge-worker/anim/clips_games.json', { cache: 'no-store' })).json()).map((c) => c.name); } catch (e) { gamesMoves = null; }
   paintGames();
   // jobs still running (started on this or another computer): watch them, so they finish and none is started twice
@@ -1018,10 +1039,17 @@ function paintGames() {
     if (j.gamesError) return `<span class="bad">made but not saved: ${esc(j.gamesError)}</span>`;
     return `<span class="bad">made on a worker image without the games moves${j.gamesMissing?.length ? ` (${j.gamesMissing.length} of ${GAMES_PACK.length} missing)` : ''}: make again</span>`;
   };
+  const free = (r) => {
+    if (!freeRoster || r.collectionKey !== 'battle_for_colony') return '';
+    if (FREE_NEVER.has(r.tokenId)) return ` · <span style="opacity:.6">${r.tokenId === '1' ? 'the starter' : 'not free until reforged'}</span>`;
+    const on = freeRoster.tokens.has(r.tokenId), can = r.publicRig || on;
+    return ` · <label title="${can ? 'On the lobby\'s Free to play roster: anyone can play it' : 'Needs a public forged character: make it in the Forge as admin (Make this my Rebel)'}" style="${can ? '' : 'opacity:.5'}"><input type="checkbox" ${on ? 'checked' : ''} ${can && !freeRoster.busy ? '' : 'disabled'} onchange="toggleFree('${esc(r.tokenId)}', this.checked)"> Free to play</label>`;
+  };
   const what = old ? (old === todo.length ? `the ${old} older` : `${todo.length}`) : `the missing ${todo.length}`;
   const label = gamesRun.on ? (gamesRun.note ? 'Rebuilding the worker…' : 'Making…') : gamesReady() ? `Make ${what}` : `Rebuild worker, then make ${what}`;
   box.innerHTML = `<div class="state"><b>Games packs</b>: ${have} of ${gamesList.length} Rebels in play${old ? ` · ${old} older (without the new moves)` : ''}${gamesRun.note ? ` · ${esc(gamesRun.note)}` : gamesRun.on ? ` · making ${gamesRun.active.size} now` : ''}</div>
-    <div style="max-height:180px;overflow:auto;margin-top:4px">${gamesList.map((r) => `<div class="state">${esc(r.name || '#' + r.tokenId)} <span style="opacity:.6">${esc(r.collectionKey)} ${esc(r.tokenId)}</span> · ${line(r)}</div>`).join('') || '<div class="state">No Rebels with a Forge rig in play.</div>'}</div>
+    ${freeRoster ? `<div class="state" style="margin-top:2px"><b>Free to play</b>: ${freeRoster.tokens.size} Rebel${freeRoster.tokens.size === 1 ? '' : 's'} on the lobby's roster${freeRoster.saved ? ` · <a href="#" style="color:#5ecfca" onclick="resetFree();return false">back to the showcase list</a>` : ' (the showcase list)'}${freeRoster.busy ? ' · saving…' : ''}</div>` : ''}
+    <div style="max-height:180px;overflow:auto;margin-top:4px">${gamesList.map((r) => `<div class="state">${esc(r.name || '#' + r.tokenId)} <span style="opacity:.6">${esc(r.collectionKey)} ${esc(r.tokenId)}</span> · ${line(r)}${free(r)}</div>`).join('') || '<div class="state">No Rebels with a Forge rig in play.</div>'}</div>
     <div class="row" style="margin-top:6px"><button class="teal" onclick="makeGamesPacks()" ${gamesRun.on || !todo.length ? 'disabled' : ''}>${label}</button><button onclick="loadGamesPacks()" ${gamesRun.on ? 'disabled' : ''}>Refresh</button></div>
     <div class="state" style="margin-top:4px">Each one re-runs the Rigger on that Rebel's own sculpt (about 4 minutes, two at a time) and keeps only the games moves; the rig and its weapon moves are not changed. Keep this page open while they run.</div>`;
 }
