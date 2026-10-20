@@ -30,7 +30,7 @@ _mi={i for i,mt in enumerate(m.data.materials) if mt and any(mt.name.startswith(
 # v2.28 NPC species (Chumpz, Saints): each vertex's base colour (the texture under its UVs, loop average) goes into the npz
 # too; landmarks finds the wrist where the arm's colour turns into the sculpted hand's. Rebels and Rebel villagers: no C.
 _C=None
-if _os.environ.get('FORGE_NPC') and _os.environ.get('FORGE_NPC_SPECIES') and m.data.uv_layers.active is not None:
+if (_os.environ.get('FORGE_NPC') or _os.environ.get('FORGE_NPC_BODY')) and _os.environ.get('FORGE_NPC_SPECIES') and m.data.uv_layers.active is not None:
     me=m.data; nl=len(me.loops); npo=len(me.polygons)
     lv=np.zeros(nl,np.int64); me.loops.foreach_get('vertex_index',lv)
     uv=np.zeros(nl*2,np.float32); me.uv_layers.active.data.foreach_get('uv',uv); uv=uv.reshape(-1,2)

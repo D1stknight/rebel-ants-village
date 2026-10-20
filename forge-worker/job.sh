@@ -25,6 +25,11 @@ NPC="${FORGE_NPC:-}"; MOVES="$FW/anim/clips.json"
 # colour turns into the sculpted hand's (the hand-length wrist left the palm on the arm beside the glove)
 # v2.29 NPCs dance at the parties: the games pack's four dances (dance_wave / tut / house / gangnam) are NPC clips too,
 # when the worker has their files (optional moves in anim/clips_npc.json)
+# v2.36 Chumpz / Saints players (FORGE_FRIEND=ape|human, the Rebel Forge for those collections' holders): the NPC body
+# handling of their species (wrist, sleeves, gloves, head yaw, cuff bones: FORGE_NPC_BODY for the rigger scripts) with
+# the Rebels' clip set, weapon moves and games pack. FORGE_NPC (the NPC clip set) stays off.
+FRIEND=""
+if [ -z "$NPC" ] && [ -n "${FORGE_FRIEND:-}" ]; then FRIEND="$FORGE_FRIEND"; export FORGE_NPC_BODY=1 FORGE_NPC_SPECIES="$FRIEND"; fi
 SPECIES="${FORGE_NPC_SPECIES:-}"
 if [ -n "$NPC" ]; then
   MOVES="$FW/anim/clips_npc.json"
@@ -126,7 +131,8 @@ if [ -n "$SPECIES" ]; then run "$R/handkeep.py" -- "$O/anim6_ff.blend" "$O/anim6
 if [ -n "$NPC" ]; then run "$R/npcarms.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v2.16 NPC arms: no elbow flick, pointing line, wave rebuilt on the villager's own arm (flat shoulder pad, palm forward), claps meet
                        run "$R/handfloor.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v2.13 NPC hands on the floor
                        run "$R/npcstance.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v2.14 NPCs stand tall, head up in the run
-                       run "$R/cufftwist.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"; fi  # v2.21 NPC cuffs follow the hand's twist only (after every hand step)
+                       run "$R/cufftwist.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v2.21 NPC cuffs follow the hand's twist only (after every hand step)
+elif [ -n "$FRIEND" ]; then run "$R/cufftwist.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"; fi  # v2.36 friend players' cuff bones too (after shoulderfix / antennafix)
 step export;     FORGE_NAME="$NAME" FORGE_DECIMATE="${FORGE_DECIMATE:-0.35}" FORGE_TEX_BASE=$([ -n "$NPC" ] && echo 1024 || echo 2048) FORGE_TEX_OTHER=512 run "$R/export.py" -- "$O/anim6_ff.blend" "$JOB/rig.glb"
 # v2.12 head cloth: skully-wrap flaps / bandana tails get spring chains (cloth_flap_*), on the finished GLB. Optional.
 step headcloth;  run "$R/headcloth.py" "$JOB/rig.glb" "$JOB/rig.glb" --report "$JOB/headcloth.json" || echo "headcloth failed (non-fatal)" >> "$JOB/log"

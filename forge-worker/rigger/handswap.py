@@ -42,7 +42,7 @@ def srgb2lin(c): return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) 
 # v2.18 NPC hands (FORGE_NPC, the admin NPC Forge): both gloves one size, from the two generated hands together and
 # kept within what the approved villagers have (11.2-12.4 % of the body height); a lone big or small blob hand made one
 # glove 40 % bigger than the other (Shogun). Rebels keep their own per-hand sizes.
-NPCM = bool(os.environ.get('FORGE_NPC'))
+NPCM = bool(os.environ.get('FORGE_NPC') or os.environ.get('FORGE_NPC_BODY'))   # v2.36 + Chumpz / Saints players (their gestures' finger poses stay NPC only: FORGE_NPC below)
 HGT = float(co[:, 2].max() - co[:, 2].min())
 # v2.25 Chumpz (ape) and Saints (human) NPCs wear the gloves too. Their sculpted hands are drawn oversized (1.6-1.8x a
 # glove's surface), so the glove takes a set share of the height instead of their reach: a human hand ~10.6 %, an ape's

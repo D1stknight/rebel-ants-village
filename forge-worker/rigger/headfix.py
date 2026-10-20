@@ -23,7 +23,7 @@ SKIP = set(os.environ.get('FORGE_HEAD_SKIP', 'cartwheel,backflip,front_flip,flip
 # bone pitches past vertical against its rest: a Shogun neck reached 92 deg in the jump's landing crouch, so the neck
 # and head turned round for three frames (the "360" of the head). Same yaw as before while the bone is upright-ish
 # (idle / walk / run within 0.5-4 deg). Rebels keep the facing yaw.
-NPCM = bool(os.environ.get('FORGE_NPC'))
+NPCM = bool(os.environ.get('FORGE_NPC') or os.environ.get('FORGE_NPC_BODY'))   # v2.36 + Chumpz / Saints players
 bpy.ops.wm.open_mainfile(filepath=src)
 arm = bpy.data.objects['Armature']; P = 'mixamorig_'; sc = bpy.context.scene
 Aw = arm.matrix_world

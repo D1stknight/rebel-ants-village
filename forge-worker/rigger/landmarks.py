@@ -2,7 +2,7 @@ import os, numpy as np
 from sil import silhouette
 # v2.22 NPC villagers (FORGE_NPC): torn skirt strips, knee pads and tall boots around the legs threw off the ankle, knee
 # and hip landmarks (Wokou: ankle in the boot sole, knee 13 cm behind the leg, hips 5.5 cm lopsided -> rubbery legs)
-NPCM = bool(os.environ.get('FORGE_NPC'))
+NPCM = bool(os.environ.get('FORGE_NPC') or os.environ.get('FORGE_NPC_BODY'))   # v2.36 + Chumpz / Saints players
 # v2.23 NPC species (FORGE_NPC_SPECIES ape / human: Chumpz, Saints): sculpted hands come out of a sleeve, and the narrowest
 # arm cross-section is the sleeve cuff, 4-6 % of the height up the forearm, so the hands came out long and turned from
 # mid-forearm. Their wrist sits one hand length (of the body height) back from the fingertip along the arm's own centre line.

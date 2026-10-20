@@ -24,7 +24,7 @@ _E = np.zeros(len(me.data.edges) * 2, np.int64); me.data.edges.foreach_get('vert
 _, lab = connected_components(coo_matrix((np.ones(len(_E)), (_E[:, 0], _E[:, 1])), shape=(len(V), len(V))), directed=False)
 _o = np.argsort(lab, kind='stable'); _b = np.searchsorted(lab[_o], np.arange(lab.max() + 2))
 comp = {c: _o[_b[c]:_b[c + 1]] for c in range(lab.max() + 1)}
-SPECIES = os.environ.get('FORGE_NPC_SPECIES', '') if os.environ.get('FORGE_NPC') else ''
+SPECIES = os.environ.get('FORGE_NPC_SPECIES', '') if (os.environ.get('FORGE_NPC') or os.environ.get('FORGE_NPC_BODY')) else ''   # v2.36 + friend players
 report = {}
 def chainw(side):
     cidx = [i for i, n in vg.items() if n.startswith(P + side) and any(k in n for k in ('Arm', 'ForeArm', 'Hand', 'Thumb', 'Index', 'Middle', 'Ring', 'Pinky')) and 'Shoulder' not in n]

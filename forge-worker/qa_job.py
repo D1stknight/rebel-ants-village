@@ -3,6 +3,9 @@
 import bpy, sys, os, json, struct, re, math, numpy as np
 a = sys.argv[sys.argv.index('--') + 1:]; blend, glb, out, logf = a[0], a[1], a[2], a[3]
 NPC = bool(os.environ.get('FORGE_NPC'))   # v2.13 NPC villagers: their own clips and checks (tears, strays, lean, floor, head snaps)
+# v2.36 Chumpz / Saints players: the Rebels' clips and checks, plus the NPC body checks that are not about NPC clips (glove
+# strays, head snaps, arms fused to the body, the species wrist ring)
+FRIEND = not NPC and bool(os.environ.get('FORGE_NPC_BODY'))
 CLIPS = ['idle', 'walk', 'run', 'talking', 'waving', 'wave_short', 'pick_up', 'bow', 'rallying', 'pointing', 'clapping', 'look_around', 'jump'] if NPC else ['idle', 'walk', 'run', 'punch_combo', 'roundhouse_kick', 'backflip']
 ENDONLY = {'jump'} if NPC else set()   # the Rebels' own jump (deep landing crouch): only checked for landing on the floor and head snaps
 bpy.ops.wm.open_mainfile(filepath=blend)
@@ -15,7 +18,7 @@ sc = bpy.context.scene
 Mw = np.array(me.matrix_world)
 stretch = {}
 npc = {}
-if NPC:
+if NPC or FRIEND:
     # dominant bone per vertex: head and feet centres give the mesh lean (feet -> head against vertical, + forward)
     gn = {g.index: g.name for g in me.vertex_groups}; dom = []
     for v in me.data.vertices:
@@ -94,10 +97,10 @@ for c in CLIPS:
         nq['end'] = float((V.reshape(-1, 3) @ Mw[:3, :3].T + Mw[:3, 3])[:, 2].min()) - floor0
         pop = head_pop(act)
         npc[c] = {'tear': round(nq['tear'], 3), 'lean': [round(nq['lean'][0], 1), round(nq['lean'][1], 1)], 'floorCm': round(nq['floor'] * 100, 1), 'headPop': round(pop, 1), 'endCm': round(nq['end'] * 100, 1), **({'cuffCm': round(nq.get('cuff', 0.0) * 100, 1)} if CUFF else {})}
-if NPC:
+if NPC or FRIEND:
     # v2.21 head snaps in every other clip too (flip_kick turned the head round on rigs before 2.19)
     npc['headSnaps'] = {a_.name: round(p_, 1) for a_ in bpy.data.actions if a_.name not in CLIPS and a_.layers for p_ in [head_pop(a_)] if p_ > 30}
-if NPC:
+if NPC or FRIEND:
     # v2.17 arms fused to the body: when the renders show the arms against the sides, the sculpt joins the inner arm to
     # the chest (the Bushi) and every arm move pulls a web out of the chest. Tested on the exported GLB (what the village
     # shows; on the full mesh the web spreads over several thin rows): both upper arms raised 100 deg in the plane of
@@ -171,10 +174,10 @@ H = float(np.ptp(VW[:, 2])) or 1.0; Wd = float(np.percentile(VW[:, 0], 99.9) - n
 if Wd > 1.2 * H or Dp > 0.7 * H: fails.append(f'rest pose too wide ({Wd / H:.2f} x {Dp / H:.2f} of height)')
 # v2.25 Chumpz / Saints: fur at the wrist (Big Chain) or a sleeve cuff makes the raw ring wide; the glove cuff is kept to
 # the wrist's own size anyway, so it is not a body pick-up there
-SPECIES = os.environ.get('FORGE_NPC_SPECIES', '') if NPC else ''
+SPECIES = os.environ.get('FORGE_NPC_SPECIES', '') if NPC or FRIEND else ''
 for m_ in re.finditer(r'hand length ([\d.]+) .*?wrist girth [\d.]+ \(raw ([\d.]+)\)', log):
     if not SPECIES and float(m_.group(2)) > 0.6 * float(m_.group(1)): fails.append('hands: the wrist ring picked up the body'); break
-if NPC:
+if NPC or FRIEND:   # friend players: strays, arms fused, head snaps (their clips have no NPC per-clip entries)
     # villagers stand, talk and gesture: pieces torn free, leftover glove parts, a sitting / leaning body, sinking into
     # the floor or a head that snaps are what a player notices (each one was seen on the old villagers)
     if npc.get('strays'): fails.append(f"{npc['strays']} glove vertices are not driven by the hand (pieces stay behind)")
@@ -195,6 +198,6 @@ if NPC:
         if lim and max(abs(q['lean'][0]), abs(q['lean'][1])) > lim: reasons.append(f"{c}: body leans {q['lean']} deg from its rest pose")
         if q['floorCm'] < -3: reasons.append(f"{c}: sinks {-q['floorCm']} cm into the floor")
 reasons = fails + reasons
-res = {'verdict': 'fail' if fails else ('review' if reasons else 'pass'), 'reasons': reasons, 'stretch': stretch, 'glb': glbinfo, 'rig': rig, 'rest': {'width': round(Wd / H, 3), 'depth': round(Dp / H, 3)}, **({'npc': npc} if NPC else {})}
+res = {'verdict': 'fail' if fails else ('review' if reasons else 'pass'), 'reasons': reasons, 'stretch': stretch, 'glb': glbinfo, 'rig': rig, 'rest': {'width': round(Wd / H, 3), 'depth': round(Dp / H, 3)}, **({'npc': npc} if NPC or FRIEND else {})}
 json.dump(res, open(out, 'w'), indent=1)
 print('qa', res['verdict'], reasons)
