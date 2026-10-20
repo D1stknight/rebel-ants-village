@@ -6,6 +6,7 @@
 // When the player comes back the Forge picks up where it is (the versions wait to be picked; a finished rig awakens).
 import { isAdminRequest, createAdminSessionToken } from './_admin-auth.mjs';
 import { redis } from './_wallet.mjs';
+import { FORGE_PRICE, settleDue } from './_forge-charge.mjs';
 
 const SET = 'forge:pending:v1';
 const MAX_AGE_MS = 26 * 3600 * 1000;
@@ -81,8 +82,11 @@ export default async function handler(req, res) {
       if (r.done) await redis([['SREM', SET, id]]);
       out.push(r);
     }
+    // paid forges whose window ended: keep the points (a rig finished) or give them back
+    let charges = [];
+    if (FORGE_PRICE > 0) { try { charges = await settleDue({ limit: 20 }); } catch (e) { charges = [['error', e.message]]; } }
     await redis([['DEL', 'forge:sweep:lock:v1']]);
-    return res.status(200).json({ ok: true, pending: (m?.result || []).length, swept: out });
+    return res.status(200).json({ ok: true, pending: (m?.result || []).length, swept: out, charges });
   } catch (e) {
     try { await redis([['DEL', 'forge:sweep:lock:v1']]); } catch (e2) {}
     return res.status(500).json({ ok: false, error: e.message });

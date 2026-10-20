@@ -200,6 +200,20 @@ export async function openForge(collectionKey, tokenId, wallet, quotaWallet = wa
   const used = Number(inc?.result || st.used + 1);
   return { ok: true, used, limit: FORGE_LIMIT, left: Math.max(0, Math.min(FORGE_LIMIT - used, TOKEN_LIFETIME - st.lifetimeUsed - 1)), open };
 }
+// whether a forge could open now, counting nothing: the Rebel's forges left and the owner's starts today (a paid forge
+// asks before it takes the points)
+export async function forgePrecheck(collectionKey, tokenId, quotaWallet) {
+  const st = await forgeStatus(collectionKey, tokenId, quotaWallet);
+  if (st.left <= 0) return { ok: false, reason: st.used >= FORGE_LIMIT ? 'owner' : 'lifetime', ...st };
+  const [d] = await redis([['GET', dKey(quotaWallet)]]);
+  if (Number(d?.result || 0) >= WALLET_DAILY) return { ok: false, reason: 'daily', ...st };
+  return { ok: true, ...st };
+}
+// a paid forge that ended without a character: its owner gets that forge back (the Rebel's lifetime count too)
+const DECR_TO_0 = "local v = tonumber(redis.call('GET', KEYS[1]) or '0') if v > 0 then return redis.call('DECR', KEYS[1]) end return 0";
+export async function giveForgeBack(collectionKey, tokenId, owner) {
+  await redis([...(owner ? [['EVAL', DECR_TO_0, '1', qKey(collectionKey, tokenId, owner)]] : []), ['EVAL', DECR_TO_0, '1', lKey(collectionKey, tokenId)]]);
+}
 // admin: the current owner gets all forges back (the Rebel's lifetime count too)
 export async function resetForges(collectionKey, tokenId, owner) {
   await redis([...(owner ? [['DEL', qKey(collectionKey, tokenId, owner)]] : []), ['DEL', lKey(collectionKey, tokenId)], ['DEL', oKey(collectionKey, tokenId)], ['DEL', uKey(collectionKey, tokenId)]]);

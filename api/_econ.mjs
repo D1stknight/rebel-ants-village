@@ -31,6 +31,8 @@ export function econEnv() {
 }
 export const econReady = () => Object.values(econEnv()).every(Boolean);
 export function economyHost() { try { return new URL(env('REBEL_ECONOMY_URL')).host; } catch (e) { return null; } }
+// the Rebel Economy's points shop (the Forge's "Get Rebel Points" until the packs open in the village)
+export function econShopUrl() { const b = env('REBEL_ECONOMY_URL').replace(/\/+$/, ''); return /^https?:\/\//.test(b) ? `${b}/shop` : null; }
 
 function secret() {
   const s = env('VILLAGE_SESSION_SECRET');
@@ -165,11 +167,22 @@ export async function econNameBalance(userId) {
 }
 // credit points (idempotencyKey: the same key never pays twice) -> { newBalance, transactionId, userId, amount }
 // (a key the economy has seen answers with that first transaction: its id, user and amount)
-export async function econCredit({ userId, amount, reason, metadata, idempotencyKey }) {
-  const { ok, status, data } = await econCall('/api/internal/credit', { userId, amount: Math.round(amount), type: 'game_reward', source: ECON_SOURCE, reason: String(reason || '').slice(0, 500), metadata, idempotencyKey });
+export async function econCredit({ userId, amount, reason, metadata, idempotencyKey, type = 'game_reward' }) {
+  const { ok, status, data } = await econCall('/api/internal/credit', { userId, amount: Math.round(amount), type, source: ECON_SOURCE, reason: String(reason || '').slice(0, 500), metadata, idempotencyKey });
   if (!ok) throw Object.assign(new Error(data.message || 'The Rebel Economy did not take the points'), { status: status >= 500 ? 502 : status, code: data.error, economyStatus: status });
   return { newBalance: Number(data.newBalance) || 0, transactionId: data.transactionId || null,
     userId: data.userId != null ? String(data.userId) : null, amount: data.amount != null ? String(data.amount) : null };
+}
+
+// take points (a forge) -> { newBalance, transactionId, userId, amount }. The economy answers any key it has seen with that
+// first transaction, whatever it was (a credit, another user), so the answer must be this very debit, else it is refused
+// (code key_conflict): callers give every debit its own key.
+export async function econDebit({ userId, amount, reason, metadata, idempotencyKey }) {
+  const { ok, status, data } = await econCall('/api/internal/debit', { userId, amount: Math.round(amount), type: 'spend', source: ECON_SOURCE, reason: String(reason || '').slice(0, 500), metadata, idempotencyKey });
+  if (!ok) throw Object.assign(new Error(data.message || 'The Rebel Economy did not take the points'), { status: status >= 500 ? 502 : status, code: data.error, economyStatus: status });
+  if (data.direction !== 'debit' || String(data.userId) !== String(userId) || String(data.amount) !== String(Math.round(amount)))
+    throw Object.assign(new Error('The Rebel Economy answered with another transaction'), { status: 502, code: 'key_conflict' });
+  return { newBalance: Number(data.newBalance) || 0, transactionId: data.transactionId || null, userId: String(data.userId), amount: String(data.amount) };
 }
 
 // ---- the page Discord sends the player back to ----

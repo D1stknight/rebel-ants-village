@@ -3,6 +3,7 @@
 // writes output.forgeRigGlbUrl + forgeRig.qa to the build record and stops the sandbox.
 import { put } from '@vercel/blob';
 import { Sandbox, creds, JOB_DIR, JOB_TIMEOUT_MS, redis, loadBuild, updateRigging, readText, sanitize, body } from './_forge-rig.mjs';
+import { keepForge } from './_forge-charge.mjs';
 
 // Rebel Forge gloves (rigger 2.33): a gloves re-rig that fails puts the rig back as it was (its file, options and QA) with
 // the error on the gloves note; one that succeeds links every rig the build had to the new file (forge-rig-latest), so
@@ -116,6 +117,10 @@ export default async function handler(req, res) {
       status: 'succeeded', movesGlbUrl: movesUrl, gamesGlbUrl: gamesUrl, progress: 'done', forgeRigGlbUrl: blob.url, thumbUrl, bytes: glb.length, seconds: result.seconds,
       qa: result.qa || null, verdict: result.qa?.verdict || null, finishedAt: at, ...(links.length ? { rigHistory: links } : {}), ...(gj ? { gloves: { ...gj, doneAt: at, url: blob.url } } : {})
     }, { forgeRigGlbUrl: blob.url, ...(thumbUrl ? { forgeRigThumbUrl: thumbUrl } : {}) });
+    // a paid forge keeps its points once a rig of a build made in its window finishes (not a gloves re-rig, not an NPC)
+    if (!gj && rec.collectionKey && rec.collectionKey !== 'npc' && !fr.options?.npc) {
+      try { await keepForge(rec.collectionKey, String(rec.tokenId), Date.parse(rec.createdAt || '') || Date.now()); } catch (e) { console.warn('[forge-rig-status] keep', e.message); }
+    }
     return res.status(200).json({ ok: true, forgeRig: next.forgeRig, forgeRigGlbUrl: blob.url, percent: 100 });
   } catch (err) {
     return res.status(500).json({ ok: false, error: err?.message || String(err) });
