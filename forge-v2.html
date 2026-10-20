@@ -1209,9 +1209,13 @@ function pointsNote() {
 function getPoints() {
   const need = Math.max(0, forgePrice() - (pointsHave() || 0));
   if (window.RebelPoints?.open) return window.RebelPoints.open({ need, why: 'forge' });
+  shopOpened = true;
   window.open(state.own?.acct?.shopUrl || 'https://economy.rebelants.io/shop', '_blank', 'noopener');
 }
 async function refreshPoints() { if (!state.token) return; state.own = await loadOwn(); if (state.step === 0) renderSummon(0, true); }
+// back from the shop's tab: read the balance again (the shop is another site, so no sign-in ping reaches this page)
+let shopOpened = false, shopSeenAt = 0;
+addEventListener('focus', () => { if (!shopOpened || Date.now() - shopSeenAt < 5000) return; shopSeenAt = Date.now(); refreshPoints(); });
 try { new BroadcastChannel('ra-econ').onmessage = () => refreshPoints(); } catch (e) {}
 addEventListener('storage', (e) => { if (e.key === 'raEconPing') refreshPoints(); });
 // sign in to the Rebel Ants account that pays: Discord (a popup that tells this page when it is done), or a name + PIN
