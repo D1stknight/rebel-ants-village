@@ -538,6 +538,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
   color: #1c1305;
   box-shadow: 0 0 0 1px rgba(0,0,0,0.35);
 }
+.ant-card-badge.friend {
+  background: rgba(20,16,10,0.85);
+  color: #f2e6c9;
+  box-shadow: 0 0 0 1px rgba(232,195,90,0.55);
+}
 .ant-card.is-ready { border-color: rgba(94,207,202,0.55); }
 .ant-card.has-forge-thumb img { object-fit: cover; }
 .ant-card.is-ready.selected { border-color: #5ecfca; box-shadow: 0 0 22px rgba(94,207,202,0.5); }
@@ -1106,6 +1111,10 @@ const FRIEND_PLAYABLES = [
   { id: 'chumpz_racer', rebelId: 'chumpz_900001', tokenId: '900001', name: 'Chumpz Racer', image: 'assets/lobby/chumpz_racer.jpg', collectionKey: 'chumpz', playerModel: 'kit:chz_ape_racer', formLabel: 'Chumpz Ape' }
 ];
 const loadFriendPlayables = () => Promise.all(FRIEND_PLAYABLES.map((r) => attachActiveForgeCharacter({ ...r })));
+// the friend collections a wallet can hold (assets/friend-collections.json): their cards' tag; the Forge door takes the
+// card's collection along so their holders forge them
+const FRIEND_LABELS = { chumpz: 'Chumpz', saints: 'Saint' };
+const sameCollection = (a, b) => (a?.collectionKey || 'battle_for_colony') === (b?.collectionKey || 'battle_for_colony');
 // Oct 20 the Free to play roster (api/free-roster.mjs, ticked in the NPC Forge): forged Rebels anyone can play: guests,
 // wallets without a Rebel and holders whose own Rebels are not forged yet. Never #001 (the starter card) or #893.
 const FREE_NEVER = new Set(['1', '893']);
@@ -1164,7 +1173,7 @@ function buildCard(rebel) {
 
   const cardLabel = `
     ${tokenNumber ? `<div class="ant-card-num">#${tokenNumber}</div>` : ''}
-    ${rebel.free ? '<div class="ant-card-badge free">Free</div>' : status ? `<div class="ant-card-badge ${status}">${status === 'ready' ? 'Ready' : 'Forged'}</div>` : ''}
+    ${rebel.free ? '<div class="ant-card-badge free">Free</div>' : status ? `<div class="ant-card-badge ${status}">${status === 'ready' ? 'Ready' : 'Forged'}</div>` : rebel.friendLabel ? `<div class="ant-card-badge friend">${rebel.friendLabel}</div>` : ''}
   `;
 
   const forgeThumb = status === 'ready' ? getRebelForgeThumb(rebel) : '';
@@ -1207,7 +1216,7 @@ async function showDefaultCard() {
 
   // the last Rebel picked here or set in the Forge (matched by card id, then by token)
   const storedCard = ownedRebels.find((rebel) => rebel.id === storedSelected.id) ||
-    (storedSelected.tokenId ? ownedRebels.find((rebel) => String(rebel.tokenId || '') === String(storedSelected.tokenId)) : null);
+    (storedSelected.tokenId ? ownedRebels.find((rebel) => String(rebel.tokenId || '') === String(storedSelected.tokenId) && sameCollection(rebel, storedSelected)) : null);
   selectedAnt = storedCard ? storedCard.id : 'ant_1';
 
   charRow.innerHTML = '';
@@ -1239,10 +1248,12 @@ async function loadNFTs(walletAddress) {
       const id = (key === 'battle_for_colony' ? 'rebel_' : key + '_') + n.tokenId;
       const traits = normalizeRebelTraits(n.traits);
       const hasTraits = Object.keys(traits).length > 0;
+      const friend = n.friend ? FRIEND_LABELS[key] || key : null;   // Oct 20: Chumpz / Saints the wallet holds (forged in the Rebel Forge)
       return {
         id,
         rebelId: id,
-        name: n.name || ('Rebel #' + n.tokenId),
+        ...(friend ? { friend: true, friendLabel: friend, formLabel: friend } : {}),
+        name: n.name || ((friend || 'Rebel') + ' #' + n.tokenId),
         image: n.thumb || n.image || 'assets/lobby/ant_1.JPG',
         imageFull: n.image || n.thumb || '',
         tokenId: n.tokenId,
@@ -1258,12 +1269,13 @@ async function loadNFTs(walletAddress) {
     );
     const savedForgePlayables = await loadSavedForgePlayableCards();
     const walletIds = new Set(walletRebels.map((rebel) => rebel.id));
-    const walletTokens = new Set(walletRebels.map((rebel) => String(rebel.tokenId || '')));
+    const tokKey = (rebel) => `${rebel.collectionKey || 'battle_for_colony'}:${rebel.tokenId || ''}`;   // a Chumpz #5 is not Rebel #5
+    const walletTokens = new Set(walletRebels.map(tokKey));
     // Forged Rebels first (Ready, then Forged), then the rest in wallet order. Saved Forge playables for a
     // token that is already in the wallet are duplicates of that card, so they are dropped.
     ownedRebels = sortRebelsByForgeStatus([
       ...walletRebels,
-      ...dedupeForgePlayablesByToken(savedForgePlayables.filter((rebel) => !walletIds.has(rebel.id) && !walletTokens.has(String(rebel.tokenId || ''))))
+      ...dedupeForgePlayablesByToken(savedForgePlayables.filter((rebel) => !walletIds.has(rebel.id) && !walletTokens.has(tokKey(rebel))))
     ]);
 
     // the friend playables sit after the wallet's ready Rebels; they are never picked by default
@@ -1272,7 +1284,7 @@ async function loadNFTs(walletAddress) {
     ownedRebels.splice(firstNotReady < 0 ? ownedRebels.length : firstNotReady, 0, ...(await loadFriendPlayables()));
     // none of the wallet's Rebels is forged yet: the Free to play roster comes after them (never picked by default)
     if (!walletReady) {
-      const held = new Set(ownedRebels.map((rebel) => String(rebel.tokenId || '')));
+      const held = new Set(ownedRebels.filter((rebel) => sameCollection(rebel, {})).map((rebel) => String(rebel.tokenId || '')));   // the roster is Rebels
       ownedRebels.push(...(await freeRosterCards((await loadFreeRoster()).filter((t) => !held.has(t)))));
     }
     const forgedReadyRebel = ownedRebels.find((rebel) => {
@@ -1280,14 +1292,15 @@ async function loadNFTs(walletAddress) {
       return Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl) || getRebelForgeStatus(rebel) === 'ready';
     });
     const readyCount = ownedRebels.filter((rebel) => !rebel.playerModel && !rebel.free && getRebelForgeStatus(rebel) === 'ready').length;
-    const freeCount = ownedRebels.filter((rebel) => rebel.free).length, ownCount = ownedRebels.length - freeCount;
+    const freeCount = ownedRebels.filter((rebel) => rebel.free).length, friendCount = ownedRebels.filter((rebel) => rebel.friend).length;
+    const ownCount = ownedRebels.filter((rebel) => !rebel.free && !rebel.friend && !rebel.playerModel).length;   // the wallet's Rebels
 
     // the Rebel last picked here or set in the Forge ("Make this my Rebel") comes first, if this wallet holds it
     let storedSel = {};
     try { storedSel = JSON.parse(localStorage.getItem('selectedRebel') || '{}') || {}; } catch(e) {}
-    const storedCard = storedSel.tokenId ? ownedRebels.find((rebel) => String(rebel.tokenId || '') === String(storedSel.tokenId)) : (storedSel.playerModel ? ownedRebels.find((rebel) => rebel.id === storedSel.id) : null);
+    const storedCard = storedSel.playerModel ? ownedRebels.find((rebel) => rebel.id === storedSel.id) : storedSel.tokenId ? ownedRebels.find((rebel) => String(rebel.tokenId || '') === String(storedSel.tokenId) && sameCollection(rebel, storedSel)) : null;
     const serverChoice = savedForgePlayables.find(r => r.activeForgeCharacter?.appearanceSource && r.activeForgeCharacter?.walletAddress === walletAddress.toLowerCase());
-    const serverCard = serverChoice && walletRebels.find(r => String(r.tokenId) === String(serverChoice.tokenId));
+    const serverCard = serverChoice && walletRebels.find(r => String(r.tokenId) === String(serverChoice.tokenId) && sameCollection(r, serverChoice));
     selectedAnt = serverCard ? serverCard.id : storedCard ? storedCard.id : forgedReadyRebel ? forgedReadyRebel.id : (ownedRebels.find((rebel) => !rebel.playerModel) || ownedRebels[0]).id;
 
     charRow.innerHTML = '';
@@ -1298,7 +1311,8 @@ async function loadNFTs(walletAddress) {
     setStatus(
       ownCount +
       ' Rebel' +
-      (ownCount > 1 ? 's' : '') +
+      (ownCount === 1 ? '' : 's') +
+      (friendCount ? ` · ${friendCount} Chumpz / Saint${friendCount === 1 ? '' : 's'}` : '') +
       ' found' +
       (readyCount ? ` — ${readyCount} ready to play` : '') +
       (freeCount ? ` — ${freeCount} free to play` : '')
@@ -1648,8 +1662,10 @@ function enterForge() {
     window._music.volume = 0;
   }
 
+  const r = ownedRebels.find((x) => x.id === selectedAnt);
+  const url = r && r.friend && r.tokenId ? `forge-v2.html?col=${encodeURIComponent(r.collectionKey)}&token=${encodeURIComponent(r.tokenId)}` : 'forge-v2.html';
   setTimeout(() => {
-    window.location.href = 'forge-v2.html';   // the new Forge room (the old forge.html is admin-only now)
+    window.location.href = url;   // the new Forge room (the old forge.html is admin-only now)
   }, 900);
 }
 

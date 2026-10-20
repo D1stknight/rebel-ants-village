@@ -21135,9 +21135,11 @@ function getForgeRigUrlBundle(rebel) {
   };
 }
 
+// Oct 20: a Chumpz the wallet holds but has not forged yet plays a kit ape until its holder forges it (Saints: the starter)
+const FRIEND_KIT_STANDIN = { chumpz: 'chz_ape_racer' };
 function resolveCharacterConfig(rebel) {
   // friend-collection playables (lobby cards with playerModel 'kit:<type>'): a rigged SamuraiKit character, no GLB
-  const kitModel = String(rebel?.playerModel || '').startsWith('kit:') ? rebel.playerModel.slice(4) : null;
+  const kitModel = String(rebel?.playerModel || '').startsWith('kit:') ? rebel.playerModel.slice(4) : rebel?.friend ? FRIEND_KIT_STANDIN[rebel.collectionKey] || null : null;
   const forgedRig = rebel?.activeForgeCharacter?.forgeRigGlbUrl || rebel?.activeForgeCharacter?.characterBundle?.forgeRigGlbUrl;
   if (kitModel && !forgedRig) return { rebel, characterId: rebel.id, displayName: rebel.name || 'Chumpz', previewImage: rebel.image || 'assets/lobby/ant_1.JPG', tokenId: null,
     collectionKey: rebel.collectionKey || 'chumpz', rebelId: rebel.id, characterRecord: null, bundleId: 'kit_' + kitModel, formType: 'procedural', formLabel: rebel.formLabel || 'Chumpz Ape',
