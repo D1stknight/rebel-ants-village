@@ -13,10 +13,13 @@
 //   RECEIPT      the saved result (an admitted request reads PENDING, a credit in flight OUTCOME_UNKNOWN)
 //   LINK_STATUS  the current account link for the connection's Rebel (never the Economy user id)
 // Off unless RAAP_UNIVERSE_DEV_CONNECTION has a chest section whose chests are all in the catalog. Never production.
-// Records: raap:v1:dev:chest-request:<connectionId>:<requestId> and the player's version (until retainUntil).
+// Records: raap:v1:dev:chest-request:<connectionId>:<requestId> and the player's version (until retainUntil, exactly;
+// requests end SETTLE_MARGIN before it). An unresolved obligation (an intent still ADMITTED or CREDITING) has no
+// automatic end and is listed in raap:v1:dev:obligations:<connectionId> until its final receipt: reaching retainUntil
+// never discards it; listObligations() (GET /api/raap-universe-obligations, admin) exports it with its exact evidence.
 // Shared game records it writes, exactly as a human claim does: econ:v1:claimed:<user> (chest:<id>),
 // econ:v1:day:<user>:<UTC day>, econ:v1:owed:<user> (held), econ:v1:log:<user>; the Economy credit (game_reward).
-import { canonical, commitment, playerIdOf, connectionConfig, retainAt, signedBy, V, devKey, playerHash, targetOf, ABSENT, ZERO, fail, ok, parse, sha256 } from './_raap-universe.mjs';
+import { canonical, commitment, playerIdOf, connectionConfig, retainAt, requestEndBy, SETTLE_MARGIN, signedBy, V, devKey, playerHash, targetOf, ABSENT, ZERO, fail, ok, parse, sha256 } from './_raap-universe.mjs';
 import { currentLink, linkStatus, refOf, isLinkRef, ownership, endLinkIfSold, sharingKey, sharingStatus, currentKey, linkKey } from './_raap-universe-link.mjs';
 import { lookup, KEYS, oneTimeKey, capApplies, owedRecord, logEntry, CAP, DAY_TTL, ONE_TIME_UNCAPPED, utcDay } from './_econ-ledger.mjs';
 
@@ -81,13 +84,16 @@ export function chestConfigurationCommitment(c, rows) {
     controllerEpoch: c.controllerEpoch, operations: [...c.chest.operations].sort(), chests: rows,
     reward: { kind: 'EXISTING_CHEST_REWARD', currency: 'REBEL', settlement: 'EXISTING_DAILY_CAP', dailyCap: CAP, oneTimeUncapped: ONE_TIME_UNCAPPED,
       claim: 'once per Economy account (econ:v1:claimed:<user> chest:<id>)', credit: 'village:chest:<id>:<user>', heldRewardsPaidHere: false },
-    maxLifetime: MAX_LIFETIME, validUntil: c.validUntil, retention: { until: c.retainUntil }, link: { approveSeconds: 300, maxSeconds: 86400 },
+    maxLifetime: MAX_LIFETIME, validUntil: c.validUntil,
+    retention: { until: c.retainUntil, requestsEndBy: requestEndBy(c), settleMargin: SETTLE_MARGIN, unresolved: 'no automatic end; listed in raap:v1:dev:obligations:<connectionId> for export until final' },
+    link: { approveSeconds: 300, maxSeconds: 86400 },
     keys: { request: 'raap:v1:dev:chest-request:<connectionId>:<requestId>', version: 'raap:v1:dev:player:<playerHash>:version', link: 'raap:v1:dev:link:<linkId>' },
     maximumCharge: ZERO
   });
 }
 const versionKey = (c) => devKey(`player:${playerHash(playerIdOf(c.wallet))}:version`);
 const requestKey = (c, requestId) => devKey(`chest-request:${c.connectionId}:${requestId}`);
+export const obligationsKey = (connectionId) => devKey(`obligations:${connectionId}`);
 const member = (id) => `chest:${id}`;
 
 // ---- state: the link pointer + record, and each chest's claim and held record, named by the account commitment ----
@@ -123,9 +129,10 @@ const stateOf = (c, cc, s, ids) => ({ version: s.version, commitment: chestState
 // Admit: same request id = the saved record; the version, the link pointer + record, the chest's claim and held record
 // must be exactly what the request was approved against; inside its time (Redis clock). Then, with nothing fallible
 // after: claim the chest, bump the version, and either hold the reward past the daily cap (HELD, final receipt) or save
-// the intent (ADMITTED). KEYS: request, version, current, link, claimed, owed, day. ARGV: version, link id, link raw,
-// member, idempotency key, owed raw, issuedAt, expiresAt, capped, amount, cap, day ttl, new version, intent, held
-// receipt, owed record, retain-until
+// the intent (ADMITTED: an unresolved obligation, no automatic end, listed until final). KEYS: request, version,
+// current, link, claimed, owed, day, obligations. ARGV: version, link id, link raw, member, idempotency key, owed raw,
+// issuedAt, expiresAt, capped, amount, cap, day ttl, new version, intent, held receipt, owed record, retain-until,
+// request id
 export const ADMIT_LUA = `
 local prior=redis.call('GET',KEYS[1])
 if prior then return {'RECORDED',prior} end
@@ -148,30 +155,40 @@ if ARGV[9]=='1' then
     return {'HELD'}
   end
 end
-redis.call('SET',KEYS[1],ARGV[14],'EXAT',tonumber(ARGV[17]))
+redis.call('SET',KEYS[1],ARGV[14])
+redis.call('SADD',KEYS[8],ARGV[18])
 return {'ADMITTED'}
 `;
-// compare-and-set of the request record. KEYS: request. ARGV: expected raw, new raw, retain-until
+// compare-and-set of an unresolved intent (ADMITTED -> CREDITING, or evidence added to it): still no automatic end.
+// KEYS: request. ARGV: expected raw, new raw
 const CAS_LUA = `
+-- chest intent: unresolved, kept without an end
 if redis.call('GET',KEYS[1])~=ARGV[1] then return 'CHANGED' end
-redis.call('SET',KEYS[1],ARGV[2],'EXAT',tonumber(ARGV[3]))
+redis.call('SET',KEYS[1],ARGV[2])
 return 'DONE'
 `;
-// paid: the final receipt + the player's award log line. KEYS: request, log. ARGV: crediting raw, receipt, retain-until, log entry
+// paid: the final receipt (an ordinary record from here: it ends at retainUntil), off the obligations list, + the
+// player's award log line. Never at or past retainUntil (LATE: the intent stays unresolved and listed). KEYS: request,
+// log, obligations. ARGV: crediting raw, receipt, retain-until, log entry, request id
 const PAID_LUA = `
 if redis.call('GET',KEYS[1])~=ARGV[1] then return 'CHANGED' end
+if tonumber(redis.call('TIME')[1])>=tonumber(ARGV[3]) then return 'LATE' end
 redis.call('SET',KEYS[1],ARGV[2],'EXAT',tonumber(ARGV[3]))
+redis.call('SREM',KEYS[3],ARGV[5])
 redis.call('LPUSH',KEYS[2],ARGV[4])
 redis.call('LTRIM',KEYS[2],0,39)
 return 'DONE'
 `;
-// the economy refused for certain: the claim and today's count go back (as a human claim's does), declined.
-// KEYS: request, claimed, day. ARGV: crediting raw, member, capped, amount, declined receipt, retain-until
+// the economy refused for certain: the claim and today's count go back (as a human claim's does), declined (final).
+// Never at or past retainUntil (LATE: the intent stays unresolved and listed, with the refusal on it). KEYS: request,
+// claimed, day, obligations. ARGV: crediting raw, member, capped, amount, declined receipt, retain-until, request id
 const UNDO_LUA = `
 if redis.call('GET',KEYS[1])~=ARGV[1] then return 'CHANGED' end
+if tonumber(redis.call('TIME')[1])>=tonumber(ARGV[6]) then return 'LATE' end
 redis.call('SREM',KEYS[2],ARGV[2])
 if ARGV[3]=='1' then redis.call('DECRBY',KEYS[3],tonumber(ARGV[4])) end
 redis.call('SET',KEYS[1],ARGV[5],'EXAT',tonumber(ARGV[6]))
+redis.call('SREM',KEYS[4],ARGV[7])
 return 'DECLINED'
 `;
 
@@ -246,12 +263,13 @@ export async function handleChestOperation(raw, deps) {
         chests: rows.map((x, i) => ({ chestId: x.chestId, villageId: x.villageId, rewardUnits: x.rewardUnits, available: refusal(i) === 'NONE', refusal: refusal(i) })) });
     }
     if (refusal(0) !== 'NONE') return fail(422, 'ACTION_UNAVAILABLE', { reason: refusal(0) });
-    const x = byId[op.action.chestId];
+    const x = byId[op.action.chestId], expiresAt = Math.min(now + MAX_LIFETIME, c.validUntil, cur.rec.validUntil, requestEndBy(c));
+    if (expiresAt <= now) return fail(403, 'CONNECTION_CLOSED');
     return ok({ schema: 'universe.raap.chest-preparation.v1', target: op.target, link: op.link, action: op.action, state: stateOf(c, cc, s, ids),
       configurationCommitment: cc, maximumCharge: ZERO,
       economyEffect: { kind: 'EXISTING_CHEST_REWARD', currency: 'REBEL', units: x.rewardUnits, beneficiary: cur.rec.accountCommitment,
         idempotencyCommitment: idempotencyCommitment(oneTimeKey('chest', x.chestId, cur.rec.economyUserId)), settlement: 'EXISTING_DAILY_CAP' },
-      observedAt: now, expiresAt: Math.min(now + MAX_LIFETIME, c.validUntil, cur.rec.validUntil) });
+      observedAt: now, expiresAt });
   }
 
   // ---- EXECUTE ----
@@ -261,7 +279,7 @@ export async function handleChestOperation(raw, deps) {
     && r.controller.address === c.wallet && r.controller.epoch === c.controllerEpoch && r.account === c.account && canonical(r.asset) === canonical(c.asset)
     && r.economyEffect.beneficiary === r.link.accountCommitment && auth.ownerApproval.signer === c.wallet;
   if (!pinned || !(await signedBy(chestMessage(r), auth.ownerApproval, c.wallet))) return fail(403, 'NOT_AUTHORIZED');
-  const rc = requestCommitmentOf(r), rKey = requestKey(c, r.requestId), ic = r.economyEffect.idempotencyCommitment, retain = String(retainAt(c, r.expiresAt));
+  const rc = requestCommitmentOf(r), rKey = requestKey(c, r.requestId), ic = r.economyEffect.idempotencyCommitment, retain = String(retainAt(c));
   // A saved request is only ever read back: a repeated EXECUTE (like RECEIPT) answers with its final receipt or
   // PENDING / OUTCOME_UNKNOWN and never starts, finishes or re-sends a credit, whatever the time, link or owner now.
   const savedResult = (raw2) => { const rec = parse(raw2); return rec && rec.requestCommitment === rc ? ok(render(rec)) : fail(409, 'REQUEST_ID_CONFLICT'); };
@@ -282,7 +300,7 @@ export async function handleChestOperation(raw, deps) {
   async function settle(admittedRaw, rec) {
     const crediting = canonical({ ...rec, status: 'CREDITING', creditingAt: deps.now() });
     let mark;
-    try { mark = await deps.redis(['EVAL', CAS_LUA, '1', rKey, admittedRaw, crediting, retain]); } catch (e) { return (await readBack()) || unknown(); }
+    try { mark = await deps.redis(['EVAL', CAS_LUA, '1', rKey, admittedRaw, crediting]); } catch (e) { return (await readBack()) || unknown(); }
     if (mark !== 'DONE') return (await readBack()) || unknown();
     try { return await sendCredit(crediting, rec); } catch (e) { return ok(render(parse(crediting))); }
   }
@@ -298,15 +316,18 @@ export async function handleChestOperation(raw, deps) {
       if (!(err.economyStatus && DEFINITE.has(err.code))) return ok(render(parse(crediting)));        // no answer / unclear: OUTCOME_UNKNOWN, kept
       const d = receiptOf(r, rc, { status: 'DECLINED', reason: 'NOT_AUTHORIZED', before: r.state, after: r.state, effects: [], acceptedAt: null, committedAt: null, reward: NONE_REWARD(ic) });
       let undo;
-      try { undo = await deps.redis(['EVAL', UNDO_LUA, '3', rKey, KEYS.claimed(u), rec.dayKey ? KEYS.day(u, rec.dayKey) : KEYS.day(u, utcDay()), crediting,
-        member(r.action.chestId), rec.capped ? '1' : '0', r.economyEffect.units, canonical(d), retain]); } catch (e) { undo = null; }
-      return undo === 'DECLINED' ? ok(d) : ok(render(parse(crediting)));
+      try { undo = await deps.redis(['EVAL', UNDO_LUA, '4', rKey, KEYS.claimed(u), rec.dayKey ? KEYS.day(u, rec.dayKey) : KEYS.day(u, utcDay()), obligationsKey(c.connectionId),
+        crediting, member(r.action.chestId), rec.capped ? '1' : '0', r.economyEffect.units, canonical(d), retain, r.requestId]); } catch (e) { undo = null; }
+      if (undo === 'DECLINED') return ok(d);
+      // not undone: the refusal goes on the unresolved intent as evidence (the claim stays; nothing is sent again)
+      try { await deps.redis(['EVAL', CAS_LUA, '1', rKey, crediting, canonical({ ...parse(crediting), economyAnswer: { refused: String(err.code) } })]); } catch (e) {}
+      return ok(render(parse(crediting)));
     }
     const tx = String(res?.transactionId || '');
     // the economy's answer must be this very credit (a repeated key answers with its first transaction)
     if (!RX.id.test(tx) || res.userId !== u || res.amount !== r.economyEffect.units) {
       const kept = canonical({ ...parse(crediting), economyAnswer: { transactionId: tx || null, sameUser: res?.userId === u, amount: res?.amount ?? null } });
-      try { await deps.redis(['EVAL', CAS_LUA, '1', rKey, crediting, kept, retain]); } catch (e) {}
+      try { await deps.redis(['EVAL', CAS_LUA, '1', rKey, crediting, kept]); } catch (e) {}
       return ok(render(parse(crediting)));
     }
     const committedAt = Math.max(deps.now(), rec.acceptedAt);
@@ -314,13 +335,17 @@ export async function handleChestOperation(raw, deps) {
       acceptedAt: rec.acceptedAt, committedAt, reward: { status: 'PAID', units: r.economyEffect.units, economyTransactionId: tx, idempotencyCommitment: ic, recordCommitment: paidRecord(tx, ic, r.economyEffect.units) } });
     let saved = null;
     for (let i = 0; i < 3 && saved !== 'DONE'; i++) {
-      try { saved = await deps.redis(['EVAL', PAID_LUA, '2', rKey, KEYS.log(u), crediting, canonical(fin), retain,
-        logEntry({ kind: 'chest', id: r.action.chestId, village: x.villageId, amount: Number(r.economyEffect.units) }, rec.acceptedAt * 1000)]); } catch (e) { saved = null; }
-      if (saved === 'CHANGED') break;
+      try { saved = await deps.redis(['EVAL', PAID_LUA, '3', rKey, KEYS.log(u), obligationsKey(c.connectionId), crediting, canonical(fin), retain,
+        logEntry({ kind: 'chest', id: r.action.chestId, village: x.villageId, amount: Number(r.economyEffect.units) }, rec.acceptedAt * 1000), r.requestId]); } catch (e) { saved = null; }
+      if (saved === 'CHANGED' || saved === 'LATE') break;
     }
     if (saved !== 'DONE') {
-      // paid, but the receipt could not be saved: keep the exact evidence for the operator; RECEIPT stays OUTCOME_UNKNOWN
-      console.error('[raap-universe-chest] paid, receipt not saved', JSON.stringify({ requestId: r.requestId, economyTransactionId: tx }));
+      // paid, but the final receipt could not be saved: the confirmed transaction id goes on the unresolved intent (the
+      // export shows it); RECEIPT stays OUTCOME_UNKNOWN
+      const kept = canonical({ ...parse(crediting), economyAnswer: { transactionId: tx, sameUser: true, amount: r.economyEffect.units, receiptNotSaved: true } });
+      let k2 = null;
+      try { k2 = await deps.redis(['EVAL', CAS_LUA, '1', rKey, crediting, kept]); } catch (e) {}
+      console.error('[raap-universe-chest] paid, receipt not saved', JSON.stringify({ requestId: r.requestId, economyTransactionId: tx, keptOnIntent: k2 === 'DONE' }));
       return ok(render(parse(crediting)));
     }
     await claimed(r, u, rec.acceptedAt, 'PAID', tx);
@@ -335,7 +360,8 @@ export async function handleChestOperation(raw, deps) {
 
   const cur = await currentLink(c, deps);
   if (!cur.rec || canonical(refOf(cur.rec)) !== canonical(r.link) || linkStatus(c, cur.rec, now) !== 'LINKED') return decline('NOT_AUTHORIZED', r.state);
-  if (!(r.issuedAt <= now && now < r.expiresAt && r.expiresAt - r.issuedAt <= MAX_LIFETIME && r.expiresAt <= c.validUntil && r.expiresAt <= cur.rec.validUntil)) return decline('EXPIRED', r.state);
+  if (!(r.issuedAt <= now && now < r.expiresAt && r.expiresAt - r.issuedAt <= MAX_LIFETIME && r.expiresAt <= c.validUntil && r.expiresAt <= cur.rec.validUntil
+    && r.expiresAt <= requestEndBy(c))) return decline('EXPIRED', r.state);
   const id = r.action.chestId, x = byId[id], u = cur.rec.economyUserId, ikey = oneTimeKey('chest', id, u);
   if (r.economyEffect.idempotencyCommitment !== idempotencyCommitment(ikey)) return decline('NOT_AUTHORIZED', r.state);
   if (!x) return decline(r.configurationCommitment !== cc ? 'RULES_CHANGED' : 'UNSUPPORTED_ACTION', r.state);
@@ -364,9 +390,9 @@ export async function handleChestOperation(raw, deps) {
     idempotencyKey: ikey, units: x.rewardUnits });
   let res;
   try {
-    res = await deps.redis(['EVAL', ADMIT_LUA, '7', rKey, versionKey(c), currentKey(c), linkKey(cur.rec.linkId), KEYS.claimed(u), KEYS.owed(u), KEYS.day(u, day),
-      s.version, cur.rec.linkId, cur.raw, member(id), ikey, s.owed[0], String(r.issuedAt), String(r.expiresAt), capped ? '1' : '0', String(e.amount), String(CAP),
-      String(DAY_TTL), version, intent, canonical(held), owed, retain]);
+    res = await deps.redis(['EVAL', ADMIT_LUA, '8', rKey, versionKey(c), currentKey(c), linkKey(cur.rec.linkId), KEYS.claimed(u), KEYS.owed(u), KEYS.day(u, day),
+      obligationsKey(c.connectionId), s.version, cur.rec.linkId, cur.raw, member(id), ikey, s.owed[0], String(r.issuedAt), String(r.expiresAt), capped ? '1' : '0',
+      String(e.amount), String(CAP), String(DAY_TTL), version, intent, canonical(held), owed, retain, r.requestId]);
   } catch (err) { res = null; }
   // the admit may or may not have happened: read it back once (an intent found then is left as it is: PENDING)
   if (!Array.isArray(res)) return (await readBack()) || unknown();
@@ -378,4 +404,26 @@ export async function handleChestOperation(raw, deps) {
   if (res[0] === 'HELD') { await claimed(r, u, now, 'HELD', null); return ok(held); }
   if (res[0] !== 'ADMITTED') return unknown();
   return settle(intent, parse(intent));
+}
+
+// ---- the term-end export: every chest obligation still unresolved, with its exact evidence (read-only) ----
+// credit: NOT_SENT (ADMITTED: nothing is sent before the CREDITING write is confirmed), UNKNOWN (CREDITING: it may have
+// reached the Economy), CONFIRMED (paid; only the final receipt could not be saved), REFUSED (the Economy refused for
+// certain; the claim could not be given back). deps = { now(), redis(args) }
+export async function listObligations(connectionId, deps) {
+  const ids = [...((await deps.redis(['SMEMBERS', obligationsKey(connectionId)])) || [])].map(String).sort();
+  const obligations = [], missing = [];
+  for (const id of ids) {
+    const rec = parse(await deps.redis(['GET', devKey(`chest-request:${connectionId}:${id}`)]));
+    if (!rec || rec.schema !== 'universe.raap.chest-intent.v1') { missing.push(id); continue; }
+    const r = rec.request, a = rec.economyAnswer || null;
+    obligations.push({ requestId: id, receipt: rec.status === 'ADMITTED' ? 'PENDING' : 'OUTCOME_UNKNOWN', intent: rec.status,
+      credit: rec.status === 'ADMITTED' ? 'NOT_SENT' : a && a.receiptNotSaved && a.transactionId ? 'CONFIRMED' : a && a.refused ? 'REFUSED' : 'UNKNOWN',
+      chestId: r.action.chestId, village: rec.village, units: r.economyEffect.units, idempotencyKey: rec.idempotencyKey,
+      idempotencyCommitment: r.economyEffect.idempotencyCommitment,
+      beneficiary: { economyUserId: rec.beneficiary?.economyUserId ?? null, linkId: r.link.linkId, accountCommitment: r.link.accountCommitment },
+      acceptedAt: rec.acceptedAt, creditingAt: rec.creditingAt ?? null, economyAnswer: a, requestCommitment: rec.requestCommitment,
+      request: r, ownerApproval: rec.ownerApproval ?? null });
+  }
+  return { schema: 'universe.raap.obligations.v1', connectionId, observedAt: deps.now(), count: obligations.length, obligations, missing };
 }

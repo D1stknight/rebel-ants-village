@@ -12,7 +12,7 @@
 //   GET               the page's status: pins, server time, the two signed-in accounts, the link and sharing
 // A new link (another account, or the same one again) gets a new link id and revision: older chest preparations and
 // sharing selections stop matching. A Rebel seen with another owner ends its link (OWNER_CHANGED).
-// Records (raap:v1:dev:*, expire at the connection's retainUntil): link-challenge:<nonce> (6 min), link:<linkId>,
+// Records (raap:v1:dev:*, expire exactly at the connection's retainUntil, never later): link-challenge:<nonce> (6 min), link:<linkId>,
 // link-current:<connectionId>:<playerHash>, link-account:<connectionId>:<accountHash> (the claim-time lookup for the
 // event feed), sharing:<linkId>, link-nonce:<nonce> (used revocation nonces).
 import crypto from 'node:crypto';
@@ -182,7 +182,8 @@ function revokeRequest(c, rec, purpose, selectionId, now) {
 // owner(collectionKey, tokenId) }. -> { status, body }
 export async function linkStatusPage(session, deps) {
   const c = connectionConfig(deps.env), now = deps.now();
-  if (deps.env.VERCEL_ENV === 'production' || !linkEnabled(c)) return ok({ schema: 'universe.raap.link-page.v1', enabled: false, now });
+  // off, or past the storage term (its records are gone): nothing to show
+  if (deps.env.VERCEL_ENV === 'production' || !linkEnabled(c) || now >= c.retainUntil) return ok({ schema: 'universe.raap.link-page.v1', enabled: false, now });
   const cur = await currentLink(c, deps), rec = cur.rec, status = linkStatus(c, rec, now);
   const s = rec ? parse(await deps.redis(['GET', sharingKey(rec.linkId)])) : null, sStatus = sharingStatus(c, rec, s, now);
   const mine = !!(rec && session.econ && rec.economyUserId === session.econ.u);
@@ -215,6 +216,7 @@ export async function handleLinkOperation(op, session, deps) {
   const c = connectionConfig(deps.env);
   if (deps.env.VERCEL_ENV === 'production' || !linkEnabled(c)) return fail(403, 'CONNECTION_UNAVAILABLE');
   const now = deps.now(), econ = session.econ;
+  if (now >= c.retainUntil) return fail(403, 'CONNECTION_CLOSED');            // past the storage term: no new records
   if ((op.operation === 'PREPARE_SHARING' || op.operation === 'SAVE_SHARING') && !c.events) return fail(403, 'OPERATION_NOT_ENABLED');
   if (op.operation !== 'REVOKE' && op.operation !== 'DISCONNECT' && (c.status !== 'ACTIVE' || now >= c.validUntil)) return fail(403, 'CONNECTION_CLOSED');
   // who is signed in: the wallet for everything but DISCONNECT; the Economy account for everything but REVOKE
@@ -243,7 +245,7 @@ export async function handleLinkOperation(op, session, deps) {
       nonce, issuedAt: now, approveBefore: now + APPROVE, validUntil, purpose: 'LINK_UNIVERSE_ECONOMY_ACCOUNT' };
     const challenge = { kind: 'LINK', request, economyUserId: econ.u, accountKind: accountOf(econ).kind, wallet: session.wallet,
       prevLinkId: cur.id, prevRaw: cur.raw, prevEconomyUserId: cur.rec ? cur.rec.economyUserId : null };
-    await deps.redis(['SET', challengeKey(nonce), canonical(challenge), 'EX', String(APPROVE + 60)]);
+    await deps.redis(['SET', challengeKey(nonce), canonical(challenge), 'EXAT', String(Math.min(now + APPROVE + 60, retainAt(c)))]);
     return ok({ schema: 'universe.raap.link-preparation.v1', request, message: consentMessage(request),
       accounts: { wallet: c.wallet, asset: c.asset, economy: accountOf(econ) },
       replaces: cur.rec ? { link: refOf(cur.rec), status: linkStatus(c, cur.rec, now), sameAccount: cur.rec.economyUserId === econ.u } : null });
@@ -298,7 +300,7 @@ export async function handleLinkOperation(op, session, deps) {
     const request = { schema: 'raap.universe.sharing-consent.v1', ...pinsOf(c), link: refOf(cur.rec), nonce, issuedAt: now, approveBefore: now + APPROVE, validUntil,
       purpose: 'SHARE_CONFIRMED_UNIVERSE_EXPERIENCES', selectionId: rand32(), eventKinds: op.eventKinds, publicExperienceConsent: true, gameplayAuthority: false };
     const challenge = { kind: 'SHARING', request, economyUserId: econ.u, wallet: session.wallet, linkId: cur.rec.linkId };
-    await deps.redis(['SET', challengeKey(nonce), canonical(challenge), 'EX', String(APPROVE + 60)]);
+    await deps.redis(['SET', challengeKey(nonce), canonical(challenge), 'EXAT', String(Math.min(now + APPROVE + 60, retainAt(c)))]);
     return ok({ schema: 'universe.raap.sharing-preparation.v1', request, message: consentMessage(request) });
   }
 
@@ -309,7 +311,7 @@ export async function handleLinkOperation(op, session, deps) {
     if (!(await signedBy(consentMessage(r), auth.ownerApproval, c.wallet))) return fail(403, 'NOT_AUTHORIZED');
     const raw = await deps.redis(['GET', linkKey(r.link.linkId)]), rec = parse(raw);
     if (!rec || canonical(refOf(rec)) !== canonical(r.link)) return fail(409, 'LINK_CHANGED');
-    if ((await deps.redis(['SET', nonceKey(r.nonce), '1', 'NX', 'EXAT', String(retainAt(c, r.expiresAt))])) !== 'OK') return fail(409, 'NONCE_USED');
+    if ((await deps.redis(['SET', nonceKey(r.nonce), '1', 'NX', 'EXAT', String(retainAt(c))])) !== 'OK') return fail(409, 'NONCE_USED');
     if (r.purpose === 'UNLINK_UNIVERSE_ECONOMY_ACCOUNT') {
       const res = await revokeLink(c, deps, { id: rec.linkId, raw, rec }, 'WALLET', now);
       return res === 'REVOKED' ? ok({ schema: 'universe.raap.link-revoked.v1', link: r.link, status: 'REVOKED' }) : fail(409, 'LINK_CHANGED');

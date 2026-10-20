@@ -11,8 +11,10 @@
 // weapon choice, the same record the Forge's weapon chips write, inside one Lua script that re-reads the exact raw bytes
 // the action was approved against (dev and production share Redis, so a version counter alone can't see a human write).
 // Pinned connection: env RAAP_UNIVERSE_DEV_CONNECTION (JSON, below); the bearer key is checked by raap-universe.mjs.
-// Retention: every raap:v1:dev record of a connection expires at its pinned retainUntil (never before validUntil, so a
-// request id stays a tombstone for as long as that request could run); the weapon choice itself never expires.
+// Retention: every ordinary raap:v1:dev record of a connection expires exactly at its pinned retainUntil (Miguel's
+// storage term; never later), and a request must end SETTLE_MARGIN before it, so its receipt stays readable after it
+// closed. The weapon choice itself never expires. An unresolved chest obligation is not an ordinary record: it has no
+// automatic end, so reaching retainUntil never silently discards it (_raap-universe-chest.mjs, raap-universe-obligations).
 import crypto from 'node:crypto';
 import { recoverMessageAddress } from 'viem';
 import { WEAPONS, weaponForTrait } from './_weapon-catalog.mjs';
@@ -21,9 +23,11 @@ export const MAX_BODY = 65536, MAX_LIFETIME = 900;
 const OPS = ['READ', 'PREPARE', 'EXECUTE', 'RECEIPT', 'EVENTS'];
 const CHEST_OPS = ['READ', 'PREPARE', 'EXECUTE', 'RECEIPT', 'LINK_STATUS'];
 export const EVENT_KINDS = ['CHEST_OPENED', 'FIRST_GAME_CLEAR', 'PLACE_RIDDLE_SOLVED', 'TREASURE_DIG_FIND'];
-// when a record written for a request may expire: the connection's retention end, and never before the request itself
-// has closed (+5 minutes for clocks)
-export const retainAt = (c, expiresAt = 0) => Math.max(c.retainUntil, expiresAt + 300);
+// when an ordinary record expires: exactly the connection's retention end. Requests end at least SETTLE_MARGIN before
+// it (preparations are cut to requestEndBy, later requests are declined EXPIRED)
+export const SETTLE_MARGIN = 300;
+export const retainAt = (c) => c.retainUntil;
+export const requestEndBy = (c) => c.retainUntil - SETTLE_MARGIN;
 const ZERO = { currency: 'REBEL', units: '0' };
 const ABSENT = '__RAAP_ABSENT__';
 const HALF_N = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n >> 1n;   // low-s bound (secp256k1)
@@ -145,7 +149,7 @@ export function configurationCommitment(c) {
     issuer: c.issuer, audience: c.audience, tenant: c.tenant, journalId: c.journalId, playerId: playerIdOf(c.wallet), asset: c.asset,
     collectionKey: c.collectionKey, account: c.account, controllerEpoch: c.controllerEpoch, operations: [...c.operations].sort(),
     actions: ['WEAPON_EQUIP', 'WEAPON_UNEQUIP'], maxLifetime: MAX_LIFETIME, validUntil: c.validUntil,
-    retention: { until: c.retainUntil, records: 'raap:v1:dev request receipts + version expire then (never before their request has closed); the weapon choice never expires' },
+    retention: { until: c.retainUntil, requestsEndBy: requestEndBy(c), records: 'raap:v1:dev request receipts + version expire exactly then; requests end at least 300 s before; the weapon choice never expires' },
     catalog: WEAPON_IDS.map((id) => ({ weaponId: id, label: WEAPONS[id].name, trait: WEAPONS[id].trait, hilt: WEAPONS[id].hilt })),
     equipped: 'choice.weaponId, else the NFT Weapons trait; none or a weapon not approved = null; only approved weapons equip',
     keys: { equipment: choiceKey(c), catalog: 'forge:weapon:v1:<weaponId>', version: 'raap:v1:dev:player:<playerHash>:version', request: 'raap:v1:dev:request:<connectionId>:<requestId>' },
@@ -261,8 +265,10 @@ export async function handleOperation(raw, deps) {
     if (op.operation === 'PREPARE') {
       const reason = refusalFor(op.action, eq, own);
       if (reason !== 'NONE') return fail(422, 'ACTION_UNAVAILABLE', { reason });
+      const expiresAt = Math.min(now + MAX_LIFETIME, c.validUntil, requestEndBy(c));
+      if (expiresAt <= now) return fail(403, 'CONNECTION_CLOSED');
       return ok({ schema: 'universe.raap.preparation.v1', target: op.target, action: op.action, state: s.state, configurationCommitment: cc,
-        maximumCharge: ZERO, economyEffect: 'NONE', observedAt: now, expiresAt: Math.min(now + MAX_LIFETIME, c.validUntil) });
+        maximumCharge: ZERO, economyEffect: 'NONE', observedAt: now, expiresAt });
     }
     const weapons = WEAPON_IDS.map((id) => {
       const refusal = refusalFor({ kind: 'WEAPON_EQUIP', weaponId: id }, eq, own);
@@ -296,7 +302,7 @@ export async function handleOperation(raw, deps) {
     const d = receipt('DECLINED', reason, before, before, [], null);
     let set;
     // not saved: no claim either way (another copy of this request id may have been applied meanwhile)
-    try { set = await deps.redis(['SET', rKey, canonical(d), 'NX', 'EXAT', String(retainAt(c, r.expiresAt))]); } catch (e) { return fail(503, 'RECEIPT_NOT_SAVED'); }
+    try { set = await deps.redis(['SET', rKey, canonical(d), 'NX', 'EXAT', String(retainAt(c))]); } catch (e) { return fail(503, 'RECEIPT_NOT_SAVED'); }
     if (set === 'OK') return ok(d);
     let raw2 = null;
     try { raw2 = await deps.redis(['GET', rKey]); } catch (e) {}
@@ -304,7 +310,7 @@ export async function handleOperation(raw, deps) {
   };
 
   const [s, trait, own] = await Promise.all([live(), deps.trait(c.collectionKey, c.asset.tokenId), owned()]);
-  if (!(r.issuedAt <= now && now < r.expiresAt && r.expiresAt - r.issuedAt <= MAX_LIFETIME && r.expiresAt <= c.validUntil)) return decline('EXPIRED', s.state);
+  if (!(r.issuedAt <= now && now < r.expiresAt && r.expiresAt - r.issuedAt <= MAX_LIFETIME && r.expiresAt <= c.validUntil && r.expiresAt <= requestEndBy(c))) return decline('EXPIRED', s.state);
   if (r.configurationCommitment !== cc) return decline('RULES_CHANGED', s.state);
   if (!own) return decline('NOT_OWNED', s.state);
   if (r.state.version !== s.state.version || r.state.commitment !== s.state.commitment) return decline('STALE_STATE', s.state);
@@ -320,7 +326,7 @@ export async function handleOperation(raw, deps) {
   let res;
   try {
     res = await deps.redis(['EVAL', EXECUTE_LUA, String(stateKeys(c).length + 2), rKey, versionKey(c), ...stateKeys(c),
-      s.version, String(r.issuedAt), String(r.expiresAt), choice, version, canonical(applied), String(retainAt(c, r.expiresAt)), ...s.raws.map((v) => v ?? ABSENT)]);
+      s.version, String(r.issuedAt), String(r.expiresAt), choice, version, canonical(applied), String(retainAt(c)), ...s.raws.map((v) => v ?? ABSENT)]);
   } catch (e) { res = null; }
   if (!Array.isArray(res)) return ok(receipt('OUTCOME_UNKNOWN', 'AWAITING_CONFIRMATION', s.state, null, [], null));   // check RECEIPT, never resend
   if (res[0] === 'APPLIED') return ok(applied);
