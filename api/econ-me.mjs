@@ -1,17 +1,20 @@
 // The village player's Rebel Economy account.
 //   GET                     -> { ok, configured, signedIn, name, avatar, balance, today, cap, owed, claimed, recent }
 //   POST { action:'logout' } -> clears the session
+// shopUrl = api/econ-shop (add ?return=<this page's path>): the economy's points shop, signed in to this account.
 // Signed in = the ra_econ cookie (api/econ-discord-callback). The balance is the economy's (every game's points);
 // today / cap / owed / claimed are the village's own ledger (api/_econ-ledger.mjs). Points held past an earlier day's
 // cap are paid here, once there is room today.
 import { enforceRateLimit } from './_guard.mjs';
-import { econReady, econSessionOf, clearEconCookie, econResolve, econNameBalance, isNameSession, econShopUrl } from './_econ.mjs';
+import { econReady, econSessionOf, clearEconCookie, econResolve, econNameBalance, isNameSession } from './_econ.mjs';
 import { payOwed, today, claimed, recent } from './_econ-ledger.mjs';
 
 // the Discord picture, or Discord's own default one (an account without a picture: index (id >> 22) % 6);
 // name + PIN accounts have none (the page draws the name's first letter)
 const avatarUrl = (s) => (isNameSession(s) ? null : s.a && /^[A-Za-z0-9_]+$/.test(s.a) ? `https://cdn.discordapp.com/avatars/${s.d}/${s.a}.png?size=64`
   : `https://cdn.discordapp.com/embed/avatars/${Number((BigInt(s.d) >> 22n) % 6n)}.png`);
+
+const SHOP = '/api/econ-shop';
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -23,7 +26,7 @@ export default async function handler(req, res) {
     }
     if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' });
     const configured = econReady(), s = configured ? econSessionOf(req) : null;
-    if (!s) return res.status(200).json({ ok: true, configured, signedIn: false, shopUrl: configured ? econShopUrl() : null });
+    if (!s) return res.status(200).json({ ok: true, configured, signedIn: false, shopUrl: configured ? SHOP : null });
     if (!(await enforceRateLimit(req, res, `econ-me:${s.u}`, 900, 3600, 'account checks'))) return;
     let paidNow = 0;
     try { paidNow = (await payOwed(s.u)).paid; } catch (e) { console.warn('[econ-me] owed', e.message); }
@@ -35,7 +38,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       ok: true, configured, signedIn: true, kind: named ? 'name' : 'discord', name: s.n || s.un, avatar: avatarUrl(s),
       balance: acct.error ? null : acct.balance, balanceError: acct.error || null,
-      today: t.today, cap: t.cap, owed: t.owed, paidNow, claimed: c, recent: r, shopUrl: econShopUrl()
+      today: t.today, cap: t.cap, owed: t.owed, paidNow, claimed: c, recent: r, shopUrl: SHOP
     });
   } catch (e) {
     return res.status(e.status || 500).json({ ok: false, error: e.message || 'Account check failed' });
