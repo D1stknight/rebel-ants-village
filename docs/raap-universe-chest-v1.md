@@ -133,6 +133,9 @@ ordinary owed record (`APPLIED` + `HELD`, final) or saves the intent (`ADMITTED`
 intent is marked `CREDITING` (confirmed write) **before** the one Economy credit with the existing key
 `village:chest:<id>:<user>` → `APPLIED` + `PAID` with the exact `economyTransactionId` (the answer must name that user
 and amount). The beneficiary and the key are the ones fixed in the intent at the admit (no link read after it).
+Oct 20 (Miguel's decision): one-time awards (chests, first clears, place riddles) no longer count toward the 2,000-a-day
+cap by default, so a chest is never `HELD` unless the village sets `ECON_ONE_TIME_UNCAPPED=0`; READ reports the rule in
+force as `reward.oneTimeUncapped`. Everything above is unchanged with the cap on (the bench passes 260 / 260 with `=0`).
 
 **A saved request is only read back.** A repeated EXECUTE (any time, any link or owner state) and RECEIPT return the
 saved final receipt, or `PENDING` / `OUTCOME_UNKNOWN`; they never start, finish or re-send a credit and read no owner.

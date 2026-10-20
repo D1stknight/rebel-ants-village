@@ -14,8 +14,9 @@ import CATALOG from './_econ-catalog.mjs';
 import { redis, econCredit } from './_econ.mjs';
 
 export const CAP = Math.max(100, parseInt(process.env.ECON_DAILY_CAP || '2000', 10));
-// one-time awards (chests, first clears, riddles) can skip the cap; off until Miguel says yes (plans v2, question 4)
-export const ONE_TIME_UNCAPPED = process.env.ECON_ONE_TIME_UNCAPPED === '1';
+// one-time awards (chests, first clears, riddles) skip the cap (Miguel, Oct 20: yes); only repeatable finds count toward
+// it. ECON_ONE_TIME_UNCAPPED=0 puts them back under the cap.
+export const ONE_TIME_UNCAPPED = process.env.ECON_ONE_TIME_UNCAPPED !== '0';
 const P = 'econ:v1';
 export const DAY_TTL = 60 * 60 * 24 * 3;
 export const KEYS = {
@@ -51,7 +52,8 @@ async function credit(u, a) {
   return r;
 }
 
-// pay what was held on earlier days, oldest first, while today's cap has room
+// pay what was held on earlier days, oldest first, while today's cap has room; an award the cap no longer applies to
+// (a one-time award held before they skipped it) pays at once
 export async function payOwed(u) {
   const [all] = await redis([['HGETALL', KEYS.owed(u)]]);
   const flat = Array.isArray(all?.result) ? all.result : [];
@@ -61,11 +63,14 @@ export async function payOwed(u) {
   const day = utcDay(), dk = KEYS.day(u, day);
   let paid = 0, balance = null;
   for (const a of items) {
-    if (a.day === day) continue;                                       // held today: wait for tomorrow
-    const [t] = await redis([['INCRBY', dk, String(a.amount)], ['EXPIRE', dk, String(DAY_TTL)]]);
-    if (Number(t?.result) > CAP) { await redis([['DECRBY', dk, String(a.amount)]]); continue; }
+    const capped = capApplies(a.kind);
+    if (capped && a.day === day) continue;                             // held today: wait for tomorrow
+    if (capped) {
+      const [t] = await redis([['INCRBY', dk, String(a.amount)], ['EXPIRE', dk, String(DAY_TTL)]]);
+      if (Number(t?.result) > CAP) { await redis([['DECRBY', dk, String(a.amount)]]); continue; }
+    }
     try { balance = (await credit(u, a)).newBalance; paid += a.amount; await redis([['HDEL', KEYS.owed(u), a.ikey]]); }
-    catch (e) { await redis([['DECRBY', dk, String(a.amount)]]).catch(() => {}); break; }
+    catch (e) { if (capped) await redis([['DECRBY', dk, String(a.amount)]]).catch(() => {}); break; }
   }
   return { paid, balance };
 }
