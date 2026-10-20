@@ -227,6 +227,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 #econMenu button:hover{color:#fff;border-color:rgba(200,146,42,0.7);}
 #econMenu .em-discord{background:#5865f2;border-color:#5865f2;color:#fff;margin-top:2px;}
 #econMenu .em-discord:hover{background:#4752c4;border-color:#4752c4;}
+#econMenu .em-shop{display:block;margin-top:12px;padding:14px;text-align:center;text-decoration:none;font-size:10px;letter-spacing:3px;text-transform:uppercase;
+  background:linear-gradient(135deg,#c8922a,#8a5e1a);color:#fff;box-shadow:0 4px 16px rgba(200,146,42,0.45), 0 0 0 1px rgba(200,146,42,0.3);}
+#econMenu .em-shop:hover{box-shadow:0 6px 24px rgba(200,146,42,0.65), 0 0 0 1px rgba(200,146,42,0.5);}
+#econMenu .em-shop + p{margin-top:6px;}
 #econMenu .em-or{margin:14px 0 8px;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:#8a7a5a;text-align:center;}
 #econMenu .em-name{display:grid;grid-template-columns:minmax(0,1fr) 92px;gap:8px;}
 #econMenu .em-name input{min-width:0;padding:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(200,146,42,0.3);color:#f3e6bf;font-family:'Cinzel',serif;font-size:12px;letter-spacing:1px;outline:none;}
@@ -235,7 +239,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 #econMenu .em-acts button{margin-top:0;padding:10px 8px;letter-spacing:2px;}
 #econMenu .em-msg{grid-column:1/-1;min-height:14px;font-size:10px;letter-spacing:1px;line-height:1.4;color:#ffd166;}
 #econMenu .em-msg.bad{color:#ff8b8b;}
-@media (pointer:coarse){#econMenu .em-name input{font-size:16px;}} /* phones zoom into smaller fields */
+@media (pointer:coarse){#econMenu .em-name input{font-size:16px;} #econMenu .em-shop{padding:17px 14px;}} /* phones zoom into smaller fields; a full finger for the shop */
 /* narrow screens: the big logo reaches the corner, so just the circle (and "Sign in" under it for guests) */
 @media (max-width:829px){
   #econChip{top:16px;left:16px;width:48px;padding:0;justify-content:center;border-radius:50%;}
@@ -1926,7 +1930,7 @@ window.addEventListener('load', () => {
 // ── DISCORD: the Rebel Economy account (api/econ-*, the same sign-in as the village journal). The lobby says whether
 // the player is signed in and how many Rebel points the account holds; signed out, one click signs in (a popup, or
 // this tab when popups are blocked; both come back here). Hidden on a deploy without the economy set up.
-const LobbyEcon = { on:false, configured:false, kind:'', name:'', avatar:null, balance:null, today:0, cap:2000 };
+const LobbyEcon = { on:false, configured:false, kind:'', name:'', avatar:null, balance:null, today:0, cap:2000, shopUrl:null };
 const LOBBY_DISCORD_GLYPH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.028C.533 9.046-.32 13.58.099 18.058a.082.082 0 0 0 .031.056 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.042-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .078-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.009c.12.1.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.029 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.331c-1.183 0-2.157-1.086-2.157-2.42 0-1.332.956-2.418 2.157-2.418 1.21 0 2.176 1.095 2.157 2.419 0 1.333-.956 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.086-2.157-2.42 0-1.332.955-2.418 2.157-2.418 1.21 0 2.176 1.095 2.157 2.419 0 1.333-.946 2.419-2.157 2.419z"/></svg>';
 const lobbyEsc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 let lobbyEconAt = 0;
@@ -1937,7 +1941,7 @@ async function refreshLobbyEcon(force) {
   try { const r = await fetch('/api/econ-me', { credentials:'same-origin', cache:'no-store' }); d = await r.json(); } catch (e) { return; }
   if (!d || !d.ok) return;
   Object.assign(LobbyEcon, { configured:!!d.configured, on:!!d.signedIn, kind:d.signedIn ? (d.kind || 'discord') : '', name:d.name || '', avatar:d.avatar || null,
-    balance:d.signedIn ? (d.balance ?? LobbyEcon.balance) : null, today:d.today || 0, cap:d.cap || 2000 });
+    balance:d.signedIn ? (d.balance ?? LobbyEcon.balance) : null, today:d.today || 0, cap:d.cap || 2000, shopUrl:d.shopUrl || LobbyEcon.shopUrl });
   renderLobbyEcon();
 }
 // a name + PIN account's picture: its first letter (the village journal draws the same)
@@ -1983,6 +1987,8 @@ function renderLobbyEcon() {
         + `<div class="em-bar"><div style="width:${pct}%"></div></div>`
         + `<div class="em-lbl">Earned today ${(LobbyEcon.today || 0).toLocaleString('en-US')} of ${(LobbyEcon.cap || 2000).toLocaleString('en-US')}</div>`
         + `<p>Chests, first game clears and place riddles in the village pay Rebel points to this account, on any device you sign in on.</p>`
+        + `<a class="em-shop" href="${lobbyEsc(LobbyEcon.shopUrl || 'https://economy.rebelants.io/shop')}" target="_blank" rel="noopener" onclick="lobbyShopOpened()">Get Rebel Points</a>`
+        + `<p>The Rebel Economy shop opens in a new tab. Sign in there ${discord ? 'with Discord' : `as ${lobbyEsc(LobbyEcon.name || 'Rebel')} with your PIN`} too, so the points come to this account.</p>`
         + `<button type="button" onclick="lobbyEconSignOut()">Sign out</button>`;
     }
   }
@@ -2028,7 +2034,11 @@ document.addEventListener('click', (e) => { const m = document.getElementById('e
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.getElementById('econMenu')?.classList.remove('open'); });
 try { const bc = new BroadcastChannel('ra-econ'); bc.onmessage = () => refreshLobbyEcon(true); } catch (e) {}
 window.addEventListener('storage', (e) => { if (e.key === 'raEconPing') refreshLobbyEcon(true); });
-window.addEventListener('focus', () => refreshLobbyEcon());
+// back from the shop's tab: the first focus after it opened reads the balance again (the shop is another site, so no ping comes back)
+let lobbyShopAt = 0;
+function lobbyShopOpened() { lobbyShopAt = Date.now(); }
+window.addEventListener('focus', () => refreshLobbyEcon(lobbyShopAt > lobbyEconAt));
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshLobbyEcon(lobbyShopAt > lobbyEconAt); });
 window.addEventListener('pageshow', (e) => { if (e.persisted) refreshLobbyEcon(true); });
 refreshLobbyEcon(true);
 </script>
