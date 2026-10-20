@@ -17,8 +17,9 @@ function buildSidePrompt(generationInput = {}, side = 'left', hasBack = false) {
   // viewer's left. Say which HALF OF IMAGE 1 is nearest to us instead.
   const HALF = side === 'right' ? 'LEFT' : 'RIGHT';
   const OTHER = side === 'right' ? 'RIGHT' : 'LEFT';
-  const kind = generationInput.species && generationInput.species !== 'ant' ? `realistic 3D-rendered ${generationInput.species} game character (same render style: real fur, fabric and leather)` : 'stylised Rebel Ant game character';
-  const headSide = generationInput.species && generationInput.species !== 'ant' ? 'the profile of the head with its ear, muzzle and headwear' : 'the profile of the head and antennae';
+  const human = generationInput.species === 'human';
+  const kind = generationInput.species && generationInput.species !== 'ant' ? `realistic 3D-rendered ${generationInput.species} game character (same render style: real ${human ? 'skin' : 'fur'}, fabric and leather)` : 'stylised Rebel Ant game character';
+  const headSide = generationInput.species && generationInput.species !== 'ant' ? `the profile of the head with its ear, ${human ? 'face' : 'muzzle'} and headwear` : 'the profile of the head and antennae';
   return `
 Image 1 is the FRONT view of a ${kind} in a neutral A-pose.${hasBack ? ' Image 2 is the same character seen from BEHIND.' : ''}
 Draw the SAME character turned 90 degrees so we see the character's ${S} side in exact profile: an orthographic side view for a 3D modelling turnaround.

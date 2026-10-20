@@ -67,15 +67,16 @@ export function headGearLines(ts = {}, view = 'front') {
 
 // friend-collection characters forged from a finished reference render (generationInput.species, e.g. a Chumpz ape)
 function speciesRigRules(species, view) {
+  const h = species === 'human';
   return [
     'Rig-friendly details (this character will be rigged and animated):',
     '- Feet point STRAIGHT FORWARD and parallel, about hip-width apart.',
     '- No loose straps, laces, tassels or cloth tails sticking out from the elbows, wrists, knees or ankles.',
     '- Keep a small gap between the arms / hands and the body; the hands must not touch the body or clothing.',
-    `HEAD = THE REFERENCE (Image 1): the same ${species} face, ears, eyes, teeth, fur colour, headwear and accessories, the SAME COLOURS. Never recolour, redesign or add to the head.`,
-    `- Same realistic 3D-rendered look as Image 1: real fur, real fabric, real leather; not a cartoon, not line art.`,
-    '- Clothing sits close to the body; the fur, bandana and straps follow the body. A clean, solid, readable silhouette.',
-    ...(view === 'back' ? ['- From behind there is NO face: the back of the head is fur (and the back of any cap with its strap), the ears seen from behind.'] : [])
+    `HEAD = THE REFERENCE (Image 1): the same ${species} face, ears, eyes, teeth, ${h ? 'skin and hair colour' : 'fur colour'}, headwear and accessories, the SAME COLOURS. Never recolour, redesign or add to the head.`,
+    `- Same realistic 3D-rendered look as Image 1: real ${h ? 'skin' : 'fur'}, real fabric, real leather; not a cartoon, not line art.`,
+    `- Clothing sits close to the body; the ${h ? 'hair' : 'fur'}, bandana and straps follow the body. A clean, solid, readable silhouette.`,
+    ...(view === 'back' ? [`- From behind there is NO face: the back of the head is ${h ? 'hair or skin' : 'fur'} (and the back of any cap with its strap), the ears seen from behind.`] : [])
   ].join('\n');
 }
 export function buildRigFriendlyRules(generationInput = {}, { view = 'front' } = {}) {
