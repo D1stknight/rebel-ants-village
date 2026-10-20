@@ -9,6 +9,10 @@ Nothing here is on `main` / production, and no live action was performed.
 connection format v2 (§2). The chest action, the wallet ↔ Economy account link and experience sharing are in
 `docs/raap-universe-chest-v1.md`.
 
+**Corrected Oct 19 (later)** after RAAP's review of `291f167` (raap-core `75232c3`): records end exactly at
+`retainUntil` (no +5 minutes past it) and requests end at least 300 s before it (§2, §4); EXECUTE never answers with a
+no-effect claim (`committed: false` removed, §4 step 7).
+
 ## In plain words (for Miguel)
 
 - **What was built:** a private door in the game's server that only RAAP's server can use (it needs a secret key).
@@ -75,10 +79,12 @@ Two Vercel variables, **Preview** scope (never Production):
 
 `controllerEpoch`, `validUntil` and `retainUntil` are numbers in the real value. Every field is required; an unknown
 field or a bad value makes the whole connection unavailable (403). `retainUntil` is the storage term: every
-`raap:v1:dev:*` record of this connection (receipts / request tombstones, the version counter) expires then. It must be
-at or after `validUntil`, and a request's tombstone never expires before that request's own `expiresAt` + 5 minutes, so
-a request id can never run again while its approval could still be valid. The weapon choice itself (a game record) never
-expires. Nothing older than this version used a 90-day term in a live record (none was ever written).
+`raap:v1:dev:*` record of this connection (receipts / request tombstones, the version counter, rate-limit windows)
+expires **exactly** then, never later. It must be at or after `validUntil` (it may be equal). Every request must end at
+least `SETTLE_MARGIN` = 300 s before `retainUntil` (PREPARE caps `expiresAt` at `retainUntil − 300`, EXECUTE declines a
+later one `EXPIRED`), so a tombstone always outlives its request's approval and a request id can never run again while
+it could still be valid — inside the term, not past it. The weapon choice itself (a game record) never expires. Nothing
+older than this version used a 90-day term in a live record (none was ever written).
 `chest` / `events` stay `null` for the weapon-only connection (the chest, link and sharing sections are described in
 `docs/raap-universe-chest-v1.md`). `"operations"` may also list `"EVENTS"` there. A Vercel variable change needs a redeploy of `dev` to take effect.
 Disconnect = set `"status": "DISCONNECTED"` (or remove the variables): new READ/PREPARE/EXECUTE refused, saved results
@@ -105,7 +111,7 @@ origins, local Redis, a stand-in owner of #909 — **not** a live authority).
 | Operation | Answer | Changes |
 |---|---|---|
 | `READ {target}` | `universe.raap.inventory.v1`: state, configurationCommitment, equippedWeaponId, the six weapons with eligible / refusal, availableActions, observedAt | none |
-| `PREPARE {target, action}` | `universe.raap.preparation.v1` with the current state, zero charge, `expiresAt = min(now + 900, validUntil)`; or `422 {error: ACTION_UNAVAILABLE, reason}` | none, nothing reserved |
+| `PREPARE {target, action}` | `universe.raap.preparation.v1` with the current state, zero charge, `expiresAt = min(now + 900, validUntil, retainUntil − 300)`; or `422 {error: ACTION_UNAVAILABLE, reason}` (`403 CONNECTION_CLOSED` once no request can end inside the term) | none, nothing reserved |
 | `EXECUTE {authorization}` | `universe.raap.action-receipt.v1` (APPLIED / DECLINED / OUTCOME_UNKNOWN) | the weapon pick, once |
 | `RECEIPT {target, requestId, requestCommitment}` | `universe.raap.receipt-read.v1` FOUND / NOT_FOUND; other commitment → `409` | none |
 | `EVENTS` | `403 OPERATION_NOT_ENABLED` (§9) | none |
@@ -124,7 +130,8 @@ origins, local Redis, a stand-in owner of #909 — **not** a live authority).
 4. Same `requestId` already saved → that receipt (byte-identical) if the request commitment matches, else
    `409 REQUEST_ID_CONFLICT`. No second change, no version increment.
 5. Checks, each a **DECLINED** receipt that is saved like a success (the same request id always gets this answer):
-   `EXPIRED` (outside `issuedAt <= now < expiresAt`, lifetime over 900 s, or past the connection's `validUntil`) →
+   `EXPIRED` (outside `issuedAt <= now < expiresAt`, lifetime over 900 s, past the connection's `validUntil`, or ending
+   later than `retainUntil − 300`) →
    `RULES_CHANGED` (configurationCommitment differs) → `NOT_OWNED` (the live `ownerOf` on chain is not the pinned wallet;
    delegate.xyz delegates are **not** accepted for RAAP actions) → `STALE_STATE` (version or state commitment differs) →
    the action itself (`UNSUPPORTED_ACTION`: unknown or not approved weapon; `STALE_STATE`: equipping what is already
@@ -136,8 +143,9 @@ origins, local Redis, a stand-in owner of #909 — **not** a live authority).
    A human change or a competing request in between → `DECLINED STALE_STATE` with the state as it now is.
 7. Lost answer from Redis → `OUTCOME_UNKNOWN` (`after: null`, `actualCharge: null`), HTTP 200. Query RECEIPT; never resend
    automatically. (Locally: the save happened, RECEIPT then showed APPLIED, a resend got that same receipt.)
-   A failure before any change → `503 {error: TEMPORARILY_UNAVAILABLE, committed: false}`; a decline that could not be
-   saved → `503 {error: RECEIPT_NOT_SAVED, committed: false}`.
+   An unexpected failure → `503 {error: TEMPORARILY_UNAVAILABLE}`; a decline that could not be saved →
+   `503 {error: RECEIPT_NOT_SAVED}` (no no-effect claim: RAAP reads RECEIPT). A decline that finds another answer already
+   saved for that request id returns the saved one (else `OUTCOME_UNKNOWN`).
 
 ## 5. The game's rules this follows (unchanged)
 
@@ -173,8 +181,9 @@ origins, local Redis, a stand-in owner of #909 — **not** a live authority).
   weapons (id, label, trait, side), the equipped rule, the record mapping, zero charge. No secret. Any change → old
   requests `RULES_CHANGED`.
 - New records (all `raap:v1:dev:*`, enforced in code): `raap:v1:dev:player:<playerHash>:version`,
-  `raap:v1:dev:request:<connectionId>:<requestId>` (the receipt), both until `retainUntil`;
-  `raap:v1:dev:rl:universe:<caller hash>:<minute>` (rate limit, ~2 minutes). Nothing else new.
+  `raap:v1:dev:request:<connectionId>:<requestId>` (the receipt), both until exactly `retainUntil`;
+  `raap:v1:dev:rl:universe:<caller hash>:<minute>` (rate limit, ~2 minutes, clamped to `retainUntil`; nothing counted or
+  written at or past it). Nothing else new.
 - Shared game records: **writes** `forge:weapon-choice:v1:battle_for_colony:909` only (EXECUTE, APPLIED);
   **reads** the six `forge:weapon:v1:<id>`, the NFT metadata cache `nft:meta:v1:battle_for_colony:909`, the chain owner.
   Never reads or writes the protected R7 appearance / writer / admission / receipt records, the Economy, or any balance.
@@ -189,7 +198,7 @@ origins, local Redis, a stand-in owner of #909 — **not** a live authority).
 | 409 | `REQUEST_ID_CONFLICT` |
 | 422 | PREPARE refused: `ACTION_UNAVAILABLE` + reason (`NOT_OWNED`, `UNSUPPORTED_ACTION`, `STALE_STATE`) |
 | 429 | rate limit |
-| 503 | `TEMPORARILY_UNAVAILABLE` / `RECEIPT_NOT_SAVED`, both `committed: false` |
+| 503 | `TEMPORARILY_UNAVAILABLE` / `RECEIPT_NOT_SAVED` (no `committed` claim) |
 
 Receipt reasons used: `NONE`, `EXPIRED`, `RULES_CHANGED`, `NOT_OWNED`, `STALE_STATE`, `UNSUPPORTED_ACTION`,
 `AWAITING_CONFIRMATION`. Not used by weapons: `INSUFFICIENT_RESOURCES`, `NOT_AUTHORIZED` (refused before any receipt).
@@ -273,7 +282,10 @@ character / selected / fence / admission keys and `GET` of exact receipt keys; a
   then APPLIED once, resend → same receipt; disconnected → reads refused, receipts readable; no keys outside the expected
   set; protected stand-ins byte-identical. After the fixes: every receipt and the version expire at the pinned
   `retainUntil` (no 90-day term), the weapon choice has no expiry, the rate limit writes only `raap:v1:dev:rl:*` (no
-  `rl:raap-universe:*`), a v1 connection and `retainUntil < validUntil` are refused.
+  `rl:raap-universe:*`), a v1 connection and `retainUntil < validUntil` are refused. After RAAP's review (87 / 87):
+  every `raap:v1:dev` record ends exactly at `retainUntil` (none later); with `retainUntil = validUntil = now + 600`
+  PREPARE ends at `retainUntil − 300`, a request ending at `retainUntil − 100` is DECLINED `EXPIRED` (its receipt ends at
+  `retainUntil`), a request inside the term applies with receipt and version ending at `retainUntil`.
 - Not verified: anything live (Vercel env, the real key, the real owner, Upstash scripting in production use — the same
   `EVAL` / `TIME` / `MSET` features run in the existing World save today), RAAP's adapter, the RAAP controller checks.
 

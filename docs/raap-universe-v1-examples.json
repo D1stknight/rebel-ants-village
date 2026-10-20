@@ -1,7 +1,7 @@
 {
   "note": "Local bench output: PUBLIC TEST-ONLY signing key (private key 0x00..02), .invalid origins, a local Redis and a stand-in owner of #909 (the real owner is not used). #909 trait as on chain (Weapons: Stormbringer-Blade-2). Not a live player, request or authority.",
   "connection": {
-    "schema": "universe.raap.connection.v1",
+    "schema": "universe.raap.connection.v2",
     "environment": "dev",
     "connectionId": "universe-dev-test",
     "connectionRevision": "1",
@@ -25,7 +25,10 @@
       "RECEIPT"
     ],
     "status": "ACTIVE",
-    "validUntil": 1792419758
+    "validUntil": 1792461777,
+    "retainUntil": 1792465377,
+    "chest": null,
+    "events": null
   },
   "read": {
     "request": {
@@ -67,12 +70,12 @@
           "weaponId": "stormbringer_blade"
         }
       ],
-      "configurationCommitment": "0x75419c48613b927a2bf88c061215325592461828f1e6ab7e0ee3b658fc501e71",
+      "configurationCommitment": "0xd0883ffea66c5bef248990ce65d7ee1ae33a20d18b6627e72dd5b8f9dc881ca9",
       "equippedWeaponId": "stormbringer_blade",
-      "observedAt": 1792412559,
+      "observedAt": 1792454578,
       "schema": "universe.raap.inventory.v1",
       "state": {
-        "commitment": "0xe742afa64c26882df610b67acc3ef8072fcdab8b7420dec7d03dc96b3aec2524",
+        "commitment": "0xd3e79e0362cd2d6e0df1d9e963ff6b0edbf9fe167217f0acbdf20c81ca6b14b0",
         "version": "0"
       },
       "target": {
@@ -146,17 +149,17 @@
         "kind": "WEAPON_EQUIP",
         "weaponId": "soulrender"
       },
-      "configurationCommitment": "0x75419c48613b927a2bf88c061215325592461828f1e6ab7e0ee3b658fc501e71",
+      "configurationCommitment": "0xd0883ffea66c5bef248990ce65d7ee1ae33a20d18b6627e72dd5b8f9dc881ca9",
       "economyEffect": "NONE",
-      "expiresAt": 1792413459,
+      "expiresAt": 1792455478,
       "maximumCharge": {
         "currency": "REBEL",
         "units": "0"
       },
-      "observedAt": 1792412559,
+      "observedAt": 1792454578,
       "schema": "universe.raap.preparation.v1",
       "state": {
-        "commitment": "0xe742afa64c26882df610b67acc3ef8072fcdab8b7420dec7d03dc96b3aec2524",
+        "commitment": "0xd3e79e0362cd2d6e0df1d9e963ff6b0edbf9fe167217f0acbdf20c81ca6b14b0",
         "version": "0"
       },
       "target": {
@@ -190,7 +193,7 @@
           "audience": "https://universe.invalid",
           "tenant": "test-tenant",
           "journalId": "0x1111111111111111111111111111111111111111111111111111111111111111",
-          "requestId": "0xe893801689e2115db0c4ac65259aa42e814a0f66c8fb0c89c23ab534e53a2504",
+          "requestId": "0xb20b344196bd49adf7f49b73e5c31811eabc21285a7133d66a9ac3ba4b22e01e",
           "connectionId": "universe-dev-test",
           "connectionRevision": "1",
           "player": {
@@ -210,10 +213,10 @@
           "account": "0x2222222222222222222222222222222222222222",
           "contextCommitment": "0x3333333333333333333333333333333333333333333333333333333333333333",
           "state": {
-            "commitment": "0xe742afa64c26882df610b67acc3ef8072fcdab8b7420dec7d03dc96b3aec2524",
+            "commitment": "0xd3e79e0362cd2d6e0df1d9e963ff6b0edbf9fe167217f0acbdf20c81ca6b14b0",
             "version": "0"
           },
-          "configurationCommitment": "0x75419c48613b927a2bf88c061215325592461828f1e6ab7e0ee3b658fc501e71",
+          "configurationCommitment": "0xd0883ffea66c5bef248990ce65d7ee1ae33a20d18b6627e72dd5b8f9dc881ca9",
           "action": {
             "kind": "WEAPON_EQUIP",
             "weaponId": "soulrender"
@@ -223,17 +226,17 @@
             "units": "0"
           },
           "economyEffect": "NONE",
-          "issuedAt": 1792412554,
-          "expiresAt": 1792413159
+          "issuedAt": 1792454573,
+          "expiresAt": 1792455178
         },
         "ownerApproval": {
           "scheme": "eip191-personal-sign",
           "signer": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
-          "signature": "0x63beecdb066c4a0c977d54eca4e528dc42f77116c9d9056f45230441ab2b4672322b9e1b85cc38607722876a61784b59ecf524d93ff697af6eaab1affd3007831b"
+          "signature": "0x0cbe0480aa138fc24edc61622e16eae09fe7b17412805b587c9f6c8cc9d0c35f324278dbc8cc5e3cd33089570cab6670c23f6349d0bdc452df0c76365e281b5a1b"
         }
       }
     },
-    "personalMessage": "RAAP approval\n\nEquip weapon for Rebel #909\nWeapon ID: soulrender\nMaximum game charge: 0 REBEL. No Economy payment or award.\nThis approves one game action. It is not an Ethereum transaction or NFT transfer.\nPlayer wallet: 0x2b5ad5c4795c026514f8317c7a215e218dccd6cf\nExpires (UTC): 2026-10-19T12:32:39.000Z\n\nVerification details\nProtocol: RAAP Universe Action / 1\nEnvironment: dev\nWebsite: https://raap.invalid\nGame: https://universe.invalid\nNetwork chain ID: 1\nCollection: 0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221\nController epoch: 3\nRebel account: 0x2222222222222222222222222222222222222222\nState version: 0\nJournal: 0x1111111111111111111111111111111111111111111111111111111111111111\nRequest ID: 0xe893801689e2115db0c4ac65259aa42e814a0f66c8fb0c89c23ab534e53a2504\nRequest: 0xb767c81fda65b6a0e8c64b161448de3d6e4d92d54ea6549aed11862e1d4b6e11",
+    "personalMessage": "RAAP approval\n\nEquip weapon for Rebel #909\nWeapon ID: soulrender\nMaximum game charge: 0 REBEL. No Economy payment or award.\nThis approves one game action. It is not an Ethereum transaction or NFT transfer.\nPlayer wallet: 0x2b5ad5c4795c026514f8317c7a215e218dccd6cf\nExpires (UTC): 2026-10-20T00:12:58.000Z\n\nVerification details\nProtocol: RAAP Universe Action / 1\nEnvironment: dev\nWebsite: https://raap.invalid\nGame: https://universe.invalid\nNetwork chain ID: 1\nCollection: 0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221\nController epoch: 3\nRebel account: 0x2222222222222222222222222222222222222222\nState version: 0\nJournal: 0x1111111111111111111111111111111111111111111111111111111111111111\nRequest ID: 0xb20b344196bd49adf7f49b73e5c31811eabc21285a7133d66a9ac3ba4b22e01e\nRequest: 0x8c6ea77660a8afaebe5b8477202de728b304383700efd301e56cd6e5d9897026",
     "response": {
       "action": {
         "kind": "WEAPON_EQUIP",
@@ -244,7 +247,7 @@
         "units": "0"
       },
       "after": {
-        "commitment": "0x73413145e47377876ba28a08fd4a2f798ca263ee9a9406f16566ef663fd129dc",
+        "commitment": "0xed5ebade2bc5a32bdaa699a99e71289befa9322b1ef295faa460181b726425e0",
         "version": "1"
       },
       "asset": {
@@ -253,10 +256,10 @@
         "tokenId": "909"
       },
       "before": {
-        "commitment": "0xe742afa64c26882df610b67acc3ef8072fcdab8b7420dec7d03dc96b3aec2524",
+        "commitment": "0xd3e79e0362cd2d6e0df1d9e963ff6b0edbf9fe167217f0acbdf20c81ca6b14b0",
         "version": "0"
       },
-      "committedAt": 1792412559,
+      "committedAt": 1792454578,
       "connectionId": "universe-dev-test",
       "controllerEpoch": 3,
       "economyEffect": "NONE",
@@ -272,9 +275,9 @@
       "origin": "RAAP_APPROVED",
       "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
       "reason": "NONE",
-      "receiptId": "0xb750987f274a5573a481a74fef278db2df123992f3ce7404c144c80bdf596391",
-      "requestCommitment": "0xb767c81fda65b6a0e8c64b161448de3d6e4d92d54ea6549aed11862e1d4b6e11",
-      "requestId": "0xe893801689e2115db0c4ac65259aa42e814a0f66c8fb0c89c23ab534e53a2504",
+      "receiptId": "0xc022d49bf947fa28f2813519850e5e61e5529c7e12a441746f38181dfa00bb9c",
+      "requestCommitment": "0x8c6ea77660a8afaebe5b8477202de728b304383700efd301e56cd6e5d9897026",
+      "requestId": "0xb20b344196bd49adf7f49b73e5c31811eabc21285a7133d66a9ac3ba4b22e01e",
       "schema": "universe.raap.action-receipt.v1",
       "status": "APPLIED"
     }
@@ -291,8 +294,8 @@
         },
         "connectionId": "universe-dev-test"
       },
-      "requestId": "0xe893801689e2115db0c4ac65259aa42e814a0f66c8fb0c89c23ab534e53a2504",
-      "requestCommitment": "0xb767c81fda65b6a0e8c64b161448de3d6e4d92d54ea6549aed11862e1d4b6e11"
+      "requestId": "0xb20b344196bd49adf7f49b73e5c31811eabc21285a7133d66a9ac3ba4b22e01e",
+      "requestCommitment": "0x8c6ea77660a8afaebe5b8477202de728b304383700efd301e56cd6e5d9897026"
     },
     "response": {
       "receipt": {
@@ -305,7 +308,7 @@
           "units": "0"
         },
         "after": {
-          "commitment": "0x73413145e47377876ba28a08fd4a2f798ca263ee9a9406f16566ef663fd129dc",
+          "commitment": "0xed5ebade2bc5a32bdaa699a99e71289befa9322b1ef295faa460181b726425e0",
           "version": "1"
         },
         "asset": {
@@ -314,10 +317,10 @@
           "tokenId": "909"
         },
         "before": {
-          "commitment": "0xe742afa64c26882df610b67acc3ef8072fcdab8b7420dec7d03dc96b3aec2524",
+          "commitment": "0xd3e79e0362cd2d6e0df1d9e963ff6b0edbf9fe167217f0acbdf20c81ca6b14b0",
           "version": "0"
         },
-        "committedAt": 1792412559,
+        "committedAt": 1792454578,
         "connectionId": "universe-dev-test",
         "controllerEpoch": 3,
         "economyEffect": "NONE",
@@ -333,13 +336,13 @@
         "origin": "RAAP_APPROVED",
         "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
         "reason": "NONE",
-        "receiptId": "0xb750987f274a5573a481a74fef278db2df123992f3ce7404c144c80bdf596391",
-        "requestCommitment": "0xb767c81fda65b6a0e8c64b161448de3d6e4d92d54ea6549aed11862e1d4b6e11",
-        "requestId": "0xe893801689e2115db0c4ac65259aa42e814a0f66c8fb0c89c23ab534e53a2504",
+        "receiptId": "0xc022d49bf947fa28f2813519850e5e61e5529c7e12a441746f38181dfa00bb9c",
+        "requestCommitment": "0x8c6ea77660a8afaebe5b8477202de728b304383700efd301e56cd6e5d9897026",
+        "requestId": "0xb20b344196bd49adf7f49b73e5c31811eabc21285a7133d66a9ac3ba4b22e01e",
         "schema": "universe.raap.action-receipt.v1",
         "status": "APPLIED"
       },
-      "requestId": "0xe893801689e2115db0c4ac65259aa42e814a0f66c8fb0c89c23ab534e53a2504",
+      "requestId": "0xb20b344196bd49adf7f49b73e5c31811eabc21285a7133d66a9ac3ba4b22e01e",
       "schema": "universe.raap.receipt-read.v1",
       "status": "FOUND"
     }
@@ -354,7 +357,7 @@
       "units": "0"
     },
     "after": {
-      "commitment": "0xf92c21daca43339a825284674fd2c2baac79ca97a2c6c48a4bc80084bb9e451b",
+      "commitment": "0x11e607c56a5d392114c6a86144b0a58ab681272ac263b890c46549fd658228c8",
       "version": "1"
     },
     "asset": {
@@ -363,7 +366,7 @@
       "tokenId": "909"
     },
     "before": {
-      "commitment": "0xf92c21daca43339a825284674fd2c2baac79ca97a2c6c48a4bc80084bb9e451b",
+      "commitment": "0x11e607c56a5d392114c6a86144b0a58ab681272ac263b890c46549fd658228c8",
       "version": "1"
     },
     "committedAt": null,
@@ -375,9 +378,9 @@
     "origin": "RAAP_APPROVED",
     "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
     "reason": "STALE_STATE",
-    "receiptId": "0x0169d119e23ad73e0b1a972340c121e6fe4eb0bec64caaf8e5669bcfa8558b53",
-    "requestCommitment": "0x59ec51086ce4499813e5bd5622017fa574680eec641b6c8fc6de74fe569e4360",
-    "requestId": "0x5b2faef54dd6fa011030d68c9b82e7cb8c0d858ae630aa041bc52d709260bd33",
+    "receiptId": "0x4a6c1f40ea702b9bee8bdf1a8bb3f7c8fd70ff86b780968911091dd260bf7ebe",
+    "requestCommitment": "0xa11c32533a426c5f7e920e3475720b771ddfac2be6416d55e36d95b474d76c75",
+    "requestId": "0x6131b2c536c92d340def422596ba10ddd9de8aad4eae63442178f095f7a9022c",
     "schema": "universe.raap.action-receipt.v1",
     "status": "DECLINED"
   }
