@@ -4,6 +4,7 @@ import { forgeImageEdit, fetchImageAsDataUrl, FORGE_REFERENCE_URLS } from './_fo
 import { buildOutfitDesignBlock } from './_forge-outfits.mjs';
 import { buildRigFriendlyRules } from './_forge-rig-rules.mjs';
 import { resolveForgeSourceImage } from './_forge-source-image.mjs';
+import { getCollection } from './_collections.mjs';
 
 const DEFAULT_SIZE = '1024x1536';
 const FORGE_ECONOMY_VERSION = 'v0_testing_free';
@@ -212,6 +213,46 @@ Generation rules:
 `.trim();
 }
 
+// Oct 20 friend collections (Chumpz apes, Saints of LA humans): the holder's NFT is a hand-drawn chest-up portrait.
+// One step turns it into the clean full-body front view the sculptor needs (the Forge uses it as the production
+// reference too): a realistic 3D render in an A-pose with the background showing between the arms and the body.
+// Apes keep their NFT's fur and skin colours; humans get natural skin (the NFTs draw red, blue or grey skin) and real eyes.
+const FRIEND_NAMES = { ape: 'a Chumpz ape', human: 'a Saints of LA character' };
+function buildFriendFullBodyPrompt(gi, { hasStyleRef = false } = {}) {
+  const ape = gi.species === 'ape';
+  const who = `${FRIEND_NAMES[gi.species] || 'a ' + gi.species}${gi.name ? ` (${String(gi.name).slice(0, 60)})` : ''}`;
+  const traits = (Array.isArray(gi.friendTraits) ? gi.friendTraits : [])
+    .filter((t) => t && t.trait_type && t.value != null && !/^(none|no|null)$/i.test(String(t.value)) && !/background/i.test(String(t.trait_type)))
+    .slice(0, 16).map((t) => `${String(t.trait_type).slice(0, 40)}: ${String(t.value).slice(0, 60)}`);
+  return `
+Image 1 is the owner's NFT: a hand-drawn, chest-up portrait of ${who}.
+${hasStyleRef ? `Image 2 is a STYLE reference only: a finished full-body render of another ${ape ? 'Chumpz ape' : 'character'} in the target look. Copy only its realistic 3D render style, its lighting, its plain light-grey background and its body proportions. Never copy its face, ${ape ? 'fur colour' : 'skin, hair'}, clothes, cap, bandana, accessories or its pose.
+` : ''}
+Create ONE full-body FRONT view of THIS character from Image 1 as a realistic 3D-rendered game character. It is the reference a 3D sculptor builds the character from; then it is rigged and animated in a game, so the owner must recognise their NFT at a glance.
+
+Identity (from Image 1, never changed):
+- The same face: the eyes and their colour, the brow, the ${ape ? 'muzzle' : 'nose'}, the mouth and teeth or whatever covers the mouth, the ears, any facial hair, and the same ${ape ? 'skin and fur colours' : 'hair colour'}.
+- The same ${ape ? 'fur colour and pattern' : 'hairstyle'}, headwear, glasses or sunglasses, jewellery, chains, tattoos and clothing, with the same colours, patterns, logos and printed text.
+${traits.length ? `- Its traits: ${traits.join('; ')}.
+` : ''}- Image 1 shows only the head and chest: continue the outfit down the body in the same style (trousers, shorts or skirt and shoes that suit it). The background colour of Image 1 is not part of the character.
+${ape ? '' : `- Skin: natural human skin with believable shading. When Image 1 draws a stylised skin colour (red, blue, grey, green or white), use the natural human skin tone closest to it; never a colour real skin can't be.
+- Eyes: real human eyes with irises and pupils, looking straight ahead; never blank, white or glowing. Glasses or sunglasses the character wears stay on.
+`}
+Render:
+- Realistic 3D render: real ${ape ? 'fur and skin' : 'skin and hair'}, real fabric, real leather; not a drawing, not a cartoon, not line art, not cel shading.
+- ${ape ? 'A strong, upright ape body with realistic proportions' : 'Realistic adult human proportions, about 7.5 heads tall'}; the head at its natural size for the body.
+- Plain light-grey background, soft even studio light, the whole body from the top of the head to the soles of the shoes in frame and centred, nothing cropped.
+
+Pose (very important, the character will be rigged):
+- A clean A-pose facing the camera: both arms held about 40 degrees out from the body with the elbows almost straight, and the plain background shows between each arm and the torso all the way from the armpit down to the hand.
+- Hands open and relaxed, fingers together, palms facing the thighs, touching nothing.
+- Legs straight, feet hip-width apart and pointing straight forward.
+- Clothes fit the body: shoulder seams on the shoulders, sleeves ending at the wrists, nothing loose hanging from the elbows, wrists, knees or ankles.
+
+Output: one single full-body front view. Not a collage, not a turnaround sheet, no added text, no extra characters, nothing in the hands, no weapons.
+`.trim();
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -249,12 +290,17 @@ export default async function handler(req, res) {
       });
     }
 
-    const bodyReferenceKey = pickBodyReferenceKey(generationInput);
-    const outfit = buildOutfitDesignBlock(generationInput);
-    const prompt = buildFullBodyPreviewPrompt(generationInput, { hasBodyRef: !!bodyReferenceKey, outfitBlock: outfit.text });
+    // friend collections: their species' prompt, the NFT + (apes) the style render; never the Rebels' clay or outfits
+    const friend = (await getCollection(generationInput.collectionKey))?.friend ? generationInput.species : null;
+    const bodyReferenceKey = friend ? null : pickBodyReferenceKey(generationInput);
+    const outfit = friend ? { text: '', colony: null, variation: null } : buildOutfitDesignBlock(generationInput);
+    const styleUrl = friend ? FORGE_REFERENCE_URLS.friendStyle?.[friend] || null : null;
+    const prompt = friend ? buildFriendFullBodyPrompt({ ...generationInput, species: friend }, { hasStyleRef: !!styleUrl })
+      : buildFullBodyPreviewPrompt(generationInput, { hasBodyRef: !!bodyReferenceKey, outfitBlock: outfit.text });
+    // the last image: the Rebels' clay proportions, or a friend species' style render
     const [sourceImageDataUrl, proportionsReferenceDataUrl, bodyReferenceDataUrl] = await Promise.all([
       resolveForgeSourceImage(generationInput.sourceImage).then(fetchImageAsDataUrl),
-      fetchImageAsDataUrl(FORGE_REFERENCE_URLS.proportions),
+      friend ? (styleUrl ? fetchImageAsDataUrl(styleUrl) : Promise.resolve(null)) : fetchImageAsDataUrl(FORGE_REFERENCE_URLS.proportions),
       bodyReferenceKey ? fetchImageAsDataUrl(FORGE_REFERENCE_URLS.body[bodyReferenceKey]) : Promise.resolve(null)
     ]);
     const economyPlan = buildForgeEconomyPlan(generationInput);
@@ -262,7 +308,7 @@ export default async function handler(req, res) {
     const { imageBase64, imageModel, attempts } = await forgeImageEdit({
       apiKey,
       prompt,
-      images: bodyReferenceDataUrl ? [sourceImageDataUrl, bodyReferenceDataUrl, proportionsReferenceDataUrl] : [sourceImageDataUrl, proportionsReferenceDataUrl],
+      images: [sourceImageDataUrl, bodyReferenceDataUrl, proportionsReferenceDataUrl].filter(Boolean),
       size: DEFAULT_SIZE
     });
 
