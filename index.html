@@ -551,10 +551,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 .ant-card.has-forge-thumb img { object-fit: cover; }
 .ant-card.is-ready.selected { border-color: #5ecfca; box-shadow: 0 0 22px rgba(94,207,202,0.5); }
 /* Oct 21 (Miguel: "it should highlight who was selected, i could not tell who i had selected"): the picked card lifts
-   with a bright ring and a check, the others dim, and its name shows under the row and on the Forge button */
+   with a bright ring and a check, the others dim, and its name shows under the row and on the Forge button.
+   The others stay solid, only a little darker (Miguel: "the transparent NFTs are too transparent") */
 #char-row { padding: 10px 8px; }
-#char-row.has-sel .ant-card:not(.selected) { opacity: 0.55; filter: saturate(0.65); }
-#char-row.has-sel .ant-card:not(.selected):hover { opacity: 0.95; filter: none; }
+#char-row.has-sel .ant-card:not(.selected) { filter: brightness(0.8) saturate(0.85); }
+#char-row.has-sel .ant-card:not(.selected):hover { filter: none; }
 .ant-card.selected, .ant-card.is-ready.selected { border-color: #ffd27a; outline: 3px solid #ffd27a; outline-offset: 2px; transform: translateY(-3px) scale(1.06); box-shadow: 0 0 26px rgba(255,200,90,0.7); }
 .ant-card.selected::after { content: '\2713'; position: absolute; left: 4px; top: 4px; z-index: 3; width: 20px; height: 20px; border-radius: 50%; background: #ffd27a; color: #1c1305; font: 700 13px/20px sans-serif; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.6); }
 #char-status b { color: #ffd27a; font-weight: 700; }
