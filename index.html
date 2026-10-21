@@ -1987,7 +1987,7 @@ function renderLobbyEcon() {
         + `<div class="em-bar"><div style="width:${pct}%"></div></div>`
         + `<div class="em-lbl">Earned today ${(LobbyEcon.today || 0).toLocaleString('en-US')} of ${(LobbyEcon.cap || 2000).toLocaleString('en-US')}</div>`
         + `<p>Chests, first game clears and place riddles in the village pay Rebel points to this account, on any device you sign in on.</p>`
-        + `<a class="em-shop" href="${lobbyEsc(lobbyShopHref())}" target="_blank" rel="noopener" onclick="lobbyShopOpened()">Get Rebel Points</a>`
+        + `<a class="em-shop" href="${lobbyEsc(lobbyShopHref())}" target="_blank" rel="opener" onclick="lobbyShopOpened()">Get Rebel Points</a>`
         + `<p>The Rebel Economy shop opens in a new tab, signed in as ${lobbyEsc(LobbyEcon.name || 'Rebel')}${discord ? ' (Discord)' : ''}: the points come to this account.</p>`
         + `<button type="button" onclick="lobbyEconSignOut()">Sign out</button>`;
     }
@@ -2035,7 +2035,8 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.g
 try { const bc = new BroadcastChannel('ra-econ'); bc.onmessage = () => refreshLobbyEcon(true); } catch (e) {}
 window.addEventListener('storage', (e) => { if (e.key === 'raEconPing') refreshLobbyEcon(true); });
 // back from the shop's tab: the first focus after it opened reads the balance again (the shop is another site, so no ping comes back)
-// the shop, signed in to this account (api/econ-shop: a sign-in ticket from the economy), its Back link to this page
+// the shop, signed in to this account (api/econ-shop: a sign-in ticket from the economy), its Back link to this page.
+// Opened with an opener (rel="opener"): the shop's Back then closes its tab, even after a card payment, instead of opening this page again in it.
 function lobbyShopHref() {
   const back = location.pathname + location.search;
   const base = LobbyEcon.shopUrl || 'https://economy.rebelants.io/shop';
