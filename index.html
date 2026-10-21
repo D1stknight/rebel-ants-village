@@ -1115,7 +1115,8 @@ async function selectAnt(id) {
     (ownedRebels.length > 1 ? 's' : '') +
     ' found' +
     (forgeReadyRebel.gangName ? ' — ' + forgeReadyRebel.gangName : '') +
-    (forgeReadyRebel.activeForgeCharacter?.activeGlbUrl ? ' — 3D Forge Character Ready' : ''),
+    (forgeReadyRebel.activeForgeCharacter?.activeGlbUrl ? ' — 3D Forge Character Ready'
+      : forgeReadyRebel.forgedBuild ? ` — Forged: open the Forge, Awaken it, then Make this my ${forgeReadyRebel.friendLabel || 'Rebel'}` : ''),
     true
   );
   markSelectedCard();
@@ -1165,8 +1166,27 @@ function getRebelForgeStatus(rebel, hasForgeCharacter) {
   const afc = rebel.activeForgeCharacter || {};
   if (hasForgeCharacter === undefined) hasForgeCharacter = Boolean(afc.activeGlbUrl || rebel.activeGlbUrl);
   if (afc.forgeRigGlbUrl || afc.characterBundle?.forgeRigGlbUrl || VILLAGE_RIGGED[String(rebel.tokenId || '')]) return 'ready';
-  if (hasForgeCharacter || rebel.playableType === 'forge_build') return 'forged';
+  if (hasForgeCharacter || rebel.playableType === 'forge_build' || rebel.forgedBuild) return 'forged';
   return '';
+}
+// Oct 21 (Miguel: "i cant remember which saint i forged ... it does not tell me in the lobby"): a token forged in the
+// Rebel Forge but never made the holder's character has no active character; /api/forge-forged (one call per
+// collection) finds its forged build, so the card says Forged and the line under the row says how to play it
+async function markForgedBuilds(list) {
+  const by = {};
+  for (const r of list) {
+    if (r.playerModel || r.free || !r.tokenId || r.activeForgeCharacter?.activeGlbUrl || r.activeGlbUrl) continue;
+    (by[r.collectionKey || 'battle_for_colony'] ||= []).push(r);
+  }
+  await Promise.all(Object.entries(by).map(async ([col, cards]) => {
+    for (let i = 0; i < cards.length; i += 120) {
+      const part = cards.slice(i, i + 120);
+      try {
+        const d = await (await fetch(`/api/forge-forged?c=${encodeURIComponent(col)}&t=${part.map((r) => encodeURIComponent(r.tokenId)).join(',')}`, { headers: { accept: 'application/json' } })).json();
+        for (const r of part) { const f = d && d.ok && d.forged && d.forged[String(r.tokenId)]; if (f) r.forgedBuild = f; }
+      } catch (e) {}
+    }
+  }));
 }
 function getRebelForgeThumb(rebel) {
   const afc = rebel.activeForgeCharacter || {};
@@ -1201,7 +1221,7 @@ function buildCard(rebel) {
   const hasForgeCharacter = Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl);
   const status = getRebelForgeStatus(rebel, hasForgeCharacter);
   const tokenNumber = getRebelCardNumber(rebel);
-  card.title = [rebel.name, rebel.free ? 'Free to play: anyone can play this forged Rebel' : status === 'ready' ? 'Playable 3D character ready' : status === 'forged' ? '3D character forged' : ''].filter(Boolean).join(' · ');
+  card.title = [rebel.name, rebel.free ? 'Free to play: anyone can play this forged Rebel' : status === 'ready' ? 'Playable 3D character ready' : status === 'forged' ? (rebel.forgedBuild && !hasForgeCharacter ? '3D character forged: awaken it in the Forge and make it yours to play it' : '3D character forged') : ''].filter(Boolean).join(' · ');
   if (status) card.classList.add('is-' + status);
 
   const cardLabel = `
@@ -1300,6 +1320,7 @@ async function loadNFTs(walletAddress) {
     const walletRebels = await Promise.all(
       mappedRebels.map((rebel) => attachActiveForgeCharacter(rebel))
     );
+    await markForgedBuilds(walletRebels);   // forged in the Forge but not made the holder's character yet: Forged badge
     const savedForgePlayables = await loadSavedForgePlayableCards();
     const walletIds = new Set(walletRebels.map((rebel) => rebel.id));
     const tokKey = (rebel) => `${rebel.collectionKey || 'battle_for_colony'}:${rebel.tokenId || ''}`;   // a Chumpz #5 is not Rebel #5
