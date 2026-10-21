@@ -2241,13 +2241,13 @@ function showAwakened(instant) {
     <div class="sep"></div>
     <div class="traits">${(state.meta?.traits || []).slice(0, 6).map((t) => `<div class="trait locked"><span class="tt"><i></i>${esc(t.trait_type)}</span><span class="tv">${esc(t.value)}</span></div>`).join('')}</div>
     ${FRIEND ? '' : `<div class="wbox"><div class="sep"></div><div class="eyebrow">WEAPON · WORN ON THE BACK${canForge() ? '' : ' · PREVIEW'}</div><div class="chips wchips" id="wpnChips"></div></div>`}
-    ${glBoxHTML()}
+    ${glBoxHTML()}${rrBoxHTML()}
     <div class="cta">${canForge() ? `<button class="btn shu wide" id="makeMine">MAKE THIS MY ${NOUN.toUpperCase()}</button>` : ''}<button class="btn${canForge() ? '' : ' fire wide'}" id="enterV">ENTER VILLAGE →</button></div>
     ${canForge() ? '' : `<div class="note">Only the wallet that holds this ${NOUN} can make it its character. You can walk the village with it.</div>`}
     <div class="note">Keys: ← → moves · Space pause · L loop · S speed · K perform all kata</div>
   `);
   if ($('#makeMine')) $('#makeMine').onclick = makeMine;
-  renderWeaponChips(); glBox(); glCheck();
+  renderWeaponChips(); glBox(); glCheck(); rrBox();
   // Enter Village: for the holder this Rebel becomes their character (same as Make this my Rebel); anyone else walks
   // in with it for this visit. Either way the village opens with this Rebel.
   $('#enterV').onclick = async () => { const b = $('#enterV'); b.disabled = true; b.textContent = 'ENTERING…'; if (canForge()) { if (!state.mine) await makeMine(); } else rememberSelected(null); location.href = `/village.html`; };
@@ -2560,6 +2560,38 @@ function glBox() {
   }
   const b = $('#glOpen'); if (b) b.onclick = () => glOpen();
 }
+// Oct 21 (rigger 2.37, Saints players stand like their sculpt): an admin re-rigs a forged Saint with the current rigger.
+// Same sculpt, no forge or points used; the new rig goes into the viewer and the holder's saved character (glWear), and
+// the replaced file leads to it (forge-rig-status links it). Saints only: Chumpz and Rebels have no such button.
+const RR = { job: false, poll: null, err: null, wearing: false };
+function rrBoxHTML() {
+  if (FRIEND?.species !== 'human' || !state.own?.admin || !state.assets?.buildId || !state.assets?.glb) return '';
+  return `<div class="gbox" id="rrBox"><div class="sep"></div><div class="eyebrow">ADMIN · RIGGER</div><div id="rrIn"></div></div>`;
+}
+function rrBox() {
+  const el = $('#rrIn'); if (!el) return;
+  el.innerHTML = RR.job ? `<div class="note live" style="margin-top:0"><b>Re-rigging</b> · ${esc(RR.step || 'starting')} · about 5 min</div>`
+    : `<div class="note" style="margin-top:0">${RR.err ? `<b>The re-rig stopped</b> · ${esc(RR.err)}. ` : ''}Re-rig this ${NOUN} with the latest rigger: the same sculpt, no forge or points used. The saved character follows the new rig.</div>
+       <div class="cta" style="margin-top:10px"><button class="btn wide" id="rrBtn">RE-RIG WITH THE LATEST RIGGER</button></div>`;
+  const b = $('#rrBtn'); if (b) b.onclick = rrStart;
+}
+async function rrStart() {
+  const id = state.assets?.buildId; if (!id || RR.job) return;
+  RR.err = null; RR.job = true; RR.step = 'starting'; rrBox();
+  try { await api('/api/forge-rig-start', { buildId: id, force: true }); toast('Re-rig started · about 5 minutes'); rrPoll(); }
+  catch (e) { RR.job = false; RR.err = e.message || 'could not start'; rrBox(); }
+}
+async function rrPoll() {
+  clearTimeout(RR.poll); if (!RR.job) return;
+  const id = state.assets?.buildId;
+  let d = null; try { d = await api(`/api/forge-rig-status?buildId=${encodeURIComponent(id)}`); } catch (e) { RR.poll = setTimeout(rrPoll, 9000); return; }
+  const fr = d.forgeRig || {};
+  if (fr.status === 'running') { RR.step = fr.progress || RR.step; rrBox(); RR.poll = setTimeout(rrPoll, 6000); return; }
+  RR.job = false;
+  const url = d.forgeRigGlbUrl || fr.forgeRigGlbUrl;
+  if (fr.status !== 'succeeded' || !url) { RR.err = fr.error || 'the rig did not finish'; rrBox(); return; }
+  GL.buildId = id; RR.wearing = true; try { await glWear(url, fr); } finally { RR.wearing = false; } toast(`${NOUN} re-rigged`); rrBox();
+}
 // the camera on the hands: both from the front, or one hand from its outer side
 function glCam(side, d = 1.2) {
   const P = [], V3 = BABYLON.Vector3;
@@ -2729,7 +2761,7 @@ async function glWear(url, fr) {
   GL.hands = null; glReady();
   if (GL.open && GL.view === 'done') glRenderDone(true);
   flash(0.7, 1.3); shake(10); burst(1.0, 500); steam.manualEmitCount = 160; Snd.hiss(); Snd.play('forged', { delay: 0.4 });
-  if (!GL.open) toast('New gloves forged');
+  if (!GL.open && !RR.wearing) toast('New gloves forged');
   glBox();
   // the holder's saved character follows the new rig (the old file also leads here, forge-rig-latest)
   if (canForge() && (state.mine || state.assets.activeBuildId === id)) {
