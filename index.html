@@ -550,6 +550,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 .ant-card.is-ready { border-color: rgba(94,207,202,0.55); }
 .ant-card.has-forge-thumb img { object-fit: cover; }
 .ant-card.is-ready.selected { border-color: #5ecfca; box-shadow: 0 0 22px rgba(94,207,202,0.5); }
+/* Oct 21 (Miguel: "it should highlight who was selected, i could not tell who i had selected"): the picked card lifts
+   with a bright ring and a check, the others dim, and its name shows under the row and on the Forge button */
+#char-row { padding: 10px 8px; }
+#char-row.has-sel .ant-card:not(.selected) { opacity: 0.55; filter: saturate(0.65); }
+#char-row.has-sel .ant-card:not(.selected):hover { opacity: 0.95; filter: none; }
+.ant-card.selected, .ant-card.is-ready.selected { border-color: #ffd27a; outline: 3px solid #ffd27a; outline-offset: 2px; transform: translateY(-3px) scale(1.06); box-shadow: 0 0 26px rgba(255,200,90,0.7); }
+.ant-card.selected::after { content: '\2713'; position: absolute; left: 4px; top: 4px; z-index: 3; width: 20px; height: 20px; border-radius: 50%; background: #ffd27a; color: #1c1305; font: 700 13px/20px sans-serif; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.6); }
+#char-status b { color: #ffd27a; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -677,9 +685,26 @@ const LANDING_AUDIO_TARGET_VOLUME = 0.4;
 let landingAudioFadeTimer = null;
 let landingUserInteracted = false;
 
-function setStatus(msg) {
+function setStatus(msg, withSel) {
   const el = document.getElementById('char-status');
-  if (el) el.textContent = msg;
+  if (!el) return;
+  const r = withSel && selectedAnt && ownedRebels.find((x) => x.id === selectedAnt), name = selLabel(r);
+  if (!name) { el.textContent = msg; return; }
+  el.textContent = '';   // withSel: the picked card's name first, "✓ SAINT #101 SELECTED · ..."
+  const b = document.createElement('b'); b.textContent = '\u2713 ' + name + ' selected';
+  el.append(b, msg ? ' \u00b7 ' + msg : '');
+}
+// Oct 21: the selected character by name (the card row, the status line, the Forge button)
+function selLabel(rebel) {
+  if (!rebel) return '';
+  const n = getRebelCardNumber(rebel);
+  return rebel.friendLabel && n ? `${rebel.friendLabel} #${n}` : rebel.name || (n ? `Rebel #${n}` : '');
+}
+function markSelectedCard() {
+  const row = document.getElementById('char-row'), r = ownedRebels.find((x) => x.id === selectedAnt);
+  if (row) row.classList.toggle('has-sel', !!r && ownedRebels.length > 1);
+  const fb = document.getElementById('btn-forge'), name = selLabel(r), n = r && !r.free && getRebelCardNumber(r);   // a Free to play card is not the player's to forge
+  if (fb) { fb.textContent = n ? `Forge ${name}` : 'Forge 3D Character'; fb.title = n ? `Open the Rebel Forge with ${name}` : 'Open the Rebel Forge'; }
 }
 
 function loadLocalForgePlayableCharacters() {
@@ -1021,6 +1046,7 @@ async function selectAnt(id) {
 
   const card = document.getElementById('card_' + id);
   if (card) card.classList.add('selected');
+  markSelectedCard();
 
   const rebel = ownedRebels.find(r => r.id === id);
   if (!rebel) return;
@@ -1028,7 +1054,7 @@ async function selectAnt(id) {
     setStatus('Loading Rebel details...');
   if (rebel.playerModel) { // a friend playable: its Forge character (if any) was attached when the cards loaded
     try { localStorage.setItem('selectedRebel', JSON.stringify(rebel)); } catch(e) {}
-    setStatus(rebel.name + ' — ' + (rebel.formLabel || 'ready to play'));
+    setStatus(rebel.formLabel || 'ready to play', true);
     return;
   }
   const forgePlayableCharacter = rebel.playableType === 'forge_build'
@@ -1088,8 +1114,10 @@ async function selectAnt(id) {
     (ownedRebels.length > 1 ? 's' : '') +
     ' found' +
     (forgeReadyRebel.gangName ? ' — ' + forgeReadyRebel.gangName : '') +
-    (forgeReadyRebel.activeForgeCharacter?.activeGlbUrl ? ' — 3D Forge Character Ready' : '')
+    (forgeReadyRebel.activeForgeCharacter?.activeGlbUrl ? ' — 3D Forge Character Ready' : ''),
+    true
   );
+  markSelectedCard();
 }
 
 // Card status: "ready" = a rigged, playable 3D character (Forge Rigger); "forged" = a Forge 3D model exists but isn't rigged yet.
