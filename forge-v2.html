@@ -57,6 +57,12 @@ header{position:fixed;z-index:20;top:0;left:0;right:0;height:64px;display:flex;a
 .pill{border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12px;color:var(--washi-dim);display:flex;gap:8px;align-items:center;background:rgba(23,19,26,.6)}
 .pill strong{color:var(--washi);font-weight:600}
 .pill.mock{border-color:rgba(200,50,30,.5);color:#ffb3a4}
+/* Oct 21: the Rebel Points of the account that pays for forges, in the header on every step; a payment drops off it */
+.pill.pts{cursor:pointer;position:relative;color:var(--washi);border-color:rgba(255,181,71,.35)}
+.pill.pts i{font-style:normal;color:var(--molten)}
+.pill.pts .dl{position:absolute;right:12px;top:100%;margin-top:6px;font-size:13px;font-weight:700;color:#ff8a70;white-space:nowrap;pointer-events:none;text-shadow:0 1px 4px #000;animation:ptsDrop 3s var(--ease) forwards}
+.pill.pts .dl.up{color:#7ef0b0}
+@keyframes ptsDrop{0%{opacity:0;transform:translateY(-6px)}10%{opacity:1;transform:none}75%{opacity:1}100%{opacity:0;transform:translateY(16px)}}
 .iconbtn{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;background:rgba(23,19,26,.6);transition:border-color .2s}
 .iconbtn:hover{border-color:var(--glow)}
 .exitbtn{cursor:pointer;font-family:inherit;letter-spacing:.06em;transition:border-color .2s,color .2s}.exitbtn:hover{border-color:var(--glow);color:var(--washi)}
@@ -350,7 +356,7 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
   #awakenBtn{bottom:50vh}
   .nowplaying{bottom:170px}
 }
-@media (max-width:480px){#tokPill{display:none}}
+@media (max-width:480px){#tokPill{display:none}.pill .lb{display:none}.hright{gap:6px}.pill{padding:6px 9px;white-space:nowrap}.logo b{font-size:15px;letter-spacing:.14em}}
 @media (prefers-reduced-motion:reduce){#grain{animation:none}}
 </style>
 </head>
@@ -367,6 +373,7 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
   <div class="hright">
     <button class="pill exitbtn" id="lobbyExit" title="Back to the lobby">← Lobby</button>
     <div class="pill hidden" id="forgePill"></div>
+    <button class="pill pts hidden" id="ptsPill" type="button"><i>◆</i><strong></strong><span class="lb"></span></button>
     <div class="pill" id="tokPill">Rebel <strong>#—</strong></div>
     <button class="iconbtn" id="sndBtn" title="Sound">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path id="sndX" d="m23 9-6 6m0-6 6 6"/></svg>
@@ -1183,9 +1190,10 @@ async function api(path, body) {
 // + acct: the player's Rebel Ants account (api/econ-me: signedIn, name, balance), which pays for the forge
 async function loadOwn(t = state.token) {
   try {
-    const [own, acct] = await Promise.all([api(`/api/forge-start?tokenId=${encodeURIComponent(t)}&collectionKey=${COL}`),
+    const [own, acct] = await Promise.all([api(`/api/forge-start?tokenId=${encodeURIComponent(t)}&collectionKey=${COL}${asPlayer ? '&asPlayer=1' : ''}`),
       fetch('/api/econ-me', { cache: 'no-store', credentials: 'same-origin' }).then((r) => r.json()).catch(() => null)]);
     own.acct = acct && acct.ok ? acct : null;
+    setTimeout(renderPtsPill, 0);             // once the caller has kept it in state.own
     return own;
   } catch (e) { return { error: e.message }; }
 }
@@ -1197,6 +1205,31 @@ const forgePrice = () => (state.own && !state.own.admin && !state.own.error ? Nu
 const openMine = () => !!(state.own && !state.own.admin && state.own.open?.mine);
 const openUntil = () => new Date(Date.parse(state.own.open.startedAt) + 24 * 3600e3).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 const pointsHave = () => (state.own?.acct?.signedIn && state.own.acct.balance != null ? Number(state.own.acct.balance) : null);
+// Oct 21 (Miguel: "in forge it does not say how many Rebel Points I have ... we should see them deducted once you pay"):
+// the paying account's Rebel Points sit in the header on every step; a forge payment (or a refund) counts the number
+// down (up) and drops the difference under it. Signed out it offers the sign-in. Admin forges are free, so the summon
+// card offers an admin a test run as a player (asPlayer: the server then starts the admin's forge like any holder's:
+// the price is taken, and given back if the forge ends without a character).
+let ptsShown = null, asPlayer = false;
+function renderPtsPill() {
+  const el = $('#ptsPill'), a = state.own?.acct; if (!el) return;
+  if (!a || a.configured === false) { el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+  const num = el.querySelector('strong'), lb = el.querySelector('.lb');
+  if (!a.signedIn) { ptsShown = null; num.textContent = 'Sign in'; lb.textContent = ' · Rebel Points'; el.title = 'Sign in to your Rebel Ants account (Discord, or a name and PIN)'; return; }
+  const v = Math.max(0, Number(a.balance) || 0), from = ptsShown; ptsShown = v;
+  lb.textContent = ' Rebel Points'; el.title = 'Your Rebel Points · tap to get more';
+  if (from == null || from === v) { gsap.killTweensOf(num); num.textContent = fmtPts(v); return; }
+  const o = { n: from }; gsap.killTweensOf(num);
+  gsap.to(o, { n: v, duration: 1.4, ease: 'power2.out', onUpdate: () => { num.textContent = fmtPts(Math.round(o.n)); } });
+  const d = v - from, dl = document.createElement('b');
+  dl.className = 'dl' + (d > 0 ? ' up' : ''); dl.textContent = `${d > 0 ? '+' : '−'}${fmtPts(Math.abs(d))}`;
+  el.querySelectorAll('.dl').forEach((x) => x.remove()); el.appendChild(dl); setTimeout(() => dl.remove(), 3100);
+}
+$('#ptsPill').onclick = () => {
+  if (state.own?.acct?.signedIn) return getPoints();
+  if (state.step === 0) renderPaySignIn(); else payDiscord();
+};
 function pointsNote() {
   const p = forgePrice(); if (!p) return '';
   if (openMine()) return ` Your forge for this ${NOUN} is open until ${openUntil()}: carry on, nothing more to pay.`;
@@ -1248,8 +1281,9 @@ async function payNameSubmit(action) {
   state.own = await loadOwn(); renderSummon(0, true);
 }
 function renderPaySignIn() {
-  renderCard(`<div class="eyebrow">STEP 1 / 5</div><h1>Pay for the forge<span class="tag">Rebel Points</span></h1>
-    <p class="lead">A forge takes ${fmtPts(forgePrice())} Rebel Points from your Rebel Ants account, the same points as your other Rebel games. Sign in to pay; if the forge ends without a character, the points come back.</p>
+  const price = forgePrice() || Number(state.own?.price) || 0;
+  renderCard(`<div class="eyebrow">STEP 1 / 5</div><h1>${forgePrice() ? 'Pay for the forge' : 'Your Rebel Ants account'}<span class="tag">Rebel Points</span></h1>
+    <p class="lead">${price ? `A forge takes ${fmtPts(price)} Rebel Points from your Rebel Ants account, the same points as your other Rebel games. Sign in to pay; if the forge ends without a character, the points come back.` : 'Sign in to see your Rebel Points, the same points as your other Rebel games.'}</p>
     <div class="cta"><button class="btn fire wide" id="payDc">SIGN IN WITH DISCORD</button></div>
     <div class="sep"></div>
     <form class="np" id="npForm" novalidate autocomplete="off"><div class="eyebrow">NO DISCORD? USE A NAME AND PIN</div>
@@ -1266,7 +1300,7 @@ function renderPaySignIn() {
 const canForge = () => !!(state.own && (state.own.admin || state.own.isOwner));
 function allowanceNote() {
   const o = state.own || {};
-  if (o.admin) return 'Admin: your forges do not use the Rebel\'s allowance.';
+  if (o.admin) return `Admin: your forges are free and do not use the ${NOUN}'s allowance${Number(o.price) ? `; players pay ${fmtPts(o.price)} Rebel Points (test it with Pay as a player)` : ''}.`;
   if (o.isOwner) return (o.left > 0 ? `${o.left} of ${o.limit} forges left for you on this ${NOUN}. It keeps forging if you close the page.` : `You have used all ${o.limit} of your forges for this ${NOUN}.`) + pointsNote();
   if (o.wallet) return `Only the wallet that holds this ${NOUN} can forge it. You can still awaken and watch its forged form.`;
   return `Forging needs the wallet that holds this ${NOUN}.`;
@@ -1592,7 +1626,7 @@ function forgeTick() {
   const P = forgeProgress();
   antNow(false, P);
   const pill = $('#forgePill'); pill.classList.remove('hidden');
-  pill.innerHTML = S.done ? `<strong>Forged</strong> · ready to awaken` : S.err ? `<strong>Paused</strong> · ${esc(PH[S.phase].label)}` : PH[S.phase].wait ? `<strong>Your turn</strong> · ${esc(PH[S.phase].label)}` : `<strong>${Math.floor(P.overall * 100)}%</strong> · about ${fmtMin(P.rem)} left`;
+  pill.innerHTML = S.done ? `<strong>Forged</strong><span class="lb"> · ready to awaken</span>` : S.err ? `<strong>Paused</strong><span class="lb"> · ${esc(PH[S.phase].label)}</span>` : PH[S.phase].wait ? `<strong>Your turn</strong><span class="lb"> · ${esc(PH[S.phase].label)}</span>` : `<strong>${Math.floor(P.overall * 100)}%</strong><span class="lb"> · about ${fmtMin(P.rem)} left</span>`;
   document.title = S.done ? `Forged · Rebel #${state.token}` : `${Math.floor(P.overall * 100)}% · Forging #${state.token}`;
   if (state.step === 3) setForgeUI(P);
   if (state.step === 1 && ['concept', 'prod'].includes(S.phase) && !S.err && Math.random() < 0.45) Snd.play(Snd.pick('brush1', 'brush2', 'brush3'), { vol: 0.35 + Math.random() * 0.25, pan: (Math.random() - 0.5) * 0.8, rate: 0.9 + Math.random() * 0.2 });
@@ -1797,6 +1831,7 @@ function renderSummon(prev, quiet) {
   else if (forgePrice() && pointsHave() != null && pointsHave() < forgePrice()) cta = `<button class="btn fire wide" id="getPtsBtn">GET REBEL POINTS · YOU HAVE ${fmtPts(pointsHave())} OF ${fmtPts(forgePrice())}</button>`;
   else cta = `<button class="btn fire wide" id="beginBtn">${forged ? 'FORGE A NEW VERSION' : 'BEGIN THE FORGE'} · ${forgePrice() ? `${fmtPts(forgePrice())} POINTS` : `ABOUT ${Math.round(total / 60)} MIN`}</button>`;
   if (forged && !active()) cta += `<button class="btn shu wide" id="awakenOld">AWAKEN MY FORGED ${NOUN.toUpperCase()}</button>`;
+  if (state.summoned && !active() && (asPlayer || (state.own?.admin && Number(state.own.price)))) cta += `<button class="btn wide" id="asPlayerBtn">${asPlayer ? 'BACK TO THE FREE ADMIN FORGE' : `ADMIN · PAY AS A PLAYER (${fmtPts(state.own.price)} POINTS)`}</button>`;
   renderCard(`
     <div class="eyebrow">STEP 1 / 5</div>
     <h1>Summon your ${NOUN}<span class="tag">Read its blood-memory</span></h1>
@@ -1824,6 +1859,7 @@ function renderSummon(prev, quiet) {
   const si = $('#signBtn'); if (si) si.onclick = signInForge;
   const wb = $('#watchBtn'); if (wb) wb.onclick = () => go(liveStep());
   const ao = $('#awakenOld'); if (ao) ao.onclick = awakenExisting;
+  const ap = $('#asPlayerBtn'); if (ap) ap.onclick = async () => { ap.disabled = true; asPlayer = !asPlayer; state.own = await loadOwn(); renderSummon(0, true); toast(asPlayer ? 'Paying as a player: the forge takes its Rebel Points' : 'Admin forge: free'); };
 }
 function inkSmokeIn(node) {
   if (REDUCED) return;
@@ -1884,11 +1920,11 @@ async function beginForge() {
   opening = true; const bb = $('#beginBtn'); if (bb) { bb.disabled = true; bb.textContent = forgePrice() && !carry ? 'TAKING THE POINTS…' : 'OPENING THE FORGE…'; }
   if (!carry) {
     try {
-      const quote = async () => (forgePrice() ? (await api(`/api/forge-start?tokenId=${encodeURIComponent(state.token)}&collectionKey=${COL}&quote=1`)).chargeId || null : null);
+      const quote = async () => (forgePrice() ? (await api(`/api/forge-start?tokenId=${encodeURIComponent(state.token)}&collectionKey=${COL}&quote=1${asPlayer ? '&asPlayer=1' : ''}`)).chargeId || null : null);
       let chargeId = await quote(), d = null;
       if (forgePrice() && !chargeId) throw new Error('Sign in to your Rebel Ants account to pay for the forge');
       for (let tries = 0; ; tries++) {
-        try { d = await api('/api/forge-start', { tokenId: String(state.token), collectionKey: COL, chargeId }); break; }
+        try { d = await api('/api/forge-start', { tokenId: String(state.token), collectionKey: COL, chargeId, ...(asPlayer ? { asPlayer: true } : {}) }); break; }
         catch (e) {
           if ((e.code === 'econ_retry' || e.status === 408) && chargeId && tries < 3) { await new Promise((r) => setTimeout(r, 1500 * (tries + 1))); continue; }
           if (e.code === 'quote_expired' && tries < 1) { chargeId = await quote(); continue; }
@@ -1896,7 +1932,7 @@ async function beginForge() {
         }
       }
       if (state.own && !d.admin) Object.assign(state.own, { used: d.used, left: d.left });
-      if (d.charged) { if (state.own?.acct && d.balance != null) state.own.acct.balance = d.balance; toast(`${fmtPts(d.charged)} Rebel Points taken${d.balance != null ? ` · ${fmtPts(d.balance)} left` : ''}`); }
+      if (d.charged) { if (state.own?.acct && d.balance != null) state.own.acct.balance = d.balance; renderPtsPill(); toast(`${fmtPts(d.charged)} Rebel Points taken${d.balance != null ? ` · ${fmtPts(d.balance)} left` : ''}`); }
     } catch (e) {
       opening = false;
       toast(e.code === 'not_enough_points' ? `Not enough Rebel Points: a forge takes ${fmtPts(e.body?.price || forgePrice())}` : (e.message || 'The forge could not open'));

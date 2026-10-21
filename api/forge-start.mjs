@@ -5,7 +5,8 @@
 //                                        Economy: takes the price, then uses one of the Rebel's forges (counted on the
 //                                        owner) and opens a 24 h forge window; a retried chargeId never charges twice
 //   POST {action:'reset', tokenId}    -> admin: gives the Rebel all of its forges back
-// Admin forges are free and never use a Rebel's allowance. FORGE_PRICE_POINTS=0 = free forges (the old flow).
+// Admin forges are free and never use a Rebel's allowance; asPlayer=1 (GET) / asPlayer: true (POST) = an admin forges
+// like a holder, price included. FORGE_PRICE_POINTS=0 = free forges (the old flow).
 import { isAdminRequest } from './_admin-auth.mjs';
 import { enforceRateLimit } from './_guard.mjs';
 import { walletOf, ownerOf, holderOf, forgeStatus, openForge, resetForges, FORGE_LIMIT } from './_wallet.mjs';
@@ -18,7 +19,10 @@ export default async function handler(req, res) {
   const tokenId = String(req.query?.tokenId || body.tokenId || '');
   const col = String(req.query?.collectionKey || body.collectionKey || 'battle_for_colony');
   if (!/^\d{1,78}$/.test(tokenId) || !/^[a-z0-9_]{1,60}$/.test(col)) return res.status(400).json({ ok: false, error: 'Missing Rebel token' });
-  const admin = isAdminRequest(req);
+  // Oct 21: an admin can try a paid forge as a player (the Forge's "Pay as a player"): every check and the price then
+  // apply as for any holder
+  const asPlayer = req.query?.asPlayer === '1' || body.asPlayer === true;
+  const admin = isAdminRequest(req) && !asPlayer;
   const wallet = walletOf(req);
   try {
     if (req.method === 'GET') {
