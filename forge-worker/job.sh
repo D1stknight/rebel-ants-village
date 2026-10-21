@@ -30,6 +30,11 @@ NPC="${FORGE_NPC:-}"; MOVES="$FW/anim/clips.json"
 # the Rebels' clip set, weapon moves and games pack. FORGE_NPC (the NPC clip set) stays off.
 FRIEND=""
 if [ -z "$NPC" ] && [ -n "${FORGE_FRIEND:-}" ]; then FRIEND="$FORGE_FRIEND"; export FORGE_NPC_BODY=1 FORGE_NPC_SPECIES="$FRIEND"; fi
+# v2.37 Saints players only (Miguel: "standing straight", leaning back in calm / walk, shoulders and head in the moves): the
+# spine keeps its sculpted curve (retarget / retarget_bvh: the Rebel master's and the Mixamo actor's turns are added to
+# the Saint's own rest instead of copying their spine angles, which tipped a forward-leaning human chest 22 deg back),
+# and the head carriage counts the chest's lean from its sculpted rest (headfix). Chumpz, Rebels and NPCs unchanged.
+if [ "$FRIEND" = human ]; then export FORGE_NO_SPINE_ALIGN=1 FORGE_HEAD_CHEST_REST=1; fi
 SPECIES="${FORGE_NPC_SPECIES:-}"
 if [ -n "$NPC" ]; then
   MOVES="$FW/anim/clips_npc.json"

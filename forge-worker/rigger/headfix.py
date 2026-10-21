@@ -99,6 +99,12 @@ _h0 = Aw @ arm.data.bones[P + 'Hips'].head_local; _n0 = Aw @ arm.data.bones[P + 
 CHEST0 = math.atan2((_n0 - _h0).dot(FWD), (_n0 - _h0).z)
 print('headfix rest lean Spine2 %.1f, chest line %.1f' % (math.degrees(RLEAN['Spine2']), math.degrees(CHEST0)))
 if abs(RLEAN['Spine2'] - CHEST0) < math.radians(10): CHEST0 = RLEAN['Spine2']     # normal spines keep the v2.3 behaviour
+# v2.37 Saints players (FORGE_HEAD_CHEST_REST, set by job.sh for FORGE_FRIEND=human, whose spine keeps its sculpted
+# curve): a sculpted human's chest leans forward at rest (18 deg on a hoodie Saint, a Rebel's -4), so its lean is
+# counted from that rest. Counted from world vertical, the sculpt's own lean pushed the head down in every move (35 deg
+# in the run). Rebels, Chumpz and NPCs never set it.
+CHEST_REST = (RLEAN['Spine2'] - CHEST0) if os.environ.get('FORGE_HEAD_CHEST_REST') else 0.0
+if CHEST_REST: print('headfix chest rest lean %.1f deg (counted from it)' % math.degrees(CHEST_REST))
 
 
 def level(bone, follow, keep, clamp, frames_out):
@@ -116,7 +122,7 @@ def level(bone, follow, keep, clamp, frames_out):
         if NPCM: yaw = 2 * math.atan2(D.z, D.w)    # v2.19 NPCs: the twist about world up (see NPCM)
         else: f = D @ FWD; yaw = math.atan2(f.y, f.x) - math.atan2(FWD.y, FWD.x)
         Y = Quaternion(Z, yaw); F = Y @ FWD
-        c = lean(Aw @ pc.matrix, F)                  # chest lean from world vertical (rest chest bones often tip back)
+        c = lean(Aw @ pc.matrix, F) - CHEST_REST     # chest lean from world vertical (rest chest bones often tip back)
         h = lean(Mw, F) - RLEAN[bone]
         t = max(-clamp, min(clamp, follow * c + keep * (h - c)))
         if bone == 'Head': t -= UPBIAS
