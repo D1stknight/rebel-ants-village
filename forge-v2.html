@@ -171,6 +171,10 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 .check{display:flex;gap:10px;align-items:center;font-size:13px;color:#d6ccb8}
 .check b{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:rgba(79,184,255,.14);color:var(--jade);font-size:11px}
 .note{font-size:12px;color:var(--washi-dim);line-height:1.5;margin-top:12px}
+.np{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.np input{width:100%;box-sizing:border-box;border-radius:10px;border:1px solid var(--line);background:rgba(239,230,210,.05);color:inherit;padding:12px 14px;font:15px/1.2 system-ui,sans-serif}
+.np input:focus{outline:none;border-color:rgba(143,208,255,.7)}
+@media (pointer:coarse){.np input{font-size:16px}}
 .picker{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:12px}
 .picker button{aspect-ratio:1;border-radius:10px;overflow:hidden;border:1px solid var(--line);position:relative;transition:all .25s}
 .picker button img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.7) brightness(.8);transition:all .25s}
@@ -1111,7 +1115,13 @@ addEventListener('resize', () => engine.resize());
 // clean reference (no concept painting); the forge then draws its back and sides, sculpts, rigs as usual.
 const COL = /^[a-z0-9_]{1,60}$/.test(Q.get('col') || '') ? Q.get('col') : 'battle_for_colony';
 const REF = /^\/assets\/forge\/sources\/[\w.-]+\.(png|jpe?g|webp)$/.test(Q.get('ref') || '') ? Q.get('ref') : null;
-const SPECIES = REF ? (/^[a-z]{2,20}$/.test(Q.get('species') || '') ? Q.get('species') : 'ape') : null;
+// Oct 20 friend collections (assets/friend-collections.json): their holders forge from their NFT like Rebels: the
+// concept step paints the full-body realistic render of their species (it is the clean reference too), then the back,
+// the sides, the sculpts and a player rig with the species' body fixes (rigger 2.36). No weapon and no glove refits.
+const FRIEND_COLS = { chumpz: { species: 'ape', name: 'Chumpz', one: 'Chumpz' }, saints: { species: 'human', name: 'Saints of LA', one: 'Saint' } };
+const FRIEND = REF ? null : FRIEND_COLS[COL] || null;
+const NOUN = FRIEND ? FRIEND.one : 'Rebel';
+const SPECIES = REF ? (/^[a-z]{2,20}$/.test(Q.get('species') || '') ? Q.get('species') : 'ape') : FRIEND ? FRIEND.species : null;
 const REF_NAME = REF ? String(Q.get('name') || '').slice(0, 60) : '';
 async function refDataUrl() { const b = await (await fetch(REF)).blob(); return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); }); }
 const VARIANTS = Math.max(1, Math.min(3, parseInt(Q.get('variants') || '3', 10) || 3));
@@ -1166,20 +1176,100 @@ async function api(path, body) {
   catch (e) { clearTimeout(tm); const er = new Error(e.name === 'AbortError' ? 'The forge took too long to answer' : 'Network error'); er.status = 408; throw er; }
   clearTimeout(tm);
   let j = null; try { j = await r.json(); } catch (e) { j = { ok: false, error: `Server error (${r.status})` }; }
-  if (!r.ok || j.ok === false) { const e = new Error(j.error || j.detail || `Request failed (${r.status})`); e.status = r.status; throw e; }
+  if (!r.ok || j.ok === false) { const e = new Error(j.error || j.detail || `Request failed (${r.status})`); e.status = r.status; e.code = j.code || null; e.body = j; throw e; }
   return j;
 }
-// Phase 2: who may forge this Rebel. { wallet, owner, isOwner, admin, used, limit, left, open }
+// Phase 2: who may forge this Rebel. { wallet, owner, isOwner, admin, used, limit, left, open, price, lastCharge }
+// + acct: the player's Rebel Ants account (api/econ-me: signedIn, name, balance), which pays for the forge
 async function loadOwn(t = state.token) {
-  try { return await api(`/api/forge-start?tokenId=${encodeURIComponent(t)}&collectionKey=${COL}`); } catch (e) { return { error: e.message }; }
+  try {
+    const [own, acct] = await Promise.all([api(`/api/forge-start?tokenId=${encodeURIComponent(t)}&collectionKey=${COL}`),
+      fetch('/api/econ-me', { cache: 'no-store', credentials: 'same-origin' }).then((r) => r.json()).catch(() => null)]);
+    own.acct = acct && acct.ok ? acct : null;
+    return own;
+  } catch (e) { return { error: e.message }; }
+}
+// Oct 20: a forge costs Rebel Points (api/_forge-charge.mjs): taken when it begins, given back if it ends without a
+// character. Admin forges are free.
+const fmtPts = (v) => Number(v || 0).toLocaleString('en-US');
+const forgePrice = () => (state.own && !state.own.admin && !state.own.error ? Number(state.own.price) || 0 : 0);
+// this wallet's forge for the Rebel is still open (24 h from its start): carry on in it, nothing more to pay
+const openMine = () => !!(state.own && !state.own.admin && state.own.open?.mine);
+const openUntil = () => new Date(Date.parse(state.own.open.startedAt) + 24 * 3600e3).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+const pointsHave = () => (state.own?.acct?.signedIn && state.own.acct.balance != null ? Number(state.own.acct.balance) : null);
+function pointsNote() {
+  const p = forgePrice(); if (!p) return '';
+  if (openMine()) return ` Your forge for this ${NOUN} is open until ${openUntil()}: carry on, nothing more to pay.`;
+  const lc = state.own.lastCharge, a = state.own.acct;
+  const last = lc?.status === 'refunded' || lc?.status === 'released' ? ` Your last forge ended without a character, so its ${fmtPts(lc.amount)} points came back.` : '';
+  if (!a?.signedIn) return ` A forge takes ${fmtPts(p)} Rebel Points from your Rebel Ants account (Discord, or a name and PIN).${last}`;
+  return ` A forge takes ${fmtPts(p)} Rebel Points; you have ${pointsHave() == null ? 'some' : fmtPts(pointsHave())}. If the forge ends without a character, they come back.${last}`;
+}
+// more points: the points packs (assets/points-packs.js when it is on this page), else the Rebel Economy shop
+function getPoints() {
+  const need = Math.max(0, forgePrice() - (pointsHave() || 0));
+  if (window.RebelPoints?.open) return window.RebelPoints.open({ need, why: 'forge' });
+  shopOpened = true;
+  // api/econ-shop: the shop signed in to this account, its Back link to this Forge page. Opened with an opener (no
+  // 'noopener'): the shop's Back then closes its tab, even after a card payment, instead of opening the Forge again in it.
+  const base = state.own?.acct?.shopUrl || 'https://economy.rebelants.io/shop', back = location.pathname + location.search;
+  window.open(base + (base.includes('?') ? '&' : '?') + 'return=' + encodeURIComponent(base.startsWith('/') ? back : location.origin + back), '_blank');
+}
+async function refreshPoints() { if (!state.token) return; state.own = await loadOwn(); if (state.step === 0) renderSummon(0, true); }
+// back from the shop's tab: read the balance again (the shop is another site, so no sign-in ping reaches this page)
+let shopOpened = false, shopSeenAt = 0;
+addEventListener('focus', () => { if (!shopOpened || Date.now() - shopSeenAt < 5000) return; shopSeenAt = Date.now(); refreshPoints(); });
+try { new BroadcastChannel('ra-econ').onmessage = () => refreshPoints(); } catch (e) {}
+addEventListener('storage', (e) => { if (e.key === 'raEconPing') refreshPoints(); });
+// sign in to the Rebel Ants account that pays: Discord (a popup that tells this page when it is done), or a name + PIN
+function payDiscord() {
+  const url = '/api/econ-discord-login?return=' + encodeURIComponent(location.pathname + location.search);
+  let w = null;
+  try { w = window.open(url + '&popup=1', 'rebelEconSignIn', 'width=520,height=760'); } catch (e) {}
+  if (!w) location.href = url;
+}
+let payBusy = false;
+async function payNameSubmit(action) {
+  const n = $('#npName'), p = $('#npPin'), msg = $('#npMsg');
+  const say = (t, bad) => { if (msg) { msg.textContent = t; msg.style.color = bad ? '#ff9a8a' : ''; } };
+  const name = (n?.value || '').trim(), pin = (p?.value || '').trim();
+  if (name.length < 3) return say('Your name needs at least 3 letters or numbers.', true);
+  if (!/^\d{4,6}$/.test(pin)) return say('Your PIN is 4 to 6 digits.', true);
+  if (payBusy) return;
+  payBusy = true; say(action === 'register' ? 'Making your account…' : 'Signing in…');
+  let d = {};
+  try { const r = await fetch('/api/econ-name-login', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, name, pin }) }); d = await r.json().catch(() => ({})); }
+  catch (e) { d = { ok: false, message: 'Could not reach the site. Check the connection and try again.' }; }
+  payBusy = false;
+  if (!d.ok) { if ((d.code === 'pin_wrong' || d.code === 'locked') && p) p.value = ''; return say(d.message || d.error || 'Not signed in.', true); }
+  try { new BroadcastChannel('ra-econ').postMessage({ signedIn: true }); } catch (e) {}
+  try { localStorage.setItem('raEconPing', String(Date.now())); } catch (e) {}
+  toast(`Signed in as ${d.name || name}`);
+  state.own = await loadOwn(); renderSummon(0, true);
+}
+function renderPaySignIn() {
+  renderCard(`<div class="eyebrow">STEP 1 / 5</div><h1>Pay for the forge<span class="tag">Rebel Points</span></h1>
+    <p class="lead">A forge takes ${fmtPts(forgePrice())} Rebel Points from your Rebel Ants account, the same points as your other Rebel games. Sign in to pay; if the forge ends without a character, the points come back.</p>
+    <div class="cta"><button class="btn fire wide" id="payDc">SIGN IN WITH DISCORD</button></div>
+    <div class="sep"></div>
+    <form class="np" id="npForm" novalidate autocomplete="off"><div class="eyebrow">NO DISCORD? USE A NAME AND PIN</div>
+      <input id="npName" maxlength="24" placeholder="Name" autocapitalize="off" spellcheck="false" aria-label="Name">
+      <input id="npPin" maxlength="6" placeholder="PIN, 4 to 6 digits" inputmode="numeric" type="password" aria-label="PIN">
+      <div class="cta"><button class="btn wide" type="submit">SIGN IN</button><button class="btn wide" type="button" id="npNew">NEW ACCOUNT</button></div>
+      <div class="note" id="npMsg"></div></form>
+    <div class="cta"><button class="btn wide" id="payBack">← BACK</button></div>`);
+  $('#payDc').onclick = payDiscord;
+  $('#npForm').onsubmit = (e) => { e.preventDefault(); payNameSubmit('login'); };
+  $('#npNew').onclick = () => payNameSubmit('register');
+  $('#payBack').onclick = () => renderSummon(0, true);
 }
 const canForge = () => !!(state.own && (state.own.admin || state.own.isOwner));
 function allowanceNote() {
   const o = state.own || {};
   if (o.admin) return 'Admin: your forges do not use the Rebel\'s allowance.';
-  if (o.isOwner) return o.left > 0 ? `${o.left} of ${o.limit} forges left for you on this Rebel. It keeps forging if you close the page.` : `You have used all ${o.limit} of your forges for this Rebel.`;
-  if (o.wallet) return 'Only the wallet that holds this Rebel can forge it. You can still awaken and watch its forged form.';
-  return 'Forging needs the wallet that holds this Rebel.';
+  if (o.isOwner) return (o.left > 0 ? `${o.left} of ${o.limit} forges left for you on this ${NOUN}. It keeps forging if you close the page.` : `You have used all ${o.limit} of your forges for this ${NOUN}.`) + pointsNote();
+  if (o.wallet) return `Only the wallet that holds this ${NOUN} can forge it. You can still awaken and watch its forged form.`;
+  return `Forging needs the wallet that holds this ${NOUN}.`;
 }
 async function signInForge() {
   const b = $('#signBtn');
@@ -1188,11 +1278,11 @@ async function signInForge() {
   try {
     await window.RebelWallet.connectAndSignIn();
     state.own = await loadOwn();
-    toast(state.own.isOwner ? 'Signed in · this Rebel is yours' : 'Signed in · this Rebel is held by another wallet');
+    toast(state.own.isOwner ? `Signed in · this ${NOUN} is yours` : `Signed in · this ${NOUN} is held by another wallet`);
   } catch (e) { toast(e.message || 'Sign-in failed'); }
   renderSummon(0, true);
 }
-function selectedRebel() { try { const r = JSON.parse(localStorage.getItem('selectedRebel') || 'null'); return r && String(r.tokenId || '') === String(state.token) ? r : null; } catch (e) { return null; } }
+function selectedRebel() { try { const r = JSON.parse(localStorage.getItem('selectedRebel') || 'null'); return r && String(r.tokenId || '') === String(state.token) && (r.collectionKey || 'battle_for_colony') === COL ? r : null; } catch (e) { return null; } }
 function rebelId() { return selectedRebel()?.rebelId || (COL === 'battle_for_colony' ? `rebel_${state.token}` : `${COL}_${state.token}`); }
 let GI_CACHE = null;
 function GI() {
@@ -1200,13 +1290,14 @@ function GI() {
   const traits = {}; (state.meta?.traits || []).forEach((t) => { traits[t.trait_type] = t.value; });
   const sel = selectedRebel() || {};
   const rebel = {
-    id: rebelId(), tokenId: String(state.token), collectionKey: COL, name: REF ? (state.meta?.name || `#${state.token}`) : `Rebel #${state.token}`,
+    id: rebelId(), tokenId: String(state.token), collectionKey: COL, name: REF || FRIEND ? (state.meta?.name || `${NOUN} #${state.token}`) : `Rebel #${state.token}`,
     image: REF ? location.origin + REF : `/api/nft-image?c=${COL}&t=${encodeURIComponent(state.token)}&s=full`,   // resolved to our Blob copy server-side
     traits: Object.keys(traits).length ? traits : (sel.traits || {}), gangName: traits['Gang Names'] || sel.gangName || null
   };
   const bp = window.buildCharacterBlueprint(rebel, { formType: 'starter', formLabel: 'Starter 3D Form', hasGeneratedModel: false, bundleId: 'starter_ant' });
   GI_CACHE = window.buildForgeGenerationInput(bp);
   if (REF) GI_CACHE = { ...GI_CACHE, species: SPECIES, name: state.meta?.name || GI_CACHE.name, referenceImage: true };
+  if (FRIEND) GI_CACHE = { ...GI_CACHE, species: SPECIES, name: state.meta?.name || GI_CACHE.name, friendTraits: (state.meta?.traits || []).slice(0, 20) };
   return GI_CACHE;
 }
 function refConcept(kind, imageUrl, extra) {
@@ -1251,7 +1342,7 @@ const RUN = {
     S.conceptUrl = await upload('concept', d.previewImage?.dataUrl);
   },
   async prod() {
-    if (REF) { S.prodUrl = S.conceptUrl; return; }
+    if (REF || FRIEND) { S.prodUrl = S.conceptUrl; return; }   // friends: the concept is drawn as the clean reference
     const c = refConcept('concept', S.conceptUrl);
     const d = await twice(() => api('/api/forge-generate-production-reference', { generationInput: GI(), selectedConcept: c, concept: c, selectedConceptImageUrl: S.conceptUrl }));
     S.prodUrl = await upload('prod', d.productionImage?.dataUrl);
@@ -1587,7 +1678,7 @@ function markNodes() {
 async function loadToken(t) {
   if (REF) return { tokenId: t, name: REF_NAME || `#${t}`, img: REF, thumb: REF,
     traits: [{ trait_type: 'Collection', value: COL }, { trait_type: 'Species', value: SPECIES }, { trait_type: 'Source', value: 'Reference render' }] };
-  const out = { tokenId: t, name: `Rebel #${t}`, traits: [], img: `/api/nft-image?c=${COL}&t=${t}&s=full`, thumb: `/api/nft-image?c=${COL}&t=${t}&s=thumb` };
+  const out = { tokenId: t, name: `${NOUN} #${t}`, traits: [], img: `/api/nft-image?c=${COL}&t=${t}&s=full`, thumb: `/api/nft-image?c=${COL}&t=${t}&s=thumb` };
   try { const j = await (await fetch(`/api/nft-token?c=${COL}&t=${encodeURIComponent(t)}`)).json(); if (j.ok) { out.name = j.name || out.name; out.traits = j.traits || []; } } catch (e) {}
   return out;
 }
@@ -1634,7 +1725,7 @@ function recoverSession(assets) {
 }
 const gangKanji = { Shogun: '将軍', Ronin: '浪人', Ninja: '忍者', Samurai: '侍', Monk: '僧', Oni: '鬼', Geisha: '芸者', Yakuza: '極道' };
 function traitVal(name) { const t = (state.meta?.traits || []).find((x) => x.trait_type === name); return t ? t.value : null; }
-function shortName() { return `REBEL #${state.token}`; }
+function shortName() { return FRIEND ? String(state.meta?.name || `${NOUN} #${state.token}`).toUpperCase() : `REBEL #${state.token}`; }
 
 /* =========================================================
    Steps
@@ -1698,28 +1789,38 @@ function renderSummon(prev, quiet) {
   const forged = state.assets?.glb;
   let cta;
   if (active()) cta = `<button class="btn fire wide" id="watchBtn">WATCH THE FORGE →</button>`;
-  else if (!state.summoned) cta = `<button class="btn fire wide" id="summonBtn">SUMMON YOUR REBEL</button>`;
+  else if (!state.summoned) cta = `<button class="btn fire wide" id="summonBtn">SUMMON YOUR ${NOUN.toUpperCase()}</button>`;
   else if (!canForge()) cta = state.own?.wallet ? '' : `<button class="btn fire wide" id="signBtn">${window.ethereum ? 'SIGN IN WITH YOUR WALLET TO FORGE' : 'CONNECT YOUR WALLET IN THE LOBBY'}</button>`;
+  else if (openMine()) cta = `<button class="btn fire wide" id="beginBtn">CONTINUE YOUR FORGE · OPEN UNTIL ${openUntil()}</button>`;
   else if (!state.own.admin && state.own.left <= 0) cta = '';
-  else cta = `<button class="btn fire wide" id="beginBtn">${forged ? 'FORGE A NEW VERSION' : 'BEGIN THE FORGE'} · ABOUT ${Math.round(total / 60)} MIN</button>`;
-  if (forged && !active()) cta += `<button class="btn shu wide" id="awakenOld">AWAKEN MY FORGED REBEL</button>`;
+  else if (forgePrice() && !state.own.acct?.signedIn) cta = `<button class="btn fire wide" id="payInBtn">SIGN IN TO PAY FOR THE FORGE · ${fmtPts(forgePrice())} POINTS</button>`;
+  else if (forgePrice() && pointsHave() != null && pointsHave() < forgePrice()) cta = `<button class="btn fire wide" id="getPtsBtn">GET REBEL POINTS · YOU HAVE ${fmtPts(pointsHave())} OF ${fmtPts(forgePrice())}</button>`;
+  else cta = `<button class="btn fire wide" id="beginBtn">${forged ? 'FORGE A NEW VERSION' : 'BEGIN THE FORGE'} · ${forgePrice() ? `${fmtPts(forgePrice())} POINTS` : `ABOUT ${Math.round(total / 60)} MIN`}</button>`;
+  if (forged && !active()) cta += `<button class="btn shu wide" id="awakenOld">AWAKEN MY FORGED ${NOUN.toUpperCase()}</button>`;
   renderCard(`
     <div class="eyebrow">STEP 1 / 5</div>
-    <h1>Summon your Rebel<span class="tag">Read its blood-memory</span></h1>
-    <p class="lead">Every trait on your Rebel is a strand of its blood-memory. Summon it and the forge reads your Rebel's DNA.</p>
+    <h1>Summon your ${NOUN}<span class="tag">Read its blood-memory</span></h1>
+    <p class="lead">Every trait on your ${NOUN} is a strand of its blood-memory. Summon it and the forge reads your ${NOUN}'s DNA.</p>
     ${PICKER ? `<div class="picker">${PICKS.map((p) => `<button data-t="${p}" class="${p === state.token ? 'on' : ''}" title="Rebel #${p}"><img src="/api/nft-image?c=${COL}&t=${p}&s=thumb" alt="" loading="lazy"><small>#${p}</small></button>`).join('')}</div>` : ''}
     <div class="sep"></div>
     <div class="traits" id="traitList">${rows || '<div class="note">Reading traits…</div>'}</div>
     <div class="cta">${cta}</div>
-    <div class="note">${active() ? `Forging now · about ${fmtMin(forgeProgress().rem)} left.` : `The forge paints your Rebel, draws all four sides, sculpts three versions for you to choose from, then gives it a skeleton and 24 moves. About ${Math.round(total / 60)} minutes. ${allowanceNote()}`}</div>
+    <div class="note">${active() ? `Forging now · about ${fmtMin(forgeProgress().rem)} left.` : `The forge paints your ${NOUN}, draws all four sides, sculpts three versions for you to choose from, then gives it a skeleton and 24 moves. About ${Math.round(total / 60)} minutes. ${allowanceNote()}`}</div>
   `, quiet);
   if (!quiet) {
-    center.innerHTML = `<div class="nftcard" id="nftCard"><img src="${state.meta?.img || ''}" alt=""><div class="cap"><div><b>#${esc(state.token)}</b><br><span>${esc(REF ? REF_NAME : traitVal('Gang Names') || 'Rebel Ants')}</span></div><span>${REF ? esc(COL[0].toUpperCase() + COL.slice(1)) : 'Battle for the Colony'}</span></div></div>`;
+    center.innerHTML = `<div class="nftcard" id="nftCard"><img src="${state.meta?.img || ''}" alt=""><div class="cap"><div><b>#${esc(state.token)}</b><br><span>${esc(REF ? REF_NAME : FRIEND ? state.meta?.name || FRIEND.name : traitVal('Gang Names') || 'Rebel Ants')}</span></div><span>${REF ? esc(COL[0].toUpperCase() + COL.slice(1)) : FRIEND ? esc(FRIEND.name) : 'Battle for the Colony'}</span></div></div>`;
     const nc = $('#nftCard'); if (state.summoned) gsap.set(nc, { opacity: 0 }); else inkSmokeIn(nc);
   }
   card.querySelectorAll('.picker button').forEach((b) => b.onclick = () => selectToken(b.dataset.t));
   const sb = $('#summonBtn'); if (sb) sb.onclick = summon;
-  const bb = $('#beginBtn'); if (bb) bb.onclick = beginForge;
+  const bb = $('#beginBtn');
+  if (bb) bb.onclick = () => {                     // a paid forge asks once more before the points are taken
+    if (!forgePrice() || openMine() || bb.dataset.sure) return beginForge();
+    const was = bb.textContent; bb.dataset.sure = '1'; bb.textContent = `TAP AGAIN · TAKE ${fmtPts(forgePrice())} POINTS AND FORGE`;
+    setTimeout(() => { if (bb.isConnected && bb.dataset.sure) { delete bb.dataset.sure; bb.textContent = was; } }, 5000);
+  };
+  const pi = $('#payInBtn'); if (pi) pi.onclick = renderPaySignIn;
+  const gp = $('#getPtsBtn'); if (gp) gp.onclick = getPoints;
   const si = $('#signBtn'); if (si) si.onclick = signInForge;
   const wb = $('#watchBtn'); if (wb) wb.onclick = () => go(liveStep());
   const ao = $('#awakenOld'); if (ao) ao.onclick = awakenExisting;
@@ -1777,13 +1878,30 @@ let opening = false;
 async function beginForge() {
   if (active() || opening) return;
   if (!window.buildCharacterBlueprint) { toast('Forge tools are still loading, try again in a moment'); return; }
-  // Phase 2: the server checks the wallet holds this Rebel and uses one of its forges
-  opening = true; const bb = $('#beginBtn'); if (bb) { bb.disabled = true; bb.textContent = 'OPENING THE FORGE…'; }
-  try {
-    const d = await api('/api/forge-start', { tokenId: String(state.token), collectionKey: COL });
-    if (state.own && !d.admin) Object.assign(state.own, { used: d.used, left: d.left });
-  } catch (e) {
-    opening = false; toast(e.message || 'The forge could not open'); state.own = await loadOwn(); renderSummon(0, true); return;
+  // Phase 2: the server checks the wallet holds this Rebel and uses one of its forges (and takes its price); a forge this
+  // wallet still has open for the Rebel just carries on
+  const carry = openMine();
+  opening = true; const bb = $('#beginBtn'); if (bb) { bb.disabled = true; bb.textContent = forgePrice() && !carry ? 'TAKING THE POINTS…' : 'OPENING THE FORGE…'; }
+  if (!carry) {
+    try {
+      const quote = async () => (forgePrice() ? (await api(`/api/forge-start?tokenId=${encodeURIComponent(state.token)}&collectionKey=${COL}&quote=1`)).chargeId || null : null);
+      let chargeId = await quote(), d = null;
+      if (forgePrice() && !chargeId) throw new Error('Sign in to your Rebel Ants account to pay for the forge');
+      for (let tries = 0; ; tries++) {
+        try { d = await api('/api/forge-start', { tokenId: String(state.token), collectionKey: COL, chargeId }); break; }
+        catch (e) {
+          if ((e.code === 'econ_retry' || e.status === 408) && chargeId && tries < 3) { await new Promise((r) => setTimeout(r, 1500 * (tries + 1))); continue; }
+          if (e.code === 'quote_expired' && tries < 1) { chargeId = await quote(); continue; }
+          throw e;
+        }
+      }
+      if (state.own && !d.admin) Object.assign(state.own, { used: d.used, left: d.left });
+      if (d.charged) { if (state.own?.acct && d.balance != null) state.own.acct.balance = d.balance; toast(`${fmtPts(d.charged)} Rebel Points taken${d.balance != null ? ` · ${fmtPts(d.balance)} left` : ''}`); }
+    } catch (e) {
+      opening = false;
+      toast(e.code === 'not_enough_points' ? `Not enough Rebel Points: a forge takes ${fmtPts(e.body?.price || forgePrice())}` : (e.message || 'The forge could not open'));
+      state.own = await loadOwn(); renderSummon(0, true); if (e.code === 'econ_required') renderPaySignIn(); return;
+    }
   }
   opening = false;
   newSession(); state.maxStep = 1; flash(0.4, 0.8); Snd.play('stamp'); Snd.play('brush1', { delay: 0.5 });
@@ -1800,7 +1918,7 @@ function renderInk(prev, quiet) {
   renderCard(`
     <div class="eyebrow">STEP 2 / 5</div>
     <h1>${title}<span class="tag">${past ? 'Accepted' : waiting ? 'Your call' : 'The brush runs'}</span></h1>
-    <p class="lead">The forge's brush paints your Rebel as a full warrior from its traits and colony, then inks a clean, simple version the smith can build from.</p>
+    <p class="lead">${FRIEND ? `The forge's brush paints your ${NOUN} from its NFT as a full-body 3D character, standing ready for the smith.` : "The forge's brush paints your Rebel as a full warrior from its traits and colony, then inks a clean, simple version the smith can build from."}</p>
     <div class="note live" id="liveStatus"></div>
     ${errBox()}
     <div class="sep"></div>
@@ -1870,7 +1988,7 @@ function renderForm(prev, quiet) {
     ${check ? `<div class="cta"><button class="btn fire wide" id="viewsOk">LOOKS RIGHT · SCULPT IT →</button><button class="btn" id="viewsAgain">DRAW THE VIEWS AGAIN</button></div>` : ''}
     ${past ? `<div class="cta"><button class="btn fire wide" id="nextBtn">TO THE FORGE →</button></div>` : ''}
     ${views.some((v) => v[1]) ? `<div class="dl"><span>KEEP THE ART</span><button class="chip" id="dlViews">⤓ All ${views.filter((v) => v[1]).length} views</button></div>` : ''}
-    <div class="note">${check ? 'Check that front, back and both sides match your Rebel. Nothing is sculpted until you say so.' : skipped ? 'A view could not be drawn, so the smith builds from the views it has.' : past ? 'Sealed and sent to the forge.' : 'Keep this page open while the views are drawn. When they are ready you check them before the forge starts.'}</div>
+    <div class="note">${check ? `Check that front, back and both sides match your ${NOUN}. Nothing is sculpted until you say so.` : skipped ? 'A view could not be drawn, so the smith builds from the views it has.' : past ? 'Sealed and sent to the forge.' : 'Keep this page open while the views are drawn. When they are ready you check them before the forge starts.'}</div>
   `, quiet);
   const sig = views.map((v) => v[1] || '').join('|');
   const sc = $('#scroll');
@@ -1953,7 +2071,7 @@ function renderForge(prev, quiet) {
   const rigging = S?.phase === 'rig' || S?.done;
   renderCard(`
     <div class="eyebrow">STEP 4 / 5</div>
-    <h1>${pick ? 'Choose your Rebel' : S?.done ? 'Forged' : 'Forging'}<span class="tag">${pick ? 'Three versions, one warrior' : 'The hammer sings'}</span></h1>
+    <h1>${pick ? `Choose your ${NOUN}` : S?.done ? 'Forged' : 'Forging'}<span class="tag">${pick ? 'Three versions, one warrior' : 'The hammer sings'}</span></h1>
     <div class="pct" id="pct">0<small>%</small></div>
     <div class="bar"><i id="barI"></i></div>
     <div class="note" id="eta">Heating the steel…</div>
@@ -1963,7 +2081,7 @@ function renderForge(prev, quiet) {
     <div class="sep"></div>
     <div class="stages">${FORGE_STAGES.map((s, i) => `<div class="stg ${st[i] === 'run' ? 'run' : st[i] === 'ok' ? 'ok' : ''}" data-i="${i}"><span class="sk">${String(i + 1).padStart(2, '0')}</span><div><div class="sn">${s.n}</div><div class="sd">${s.d}</div></div><span class="ss">${st[i] === 'run' ? (i === 1 ? 'YOUR TURN' : 'FORGING') : st[i] === 'ok' ? 'DONE' : 'WAIT'}</span></div>`).join('')}</div>
     <div class="comb ${rigging ? '' : 'hidden'}" id="comb">${ALL_MOVES.map((m) => `<div class="hex" title="${esc(m.n)}">${esc(SHORT[m.clip] || m.n)}</div>`).join('')}</div>
-    ${S?.done ? `<div class="cta"><button class="btn fire wide" id="toAwaken">AWAKEN →</button></div>` : `<div class="note">${active() && PH[S.phase].i >= PH.meshy.i ? 'You can close this page: the sculpting and rigging keep going, and your Rebel will be here when you come back.' : 'The forge starts once the blueprint is ready.'}</div>`}
+    ${S?.done ? `<div class="cta"><button class="btn fire wide" id="toAwaken">AWAKEN →</button></div>` : `<div class="note">${active() && PH[S.phase].i >= PH.meshy.i ? `You can close this page: the sculpting and rigging keep going, and your ${NOUN} will be here when you come back.` : 'The forge starts once the blueprint is ready.'}</div>`}
   `, quiet);
   bindErr();
   card.querySelectorAll('.ver.can').forEach((b) => b.onclick = () => previewVersion(b.dataset.id));
@@ -2078,18 +2196,18 @@ function showAwakened(instant) {
   rebel.meshes.forEach((m) => { m.visibility = 1; }); U.uMorph = 1; U.uScatter = 1; if (instant) U.uAlpha = 0;
   if (!rebel.cur) play('fight_idle', true);
   const gang = traitVal('Gang Names');
-  $('#rvName').textContent = shortName(); $('#rvMei').textContent = `${gang || 'Rebel'} · Battle for the Colony`;
+  $('#rvName').textContent = shortName(); $('#rvMei').textContent = FRIEND ? `${FRIEND.name} · Rebel Universe` : `${gang || 'Rebel'} · Battle for the Colony`;
   gsap.fromTo('#reveal', { opacity: 0, y: -12, letterSpacing: '0.5em' }, { opacity: 1, y: 0, duration: instant ? 0.3 : 1.4, ease: 'power3.out' });
   renderCard(`
     <div class="eyebrow">STEP 5 / 5</div>
     <h1>${esc(shortName())}<span class="tag">Awakened</span></h1>
-    <p class="lead">Your Rebel is awake. Drag to turn it, and pick any of its <b>24 moves</b> below.</p>
+    <p class="lead">Your ${NOUN} is awake. Drag to turn it, and pick any of its <b>24 moves</b> below.</p>
     <div class="sep"></div>
     <div class="traits">${(state.meta?.traits || []).slice(0, 6).map((t) => `<div class="trait locked"><span class="tt"><i></i>${esc(t.trait_type)}</span><span class="tv">${esc(t.value)}</span></div>`).join('')}</div>
-    <div class="wbox"><div class="sep"></div><div class="eyebrow">WEAPON · WORN ON THE BACK${canForge() ? '' : ' · PREVIEW'}</div><div class="chips wchips" id="wpnChips"></div></div>
+    ${FRIEND ? '' : `<div class="wbox"><div class="sep"></div><div class="eyebrow">WEAPON · WORN ON THE BACK${canForge() ? '' : ' · PREVIEW'}</div><div class="chips wchips" id="wpnChips"></div></div>`}
     ${glBoxHTML()}
-    <div class="cta">${canForge() ? '<button class="btn shu wide" id="makeMine">MAKE THIS MY REBEL</button>' : ''}<button class="btn${canForge() ? '' : ' fire wide'}" id="enterV">ENTER VILLAGE →</button></div>
-    ${canForge() ? '' : '<div class="note">Only the wallet that holds this Rebel can make it its character. You can walk the village with it.</div>'}
+    <div class="cta">${canForge() ? `<button class="btn shu wide" id="makeMine">MAKE THIS MY ${NOUN.toUpperCase()}</button>` : ''}<button class="btn${canForge() ? '' : ' fire wide'}" id="enterV">ENTER VILLAGE →</button></div>
+    ${canForge() ? '' : `<div class="note">Only the wallet that holds this ${NOUN} can make it its character. You can walk the village with it.</div>`}
     <div class="note">Keys: ← → moves · Space pause · L loop · S speed · K perform all kata</div>
   `);
   if ($('#makeMine')) $('#makeMine').onclick = makeMine;
@@ -2110,8 +2228,8 @@ async function makeMine() {
     const ac = d.activeCharacter;
     if (ac) rememberSelected(ac, buildId, url);
     state.mine = true;
-    btn.textContent = 'YOUR REBEL ✓'; Snd.play('seal'); flash(0.3, 0.8); toast('Set as your Rebel in the lobby and the village');
-  } catch (e) { btn.disabled = false; btn.textContent = 'MAKE THIS MY REBEL'; toast(e.message || 'Could not set it'); }
+    btn.textContent = `YOUR ${NOUN.toUpperCase()} ✓`; Snd.play('seal'); flash(0.3, 0.8); toast(`Set as your ${NOUN} in the lobby and the village`);
+  } catch (e) { btn.disabled = false; btn.textContent = `MAKE THIS MY ${NOUN.toUpperCase()}`; toast(e.message || 'Could not set it'); }
 }
 // the lobby and the village read selectedRebel: this Rebel is the one they open with (ac = its server character)
 function rememberSelected(ac, buildId, url) {
@@ -2119,9 +2237,9 @@ function rememberSelected(ac, buildId, url) {
       const sel = selectedRebel() || {};
       const t = String(state.token), g = GI(), tm = {}; (state.meta?.traits || []).forEach((x) => { tm[x.trait_type] = x.value; });
       localStorage.setItem('selectedRebel', JSON.stringify({
-        ...sel, id: sel.id || `rebel_${t}`, rebelId: sel.rebelId || g.rebelId || `rebel_${t}`, tokenId: t, collectionKey: COL,
-        name: sel.name || `Rebel #${t}`, image: sel.image || `/api/nft-image?c=${COL}&t=${t}&s=thumb`,
-        traits: Object.keys(tm).length ? tm : (sel.traits || {}), gangName: tm['Gang Names'] || sel.gangName || null,
+        ...sel, id: sel.id || rebelId(), rebelId: sel.rebelId || g.rebelId || rebelId(), tokenId: t, collectionKey: COL,
+        name: sel.name || (FRIEND ? state.meta?.name || `${NOUN} #${t}` : `Rebel #${t}`), image: sel.image || `/api/nft-image?c=${COL}&t=${t}&s=thumb`,
+        traits: Object.keys(tm).length ? tm : (sel.traits || {}), gangName: FRIEND ? null : tm['Gang Names'] || sel.gangName || null,
         playableType: undefined, buildId: ac ? buildId : undefined, activeForgeCharacter: ac || undefined, activeGlbUrl: ac ? (ac.activeGlbUrl || url) : undefined,
         characterSource: ac ? 'forge_glb' : undefined, updatedAt: new Date().toISOString()
       }));
@@ -2388,7 +2506,7 @@ async function glCheck() {
 }
 // the awakened card's Gloves box
 function glBoxHTML() {
-  if (glMaster()) return '';
+  if (glMaster() || FRIEND) return '';   // Chumpz / Saints keep the gloves they were forged with
   return `<div class="gbox" id="glBox"><div class="sep"></div><div class="eyebrow">GLOVES · <span class="jp">手袋</span>${canForge() ? '' : ' · PREVIEW'}</div><div id="glBoxIn"></div></div>`;
 }
 function glBox() {
@@ -2697,7 +2815,7 @@ addEventListener('keydown', (e) => {
   else if (e.key.toLowerCase() === 'k') $('#cKata').click();
 });
 
-function updateTokPill() { const g = traitVal('Gang Names'); $('#tokPill').innerHTML = `Rebel <strong>#${esc(state.token)}</strong>${g ? ' · ' + esc(g) : ''}`; }
+function updateTokPill() { const g = FRIEND ? FRIEND.name : traitVal('Gang Names'); $('#tokPill').innerHTML = `${NOUN} <strong>#${esc(state.token)}</strong>${g ? ' · ' + esc(g) : ''}`; }
 
 /* =========================================================
    Boot

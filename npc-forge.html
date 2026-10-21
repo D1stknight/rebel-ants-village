@@ -279,6 +279,58 @@ async function shrink(dataUrl) {   // keep uploads under the 8 MB Blob limit (th
   throw new Error('Image too large');
 }
 
+/* ---------- Redraw renders (Oct 20, human NPCs: the Saints) ---------- */
+// The same person and outfit redrawn by the Rebel Forge's image step so the sculpt comes out human: natural skin, real
+// eyes, clothes that fit, arms clear of the body (fused arms tear in the rig). Front first, then the back to match it,
+// then both sides from the two. The new renders wait on the card until they are used (a new sculpt) or dropped.
+async function redrawRenders(id) {
+  const n = npc(id); if (!n || running.has(id) || colOf(n).species !== 'human') return;
+  if (!SLOTS.every((s) => n.refs[s]?.url)) { toast('Upload all four renders first'); return; }
+  const notes = prompt(`Redraw ${n.name || 'this NPC'}'s four renders: the same person and outfit with natural skin, real eyes, clothes that fit and the arms clear of the body. Four image generations, a few minutes.\n\nAnything else to change? (optional)`, '');
+  if (notes === null) return;
+  running.add(id); n.err = null; n.redraw = { phase: 'front', at: new Date().toISOString(), notes: notes.trim() }; save(); renderList();
+  const k = n.key || `draft_${n.id}`;
+  const up = async (slot, dataUrl) => {
+    const local = await shrink(dataUrl);
+    const j = await twice(() => api('/api/forge-concepts-upload-image', { conceptId: `${n.id}_${slot}_rd${Date.now().toString(36)}`, ...ids(n), tokenId: k, rebelId: `npc_${k}`, imageDataUrl: local }));
+    if (!j.imageUrl) throw new Error('no image URL'); return j.imageUrl;
+  };
+  const step = (p) => { n.redraw.phase = p; renderList(); };
+  try {
+    const g = gi(n), out = {}, wrong = [];
+    const f = await api('/api/forge-fix-reference', { imageUrl: n.refs.front.url, view: 'front', notes: n.redraw.notes, makeover: true, generationInput: g });
+    out.front = await up('front', f.image.dataUrl); step('back');
+    const b = await api('/api/forge-fix-reference', { imageUrl: n.refs.back.url, view: 'back', notes: n.redraw.notes, makeover: true, frontImageUrl: out.front, generationInput: g });
+    out.back = await up('back', b.image.dataUrl); step('sides');
+    for (const side of ['left', 'right']) {
+      const s = await api('/api/forge-generate-side-reference', { productionImageUrl: out.front, backImageUrl: out.back, side, generationInput: g });
+      out[side] = await up(side, s.sideImage.dataUrl); if (s.wrongSide) wrong.push(side);
+    }
+    n.redraw = { refs: out, at: n.redraw.at, notes: n.redraw.notes, wrong };
+  } catch (e) { n.redraw = null; n.err = `Redraw stopped: ${e.message}`; }
+  running.delete(id); save(); renderList();
+}
+function useRedraw(id) {
+  const n = npc(id); if (!n?.redraw?.refs || running.has(id)) return;
+  if (!SLOTS.every((s) => n.redraw.refs[s])) { toast('A redrawn view is missing: redraw again'); return; }
+  if (!confirm(`Use the redrawn renders for ${n.name || 'this NPC'}?${n.buildId ? ' It is sculpted again from them (a new Rebel Forge sculpt), then rigged.' : ''} The old renders are kept: Old renders puts them back.`)) return;
+  n.prevRefs = n.refs; n.refs = Object.fromEntries(SLOTS.map((s) => [s, { url: n.redraw.refs[s] }])); n.redraw = null; save();
+  if (n.buildId) forgeOne(id, { resculpt: true }); else renderList();
+}
+function dropRedraw(id) { const n = npc(id); if (!n || running.has(id) || !confirm('Drop the redrawn renders?')) return; n.redraw = null; save(); renderList(); }
+function restoreRefs(id) {
+  const n = npc(id); if (!n?.prevRefs || running.has(id)) return;
+  if (!confirm('Put the old renders back? (The next Forge or Re-sculpt uses them.)')) return;
+  const cur = n.refs; n.refs = n.prevRefs; n.prevRefs = cur; save(); renderList();
+}
+function redrawStrip(n) {
+  const r = n.redraw; if (!r) return '';
+  if (!r.refs) return `<div class="info">Redrawing renders: ${{ front: 'the front', back: 'the back', sides: 'both sides' }[r.phase] || r.phase}…</div>`;
+  return `<div class="info" style="margin-top:6px">Redrawn renders${r.at ? ' · ' + when(r.at) : ''}${r.wrong?.length ? ` · <span class="err" style="display:inline">${r.wrong.join(' + ')} side faced the wrong way: redraw again</span>` : ''}</div>
+    <div class="slots">${SLOTS.map((s) => `<div class="slot">${r.refs[s] ? `<img src="${r.refs[s]}" alt="">` : '?'}<b>${s}</b></div>`).join('')}</div>
+    <div class="row" style="margin-top:6px"><button class="gold" onclick="useRedraw('${n.id}')">Use them${n.buildId ? ': sculpt again' : ''}</button><button onclick="dropRedraw('${n.id}')">Drop</button></div>`;
+}
+
 /* ---------- the pipeline (same steps as the Rebel Forge, NPC rig job) ---------- */
 const running = new Set();
 function ids(n) { return { tokenId: n.key, rebelId: `npc_${n.key}`, collectionKey: 'npc' }; }
@@ -397,13 +449,15 @@ function card(n) {
     <div class="row" style="margin-top:6px"><select onchange="setField('${n.id}','collection',this.value)" ${busy || n.buildId ? 'disabled' : ''} title="Collection">${Object.entries(COLLECTIONS).map(([k, c]) => `<option value="${k}" ${k === (n.collection || 'rebel') ? 'selected' : ''}>${c.label}</option>`).join('')}</select><input class="grow" placeholder="library key" value="${esc(n.key)}" onchange="setField('${n.id}','key',this.value)" ${busy || n.buildId ? 'disabled' : ''} title="Library key (samurai_villager replaces that villager's placeholder; chumpz_bartender replaces Big Chain)"></div>
     ${n.buildId ? '' : `<div class="slots">${slots}</div>`}
     ${n.buildId || colOf(n).species === 'ant' ? '' : `<div class="info">Renders for ${colOf(n).label}: A-pose, a clear gap between each arm and the body all the way down (background showing under the armpits) and the hands open, away from the hips. Arms or hands touching the body are fused in the sculpt and tear when they move.</div>`}
+    ${redrawStrip(n)}
     <div class="state">${stateLine(n)}</div><div class="bar"><i style="width:${pct(n)}%"></i></div>
     <div class="info" id="info_${n.id}">${statusLines(n).join('<br>')}</div>
     ${n.err ? `<div class="err">${esc(n.err)}</div>` : ''}
     <div class="row" style="margin-top:8px">
       ${n.phase === 'done' ? `<button class="teal" onclick="select('${n.id}')">Test</button><button onclick="reRig('${n.id}')" title="Run the Forge Rigger again on the same sculpt">Re-rig</button>` : `<button class="gold" onclick="forgeOne('${n.id}')" ${busy || !ready(n) ? 'disabled' : ''}>${n.phase === 'failed' ? 'Retry' : ['uploading', 'building', 'sculpting', 'storing', 'rigging'].includes(n.phase) && !busy ? 'Continue' : 'Forge'}</button>`}
       ${n.buildId && !busy ? `<button onclick="if(confirm('Sculpt this NPC again from the same renders? (a new Rebel Forge sculpt)'))forgeOne('${n.id}',{resculpt:true})">Re-sculpt</button>` : ''}
-      ${!n.buildId && Object.keys(n.refs).length ? '' : ''}
+      ${colOf(n).species === 'human' && !busy && !n.redraw && SLOTS.every((s) => n.refs[s]?.url) ? `<button onclick="redrawRenders('${n.id}')" title="Redraw the four renders: natural skin, real eyes, clothes that fit, arms clear of the body">Redraw renders</button>` : ''}
+      ${n.prevRefs && !busy ? `<button onclick="restoreRefs('${n.id}')" title="Put back the renders the last redraw replaced">Old renders</button>` : ''}
       <button class="red" style="margin-left:auto" onclick="removeNPC('${n.id}')" ${busy ? 'disabled' : ''}>Remove</button></div></div>`;
 }
 function select(id) { selId = id; selKit = null; renderList(); showNPC(id); }
@@ -942,8 +996,29 @@ const gamesReady = () => { const g = workerInfo?.games; return !!(g && g.have >=
 const packMoves = (r) => r.gamesClips || GAMES_V1;
 const packOld = (r) => !!r.games && !!gamesMoves && gamesMoves.some((n) => !packMoves(r).includes(n));
 const packTodo = (r) => !r.games || packOld(r);
+// Oct 20 the Free to play roster (api/free-roster.mjs): forged Rebels anyone can play from the lobby; ticked here
+let freeRoster = null;   // { tokens: Set, saved, busy }
+const FREE_NEVER = new Set(['1', '893']);
+async function loadFreeRoster() {
+  try { const d = await api('/api/free-roster'); freeRoster = { tokens: new Set(d.tokens || []), saved: !!d.saved, busy: false }; } catch (e) { freeRoster = null; }
+}
+async function setFreeRoster(body, undo) {
+  if (!freeRoster || freeRoster.busy) return;
+  freeRoster.busy = true; paintGames();
+  try { const d = await api('/api/free-roster', body); freeRoster.tokens = new Set(d.tokens || []); freeRoster.saved = !!d.saved; }
+  catch (e) { toast(e.message, 9000); if (undo) undo(); }
+  freeRoster.busy = false; paintGames();
+}
+function toggleFree(tok, on) {
+  if (!freeRoster) return;
+  const was = new Set(freeRoster.tokens), next = [...freeRoster.tokens].filter((t) => t !== tok);
+  if (on) next.push(tok);
+  freeRoster.tokens = new Set(next);
+  setFreeRoster({ tokens: next }, () => { freeRoster.tokens = was; });
+}
+function resetFree() { if (confirm('Put the Free to play roster back to the lobby\'s own showcase list?')) setFreeRoster({ reset: true }); }
 async function loadGamesPacks() {
-  try { gamesList = (await api('/api/forge-games-packs')).rebels || []; } catch (e) { const b = $('#gamesBox'); if (b) b.innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
+  try { [gamesList] = await Promise.all([api('/api/forge-games-packs').then((d) => d.rebels || []), loadFreeRoster()]); } catch (e) { const b = $('#gamesBox'); if (b) b.innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
   try { gamesMoves = (await (await fetch('/forge-worker/anim/clips_games.json', { cache: 'no-store' })).json()).map((c) => c.name); } catch (e) { gamesMoves = null; }
   paintGames();
   // jobs still running (started on this or another computer): watch them, so they finish and none is started twice
@@ -964,10 +1039,17 @@ function paintGames() {
     if (j.gamesError) return `<span class="bad">made but not saved: ${esc(j.gamesError)}</span>`;
     return `<span class="bad">made on a worker image without the games moves${j.gamesMissing?.length ? ` (${j.gamesMissing.length} of ${GAMES_PACK.length} missing)` : ''}: make again</span>`;
   };
+  const free = (r) => {
+    if (!freeRoster || r.collectionKey !== 'battle_for_colony') return '';
+    if (FREE_NEVER.has(r.tokenId)) return ` · <span style="opacity:.6">${r.tokenId === '1' ? 'the starter' : 'not free until reforged'}</span>`;
+    const on = freeRoster.tokens.has(r.tokenId), can = r.publicRig || on;
+    return ` · <label title="${can ? 'On the lobby\'s Free to play roster: anyone can play it' : 'Needs a public forged character: make it in the Forge as admin (Make this my Rebel)'}" style="${can ? '' : 'opacity:.5'}"><input type="checkbox" ${on ? 'checked' : ''} ${can && !freeRoster.busy ? '' : 'disabled'} onchange="toggleFree('${esc(r.tokenId)}', this.checked)"> Free to play</label>`;
+  };
   const what = old ? (old === todo.length ? `the ${old} older` : `${todo.length}`) : `the missing ${todo.length}`;
   const label = gamesRun.on ? (gamesRun.note ? 'Rebuilding the worker…' : 'Making…') : gamesReady() ? `Make ${what}` : `Rebuild worker, then make ${what}`;
   box.innerHTML = `<div class="state"><b>Games packs</b>: ${have} of ${gamesList.length} Rebels in play${old ? ` · ${old} older (without the new moves)` : ''}${gamesRun.note ? ` · ${esc(gamesRun.note)}` : gamesRun.on ? ` · making ${gamesRun.active.size} now` : ''}</div>
-    <div style="max-height:180px;overflow:auto;margin-top:4px">${gamesList.map((r) => `<div class="state">${esc(r.name || '#' + r.tokenId)} <span style="opacity:.6">${esc(r.collectionKey)} ${esc(r.tokenId)}</span> · ${line(r)}</div>`).join('') || '<div class="state">No Rebels with a Forge rig in play.</div>'}</div>
+    ${freeRoster ? `<div class="state" style="margin-top:2px"><b>Free to play</b>: ${freeRoster.tokens.size} Rebel${freeRoster.tokens.size === 1 ? '' : 's'} on the lobby's roster${freeRoster.saved ? ` · <a href="#" style="color:#5ecfca" onclick="resetFree();return false">back to the showcase list</a>` : ' (the showcase list)'}${freeRoster.busy ? ' · saving…' : ''}</div>` : ''}
+    <div style="max-height:180px;overflow:auto;margin-top:4px">${gamesList.map((r) => `<div class="state">${esc(r.name || '#' + r.tokenId)} <span style="opacity:.6">${esc(r.collectionKey)} ${esc(r.tokenId)}</span> · ${line(r)}${free(r)}</div>`).join('') || '<div class="state">No Rebels with a Forge rig in play.</div>'}</div>
     <div class="row" style="margin-top:6px"><button class="teal" onclick="makeGamesPacks()" ${gamesRun.on || !todo.length ? 'disabled' : ''}>${label}</button><button onclick="loadGamesPacks()" ${gamesRun.on ? 'disabled' : ''}>Refresh</button></div>
     <div class="state" style="margin-top:4px">Each one re-runs the Rigger on that Rebel's own sculpt (about 4 minutes, two at a time) and keeps only the games moves; the rig and its weapon moves are not changed. Keep this page open while they run.</div>`;
 }

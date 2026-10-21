@@ -49035,7 +49035,8 @@
         "time": "night",
         "hint": "Only bark and blossoms. The tree looks different by moonlight."
       },
-      "text": "In the moonlight a faint handprint shows on the bark, pressed in from the inside."
+      "text": "In the moonlight a faint handprint shows on the bark, pressed in from the inside.",
+      "radius": 4.6
     }
   },
   {

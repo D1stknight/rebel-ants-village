@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>RAAP Account Link</title>
+<style>
+:root{--bg:#0a0c11;--card:rgba(255,255,255,.035);--line:rgba(214,175,92,.32);--ink:#ece4cf;--dim:#a39c8b;--gold:#d6af5c;--teal:#5ecfca;--red:#e06b5b;--green:#7fcf8a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:720px;margin:0 auto;padding:28px 16px 60px}
+h1{font-size:20px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin:0 0 4px}
+.sub{color:var(--dim);margin:0 0 22px;font-size:13px}
+section{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:16px 18px;margin:0 0 16px}
+h2{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin:0 0 10px}
+.row{display:grid;grid-template-columns:130px minmax(0,1fr);gap:2px 10px;align-items:baseline;margin:5px 0}
+.k{color:var(--dim);font-size:13px}
+.v{word-break:break-word;overflow-wrap:anywhere;min-width:0;font-size:14px}
+@media (max-width:480px){.row{grid-template-columns:100px minmax(0,1fr)}}
+.pill{display:inline-block;padding:1px 9px;border-radius:99px;font-size:12px;letter-spacing:1px;border:1px solid currentColor}
+.on{color:var(--green)}.off{color:var(--dim)}.bad{color:var(--red)}
+button{background:transparent;color:var(--teal);border:1px solid var(--teal);border-radius:7px;padding:8px 14px;font:inherit;cursor:pointer;margin:10px 8px 0 0}
+button.gold{color:var(--gold);border-color:var(--gold)}button.red{color:var(--red);border-color:var(--red)}
+button:disabled{opacity:.4;cursor:default}
+input{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:6px;color:var(--ink);padding:7px 9px;font:inherit;width:150px;margin:8px 8px 0 0}
+pre{white-space:pre-wrap;word-break:break-all;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08);border-radius:7px;padding:10px 12px;font-size:12px;color:#d9d2bf;max-height:320px;overflow:auto}
+#note{min-height:22px;font-size:14px}
+#note.err{color:var(--red)}#note.ok{color:var(--green)}
+.small{font-size:12px;color:var(--dim)}
+a{color:var(--teal)}
+</style>
+</head>
+<body>
+<main>
+  <h1>RAAP account link</h1>
+  <p class="sub">Development preview only. Links your signed-in wallet to your signed-in Rebel Economy account for RAAP,
+    and lets you share confirmed experiences with your Rebel. Nothing here plays, pays or spends points.</p>
+  <div id="note"></div>
+  <div id="app"><section><p class="small">Loading…</p></section></div>
+</main>
+<script src="assets/wallet-auth.js"></script>
+<script>
+(function () {
+  const API = '/api/raap-universe-link';
+  const MSG = {
+    WALLET_NOT_SIGNED_IN: 'Sign in with your wallet first.', WRONG_WALLET: 'This connection is for another wallet.',
+    ECONOMY_NOT_SIGNED_IN: 'Sign in to your Rebel Economy account first.', NOT_OWNED: 'This wallet does not hold the Rebel right now.',
+    ACCOUNT_CHANGED: 'Your Economy account changed since this was prepared. Prepare it again.', WALLET_CHANGED: 'Your wallet changed since this was prepared. Prepare it again.',
+    CHALLENGE_NOT_FOUND: 'That approval expired or was already used. Prepare it again.', EXPIRED: 'That approval expired. Prepare it again.',
+    NOT_AUTHORIZED: 'The signature did not match this wallet.', LINK_CHANGED: 'The link changed meanwhile. Reload and try again.',
+    NOT_LINKED_ACCOUNT: 'Sign in with the Economy account that is linked.', CONNECTION_CLOSED: 'The RAAP connection is closed.',
+    CONNECTION_UNAVAILABLE: 'The RAAP connection is not switched on here.', OPERATION_NOT_ENABLED: 'Sharing is not switched on for this connection.',
+    NONCE_USED: 'That revocation was already used. Reload.', NOT_SAME_ORIGIN: 'Open this page on the development preview itself.',
+    RATE_LIMITED: 'Too many tries. Wait a minute.', EVENT_KIND_NOT_ENABLED: 'That kind of experience is not offered.', SELECTION_CHANGED: 'Sharing changed meanwhile. Reload.'
+  };
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const short = (a) => a ? a.slice(0, 6) + '…' + a.slice(-4) : '';
+  const when = (t) => t ? new Date(t * 1000).toLocaleString() : '';
+  const note = (t, cls) => { const n = $('#note'); n.textContent = t || ''; n.className = cls || ''; };
+  const hexUtf8 = (s) => '0x' + Array.from(new TextEncoder().encode(s)).map((b) => b.toString(16).padStart(2, '0')).join('');
+  let S = null, pending = null;
+
+  async function load() {
+    const r = await fetch(API, { cache: 'no-store', credentials: 'same-origin' });
+    S = await r.json().catch(() => null);
+    render();
+  }
+  async function post(op) {
+    const r = await fetch(API, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(op) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(MSG[j.error] || j.error || 'That did not go through.');
+    return j;
+  }
+  // the owner's readable approval: personal_sign over the exact text, v as 27 / 28
+  async function sign(message, wallet) {
+    const p = window.ethereum;
+    if (!p) throw new Error('No browser wallet found.');
+    const accts = (await p.request({ method: 'eth_requestAccounts' })).map((a) => String(a).toLowerCase());
+    if (!accts.includes(wallet)) throw new Error('Switch your wallet to ' + short(wallet) + '.');
+    let sig = String(await p.request({ method: 'personal_sign', params: [hexUtf8(message), wallet] })).toLowerCase();
+    if (/^0x[0-9a-f]{130}$/.test(sig)) { const v = parseInt(sig.slice(130), 16); if (v < 27) sig = sig.slice(0, 130) + (v + 27).toString(16); }
+    return { scheme: 'eip191-personal-sign', signer: wallet, signature: sig };
+  }
+  const run = (fn) => async () => { note('Working…'); try { const m = await fn(); note(m || 'Done.', 'ok'); } catch (e) { note(e.message, 'err'); } pending = null; await load(); };
+
+  function render() {
+    const app = $('#app');
+    if (!S || S.schema !== 'universe.raap.link-page.v1') { app.innerHTML = '<section><p class="bad">This page could not load.</p></section>'; return; }
+    if (!S.enabled) { app.innerHTML = '<section><h2>Not switched on</h2><p class="small">The RAAP account link is off on this deployment.</p></section>'; return; }
+    const c = S.connection, se = S.session, L = S.link, sh = S.sharing;
+    const walletOk = se.walletMatches, econOk = !!se.economy;
+    const st = (s) => `<span class="pill ${s === 'LINKED' || s === 'SHARING' ? 'on' : s === 'REVOKED' ? 'bad' : 'off'}">${esc(s.replace('_', ' '))}</span>`;
+    let h = `<section><h2>Accounts being linked</h2>
+      <div class="row"><span class="k">Wallet</span><span class="v">${se.wallet ? esc(se.wallet) : '<span class="off">not signed in</span>'}
+        ${se.wallet && !walletOk ? `<span class="bad"> · this connection is for ${esc(short(c.wallet))}</span>` : ''}</span></div>
+      <div class="row"><span class="k">Rebel</span><span class="v">#${esc(c.asset.tokenId)} <span class="small">(${esc(short(c.asset.collection))})</span></span></div>
+      <div class="row"><span class="k">Economy account</span><span class="v">${econOk ? esc(se.economy.name) + ` <span class="small">(${se.economy.kind === 'name' ? 'name + PIN' : 'Discord'})</span>` : '<span class="off">not signed in</span>'}</span></div>
+      ${se.wallet ? '' : '<button id="bWallet">Sign in with wallet</button>'}
+      ${econOk ? '' : `<div><button id="bDiscord">Sign in with Discord</button></div>
+        <div><input id="iName" placeholder="Colony name" autocomplete="username"><input id="iPin" placeholder="PIN" inputmode="numeric" type="password" autocomplete="current-password"><button id="bName">Sign in with name + PIN</button></div>`}
+    </section>`;
+    h += `<section><h2>Account link</h2>
+      <div class="row"><span class="k">Status</span><span class="v">${st(L.status)}${L.mine ? ' <span class="small">· your signed-in Economy account</span>' : L.link ? ' <span class="small">· another Economy account</span>' : ''}</span></div>
+      ${L.link ? `<div class="row"><span class="k">Ends</span><span class="v">${esc(when(L.validUntil))}</span></div>
+      <div class="row"><span class="k">Link</span><span class="v small">${esc(L.link.linkId)} / ${esc(L.link.revision)}</span></div>` : ''}
+      <button class="gold" id="bLink" ${walletOk && econOk ? '' : 'disabled'}>${L.status === 'LINKED' ? 'Link again (replaces the current link)' : 'Link these two accounts'}</button>
+      ${S.revoke.unlink ? '<button class="red" id="bUnlink">Unlink (wallet signature)</button>' : ''}
+      ${L.status === 'LINKED' && L.mine ? '<button class="red" id="bDisc">Disconnect my Economy account</button>' : ''}
+    </section>`;
+    if (c.sharing) h += `<section><h2>Experience sharing</h2>
+      <div class="row"><span class="k">Status</span><span class="v">${st(sh.status)}</span></div>
+      ${sh.selectionId ? `<div class="row"><span class="k">Shares</span><span class="v">${esc(sh.eventKinds.join(', '))} · until ${esc(when(sh.validUntil))}</span></div>` : ''}
+      <div class="row"><span class="k">Offered</span><span class="v small">${esc(c.eventKinds.join(', '))}</span></div>
+      <button class="gold" id="bShare" ${L.status === 'LINKED' && L.mine && walletOk ? '' : 'disabled'}>Share confirmed experiences</button>
+      ${S.revoke.stopSharing ? '<button class="red" id="bStop">Stop sharing (wallet signature)</button>' : ''}
+      <p class="small">Normal play needs no signatures. Only new, server-confirmed experiences are shared while this is on.</p>
+    </section>`;
+    if (pending) h += `<section><h2>Your wallet will show</h2><pre>${esc(pending)}</pre></section>`;
+    h += `<p class="small">Connection ${esc(c.connectionId)} / ${esc(c.connectionRevision)} · RAAP ${esc(c.raap)} · open until ${esc(when(c.validUntil))}</p>`;
+    app.innerHTML = h;
+    const on = (id, f) => { const b = document.getElementById(id); if (b) b.onclick = f; };
+    on('bWallet', run(async () => { await window.RebelWallet.connectAndSignIn(); return 'Wallet signed in.'; }));
+    on('bDiscord', () => { location.href = '/api/econ-discord-login?return=' + encodeURIComponent('/raap-link.html'); });
+    on('bName', run(async () => {
+      const r = await fetch('/api/econ-name-login', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'login', name: $('#iName').value, pin: $('#iPin').value }) });
+      const j = await r.json().catch(() => ({})); if (!r.ok || j.ok === false) throw new Error(j.message || j.error || 'Name sign-in failed.'); return 'Economy account signed in.';
+    }));
+    on('bLink', run(async () => {
+      const p = await post({ operation: 'PREPARE_LINK', target: c.target });
+      pending = p.message; render();
+      const approval = await sign(p.message, c.wallet);
+      await post({ operation: 'SAVE_LINK', authorization: { schema: 'raap.universe.authorized-economy-link.v1', request: p.request, ownerApproval: approval } });
+      pending = null; return 'Linked.';
+    }));
+    on('bShare', run(async () => {
+      const p = await post({ operation: 'PREPARE_SHARING', target: c.target, link: L.link, eventKinds: c.eventKinds });
+      pending = p.message; render();
+      const approval = await sign(p.message, c.wallet);
+      await post({ operation: 'SAVE_SHARING', authorization: { schema: 'raap.universe.authorized-sharing-consent.v1', request: p.request, ownerApproval: approval } });
+      pending = null; return 'Sharing is on.';
+    }));
+    const revoke = (t, done) => run(async () => {
+      pending = t.message; render();
+      const approval = await sign(t.message, c.wallet);
+      await post({ operation: 'REVOKE', authorization: { schema: 'raap.universe.authorized-revoke-consent.v1', request: t.request, ownerApproval: approval } });
+      pending = null; return done;
+    });
+    if (S.revoke.unlink) on('bUnlink', revoke(S.revoke.unlink, 'Unlinked.'));
+    if (S.revoke.stopSharing) on('bStop', revoke(S.revoke.stopSharing, 'Sharing stopped.'));
+    on('bDisc', run(async () => { await post({ operation: 'DISCONNECT', link: L.link }); return 'Disconnected.'; }));
+  }
+  load().catch(() => { $('#app').innerHTML = '<section><p class="bad">This page could not load.</p></section>'; });
+})();
+</script>
+</body>
+</html>

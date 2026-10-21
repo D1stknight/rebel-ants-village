@@ -8,8 +8,11 @@
 // Rebel Forge gloves (Oct 18, rigger 2.33): POST {buildId, gloves: {Left, Right, glove, cuff}} (the NPC Forge hand fit)
 // re-rigs a rigged Rebel with its holder's glove fit: same sculpt and rig options, today's worker, no Rebel Forge credits
 // and no forge used (3 a day per Rebel). The Rebel's holder or an admin; never #001. A re-rig keeps the fit.
+// Oct 20 (rigger 2.36): a build of a friend collection (Chumpz, Saints: assets/friend-collections.json) is rigged as a
+// player with its species' body fixes (job.sh FORGE_FRIEND), never with the Rebels' head sizing.
 import { isAdminRequest } from './_admin-auth.mjs';
 import { getToken } from './_nft.mjs';
+import { getCollection } from './_collections.mjs';
 import { requireForgeStep, walletOf, holderOf } from './_wallet.mjs';
 import { enforceRateLimit } from './_guard.mjs';
 import { Sandbox, creds, WORKER_KEY, FW, JOB_DIR, JOB_TIMEOUT_MS, redis, getJson, loadBuild, updateRigging, sourceGlbUrl, sanitize, body } from './_forge-rig.mjs';
@@ -28,6 +31,10 @@ async function headAutoFor(rec) {
     const gear = has('Ranger Helmets') || has('Full Face Masks') || has('Ninja Masks') || /Kimono-Head/i.test(tr['Heads'] || '') || /Helmet|Hat/i.test(tr['Head Accessories'] || '');
     return !gear;
   } catch (e) { return false; }
+}
+// a friend collection's species (ape / human) for its players' rigs, '' for the Rebels
+async function friendSpeciesOf(rec) {
+  try { const c = await getCollection(rec?.collectionKey || 'battle_for_colony'); return c?.friend ? c.species : ''; } catch (e) { return ''; }
 }
 const DAILY_LIMIT = parseInt(process.env.FORGE_RIG_DAILY_LIMIT || '200', 10);
 // v2.18 NPC Forge hands panel: per hand offsets (fractions of the hand length) and size, glove / cuff colours (#rrggbb);
@@ -51,8 +58,8 @@ function handFitEnv(hf) {
   return { ...(Object.keys(fit).length ? { FORGE_HAND_FIT: JSON.stringify(fit) } : {}), ...(hf.glove ? { FORGE_GLOVE_RGB: srgb01(hf.glove) } : {}), ...(hf.cuff ? { FORGE_CUFF_RGB: srgb01(hf.cuff) } : {}) };
 }
 // the job's env for a build's rig options
-function optionEnv({ skirtfix, up, headUrl, armorUrl, anchorsUrl, cutBridges, hs, headAuto, npc, npcSpecies, hf }) {
-  return { ...(skirtfix ? { FORGE_SKIRTFIX: '1', FORGE_KEEP_TEAR: '', FORGE_KEEP_BRIDGE: '' } : {}), ...(up ? { FORGE_HEAD_UP: String(up) } : {}), ...(headUrl ? { FORGE_HEAD_URL: String(headUrl) } : {}), ...(armorUrl ? { FORGE_ARMOR_URL: String(armorUrl), FORGE_ANCHORS_URL: String(anchorsUrl) } : {}), ...(cutBridges && !skirtfix ? { FORGE_KEEP_TEAR: '', FORGE_KEEP_BRIDGE: '' } : {}), ...(hs !== null ? { FORGE_HEAD_SCALE: String(hs) } : {}), ...(headAuto ? { FORGE_HEAD_AUTO: '1' } : {}), ...(npc ? { FORGE_NPC: '1' } : {}), ...(npcSpecies ? { FORGE_NPC_SPECIES: npcSpecies } : {}), ...handFitEnv(hf) };
+function optionEnv({ skirtfix, up, headUrl, armorUrl, anchorsUrl, cutBridges, hs, headAuto, npc, npcSpecies, friend, hf }) {
+  return { ...(friend && !npc ? { FORGE_FRIEND: friend } : {}), ...(skirtfix ? { FORGE_SKIRTFIX: '1', FORGE_KEEP_TEAR: '', FORGE_KEEP_BRIDGE: '' } : {}), ...(up ? { FORGE_HEAD_UP: String(up) } : {}), ...(headUrl ? { FORGE_HEAD_URL: String(headUrl) } : {}), ...(armorUrl ? { FORGE_ARMOR_URL: String(armorUrl), FORGE_ANCHORS_URL: String(anchorsUrl) } : {}), ...(cutBridges && !skirtfix ? { FORGE_KEEP_TEAR: '', FORGE_KEEP_BRIDGE: '' } : {}), ...(hs !== null ? { FORGE_HEAD_SCALE: String(hs) } : {}), ...(headAuto ? { FORGE_HEAD_AUTO: '1' } : {}), ...(npc ? { FORGE_NPC: '1' } : {}), ...(npcSpecies ? { FORGE_NPC_SPECIES: npcSpecies } : {}), ...handFitEnv(hf) };
 }
 // one rig job in a fresh sandbox from the worker image
 async function runJob(worker, buildId, src, name, env) {
@@ -84,6 +91,7 @@ const isMaster = (rec) => (rec.collectionKey || 'battle_for_colony') === 'battle
 async function startGloves(req, res, rec, buildId, admin, gloves) {
   const cur = rec.forgeRig || {}, rigUrl = rec.output?.forgeRigGlbUrl || '';
   if (cur.options?.npc) return res.status(400).json({ ok: false, error: 'NPC hands are fitted in the NPC Forge' });
+  if (cur.options?.friend || (await friendSpeciesOf(rec))) return res.status(400).json({ ok: false, error: 'Chumpz and Saints keep the gloves they were forged with', code: 'friend_gloves' });
   if (isMaster(rec)) return res.status(403).json({ ok: false, error: 'Rebel #001 keeps its gloves', code: 'master' });
   if (!BLOB.test(rigUrl)) return res.status(409).json({ ok: false, error: 'Forge this Rebel first', code: 'no_rig' });
   if (cur.status === 'running') return res.status(200).json({ ok: true, forgeRig: cur, alreadyRunning: true });
@@ -180,11 +188,12 @@ export default async function handler(req, res) {
 
     // v2.13 NPC Forge (admin): the NPC clip set instead of the fight / weapon moves (job.sh FORGE_NPC)
     const name = npc ? `npc_${sanitize(rec.tokenId || rec.rebelId, 'x')}` : `rebel${sanitize(rec.tokenId || rec.rebelId, 'x')}`;
-    const headAuto = hs === null && !npc ? await headAutoFor(rec) : false;
+    const friend = npc ? '' : await friendSpeciesOf(rec);   // v2.36 Chumpz / Saints players
+    const headAuto = hs === null && !npc && !friend ? await headAutoFor(rec) : false;
     // v2.23 NPC species (the NPC Forge's collection): Chumpz are apes, Saints are humans, from the page or the NPC's key
     // (chumpz_ / saints_). Only those get FORGE_NPC_SPECIES; Rebel villagers (ants) run exactly as before.
     const npcSpecies = !npc ? '' : ['ape', 'human'].includes(String(species)) ? String(species) : String(species) === 'ant' ? '' : /^chumpz_/.test(rec.tokenId || '') ? 'ape' : /^saints_/.test(rec.tokenId || '') ? 'human' : '';
-    const { sandbox, cmd } = await runJob(worker, buildId, src, name, optionEnv({ skirtfix, up, headUrl, armorUrl, anchorsUrl, cutBridges, hs, headAuto, npc, npcSpecies, hf }));
+    const { sandbox, cmd } = await runJob(worker, buildId, src, name, optionEnv({ skirtfix, up, headUrl, armorUrl, anchorsUrl, cutBridges, hs, headAuto, npc, npcSpecies, friend, hf }));
     const next = await updateRigging(buildId, {
       engine: 'forge-rigger',
       status: 'running',
@@ -193,7 +202,7 @@ export default async function handler(req, res) {
       cmdId: cmd.cmdId,
       workerCommit: worker.commit || null,
       sourceGlbUrl: src,
-      options: { skirtfix: !!skirtfix, headUp: up || 0, headUrl: headUrl || null, armorUrl: armorUrl || null, anchorsUrl: anchorsUrl || null, cutBridges: !!cutBridges, headScale: hs, headAuto, npc: !!npc, handFit: hf, species: npcSpecies || null },
+      options: { skirtfix: !!skirtfix, headUp: up || 0, headUrl: headUrl || null, armorUrl: armorUrl || null, anchorsUrl: anchorsUrl || null, cutBridges: !!cutBridges, headScale: hs, headAuto, npc: !!npc, handFit: hf, species: npcSpecies || null, friend: friend || null },
       startedAt: new Date().toISOString(),
       finishedAt: null,
       error: null

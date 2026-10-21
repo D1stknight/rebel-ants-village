@@ -2,7 +2,7 @@ import os, numpy as np
 from sil import silhouette
 # v2.22 NPC villagers (FORGE_NPC): torn skirt strips, knee pads and tall boots around the legs threw off the ankle, knee
 # and hip landmarks (Wokou: ankle in the boot sole, knee 13 cm behind the leg, hips 5.5 cm lopsided -> rubbery legs)
-NPCM = bool(os.environ.get('FORGE_NPC'))
+NPCM = bool(os.environ.get('FORGE_NPC') or os.environ.get('FORGE_NPC_BODY'))   # v2.36 + Chumpz / Saints players
 # v2.23 NPC species (FORGE_NPC_SPECIES ape / human: Chumpz, Saints): sculpted hands come out of a sleeve, and the narrowest
 # arm cross-section is the sleeve cuff, 4-6 % of the height up the forearm, so the hands came out long and turned from
 # mid-forearm. Their wrist sits one hand length (of the body height) back from the fingertip along the arm's own centre line.
@@ -54,6 +54,46 @@ def colour_wrist(C,x,z,qs,S,u,L,rows,cols,ar,zr,side):
     for a_,b_,h_ in reversed(rn):
         if h_>=3 and ed[b_]>=0.88-1e-6: return float(ed[a_]) if ed[a_]>=0.66-1e-6 else None
     return None
+# v2.35 species without a colour edge (Pengu in shorts: his hands are his arms' colour): the hand-length wrist sat 5-6 cm
+# down the sculpted hand, and the hand's flare between the real wrist and that cut stayed on the arm as a fur ruffle round
+# the glove (Big Chain's white hand fur, the Racer's fur out of his jacket cuff, the bare-armed Saints' stumps through the
+# cuff). The mesh cut across the forearm (elbow -> that wrist): per angle the first surface from the limb's centre (things
+# behind it, the thigh or the body, don't count). Where the cut at the wrist is >= 15 % fatter than the narrowest one
+# above it, the wrist goes to the hand's end of that narrow part (within 5 % of it), on the section's own centre.
+def section_area(V,F,E,W,t,n,u,v,R,NB=32):
+    fl=np.linalg.norm(W-E); p=E+n*fl*t
+    tri=F[(np.linalg.norm(V-p,axis=1)<R)[F].any(1)]; s=(V[tri]-p)@n; sg=s>0; cr=sg.any(1)&~sg.all(1); tri,s,sg=tri[cr],s[cr],sg[cr]
+    P=[]
+    for a_,b_ in ((0,1),(1,2),(2,0)):
+        m=sg[:,a_]!=sg[:,b_]; f=s[m,a_]/(s[m,a_]-s[m,b_]); P.append(V[tri[m,a_]]+f[:,None]*(V[tri[m,b_]]-V[tri[m,a_]]))
+    P=np.concatenate(P)
+    if len(P)<20: return None
+    c=p.copy()
+    for it in range(3):
+        q=P-c; x_,y_=q@u,q@v; r=np.hypot(x_,y_); b=((np.arctan2(y_,x_)+np.pi)/(2*np.pi)*NB).astype(int)%NB
+        rb=np.full(NB,np.nan); pts=[]
+        for k in range(NB):
+            m=b==k
+            if m.any(): i=np.argmin(np.where(m,r,np.inf)); rb[k]=r[i]; pts.append(P[i])
+        if len(pts)<0.6*NB: return None
+        c=np.mean(pts,0); c=c-((c-p)@n)*n
+    ok=~np.isnan(rb); ix=np.arange(NB)
+    rb=np.interp(ix,np.concatenate([ix[ok]-NB,ix[ok],ix[ok]+NB]),np.tile(rb[ok],3))
+    return 0.5*float(np.sum(rb**2))*2*np.pi/NB, c
+def section_wrist(V,F,E,W,H,side):
+    fl=np.linalg.norm(W-E); n=(W-E)/fl; a=np.array([0,0,1.0]) if abs(n[2])<0.9 else np.array([1.0,0,0])
+    u=np.cross(n,a); u/=np.linalg.norm(u); v=np.cross(n,u); R=0.14*H/1.8
+    ts=np.round(np.arange(0.66,1.0001,0.01),2); S_=[section_area(V,F,E,W,t,n,u,v,R) for t in ts]
+    if sum(s_ is not None for s_ in S_)<0.8*len(ts) or S_[-1] is None: return None
+    A=np.array([s_[0] if s_ is not None else np.nan for s_ in S_]); i0=int(np.nanargmin(A))
+    if i0==0 or A[-1]<1.15*A[i0]:
+        if DEBUG: print(side,'section wrist: kept (narrowest t',ts[i0],'wrist x',round(float(A[-1]/A[i0]),2),')')
+        return None
+    i1=i0
+    while i1+1<len(ts) and S_[i1+1] is not None and A[i1+1]<=1.05*A[i0]: i1+=1
+    if ts[i1]>0.985: return None
+    print(f'landmarks {side}: section wrist t {ts[i1]:.2f} (narrowest {ts[i0]:.2f}, the hand-length wrist x{A[-1]/A[i0]:.2f} as wide) {fl*(1-ts[i1])*100:.1f} cm up the arm')
+    return S_[i1][1]
 def detect(V,F,VC=None):
     M,g=silhouette(V,F); rows,cols,ar,zr=g['rows'],g['cols'],g['ar'],g['zr']
     X=lambda c: c/(cols-1)*2*ar-ar; Z=lambda r: zr-r/(rows-1)*zr; cc=cols//2
@@ -152,7 +192,7 @@ def detect(V,F,VC=None):
             Wp=np.array([(zr-C[i_][0])/zr*(rows-1),(C[i_][1]+ar)*(cols-1)/(2*ar)])
             if DEBUG: print(s,'own hand: wrist t',round(float((Wp-S)@u/L),3),'was',round(tw,3))
             # v2.28: the colour edge (colour_wrist) instead, when it is further up the arm
-            E_=S+(Wp-S)*0.53
+            E_=S+(Wp-S)*0.53; byColour=False
             if VC is not None:
                 tc_=colour_wrist(VC,x,z,qs,S,u,L,rows,cols,ar,zr,s)
                 tp_=float((Wp-S)@u/L)
@@ -169,8 +209,11 @@ def detect(V,F,VC=None):
                         tc_=min(tc_,float(ts[j_]))
                     # on the arm's own centre line there, not the shoulder -> fingertip chord (up to 8 cm inside a bent arm)
                     Cp=np.c_[(zr-C[:,0])/zr*(rows-1),(C[:,1]+ar)*(cols-1)/(2*ar)]
-                    Wp=Cp[int(np.argmin(np.abs(((Cp-S)@u)/L-tc_)))]
+                    Wp=Cp[int(np.argmin(np.abs(((Cp-S)@u)/L-tc_)))]; byColour=True
                     if DEBUG: print(s,'colour wrist t',round(tc_,3),'(hand length rule',round(tp_,3),')')
+            if not byColour:   # v2.35 no colour edge: the narrowest cross-section above the hand's flare
+                Wc=section_wrist(V,F,P(X(E_[1]),Z(E_[0])),P(X(Wp[1]),Z(Wp[0])),zr,s)
+                if Wc is not None: Wp=np.array([(zr-Wc[2])/zr*(rows-1),(Wc[0]+ar)*(cols-1)/(2*ar)])
             # the elbow stays where the hand-length wrist puts it (moved up with the colour wrist, Big Chain's inner elbow took
             # jacket weights and tore 0.44 of the height in waving / rallying / pick_up)
             W_=Wp; HC=W_+(T-W_)*0.45

@@ -17,8 +17,10 @@ function buildSidePrompt(generationInput = {}, side = 'left', hasBack = false) {
   // viewer's left. Say which HALF OF IMAGE 1 is nearest to us instead.
   const HALF = side === 'right' ? 'LEFT' : 'RIGHT';
   const OTHER = side === 'right' ? 'RIGHT' : 'LEFT';
-  const kind = generationInput.species && generationInput.species !== 'ant' ? `realistic 3D-rendered ${generationInput.species} game character (same render style: real fur, fabric and leather)` : 'stylised Rebel Ant game character';
-  const headSide = generationInput.species && generationInput.species !== 'ant' ? 'the profile of the head with its ear, muzzle and headwear' : 'the profile of the head and antennae';
+  const human = generationInput.species === 'human';
+  const kind = generationInput.species && generationInput.species !== 'ant' ? `realistic 3D-rendered ${generationInput.species} game character (same render style: real ${human ? 'skin' : 'fur'}, fabric and leather)` : 'stylised Rebel Ant game character';
+  const friend = generationInput.species && generationInput.species !== 'ant';   // Chumpz / Saints (clothes, not armour)
+  const headSide = friend ? `the profile of the head with its ear, ${human ? 'face' : 'muzzle'} and headwear` : 'the profile of the head and antennae';
   return `
 Image 1 is the FRONT view of a ${kind} in a neutral A-pose.${hasBack ? ' Image 2 is the same character seen from BEHIND.' : ''}
 Draw the SAME character turned 90 degrees so we see the character's ${S} side in exact profile: an orthographic side view for a 3D modelling turnaround.
@@ -28,8 +30,8 @@ WHICH SIDE IS NEAREST (critical): the half of the character that appears on the 
 Match Image 1 exactly:
 - Same A-pose seen from the side (the ${S.toLowerCase()} arm hangs slightly away from the body), same height, same scale, same feet position on the canvas, head-to-feet in frame.
 - Same outfit, colours, materials, armour, emblems, art style and line-work, same plain light-grey background, same soft even lighting.
-- Only what is really on the side of this character: ${headSide}, the side of the chest plate, shoulder plate, sleeve, belt, hip plates, legs and footwear.
-- Colony: ${colony}.
+${friend ? `- Only what is really on the side of this character: ${headSide}, the side of the top, the sleeve, any belt or chain, the trousers or shorts and the shoes.` : `- Only what is really on the side of this character: ${headSide}, the side of the chest plate, shoulder plate, sleeve, belt, hip plates, legs and footwear.
+- Colony: ${colony}.`}
 
 ${buildRigFriendlyRules(generationInput, { view: 'side' })}
 

@@ -1483,19 +1483,16 @@ async function buildDecor(scene, T, avoid) {
       const t = new BABYLON.Color3(...spec.tint);
       if (c.albedoColor) c.albedoColor = c.albedoColor.multiply(t); if (c.diffuseColor) c.diffuseColor = c.diffuseColor.multiply(t);
     });
-    // trunk circles found in the model (cherry trees: the trunk is well off the pivot), else one circle at the pivot
+    // trunk circles from the model's bark, as wide as it is at body height (WalkGen.trunkCircles, as for the village's own
+    // trees: the cherry trunk flares out wide at its foot, well off the pivot), made for each tree's own scale and ground
+    // lift (the flare's outline changes fast with height) and widened by about the body's half-width; else one circle at
+    // the pivot
     let trunk = null;
-    if (spec.trunkFromMesh) {
-      const P = []; parts.forEach(mm => { const p = mm.getVerticesData(BABYLON.VertexBuffer.PositionKind); if (p) for (let i = 0; i < p.length; i++) P.push(p[i]); });
-      let y0 = Infinity, y1 = -Infinity; for (let i = 1; i < P.length; i += 3) { y0 = Math.min(y0, P[i]); y1 = Math.max(y1, P[i]); }
-      trunk = [];
-      for (const [a, b, kk] of [[0, .05, .8], [.05, .14, 1.1]]) {
-        const xs = [], zs = []; for (let i = 0; i < P.length; i += 3) { const f = (P[i + 1] - y0) / (y1 - y0); if (f >= a && f < b) { xs.push(P[i]); zs.push(P[i + 2]); } }
-        if (!xs.length) continue;
-        const cx = xs.reduce((q, x) => q + x, 0) / xs.length, cz = zs.reduce((q, z) => q + z, 0) / zs.length;
-        const d = xs.map((x, i) => Math.hypot(x - cx, zs[i] - cz)).sort((p, q) => p - q);
-        trunk.push({ x: cx, z: cz, r: Math.max(.4, d[Math.floor(d.length * .5)] * kk) });
-      }
+    if (spec.trunkFromMesh && globalThis.WalkGen?.trunkCircles) {
+      const bark = parts.filter(mm => /bark|trunk/i.test(mm.name)), T3 = [];
+      (bark.length ? bark : parts).forEach(mm => { const p = mm.getVerticesData(BABYLON.VertexBuffer.PositionKind), ix = mm.getIndices(); if (p && ix) for (const i of ix) T3.push(p[i * 3], p[i * 3 + 1], p[i * 3 + 2]); });
+      const tris = new Float32Array(T3);
+      trunk = (s, lift) => globalThis.WalkGen.trunkCircles(tris, { scale: s, lift: Math.max(0, lift) }).map(c => ({ x: c.x, z: c.z, r: c.r + .4 }));
     }
     const per = spec.count, bufs = [...Array(16)].map(() => new Float32Array(per * 16)), cnt = new Array(16).fill(0);
     let k = 0, t = 0;
@@ -1522,7 +1519,8 @@ async function buildDecor(scene, T, avoid) {
       for (let a = 0; a < 8; a++) low = Math.min(low, h(x + Math.cos(a * .785) * rr, z + Math.sin(a * .785) * rr));
       S.set(s, s, s); P.set(x, low - (spec.sink ?? .15) * s, z);
       BABYLON.Matrix.ComposeToRef(S, q, P, m4); const tile = tileOf(x, z); m4.copyToArray(bufs[tile], cnt[tile] * 16); cnt[tile]++; k++;
-      if (trunk) { const c = Math.cos(yaw), sn = Math.sin(yaw); for (const tr of trunk) addBlocker(x + (tr.x * c + tr.z * sn) * s, z + (-tr.x * sn + tr.z * c) * s, tr.r * s); }
+      const circles = trunk ? trunk(s, h(x, z) - P.y) : [];
+      if (circles.length) { const c = Math.cos(yaw), sn = Math.sin(yaw); for (const tr of circles) addBlocker(x + tr.x * c + tr.z * sn, z - tr.x * sn + tr.z * c, tr.r); }
       else addBlocker(x, z, blockR * s);
       addAvoid(x, z, blockR * s + 1);
     }

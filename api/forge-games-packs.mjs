@@ -2,8 +2,10 @@
 // records the lobby and the village load), its live rig and whether that rig has a games pack yet
 // (forge:games:v1:<rig>, made by /api/forge-rig-moves on a worker built with the games moves). The Rig worker box in
 // the NPC Forge lists them and runs the missing ones.
-//   GET -> { ok, rebels: [{ buildId, collectionKey, tokenId, name, rigUrl, games, gamesClips, moves, job }] }
+//   GET -> { ok, rebels: [{ buildId, collectionKey, tokenId, name, rigUrl, games, gamesClips, moves, job, publicRig }] }
 // v2.30 gamesClips = the moves that pack holds (null: made before 2.30, the first 16)
+// Oct 20 publicRig = the Rebel has a public forged character with a rig (what guests load), so it can be on the Free to
+// play roster (api/free-roster.mjs)
 import { isAdminRequest } from './_admin-auth.mjs';
 import { redis, buildKey } from './_forge-rig.mjs';
 
@@ -28,6 +30,9 @@ export default async function handler(req, res) {
   try {
     const keys = await scan('forge:active-character:v1:*');
     const recs = await getMany(keys);
+    const PUB = 'forge:active-character:v1:local_testing_wallet:';
+    const pub = new Set(keys.map((k, i) => (k.startsWith(PUB) && recs[i] && typeof recs[i] === 'object' && !recs[i].walletAddress && (recs[i].forgeRigGlbUrl || recs[i].characterBundle?.forgeRigGlbUrl)
+      ? `${recs[i].collectionKey}:${recs[i].tokenId}` : null)).filter(Boolean));
     const byBuild = new Map();
     recs.forEach((a) => { if (a && typeof a === 'object' && a.activeForgeBuildId && !byBuild.has(a.activeForgeBuildId)) byBuild.set(a.activeForgeBuildId, a); });
     const ids = [...byBuild.keys()];
@@ -35,7 +40,8 @@ export default async function handler(req, res) {
     const rebels = ids.map((id, i) => {
       const b = builds[i] && typeof builds[i] === 'object' ? builds[i] : {}, a = byBuild.get(id);
       const rigUrl = b.output?.forgeRigGlbUrl || b.forgeRig?.forgeRigGlbUrl || a.forgeRigGlbUrl || null;
-      return { buildId: id, collectionKey: b.collectionKey || a.collectionKey || '', tokenId: String(b.tokenId || a.tokenId || ''), name: a.name || b.name || '', rigUrl: BLOB.test(rigUrl || '') ? rigUrl : null };
+      const collectionKey = b.collectionKey || a.collectionKey || '', tokenId = String(b.tokenId || a.tokenId || '');
+      return { buildId: id, collectionKey, tokenId, name: a.name || b.name || '', rigUrl: BLOB.test(rigUrl || '') ? rigUrl : null, publicRig: pub.has(`${collectionKey}:${tokenId}`) };
     }).filter((r) => r.rigUrl);
     const st = await redis(rebels.flatMap((r) => [['GET', `forge:games:v1:${r.rigUrl}`], ['GET', `forge:moves:v1:${r.rigUrl}`], ['GET', `forge:moves-job:v1:${r.buildId}`], ['GET', `forge:games-clips:v1:${r.rigUrl}`]]));
     rebels.forEach((r, i) => {

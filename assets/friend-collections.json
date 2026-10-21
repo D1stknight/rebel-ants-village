@@ -1,0 +1,25 @@
+{
+  "version": "v1",
+  "friendCollections": {
+    "chumpz": {
+      "collectionKey": "chumpz",
+      "displayName": "Chumpz",
+      "chain": "apechain",
+      "contractAddress": "0xa9a1d086623475595A02991664742E4A1cbAFcb8",
+      "openSeaSlug": "",
+      "enabled": true,
+      "species": "ape",
+      "village": "chumpz"
+    },
+    "saints": {
+      "collectionKey": "saints",
+      "displayName": "Saints of LA",
+      "chain": "ethereum",
+      "contractAddress": "0x7caB6c0E4DC14b995901F5D672Cdcc8469CC459D",
+      "openSeaSlug": "",
+      "enabled": true,
+      "species": "human",
+      "village": "saints-la"
+    }
+  }
+}

@@ -1,0 +1,387 @@
+{
+  "note": "Local bench output: PUBLIC TEST-ONLY signing key (private key 0x00..02), .invalid origins, a local Redis and a stand-in owner of #909 (the real owner is not used). #909 trait as on chain (Weapons: Stormbringer-Blade-2). Not a live player, request or authority.",
+  "connection": {
+    "schema": "universe.raap.connection.v2",
+    "environment": "dev",
+    "connectionId": "universe-dev-test",
+    "connectionRevision": "1",
+    "issuer": "https://raap.invalid",
+    "audience": "https://universe.invalid",
+    "tenant": "test-tenant",
+    "journalId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+    "wallet": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+    "asset": {
+      "chainId": 1,
+      "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+      "tokenId": "909"
+    },
+    "collectionKey": "battle_for_colony",
+    "account": "0x2222222222222222222222222222222222222222",
+    "controllerEpoch": 3,
+    "operations": [
+      "READ",
+      "PREPARE",
+      "EXECUTE",
+      "RECEIPT"
+    ],
+    "status": "ACTIVE",
+    "validUntil": 1792461777,
+    "retainUntil": 1792465377,
+    "chest": null,
+    "events": null
+  },
+  "read": {
+    "request": {
+      "operation": "READ",
+      "target": {
+        "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+        "asset": {
+          "chainId": 1,
+          "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+          "tokenId": "909"
+        },
+        "connectionId": "universe-dev-test"
+      }
+    },
+    "response": {
+      "availableActions": [
+        {
+          "kind": "WEAPON_EQUIP",
+          "weaponId": "celestial_fang"
+        },
+        {
+          "kind": "WEAPON_EQUIP",
+          "weaponId": "dawns_light_arrows"
+        },
+        {
+          "kind": "WEAPON_EQUIP",
+          "weaponId": "eclipse_edge"
+        },
+        {
+          "kind": "WEAPON_EQUIP",
+          "weaponId": "soulrender"
+        },
+        {
+          "kind": "WEAPON_EQUIP",
+          "weaponId": "whisper_of_dawn"
+        },
+        {
+          "kind": "WEAPON_UNEQUIP",
+          "weaponId": "stormbringer_blade"
+        }
+      ],
+      "configurationCommitment": "0xd0883ffea66c5bef248990ce65d7ee1ae33a20d18b6627e72dd5b8f9dc881ca9",
+      "equippedWeaponId": "stormbringer_blade",
+      "observedAt": 1792454578,
+      "schema": "universe.raap.inventory.v1",
+      "state": {
+        "commitment": "0xd3e79e0362cd2d6e0df1d9e963ff6b0edbf9fe167217f0acbdf20c81ca6b14b0",
+        "version": "0"
+      },
+      "target": {
+        "asset": {
+          "chainId": 1,
+          "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+          "tokenId": "909"
+        },
+        "connectionId": "universe-dev-test",
+        "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf"
+      },
+      "weapons": [
+        {
+          "eligible": true,
+          "label": "Celestial Fang",
+          "refusal": "NONE",
+          "weaponId": "celestial_fang"
+        },
+        {
+          "eligible": true,
+          "label": "Dawn's Light Arrows",
+          "refusal": "NONE",
+          "weaponId": "dawns_light_arrows"
+        },
+        {
+          "eligible": true,
+          "label": "Eclipse Edge",
+          "refusal": "NONE",
+          "weaponId": "eclipse_edge"
+        },
+        {
+          "eligible": true,
+          "label": "Soulrender",
+          "refusal": "NONE",
+          "weaponId": "soulrender"
+        },
+        {
+          "eligible": false,
+          "label": "Stormbringer Blade",
+          "refusal": "STALE_STATE",
+          "weaponId": "stormbringer_blade"
+        },
+        {
+          "eligible": true,
+          "label": "Whisper of Dawn",
+          "refusal": "NONE",
+          "weaponId": "whisper_of_dawn"
+        }
+      ]
+    }
+  },
+  "prepare": {
+    "request": {
+      "operation": "PREPARE",
+      "target": {
+        "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+        "asset": {
+          "chainId": 1,
+          "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+          "tokenId": "909"
+        },
+        "connectionId": "universe-dev-test"
+      },
+      "action": {
+        "kind": "WEAPON_EQUIP",
+        "weaponId": "soulrender"
+      }
+    },
+    "response": {
+      "action": {
+        "kind": "WEAPON_EQUIP",
+        "weaponId": "soulrender"
+      },
+      "configurationCommitment": "0xd0883ffea66c5bef248990ce65d7ee1ae33a20d18b6627e72dd5b8f9dc881ca9",
+      "economyEffect": "NONE",
+      "expiresAt": 1792455478,
+      "maximumCharge": {
+        "currency": "REBEL",
+        "units": "0"
+      },
+      "observedAt": 1792454578,
+      "schema": "universe.raap.preparation.v1",
+      "state": {
+        "commitment": "0xd3e79e0362cd2d6e0df1d9e963ff6b0edbf9fe167217f0acbdf20c81ca6b14b0",
+        "version": "0"
+      },
+      "target": {
+        "asset": {
+          "chainId": 1,
+          "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+          "tokenId": "909"
+        },
+        "connectionId": "universe-dev-test",
+        "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf"
+      }
+    }
+  },
+  "prepareRefused": {
+    "status": 422,
+    "body": {
+      "error": "ACTION_UNAVAILABLE",
+      "reason": "STALE_STATE",
+      "schema": "universe.raap.error.v1"
+    }
+  },
+  "execute": {
+    "request": {
+      "operation": "EXECUTE",
+      "authorization": {
+        "schema": "raap.universe.authorized-action.v1",
+        "request": {
+          "schema": "raap.universe.action.v1",
+          "environment": "dev",
+          "issuer": "https://raap.invalid",
+          "audience": "https://universe.invalid",
+          "tenant": "test-tenant",
+          "journalId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+          "requestId": "0xb20b344196bd49adf7f49b73e5c31811eabc21285a7133d66a9ac3ba4b22e01e",
+          "connectionId": "universe-dev-test",
+          "connectionRevision": "1",
+          "player": {
+            "id": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+            "wallet": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+            "economyAccountId": null
+          },
+          "asset": {
+            "chainId": 1,
+            "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "tokenId": "909"
+          },
+          "controller": {
+            "address": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+            "epoch": 3
+          },
+          "account": "0x2222222222222222222222222222222222222222",
+          "contextCommitment": "0x3333333333333333333333333333333333333333333333333333333333333333",
+          "state": {
+            "commitment": "0xd3e79e0362cd2d6e0df1d9e963ff6b0edbf9fe167217f0acbdf20c81ca6b14b0",
+            "version": "0"
+          },
+          "configurationCommitment": "0xd0883ffea66c5bef248990ce65d7ee1ae33a20d18b6627e72dd5b8f9dc881ca9",
+          "action": {
+            "kind": "WEAPON_EQUIP",
+            "weaponId": "soulrender"
+          },
+          "maximumCharge": {
+            "currency": "REBEL",
+            "units": "0"
+          },
+          "economyEffect": "NONE",
+          "issuedAt": 1792454573,
+          "expiresAt": 1792455178
+        },
+        "ownerApproval": {
+          "scheme": "eip191-personal-sign",
+          "signer": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+          "signature": "0x0cbe0480aa138fc24edc61622e16eae09fe7b17412805b587c9f6c8cc9d0c35f324278dbc8cc5e3cd33089570cab6670c23f6349d0bdc452df0c76365e281b5a1b"
+        }
+      }
+    },
+    "personalMessage": "RAAP approval\n\nEquip weapon for Rebel #909\nWeapon ID: soulrender\nMaximum game charge: 0 REBEL. No Economy payment or award.\nThis approves one game action. It is not an Ethereum transaction or NFT transfer.\nPlayer wallet: 0x2b5ad5c4795c026514f8317c7a215e218dccd6cf\nExpires (UTC): 2026-10-20T00:12:58.000Z\n\nVerification details\nProtocol: RAAP Universe Action / 1\nEnvironment: dev\nWebsite: https://raap.invalid\nGame: https://universe.invalid\nNetwork chain ID: 1\nCollection: 0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221\nController epoch: 3\nRebel account: 0x2222222222222222222222222222222222222222\nState version: 0\nJournal: 0x1111111111111111111111111111111111111111111111111111111111111111\nRequest ID: 0xb20b344196bd49adf7f49b73e5c31811eabc21285a7133d66a9ac3ba4b22e01e\nRequest: 0x8c6ea77660a8afaebe5b8477202de728b304383700efd301e56cd6e5d9897026",
+    "response": {
+      "action": {
+        "kind": "WEAPON_EQUIP",
+        "weaponId": "soulrender"
+      },
+      "actualCharge": {
+        "currency": "REBEL",
+        "units": "0"
+      },
+      "after": {
+        "commitment": "0xed5ebade2bc5a32bdaa699a99e71289befa9322b1ef295faa460181b726425e0",
+        "version": "1"
+      },
+      "asset": {
+        "chainId": 1,
+        "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+        "tokenId": "909"
+      },
+      "before": {
+        "commitment": "0xd3e79e0362cd2d6e0df1d9e963ff6b0edbf9fe167217f0acbdf20c81ca6b14b0",
+        "version": "0"
+      },
+      "committedAt": 1792454578,
+      "connectionId": "universe-dev-test",
+      "controllerEpoch": 3,
+      "economyEffect": "NONE",
+      "effects": [
+        {
+          "afterWeaponId": "soulrender",
+          "beforeWeaponId": "stormbringer_blade",
+          "kind": "EQUIPMENT",
+          "slot": "weapon"
+        }
+      ],
+      "environment": "dev",
+      "origin": "RAAP_APPROVED",
+      "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+      "reason": "NONE",
+      "receiptId": "0xc022d49bf947fa28f2813519850e5e61e5529c7e12a441746f38181dfa00bb9c",
+      "requestCommitment": "0x8c6ea77660a8afaebe5b8477202de728b304383700efd301e56cd6e5d9897026",
+      "requestId": "0xb20b344196bd49adf7f49b73e5c31811eabc21285a7133d66a9ac3ba4b22e01e",
+      "schema": "universe.raap.action-receipt.v1",
+      "status": "APPLIED"
+    }
+  },
+  "receipt": {
+    "request": {
+      "operation": "RECEIPT",
+      "target": {
+        "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+        "asset": {
+          "chainId": 1,
+          "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+          "tokenId": "909"
+        },
+        "connectionId": "universe-dev-test"
+      },
+      "requestId": "0xb20b344196bd49adf7f49b73e5c31811eabc21285a7133d66a9ac3ba4b22e01e",
+      "requestCommitment": "0x8c6ea77660a8afaebe5b8477202de728b304383700efd301e56cd6e5d9897026"
+    },
+    "response": {
+      "receipt": {
+        "action": {
+          "kind": "WEAPON_EQUIP",
+          "weaponId": "soulrender"
+        },
+        "actualCharge": {
+          "currency": "REBEL",
+          "units": "0"
+        },
+        "after": {
+          "commitment": "0xed5ebade2bc5a32bdaa699a99e71289befa9322b1ef295faa460181b726425e0",
+          "version": "1"
+        },
+        "asset": {
+          "chainId": 1,
+          "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+          "tokenId": "909"
+        },
+        "before": {
+          "commitment": "0xd3e79e0362cd2d6e0df1d9e963ff6b0edbf9fe167217f0acbdf20c81ca6b14b0",
+          "version": "0"
+        },
+        "committedAt": 1792454578,
+        "connectionId": "universe-dev-test",
+        "controllerEpoch": 3,
+        "economyEffect": "NONE",
+        "effects": [
+          {
+            "afterWeaponId": "soulrender",
+            "beforeWeaponId": "stormbringer_blade",
+            "kind": "EQUIPMENT",
+            "slot": "weapon"
+          }
+        ],
+        "environment": "dev",
+        "origin": "RAAP_APPROVED",
+        "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+        "reason": "NONE",
+        "receiptId": "0xc022d49bf947fa28f2813519850e5e61e5529c7e12a441746f38181dfa00bb9c",
+        "requestCommitment": "0x8c6ea77660a8afaebe5b8477202de728b304383700efd301e56cd6e5d9897026",
+        "requestId": "0xb20b344196bd49adf7f49b73e5c31811eabc21285a7133d66a9ac3ba4b22e01e",
+        "schema": "universe.raap.action-receipt.v1",
+        "status": "APPLIED"
+      },
+      "requestId": "0xb20b344196bd49adf7f49b73e5c31811eabc21285a7133d66a9ac3ba4b22e01e",
+      "schema": "universe.raap.receipt-read.v1",
+      "status": "FOUND"
+    }
+  },
+  "declined": {
+    "action": {
+      "kind": "WEAPON_EQUIP",
+      "weaponId": "whisper_of_dawn"
+    },
+    "actualCharge": {
+      "currency": "REBEL",
+      "units": "0"
+    },
+    "after": {
+      "commitment": "0x11e607c56a5d392114c6a86144b0a58ab681272ac263b890c46549fd658228c8",
+      "version": "1"
+    },
+    "asset": {
+      "chainId": 1,
+      "collection": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+      "tokenId": "909"
+    },
+    "before": {
+      "commitment": "0x11e607c56a5d392114c6a86144b0a58ab681272ac263b890c46549fd658228c8",
+      "version": "1"
+    },
+    "committedAt": null,
+    "connectionId": "universe-dev-test",
+    "controllerEpoch": 3,
+    "economyEffect": "NONE",
+    "effects": [],
+    "environment": "dev",
+    "origin": "RAAP_APPROVED",
+    "playerId": "wallet:eip155:1:0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+    "reason": "STALE_STATE",
+    "receiptId": "0x4a6c1f40ea702b9bee8bdf1a8bb3f7c8fd70ff86b780968911091dd260bf7ebe",
+    "requestCommitment": "0xa11c32533a426c5f7e920e3475720b771ddfac2be6416d55e36d95b474d76c75",
+    "requestId": "0x6131b2c536c92d340def422596ba10ddd9de8aad4eae63442178f095f7a9022c",
+    "schema": "universe.raap.action-receipt.v1",
+    "status": "DECLINED"
+  }
+}

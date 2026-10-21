@@ -274,5 +274,110 @@
     }
     return out;
   }
-  root.WalkGen = { fromTriangles, DEF };
+  // A tree's trunk as circles (Oct 19; the cherry trunks flare out wide at the foot, and circles from a few low vertices sat
+  // well inside the bark). tris: the bark's triangles in the tree's upright frame (y up, the pivot at 0), unscaled; the
+  // cuts are at heights (m above the ground, the ground lift m above the pivot) for a tree of this scale. Each cut's loops
+  // are wrapped in their convex hulls; the outline of their union comes back as points every step m (r 0) and the inside
+  // as the largest circles that fit (down to tol deep, at most maxCircles), in metres in that frame. The caller turns
+  // them with the tree's yaw and widens every one by about the body's half-width (the village tests the body's centre),
+  // so the points become a ring that follows the bark and the circles keep the inside solid.
+  function trunkCircles(tris, opts = {}) {
+    const o = { scale: 1, lift: 0, heights: [.5, .9, 1.3, 1.7, 2.1, 2.6], g: .2, tol: .5, maxCircles: 12, step: .35, ...opts };
+    const s = o.scale, nT = Math.floor(tris.length / 9), lo = new Float32Array(nT), hi = new Float32Array(nT), hulls = [];
+    for (let t = 0; t < nT; t++) { const a = t * 9; lo[t] = Math.min(tris[a + 1], tris[a + 4], tris[a + 7]); hi[t] = Math.max(tris[a + 1], tris[a + 4], tris[a + 7]); }
+    for (const h of o.heights) {
+      const y = (o.lift + h) / s, ids = new Map(), pts = [], par = [];
+      // the point where edge (p, q) crosses the cut, worked out from its lower end so both triangles of an edge agree
+      const cross = (p, q) => {
+        if (tris[p + 1] > tris[q + 1] || (tris[p + 1] === tris[q + 1] && tris[p] > tris[q])) { const t = p; p = q; q = t; }
+        const f = (y - tris[p + 1]) / (tris[q + 1] - tris[p + 1]), x = tris[p] + (tris[q] - tris[p]) * f, z = tris[p + 2] + (tris[q + 2] - tris[p + 2]) * f;
+        const k = x.toFixed(5) + ',' + z.toFixed(5);
+        let i = ids.get(k); if (i === undefined) { i = pts.length; ids.set(k, i); pts.push([x * s, z * s]); par.push(i); }
+        return i;
+      };
+      const find = i => { while (par[i] !== i) { par[i] = par[par[i]]; i = par[i]; } return i; };
+      for (let t = 0; t < nT; t++) {
+        if (lo[t] >= y || hi[t] <= y) continue;
+        const a = t * 9, ya = tris[a + 1] - y, yb = tris[a + 4] - y, yc = tris[a + 7] - y, e = [];
+        if (ya * yb < 0) e.push(cross(a, a + 3));
+        if (yb * yc < 0) e.push(cross(a + 3, a + 6));
+        if (yc * ya < 0) e.push(cross(a + 6, a));
+        if (e.length === 2) { const r1 = find(e[0]), r2 = find(e[1]); if (r1 !== r2) par[r1] = r2; }
+      }
+      const groups = new Map();
+      pts.forEach((p, i) => { const r = find(i); if (!groups.has(r)) groups.set(r, []); groups.get(r).push(p); });
+      for (const g of groups.values()) if (g.length >= 3) hulls.push(hull(g));
+    }
+    if (!hulls.length) return [];
+    let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    for (const hu of hulls) for (const [x, z] of hu) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (z < z0) z0 = z; if (z > z1) z1 = z; }
+    const g = o.g, W = Math.ceil((x1 - x0) / g) + 3, H = Math.ceil((z1 - z0) / g) + 3, N = W * H, X0 = x0 - g, Z0 = z0 - g;
+    const inside = new Uint8Array(N), cx = i => X0 + (i + .5) * g, cz = k => Z0 + (k + .5) * g;
+    for (const hu of hulls) { // each hull fills the cells of its own box
+      let a0 = Infinity, a1 = -Infinity, b0 = Infinity, b1 = -Infinity;
+      for (const [x, z] of hu) { if (x < a0) a0 = x; if (x > a1) a1 = x; if (z < b0) b0 = z; if (z > b1) b1 = z; }
+      for (let k = Math.max(0, Math.floor((b0 - Z0) / g)); k <= Math.min(H - 1, Math.ceil((b1 - Z0) / g)); k++)
+        for (let i = Math.max(0, Math.floor((a0 - X0) / g)); i <= Math.min(W - 1, Math.ceil((a1 - X0) / g)); i++) if (!inside[k * W + i] && inHull(hu, cx(i), cz(k))) inside[k * W + i] = 1;
+    }
+    // depth of each filled cell: its distance to the nearest empty cell, less half a cell (exact squared distance transform,
+    // columns then rows)
+    const BIG = 1e12, d2 = new Float64Array(N), depth = new Float32Array(N);
+    for (let c = 0; c < N; c++) d2[c] = inside[c] ? BIG : 0;
+    const f = new Float64Array(Math.max(W, H)), r = new Float64Array(Math.max(W, H)), v = new Int32Array(Math.max(W, H)), zz = new Float64Array(Math.max(W, H) + 1);
+    const pass = (n, get, set) => {
+      for (let q = 0; q < n; q++) f[q] = get(q);
+      let k = 0; v[0] = 0; zz[0] = -Infinity; zz[1] = Infinity;
+      for (let q = 1; q < n; q++) {
+        let sx = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+        while (sx <= zz[k]) { k--; sx = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]); }
+        k++; v[k] = q; zz[k] = sx; zz[k + 1] = Infinity;
+      }
+      k = 0; for (let q = 0; q < n; q++) { while (zz[k + 1] < q) k++; r[q] = (q - v[k]) * (q - v[k]) + f[v[k]]; }
+      for (let q = 0; q < n; q++) set(q, r[q]);
+    };
+    for (let i = 0; i < W; i++) pass(H, k => d2[k * W + i], (k, val) => { d2[k * W + i] = val; });
+    for (let k = 0; k < H; k++) pass(W, i => d2[k * W + i], (i, val) => { d2[k * W + i] = val; });
+    let left = 0; const open = new Uint8Array(N);
+    for (let c = 0; c < N; c++) if (inside[c]) { depth[c] = Math.sqrt(d2[c]) * g - g / 2; open[c] = 1; left++; }
+    const out = [];
+    while (left && out.length < o.maxCircles) {
+      let best = -1, bd = -Infinity; for (let c = 0; c < N; c++) if (open[c] && depth[c] > bd) { bd = depth[c]; best = c; }
+      if (bd < o.tol) break;
+      const bi = best % W, bk = (best - bi) / W, x = cx(bi), z = cz(bk), rc = bd / g, rr = Math.ceil(rc);
+      out.push({ x: Math.round(x * 1000) / 1000, z: Math.round(z * 1000) / 1000, r: Math.round(bd * 1000) / 1000 });
+      for (let k = Math.max(0, bk - rr); k <= Math.min(H - 1, bk + rr); k++) for (let i = Math.max(0, bi - rr); i <= Math.min(W - 1, bi + rr); i++) {
+        const c = k * W + i; if (open[c] && (i - bi) ** 2 + (k - bk) ** 2 <= rc * rc) { open[c] = 0; left--; }
+      }
+    }
+    // the outline: points along every hull's edges that no other hull holds inside it (and none within step / 2 of one
+    // already kept: cuts close in height run along the same bark)
+    const kept = new Map(), cell = o.step / 2, key = (i, k) => i * 100003 + k;
+    const near = (x, z) => { const i0 = Math.floor(x / cell), k0 = Math.floor(z / cell);
+      for (let i = i0 - 1; i <= i0 + 1; i++) for (let k = k0 - 1; k <= k0 + 1; k++) for (const [px, pz] of kept.get(key(i, k)) || []) if ((px - x) ** 2 + (pz - z) ** 2 < cell * cell) return true;
+      return false; };
+    for (const hu of hulls) for (let e = 0; e < hu.length; e++) {
+      const [ax, az] = hu[e], [bx, bz] = hu[(e + 1) % hu.length], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / o.step));
+      for (let j = 0; j < n; j++) {
+        const x = ax + (bx - ax) * j / n, z = az + (bz - az) * j / n;
+        if (near(x, z) || hulls.some(h2 => h2 !== hu && inHull(h2, x, z, .05))) continue;
+        const kk = key(Math.floor(x / cell), Math.floor(z / cell)); if (!kept.has(kk)) kept.set(kk, []); kept.get(kk).push([x, z]);
+        out.push({ x: Math.round(x * 1000) / 1000, z: Math.round(z * 1000) / 1000, r: 0 });
+      }
+    }
+    return out;
+  }
+  // convex hull (counter-clockwise, Andrew's monotone chain) and the point-in-hull test
+  function hull(p) {
+    p = p.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]), lo = [], up = [];
+    for (const q of p) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); }
+    for (let i = p.length - 1; i >= 0; i--) { const q = p[i]; while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q); }
+    return lo.slice(0, -1).concat(up.slice(0, -1));
+  }
+  function inHull(h, x, z, inset = 0) { // inside by at least inset m
+    if (h.length < 3) return false;
+    for (let i = 0; i < h.length; i++) { const a = h[i], b = h[(i + 1) % h.length]; if ((b[0] - a[0]) * (z - a[1]) - (b[1] - a[1]) * (x - a[0]) < inset * Math.hypot(b[0] - a[0], b[1] - a[1])) return false; }
+    return true;
+  }
+  root.WalkGen = { fromTriangles, trunkCircles, DEF };
 })(typeof window !== 'undefined' ? window : globalThis);

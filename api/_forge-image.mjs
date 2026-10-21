@@ -23,7 +23,10 @@ export const FORGE_REFERENCE_URLS = {
     robe: `${REPO_RAW}/assets/forge-references/body/red-kimono-clean.png`
   },
   // Grey clay FRONT + SIDE of #262, the standard Rebel body (9/28, Miguel: #262 is the best character): PROPORTIONS ONLY
-  proportions: `${REPO_RAW}/assets/forge-references/proportions-262-clay.jpg`
+  proportions: `${REPO_RAW}/assets/forge-references/proportions-262-clay.jpg`,
+  // Oct 20 friend collections: the finished look of a forged character of that species (STYLE + PROPORTIONS ONLY).
+  // Apes: Miguel's Chumpz Racer render. Humans: none yet (the Saints' NPC renders are not the look he wants).
+  friendStyle: { ape: `${REPO_RAW}/assets/forge/sources/chumpz_racer_production_ref_v1.png` }
 };
 
 // Phase 0 SSRF guard: public https hosts only (no localhost / IP literals / internal names).

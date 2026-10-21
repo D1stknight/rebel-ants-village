@@ -6,9 +6,10 @@
 // def: { start: [x, z] (world: where each ride begins), dir (the ride's direction as a yaw, the open sea on its right;
 //   crestLeft: on its left),
 //   len: 150, seaY: -1.6, waves: 4, pass, points }
+// The stance: game_surf (a Mixamo surf / board stance) once the Rebel's games pack has it, else the guard stance.
 (function () {
   const G = {
-    title: 'Surf the Cove',
+    title: 'Surf the Cove', moves: true,
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const S0 = { x: +(def.start || [0, -95])[0], z: +(def.start || [0, -95])[1] }, DIR = def.dir ?? Math.PI / 2, LEN = def.len || 150, SEA = def.seaY ?? -1.6, WAVES = def.waves || 4;
@@ -61,7 +62,7 @@
       const ringM = std('ring', [1, .8, .3], [.9, .62, .18], { spec: [.8, .7, .4] }), woodM = std('drift', [.42, .3, .2], [.05, .04, .02]), rockM = std('rock', [.32, .33, .35], [.04, .04, .05]);
       const sprayM = std('spray', [0, 0, 0], [.9, .97, 1], { alpha: .55, add: true });
       const st = { phase: 'count', t: 2.6, said: '', wave: 0, s: 0, u: 0, du: 0, v: 9, score: 0, rings: 0, perfect: 0, finished: 0, wipes: 0, lip: 0, low: 0, items: [], spray: [], sprayT: 0, input: 0, ptr: null, cam: null, combo: 0 };
-      const PACK = ctx.player.has?.('fight_idle');
+      const STANCE = ['game_surf', 'fight_idle'].find(c => ctx.player.has?.(c)) || null, PACK = !!STANCE;
       // a wave's rings and hazards (more hazards each wave)
       function lay(k) {
         st.items.forEach(it => it.m.dispose()); st.items = [];
@@ -110,7 +111,7 @@
         ctx.finish({ score: st.score, label: 'points', passed: st.score >= (def.pass || 250),
           extra: `${st.rings} rings (${st.perfect} dead centre), ${st.finished} of ${WAVES} waves ridden out, ${st.wipes} wipeout${st.wipes === 1 ? '' : 's'}.` });
       }
-      if (PACK) ctx.player.clip('fight_idle', { loop: true });
+      if (STANCE) ctx.player.clip(STANCE, { loop: true });
       H.title(def.title || 'Surf the Cove'); info();
       H.hint('<kbd>↑</kbd> <kbd>↓</kbd> (<kbd>W</kbd> <kbd>S</kbd>, or hold the mouse) climb and drop on the wave. Low is fast; keep off the lip. Through the rings, clear of the driftwood.');
       startWave();
@@ -171,7 +172,7 @@
           if (evt.type === T.POINTERDOWN || (evt.type === T.POINTERMOVE && st.ptr != null)) st.ptr = Math.max(-1, Math.min(1, 1 - 2 * (scene.pointerY / h) * 1.15 + .15));
           if (evt.type === T.POINTERUP) st.ptr = null;
         },
-        _test: { st, wipe, endWave, at, place, startWave, LEN, FW, PACK },
+        _test: { st, wipe, endWave, at, place, startWave, LEN, FW, PACK, STANCE },
         dispose() { ctx.player.float(null); ctx.player.show(true); H.meter(null); st.items.forEach(it => { try { it.m.dispose(); } catch (e) {} }); st.spray.forEach(f => { try { f.m.dispose(); } catch (e) {} }); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };
     }

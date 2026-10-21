@@ -42,7 +42,7 @@ def srgb2lin(c): return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) 
 # v2.18 NPC hands (FORGE_NPC, the admin NPC Forge): both gloves one size, from the two generated hands together and
 # kept within what the approved villagers have (11.2-12.4 % of the body height); a lone big or small blob hand made one
 # glove 40 % bigger than the other (Shogun). Rebels keep their own per-hand sizes.
-NPCM = bool(os.environ.get('FORGE_NPC'))
+NPCM = bool(os.environ.get('FORGE_NPC') or os.environ.get('FORGE_NPC_BODY'))   # v2.36 + Chumpz / Saints players (their gestures' finger poses stay NPC only: FORGE_NPC below)
 HGT = float(co[:, 2].max() - co[:, 2].min())
 # v2.25 Chumpz (ape) and Saints (human) NPCs wear the gloves too. Their sculpted hands are drawn oversized (1.6-1.8x a
 # glove's surface), so the glove takes a set share of the height instead of their reach: a human hand ~10.6 %, an ape's
@@ -215,6 +215,12 @@ for f in res['faces']:
         for l in f.loops:
             other = [ol for ol in l.vert.link_loops if ol.face is not f]
             if other: l[uvL].uv = other[0][uvL].uv
+        # v2.35 Chumpz / Saints: the rim's UVs come from several texture islands, so across the cap the texture ran
+        # through the atlas (orange / blue shards in the cuff once the wrist moved to the narrow forearm, Pengu): the
+        # whole cap takes one rim point's UV (the one nearest the rim's middle UV), one colour of the rim
+        if SPECIES and len(f.loops) > 2:
+            uvs = np.array([l[uvL].uv[:] for l in f.loops]); k = int(np.argmin(np.linalg.norm(uvs - np.median(uvs, 0), axis=1)))
+            for l in f.loops: l[uvL].uv = uvs[k]
 print('handswap sleeve-end caps', len(res['faces']), 'from boundary edges', len(edges))
 bm.to_mesh(me); bm.free(); me.update()
 # v2.21 NPCs: what is left of the arm at the wrist (sleeve / arm guard end) rides the forearm only. Its leftover hand

@@ -40,10 +40,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 
 /* ── MAIN UI ── */
 #ui{
-  position:fixed;top:0;left:0;width:100%;height:100%;z-index:10;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:32px;
+  position:fixed;top:0;right:0;bottom:0;left:0;z-index:10;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  gap:32px;padding:12px 16px 56px;
+  overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
 }
+/* centred when it fits; when it doesn't (phones, short windows) it starts at the top and scrolls, the last
+   button clear of the news ticker (bottom padding) */
+#ui > :first-child{margin-top:auto;}
+#ui > :last-child{margin-bottom:auto;}
+@media (max-height:860px){#ui{gap:24px;}}
+@media (max-height:600px){#char-row{max-height:116px;}}
 
 /* ── UI BACKDROP ── */
 #ui-backdrop{
@@ -54,7 +61,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 
 /* ── LOGO ── */
 #logo-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;}
-#logo{width:320px;max-width:80vw;filter:drop-shadow(0 0 30px rgba(255,180,50,0.4));
+#logo{width:320px;max-width:min(80vw,40vh);filter:drop-shadow(0 0 30px rgba(255,180,50,0.4));
   animation:float 4s ease-in-out infinite;}
 #logo-placeholder{
   color:#c8922a;font-size:42px;font-weight:900;letter-spacing:8px;text-transform:uppercase;font-family:'Cinzel Decorative',serif;
@@ -220,6 +227,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 #econMenu button:hover{color:#fff;border-color:rgba(200,146,42,0.7);}
 #econMenu .em-discord{background:#5865f2;border-color:#5865f2;color:#fff;margin-top:2px;}
 #econMenu .em-discord:hover{background:#4752c4;border-color:#4752c4;}
+#econMenu .em-shop{display:block;margin-top:12px;padding:14px;text-align:center;text-decoration:none;font-size:10px;letter-spacing:3px;text-transform:uppercase;
+  background:linear-gradient(135deg,#c8922a,#8a5e1a);color:#fff;box-shadow:0 4px 16px rgba(200,146,42,0.45), 0 0 0 1px rgba(200,146,42,0.3);}
+#econMenu .em-shop:hover{box-shadow:0 6px 24px rgba(200,146,42,0.65), 0 0 0 1px rgba(200,146,42,0.5);}
+#econMenu .em-shop + p{margin-top:6px;}
 #econMenu .em-or{margin:14px 0 8px;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:#8a7a5a;text-align:center;}
 #econMenu .em-name{display:grid;grid-template-columns:minmax(0,1fr) 92px;gap:8px;}
 #econMenu .em-name input{min-width:0;padding:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(200,146,42,0.3);color:#f3e6bf;font-family:'Cinzel',serif;font-size:12px;letter-spacing:1px;outline:none;}
@@ -228,7 +239,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 #econMenu .em-acts button{margin-top:0;padding:10px 8px;letter-spacing:2px;}
 #econMenu .em-msg{grid-column:1/-1;min-height:14px;font-size:10px;letter-spacing:1px;line-height:1.4;color:#ffd166;}
 #econMenu .em-msg.bad{color:#ff8b8b;}
-@media (pointer:coarse){#econMenu .em-name input{font-size:16px;}} /* phones zoom into smaller fields */
+@media (pointer:coarse){#econMenu .em-name input{font-size:16px;} #econMenu .em-shop{padding:17px 14px;}} /* phones zoom into smaller fields; a full finger for the shop */
 /* narrow screens: the big logo reaches the corner, so just the circle (and "Sign in" under it for guests) */
 @media (max-width:829px){
   #econChip{top:16px;left:16px;width:48px;padding:0;justify-content:center;border-radius:50%;}
@@ -236,6 +247,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
   #econChip.off::after{content:'Sign in';position:absolute;top:53px;left:50%;transform:translateX(-50%);font-size:8px;letter-spacing:2px;
     text-transform:uppercase;color:#aab3ff;white-space:nowrap;text-shadow:0 1px 3px #000;}
   #econMenu{top:84px;left:16px;}
+  /* phones: a smaller logo, Enter Village first, the buttons stacked */
+  #ui{gap:18px;}
+  #logo{max-width:min(80vw,30vh);}
+  #btn-row{flex-direction:column;align-items:stretch;gap:10px;width:min(300px,100%);}
+  #btn-enter{order:-1;}
 }
 
 #wallet-modal-backdrop{
@@ -516,10 +532,20 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
   color: #07201f;
   box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 0 8px rgba(94,207,202,0.55);
 }
+.ant-card-badge.free {
+  background: #e8c35a;
+  color: #241a02;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 0 8px rgba(232,195,90,0.5);
+}
 .ant-card-badge.forged {
   background: rgba(200,146,42,0.92);
   color: #1c1305;
   box-shadow: 0 0 0 1px rgba(0,0,0,0.35);
+}
+.ant-card-badge.friend {
+  background: rgba(20,16,10,0.85);
+  color: #f2e6c9;
+  box-shadow: 0 0 0 1px rgba(232,195,90,0.55);
 }
 .ant-card.is-ready { border-color: rgba(94,207,202,0.55); }
 .ant-card.has-forge-thumb img { object-fit: cover; }
@@ -1089,6 +1115,22 @@ const FRIEND_PLAYABLES = [
   { id: 'chumpz_racer', rebelId: 'chumpz_900001', tokenId: '900001', name: 'Chumpz Racer', image: 'assets/lobby/chumpz_racer.jpg', collectionKey: 'chumpz', playerModel: 'kit:chz_ape_racer', formLabel: 'Chumpz Ape' }
 ];
 const loadFriendPlayables = () => Promise.all(FRIEND_PLAYABLES.map((r) => attachActiveForgeCharacter({ ...r })));
+// the friend collections a wallet can hold (assets/friend-collections.json): their cards' tag; the Forge door takes the
+// card's collection along so their holders forge them
+const FRIEND_LABELS = { chumpz: 'Chumpz', saints: 'Saint' };
+const sameCollection = (a, b) => (a?.collectionKey || 'battle_for_colony') === (b?.collectionKey || 'battle_for_colony');
+// Oct 20 the Free to play roster (api/free-roster.mjs, ticked in the NPC Forge): forged Rebels anyone can play: guests,
+// wallets without a Rebel and holders whose own Rebels are not forged yet. Never #001 (the starter card) or #893.
+const FREE_NEVER = new Set(['1', '893']);
+async function loadFreeRoster() {
+  let tokens = null;
+  try { const d = await (await fetch('/api/free-roster', { headers: { accept: 'application/json' } })).json(); if (d && d.ok && Array.isArray(d.tokens)) tokens = d.tokens; } catch (e) {}
+  return (tokens || Object.keys(VILLAGE_RIGGED)).map(String).filter((t) => !FREE_NEVER.has(t));
+}
+const freeRosterCards = (tokens) => Promise.all(tokens.map((t) => attachActiveForgeCharacter({
+  id: 'rebel_' + t, rebelId: 'rebel_' + t, tokenId: t, name: 'Rebel #' + t, collectionKey: 'battle_for_colony', free: true,
+  image: `/api/nft-image?c=battle_for_colony&t=${t}&s=thumb`, imageFull: `/api/nft-image?c=battle_for_colony&t=${t}&s=full`
+})));
 function getRebelForgeStatus(rebel, hasForgeCharacter) {
   if (rebel.playerModel) return 'ready';
   const afc = rebel.activeForgeCharacter || {};
@@ -1130,12 +1172,12 @@ function buildCard(rebel) {
   const hasForgeCharacter = Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl);
   const status = getRebelForgeStatus(rebel, hasForgeCharacter);
   const tokenNumber = getRebelCardNumber(rebel);
-  card.title = [rebel.name, status === 'ready' ? 'Playable 3D character ready' : status === 'forged' ? '3D character forged' : ''].filter(Boolean).join(' · ');
+  card.title = [rebel.name, rebel.free ? 'Free to play: anyone can play this forged Rebel' : status === 'ready' ? 'Playable 3D character ready' : status === 'forged' ? '3D character forged' : ''].filter(Boolean).join(' · ');
   if (status) card.classList.add('is-' + status);
 
   const cardLabel = `
     ${tokenNumber ? `<div class="ant-card-num">#${tokenNumber}</div>` : ''}
-    ${status ? `<div class="ant-card-badge ${status}">${status === 'ready' ? 'Ready' : 'Forged'}</div>` : ''}
+    ${rebel.free ? '<div class="ant-card-badge free">Free</div>' : status ? `<div class="ant-card-badge ${status}">${status === 'ready' ? 'Ready' : 'Forged'}</div>` : rebel.friendLabel ? `<div class="ant-card-badge friend">${rebel.friendLabel}</div>` : ''}
   `;
 
   const forgeThumb = status === 'ready' ? getRebelForgeThumb(rebel) : '';
@@ -1162,12 +1204,9 @@ async function showDefaultCard() {
   };
 
   const defaultRebel = await attachActiveForgeCharacter(starterRebel);
-  // Guest mode: every Rebel with a finished Forge character gets its own card, loaded fresh from the server, so a
+  // Guest mode (and wallets without a Rebel): the Free to play roster, each card loaded fresh from the server, so a
   // new "Make this my Rebel" shows here right away. Older local copies of the same Rebel are dropped.
-  const showcase = await Promise.all(Object.keys(VILLAGE_RIGGED).map((t) => attachActiveForgeCharacter({
-    id: 'rebel_' + t, rebelId: 'rebel_' + t, tokenId: t, name: 'Rebel #' + t, collectionKey: 'battle_for_colony',
-    image: `/api/nft-image?c=battle_for_colony&t=${t}&s=thumb`, imageFull: `/api/nft-image?c=battle_for_colony&t=${t}&s=full`
-  })));
+  const showcase = await freeRosterCards(await loadFreeRoster());
   const showTokens = new Set(showcase.map((r) => String(r.tokenId)));
   const savedForgePlayables = (await loadSavedForgePlayableCards()).filter((r) => !showTokens.has(String(r.tokenId || '')));
   const friends = await loadFriendPlayables();
@@ -1181,7 +1220,7 @@ async function showDefaultCard() {
 
   // the last Rebel picked here or set in the Forge (matched by card id, then by token)
   const storedCard = ownedRebels.find((rebel) => rebel.id === storedSelected.id) ||
-    (storedSelected.tokenId ? ownedRebels.find((rebel) => String(rebel.tokenId || '') === String(storedSelected.tokenId)) : null);
+    (storedSelected.tokenId ? ownedRebels.find((rebel) => String(rebel.tokenId || '') === String(storedSelected.tokenId) && sameCollection(rebel, storedSelected)) : null);
   selectedAnt = storedCard ? storedCard.id : 'ant_1';
 
   charRow.innerHTML = '';
@@ -1213,10 +1252,12 @@ async function loadNFTs(walletAddress) {
       const id = (key === 'battle_for_colony' ? 'rebel_' : key + '_') + n.tokenId;
       const traits = normalizeRebelTraits(n.traits);
       const hasTraits = Object.keys(traits).length > 0;
+      const friend = n.friend ? FRIEND_LABELS[key] || key : null;   // Oct 20: Chumpz / Saints the wallet holds (forged in the Rebel Forge)
       return {
         id,
         rebelId: id,
-        name: n.name || ('Rebel #' + n.tokenId),
+        ...(friend ? { friend: true, friendLabel: friend, formLabel: friend } : {}),
+        name: n.name || ((friend || 'Rebel') + ' #' + n.tokenId),
         image: n.thumb || n.image || 'assets/lobby/ant_1.JPG',
         imageFull: n.image || n.thumb || '',
         tokenId: n.tokenId,
@@ -1232,29 +1273,38 @@ async function loadNFTs(walletAddress) {
     );
     const savedForgePlayables = await loadSavedForgePlayableCards();
     const walletIds = new Set(walletRebels.map((rebel) => rebel.id));
-    const walletTokens = new Set(walletRebels.map((rebel) => String(rebel.tokenId || '')));
+    const tokKey = (rebel) => `${rebel.collectionKey || 'battle_for_colony'}:${rebel.tokenId || ''}`;   // a Chumpz #5 is not Rebel #5
+    const walletTokens = new Set(walletRebels.map(tokKey));
     // Forged Rebels first (Ready, then Forged), then the rest in wallet order. Saved Forge playables for a
     // token that is already in the wallet are duplicates of that card, so they are dropped.
     ownedRebels = sortRebelsByForgeStatus([
       ...walletRebels,
-      ...dedupeForgePlayablesByToken(savedForgePlayables.filter((rebel) => !walletIds.has(rebel.id) && !walletTokens.has(String(rebel.tokenId || ''))))
+      ...dedupeForgePlayablesByToken(savedForgePlayables.filter((rebel) => !walletIds.has(rebel.id) && !walletTokens.has(tokKey(rebel))))
     ]);
 
     // the friend playables sit after the wallet's ready Rebels; they are never picked by default
     const firstNotReady = ownedRebels.findIndex((rebel) => getRebelForgeStatus(rebel) !== 'ready');
+    const walletReady = firstNotReady !== 0 && ownedRebels.length > 0;
     ownedRebels.splice(firstNotReady < 0 ? ownedRebels.length : firstNotReady, 0, ...(await loadFriendPlayables()));
+    // none of the wallet's Rebels is forged yet: the Free to play roster comes after them (never picked by default)
+    if (!walletReady) {
+      const held = new Set(ownedRebels.filter((rebel) => sameCollection(rebel, {})).map((rebel) => String(rebel.tokenId || '')));   // the roster is Rebels
+      ownedRebels.push(...(await freeRosterCards((await loadFreeRoster()).filter((t) => !held.has(t)))));
+    }
     const forgedReadyRebel = ownedRebels.find((rebel) => {
-      if (rebel.playerModel) return false;
+      if (rebel.playerModel || rebel.free) return false;
       return Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl) || getRebelForgeStatus(rebel) === 'ready';
     });
-    const readyCount = ownedRebels.filter((rebel) => !rebel.playerModel && getRebelForgeStatus(rebel) === 'ready').length;
+    const readyCount = ownedRebels.filter((rebel) => !rebel.playerModel && !rebel.free && getRebelForgeStatus(rebel) === 'ready').length;
+    const freeCount = ownedRebels.filter((rebel) => rebel.free).length, friendCount = ownedRebels.filter((rebel) => rebel.friend).length;
+    const ownCount = ownedRebels.filter((rebel) => !rebel.free && !rebel.friend && !rebel.playerModel).length;   // the wallet's Rebels
 
     // the Rebel last picked here or set in the Forge ("Make this my Rebel") comes first, if this wallet holds it
     let storedSel = {};
     try { storedSel = JSON.parse(localStorage.getItem('selectedRebel') || '{}') || {}; } catch(e) {}
-    const storedCard = storedSel.tokenId ? ownedRebels.find((rebel) => String(rebel.tokenId || '') === String(storedSel.tokenId)) : (storedSel.playerModel ? ownedRebels.find((rebel) => rebel.id === storedSel.id) : null);
+    const storedCard = storedSel.playerModel ? ownedRebels.find((rebel) => rebel.id === storedSel.id) : storedSel.tokenId ? ownedRebels.find((rebel) => String(rebel.tokenId || '') === String(storedSel.tokenId) && sameCollection(rebel, storedSel)) : null;
     const serverChoice = savedForgePlayables.find(r => r.activeForgeCharacter?.appearanceSource && r.activeForgeCharacter?.walletAddress === walletAddress.toLowerCase());
-    const serverCard = serverChoice && walletRebels.find(r => String(r.tokenId) === String(serverChoice.tokenId));
+    const serverCard = serverChoice && walletRebels.find(r => String(r.tokenId) === String(serverChoice.tokenId) && sameCollection(r, serverChoice));
     selectedAnt = serverCard ? serverCard.id : storedCard ? storedCard.id : forgedReadyRebel ? forgedReadyRebel.id : (ownedRebels.find((rebel) => !rebel.playerModel) || ownedRebels[0]).id;
 
     charRow.innerHTML = '';
@@ -1263,11 +1313,13 @@ async function loadNFTs(walletAddress) {
     await selectAnt(selectedAnt);
 
     setStatus(
-      ownedRebels.length +
+      ownCount +
       ' Rebel' +
-      (ownedRebels.length > 1 ? 's' : '') +
+      (ownCount === 1 ? '' : 's') +
+      (friendCount ? ` · ${friendCount} Chumpz / Saint${friendCount === 1 ? '' : 's'}` : '') +
       ' found' +
-      (readyCount ? ` — ${readyCount} ready to play` : '')
+      (readyCount ? ` — ${readyCount} ready to play` : '') +
+      (freeCount ? ` — ${freeCount} free to play` : '')
     );
 
     document.getElementById('btn-enter').disabled = false;
@@ -1614,8 +1666,10 @@ function enterForge() {
     window._music.volume = 0;
   }
 
+  const r = ownedRebels.find((x) => x.id === selectedAnt);
+  const url = r && r.friend && r.tokenId ? `forge-v2.html?col=${encodeURIComponent(r.collectionKey)}&token=${encodeURIComponent(r.tokenId)}` : 'forge-v2.html';
   setTimeout(() => {
-    window.location.href = 'forge-v2.html';   // the new Forge room (the old forge.html is admin-only now)
+    window.location.href = url;   // the new Forge room (the old forge.html is admin-only now)
   }, 900);
 }
 
@@ -1876,7 +1930,7 @@ window.addEventListener('load', () => {
 // ── DISCORD: the Rebel Economy account (api/econ-*, the same sign-in as the village journal). The lobby says whether
 // the player is signed in and how many Rebel points the account holds; signed out, one click signs in (a popup, or
 // this tab when popups are blocked; both come back here). Hidden on a deploy without the economy set up.
-const LobbyEcon = { on:false, configured:false, kind:'', name:'', avatar:null, balance:null, today:0, cap:2000 };
+const LobbyEcon = { on:false, configured:false, kind:'', name:'', avatar:null, balance:null, today:0, cap:2000, shopUrl:null };
 const LOBBY_DISCORD_GLYPH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.028C.533 9.046-.32 13.58.099 18.058a.082.082 0 0 0 .031.056 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.042-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .078-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.009c.12.1.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.029 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.331c-1.183 0-2.157-1.086-2.157-2.42 0-1.332.956-2.418 2.157-2.418 1.21 0 2.176 1.095 2.157 2.419 0 1.333-.956 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.086-2.157-2.42 0-1.332.955-2.418 2.157-2.418 1.21 0 2.176 1.095 2.157 2.419 0 1.333-.946 2.419-2.157 2.419z"/></svg>';
 const lobbyEsc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 let lobbyEconAt = 0;
@@ -1887,7 +1941,7 @@ async function refreshLobbyEcon(force) {
   try { const r = await fetch('/api/econ-me', { credentials:'same-origin', cache:'no-store' }); d = await r.json(); } catch (e) { return; }
   if (!d || !d.ok) return;
   Object.assign(LobbyEcon, { configured:!!d.configured, on:!!d.signedIn, kind:d.signedIn ? (d.kind || 'discord') : '', name:d.name || '', avatar:d.avatar || null,
-    balance:d.signedIn ? (d.balance ?? LobbyEcon.balance) : null, today:d.today || 0, cap:d.cap || 2000 });
+    balance:d.signedIn ? (d.balance ?? LobbyEcon.balance) : null, today:d.today || 0, cap:d.cap || 2000, shopUrl:d.shopUrl || LobbyEcon.shopUrl });
   renderLobbyEcon();
 }
 // a name + PIN account's picture: its first letter (the village journal draws the same)
@@ -1933,6 +1987,8 @@ function renderLobbyEcon() {
         + `<div class="em-bar"><div style="width:${pct}%"></div></div>`
         + `<div class="em-lbl">Earned today ${(LobbyEcon.today || 0).toLocaleString('en-US')} of ${(LobbyEcon.cap || 2000).toLocaleString('en-US')}</div>`
         + `<p>Chests, first game clears and place riddles in the village pay Rebel points to this account, on any device you sign in on.</p>`
+        + `<a class="em-shop" href="${lobbyEsc(lobbyShopHref())}" target="_blank" rel="opener" onclick="lobbyShopOpened()">Get Rebel Points</a>`
+        + `<p>The Rebel Economy shop opens in a new tab, signed in as ${lobbyEsc(LobbyEcon.name || 'Rebel')}${discord ? ' (Discord)' : ''}: the points come to this account.</p>`
         + `<button type="button" onclick="lobbyEconSignOut()">Sign out</button>`;
     }
   }
@@ -1978,7 +2034,18 @@ document.addEventListener('click', (e) => { const m = document.getElementById('e
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.getElementById('econMenu')?.classList.remove('open'); });
 try { const bc = new BroadcastChannel('ra-econ'); bc.onmessage = () => refreshLobbyEcon(true); } catch (e) {}
 window.addEventListener('storage', (e) => { if (e.key === 'raEconPing') refreshLobbyEcon(true); });
-window.addEventListener('focus', () => refreshLobbyEcon());
+// back from the shop's tab: the first focus after it opened reads the balance again (the shop is another site, so no ping comes back)
+// the shop, signed in to this account (api/econ-shop: a sign-in ticket from the economy), its Back link to this page.
+// Opened with an opener (rel="opener"): the shop's Back then closes its tab, even after a card payment, instead of opening this page again in it.
+function lobbyShopHref() {
+  const back = location.pathname + location.search;
+  const base = LobbyEcon.shopUrl || 'https://economy.rebelants.io/shop';
+  return base + (base.includes('?') ? '&' : '?') + 'return=' + encodeURIComponent(base.startsWith('/') ? back : location.origin + back);
+}
+let lobbyShopAt = 0;
+function lobbyShopOpened() { lobbyShopAt = Date.now(); }
+window.addEventListener('focus', () => refreshLobbyEcon(lobbyShopAt > lobbyEconAt));
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshLobbyEcon(lobbyShopAt > lobbyEconAt); });
 window.addEventListener('pageshow', (e) => { if (e.persisted) refreshLobbyEcon(true); });
 refreshLobbyEcon(true);
 </script>

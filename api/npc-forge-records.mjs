@@ -37,6 +37,12 @@ const fit = (o) => {
 const hex = (v) => (/^#[0-9a-f]{6}$/i.test(String(v || '')) ? String(v).toLowerCase() : null);
 const handFit = (h) => (h && typeof h === 'object' ? { Left: fit(h.Left), Right: fit(h.Right), glove: hex(h.glove), cuff: hex(h.cuff) } : null);
 
+// the four views as plain URLs ({ front: url } or, wrapped, { front: { url } } like refs)
+function viewsOf(o, wrapped) {
+  const v = {};
+  for (const s of ['front', 'back', 'left', 'right']) { const u = url(wrapped ? o?.[s]?.url : o?.[s]); if (u) v[s] = wrapped ? { url: u } : u; }
+  return v;
+}
 function clean(r) {
   if (!r || typeof r !== 'object' || !ID.test(String(r.id || ''))) throw new Error('Bad record id');
   const refs = {};
@@ -51,6 +57,9 @@ function clean(r) {
     ...(r.handFit ? { handFit: handFit(r.handFit) } : {}),
     ...(r.notes ? { notes: text(r.notes, 2000) } : {}),   // a Cute & Creepy kit request: what Claude builds it from
     ...(r.hands && iso(r.hands.at) ? { hands: { at: r.hands.at, ...(iso(r.hands.doneAt) ? { doneAt: r.hands.doneAt } : {}) } } : {}),
+    // Oct 20 Redraw renders (Saints): the four redrawn renders waiting for a yes, and the renders a redraw replaced
+    ...(r.redraw && typeof r.redraw === 'object' && r.redraw.refs ? { redraw: { refs: viewsOf(r.redraw.refs), ...(iso(r.redraw.at) ? { at: r.redraw.at } : {}), ...(r.redraw.notes ? { notes: text(r.redraw.notes, 600) } : {}), wrong: (Array.isArray(r.redraw.wrong) ? r.redraw.wrong : []).filter((s) => s === 'left' || s === 'right') } } : {}),
+    ...(r.prevRefs && typeof r.prevRefs === 'object' ? { prevRefs: viewsOf(r.prevRefs, true) } : {}),
     updatedAt: num(r.updatedAt) || Date.now()
   };
   const json = JSON.stringify(out);

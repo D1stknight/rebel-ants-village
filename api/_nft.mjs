@@ -74,7 +74,8 @@ function shape(col, tokenId, { name, description, traits, sourceImages }, source
     thumb: imageRoute(col.key, tokenId, 'thumb'),
     traits: normalizeTraits(traits),
     sourceImages: (sourceImages || []).filter(Boolean).map(ipfsToHttps),
-    source
+    source,
+    ...(col.friend ? { friend: true, species: col.species } : {})
   };
 }
 
@@ -128,31 +129,74 @@ async function alchemyWallet(address, cols) {
   return out;
 }
 
+// a collection's OpenSea slug: from the Manager, else asked once from its contract (kept 30 days)
+async function openseaSlug(col, apiKey) {
+  if (col.openseaSlug) return col.openseaSlug;
+  const k = `nft:slug:v1:${col.chain}:${col.contract.toLowerCase()}`;
+  const hit = await cacheGet(k);
+  if (hit?.slug) return hit.slug;
+  const r = await fetch(`https://api.opensea.io/api/v2/chain/${OPENSEA_CHAIN[col.chain] || col.chain}/contract/${col.contract}`, { headers: { accept: 'application/json', 'x-api-key': apiKey } });
+  if (!r.ok) throw new Error('OpenSea contract ' + r.status);
+  const slug = String((await r.json())?.collection || '');
+  if (!/^[a-z0-9_-]{1,120}$/i.test(slug)) throw new Error('OpenSea has no collection for this contract');
+  await cacheSet(k, { slug }, 30 * 86400);
+  return slug;
+}
+
+// { tokens, partial }: a friend collection OpenSea can't list is left out (partial); a Rebel collection fails the call
 async function openseaWallet(address, cols) {
   const apiKey = process.env.OPENSEA_API_KEY;
   if (!apiKey) throw new Error('OpenSea not configured');
   const out = [];
+  let partial = false;
   for (const col of cols) {
-    if (!col.openseaSlug) continue;
-    let next = '';
-    let pages = 0;
-    do {
-      const chain = OPENSEA_CHAIN[col.chain] || col.chain;
-      const url = `https://api.opensea.io/api/v2/chain/${chain}/account/${address}/nfts?collection=${col.openseaSlug}&limit=50${next ? '&next=' + encodeURIComponent(next) : ''}`;
-      const r = await fetch(url, { headers: { accept: 'application/json', 'x-api-key': apiKey } });
-      if (!r.ok) throw new Error('OpenSea wallet ' + r.status);
-      const j = await r.json();
-      for (const n of j.nfts || []) {
-        out.push(shape(col, n.identifier, { name: n.name, description: n.description, traits: [], sourceImages: [n.image_url] }, 'opensea'));
-      }
-      next = j.next || '';
-      pages += 1;
-    } while (next && pages < 20);
+    if (!col.openseaSlug && !col.friend) continue;
+    try {
+      const slug = await openseaSlug(col, apiKey);
+      const mine = [];
+      let next = '';
+      let pages = 0;
+      do {
+        const chain = OPENSEA_CHAIN[col.chain] || col.chain;
+        const url = `https://api.opensea.io/api/v2/chain/${chain}/account/${address}/nfts?collection=${slug}&limit=50${next ? '&next=' + encodeURIComponent(next) : ''}`;
+        const r = await fetch(url, { headers: { accept: 'application/json', 'x-api-key': apiKey } });
+        if (!r.ok) throw new Error('OpenSea wallet ' + r.status);
+        const j = await r.json();
+        for (const n of j.nfts || []) {
+          mine.push(shape(col, n.identifier, { name: n.name, description: n.description, traits: [], sourceImages: [n.image_url] }, 'opensea'));
+        }
+        next = j.next || '';
+        pages += 1;
+      } while (next && pages < 20);
+      out.push(...mine);
+    } catch (e) {
+      if (!col.friend) throw e;
+      console.warn(`OpenSea wallet (${col.key}) failed, leaving it out:`, e.message);
+      partial = true;
+    }
   }
-  return out;
+  return { tokens: out, partial };
 }
 
-// All NFTs from our collections held by a wallet. { tokens, source, cached }
+// one chain's collections: Alchemy, then OpenSea. Chains are asked apart (Oct 20: ApeChain), so a friend collection's
+// chain that both providers fail on is left out (partial) instead of failing the Rebels' listing.
+async function chainTokens(address, chain, cols) {
+  try {
+    return { tokens: await alchemyWallet(address, cols), source: 'alchemy', partial: false };
+  } catch (e) {
+    console.warn(`Alchemy wallet (${chain}) failed, trying OpenSea:`, e.message);
+    try {
+      const r = await openseaWallet(address, cols);
+      return { ...r, source: 'opensea' };
+    } catch (e2) {
+      if (cols.some((c) => !c.friend)) throw e2;
+      console.warn(`OpenSea wallet (${chain}) failed too, leaving it out:`, e2.message);
+      return { tokens: [], source: 'none', partial: true };
+    }
+  }
+}
+
+// All NFTs from our collections held by a wallet. { tokens, source, cached, partial }
 export async function getWalletTokens(address, collectionKeys = null) {
   const all = await loadCollections();
   const cols = collectionKeys?.length ? all.filter((c) => collectionKeys.includes(c.key)) : all;
@@ -161,20 +205,18 @@ export async function getWalletTokens(address, collectionKeys = null) {
   const cacheKey = `nft:wallet:v1:${addr}:${cols.map((c) => c.key).sort().join(',')}`;
   const hit = await cacheGet(cacheKey);
   if (hit) return { ...hit, cached: true };
-  let tokens;
-  let source = 'alchemy';
-  try {
-    tokens = await alchemyWallet(addr, cols);
-  } catch (e) {
-    console.warn('Alchemy wallet failed, trying OpenSea:', e.message);
-    tokens = await openseaWallet(addr, cols);
-    source = 'opensea';
-  }
+  const byChain = new Map();
+  for (const c of cols) byChain.set(c.chain, [...(byChain.get(c.chain) || []), c]);
+  const parts = await Promise.all([...byChain].map(([chain, list]) => chainTokens(addr, chain, list)));
+  const tokens = parts.flatMap((p) => p.tokens);
+  const sources = [...new Set(parts.map((p) => p.source).filter((x) => x !== 'none'))];
+  const source = sources.length === 1 ? sources[0] : sources.length ? 'mixed' : 'none';
+  const partial = parts.some((p) => p.partial);
   // Warm the per-token metadata cache so the lobby / Forge don't have to look each one up again.
   const cmds = tokens.filter((t) => t.traits.length).map((t) => ['SET', `nft:meta:v1:${t.collectionKey}:${t.tokenId}`, JSON.stringify(t), 'EX', META_TTL]);
   if (cmds.length) await redis(cmds);
-  const result = { tokens, source };
-  await cacheSet(cacheKey, result, WALLET_TTL);
+  const result = { tokens, source, ...(partial ? { partial: true } : {}) };
+  await cacheSet(cacheKey, result, partial ? 20 : WALLET_TTL);   // a listing with a chain left out is asked again soon
   return { ...result, cached: false };
 }
 
