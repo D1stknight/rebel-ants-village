@@ -33,8 +33,9 @@ if [ -z "$NPC" ] && [ -n "${FORGE_FRIEND:-}" ]; then FRIEND="$FORGE_FRIEND"; exp
 # v2.37 Saints players only (Miguel: "standing straight", leaning back in calm / walk, shoulders and head in the moves): the
 # spine keeps its sculpted curve (retarget / retarget_bvh: the Rebel master's and the Mixamo actor's turns are added to
 # the Saint's own rest instead of copying their spine angles, which tipped a forward-leaning human chest 22 deg back),
-# and the head carriage counts the chest's lean from its sculpted rest (headfix). Chumpz, Rebels and NPCs unchanged.
-if [ "$FRIEND" = human ]; then export FORGE_NO_SPINE_ALIGN=1 FORGE_HEAD_CHEST_REST=1; fi
+# the head carriage counts the chest's lean from its sculpted rest, and the neck takes half of the head's turn about
+# its own axis (headfix: the fight stance turned the head 44 deg at the jaw). Chumpz, Rebels and NPCs unchanged.
+if [ "$FRIEND" = human ]; then export FORGE_NO_SPINE_ALIGN=1 FORGE_HEAD_CHEST_REST=1 FORGE_NECK_TWIST_SHARE="${FORGE_NECK_TWIST_SHARE:-0.5}"; fi
 SPECIES="${FORGE_NPC_SPECIES:-}"
 if [ -n "$NPC" ]; then
   MOVES="$FW/anim/clips_npc.json"

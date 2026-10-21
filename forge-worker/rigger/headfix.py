@@ -155,4 +155,45 @@ for act in bpy.data.actions:
 arm.animation_data.action = None
 for t_ in tracks: t_.mute = False
 print('headfix v1.8 mean forward lean deg (before, after):', report)
+# v2.37 Saints players (FORGE_NECK_TWIST_SHARE, set by job.sh for FORGE_FRIEND=human): the neck takes that share of the
+# head's turn about the neck's own axis and the head keeps the rest, in every clip; the head's world pose is unchanged.
+# The moves turn the head at the Head joint alone (fight stance: 44 deg back to the front against the side-on chest),
+# which a human neck shows as a twisted band under the jaw (an ant's head hides it). Rebels, Chumpz and NPCs never set it.
+SHARE = float(os.environ.get('FORGE_NECK_TWIST_SHARE') or 0)
+if SHARE > 0:
+    nb, hb = arm.data.bones[P + 'Neck'], arm.data.bones[P + 'Head']
+    Cm = nb.matrix_local.inverted() @ hb.matrix_local; C = Cm.to_quaternion(); Ci = C.inverted()
+    print('headfix neck share %.2f, head offset in the neck %s' % (SHARE, tuple(round(v, 4) for v in Cm.translation)))
+    shared = {}
+    for act in bpy.data.actions:
+        if not act.layers: continue
+        cb = act.layers[0].strips[0].channelbag(act.slots[0])
+        fn = [cb.fcurves.find(f'pose.bones["{P}Neck"].rotation_quaternion', index=i) for i in range(4)]
+        fh = [cb.fcurves.find(f'pose.bones["{P}Head"].rotation_quaternion', index=i) for i in range(4)]
+        if not all(fn) or not all(fh): continue
+        def keys(fcs):
+            out = []
+            for f_ in fcs:
+                co = np.zeros(len(f_.keyframe_points) * 2); f_.keyframe_points.foreach_get('co', co); out.append(co.reshape(-1, 2))
+            return out
+        kn, kh = keys(fn), keys(fh)
+        fr = kn[0][:, 0]
+        if any(len(k) != len(fr) or np.abs(k[:, 0] - fr).max() > 1e-3 for k in kn + kh):
+            print('headfix neck share: keys differ, skipped', act.name); continue
+        turn = []; pn = ph = None
+        for k in range(len(fr)):
+            qn = Quaternion([kn[i][k, 1] for i in range(4)]); qh = Quaternion([kh[i][k, 1] for i in range(4)])
+            E = C @ qh @ Ci                                   # the head's turn in the neck's axes (Y = along the neck)
+            th = math.atan2(math.sin(2 * math.atan2(E.y, E.w)), math.cos(2 * math.atan2(E.y, E.w)))
+            T = Quaternion((0, 1, 0), SHARE * th)
+            qn2 = qn @ T; qh2 = Ci @ T.inverted() @ C @ qh
+            if pn is not None and pn.dot(qn2) < 0: qn2.negate()
+            if ph is not None and ph.dot(qh2) < 0: qh2.negate()
+            pn, ph = qn2, qh2
+            for i in range(4): kn[i][k, 1] = qn2[i]; kh[i][k, 1] = qh2[i]
+            turn.append(math.degrees(th))
+        for fcs, ks in ((fn, kn), (fh, kh)):
+            for f_, co in zip(fcs, ks): f_.keyframe_points.foreach_set('co', co.ravel()); f_.update()
+        shared[act.name] = round(float(np.mean(np.abs(turn))), 1)
+    print('headfix neck share: mean head turn against the neck (deg) moved', SHARE, 'onto the neck:', shared)
 bpy.ops.wm.save_as_mainfile(filepath=dst)
