@@ -5674,7 +5674,7 @@ window.returnToHubVillage = returnToHubVillage;
 // this module runs after the page has parsed (DOMContentLoaded may already have fired): update now, else on the event
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', updateVillageChrome); else updateVillageChrome();
 // ── ENGINE ───────────────────────────────────
-// Optional WebGPU test mode: /village.html?engine=webgpu
+// Optional WebGPU test mode: /village.html?engine=webgpu (that page load only)
 let engine;
 window._gpuMode = 'webgl';
 
@@ -5738,25 +5738,13 @@ function clearRendererPreference() {
   safeStorageRemove(localStorage, RENDERER_PREF_KEY);
 }
 
-function rememberRendererPreference(mode, persistLocal = true) {
-  if (!['webgpu', 'webgl'].includes(mode)) return;
-  safeStorageSet(sessionStorage, RENDERER_SESSION_KEY, mode);
-  if (persistLocal) safeStorageSet(localStorage, RENDERER_PREF_KEY, mode);
-}
-
+// WebGPU only when the link asks for it, never remembered (Oct 22): a WebGPU start used to be kept in the browser for every
+// later visit, and the village's own shaders (terrain, sea, portal) don't draw in WebGPU yet (CLAUDE.md "After launch").
+// The old remembered choice is cleared here.
 function getRendererStartupPreference() {
+  clearRendererPreference();
   const params = new URLSearchParams(window.location.search);
-  if (params.get('retryWebGPU') === '1' || params.get('forceWebGPU') === '1') {
-    clearRendererPreference();
-    return 'webgpu';
-  }
-  if (params.get('engine') === 'webgl') return 'webgl';
-  const rememberedSession = safeStorageGet(sessionStorage, RENDERER_SESSION_KEY);
-  const rememberedLocal = safeStorageGet(localStorage, RENDERER_PREF_KEY);
-  if (rememberedSession === 'webgl' || rememberedLocal === 'webgl') return 'webgl';
-  if (params.get('engine') === 'webgpu') return 'webgpu';
-  if (rememberedSession === 'webgpu' || rememberedLocal === 'webgpu') return 'webgpu';
-  return 'webgl';
+  return params.get('engine') === 'webgpu' || params.get('retryWebGPU') === '1' || params.get('forceWebGPU') === '1' ? 'webgpu' : 'webgl';
 }
 
 function makeWebGLFallbackEngine(reason = '') {
@@ -5773,6 +5761,8 @@ function makeTimeoutError(message) {
 }
 
 async function createWebGPUEngineWithTimeout() {
+  // WebGPU's shader translators (glslang, twgsl) are not in our Babylon copy: they come from Babylon's site, at the same version
+  try { BABYLON.Tools.ScriptBaseUrl = ''; } catch(e) {}
   const webgpuEngine = new BABYLON.WebGPUEngine(canvas, {
     antialias: true,
     adaptToDeviceRatio: true
@@ -5803,7 +5793,6 @@ async function createPreferredEngine() {
       const webgpuEngine = await createWebGPUEngineWithTimeout();
       window._gpuMode = 'webgpu';
       window._gpuFallbackReason = '';
-      rememberRendererPreference('webgpu', true);
       setSt('Renderer: WebGPU ready.');
       return webgpuEngine;
     } catch (err) {
@@ -5812,16 +5801,13 @@ async function createPreferredEngine() {
         ? 'WebGPU took too long to start, loading WebGL mode instead.'
         : 'WebGPU could not start, loading WebGL mode instead.';
       console.warn('WebGPU failed. Falling back to WebGL.', err);
-      rememberRendererPreference('webgl', true);
+      if (window.BABYLON_BASE) BABYLON.Tools.ScriptBaseUrl = window.BABYLON_BASE;
       setSt(message);
       return makeWebGLFallbackEngine(message);
     }
   }
 
-  if (useWebGPU) {
-    rememberRendererPreference('webgl', true);
-    setSt('WebGPU is not available here, loading WebGL mode instead.');
-  }
+  if (useWebGPU) setSt('WebGPU is not available here, loading WebGL mode instead.');
   return makeWebGLFallbackEngine('Renderer: loading WebGL mode...');
 }
 
