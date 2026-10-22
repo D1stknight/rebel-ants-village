@@ -39,6 +39,8 @@ if [ "$FRIEND" = human ]; then export FORGE_NO_SPINE_ALIGN=1 FORGE_HEAD_CHEST_RE
 # v2.38 Saints players only (Miguel: the upper arm / shoulder blocky in the fight moves): the Mixamo moves keep the
 # actor's whole collarbone turn (shoulderfix CLAV_K_MOCAP; the ant master's idle / walk / run stay calmed) and the
 # shoulder is weighted like a person's (deltoid on the arm, shoulder blade on the collarbone, no armour pad share).
+# The fight moves' guard leans from the waist with a straighter upper back (humanspine, before headfix; Miguel: "still
+# looks hunch back a little" in the fight stance).
 if [ "$FRIEND" = human ]; then export FORGE_CLAV_K_MOCAP="${FORGE_CLAV_K_MOCAP:-1}" FORGE_HUMAN_SHOULDER=1 FORGE_PAD_SHARE="${FORGE_PAD_SHARE:-0}"; fi
 SPECIES="${FORGE_NPC_SPECIES:-}"
 if [ -n "$NPC" ]; then
@@ -130,6 +132,7 @@ step cleanup;    run "$R/fixarm.py" -- "$O/anim6_ma.blend" "$O/anim6_fix.blend"
                  run "$R/padfix.py" -- "$O/anim6_ff0.blend" "$O/anim6_ff1.blend"
                  run "$R/smoothfix.py" -- "$O/anim6_ff1.blend" "$O/anim6_ff2.blend"
                  run "$R/layerfix.py" -- "$O/anim6_ff2.blend" "$O/anim6_ff2.blend"
+if [ "$FRIEND" = human ]; then run "$R/humanspine.py" -- "$O/anim6_ff2.blend" "$O/anim6_ff2.blend"; fi   # v2.38 Saints players: the guard leans from the waist
                  run "$R/headfix.py" -- "$O/anim6_ff2.blend" "$O/anim6_ff.blend"   # v1.8 head carriage; v2.19 NPCs: yaw from the twist (no turn-round in the jump)
                  run "$R/armpitfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v1.9c no shards under the arms
                  run "$R/armorfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # re-assert after the cloth cleanups
