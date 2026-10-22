@@ -80,6 +80,15 @@ Read this first. It is the hand-off from the Cowork sessions (Sept–Oct 2026) s
 6. Older: domain DNS (Kev), #893 reforge, production wallet tests.
 
 
+## After launch (agreed with Miguel)
+- WebGPU as an automatic upgrade (Miguel, Oct 22: "put it on the after launch list"). Steps:
+  - Rewrite the village's five custom shaders for WebGPU (WGSL), so no glslang / twgsl download is needed: terrainMat, terrainGrassMat, terrainFlowerMat and seaMat (CustomMaterial, assets/village-terrain.js), and the villagePortal ShaderMaterial (village.html).
+  - Test all 15 villages, the rooms and the games in both WebGL and WebGPU.
+  - Measure frame rates on Miguel's computers.
+  - Browsers with WebGPU get it only if it is clearly faster; WebGL stays the fallback (and the default until then).
+  - Drop the remembered preference (rebelAntsRendererPreference:v1) at the same time.
+- Games up to 200 at most (Miguel, Oct 15: "after launch we can go to 200 as a max and hold it there").
+
 
 ## Repo map (the parts touched most)
 - `village.html` — the whole village runtime (Babylon.js, one big module script): assets (`ASSETS`), admin panel, layout save/load (`/api/world-layout`), collision (`rebuildVillageCollisionBlockers`, `villagePointBlocked`), player movement (render loop, `walkMode`).
