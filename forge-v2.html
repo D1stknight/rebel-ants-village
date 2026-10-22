@@ -432,8 +432,9 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 <script src="assets/forge-sfx.js"></script>
 <script src="assets/wallet-auth.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
-<script src="https://cdn.babylonjs.com/babylon.js"></script>
-<script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+<script src="assets/vendor/babylon/9.31.3/babylon.js"></script>
+<script src="assets/vendor/babylon/9.31.3/babylonjs.loaders.min.js"></script>
+<script>if (window.BABYLON) BABYLON.Tools.ScriptBaseUrl = window.BABYLON_BASE = new URL('assets/vendor/babylon/9.31.3/', location.href).href; // Babylon's own extra downloads (Draco, ...) come from the same copy (tools/babylon-upgrade.mjs)</script>
 <script src="assets/rebel-weapon.js"></script>
 <script>
 (() => {

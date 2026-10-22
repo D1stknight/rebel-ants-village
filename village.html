@@ -1772,9 +1772,10 @@ body.walk-photo #photoBtn{display:block}
   <div class="pread">O or Esc to close</div>
 </div>
 
-<script src="https://cdn.babylonjs.com/babylon.js"></script>
-<script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
-<script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+<script src="assets/vendor/babylon/9.31.3/babylon.js"></script>
+<script src="assets/vendor/babylon/9.31.3/babylonjs.loaders.min.js"></script>
+<script src="assets/vendor/babylon/9.31.3/babylonjs.materials.min.js"></script>
+<script>if (window.BABYLON) BABYLON.Tools.ScriptBaseUrl = window.BABYLON_BASE = new URL('assets/vendor/babylon/9.31.3/', location.href).href; // Babylon's own extra downloads (Draco, ...) come from the same copy (tools/babylon-upgrade.mjs)</script>
 <script src="assets/forge-core.js"></script>
 <script src="assets/village-hud.js"></script>
 <script src="assets/samurai-kit.js"></script>
@@ -1828,17 +1829,17 @@ window.CURRENT_REBEL_ANTS_VILLAGE = CURRENT_VILLAGE;
 if (window.BABYLON?.DracoCompression) {
   BABYLON.DracoCompression.Configuration = {
     decoder: {
-      wasmUrl: 'https://cdn.babylonjs.com/draco_wasm_wrapper_gltf.js',
-      wasmBinaryUrl: 'https://cdn.babylonjs.com/draco_decoder_gltf.wasm',
-      fallbackUrl: 'https://cdn.babylonjs.com/draco_decoder_gltf.js'
+      wasmUrl: window.BABYLON_BASE + 'draco_wasm_wrapper_gltf.js',
+      wasmBinaryUrl: window.BABYLON_BASE + 'draco_decoder_gltf.wasm',
+      fallbackUrl: window.BABYLON_BASE + 'draco_decoder_gltf.js'
     }
   };
 }
 if (window.BABYLON?.DracoDecoder) {
   BABYLON.DracoDecoder.DefaultConfiguration = {
-    wasmUrl: 'https://cdn.babylonjs.com/draco_wasm_wrapper_gltf.js',
-    wasmBinaryUrl: 'https://cdn.babylonjs.com/draco_decoder_gltf.wasm',
-    fallbackUrl: 'https://cdn.babylonjs.com/draco_decoder_gltf.js'
+    wasmUrl: window.BABYLON_BASE + 'draco_wasm_wrapper_gltf.js',
+    wasmBinaryUrl: window.BABYLON_BASE + 'draco_decoder_gltf.wasm',
+    fallbackUrl: window.BABYLON_BASE + 'draco_decoder_gltf.js'
   };
 }
 // Inline admin buttons call window functions. Bind these wrappers early so
@@ -8372,7 +8373,7 @@ function buildToro(root, glowColor) {
   );
 
   // Camera-facing glow halo around the flame
-  const haloTexture = new BABYLON.Texture('https://playground.babylonjs.com/textures/flare.png', scene);
+  const haloTexture = new BABYLON.Texture('assets/vendor/babylon/flare.png', scene);
 
   const haloMat = new BABYLON.StandardMaterial('toroHaloMat_' + Math.random(), scene);
   haloMat.diffuseTexture = haloTexture;
@@ -27197,7 +27198,7 @@ window.addEventListener('resize',()=>engine.resize());
   if (CURRENT_VILLAGE_ID !== 'hub') return;
   const ps = new BABYLON.ParticleSystem('petals', 250, scene);
   // Use a simple pink disc texture from CDN
-  ps.particleTexture = new BABYLON.Texture('https://playground.babylonjs.com/textures/flare.png', scene);
+  ps.particleTexture = new BABYLON.Texture('assets/vendor/babylon/flare.png', scene);
   // Emit across the whole courtyard area
   ps.emitter = new BABYLON.Vector3(0, 18, 0);
   ps.minEmitBox = new BABYLON.Vector3(-60, 0, -60);
@@ -28848,7 +28849,7 @@ function startVillagePetalEffects(){
   _villagePetalEffectsStarted = true;
   function makePetalSystem(name, count, emitY, boxSize, rate){
     const ps = new BABYLON.ParticleSystem(name, count, scene);
-    ps.particleTexture = new BABYLON.Texture('https://playground.babylonjs.com/textures/flare.png',scene);
+    ps.particleTexture = new BABYLON.Texture('assets/vendor/babylon/flare.png',scene);
     ps.emitter = new BABYLON.Vector3(0, emitY, 0);
     ps.minEmitBox = new BABYLON.Vector3(-boxSize,0,-boxSize);
     ps.maxEmitBox = new BABYLON.Vector3(boxSize,4,boxSize);

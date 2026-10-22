@@ -10,7 +10,7 @@
 //   3. the Draco glTF decoder (not in Babylon's npm packages): copied from the folder in use, else from three's npm package
 //      (examples/jsm/libs/draco/gltf, Google's decoder build) under Babylon's file names
 //   4. point the pages at the new folder (every "assets/vendor/babylon/<x.y.z>/" path) and write current.json
-//   5. remove the old folder, unless --keep-old
+//   5. remove the old folder, unless --keep-old (flare.png beside the folders is Babylon's playground glow texture: it stays)
 // Then boot all 15 villages, the Forge and the NPC Forge before pushing (CLAUDE.md: "Babylon on our own site").
 import { execFileSync } from 'child_process';
 import fs from 'fs';
@@ -50,7 +50,7 @@ for (const [pkg, file] of BABYLON_FILES) {
     // Apache License 2.0 (Babylon and Google's Draco decoder alike): the licence text and the notices go with the files
     fs.copyFileSync(path.join(dir, 'license.md'), path.join(VENDOR, 'LICENSE-babylon.md'));
     const notice = fs.existsSync(path.join(dir, 'NOTICE.md')) ? fs.readFileSync(path.join(dir, 'NOTICE.md'), 'utf8').trim() : 'Babylon.js';
-    fs.writeFileSync(path.join(VENDOR, 'NOTICE.md'), `${notice}\n\nDraco glTF decoder (draco_*_gltf.*): Copyright Google LLC, https://github.com/google/draco\n\nBoth are under the Apache License 2.0 (LICENSE-babylon.md).\n`);
+    fs.writeFileSync(path.join(VENDOR, 'NOTICE.md'), `${notice}\n\nflare.png (the village's particle glow): the Babylon.js playground texture (packages/tools/playground/public/textures).\n\nDraco glTF decoder (draco_*_gltf.*): Copyright Google LLC, https://github.com/google/draco\n\nAll of it is under the Apache License 2.0 (LICENSE-babylon.md).\n`);
   }
 }
 const oldDir = oldVersion && oldVersion !== version ? path.join(VENDOR, oldVersion) : null;
