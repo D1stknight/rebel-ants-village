@@ -36,6 +36,10 @@ if [ -z "$NPC" ] && [ -n "${FORGE_FRIEND:-}" ]; then FRIEND="$FORGE_FRIEND"; exp
 # the head carriage counts the chest's lean from its sculpted rest, and the neck takes half of the head's turn about
 # its own axis (headfix: the fight stance turned the head 44 deg at the jaw). Chumpz, Rebels and NPCs unchanged.
 if [ "$FRIEND" = human ]; then export FORGE_NO_SPINE_ALIGN=1 FORGE_HEAD_CHEST_REST=1 FORGE_NECK_TWIST_SHARE="${FORGE_NECK_TWIST_SHARE:-0.5}"; fi
+# v2.38 Saints players only (Miguel: the upper arm / shoulder blocky in the fight moves): the Mixamo moves keep the
+# actor's whole collarbone turn (shoulderfix CLAV_K_MOCAP; the ant master's idle / walk / run stay calmed) and the
+# shoulder is weighted like a person's (deltoid on the arm, shoulder blade on the collarbone, no armour pad share).
+if [ "$FRIEND" = human ]; then export FORGE_CLAV_K_MOCAP="${FORGE_CLAV_K_MOCAP:-1}" FORGE_HUMAN_SHOULDER=1 FORGE_PAD_SHARE="${FORGE_PAD_SHARE:-0}"; fi
 SPECIES="${FORGE_NPC_SPECIES:-}"
 if [ -n "$NPC" ]; then
   MOVES="$FW/anim/clips_npc.json"
