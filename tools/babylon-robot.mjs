@@ -52,6 +52,8 @@ if (cmd === 'plan') {
   // every page the smoke test has: a part that died must not read as a pass
   const expected = ['hub', ...fs.readdirSync(path.join(ROOT, 'assets/world-layouts')).filter((f) => f.endsWith('.json')).map((f) => f.slice(0, -5)).sort(), 'forge', 'npcforge', 'terrainlab', 'rig'];
   const RANK = { pass: 0, review: 1, fail: 2 };
+  let names = null;
+  const repoNames = () => names || (names = new Set(execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20 }).split('\n').map((f) => path.basename(f))));
   const pages = {};
   const fresh = (a, b) => (b || []).filter((x) => !(a || []).includes(x));
   for (const id of expected) {
@@ -62,7 +64,12 @@ if (cmd === 'plan') {
     if (A.ok && !B.ok) mark('fail', B.failed ? `does not start: ${B.failed}` : B.kind === 'village' && !(B.player > 0) ? 'the Rebel did not appear' : 'does not start');
     for (const e of fresh(A.errors, B.errors)) mark('fail', 'new error: ' + e);
     for (const e of fresh(A.bjs, B.bjs)) mark('fail', 'new Babylon error: ' + e);
-    for (const f of fresh(A.missing, B.missing)) mark('fail', 'asks for a file that is not there: ' + f);
+    // a file the site never had (no file of that name anywhere in the repo: the villages' random ambience sounds) is not Babylon's doing
+    for (const f of fresh(A.missing, B.missing)) {
+      if (f.startsWith('/assets/vendor/babylon/')) mark('fail', "asks for a Babylon file our copy doesn't have: " + f);
+      else if (!repoNames().has(path.basename(f))) notes.push(`asks for ${f}, a file the site never had (not a Babylon change)`);
+      else mark('fail', 'asks for a file that is not there: ' + f);
+    }
     for (const s of fresh(A.babylonSites, B.babylonSites)) mark('review', "wants a file from Babylon's own site (blocked in the test): " + s);
     for (const w of fresh(A.warnings, B.warnings)) mark('review', 'new Babylon warning: ' + w);
     for (const e of fresh(A.console, B.console)) mark('review', 'new console error: ' + e);
