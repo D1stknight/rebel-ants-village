@@ -29033,7 +29033,8 @@ engine.runRenderLoop(()=>{
       const _d = charMesh.rotation.y + Math.PI - _orbitAngleH, da = Math.atan2(Math.sin(_d), Math.cos(_d));
       _orbitAngleH += da * (1 - Math.exp(-(runKey ? 2.4 : 1.5) * dt));
     }
-    _orbitDist+=((runKey?13.5:9)-_orbitDist)*0.06;
+    // the camera keeps its distance when running (it used to back out to 13.5 m, so the character looked a third smaller)
+    _orbitDist+=(9-_orbitDist)*0.06;
     let dc=new BABYLON.Vector3(charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
     const _camTarget = new BABYLON.Vector3(charMesh.position.x,charMesh.position.y+2.8,charMesh.position.z);
     if (MiniGames.on && !MiniGames.roam) { /* the game drives the camera */ }
