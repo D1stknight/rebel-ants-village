@@ -263,9 +263,9 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 .seal{position:absolute;right:22px;bottom:18px;z-index:3;width:64px;height:64px;border:3px solid var(--shu);border-radius:6px;color:var(--shu);display:grid;place-items:center;font-family:Cinzel,serif;font-weight:900;font-size:11px;letter-spacing:.06em;line-height:1.2;text-align:center;transform:rotate(-6deg) scale(0);opacity:.9;mix-blend-mode:multiply}
 
 /* reveal */
-#reveal{position:fixed;z-index:12;left:50%;top:92px;transform:translateX(-50%);text-align:center;pointer-events:none;opacity:0}
-#reveal .nm{font-family:Shojumaru,serif;font-weight:400;font-size:clamp(34px,4.8vw,66px);letter-spacing:.06em;line-height:1.1;background:var(--gradName);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px rgba(79,184,255,.45)) drop-shadow(0 2px 0 rgba(20,30,80,.6))}
-#reveal .mei{font-family:Cinzel,serif;font-size:clamp(12px,1.2vw,15px);color:var(--washi);letter-spacing:.42em;margin-top:8px;text-transform:uppercase}
+#reveal{position:fixed;z-index:12;left:50%;top:92px;transform:translateX(-50%);text-align:center;pointer-events:none;opacity:0;width:max-content}
+#reveal .nm{font-family:Shojumaru,serif;font-weight:400;font-size:clamp(34px,4.8vw,66px);letter-spacing:.06em;line-height:1.1;white-space:nowrap;background:var(--gradName);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px rgba(79,184,255,.45)) drop-shadow(0 2px 0 rgba(20,30,80,.6))}
+#reveal .mei{font-family:Cinzel,serif;font-size:clamp(12px,1.2vw,15px);color:var(--washi);letter-spacing:.42em;margin-top:8px;text-transform:uppercase;white-space:nowrap}
 #awakenBtn{position:fixed;z-index:14;left:50%;bottom:9vh;transform:translateX(-50%);display:none;width:138px;height:138px;border-radius:50%;pointer-events:auto}
 #awakenBtn svg{position:absolute;inset:0}
 #awakenBtn .lbl{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
@@ -349,6 +349,7 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
   .card{padding:18px}
   h1{font-size:22px}
   #center{left:50%;top:38%;width:78vw}
+  #reveal{top:128px}   /* under the row of steps */
   .scroll{width:88vw}
   #bigKanji{display:none}
   #dock{left:10px;bottom:10px;width:calc(100vw - 20px)}
@@ -2228,12 +2229,32 @@ function awaken() {
     .to(U, { uAlpha: 0, duration: 0.8 }, '-=0.6')
     .add(() => showAwakened(false), '-=1.2');
 }
+// the name stays on one line, at most as wide as the room between the middle and the card (left:50% gave a long name
+// only half the screen: HOOLIGAN #1998 wrapped to two lines and hung over the character's head)
+function fitReveal() {
+  const nm = $('#rvName'), mei = $('#rvMei'); nm.style.fontSize = ''; mei.style.fontSize = '';
+  const cx = innerWidth / 2, p = $('#panel').getBoundingClientRect();
+  const room = 2 * (innerWidth > 900 && p.width && p.left > cx ? p.left - cx - 18 : innerWidth * 0.46);
+  for (const el of [nm, mei]) { const w = el.scrollWidth; if (w > room) el.style.fontSize = (parseFloat(getComputedStyle(el).fontSize) * room / w).toFixed(1) + 'px'; }
+}
+// the awakened framing: the camera aims a little higher, or backs off, until the character's head (the top of its
+// 1.9 m) is under the name title, feet still on screen (they may stand behind the glass of the moves dock, as before)
+function awakenCam() {
+  const b = STEPS[4].cam, H = innerHeight, tf = Math.tan(cam.fov / 2);
+  const R = $('#reveal'), top = (R.offsetHeight ? R.offsetTop + R.offsetHeight : 64) + 14, bot = H - 12;   // offsets: the fade-in's translate left out
+  const Y = (h, r, ty) => { const c = ty + r * Math.cos(b.b), a = Math.atan((h - c) / (r * Math.sin(b.b))) + Math.PI / 2 - b.b; return H / 2 * (1 - Math.tan(a) / tf); };   // screen y of height h
+  const at = (h, want, r) => { let lo = -2, hi = 4; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (Y(h, r, m) < want) lo = m; else hi = m; } return lo; };   // the aim height that puts h at want
+  for (let r = b.r; r <= 8; r += 0.05) { const t1 = at(1.9, top, r), t2 = at(0, bot, r); if (t1 <= t2) return { ...b, r, y: Math.min(Math.max(b.y, t1), t2) }; }
+  return b;
+}
+addEventListener('resize', () => { if (state.step !== 4) return; fitReveal(); if (!GL.open) camTo(awakenCam(), 0.6); });
 function showAwakened(instant) {
   $('#panel').classList.remove('hidden');
   rebel.meshes.forEach((m) => { m.visibility = 1; }); U.uMorph = 1; U.uScatter = 1; if (instant) U.uAlpha = 0;
   if (!rebel.cur) play('fight_idle', true);
   const gang = traitVal('Gang Names');
   $('#rvName').textContent = shortName(); $('#rvMei').textContent = FRIEND ? `${FRIEND.name} · Rebel Universe` : `${gang || 'Rebel'} · Battle for the Colony`;
+  fitReveal();
   gsap.fromTo('#reveal', { opacity: 0, y: -12, letterSpacing: '0.5em' }, { opacity: 1, y: 0, duration: instant ? 0.3 : 1.4, ease: 'power3.out' });
   renderCard(`
     <div class="eyebrow">STEP 5 / 5</div>
@@ -2253,7 +2274,7 @@ function showAwakened(instant) {
   // in with it for this visit. Either way the village opens with this Rebel.
   $('#enterV').onclick = async () => { const b = $('#enterV'); b.disabled = true; b.textContent = 'ENTERING…'; if (canForge()) { if (!state.mine) await makeMine(); } else rememberSelected(null); location.href = `/village.html`; };
   buildDock(); $('#dock').classList.add('show');
-  camTo(STEPS[4].cam, instant ? 0.8 : 2.2);   // v4 HD: frame the awakened Rebel close (he fills the view)
+  camTo(awakenCam(), instant ? 0.8 : 2.2);   // v4 HD: frame the awakened Rebel close (he fills the view), clear of the title
   cam.useAutoRotationBehavior = true; cam.autoRotationBehavior.idleRotationSpeed = 0.18; cam.autoRotationBehavior.idleRotationWaitTime = 4000;
 }
 async function makeMine() {
