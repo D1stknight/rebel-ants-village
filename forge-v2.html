@@ -128,6 +128,7 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 .gl-dot{flex:0 0 auto;width:18px;height:18px;border-radius:50%;border:1px solid rgba(255,255,255,.22);box-shadow:inset 0 2px 3px rgba(255,255,255,.28),inset 0 -3px 5px rgba(0,0,0,.35)}
 .gl-dot+.gl-dot{margin-left:-14px}
 .gl-run{margin-top:10px}.gl-run .bar{margin:8px 0 2px}
+.rr-run .bar{height:5px;margin:8px 0 4px}.rr-run .rr-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.rr-run .rr-pct{font-family:Cinzel,serif;font-weight:900;font-size:22px;color:var(--ice)}.rr-run .rr-eta{font-size:12px;color:var(--washi-dim)}
 .gl-seg{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:4px;margin-top:16px;padding:4px;border-radius:13px;background:rgba(239,230,210,.04);border:1px solid rgba(239,230,210,.08)}
 .gl-seg button{padding:9px 6px;border-radius:9px;font-family:Cinzel,serif;font-weight:700;font-size:11px;letter-spacing:.14em;color:var(--washi-dim);transition:all .25s var(--ease)}
 .gl-seg button:hover{color:var(--washi)}
@@ -2538,7 +2539,7 @@ async function glCheck() {
   GL.buildId = id; GL.checked = fr; GL.built = fr.options?.handFit || null; GL.auto = fr.autoColors || {};
   if (!GL.fit || GL.fitFor !== id) { GL.fit = glFull(GL.built); GL.fitFor = id; }   // slider changes are kept while this Rebel's page is open
   if (fr.status === 'running' && fr.gloves && !GL.job) { GL.job = { startedAt: fr.gloves.startedAt, t0: Date.parse(fr.gloves.startedAt) || Date.now() }; GL.step = fr.progress || 'starting'; glPoll(); }
-  glBox();
+  glBox(); rrPickUp(fr);
 }
 // the awakened card's Gloves box
 function glBoxHTML() {
@@ -2563,34 +2564,67 @@ function glBox() {
 // Oct 21 (rigger 2.37, Saints players stand like their sculpt): an admin re-rigs a forged Saint with the current rigger.
 // Same sculpt, no forge or points used; the new rig goes into the viewer and the holder's saved character (glWear), and
 // the replaced file leads to it (forge-rig-status links it). Saints only: Chumpz and Rebels have no such button.
-const RR = { job: false, poll: null, err: null, wearing: false };
+const RR = { job: false, poll: null, tick: null, err: null, wearing: false, step: 'starting', pct: 0, t0: 0, done: null };
+// Oct 22 (Miguel: "when you re-rig in forge can you add a progress bar"): where each rig step starts, as a share of a
+// Saint's rig job (local job log, 325 s: bind 31 s, moves 93, cleanup 183, export 265, qa 306), so the bar moves at the
+// job's pace and jumps ahead when a step ends early; between polls it creeps on the clock, never past the next step
+const RR_AT = { starting: 0, download: .01, armor: .02, head: .02, normalize: .02, landmarks: .03, skeleton: .04, weights: .05, bind: .11, hands: .19, cloth: .2,
+  animate: .22, moves: .29, weapons: .34, games: .35, cleanup: .56, export: .81, headcloth: .87, movespack: .88, gamespack: .88, qa: .94, thumb: .98, done: .99, saving: .99 };
+const RR_EST = 340;   // seconds: Saint #1998's re-rig took 341 s
+const rrStage = (a) => a < .05 ? 'Reading the sculpt' : a < .2 ? 'Setting it on its bones' : a < .56 ? 'Teaching every move' : a < .81 ? 'Cleaning up the moves' : a < .94 ? 'Packing the rig' : 'Checking and saving';
+function rrPct() {
+  const a = RR_AT[RR.step] ?? 0, next = Object.values(RR_AT).filter((v) => v > a).sort((x, y) => x - y)[0] ?? 1;
+  const t = (Date.now() - RR.t0) / 1000 / RR_EST;
+  RR.pct = Math.max(RR.pct || 0, Math.min(99, 100 * Math.min(Math.max(t, a), next - .005)));
+  return RR.pct;
+}
+function rrProgressUI() {
+  if (!RR.job && !RR.wearing) return;
+  const p = RR.wearing ? 100 : rrPct();
+  const b = $('#rrBar'), n = $('#rrPct'), st = $('#rrStage'), e = $('#rrEta');
+  if (b) b.style.width = p + '%'; if (n) n.textContent = Math.floor(p) + '%';
+  if (st) st.textContent = RR.wearing ? 'Putting on the new rig' : rrStage(RR_AT[RR.step] ?? 0);
+  if (e) e.textContent = RR.wearing ? 'done in a moment' : `${(left => left < 60 ? 'under a minute' : `about ${fmtMin(left)}`)(Math.max(15, RR_EST * (1 - p / 100)))} left · you can close this page`;
+}
 function rrBoxHTML() {
   if (FRIEND?.species !== 'human' || !state.own?.admin || !state.assets?.buildId || !state.assets?.glb) return '';
   return `<div class="gbox" id="rrBox"><div class="sep"></div><div class="eyebrow">ADMIN · RIGGER</div><div id="rrIn"></div></div>`;
 }
 function rrBox() {
   const el = $('#rrIn'); if (!el) return;
-  el.innerHTML = RR.job ? `<div class="note live" style="margin-top:0"><b>Re-rigging</b> · ${esc(RR.step || 'starting')} · about 5 min</div>`
-    : `<div class="note" style="margin-top:0">${RR.err ? `<b>The re-rig stopped</b> · ${esc(RR.err)}. ` : ''}Re-rig this ${NOUN} with the latest rigger: the same sculpt, no forge or points used. The saved character follows the new rig.</div>
+  el.innerHTML = RR.job || RR.wearing ? `<div class="rr-run"><div class="rr-row"><div class="note live" style="margin-top:0"><b>Re-rigging</b> · <span id="rrStage"></span></div><span class="rr-pct" id="rrPct">0%</span></div>
+       <div class="bar"><i id="rrBar" style="width:${Math.floor(RR.pct || 0)}%"></i></div><div class="rr-eta" id="rrEta"></div></div>`
+    : `<div class="note" style="margin-top:0">${RR.err ? `<b>The re-rig stopped</b> · ${esc(RR.err)}. ` : RR.done ? `<b>Re-rigged</b> · ${esc(RR.done)} ✓ ` : ''}Re-rig this ${NOUN} with the latest rigger: the same sculpt, no forge or points used. The saved character follows the new rig.</div>
        <div class="cta" style="margin-top:10px"><button class="btn wide" id="rrBtn">RE-RIG WITH THE LATEST RIGGER</button></div>`;
   const b = $('#rrBtn'); if (b) b.onclick = rrStart;
+  rrProgressUI();
+  clearInterval(RR.tick); if (RR.job) RR.tick = setInterval(rrProgressUI, 1000);
+}
+function rrGo(step, t0) { RR.err = null; RR.done = null; RR.job = true; RR.step = step || 'starting'; RR.pct = 0; RR.t0 = t0 || Date.now(); rrBox(); }
+// a re-rig started earlier (another tab, before a reload) is picked up from glCheck's status read; glove jobs are the Gloves card's
+function rrPickUp(fr) {
+  if (RR.job || !$('#rrIn') || fr?.status !== 'running' || fr.gloves) return;
+  rrGo(fr.progress, Date.parse(fr.startedAt) || Date.now()); rrPoll();
 }
 async function rrStart() {
   const id = state.assets?.buildId; if (!id || RR.job) return;
-  RR.err = null; RR.job = true; RR.step = 'starting'; rrBox();
-  try { await api('/api/forge-rig-start', { buildId: id, force: true }); toast('Re-rig started · about 5 minutes'); rrPoll(); }
-  catch (e) { RR.job = false; RR.err = e.message || 'could not start'; rrBox(); }
+  rrGo('starting');
+  try { await api('/api/forge-rig-start', { buildId: id, force: true }); toast('Re-rig started · about 6 minutes'); rrPoll(); }
+  catch (e) { RR.job = false; clearInterval(RR.tick); RR.err = e.message || 'could not start'; rrBox(); }
 }
 async function rrPoll() {
   clearTimeout(RR.poll); if (!RR.job) return;
   const id = state.assets?.buildId;
   let d = null; try { d = await api(`/api/forge-rig-status?buildId=${encodeURIComponent(id)}`); } catch (e) { RR.poll = setTimeout(rrPoll, 9000); return; }
   const fr = d.forgeRig || {};
-  if (fr.status === 'running') { RR.step = fr.progress || RR.step; rrBox(); RR.poll = setTimeout(rrPoll, 6000); return; }
-  RR.job = false;
+  if (fr.status === 'running') { if (fr.progress && fr.progress !== RR.step) { RR.step = fr.progress; rrProgressUI(); } RR.poll = setTimeout(rrPoll, 5000); return; }
+  RR.job = false; clearInterval(RR.tick);
   const url = d.forgeRigGlbUrl || fr.forgeRigGlbUrl;
   if (fr.status !== 'succeeded' || !url) { RR.err = fr.error || 'the rig did not finish'; rrBox(); return; }
-  GL.buildId = id; RR.wearing = true; try { await glWear(url, fr); } finally { RR.wearing = false; } toast(`${NOUN} re-rigged`); rrBox();
+  const secs = Math.round((Date.now() - RR.t0) / 1000);
+  GL.buildId = id; RR.wearing = true; rrBox();
+  try { await glWear(url, fr); } finally { RR.wearing = false; }
+  RR.done = secs >= 60 ? `${Math.floor(secs / 60)} min ${secs % 60} s` : `${secs} s`; toast(`${NOUN} re-rigged`); rrBox();
 }
 // the camera on the hands: both from the front, or one hand from its outer side
 function glCam(side, d = 1.2) {
