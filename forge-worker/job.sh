@@ -37,7 +37,10 @@ if [ -z "$NPC" ] && [ -n "${FORGE_FRIEND:-}" ]; then FRIEND="$FORGE_FRIEND"; exp
 # its own axis (headfix: the fight stance turned the head 44 deg at the jaw). Chumpz, Rebels and NPCs unchanged.
 if [ "$FRIEND" = human ]; then export FORGE_NO_SPINE_ALIGN=1 FORGE_HEAD_CHEST_REST=1 FORGE_NECK_TWIST_SHARE="${FORGE_NECK_TWIST_SHARE:-0.5}"; fi
 # v2.38 Saints players only (Miguel: "still looks hunch back a little" in the fight stance): the fight moves' guard
-# leans from the waist with a straighter upper back (humanspine, before headfix).
+# leans from the waist with a straighter upper back (humanspine, before headfix). The upper arm / shoulder "blocky" in
+# the fight moves: the sleeve takes the arm's turn over half the upper arm instead of its first third, and the shoulder
+# weights are smoothed far enough to matter on a human mesh (shoulderfix).
+if [ "$FRIEND" = human ]; then export FORGE_SLEEVE_RAMP="${FORGE_SLEEVE_RAMP:--0.08,0.55}" FORGE_SHOULDER_SMOOTH="${FORGE_SHOULDER_SMOOTH:-30}" FORGE_SHOULDER_CAP_SMOOTH="${FORGE_SHOULDER_CAP_SMOOTH:-120}"; fi
 SPECIES="${FORGE_NPC_SPECIES:-}"
 if [ -n "$NPC" ]; then
   MOVES="$FW/anim/clips_npc.json"

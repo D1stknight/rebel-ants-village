@@ -33,6 +33,15 @@ def smoothstep(x): x = np.clip(x, 0, 1); return x * x * (3 - 2 * x)
 
 LOWSPINE = [gi(n) for n in ('Hips', 'Spine', 'Spine1')]
 S2 = gi('Spine2')
+# v2.38 Saints players (job.sh: FORGE_FRIEND=human; Miguel: the upper arm / shoulder blocky in the fight moves). The sleeve
+# took the arm's whole turn within the first third of the upper arm (a ramp made for the Rebels' armour), so a raised arm
+# folded the shoulder like a hinge; and the smoothing below reached 1-2 cm on a dense human mesh. FORGE_SLEEVE_RAMP
+# "start,length" (in upper-arm lengths; 2.37: 0.02,0.33) spreads the turn from over the joint (its outer side) to half
+# way down the arm, like a shoulder; FORGE_SHOULDER_SMOOTH passes (6) smooth the weights round both shoulders and
+# FORGE_SHOULDER_CAP_SMOOTH more passes the shoulder caps only (the armpit and shoulder blade crease when smoothed
+# further). Unset = the v2.0 rule exactly (Rebels, Chumpz, NPCs).
+RA, RB = [float(x) for x in (os.environ.get('FORGE_SLEEVE_RAMP') or '0.02,0.33').split(',')]
+SP2H = np.array((Aw @ arm.data.bones[P + 'Spine2'].head_local)[:])
 # edges once, for the smoothing
 bm = bmesh.new(); bm.from_mesh(me.data); E = np.array([[e.verts[0].index, e.verts[1].index] for e in bm.edges]); bm.free()
 touched = np.zeros(nv, bool)
@@ -47,8 +56,11 @@ for side in ('Left', 'Right'):
     if armdom.sum() < 20: print('shoulderfix', side, 'no sleeve found'); continue
     R = float(np.percentile(r[armdom], 95))
     sleeve = upper & (t > 0.02 * Lu) & (t < 1.05 * Lu) & (r < 1.08 * R)
+    if RA < 0.02:   # the ramp starts over the joint: there only on the shoulder's outer side, never the armpit
+        out = A - SP2H; out[2] = 0; out /= np.linalg.norm(out) + 1e-9
+        sleeve |= upper & (t > RA * Lu) & (t <= 0.02 * Lu) & (r < 1.08 * R) & ((co - A) @ out > -0.25 * R)
     # 1) the sleeve rides the arm; its top blends into the shoulder and upper chest
-    k = smoothstep((t / Lu - 0.02) / 0.33)
+    k = smoothstep((t / Lu - RA) / RB)
     for i in np.nonzero(sleeve)[0]:
         keep_fore = W[i, ifo]; rest = max(0.0, 1.0 - keep_fore)
         W[i, :] = 0; W[i, ifo] = keep_fore
@@ -69,16 +81,24 @@ for side in ('Left', 'Right'):
 
 # 3) smooth the shoulder weights over the surface (a few Laplacian passes on the touched area and its ring)
 cols = [gi(n) for s in ('Left', 'Right') for n in (s + 'Arm', s + 'Shoulder')] + [S2] + LOWSPINE
+NSM = int(os.environ.get('FORGE_SHOULDER_SMOOTH') or 6); NCAP = int(os.environ.get('FORGE_SHOULDER_CAP_SMOOTH') or 0)
 region = touched.copy()
-for _ in range(3):
+for _ in range(3 if NSM <= 6 else NSM // 4):    # more passes reach further: the region grows with them
     nb = np.zeros(nv, bool); nb[E[region[E[:, 0]], 1]] = True; nb[E[region[E[:, 1]], 0]] = True; region |= nb
 deg = np.bincount(E.ravel(), minlength=nv).astype(float) + 1e-9
-for _ in range(6):
+capm = np.zeros(nv)
+if NCAP:   # over the joint and outside it, within 25 cm
+    for side in ('Left', 'Right'):
+        A = np.array((Aw @ arm.data.bones[P + side + 'Arm'].head_local)[:]); sgn = np.sign(A[0] - SP2H[0])
+        capm = np.maximum(capm, smoothstep((co[:, 2] - A[2] + 0.04) / 0.08) * smoothstep(((co[:, 0] - A[0]) * sgn + 0.06) / 0.08)
+                          * (np.linalg.norm(co - A, axis=1) < 0.25))
+for it in range(NSM + NCAP):
     S = np.zeros((nv, len(cols)))
     np.add.at(S, E[:, 0], W[E[:, 1]][:, cols]); np.add.at(S, E[:, 1], W[E[:, 0]][:, cols])
     avg = S / deg[:, None]
     tot_c = W[:, cols].sum(1)
-    Wn = 0.5 * W[:, cols] + 0.5 * avg
+    al = 0.5 if it < NSM else (0.5 * capm)[:, None]
+    Wn = (1 - al) * W[:, cols] + al * avg
     s = Wn.sum(1) + 1e-12; Wn *= (tot_c / s)[:, None]             # keep the share the other bones (cloth, forearm) have
     W[np.ix_(region, cols)] = Wn[region]
 # 4) v2.4 the collar belongs to the chest: near the neck the shoulder (clavicle) weight hands over to Spine2, fading in
