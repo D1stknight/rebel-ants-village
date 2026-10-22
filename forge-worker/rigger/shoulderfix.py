@@ -33,13 +33,6 @@ def smoothstep(x): x = np.clip(x, 0, 1); return x * x * (3 - 2 * x)
 
 LOWSPINE = [gi(n) for n in ('Hips', 'Spine', 'Spine1')]
 S2 = gi('Spine2')
-# v2.38 Saints players (FORGE_HUMAN_SHOULDER, set by job.sh for FORGE_FRIEND=human): a person's shoulder, not a Rebel's
-# armour. The cap of the shoulder rides the upper arm like a deltoid (a third of the arm's share at the joint line, all of
-# it a fifth of the way down), the top of the shoulder over the joint is part of the sleeve on its outer side, what is
-# left there goes mostly to the collarbone, and the shoulder blade and the top of the chest beside it follow the
-# collarbone too (a person's scapula slides with it). Rebels, Chumpz and NPCs keep the v2.0 rule.
-HUMAN = os.environ.get('FORGE_HUMAN_SHOULDER') == '1'
-SP2H = np.array((Aw @ arm.data.bones[P + 'Spine2'].head_local)[:])
 # edges once, for the smoothing
 bm = bmesh.new(); bm.from_mesh(me.data); E = np.array([[e.verts[0].index, e.verts[1].index] for e in bm.edges]); bm.free()
 touched = np.zeros(nv, bool)
@@ -55,16 +48,11 @@ for side in ('Left', 'Right'):
     R = float(np.percentile(r[armdom], 95))
     sleeve = upper & (t > 0.02 * Lu) & (t < 1.05 * Lu) & (r < 1.08 * R)
     # 1) the sleeve rides the arm; its top blends into the shoulder and upper chest
-    k = smoothstep((t / Lu - 0.02) / 0.33); fsh = 0.6
-    if HUMAN:
-        out = A - SP2H; out[2] = 0; out /= np.linalg.norm(out) + 1e-9          # away from the body's middle
-        outer = (co - A) @ out > -0.25 * R
-        sleeve = upper & (t > -0.12 * Lu) & (t < 1.05 * Lu) & (r < 1.08 * R) & ((t > 0.02 * Lu) | outer)
-        k = smoothstep((t / Lu + 0.12) / 0.30); fsh = 0.75
+    k = smoothstep((t / Lu - 0.02) / 0.33)
     for i in np.nonzero(sleeve)[0]:
         keep_fore = W[i, ifo]; rest = max(0.0, 1.0 - keep_fore)
         W[i, :] = 0; W[i, ifo] = keep_fore
-        W[i, ia] = rest * k[i]; W[i, ish] = rest * (1 - k[i]) * fsh; W[i, S2] = rest * (1 - k[i]) * (1 - fsh)
+        W[i, ia] = rest * k[i]; W[i, ish] = rest * (1 - k[i]) * 0.6; W[i, S2] = rest * (1 - k[i]) * 0.4
     # 2) the chest beside the armpit: arm weight fades out with distance from the sleeve
     chest = upper & ~sleeve & (W[:, ia] > 0) & (t < 1.05 * Lu)
     fade = np.clip(1 - (r - 1.08 * R) / (0.6 * R), 0, 1) * smoothstep((t / Lu) / 0.4)
@@ -76,20 +64,8 @@ for side in ('Left', 'Right'):
         s = W[i, LOWSPINE].sum()
         if s > 0:
             f = smoothstep((co[i, 2] - (A[2] - 0.35 * Lu)) / (0.3 * Lu)); W[i, S2] += s * f; W[i, LOWSPINE] *= (1 - f)
-    blade = np.zeros(nv, bool)
-    if HUMAN:
-        # the shoulder blade (behind) and the top of the chest (in front) beside this shoulder take collarbone weight from
-        # the chest bone: up to half behind, a third in front, fading toward the spine and down the back
-        half = abs(A[0] - SP2H[0]) + 1e-6
-        fx = smoothstep((np.abs(co[:, 0] - SP2H[0]) / half - 0.3) / 0.5) * (np.sign(co[:, 0] - SP2H[0]) == np.sign(A[0] - SP2H[0]))
-        fz = smoothstep((co[:, 2] - (A[2] - 0.8 * Lu)) / (0.5 * Lu)) * (co[:, 2] < A[2] + 0.3 * Lu)
-        back = co[:, 1] > SP2H[1]
-        tgt = np.where(back, 0.5, 0.3) * fx * fz
-        blade = upper & ~sleeve & (tgt > 0.01)
-        for i in np.nonzero(blade)[0]:
-            mv = min(max(0.0, tgt[i] - W[i, ish]), W[i, S2]); W[i, S2] -= mv; W[i, ish] += mv
-    touched |= sleeve | chest | top | blade
-    print(f'shoulderfix {side}: upper arm {Lu:.3f}, sleeve radius {R:.3f}, sleeve verts {int(sleeve.sum())}, chest verts {int(chest.sum())}' + (f', blade verts {int(blade.sum())}' if HUMAN else ''))
+    touched |= sleeve | chest | top
+    print(f'shoulderfix {side}: upper arm {Lu:.3f}, sleeve radius {R:.3f}, sleeve verts {int(sleeve.sum())}, chest verts {int(chest.sum())}')
 
 # 3) smooth the shoulder weights over the surface (a few Laplacian passes on the touched area and its ring)
 cols = [gi(n) for s in ('Left', 'Right') for n in (s + 'Arm', s + 'Shoulder')] + [S2] + LOWSPINE
@@ -131,12 +107,6 @@ print('shoulderfix smoothed verts', int(region.sum()))
 # rotation and hand the rest to the upper arm, so the arm still points exactly where the clip puts it.
 import mathutils as mu
 CLAV_K = float(os.environ.get('FORGE_CLAV_K', '0.4'))
-# v2.38 Saints players (FORGE_CLAV_K_MOCAP, set by job.sh for FORGE_FRIEND=human): the Mixamo moves keep CLAV_K_MOCAP of
-# the actor's collarbone turn (1 = all of it, as a person's shoulders lift and roll with a punch); the ant master's
-# idle / walk / run / flip_kick keep CLAV_K (their collarbones follow the ant's own shoulders: in full they drop a
-# person's shoulders ~30 deg in the walk). Unset = CLAV_K for every clip, as before.
-CLAV_K_MOCAP = float(os.environ.get('FORGE_CLAV_K_MOCAP') or CLAV_K)
-MASTER_CLIPS = {'idle', 'walk', 'run', 'flip_kick'}
 def _bags(act):
     for Ly in act.layers:
         for st in Ly.strips:
@@ -145,7 +115,6 @@ CLAV_SKIP = set(os.environ.get('FORGE_CLAV_SKIP', 'cartwheel,knockdown,get_up').
 n_fix = 0
 for act in bpy.data.actions:
     if act.name in CLAV_SKIP: continue
-    K = CLAV_K if act.name in MASTER_CLIPS else CLAV_K_MOCAP
     for cb in _bags(act):
         for side in ('Left', 'Right'):
             sh, ar = P + side + 'Shoulder', P + side + 'Arm'
@@ -162,11 +131,11 @@ for act in bpy.data.actions:
             for k in range(nk):
                 qs = mu.Quaternion([S[i][2 * k + 1] for i in range(4)]).normalized()
                 qa = mu.Quaternion([A[i][2 * k + 1] for i in range(4)]).normalized()
-                qs2 = I.slerp(qs, K)
+                qs2 = I.slerp(qs, CLAV_K)
                 qa2 = Ri @ (qs2.inverted() @ qs) @ R @ qa
                 for i in range(4): S[i][2 * k + 1] = qs2[i]; A[i][2 * k + 1] = qa2[i]
             for i in range(4):
                 fs[i].keyframe_points.foreach_set('co', S[i]); fa[i].keyframe_points.foreach_set('co', A[i]); fs[i].update(); fa[i].update()
             n_fix += 1
-print('shoulderfix collarbones calmed (clip sides)', n_fix, 'k', CLAV_K, *(['mocap k', CLAV_K_MOCAP] if CLAV_K_MOCAP != CLAV_K else []))
+print('shoulderfix collarbones calmed (clip sides)', n_fix, 'k', CLAV_K)
 bpy.ops.wm.save_as_mainfile(filepath=dst)
