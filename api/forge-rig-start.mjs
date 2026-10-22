@@ -91,9 +91,13 @@ const isMaster = (rec) => (rec.collectionKey || 'battle_for_colony') === 'battle
 async function startGloves(req, res, rec, buildId, admin, gloves) {
   const cur = rec.forgeRig || {}, rigUrl = rec.output?.forgeRigGlbUrl || '';
   if (cur.options?.npc) return res.status(400).json({ ok: false, error: 'NPC hands are fitted in the NPC Forge' });
-  if (cur.options?.friend || (await friendSpeciesOf(rec))) return res.status(400).json({ ok: false, error: 'Chumpz and Saints keep the gloves they were forged with', code: 'friend_gloves' });
+  // Oct 22: Saints players fit their gloves too (rigger 2.36 gloves on a human: the same fit as the NPC Forge's hands);
+  // Chumpz keep the gloves they were forged with
+  const friend = cur.options?.friend || (await friendSpeciesOf(rec)) || '';
+  if (friend && friend !== 'human') return res.status(400).json({ ok: false, error: 'Chumpz keep the gloves they were forged with', code: 'friend_gloves' });
+  const noun = friend ? 'Saint' : 'Rebel';
   if (isMaster(rec)) return res.status(403).json({ ok: false, error: 'Rebel #001 keeps its gloves', code: 'master' });
-  if (!BLOB.test(rigUrl)) return res.status(409).json({ ok: false, error: 'Forge this Rebel first', code: 'no_rig' });
+  if (!BLOB.test(rigUrl)) return res.status(409).json({ ok: false, error: `Forge this ${noun} first`, code: 'no_rig' });
   if (cur.status === 'running') return res.status(200).json({ ok: true, forgeRig: cur, alreadyRunning: true });
   const hf = cleanHandFit(gloves);
   if (fitKey(hf) === fitKey(cur.options?.handFit)) return res.status(200).json({ ok: true, forgeRig: cur, alreadyDone: true });
@@ -103,11 +107,11 @@ async function startGloves(req, res, rec, buildId, admin, gloves) {
     if (!wallet) return res.status(401).json({ ok: false, error: 'Sign in with your wallet to forge its gloves', code: 'wallet_required' });
     if (!/^\d{1,78}$/.test(tok)) return res.status(400).json({ ok: false, error: 'This build has no Rebel token', code: 'bad_token' });
     const h = await holderOf(col, tok, wallet, { fresh: true });
-    if (!h.holder) return res.status(403).json({ ok: false, error: 'Only the wallet that holds this Rebel (or its delegate.xyz delegate) can forge its gloves', code: 'not_owner' });
+    if (!h.holder) return res.status(403).json({ ok: false, error: `Only the wallet that holds this ${noun} (or its delegate.xyz delegate) can forge its gloves`, code: 'not_owner' });
     if (!(await enforceRateLimit(req, res, 'rig-gloves', 6, 86400, 'glove forgings today'))) return;
     const day = new Date().toISOString().slice(0, 10), rk = `forge:gloves:count:${col}:${tok}:${day}`, gk = `forge:rig:count:${day}`;
     const [n, , g] = await redis([['INCR', rk], ['EXPIRE', rk, 172800], ['INCR', gk], ['EXPIRE', gk, 172800]]);
-    if (Number(n?.result || 0) > GLOVES_DAILY) return res.status(429).json({ ok: false, error: `A Rebel's gloves can be forged ${GLOVES_DAILY} times a day. Try again tomorrow.`, code: 'gloves_daily' });
+    if (Number(n?.result || 0) > GLOVES_DAILY) return res.status(429).json({ ok: false, error: `A ${noun}'s gloves can be forged ${GLOVES_DAILY} times a day. Try again tomorrow.`, code: 'gloves_daily' });
     if (Number(g?.result || 0) > DAILY_LIMIT) return res.status(429).json({ ok: false, error: 'Daily rig limit reached, try again tomorrow' });
   }
   const lockKey = `forge:rig:start-lock:${buildId}`;
@@ -120,10 +124,10 @@ async function startGloves(req, res, rec, buildId, admin, gloves) {
     const o = cur.options || {}, hs = o.headScale == null || o.headScale === '' ? null : Number(o.headScale);
     const src = cur.sourceGlbUrl || sourceGlbUrl(rec);
     if (!src) throw Object.assign(new Error('Build has no stored GLB'), { status: 409 });
-    const headAuto = hs === null ? await headAutoFor(rec) : false;
+    const headAuto = hs === null && !friend ? await headAutoFor(rec) : false;   // (friends: no head auto-size, as their forge)
     const up = Number(o.headUp || 0);
     const { sandbox, cmd } = await runJob(worker, buildId, src, `rebel${sanitize(rec.tokenId || rec.rebelId, 'x')}`,
-      optionEnv({ skirtfix: o.skirtfix, up, headUrl: o.headUrl, armorUrl: o.armorUrl, anchorsUrl: o.anchorsUrl, cutBridges: o.cutBridges, hs, headAuto, npc: false, npcSpecies: '', hf }));
+      optionEnv({ skirtfix: o.skirtfix, up, headUrl: o.headUrl, armorUrl: o.armorUrl, anchorsUrl: o.anchorsUrl, cutBridges: o.cutBridges, hs, headAuto, npc: false, npcSpecies: '', friend, hf }));
     // prev: the rig as it is, put back if the job fails; rigHistory: every rig this build had, linked to the new one when
     // it is done (saved characters keep the URL they were saved with)
     const prev = { ...cur }; delete prev.gloves;
@@ -135,7 +139,7 @@ async function startGloves(req, res, rec, buildId, admin, gloves) {
     const next = await updateRigging(buildId, {
       engine: 'forge-rigger', status: 'running', progress: 'starting', sandboxName: sandbox.name, cmdId: cmd.cmdId,
       workerCommit: worker.commit || null, sourceGlbUrl: src,
-      options: { ...o, headUp: up, headScale: hs, headAuto, npc: false, handFit: hf, species: null },
+      options: { ...o, headUp: up, headScale: hs, headAuto, npc: false, handFit: hf, species: null, friend: friend || null },
       gloves: { from: rigUrl, by: admin ? 'admin' : 'holder', startedAt: at, prev },
       rigHistory: [...new Set([...(cur.rigHistory || []), rigUrl])].filter((u) => BLOB.test(u)).slice(-20), autoColors,
       startedAt: at, finishedAt: null, error: null
