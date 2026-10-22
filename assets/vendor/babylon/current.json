@@ -1,0 +1,21 @@
+{
+  "version": "9.31.3",
+  "since": "2026-10-22",
+  "previous": null,
+  "folder": "/assets/vendor/babylon/9.31.3/",
+  "files": [
+    "babylon.js",
+    "babylonjs.loaders.min.js",
+    "babylonjs.materials.min.js",
+    "draco_decoder_gltf.js",
+    "draco_decoder_gltf.wasm",
+    "draco_wasm_wrapper_gltf.js"
+  ],
+  "dracoFrom": "three@0.186.1 examples/jsm/libs/draco/gltf (Google's Draco glTF decoder)",
+  "pages": [
+    "village.html",
+    "forge-v2.html",
+    "npc-forge.html",
+    "terrain-lab.html"
+  ]
+}

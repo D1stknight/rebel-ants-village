@@ -81,5 +81,16 @@
       "path": "/api/forge-sweep",
       "schedule": "*/5 * * * *"
     }
+  ],
+  "headers": [
+    {
+      "source": "/assets/vendor/babylon/:version(\\d+\\.\\d+\\.\\d+)/:file*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
   ]
 }
