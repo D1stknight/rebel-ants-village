@@ -2826,13 +2826,13 @@ async function glWear(url, fr) {
   const id = GL.buildId || state.assets?.buildId;
   state.assets = { ...(state.assets || {}), glb: url, thumb: fr.thumbUrl || state.assets?.thumb, buildId: id };
   if (S && S.picked === id) { S.rigUrl = url; S.thumbUrl = fr.thumbUrl || S.thumbUrl; saveS(); }
-  GL.view = 'done'; GL.fit = glFull(GL.built);
-  if (GL.open) glRenderDone();
+  GL.view = GL.open && !RR.wearing ? 'done' : 'fit'; GL.fit = glFull(GL.built);   // ("Gloves forged" only on the gloves card that watched them; a re-rig is the same gloves on a new rig)
+  if (GL.open) glRender();
   const clip = rebel.cur?.name || 'idle';
   await loadRebelOnce(url);
   rebel.meshes.forEach((m) => { m.visibility = 1; }); rebel.cur = null; play(rebel.groups[clip] ? clip : rebel.groups.fight_idle ? 'fight_idle' : 'idle', true);
   glReady();   // (the new rig's preview: loadRebelOnce's Gloves box may have made it already; a second one on its skeleton copy found no hands and the box went away)
-  if (GL.open && GL.view === 'done') glRenderDone(true);
+  if (GL.open) glRender(true);
   flash(0.7, 1.3); shake(10); burst(1.0, 500); steam.manualEmitCount = 160; Snd.hiss(); Snd.play('forged', { delay: 0.4 });
   if (!GL.open && !RR.wearing) toast('New gloves forged');
   glBox();
