@@ -68,8 +68,11 @@ if (cmd === 'plan') {
     for (const e of fresh(A.console, B.console)) mark('review', 'new console error: ' + e);
     if ((B.notReady || 0) > (A.notReady || 0) + 2) mark('review', `${B.notReady} pieces on screen not ready to draw (was ${A.notReady || 0})`);
     const near = (x, y, abs, rel) => x == null || y == null || Math.abs(x - y) <= Math.max(abs, rel * Math.max(x, y));
-    if (!near(A.meshes, B.meshes, 5, .02)) mark('review', `scene pieces ${A.meshes} -> ${B.meshes}`);
-    if (!near(A.active, B.active, 10, .05)) mark('review', `pieces drawn ${A.active} -> ${B.active}`);
+    // a page still changing when it was counted (the smoke test waits up to 5 minutes) is not compared piece by piece
+    if (B.unsettled && !A.unsettled) mark('review', 'still changing after 5 minutes (it settled on the Babylon in use)');
+    const counted = (level, note) => (A.unsettled || B.unsettled ? notes.push(note + ' (still loading when counted)') : mark(level, note));
+    if (!near(A.meshes, B.meshes, 5, .02)) counted('review', `scene pieces ${A.meshes} -> ${B.meshes}`);
+    if (!near(A.active, B.active, 10, .05)) counted('review', `pieces drawn ${A.active} -> ${B.active}`);
     if (A.kind === 'village' && A.player > 0 && B.player > 0 && A.player !== B.player) mark('review', `Rebel meshes ${A.player} -> ${B.player}`);
     if (A.rigCheck?.files && B.rigCheck?.files) {
       for (const fa of A.rigCheck.files) {
