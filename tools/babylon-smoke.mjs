@@ -4,7 +4,7 @@
 // Draco, skin, its moves), and writes down what each page did. tools/babylon-robot.mjs runs it on the Babylon in use and on
 // a newer one and compares the two (.github/workflows/babylon-check.yml, every Tuesday).
 //
-// node tools/babylon-smoke.mjs --out <dir> [--root <repo>] [--only hub,ronin,forge,npcforge,terrainlab,rig] [--shard k/n] [--list] [--port 8790] [--wait 240]
+// node tools/babylon-smoke.mjs --out <dir> [--root <repo>] [--only hub,ronin,forge,npcforge,terrainlab,rig] [--shard k/n] [--list] [--trace] [--port 8790] [--wait 240]
 //   PLAYWRIGHT_DIR = a folder whose node_modules (or itself) holds playwright, when it isn't installed beside the repo
 //   SMOKE_CACHE = a folder for the outside files the pages fetch (Rebel rig, fonts, gsap), so both runs see the same bytes
 // Writes <dir>/smoke.json and a picture per page (<dir>/<id>.jpg).
@@ -39,6 +39,7 @@ const PAGES = [
   { id: 'rig', kind: 'rig', url: '/__smoke-rig.html' }
 ];
 const only = arg('only', '') ? new Set(arg('only').split(',')) : null;
+const TRACE = argv.includes('--trace');
 // --shard k/n: every n-th page from the k-th (the robot runs n parts at once on GitHub)
 const shard = (arg('shard', '').match(/^(\d+)\/(\d+)$/) || []).slice(1).map(Number);
 const RUN = PAGES.filter((pg, i) => (!only || only.has(pg.id)) && (!shard.length || i % shard[1] === shard[0] - 1));
@@ -149,6 +150,11 @@ for (const pg of RUN) {
     return route.fulfill({ status: 404, body: '' });
   });
   const page = await ctx.newPage();
+  // downloads (not /api/ calls: some pages ask those again and again) decide when a page has settled
+  const open = new Map(); let netAt = Date.now();
+  const isFile = (r) => { try { return !new URL(r.url()).pathname.startsWith('/api/'); } catch (e) { return false; } };
+  page.on('request', (r) => { if (isFile(r)) { open.set(r, Date.now()); netAt = Date.now(); } });
+  for (const ev of ['requestfinished', 'requestfailed']) page.on(ev, (r) => { if (open.delete(r)) netAt = Date.now(); });
   page.on('pageerror', (e) => rec.errors.push(norm(e.message)));
   page.on('console', (m) => {
     const t = m.text(), type = m.type();
@@ -173,13 +179,32 @@ for (const pg of RUN) {
     } else {
       await page.waitForFunction(() => !!window.BABYLON?.EngineStore?.LastCreatedScene, null, { timeout: WAIT, polling: 1000 });
     }
-    // villages keep adding pieces for a while after they say ready (late downloads, decor): count once nothing new has come for 6 s
-    const t1 = Date.now();
-    await page.waitForFunction(() => {
-      const s = window.BABYLON?.EngineStore?.LastCreatedScene, n = s ? s.meshes.length + s.materials.length : -1, w = window.__smokeSettle || (window.__smokeSettle = { n: -2, at: 0 });
-      if (n !== w.n) { w.n = n; w.at = performance.now(); return false; }
-      return performance.now() - w.at > 6000;
-    }, null, { timeout: 120000, polling: 1000 }).catch(() => { rec.unsettled = true; });
+    // villages keep adding pieces long after they say ready (late downloads, the games pack 15 s after the Rebel, decor): count once
+    // no download is open and neither the scene nor the network has changed for QUIET (villages 20 s), at most CAP;
+    // --trace writes down what came and went meanwhile (rec.trace: seconds, pieces, the names that changed, digits folded)
+    const QUIET = pg.kind === 'village' ? 20000 : 6000, CAP = pg.kind === 'village' ? 300000 : 60000, t1 = Date.now();
+    let n0 = null, at = t1, names0 = null;
+    if (TRACE) rec.trace = [];
+    for (;;) {
+      const s1 = await page.evaluate((trace) => {
+        const s = window.BABYLON?.EngineStore?.LastCreatedScene; if (!s) return { n: -1 };
+        const out = { n: s.meshes.length + s.materials.length };
+        if (trace) { out.names = {}; for (const m of s.meshes) { const k = String(m.name).replace(/\d+/g, '#').slice(0, 48); out.names[k] = (out.names[k] || 0) + 1; } }
+        return out;
+      }, TRACE).catch(() => ({ n: -1 }));
+      const now = Date.now(), busy = [...open.values()].some((t) => now - t < 30000);
+      if (s1.n !== n0) {
+        if (TRACE && names0 && rec.trace.length < 300) {
+          const d = {}; for (const k of new Set([...Object.keys(names0), ...Object.keys(s1.names || {})])) { const v = (s1.names?.[k] || 0) - (names0[k] || 0); if (v) d[k] = v; }
+          rec.trace.push({ s: Math.round((now - t1) / 1000), n: s1.n, d: Object.fromEntries(Object.entries(d).slice(0, 12)) });
+        }
+        n0 = s1.n; at = now;
+      }
+      if (TRACE && s1.names) names0 = s1.names;
+      if (!busy && now - Math.max(at, netAt) >= QUIET) break;
+      if (now - t1 >= CAP) { rec.unsettled = true; break; }
+      await new Promise((r) => setTimeout(r, 1000));
+    }
     rec.settleMs = Date.now() - t1;
     Object.assign(rec, await page.evaluate(() => new Promise((done) => {
       const B = window.BABYLON, e = B?.EngineStore?.LastCreatedEngine, s = B?.EngineStore?.LastCreatedScene;
