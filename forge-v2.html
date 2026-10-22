@@ -2831,7 +2831,7 @@ async function glWear(url, fr) {
   const clip = rebel.cur?.name || 'idle';
   await loadRebelOnce(url);
   rebel.meshes.forEach((m) => { m.visibility = 1; }); rebel.cur = null; play(rebel.groups[clip] ? clip : rebel.groups.fight_idle ? 'fight_idle' : 'idle', true);
-  GL.hands = null; glReady();
+  glReady();   // (the new rig's preview: loadRebelOnce's Gloves box may have made it already; a second one on its skeleton copy found no hands and the box went away)
   if (GL.open && GL.view === 'done') glRenderDone(true);
   flash(0.7, 1.3); shake(10); burst(1.0, 500); steam.manualEmitCount = 160; Snd.hiss(); Snd.play('forged', { delay: 0.4 });
   if (!GL.open && !RR.wearing) toast('New gloves forged');
