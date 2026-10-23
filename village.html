@@ -24764,9 +24764,22 @@ async function latestForgeRigUrl(url) {
   try { const ac = new AbortController(); const t = setTimeout(() => ac.abort(), 1500); const j = await (await fetch('/api/forge-rig-latest?url=' + encodeURIComponent(url), { signal: ac.signal })).json(); clearTimeout(t); return j && j.url || url; } catch (e) { return url; }
 }
 const _forgeSingleGlb = activeCharacter.singleGlb ? await latestForgeRigUrl(activeCharacter.singleGlb) : null;   // Forge Rigger bundle: one GLB, metres, all clips inside
+// The Rebel's own model is downloaded from our model storage (vercel-storage.com). A network that blocks it (a work
+// filter) or a download that breaks would leave the village without a player: load the page again with the starter
+// ant (?rig=master, our own files) and say why. Once only (rigFallback=1).
+function rigFallbackToStarter(err) {
+  const q = new URLSearchParams(location.search);
+  if (!_forgeSingleGlb || q.get('rigFallback') === '1' || q.get('rig') === 'master') return false;
+  console.warn('The Rebel\'s model did not download; starting with the starter ant instead.', err);
+  setSt("Your Rebel's 3D model couldn't download here. Starting with the starter ant...");
+  const u = new URL(location.href); u.searchParams.set('rig', 'master'); u.searchParams.set('rigFallback', '1');
+  setTimeout(() => location.replace(u.toString()), 1500);
+  return true;
+}
 (activeCharacter.procedural && window.SamuraiKit?.types?.includes(activeCharacter.kitModel)
   ? Promise.resolve({ kit: true, meshes: [], transformNodes: [], animationGroups: [], skeletons: [] })
-  : BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, _forgeSingleGlb || activeCharacter.idleFile, scene))
+  : BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, _forgeSingleGlb || activeCharacter.idleFile, scene)
+      .catch(err => { if (rigFallbackToStarter(err)) return new Promise(() => {}); throw err; }))
 .then(r => {
   const playerRoot = new BABYLON.TransformNode("playerRoot", scene);
   playerRoot.position = new BABYLON.Vector3(0, 0.25, 20);
@@ -29422,6 +29435,12 @@ function markVillageStartupInteractive() {
   schedulePostInteractiveStartupTask(startVillagePetalEffects, 1200);
   schedulePostInteractiveStartupTask(initVillageHud, 300);
   if (PlaytestNote) schedulePostInteractiveStartupTask(() => showToast(PlaytestNote, 9000), 2500); // a playtest jump says where it put you
+  // loaded again with the starter ant because the Rebel's model didn't download (rigFallbackToStarter): say so, and take
+  // the test parameters off the address so a reload tries the Rebel again
+  if (new URLSearchParams(location.search).get('rigFallback') === '1') schedulePostInteractiveStartupTask(() => {
+    showToast("Your Rebel's 3D model couldn't download on this network (it may block vercel-storage.com), so you're playing as the starter ant. On another network your Rebel is back.", 12000);
+    try { const u = new URL(location.href); u.searchParams.delete('rig'); u.searchParams.delete('rigFallback'); history.replaceState(history.state, '', u.toString()); } catch (e) {}
+  }, 2500);
   if (GameJump) schedulePostInteractiveStartupTask(() => runGameJump(), 3000); // a game jump walks the Rebel to that game
   const ld = document.getElementById('ld');
   if (ld) { ld.style.opacity='0'; setTimeout(()=>{ ld.style.display='none'; }, 900); }
