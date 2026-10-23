@@ -173,9 +173,10 @@ const CC_KIT = {
   cc_flower_moon: { name: 'Kokeshi Flower Moon', npcId: 'cc-flower-moon', moon: 'Flower Moon', where: 'by the great tree', moves: 'rocks gently' },
   cc_mochi: { name: 'Mochi', npcId: 'cc-mochi', moon: 'Pink Moon', where: 'at the game hall', moves: 'breathes, beckons with a paw, the rose quartz pendant glows like a heartbeat' },
   cc_ostara: { name: 'Ostara', npcId: 'cc-ostara', moon: 'Hare Moon', where: 'at the library, on the Moon Ledge from Moon Tales 13', moves: 'rocks gently' },
-  cc_nariko: { name: 'Nariko', npcId: 'cc-nariko', moon: 'Thunder Moon', where: 'in the graveyard, at the stone circle from Moon Tales 17', moves: 'rocks gently, the storm orb pulses' }
+  cc_nariko: { name: 'Nariko', npcId: 'cc-nariko', moon: 'Thunder Moon', where: 'in the graveyard, at the stone circle from Moon Tales 17', moves: 'rocks gently, the storm orb pulses' },
+  cc_lunar_witch: { name: 'Lunar Witch', npcId: 'cc-lunar-witch', moon: 'Pink Moon', where: "by her cottage's cauldron, in the Blossom Clearing from Moon Tales 06", moves: 'rocks gently' }
 };
-const CC_PLANNED = { cc_lunar_witch: { name: 'Lunar Witch', why: "Mochi's tale (Moon Tales 05-08) waits on her art." } };
+const CC_PLANNED = {};   // kit characters still waiting on their art (a card that asks for it)
 const isKit = (n) => n?.collection === 'cc';
 const KIT_KEY = /^(cc_|mystic_moons_)/;   // keys of kit-built NPCs: never a forged model (it would replace the kit look)
 const groupOf = (n) => (isKit(n) ? 'cc' : COLLECTIONS[n?.collection] ? n.collection : 'rebel');
