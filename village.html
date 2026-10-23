@@ -6363,6 +6363,25 @@ lantern_1: {
   }
 };
 
+// Phones and low-memory devices: the Hub's three buildings with the biggest textures (shrine_2, dojo_7, dojo_5: ~460 MB
+// of GPU memory, pictures up to 4096 px) load copies with no picture over 1024 px (assets/buildings/lite/, ~100 MB; the
+// same meshes, byte for byte), the shadow map is 1024 px and the picture is drawn at no more than twice the CSS pixels.
+// Without it a phone runs out of memory in the Hub (Safari's "a problem repeatedly occurred" page). ?lite=1 / ?lite=0
+// force it.
+const LITE_GRAPHICS = (() => {
+  const v = new URLSearchParams(location.search).get('lite');
+  if (v === '1' || v === '0') return v === '1';
+  try {
+    const touchOnly = matchMedia('(pointer: coarse)').matches && !matchMedia('(any-pointer: fine)').matches;
+    return touchOnly || (navigator.deviceMemory > 0 && navigator.deviceMemory <= 4);
+  } catch (e) { return false; }
+})();
+window._liteGraphics = LITE_GRAPHICS;
+if (LITE_GRAPHICS) {
+  for (const k of ['shrine_2', 'dojo_7', 'dojo_5']) if (ASSETS[k]?.path) ASSETS[k].path = ASSETS[k].path.replace('/assets/buildings/', '/assets/buildings/lite/');
+  if ((window.devicePixelRatio || 1) > 2) engine.setHardwareScalingLevel(1 / 2);   // twice the CSS pixels, not 3x
+}
+
 const CORE_ASSET_KEYS = new Set(Object.keys(ASSETS));
 
   // ═══════════════════════════════════════
@@ -13164,7 +13183,7 @@ const hemi=new BABYLON.HemisphericLight("h",new BABYLON.Vector3(0,1,0),scene);
 hemi.intensity=0.65; hemi.diffuse=new BABYLON.Color3(.52,.7,.98);
 hemi.groundColor=new BABYLON.Color3(.55,.58,.48); hemi.specular=new BABYLON.Color3(0,0,0);
 
-const shadows=new BABYLON.ShadowGenerator(2048,sun);
+const shadows=new BABYLON.ShadowGenerator(LITE_GRAPHICS ? 1024 : 2048,sun);
 shadows.useExponentialShadowMap=true; shadows.bias=0.005;
 shadows.darkness=0.85; // 0 = black shadows, 1 = none: 0.85 is only a faint 15% shade
 if (SHADOW_PREVIEW) { shadows.darkness=0.45; shadows.useExponentialShadowMap=false; shadows.usePercentageCloserFiltering=true; shadows.filteringQuality=BABYLON.ShadowGenerator.QUALITY_MEDIUM; shadows.bias=0.0015; shadows.normalBias=0.02; console.log('Village shadows on (?shadows=off to disable)'); }
@@ -28948,7 +28967,8 @@ refreshQuestBuilderOptions();
     } catch (e) { console.warn('bloom unavailable', e); }
   }
   if (look === 'high') setTimeout(addBloom, 3000);
-  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  // lite graphics (phones) draw at no more than twice the CSS pixels (LITE_GRAPHICS)
+  const dpr = Math.max(1, LITE_GRAPHICS ? Math.min(2, window.devicePixelRatio || 1) : (window.devicePixelRatio || 1));
   const levels = [1 / dpr]; if (dpr >= 1.75) levels.push(1 / 1.5); if (dpr > 1.01) levels.push(1);
   let li = 0, low = 0, high = 0;
   const pinned = qs.get('res') === 'native';
