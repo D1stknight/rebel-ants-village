@@ -141,8 +141,9 @@ small{color:var(--dim)}
   <div class="row" style="margin-top:14px;justify-content:flex-end"><button onclick="approveDlg.close()">Cancel</button><button class="gold" onclick="doApprove()">Approve</button></div>
 </dialog>
 <div id="toast"></div>
-<script src="https://cdn.babylonjs.com/babylon.js"></script>
-<script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+<script src="assets/vendor/babylon/9.31.3/babylon.js"></script>
+<script src="assets/vendor/babylon/9.31.3/babylonjs.loaders.min.js"></script>
+<script>if (window.BABYLON) BABYLON.Tools.ScriptBaseUrl = window.BABYLON_BASE = new URL('assets/vendor/babylon/9.31.3/', location.href).href; // Babylon's own extra downloads (Draco, ...) come from the same copy (tools/babylon-upgrade.mjs)</script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);

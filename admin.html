@@ -191,6 +191,26 @@ body{
   color:#8a7a5a;font-size:10px;letter-spacing:3px;font-family:'Cinzel',serif;
 }
 @keyframes annTicker{0%{transform:translateX(100%);}100%{transform:translateX(-100%);}}
+#bjs{border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);padding:22px;display:flex;flex-direction:column;gap:12px}
+#bjs h2{font-family:'Cinzel Decorative',serif;color:#c8922a;font-size:16px;letter-spacing:2px}
+#bjs p{color:#b7a98b;font-size:12px;line-height:1.7}
+#bjs .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+#bjs button,#bjs a.btn{padding:10px 16px;background:transparent;border:1px solid rgba(200,146,42,.45);color:#c8922a;font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;text-decoration:none}
+#bjs button.primary{background:rgba(200,146,42,.16);border-color:rgba(200,146,42,.8);color:#f3e6bf}
+#bjs button:disabled{opacity:.45;cursor:default}
+#bjs .ver{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+#bjs .ver div{border:1px solid rgba(200,146,42,.18);background:rgba(0,0,0,.25);padding:10px 12px}
+#bjs .ver span{display:block;color:#8a7a5a;font-size:10px;letter-spacing:2px;text-transform:uppercase}
+#bjs .ver b{display:block;color:#f3e6bf;font:600 20px Georgia,serif;margin:4px 0 2px}
+#bjs .ver small{color:#8a7a5a;font-size:11px}
+#bjs-verdict{border-left:3px solid #8a7a5a;background:rgba(0,0,0,.25);padding:10px 14px;color:#e7dcc0;font-size:13px;line-height:1.6}
+#bjs-verdict.pass{border-color:#5ecfca}
+#bjs-verdict.review{border-color:#e8c56a}
+#bjs-verdict.fail{border-color:#e07a6a}
+#bjs-verdict ul{margin:6px 0 0 18px;color:#b7a98b;font-size:12px}
+#bjs-verdict a{color:#5ecfca}
+#bjs-status{color:#5ecfca;font-size:11px;letter-spacing:1px}
+#bjs-status.err{color:#e07a6a}
 #hub-note{
   color:#8a7a5a;
   font-size:11px;
@@ -268,6 +288,25 @@ body{
     </div>
   </section>
 
+  <section id="bjs">
+    <h2>🧊 Babylon (the 3D engine)</h2>
+    <p>The site keeps its own copy of Babylon, so it never changes by itself. Babylon puts out a new version most weeks and you don't need each one. Every Tuesday (five days after Babylon's weekly release, so its quick fixes are in) a robot tests the newest on all 15 villages, the Rebel Forge, the NPC Forge and the terrain lab, and says here whether it is safe.</p>
+    <div class="ver">
+      <div><span>This site runs</span><b id="bjs-pinned">…</b><small id="bjs-pinned-at"></small></div>
+      <div><span>Dev runs</span><b id="bjs-dev">…</b><small id="bjs-dev-at"></small></div>
+      <div><span>Newest Babylon</span><b id="bjs-latest">…</b><small id="bjs-latest-at"></small></div>
+    </div>
+    <div id="bjs-verdict">Checking…</div>
+    <div class="row">
+      <button id="bjs-apply" class="primary" type="button" onclick="bjsApply()" disabled>Put it on dev</button>
+      <a id="bjs-preview" class="btn" target="_blank" rel="noopener" href="#" hidden>Try it first ↗</a>
+      <button id="bjs-run" type="button" onclick="bjsRun()">Run the robot now</button>
+      <button id="bjs-check" type="button" onclick="bjsLoad(true)">Check for updates</button>
+      <span id="bjs-status"></span>
+    </div>
+    <p>Put it on dev = the dev preview runs it right away (try it there); the live site gets it with the next dev → main, like any other change. Staying on the version you have is always safe: updating every month or two is plenty.</p>
+  </section>
+
   <div id="hub-note">
     This hub will become the private entrance for all Rebel Ants Universe admin tools:
     Village Builder, Forge Collection Manager, Character Parts Manager, generated characters,
@@ -339,7 +378,79 @@ function resetAnnouncements() { if (confirm("Go back to the landing page's own l
 document.getElementById('ann-lines').addEventListener('input', annPreview);
 document.getElementById('ann-speed').addEventListener('input', annPreview);
 
-checkAdminSession().then(loadAnnouncements);
+// Babylon card (Oct 22): /api/babylon-check (npm, the robot's report on branch babylon-update, its last run) + this site's own current.json
+const BJS_PREVIEW = 'https://rebel-ants-village-git-babylon-update-miguel-concepcions-projects.vercel.app/village.html?village=hub';
+const bjs = { data: null };
+const bjsNewer = (a, b) => { const x = String(a || '').split('.').map(Number), y = String(b || '').split('.').map(Number); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); return false; };
+const bjsDay = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '');
+const bjsEsc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function bjsStatus(text, err) { const s = document.getElementById('bjs-status'); s.textContent = text || ''; s.className = err ? 'err' : ''; }
+async function bjsLoad(fresh) {
+  if (fresh) bjsStatus('Checking…');
+  let mine = null;
+  try { mine = await (await fetch('/assets/vendor/babylon/current.json', { cache: 'no-store' })).json(); } catch (e) {}
+  try {
+    const r = await fetch('/api/babylon-check?pinned=' + encodeURIComponent(mine?.version || ''), { cache: 'no-store' }), d = await r.json();
+    if (!r.ok || !d.ok) throw new Error(d.error || 'Could not check');
+    bjs.data = d; bjsRender(d, mine);
+    bjsStatus(fresh ? 'Checked ' + new Date().toLocaleTimeString() : '');
+  } catch (e) { bjsStatus(e.message || 'Could not check', true); if (!bjs.data) document.getElementById('bjs-verdict').textContent = 'Could not reach the check right now.'; }
+}
+function bjsRender(d, mine) {
+  const $ = (id) => document.getElementById(id);
+  $('bjs-pinned').textContent = d.pinned || '?';
+  $('bjs-pinned-at').textContent = mine?.since ? 'since ' + bjsDay(mine.since) : '';
+  $('bjs-dev').textContent = d.dev || '?';
+  $('bjs-dev-at').textContent = d.dev && d.dev === d.pinned ? 'same as this site' : d.devSince ? 'since ' + bjsDay(d.devSince) : '';
+  $('bjs-latest').textContent = d.latest || '?';
+  $('bjs-latest-at').textContent = d.latestAt ? 'out ' + bjsDay(d.latestAt) : '';
+  const c = d.candidate, base = d.dev || d.pinned, box = $('bjs-verdict');
+  const pages = c ? Object.entries(c.pages || {}) : [];
+  const notes = pages.filter(([, p]) => p.notes?.length).map(([id, p]) => `<li><b>${bjsEsc(id)}</b>: ${p.notes.slice(0, 3).map(bjsEsc).join('; ')}</li>`).join('');
+  const run = c?.run ? ` <a href="${bjsEsc(c.run)}" target="_blank" rel="noopener">The robot's pictures and full report ↗</a>` : '';
+  let cls = '', html = '';
+  if (c && bjsNewer(c.version, base)) {
+    const when = bjsDay(c.at), what = `${c.counts?.pages || pages.length} pages (15 villages, the Forge, the NPC Forge, the terrain lab, the rig check)`;
+    if (c.verdict === 'pass') { cls = 'pass'; html = `✓ The robot tested <b>${bjsEsc(c.version)}</b> on ${when}: the same as ${bjsEsc(c.from)} on all ${what}. Safe to use.${run}`; }
+    else if (c.verdict === 'review') { cls = 'review'; html = `● The robot tested <b>${bjsEsc(c.version)}</b> on ${when}: it works, but some things are different. Look on "Try it first" before putting it on dev:<ul>${notes}</ul>${run}`; }
+    else { cls = 'fail'; html = `✗ The robot found problems with <b>${bjsEsc(c.version)}</b> (${when}): Universe stays on ${bjsEsc(base)}, nothing to do. A later version usually fixes it, or ask Claude.<ul>${notes}</ul>${run}`; }
+  } else if (d.latest && bjsNewer(d.latest, base)) {
+    const r = d.robot || {};
+    const when = r.missing ? 'The robot starts working once this update is on main (the next dev → main).' : r.status && r.status !== 'completed' ? 'The robot is testing it right now (about an hour).' : 'The robot tests it on Tuesday, or press "Run the robot now".';
+    html = `${bjsEsc(d.latest)} is out (${d.newerCount} version${d.newerCount === 1 ? '' : 's'} newer than ${bjsEsc(base)}). ${when}`;
+  } else { cls = 'pass'; html = `✓ Up to date: ${bjsEsc(base)} is the newest Babylon. Nothing to do.`; }
+  if (d.major) html += '<br>⚠ This is a big update (a new main version): even when the robot says safe, ask Claude to look first.';
+  if (d.deprecated) html += `<br>⚠ Babylon has withdrawn ${bjsEsc(d.pinned)} (${bjsEsc(d.deprecated)}): updating soon is a good idea.`;
+  if (d.robot?.at && !d.robot.missing) html += `<br><small style="color:#8a7a5a">The robot last ran ${bjsDay(d.robot.at)}${d.robot.conclusion ? ' (' + bjsEsc(d.robot.conclusion) + ')' : ''}.</small>`;
+  box.className = cls; box.innerHTML = html;
+  const can = !!(c && c.verdict !== 'fail' && bjsNewer(c.version, d.dev || d.pinned));
+  $('bjs-apply').disabled = !can;
+  $('bjs-apply').textContent = can ? `Put ${c.version} on dev` : 'Put it on dev';
+  $('bjs-preview').hidden = !(c && c.verdict !== 'fail');
+  $('bjs-preview').href = BJS_PREVIEW;
+}
+async function bjsPost(body) {
+  const r = await fetch('/api/babylon-check', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || !d.ok) { const e = new Error(d.error || 'Did not work'); e.d = d; throw e; }
+  return d;
+}
+async function bjsApply() {
+  const c = bjs.data?.candidate; if (!c) return;
+  const warn = c.verdict === 'review' ? '\n\nThe robot saw some differences (listed on the card). Only go ahead if it looked right on "Try it first".' : '';
+  if (!confirm(`Put Babylon ${c.version} on dev?\n\nThe dev preview gets it in about a minute; the live site only with the next dev → main.${warn}`)) return;
+  const btn = document.getElementById('bjs-apply'); btn.disabled = true; bjsStatus('Putting it on dev…');
+  try { await bjsPost({ action: 'apply', version: c.version, confirm: c.verdict === 'review' }); bjsStatus(`Done: dev is rebuilding with ${c.version} (about a minute).`); setTimeout(() => bjsLoad(), 4000); }
+  catch (e) { bjsStatus(e.message, true); btn.disabled = false; }
+}
+async function bjsRun() {
+  const btn = document.getElementById('bjs-run'); btn.disabled = true; bjsStatus('Starting the robot…');
+  try { await bjsPost({ action: 'run' }); bjsStatus('The robot started: results here in about an hour.'); }
+  catch (e) { bjsStatus(e.message, true); }
+  btn.disabled = false;
+}
+
+checkAdminSession().then(() => { loadAnnouncements(); bjsLoad(); });
 </script>
 
 </body>

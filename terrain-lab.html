@@ -19,9 +19,10 @@ html,body{margin:0;height:100%;background:#0c1514;overflow:hidden;font-family:sy
 #help{color:#aab8b4;font-size:12px}
 #busy{position:fixed;inset:0;display:grid;place-items:center;background:rgba(5,10,10,.55);font-size:16px;letter-spacing:.1em;color:#e8c56a}
 </style>
-<script src="https://cdn.babylonjs.com/babylon.js"></script>
-<script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
-<script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+<script src="assets/vendor/babylon/9.31.3/babylon.js"></script>
+<script src="assets/vendor/babylon/9.31.3/babylonjs.loaders.min.js"></script>
+<script src="assets/vendor/babylon/9.31.3/babylonjs.materials.min.js"></script>
+<script>if (window.BABYLON) BABYLON.Tools.ScriptBaseUrl = window.BABYLON_BASE = new URL('assets/vendor/babylon/9.31.3/', location.href).href; // Babylon's own extra downloads (Draco, ...) come from the same copy (tools/babylon-upgrade.mjs)</script>
 </head>
 <body>
 <canvas id="c"></canvas>

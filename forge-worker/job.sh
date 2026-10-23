@@ -30,6 +30,17 @@ NPC="${FORGE_NPC:-}"; MOVES="$FW/anim/clips.json"
 # the Rebels' clip set, weapon moves and games pack. FORGE_NPC (the NPC clip set) stays off.
 FRIEND=""
 if [ -z "$NPC" ] && [ -n "${FORGE_FRIEND:-}" ]; then FRIEND="$FORGE_FRIEND"; export FORGE_NPC_BODY=1 FORGE_NPC_SPECIES="$FRIEND"; fi
+# v2.37 Saints players only (Miguel: "standing straight", leaning back in calm / walk, shoulders and head in the moves): the
+# spine keeps its sculpted curve (retarget / retarget_bvh: the Rebel master's and the Mixamo actor's turns are added to
+# the Saint's own rest instead of copying their spine angles, which tipped a forward-leaning human chest 22 deg back),
+# the head carriage counts the chest's lean from its sculpted rest, and the neck takes half of the head's turn about
+# its own axis (headfix: the fight stance turned the head 44 deg at the jaw). Chumpz, Rebels and NPCs unchanged.
+if [ "$FRIEND" = human ]; then export FORGE_NO_SPINE_ALIGN=1 FORGE_HEAD_CHEST_REST=1 FORGE_NECK_TWIST_SHARE="${FORGE_NECK_TWIST_SHARE:-0.5}"; fi
+# v2.38 Saints players only (Miguel: "still looks hunch back a little" in the fight stance): the fight moves' guard
+# leans from the waist with a straighter upper back (humanspine, before headfix). The upper arm / shoulder "blocky" in
+# the fight moves: the sleeve takes the arm's turn over half the upper arm instead of its first third, and the shoulder
+# weights are smoothed far enough to matter on a human mesh (shoulderfix).
+if [ "$FRIEND" = human ]; then export FORGE_SLEEVE_RAMP="${FORGE_SLEEVE_RAMP:--0.08,0.55}" FORGE_SHOULDER_SMOOTH="${FORGE_SHOULDER_SMOOTH:-30}" FORGE_SHOULDER_CAP_SMOOTH="${FORGE_SHOULDER_CAP_SMOOTH:-120}"; fi
 SPECIES="${FORGE_NPC_SPECIES:-}"
 if [ -n "$NPC" ]; then
   MOVES="$FW/anim/clips_npc.json"
@@ -120,6 +131,7 @@ step cleanup;    run "$R/fixarm.py" -- "$O/anim6_ma.blend" "$O/anim6_fix.blend"
                  run "$R/padfix.py" -- "$O/anim6_ff0.blend" "$O/anim6_ff1.blend"
                  run "$R/smoothfix.py" -- "$O/anim6_ff1.blend" "$O/anim6_ff2.blend"
                  run "$R/layerfix.py" -- "$O/anim6_ff2.blend" "$O/anim6_ff2.blend"
+if [ "$FRIEND" = human ]; then run "$R/humanspine.py" -- "$O/anim6_ff2.blend" "$O/anim6_ff2.blend"; fi   # v2.38 Saints players: the guard leans from the waist
                  run "$R/headfix.py" -- "$O/anim6_ff2.blend" "$O/anim6_ff.blend"   # v1.8 head carriage; v2.19 NPCs: yaw from the twist (no turn-round in the jump)
                  run "$R/armpitfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v1.9c no shards under the arms
                  run "$R/armorfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # re-assert after the cloth cleanups

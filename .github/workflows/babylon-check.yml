@@ -1,0 +1,142 @@
+name: Babylon update check
+
+# Every Tuesday (Babylon publishes on Thursdays: five days later its quick fixes are out too) and by hand
+# (Actions > Babylon update check > Run workflow, or the Admin Hub's "Run the robot now").
+# When a newer Babylon is out: boot every village, the Rebel Forge, the NPC Forge and the terrain lab on the Babylon in use
+# and on the newer one (tools/babylon-smoke.mjs, in 4 parts at once), compare them (tools/babylon-robot.mjs) and push branch
+# babylon-update = dev + the newer Babylon + robot-report.json. It never changes dev or main: the Admin Hub's Babylon card
+# puts the branch on dev when Miguel presses the button, and production gets it with the next dev -> main.
+on:
+  schedule:
+    - cron: '41 13 * * 2'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Babylon version to test (empty = the newest)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: babylon-check
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      test: ${{ steps.plan.outputs.test }}
+      latest: ${{ steps.plan.outputs.latest }}
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: The robot's last report
+        run: git fetch --depth 1 origin babylon-update:refs/remotes/origin/babylon-update || true
+
+      - name: Newest Babylon
+        id: plan
+        env:
+          FORCE: ${{ github.event_name == 'workflow_dispatch' && 'yes' || 'no' }}
+        run: node tools/babylon-robot.mjs plan "${{ github.event.inputs.version }}"
+
+      - name: Dev runs the newest, remove an old update branch
+        if: steps.plan.outputs.reason == 'current'
+        run: git push origin --delete babylon-update || true
+
+  smoke:
+    needs: plan
+    if: needs.plan.outputs.test == 'yes'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [1, 2, 3, 4]
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install the test browser
+        run: |
+          npm install --prefix "$RUNNER_TEMP/pw" --no-audit --no-fund playwright@1.56.1
+          "$RUNNER_TEMP/pw/node_modules/.bin/playwright" install --with-deps chromium
+
+      - name: Test the Babylon in use
+        env:
+          PLAYWRIGHT_DIR: ${{ runner.temp }}/pw
+          SMOKE_CACHE: ${{ runner.temp }}/smoke-cache
+        run: node tools/babylon-smoke.mjs --shard ${{ matrix.part }}/4 --out "$RUNNER_TEMP/smoke/now"
+
+      - name: Put the newer Babylon in
+        run: node tools/babylon-upgrade.mjs "${{ needs.plan.outputs.latest }}"
+
+      - name: Test the newer Babylon
+        env:
+          PLAYWRIGHT_DIR: ${{ runner.temp }}/pw
+          SMOKE_CACHE: ${{ runner.temp }}/smoke-cache
+        run: node tools/babylon-smoke.mjs --shard ${{ matrix.part }}/4 --out "$RUNNER_TEMP/smoke/new"
+
+      - name: Keep the results and pictures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: babylon-${{ needs.plan.outputs.latest }}-part-${{ matrix.part }}
+          path: ${{ runner.temp }}/smoke
+          retention-days: 30
+
+  report:
+    needs: [plan, smoke]
+    if: always() && needs.plan.outputs.test == 'yes'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: The parts' results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: babylon-${{ needs.plan.outputs.latest }}-part-*
+          path: ${{ runner.temp }}/parts
+
+      - name: Put the newer Babylon in
+        run: node tools/babylon-upgrade.mjs "${{ needs.plan.outputs.latest }}"
+
+      - name: Compare
+        id: report
+        run: node tools/babylon-robot.mjs report "$RUNNER_TEMP/parts"
+
+      - name: Push branch babylon-update
+        run: |
+          git config user.name "babylon-robot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B babylon-update
+          git add -A assets/vendor/babylon village.html forge-v2.html npc-forge.html terrain-lab.html
+          git commit -m "Babylon ${{ needs.plan.outputs.latest }} from the robot: ${{ steps.report.outputs.verdict }}"
+          git push -f origin babylon-update
