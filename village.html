@@ -1783,6 +1783,7 @@ body.walk-photo #photoBtn{display:block}
 <script>if (window.BABYLON) BABYLON.Tools.ScriptBaseUrl = window.BABYLON_BASE = new URL('assets/vendor/babylon/9.31.3/', location.href).href; // Babylon's own extra downloads (Draco, ...) come from the same copy (tools/babylon-upgrade.mjs)</script>
 <script src="assets/forge-core.js"></script>
 <script src="assets/village-hud.js"></script>
+<script src="assets/village-touch.js"></script>
 <script src="assets/samurai-kit.js"></script>
 <script src="assets/walk-gen.js"></script>
 <script src="assets/forge-sfx.js"></script>
@@ -29370,6 +29371,8 @@ async function loadForgeCollectionsConfig() {
 }
 
 // the round Rebel button (opens the Rebel panel), the quest line beside it and the minimap (assets/village-hud.js)
+// touch screens: the stick and buttons (assets/village-touch.js) show while walking, not in admin or a board game
+setInterval(() => window.VillageTouch?.update({ walking: !!walkMode && !adminMode && !(MiniGames.on && !MiniGames.roam) && !DanceOff.on }), 250);
 function initVillageHud() {
   try {
     window.VillageHud?.init(scene, {
