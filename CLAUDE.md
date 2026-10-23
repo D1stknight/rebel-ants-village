@@ -5,6 +5,7 @@ Read this first. It is the hand-off from the Cowork sessions (Sept–Oct 2026) s
 
 ## How this repo is worked on
 - Work on the `dev` branch; push with plain git. Production = `main`, updated only by merging dev via a PR when Miguel says so.
+- At the next dev -> main (Miguel, Oct 23: "remind me after we merge to main"): tell him the Babylon robot is on from then (its workflow is on main: every Tuesday 13:41 UTC it tests the newest Babylon, 9.32.x, and the Admin Hub's Babylon card shows the verdict; when it says safe he presses "Put it on dev", tries the dev preview, and it goes live with the following dev -> main). See "Babylon on our own site".
 - Vercel builds every push to dev (preview URL `rebel-ants-village-git-dev-miguel-concepcions-projects.vercel.app`); check the deploy after pushing.
 - More notes live in the claude.ai project "Rebel Ants Universe" (docs `claude/handoff.md`, `claude/village-terrains.md`); this file carries the essentials.
 
