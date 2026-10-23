@@ -845,9 +845,11 @@
     pumpkin: { col: [.88, .42, .08], em: [.3, .1, 0] }, ghost: { col: [.75, .85, 1], em: [.55, .7, .95], alpha: .55 }, candle: { col: [.92, .88, .76] }, bone: { col: [.86, .82, .72] },
     face_fm: { tex: 'face_fm' }, face_nr: { tex: 'face_nr', em: [.08, .14, .3] }, face_os: { tex: 'face_os', em: [.06, .1, .1] }, face_mamoru: { tex: 'face_mamoru' }, face_mochi: { tex: 'face_mochi' },
     coat_mamoru: { tex: 'coat_mamoru' }, coat_mochi: { tex: 'coat_mochi' }, kimono_fm: { tex: 'kimono_fm' }, kimono_nr: { tex: 'kimono_nr' }, kimono_os: { tex: 'kimono_os' },
+    witch_moth_front: { img: 'assets/npcs/lunar-witch-moth-front.jpg', em: [.07, .05, .09] }, witch_moth_back: { img: 'assets/npcs/lunar-witch-moth-back.jpg', em: [.07, .05, .09] },
     skin_w: { col: [.95, .92, .9] }, skin_blue: { col: [.72, .82, .93] }, hair_black: { col: [.06, .06, .07], spec: [.3, .3, .35], power: 30 }, hair_blue: { col: [.06, .12, .3], spec: [.3, .4, .6], power: 30 },
     obi_red: { col: [.62, .07, .1] }, obi_silver: { col: [.78, .82, .88], spec: [.6, .6, .7], power: 40 }, obi_black: { col: [.06, .07, .08] }, horn: { col: [.88, .9, .95] }, ear_os: { col: [.1, .14, .18] },
     flower_pink: { col: [.95, .55, .66] }, flower_teal: { col: [.3, .75, .7], em: [.05, .2, .18] }, flower_orange: { col: [.95, .5, .12] }, ear_pink: { col: [.95, .62, .7] },
+    petal_pink: { col: [.98, .58, .74], em: [.16, .04, .09] }, glow_pink: { glow: [.85, .3, .55] },
     cat_black: { col: [.07, .065, .07] }, cat_white: { col: [.95, .93, .9] }, collar_red: { col: [.7, .08, .1] }, gem_green: { col: [.2, .9, .4], em: [.1, .6, .25] }, rose_quartz: { col: [.97, .66, .78], em: [.5, .16, .3], spec: [1, .92, .96], power: 90 }, moon_cake: { col: [.72, .45, .18] }, moon_cake_top: { col: [.9, .64, .32] }, shadow_wisp: { col: [.05, .03, .08], em: [.03, .01, .06], alpha: .72 }, wisp_eye: { col: [.85, .5, 1], em: [.85, .45, 1] }, starlight: { col: [.86, .9, 1], em: [.72, .8, 1] },
     orb: { col: [.6, .85, 1], em: [.45, .75, 1] }, glow_blue: { glow: [.35, .6, 1] },
     // Nariko's circle (Moon Tales 17-19): dark storm stone, the sigil's electric blue, the orb's glass, the three transformed burdens
@@ -1374,6 +1376,32 @@
     faceSphere(M, face, fur, [0, -.05, 1.3], .46, .86);
     for (const sd of [-1, 1]) { M.cyl(fur, [sd * .27, 0, 1.56], .16, .36, 6, .01); M.cyl(earIn, [sd * .27, -.06, 1.6], .09, .24, 5, .01); M.sphere(fur, [sd * .24, -.38, .08], .16, .7, 8, 4); }
     curveTube(M, fur, [[0, .45, .2], [.3, .62, .35], [.42, .55, .75], [.3, .45, .9]], [.09, .08, .07, .03], { segs: 8, n: 3, ridge: .02, bump: .02, seed: 9 });
+  }
+  // a matryoshka doll from her picture: a surface of revolution round z whose outline (prof [[radius, z], ...] bottom to
+  // top) is the doll's silhouette in the picture, the front (-y) painted with the picture straight on (planar: u from x,
+  // v from z; uv = [left, width, bottom, height] of the picture in metres) up to arc degrees either side, where the
+  // picture's own outline sits (past it a flat picture only smears its edge round the side), the rest with its own
+  // picture (u once round, the back's middle at .25; v up the doll)
+  function matryoshka(M, front, back, prof, uv, segs = 36, arc = 80) {
+    const z0 = prof[0][1], H = prof[prof.length - 1][1] - z0, P = (r, z, a) => [r * Math.cos(a), r * Math.sin(a), z];
+    for (let i = 0; i < prof.length - 1; i++) for (let j = 0; j < segs; j++) {
+      const a0 = j / segs * Math.PI * 2, a1 = (j + 1) / segs * Math.PI * 2, [r0, za] = prof[i], [r1, zb] = prof[i + 1];
+      const q = [[r0, za, a0, j], [r0, za, a1, j + 1], [r1, zb, a1, j + 1], [r1, zb, a0, j]].filter((e, k) => !(k === 3 && e[0] < 1e-6)); // the top is a point
+      const pts = q.map(e => P(e[0], e[1], e[2]));
+      if (Math.abs((a0 + a1) / 2 - 1.5 * Math.PI) < arc * Math.PI / 180) M.poly(front, pts, pts.map(p => [(p[0] - uv[0]) / uv[1], (p[2] - uv[2]) / uv[3]]));
+      else M.poly(back, pts, q.map(e => [e[3] / segs, (e[1] - z0) / H]));
+    }
+    M.cyl('darkwood', [0, 0, z0], prof[0][0] * .98, .02, segs);
+  }
+  // Vicky's moth witch read off her picture (assets/npcs/lunar-witch-moth-front.jpg): the outline in metres (2.1 m tall)
+  // and where the picture sits round her
+  const WITCH_MOTH = {
+    prof: [[.27, 0], [.3, .025], [.318, .073], [.326, .11], [.397, .293], [.426, .33], [.472, .404], [.507, .477], [.534, .55], [.559, .66], [.573, .77], [.573, .88], [.555, 1.064], [.52, 1.21], [.488, 1.321], [.477, 1.394], [.479, 1.651], [.456, 1.761], [.426, 1.834], [.408, 1.871], [.353, 1.944], [.316, 1.981], [.268, 2.018], [.202, 2.054], [.087, 2.091], [0, 2.1]],
+    uv: [-.6041, 1.2105, -.0321, 2.1642],
+  };
+  function ccPetal(M, x, y, z, s, a, tilt) {
+    const c = Math.cos(a), si = Math.sin(a), ct = Math.cos(tilt), st = Math.sin(tilt), P = (u, v) => [x + (u * c - v * si * ct), y + (u * si + v * c * ct), z + v * st];
+    M.poly('petal_pink', [P(-s, 0), P(-s * .3, -s * .45), P(s, 0), P(s * .3, s * .45)]);
   }
   function ccFlower(M, m, x, y, z, r) { for (let k = 0; k < 5; k++) { const a = k * 1.2566; M.sphere(m, [x + Math.cos(a) * r * .55, y - .01, z + Math.sin(a) * r * .55], r * .5, .6, 6, 3); } M.sphere('gold', [x, y - .04, z], r * .25, 1, 5, 3); }
   // a standing stone of Nariko's circle (Moon Tales 17-19), ~2.7 m: seven-sided, tapering and leaning a little, the top
@@ -3061,6 +3089,23 @@
       M.rod('cat_white', [-.3, -.28, .74], [-.36, -.48, .7], .1, 6); M.sphere('cat_white', [-.36, -.5, .7], .12, 1, 6, 4);
       for (const [x, y, z, r] of [[.5, -.3, .1, .13], [.62, 0, .25, .11], [-.62, .1, .2, .12], [.55, -.2, .45, .1]]) ccFlower(M, 'flower_pink', x, y, z, r);
     },
+    // the Lunar Witch of Mochi's tale (Moon Tales 05-08): Vicky's moth witch, a matryoshka doll in purple with a gold band
+    // across her eyes, a dark moon in a lavender crescent and a death's-head moth; outline and front straight from her art
+    cc_lunar_witch(M) { matryoshka(M, 'witch_moth_front', 'witch_moth_back', WITCH_MOTH.prof, WITCH_MOTH.uv); },
+    cc_petal_drift(M) { // a swirl of cherry petals drifting a metre up: Mochi's trail to the Blossom Clearing (Moon Tales 06); hovers
+      for (let k = 0; k < 22; k++) ccPetal(M, Math.cos(k * 2.4) * (.14 + .035 * k), Math.sin(k * 2.4) * (.14 + .035 * k), .8 + .05 * k, .1, k * 1.3, .6 + .2 * (k % 3));
+      M.quad('glow_pink', [[-.9, -.9, .05], [.9, -.9, .05], [.9, .9, .05], [-.9, .9, .05]]);
+    },
+    cc_petal_carpet(M) { // fallen cherry petals over the Blossom Clearing's grass (8.5 m round), a soft pink glow in its middle
+      let sd = 77; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+      for (let k = 0; k < 260; k++) { const a = r() * 6.283, d = 8.5 * Math.sqrt(r()); ccPetal(M, Math.cos(a) * d, Math.sin(a) * d, .03, .06 + .05 * r(), r() * 6.283, 0); }
+      M.quad('glow_pink', [[-4, -4, .05], [4, -4, .05], [4, 4, .05], [-4, 4, .05]]);
+    },
+    cc_rose_pendant(M) { // the Rose Quartz pendant Mochi carried, now in the Lunar Witch's palm (Moon Tales 07): glows like a heartbeat; hovers
+      M.sphere('rose_quartz', [0, 0, 1.2], .085, 1.6, 6, 3); M.sphere('chrome', [0, 0, 1.36], .022, 1, 5, 3);
+      for (const dx of [-.06, .06]) M.rod('chrome', [dx, 0, 1.52], [0, 0, 1.37], .008, 3);
+      for (const a of [0, Math.PI / 2]) { const c = Math.cos(a) * .55, s = Math.sin(a) * .55; M.quad('glow_pink', [[-c, -s, .7], [c, s, .7], [c, s, 1.7], [-c, -s, 1.7]]); }
+    },
     // subparts (built under their own pivot so they move): the beckoning paws, Mamoru's flame, Nariko's orb
     cc_paw_black(M) { M.rod('cat_black', [0, 0, 0], [.02, -.08, .4], .11, 7); M.sphere('cat_black', [.02, -.09, .46], .14, 1, 8, 5); for (const x of [-.05, 0, .05]) M.sphere('bone', [.02 + x, -.22, .5], .028, 1, 5, 3); M.sphere('bone', [.02, -.22, .42], .045, 1, 5, 3); },
     cc_paw_white(M) { // Mochi's beckoning paw, the Rose Quartz pendant hanging from it on a silver chain (Miguel's Pink Moon tale)
@@ -3646,7 +3691,7 @@
   // floating pieces (ghosts): their instances bob and sway under the placed root, so saved positions never move
   const FLOAT = new Set(['cc_ghost']), floaters = [];
   // characters: the body rocks (kokeshi) or breathes (cats); subparts under their own pivots wave, flicker, pulse
-  const CHAR = { cc_storm_stone_lit: 'still', cc_storm_orb: 'still', chz_torch_lit: 'still', chz_bonfire_lit: 'still', chz_crab: 'rock', chz_crab_shades: 'rock', cc_flower_moon: 'rock', cc_nariko: 'rock', cc_ostara: 'rock', cc_mamoru: 'bob', cc_mochi: 'bob', cc_trickster: 'hover', cc_chime_light: 'hover', cc_shadow: 'hover' };
+  const CHAR = { cc_storm_stone_lit: 'still', cc_storm_orb: 'still', chz_torch_lit: 'still', chz_bonfire_lit: 'still', chz_crab: 'rock', chz_crab_shades: 'rock', cc_flower_moon: 'rock', cc_nariko: 'rock', cc_ostara: 'rock', cc_lunar_witch: 'rock', cc_petal_drift: 'hover', cc_rose_pendant: 'hover', cc_mamoru: 'bob', cc_mochi: 'bob', cc_trickster: 'hover', cc_chime_light: 'hover', cc_shadow: 'hover' };
   const SUBPARTS = { cc_storm_stone_lit: [['cc_storm_spark', [.14, -.02, 3.12], 'pulse']], cc_storm_orb: [['cc_storm_orb_core', [0, 0, 3.7], 'pulse']], chz_torch_lit: [['chz_torch_flame', [0, 0, 2.5], 'flicker']], chz_bonfire_lit: [['chz_bonfire_flame', [0, 0, .05], 'flicker']], cc_mamoru: [['cc_paw_black', [.36, -.25, .92], 'wave'], ['cc_candle_flame', [0, 0, 2.17], 'flicker']], cc_mochi: [['cc_paw_white', [.36, -.25, .92], 'wave']], cc_nariko: [['cc_orb', [0, -.56, .74], 'pulse']] };
   const actors = [];
   function animateActors(t) {
@@ -4313,7 +4358,7 @@
       hemi: { i: .32, c: [.82, .72, 1], g: [.14, .1, .16] },
       lights: [{ p: [0, 1.8, -3.6], c: [.45, 1, .4], i: .8, r: 7, flicker: .3 }, { p: [0, 1.2, -5.2], c: [1, .55, .2], i: .6, r: 6, flicker: .35 }, { p: [5, 3, 2], c: [.7, .55, 1], i: .4, r: 7 }, { p: [-4, 3.2, 1], c: [1, .8, .55], i: .35, r: 7 }],
       parts: [{ type: 'room_cc_bubbles', p: [0, 1.5, -3.6], anim: { bob: [.06, 1.2] } }, ...[[-3, 2], [2.6, 3], [4, -3.4]].map(([x, z], k) => ({ type: 'room_cc_bat', p: [x, CW.H - .3, z], ry: k * 1.3, anim: { sway: [.18, 2.4 + k * .5] } }))],
-      blockers: [{ box: [-2.6, -CW.HY, 2.6, -4.6] }, { circle: [0, -3.6, 1.1] }, { box: [-CW.HX, -4.2, -6, 3.2] }, { box: [3.2, -3.6, 6.4, -.4] }, { circle: [-3.6, -4.4, .7] }, { box: [CW.HX - .8, -5.6, CW.HX, -4.2] }]
+      blockers: [{ box: [-2.6, -CW.HY, 2.6, -4.6] }, { circle: [0, -3.6, 1.1] }, { box: [-CW.HX, -4.2, -6, 3.2] }, { box: [3.2, -3.6, 6.4, -.4] }, { circle: [-3.6, -4.4, .7] }, { box: [CW.HX - .8, -5.6, CW.HX, -4.2] }, { box: [CW.HX - 1.3, 1.65, CW.HX, 3.15] }]
     },
     room_cc_game: {
       bounds: [-CG.HX, CG.HX, -CG.HY, CG.HY + .2], spawn: [0, CG.HY - 4.6, Math.PI], exit: [0, CG.HY + .3], ceil: CG.H,
@@ -6734,6 +6779,11 @@
       M.rod('wood', [HX - .4, -5.2, 0], [HX - .7, -4.6, 2.8], .05, 5); M.cyl('straw', [HX - .38, -5.25, 0], .3, .7, 8, .08);
       discK(M, 'night_sky', [HX - .05, 2.4, 2.9], [0, 1, 0], [0, 0, 1], .9, 24); M.tube('darkwood', [HX - .1, 2.4, 2.9], [HX, 2.4, 2.9], .98, .98, 24, false); for (const t of [0, 1]) M.rod('darkwood', [HX - .06, 2.4 - (t ? 0 : .9), 2.9 - (t ? .9 : 0)], [HX - .06, 2.4 + (t ? 0 : .9), 2.9 + (t ? .9 : 0)], .03, 4);
       M.quad('runner', [[-1.6, -1, .01], [1.6, -1, .01], [1.6, 3.6, .01], [-1.6, 3.6, .01]]);
+      // her writing table under the round window, the page she left on it (Moon Tales 05), an inkpot and a candle
+      M.block('darkwood', HX - .8, 2.4, 0, .9, 1.4, .8);
+      M.poly('paper', [[HX - 1.05, 2.1, .81], [HX - .6, 2.05, .81], [HX - .55, 2.6, .81], [HX - 1, 2.65, .81]]);
+      M.cyl('dark', [HX - .55, 1.9, .8], .05, .07, 6); M.rod('straw', [HX - .55, 1.9, .86], [HX - .7, 1.75, 1.05], .008, 3);
+      M.cyl('candle', [HX - .6, 3, .8], .045, .22, 6); M.sphere('fire', [HX - .6, 3, 1.06], .04, 1.6, 5, 3);
     },
     // the cauldron's bubbles (a part, bobbing) and a bat hanging from a beam (a part, swaying)
     room_cc_bubbles(M) { M.room = true; for (const [dx, dy, rr] of [[.2, .1, .1], [-.25, -.05, .08], [0, -.25, .07], [.1, .3, .06]]) M.sphere('brew', [dx, dy, 0], rr, 1, 6, 3); },
@@ -7070,7 +7120,7 @@
   for (const t of ['wok_great_dojo', 'yam_great_dojo', 'kenshi_great_dojo', 'sohei_great_dojo', 'buke_great_hall']) decks[t] = samDojoDeck;
   // walk floors and walls made from the geometry (assets/walk-gen.js, tools/gen-kit-walk.mjs -> assets/kit-walk.json): every
   // placed piece without hand-made decks; cloth, rope, glow, fire, water, smoke, leaves and bottles are not solid (stems and trunks are)
-  const WALK_SOFT = /^(rm_)?(leaf|leaves|palm_leaf|banana_leaf|bottle_|banner|noren|sail|rope|cloth|net$|curtain|glow|window_glow|win_lit|fire|water|smoke|ghost|spirit|neon|emblem|mark_|teal_glow|candle$|mist|shaft)/;
+  const WALK_SOFT = /^(rm_)?(leaf|leaves|petal|palm_leaf|banana_leaf|bottle_|banner|noren|sail|rope|cloth|net$|curtain|glow|window_glow|win_lit|fire|water|smoke|ghost|spirit|neon|emblem|mark_|teal_glow|candle$|mist|shaft)/;
   const SUBPART_TYPES = new Set(Object.values(SUBPARTS).flat().map(s => s[0]));
   function walkEligible(type) {
     return !!B[type] && !type.startsWith('room_') && !type.includes('__') && !type.startsWith('chz_ape_') && !CHAR[type] && !FLOAT.has(type) && !STAIRS[type] && !decks[type] && !SUBPART_TYPES.has(type);
