@@ -333,6 +333,11 @@ body.walk-photo #photoBtn{display:block}
 #ld h1{font-family:'Cinzel Decorative',serif;font-size:30px;color:#e8c56a;letter-spacing:5px;margin-bottom:10px;text-shadow:0 0 40px rgba(232,197,106,.6)}
 #ld .sub{font-size:10px;color:#5ecfca;letter-spacing:7px;text-transform:uppercase;margin-bottom:48px;animation:pulse 2s infinite}
 #ldst{font-size:10px;color:rgba(232,197,106,.45);letter-spacing:2px;margin-top:18px;text-transform:uppercase;text-align:center}
+#ldProblem{box-sizing:border-box;width:min(520px,calc(100vw - 32px));margin-top:22px;padding:18px 20px;border:1px solid rgba(232,197,106,.35);border-radius:14px;background:rgba(10,16,32,.9);color:#e9e2cc;font-size:14px;line-height:1.5;text-align:left}
+#ldProblem h2{margin:0 0 8px;font-size:17px;color:#e8c56a;letter-spacing:.5px}
+#ldProblem ol{margin:10px 0 0;padding-left:20px}#ldProblem li{margin:6px 0}
+#ldProblem .btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+#ldProblem .btns a,#ldProblem .btns button{font:inherit;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;border:1px solid rgba(232,197,106,.5);background:rgba(232,197,106,.12);color:#e8c56a;text-decoration:none;cursor:pointer}
 .lb{width:240px;height:2px;background:rgba(232,197,106,.1);position:relative;overflow:hidden}
 .lf{position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,#e8c56a,transparent);animation:sw 1.6s infinite}
 @keyframes sw{to{left:100%}}@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
@@ -1792,6 +1797,21 @@ const NEW_TERRAIN_MODULE = new URLSearchParams(location.search).get('terrain') !
   : null;
 const canvas=document.getElementById('c');
 const setSt=t=>{const el=document.getElementById('ldst'); if(el) el.textContent=t;};
+// A start the browser can't finish (no WebGL): the loading screen says what is wrong and what to try, instead of a status
+// line that never moves.
+const showStartupProblem=(title,intro,steps)=>{
+  const ld=document.getElementById('ld'); if(!ld) return;
+  ld.querySelectorAll('.sub,.lb').forEach(el=>el.style.display='none');
+  setSt('');
+  const box=document.createElement('div'); box.id='ldProblem'; box.setAttribute('role','alert');
+  const h=document.createElement('h2'); h.textContent=title; box.appendChild(h);
+  const p=document.createElement('div'); p.textContent=intro; box.appendChild(p);
+  const ol=document.createElement('ol'); steps.forEach(t=>{const li=document.createElement('li'); li.textContent=t; ol.appendChild(li);}); box.appendChild(ol);
+  const b=document.createElement('div'); b.className='btns';
+  const again=document.createElement('button'); again.type='button'; again.textContent='Try again'; again.onclick=()=>location.reload(); b.appendChild(again);
+  const back=document.createElement('a'); back.href='index.html'; back.textContent='Back to the lobby'; b.appendChild(back);
+  box.appendChild(b); ld.appendChild(box);
+};
 const VILLAGE_REGISTRY = {
   hub: { villageId:'hub', displayName:'Hub Village', route:'village.html?village=hub', themeColor:'#5ecfca', layoutPath:'assets/world-layout.json' },
   ronin: { villageId:'ronin', displayName:'Ronin Village', route:'village.html?village=ronin', themeColor:'#8f8f8f', layoutPath:'assets/world-layouts/ronin.json' },
@@ -5751,7 +5771,19 @@ function makeWebGLFallbackEngine(reason = '') {
   window._gpuMode = 'webgl';
   window._gpuFallbackReason = reason;
   setSt(reason || 'Renderer: loading WebGL mode...');
-  return new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
+  try {
+    return new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
+  } catch (err) {
+    // no WebGL: graphics acceleration off, a policy that blocks it, or no GPU
+    console.error('WebGL could not start', err);
+    window._startupProblem = 'webgl';
+    showStartupProblem('Universe needs 3D graphics (WebGL)',
+      'This browser has WebGL switched off or blocked, so Universe can\'t draw its villages.',
+      ['Chrome or Edge: Settings → System → turn on "Use graphics acceleration when available", then restart the browser.',
+       'A work or school computer may block 3D graphics: try your own computer, phone or browser.',
+       'Or open Universe in another browser (Chrome, Edge, Firefox or Safari).']);
+    return new Promise(() => {});   // the village stops here; the card says why
+  }
 }
 
 function makeTimeoutError(message) {
