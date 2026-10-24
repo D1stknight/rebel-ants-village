@@ -50,6 +50,8 @@
         pads.querySelectorAll('button').forEach(b => { b.style.width = b.style.height = '64px'; b.style.borderRadius = '50%'; b.style.touchAction = 'none'; });
         document.body.classList.add('game-hide-touch-btns');
         if (innerWidth <= 520) Object.assign(box.style, { bottom: 'auto', top: '172px', transform: 'translateX(-50%) scale(.78)', transformOrigin: '50% 0' });
+        // a phone held sideways: the bowl sat over the Rebel in the middle of the short screen; up under the title bar
+        else if (innerHeight <= 520) Object.assign(box.style, { bottom: 'auto', top: '64px', transform: 'translateX(-50%) scale(.7)', transformOrigin: '50% 0' });
       }
       const drops = [];
       const wave = box.querySelector('.wb-wave'), glint = box.querySelector('.wb-glint');
