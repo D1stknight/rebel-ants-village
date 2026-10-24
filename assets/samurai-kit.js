@@ -4356,7 +4356,8 @@
     room_cc_witch: {
       bounds: [-CW.HX, CW.HX, -CW.HY, CW.HY + .2], spawn: [0, CW.HY - 4.6, Math.PI], exit: [0, CW.HY + .3], ceil: CW.H,
       hemi: { i: .32, c: [.82, .72, 1], g: [.14, .1, .16] },
-      lights: [{ p: [0, 1.8, -3.6], c: [.45, 1, .4], i: .8, r: 7, flicker: .3 }, { p: [0, 1.2, -5.2], c: [1, .55, .2], i: .6, r: 6, flicker: .35 }, { p: [5, 3, 2], c: [.7, .55, 1], i: .4, r: 7 }, { p: [-4, 3.2, 1], c: [1, .8, .55], i: .35, r: 7 }],
+      lights: [{ p: [0, 1.8, -3.6], c: [.45, 1, .4], i: .8, r: 7, flicker: .3 }, { p: [0, 1.2, -5.2], c: [1, .55, .2], i: .6, r: 6, flicker: .35 }, { p: [5, 3, 2], c: [.7, .55, 1], i: .4, r: 7 }, { p: [-4, 3.2, 1], c: [1, .8, .55], i: .35, r: 7 },
+        { p: [CW.HX - .75, 1.5, 2.7], c: [1, .72, .42], i: .6, r: 4.5, flicker: .2 }], // the candle on her writing table (the page, Moon Tales 05)
       parts: [{ type: 'room_cc_bubbles', p: [0, 1.5, -3.6], anim: { bob: [.06, 1.2] } }, ...[[-3, 2], [2.6, 3], [4, -3.4]].map(([x, z], k) => ({ type: 'room_cc_bat', p: [x, CW.H - .3, z], ry: k * 1.3, anim: { sway: [.18, 2.4 + k * .5] } }))],
       blockers: [{ box: [-2.6, -CW.HY, 2.6, -4.6] }, { circle: [0, -3.6, 1.1] }, { box: [-CW.HX, -4.2, -6, 3.2] }, { box: [3.2, -3.6, 6.4, -.4] }, { circle: [-3.6, -4.4, .7] }, { box: [CW.HX - .8, -5.6, CW.HX, -4.2] }, { box: [CW.HX - 1.3, 1.65, CW.HX, 3.15] }]
     },
