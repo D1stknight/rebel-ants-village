@@ -108,12 +108,19 @@
       pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); });
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); H.msg(`Level ${k + 1}`, 900, label(LV[k])); }
       hud.appendChild(pick);
-      ctx.player.place(0, -1.2, 0);
+      // the spyglass button for phones (Oct 24): the same as Z or the wheel; drag still looks round, a tap still calls
+      const zoomBtn = document.createElement('button'); zoomBtn.type = 'button'; zoomBtn.textContent = 'Spyglass';
+      zoomBtn.style.cssText = 'position:absolute;bottom:62px;left:16px;display:none;min-width:96px;height:46px;padding:0 14px;border-radius:10px;border:1px solid #d8b35c;background:rgba(12,16,30,.88);color:#ffe9b0;font:700 14px Georgia,serif;letter-spacing:.06em;cursor:pointer;pointer-events:auto;touch-action:none';
+      zoomBtn.onpointerdown = (e) => { e.preventDefault(); e.stopPropagation(); st.zoom = !st.zoom; };
+      hud.appendChild(zoomBtn);
+      let zoomShown = false;
       H.title(def.title || 'The Lookout'); H.score(''); info();
       H.hint('Look round: arrows / <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or drag. Spyglass: <kbd>Z</kbd> or the wheel. Spot a scout: click it, or ring it and press <kbd>Space</kbd>.');
       aim();
       return {
         update(dt) {
+          const zs = st.phase === 'play'; if (zs !== zoomShown) { zoomShown = zs; zoomBtn.style.display = zs ? 'block' : 'none'; }
+          if (zs) { const t = st.zoom ? 'Spyglass ✓' : 'Spyglass'; if (zoomBtn.textContent !== t) zoomBtn.textContent = t; }
           // turning: held keys, slower through the spyglass
           const k = st.keys, sp = (st.zoom ? .35 : .9) * dt;
           if (k.left) st.yaw -= sp; if (k.right) st.yaw += sp; if (k.up) st.pitch += sp * .7; if (k.down) st.pitch -= sp * .7;
@@ -156,7 +163,7 @@
           if (evt.type === T.POINTERUP && st.drag) { const moved = st.drag.moved; st.drag = null; if (moved < 6) call(scene.pointerX, scene.pointerY); }
         },
         _test: { st, choose, call, aimAt(s) { const p = s.root.position, d = Math.hypot(p.x, p.z); st.yaw = Math.atan2(p.x, p.z); st.pitch = Math.atan2(p.y + .8 - EYE, d); aim(); }, get lv() { return lv; } },
-        dispose() { pick.remove(); glass.remove(); ring.remove(); if (lv) [...lv.scouts, ...lv.boars].forEach(s => { try { s.root.dispose(); } catch (e) {} }); st.pops.forEach(p => { try { p.m.dispose(); } catch (e) {} }); }
+        dispose() { pick.remove(); zoomBtn.remove(); glass.remove(); ring.remove(); if (lv) [...lv.scouts, ...lv.boars].forEach(s => { try { s.root.dispose(); } catch (e) {} }); st.pops.forEach(p => { try { p.m.dispose(); } catch (e) {} }); }
       };
     }
   };

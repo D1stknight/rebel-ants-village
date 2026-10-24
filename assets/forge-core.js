@@ -552,7 +552,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
     const safeId = String(id).replace(/'/g, "\\'");
     const imgHtml = imageUrl
-      ? `<img src="${imageUrl}" alt="Selected Forge concept">`
+      ? `<img src="${window.viaSite ? window.viaSite(imageUrl) : imageUrl}" alt="Selected Forge concept">`
       : '<div class="forge-selected-empty">Selected image missing.</div>';
 
     const actionButtonHtml = isProductionReference
@@ -3921,7 +3921,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         ? `<span class="forge-3d-build-badge" title="${escapeForgeRigText((fr.qa?.reasons || []).join('; '))}">Rig ✓ (check moves)</span>`
         : '<span class="forge-3d-build-badge ready">Rig ✓</span>';
       const thumb = fr.thumbUrl || build.output?.forgeRigThumbUrl;
-      const thumbHtml = thumb ? `<img src="${escapeForgeRigText(thumb)}" alt="Rigged character" style="width:44px;height:44px;border-radius:6px;object-fit:cover;vertical-align:middle;margin-right:6px;border:1px solid rgba(94,207,202,.5)">` : '';
+      const thumbHtml = thumb ? `<img src="${escapeForgeRigText(window.viaSite ? window.viaSite(thumb) : thumb)}" alt="Rigged character" style="width:44px;height:44px;border-radius:6px;object-fit:cover;vertical-align:middle;margin-right:6px;border:1px solid rgba(94,207,202,.5)">` : '';
       return `${thumbHtml}${badge}<a class="forge-3d-build-refresh-btn forge-3d-step-action" href="/village.html?rigUrl=${encodeURIComponent(url)}" target="_blank" rel="noopener">Play in Village</a>`;
     }
     return `<span class="forge-3d-build-badge" title="${escapeForgeRigText(fr.error || '')}">Rig failed${fr.failedStep ? ' (' + escapeForgeRigText(FORGE_RIG_STEP_LABELS[fr.failedStep] || fr.failedStep) + ')' : ''}</span>`

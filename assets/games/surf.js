@@ -168,7 +168,9 @@
           if (up || dn) { if (down) st.input = up ? 1 : -1; else if ((up && st.input > 0) || (dn && st.input < 0)) st.input = 0; }
         },
         pointer(evt) {
-          const T = B.PointerEventTypes, h = ctx.engine.getRenderHeight() || 1;
+          // the finger's height on the screen: scene.pointerY is in CSS pixels, so the canvas's CSS height (the render
+          // height is in device pixels: on a 2x phone the bottom of the screen read as the middle of the face, Oct 24)
+          const T = B.PointerEventTypes, cv = ctx.engine.getRenderingCanvas(), h = (cv && cv.clientHeight) || ctx.engine.getRenderHeight() || 1;
           if (evt.type === T.POINTERDOWN || (evt.type === T.POINTERMOVE && st.ptr != null)) st.ptr = Math.max(-1, Math.min(1, 1 - 2 * (scene.pointerY / h) * 1.15 + .15));
           if (evt.type === T.POINTERUP) st.ptr = null;
         },

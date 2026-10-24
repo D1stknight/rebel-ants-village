@@ -434,6 +434,7 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
 <script src="assets/vendor/babylon/9.31.3/babylon.js"></script>
 <script src="assets/vendor/babylon/9.31.3/babylonjs.loaders.min.js"></script>
+<script src="assets/site-files.js"></script>
 <script>if (window.BABYLON) BABYLON.Tools.ScriptBaseUrl = window.BABYLON_BASE = new URL('assets/vendor/babylon/9.31.3/', location.href).href; // Babylon's own extra downloads (Draco, ...) come from the same copy (tools/babylon-upgrade.mjs)</script>
 <script src="assets/rebel-weapon.js"></script>
 <script>
@@ -1536,7 +1537,7 @@ function renderChooser() {
   const show = S && S.phase === 'pick' && state.step === 3;
   el.classList.toggle('show', !!show); if (!show) return;
   const vs = S.builds.map((b, k) => ({ b, k })).filter((x) => x.b.stored);
-  $('#chV').innerHTML = vs.map(({ b, k }) => `<button class="chv${previewId === b.id ? ' on' : ''}${b.seen ? '' : ' fresh'}" data-id="${esc(b.id)}">${b.thumb ? `<img src="${esc(b.thumb)}" alt="">` : ''}<span>V${k + 1}</span></button>`).join('');
+  $('#chV').innerHTML = vs.map(({ b, k }) => `<button class="chv${previewId === b.id ? ' on' : ''}${b.seen ? '' : ' fresh'}" data-id="${esc(b.id)}">${b.thumb ? `<img src="${esc(viaSite(b.thumb))}" alt="">` : ''}<span>V${k + 1}</span></button>`).join('');
   $('#chV').querySelectorAll('.chv').forEach((x) => x.onclick = () => { const b = S.builds.find((y) => y.id === x.dataset.id); if (b) { b.seen = true; saveS(); } previewVersion(x.dataset.id); });
   const go_ = $('#chGo'); go_.disabled = !previewId;
   go_.textContent = previewId ? `FORGE V${S.builds.findIndex((b) => b.id === previewId) + 1} →` : 'TAP A VERSION';
@@ -1846,7 +1847,7 @@ function renderSummon(prev, quiet) {
     <div class="note">${active() ? `Forging now · about ${fmtMin(forgeProgress().rem)} left.` : `The forge paints your ${NOUN}, draws all four sides, sculpts three versions for you to choose from, then gives it a skeleton and 24 moves. About ${Math.round(total / 60)} minutes. ${allowanceNote()}`}</div>
   `, quiet);
   if (!quiet) {
-    center.innerHTML = `<div class="nftcard" id="nftCard"><img src="${state.meta?.img || ''}" alt=""><div class="cap"><div><b>#${esc(state.token)}</b><br><span>${esc(REF ? REF_NAME : FRIEND ? state.meta?.name || FRIEND.name : traitVal('Gang Names') || 'Rebel Ants')}</span></div><span>${REF ? esc(COL[0].toUpperCase() + COL.slice(1)) : FRIEND ? esc(FRIEND.name) : 'Battle for the Colony'}</span></div></div>`;
+    center.innerHTML = `<div class="nftcard" id="nftCard"><img src="${viaSite(state.meta?.img || '')}" alt=""><div class="cap"><div><b>#${esc(state.token)}</b><br><span>${esc(REF ? REF_NAME : FRIEND ? state.meta?.name || FRIEND.name : traitVal('Gang Names') || 'Rebel Ants')}</span></div><span>${REF ? esc(COL[0].toUpperCase() + COL.slice(1)) : FRIEND ? esc(FRIEND.name) : 'Battle for the Colony'}</span></div></div>`;
     const nc = $('#nftCard'); if (state.summoned) gsap.set(nc, { opacity: 0 }); else inkSmokeIn(nc);
   }
   card.querySelectorAll('.picker button').forEach((b) => b.onclick = () => selectToken(b.dataset.t));
@@ -1965,7 +1966,7 @@ function renderInk(prev, quiet) {
       <div class="note">Continues on its own in <b id="autoN">${approveLeft}</b> s. Paint again uses one of today's paintings.</div>` : ''}
     ${past ? `<div class="cta"><button class="btn fire wide" id="nextBtn">${liveStep() >= 3 ? 'TO THE FORGE →' : 'THE BLUEPRINT →'}</button></div>` : ''}
     ${S?.prodUrl || S?.conceptUrl ? `<div class="dl"><span>KEEP THE ART</span>${S.prodUrl ? `<button class="chip" id="dlProd">⤓ Clean drawing</button>` : ''}${S.conceptUrl ? `<button class="chip" id="dlConcept">⤓ Painted concept</button>` : ''}</div>` : ''}
-    ${S?.history?.length ? `<div class="kept"><span>${waiting ? 'YOUR PAINTINGS · TAP ONE TO USE IT' : 'EARLIER PAINTINGS'}</span><div class="kthumbs">${S.history.map((h, k) => `<button class="kthumb" data-k="${k}" title="${waiting ? 'Use this painting' : 'Download'}"><img src="${esc(h.prodUrl)}" alt=""></button>`).join('')}</div></div>` : ''}
+    ${S?.history?.length ? `<div class="kept"><span>${waiting ? 'YOUR PAINTINGS · TAP ONE TO USE IT' : 'EARLIER PAINTINGS'}</span><div class="kthumbs">${S.history.map((h, k) => `<button class="kthumb" data-k="${k}" title="${waiting ? 'Use this painting' : 'Download'}"><img src="${esc(viaSite(h.prodUrl))}" alt=""></button>`).join('')}</div></div>` : ''}
     ${!waiting && !past && !S?.err ? `<div class="note">Keep this page open while the brush paints (about ${fmtMin(expect('concept') + expect('prod'))}). Once the sculpting starts you can leave.</div>` : ''}
   `, quiet);
   const frame = center.querySelector('.inkframe');
@@ -2037,7 +2038,7 @@ function renderForm(prev, quiet) {
       <div class="rod"></div>
       <div class="paper" id="paper">
         <div class="bp-head"><span>BLUEPRINT</span><span>${esc(shortName())}</span><span>${esc(traitVal('Gang Names') || '')}</span></div>
-        <div class="bp-views four">${views.map(([n, u]) => `<div class="bp-view">${u ? `<img class="line" src="${esc(u)}" alt=""><img class="col" src="${esc(u)}" alt="">` : '<div class="bp-wait">図</div>'}<label>${n}</label></div>`).join('')}</div>
+        <div class="bp-views four">${views.map(([n, u]) => `<div class="bp-view">${u ? `<img class="line" src="${esc(viaSite(u))}" alt=""><img class="col" src="${esc(viaSite(u))}" alt="">` : '<div class="bp-wait">図</div>'}<label>${n}</label></div>`).join('')}</div>
         <svg class="bp-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
           <line x1="2" y1="12" x2="2" y2="94"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="1" y1="94" x2="3" y2="94"/>
           <path d="M8 60 H92" stroke-dasharray="1 1.5"/>
@@ -2096,7 +2097,7 @@ function versionsHTML() {
   const pick = S.phase === 'pick';
   return `<div class="vers">${S.builds.map((b, k) => {
     const cls = ['ver', b.failed ? 'bad' : '', b.glb ? 'ready' : '', S.picked === b.id ? 'on' : '', pick && b.stored ? 'can' : '', previewId === b.id ? 'prev' : ''].join(' ');
-    const inner = b.failed ? `<div class="vp">✕</div>` : b.thumb ? `<img src="${esc(b.thumb)}" alt="">` : `<div class="vp">${Math.round(b.p || 0)}<small>%</small></div>`;
+    const inner = b.failed ? `<div class="vp">✕</div>` : b.thumb ? `<img src="${esc(viaSite(b.thumb))}" alt="">` : `<div class="vp">${Math.round(b.p || 0)}<small>%</small></div>`;
     return `<button class="${cls}" data-id="${esc(b.id)}" ${pick && b.stored ? '' : 'disabled'}>${inner}<span class="vl">V${k + 1}${b.glb && !b.failed ? '' : b.failed ? ' · failed' : ` · ${Math.round(b.p || 0)}%`}</span></button>`;
   }).join('')}</div>`;
 }

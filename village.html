@@ -183,7 +183,8 @@ body.walk-photo #photoBtn{display:block}
 #danceOff .do-pad{width:46px;height:40px;border-radius:10px;border:1px solid #d8b35c;background:rgba(255,216,119,.08);color:#ffe9b0;font:700 20px/38px sans-serif;cursor:pointer}
 /* the timing bar (SkillBar): stop the sliding marker in the gold */
 #skillBar{position:fixed;left:50%;bottom:24%;transform:translateX(-50%);width:min(440px,86vw);padding:14px 18px 12px;background:rgba(10,13,22,.9);border:1px solid rgba(216,179,92,.6);border-radius:12px;color:#f3e6c4;font:600 14px/1.3 Georgia,serif;text-align:center;z-index:60;display:none;box-shadow:0 8px 30px rgba(0,0,0,.45);user-select:none}
-#skillBar.on{display:block}
+#skillBar.on{display:block;touch-action:none}
+@media (pointer:coarse) and (max-width:520px){#skillBar{bottom:auto;top:190px}}
 #skillBar .sb-title{letter-spacing:.14em;text-transform:uppercase;font-size:12px;color:#d8b35c;margin-bottom:10px}
 #skillBar .sb-track{position:relative;height:20px;border-radius:10px;background:linear-gradient(90deg,#2a140e,#4a2414 40%,#4a2414 60%,#2a140e);cursor:pointer}
 #skillBar .sb-zone{position:absolute;top:0;bottom:0;border-radius:4px;background:linear-gradient(90deg,#b77b22,#ffd877,#b77b22);box-shadow:0 0 12px #ffcc66}
@@ -194,6 +195,8 @@ body.walk-photo #photoBtn{display:block}
 #skillBar .sb-msg{margin-top:8px;min-height:18px;font-size:13px;color:#ffe9b0}
 #skillBar.miss .sb-track{animation:sbShake .25s}
 .mg-restart{margin-top:8px;font:600 12px Georgia,serif;letter-spacing:.08em;padding:5px 14px;border-radius:6px;border:1px solid #8a6a2a;background:#2a1d10;color:#ffe9b0;cursor:pointer}
+.mg-leave{margin:8px 0 0 8px;font:600 12px Georgia,serif;letter-spacing:.08em;padding:5px 14px;border-radius:6px;border:1px solid #8a6a2a;background:#2a1d10;color:#ffe9b0;cursor:pointer}
+@media (pointer:coarse){#danceOff .do-pad{width:58px;height:50px;touch-action:none}.mg-restart,.mg-leave{padding:10px 16px;font-size:13px}}
 @keyframes sbShake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 #questTrackerObjective{
   font-size:8px;
@@ -507,6 +510,9 @@ body.walk-photo #photoBtn{display:block}
 @keyframes villageTravelSpin{to{transform:rotate(360deg)}}
 #returnHubBtn{position:fixed;top:78px;left:50%;transform:translateX(-50%);z-index:20;display:none;background:rgba(5,10,28,.92);border:1px solid rgba(232,197,106,.5);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:8px 14px;cursor:pointer;backdrop-filter:blur(12px)}
 #returnHubBtn.on{display:block}
+@media (max-width:520px){#returnHubBtn{top:146px}}
+html.vt-touch #interactionPrompt{bottom:auto;top:184px;max-width:92vw;white-space:normal;text-align:center}
+body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPrompt{display:none}
 #returnHubBtn:hover{background:rgba(232,197,106,.16)}
 #villageGateOverlay{position:fixed;inset:0;background:rgba(2,8,18,.62);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:70;opacity:0;pointer-events:none;transition:opacity .22s}
 #villageGateOverlay.on{opacity:1;pointer-events:all}
@@ -1707,8 +1713,8 @@ body.walk-photo #photoBtn{display:block}
 <button id="photoBtn" title="Take a picture (P)" onclick="window.takeVillagePhoto && window.takeVillagePhoto()">&#128247;</button>
 <div id="photoFlash"></div>
 <div id="photoOverlay"><div class="ph-card"><img id="photoImg" alt="Your picture"><div class="ph-cap"></div><div class="ph-btns"><button onclick="window.saveVillagePhoto()">Save</button><button onclick="window.shareVillagePhoto()">Share</button><button onclick="window.closeVillagePhoto()">Close</button></div></div></div>
-<div id="danceOff"><div class="do-title"></div><div class="do-levels"></div><div class="do-lane"><div class="do-ring"></div><div class="do-notes"></div></div><div class="do-score"><span class="do-count"></span><span class="do-judge"></span></div><div class="do-pads"><button class="do-pad" onclick="window.pressDance && window.pressDance(0)">←</button><button class="do-pad" onclick="window.pressDance && window.pressDance(1)">↑</button><button class="do-pad" onclick="window.pressDance && window.pressDance(2)">→</button><button class="do-pad" onclick="window.pressDance && window.pressDance(3)">↓</button></div><button class="mg-restart" onclick="this.blur(); window.restartDanceOff && window.restartDanceOff()">Restart</button></div>
-<div id="skillBar" onclick="window.pressSkillBar && window.pressSkillBar()"><div class="sb-title"></div><div class="sb-track"><div class="sb-zone"></div><div class="sb-mark"></div></div><div class="sb-pips"></div><div class="sb-msg"></div><button class="mg-restart" onclick="event.stopPropagation(); this.blur(); window.restartSkillBar && window.restartSkillBar()">Restart</button></div>
+<div id="danceOff"><div class="do-title"></div><div class="do-levels"></div><div class="do-lane"><div class="do-ring"></div><div class="do-notes"></div></div><div class="do-score"><span class="do-count"></span><span class="do-judge"></span></div><div class="do-pads"><button class="do-pad" onpointerdown="event.preventDefault(); window.pressDance && window.pressDance(0)">←</button><button class="do-pad" onpointerdown="event.preventDefault(); window.pressDance && window.pressDance(1)">↑</button><button class="do-pad" onpointerdown="event.preventDefault(); window.pressDance && window.pressDance(2)">→</button><button class="do-pad" onpointerdown="event.preventDefault(); window.pressDance && window.pressDance(3)">↓</button></div><button class="mg-restart" onclick="this.blur(); window.restartDanceOff && window.restartDanceOff()">Restart</button><button class="mg-leave" onclick="this.blur(); window.leaveDanceOff && window.leaveDanceOff()">Leave</button></div>
+<div id="skillBar" onpointerdown="if (!event.target.closest('button')) { event.preventDefault(); window.pressSkillBar && window.pressSkillBar(); }"><div class="sb-title"></div><div class="sb-track"><div class="sb-zone"></div><div class="sb-mark"></div></div><div class="sb-pips"></div><div class="sb-msg"></div><button class="mg-restart" onclick="event.stopPropagation(); this.blur(); window.restartSkillBar && window.restartSkillBar()">Restart</button></div>
 <div id="playerStartupOverlay" aria-hidden="true">
   <div id="playerStartupPanel" role="dialog" aria-modal="true" aria-labelledby="playerStartupTitle">
     <div id="playerStartupKicker">Welcome</div>
@@ -1780,6 +1786,7 @@ body.walk-photo #photoBtn{display:block}
 <script src="assets/vendor/babylon/9.31.3/babylon.js"></script>
 <script src="assets/vendor/babylon/9.31.3/babylonjs.loaders.min.js"></script>
 <script src="assets/vendor/babylon/9.31.3/babylonjs.materials.min.js"></script>
+<script src="assets/site-files.js"></script>
 <script>if (window.BABYLON) BABYLON.Tools.ScriptBaseUrl = window.BABYLON_BASE = new URL('assets/vendor/babylon/9.31.3/', location.href).href; // Babylon's own extra downloads (Draco, ...) come from the same copy (tools/babylon-upgrade.mjs)</script>
 <script src="assets/forge-core.js"></script>
 <script src="assets/village-hud.js"></script>
@@ -1834,6 +1841,9 @@ const FACTION_VILLAGES = ['ronin','samurai','bushi','warrior','shogun','buke','k
 const urlVillageId = new URLSearchParams(window.location.search).get('village') || 'hub';
 const CURRENT_VILLAGE_ID = VILLAGE_REGISTRY[urlVillageId] ? urlVillageId : 'hub';
 const CURRENT_VILLAGE = VILLAGE_REGISTRY[CURRENT_VILLAGE_ID];
+// the village's heightmap base from the site (api/terrain-base: worked out once there, then kept by the CDN and the browser)
+// downloads while the page sets up; null = worked out here
+const NEW_TERRAIN_BASE = NEW_TERRAIN_MODULE?.loadHeightmapBase && NEW_TERRAIN_MODULE.TERRAIN_RECIPES[CURRENT_VILLAGE_ID] ? NEW_TERRAIN_MODULE.loadHeightmapBase(CURRENT_VILLAGE_ID) : null;
 // Village shadows (default since Sept 30, chosen by Miguel after the ?shadows=all preview): buildings, trees and rocks
 // cast and receive frozen static shadows at a stronger shade. Lanterns, glows, mist, signs, gates and characters stay
 // shadowless. ?shadows=off brings back the old faint, mostly-off look.
@@ -4927,7 +4937,7 @@ function processBadgeUnlockQueue() {
   if (descEl) descEl.textContent = meta.requirement ? `${meta.requirement}. ${meta.description}` : meta.description;
   if (iconEl) {
     const image = getBadgeImageSource(getBadgeDefinitionByName(name)) || meta.localImageDataUrl || meta.imageUrl;
-    iconEl.innerHTML = image ? `<img src="${escapeHTML(image)}" alt="">` : '★';
+    iconEl.innerHTML = image ? `<img src="${escapeHTML(viaSite(image))}" alt="">` : '★';
   }
   badgePopupActive = true;
   popup.classList.add('on');
@@ -5062,7 +5072,7 @@ function isBadgeUnlocked(badge) {
 function renderBadgeIcon(badge, unlocked) {
   const imageSrc = getBadgeImageSource(badge);
   if (imageSrc) {
-    return `<div class="badge-icon"><img src="${escapeHTML(imageSrc)}" alt="${escapeHTML(badge.name)}" onerror="this.style.display='none';this.parentElement.textContent='${unlocked ? '✦' : '?'}'"></div>`;
+    return `<div class="badge-icon"><img src="${escapeHTML(viaSite(imageSrc))}" alt="${escapeHTML(badge.name)}" onerror="this.style.display='none';this.parentElement.textContent='${unlocked ? '✦' : '?'}'"></div>`;
   }
   return `<div class="badge-icon">${unlocked ? '✦' : '?'}</div>`;
 }
@@ -9033,7 +9043,8 @@ function showToast(msg, duration) {
 function setInteractionPrompt(text, visible) {
   const prompt = document.getElementById('interactionPrompt');
   if (!prompt) return;
-  prompt.textContent = text || '';
+  // touch screens press O with the Use button (assets/village-touch.js)
+  prompt.textContent = (window.VillageTouch?.on ? String(text || '').replace(/^Press O\b/, 'Tap Use') : text) || '';
   prompt.classList.toggle('on', visible === true);
 }
 
@@ -11267,14 +11278,14 @@ async function startMiniGame(def, src) {
   moveForward = moveBackward = turnLeft = turnRight = runKey = false; charMesh._vel = 0;
   _camOcc.dist = null; setPlayerCameraFade(1);
   const guide = scene.getTransformNodeByName?.('questTargetAutoGuide');
-  MiniGames.saved = { x:charMesh.position.x, z:charMesh.position.z, ry:charMesh.rotation.y, fov:walk.fov, camYaw:_orbitAngleH, guide, guideOn:guide?.isEnabled() };
+  MiniGames.saved = { x:charMesh.position.x, z:charMesh.position.z, ry:charMesh.rotation.y, fov:walk.fov, fovMode:walk.fovMode, camYaw:_orbitAngleH, guide, guideOn:guide?.isEnabled() };
   guide?.setEnabled(false);
   MiniGames.saved.hidden = [src.root, ...(ActiveInterior ? getInteriorHotspotRoots() : [])].filter(n => n?.isEnabled?.());
   MiniGames.saved.hidden.forEach(n => n.setEnabled(false));
   // a roam game (impl.roam: runs, chases, lights to keep lit) keeps the walk: the keys walk, the camera follows, the
   // minimap stays; the game watches the player and gets a key first (O, Space ...)
   const roam = !!(impl.roam || def.roam);
-  Object.assign(MiniGames, { on:true, busy:false, impl, def, src, objs:[], escAt:0, roam, holdWalk:false, walkLight:null });
+  Object.assign(MiniGames, { on:true, busy:false, impl, def, src, objs:[], escAt:0, roam, holdWalk:false, walkLight:null, vfov:walk.fov, fitK:1, fitWant:1, fitAt:.2 });
   document.body.classList.toggle('game-roam', roam);
   window._newTerrain?.birds?.setVisible(false);
   document.getElementById('interactionPrompt')?.classList.remove('on');
@@ -11344,6 +11355,19 @@ function grantMiniGameRebelPoints(def, points, cap) {
   try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ gameId:def.id, points:give, total:ProgressionState.rebelPoints } })); } catch(e) {}
   return give;
 }
+// phones held upright (Oct 24): the boards were framed for a 16:9 screen and an upright phone cut them off at both sides.
+// A fixed game camera there shows at most a 16:9 screen's width and closes in on the game's things (RebelGames.util.upright:
+// measured every 0.4 s, eased); wider screens keep the game's own view
+function applyMiniGameFov() {
+  if (!MiniGames.on || MiniGames.roam) return;
+  RebelGames.util.upright.apply(walk, MiniGames.vfov || walk.fov, MiniGames.fitK ?? 1);
+}
+function updateMiniGameFit(dt) {
+  if (MiniGames.roam || !MiniGames.ctx || !RebelGames.util.upright.is(walk)) return;
+  if ((MiniGames.fitAt = (MiniGames.fitAt || 0) - dt) <= 0) { MiniGames.fitAt = .4; MiniGames.fitWant = RebelGames.util.upright.fit(walk, MiniGames.ctx.frame, MiniGames.vfov || walk.fov); }
+  const k = MiniGames.fitK ?? 1, want = MiniGames.fitWant ?? k;
+  if (Math.abs(want - k) > .002) { MiniGames.fitK = k + (want - k) * Math.min(1, dt * 5); applyMiniGameFov(); }
+}
 function buildMiniGameCtx(def, src, frame) {
   const V3 = BABYLON.Vector3;
   const frameYaw = () => { const q = new BABYLON.Quaternion(); frame.getWorldMatrix().decompose(undefined, q); return q.toEulerAngles().y; };
@@ -11359,7 +11383,9 @@ function buildMiniGameCtx(def, src, frame) {
     toWorld: (x, y, z) => V3.TransformCoordinates(new V3(x, y, z), frame.getWorldMatrix()),
     toLocal: (p) => V3.TransformCoordinates(p, BABYLON.Matrix.Invert(frame.getWorldMatrix())),
     // the camera: at local position p, looking at local point t
-    look(p, t, fov) { walk.position.copyFrom(ctx.toWorld(p[0], p[1], p[2])); walk.setTarget(ctx.toWorld(t[0], t[1], t[2])); if (fov) walk.fov = fov; },
+    look(p, t, fov) { walk.position.copyFrom(ctx.toWorld(p[0], p[1], p[2])); walk.setTarget(ctx.toWorld(t[0], t[1], t[2])); if (fov) MiniGames.vfov = fov; applyMiniGameFov(); },
+    // the field of view by itself (as look's fov: what a 16:9 screen shows top to bottom)
+    fov(v) { if (v) MiniGames.vfov = v; applyMiniGameFov(); },
     // keep a game object: disposed with the game; lit by the room's lights in a room
     add(node) {
       if (!node) return node;
@@ -11613,7 +11639,8 @@ function playMiniGameClip(name, o = {}) {
 function updateMiniGame(dt) {
   if (!MiniGames.on || !MiniGames.inst) return;
   if (!walkMode) { endMiniGame(); return; }
-  try { MiniGames.inst.update?.(Math.min(.1, dt)); } catch (e) { console.warn('mini-game update', e); showToast('The game hit a snag.'); endMiniGame(); }
+  try { MiniGames.inst.update?.(Math.min(.1, dt)); } catch (e) { console.warn('mini-game update', e); showToast('The game hit a snag.'); endMiniGame(); return; }
+  try { updateMiniGameFit(Math.min(.1, dt)); } catch (e) {}
 }
 function miniGameKey(e, down) {
   const key = e.key.toLowerCase();
@@ -11779,7 +11806,7 @@ function endMiniGame() {
     charMesh._vel = 0; charMesh.getChildMeshes(false).forEach(m => { m.visibility = 1; });
     const g = animGroups[animState]; if (animState !== 0 && g?.isPlaying) g.stop(); animState = -1; switchAnim(0, true);
   }
-  if (s) { walk.fov = s.fov; if (s.guide && !s.guide.isDisposed?.()) s.guide.setEnabled(!!s.guideOn); (s.hidden || []).forEach(n => { if (!n.isDisposed?.()) n.setEnabled(true); }); }
+  if (s) { walk.fovMode = s.fovMode ?? BABYLON.Camera.FOVMODE_VERTICAL_FIXED; walk.fov = s.fov; if (s.guide && !s.guide.isDisposed?.()) s.guide.setEnabled(!!s.guideOn); (s.hidden || []).forEach(n => { if (!n.isDisposed?.()) n.setEnabled(true); }); }
   if (!roam) snapWalkCameraBehindPlayer();
   setTimeout(processBadgeUnlockQueue, 400); // a badge earned in the game
 }
@@ -12130,6 +12157,8 @@ function restartDanceOff() {
   return openDanceOff(root, cfg, level);
 }
 window.restartDanceOff = restartDanceOff;
+// Leave (Oct 24, phones): what Esc does; a phone had no way out mid-song (the touch layer hides during a dance-off)
+window.leaveDanceOff = () => { const playing = DanceOff.on; closeDanceOff(); if (playing) MoonTaleSounds.stop(); };
 function closeDanceOff() { DanceOff.on = false; DanceOff.choosing = false; stopDanceOffLoop(); document.getElementById('danceOff')?.classList.remove('on', 'choose'); setTimeout(processBadgeUnlockQueue, 400); }
 function updateDanceOff() {
   if (DanceOff.choosing && (!walkMode || ActiveInterior || !charMesh || Math.hypot(charMesh.position.x - DanceOff.px, charMesh.position.z - DanceOff.pz) > 2)) { closeDanceOff(); return; }
@@ -18541,7 +18570,7 @@ function refreshForgedNPCs() {
 function renderForgedNPCAdmin() {
   const keys = Object.keys(NPC_FORGED).sort();
   const grid = document.getElementById('forgedNPCGrid'), head = document.getElementById('forgedNPCHead');
-  if (grid) grid.innerHTML = keys.map(k => { const e = NPC_FORGED[k]; const img = e.thumbUrl ? `<img src="${e.thumbUrl}" alt="" style="width:34px;height:34px;object-fit:cover;border-radius:4px">` : '<span class="ap-icon">🐜</span>';
+  if (grid) grid.innerHTML = keys.map(k => { const e = NPC_FORGED[k]; const img = e.thumbUrl ? `<img src="${viaSite(e.thumbUrl)}" alt="" style="width:34px;height:34px;object-fit:cover;border-radius:4px">` : '<span class="ap-icon">🐜</span>';
     return `<div class="ap-card" onclick="spawnNPCFromPanel('${k}')" title="${k}">${img}<span class="ap-name">${String(e.displayName || k).replace(/[<>&"]/g, '')}</span></div>`; }).join('');
   const sel = document.getElementById('npcModelInput');
   if (sel) {
@@ -20431,10 +20460,13 @@ function ensureEditableRootUniqueName(node) {
 
 // ── GROUND / TERRAIN ─────────────────────────
 setSt("Village: building terrain...");
+// the pre-built heightmap if it has come (a slow download waits 4 s at most here: the ground is then worked out, the same)
+const _terrainBase = NEW_TERRAIN_BASE ? await Promise.race([NEW_TERRAIN_BASE, new Promise(r => setTimeout(() => r(null), 4000))]) : null;
 // Large grass base
 const _newTerrain = (NEW_TERRAIN_MODULE && NEW_TERRAIN_MODULE.TERRAIN_RECIPES[CURRENT_VILLAGE_ID]) ? (() => {
   try {
     return NEW_TERRAIN_MODULE.createVillageTerrain(scene, NEW_TERRAIN_MODULE.TERRAIN_RECIPES[CURRENT_VILLAGE_ID], {
+      heightmapBase: _terrainBase,
       oldHeightAt: NEW_TERRAIN_MODULE.makeOldHubSampler(),
       counts: Object.fromEntries(['grass', 'pines', 'rocks'].map(k => [k, Number(new URLSearchParams(location.search).get(k) ?? NaN)]))
     });
@@ -20442,7 +20474,7 @@ const _newTerrain = (NEW_TERRAIN_MODULE && NEW_TERRAIN_MODULE.TERRAIN_RECIPES[CU
 })() : null;
 window._newTerrain = _newTerrain;
 if (_newTerrain && typeof updateSky === 'function') try { updateSky(); } catch (e) {} // fog, light and hour of this village at once
-if (_newTerrain) console.log('New terrain on (' + CURRENT_VILLAGE_ID + '), built in', _newTerrain.buildMs, 'ms');
+if (_newTerrain) console.log('New terrain on (' + CURRENT_VILLAGE_ID + '), built in', _newTerrain.buildMs, 'ms', _newTerrain.prebuilt ? '(pre-built heightmap)' : '(heightmap worked out)');
 // the village's sky (heavier and hazier for some villages)
 if (_newTerrain?.recipe.sky) Object.assign(skyMat, _newTerrain.recipe.sky);
 const ground=_newTerrain ? _newTerrain.ground : BABYLON.MeshBuilder.CreateGround("gnd",{width:700,height:700,subdivisions:120},scene);
@@ -25366,6 +25398,8 @@ function applyObjectTransform(node, data){
 
 let _worldLayoutSaveChain = Promise.resolve();
 let _layoutDirty = false;
+// the branch this site was built from (the layout API tells admins): players get that copy, Hard Save writes to dev
+var _layoutDeployBranch = null;
 let _lastLocalCacheAt = Number(localStorage.getItem('rebelAntsLayoutLocalCacheAt:' + CURRENT_VILLAGE_ID) || 0);
 let _lastHardSaveAt = Number(localStorage.getItem('rebelAntsLayoutHardSaveAt:' + CURRENT_VILLAGE_ID) || 0);
 
@@ -25821,7 +25855,10 @@ return Promise.resolve(true);
       localStorage.setItem('rebelAntsLayoutHardSaveAt:' + CURRENT_VILLAGE_ID, String(_lastHardSaveAt));
       if (result.githubContentSha) safeStorageSet(localStorage, 'rebelAntsLayoutRemoteSha:' + CURRENT_VILLAGE_ID, result.githubContentSha);
       updateLayoutCacheStatus();
-     showToast('✓ Saved to GitHub — ' + data.length + ' objects');
+      if (result.deployBranch) _layoutDeployBranch = result.deployBranch;
+     showToast(result.deployBranch === 'main'
+       ? '✓ Saved to dev — ' + data.length + ' objects. Players here get it with the next merge to main.'
+       : '✓ Saved to GitHub — ' + data.length + ' objects');
       return true;
     } catch (e) {
       console.error("World layout GitHub save failed", e);
@@ -25858,7 +25895,8 @@ function updateLayoutCacheStatus() {
   const el = document.getElementById('layoutCacheStatus');
   if (!el) return;
   const dirtyText = _layoutDirty ? 'Unsaved changes' : 'No unsaved changes';
-  el.textContent = `${dirtyText} | Local cache: ${formatLayoutSaveTime(_lastLocalCacheAt)} | Hard save: ${formatLayoutSaveTime(_lastHardSaveAt)}`;
+  el.textContent = `${dirtyText} | Local cache: ${formatLayoutSaveTime(_lastLocalCacheAt)} | Hard save: ${formatLayoutSaveTime(_lastHardSaveAt)}`
+    + (_layoutDeployBranch === 'main' ? ' | Hard Save goes to dev: players here get it with the next merge to main' : '');
 }
 
 function cacheLayoutLocally() {
@@ -27316,7 +27354,7 @@ scene.onPointerObservable.add(evt=>{
     else{ orbit.alpha=-Math.PI/2.1;orbit.beta=Math.PI/3.6;orbit.radius=150;orbit.target=new BABYLON.Vector3(0,6,0); }
   }
 });
-window.addEventListener('resize',()=>engine.resize());
+window.addEventListener('resize',()=>{ engine.resize(); applyMiniGameFov(); }); // (a phone turned mid-game)
 
 
 // ── MOON & STARS ──────────────────────────────
@@ -29426,6 +29464,7 @@ async function initWorldLayout() {
     if (resp.ok) {
       const d = await resp.json();
       if (d.ok && Array.isArray(d.layout)) remote = { layout: d.layout, sha: d.sha || null };
+      if (d.deployBranch) { _layoutDeployBranch = d.deployBranch; updateLayoutCacheStatus(); }
     }
     if (!remote) console.warn('World layout service did not return a layout. Status:', resp.status);
   } catch(e) {
@@ -29495,7 +29534,7 @@ async function loadForgeCollectionsConfig() {
 
 // the round Rebel button (opens the Rebel panel), the quest line beside it and the minimap (assets/village-hud.js)
 // touch screens: the stick and buttons (assets/village-touch.js) show while walking, not in admin or a board game
-setInterval(() => window.VillageTouch?.update({ walking: !!walkMode && !adminMode && !(MiniGames.on && !MiniGames.roam) && !DanceOff.on }), 250);
+setInterval(() => window.VillageTouch?.update({ walking: !!walkMode && !adminMode && !(MiniGames.on && !MiniGames.roam) && !DanceOff.on && !DanceOff.choosing }), 250);
 function initVillageHud() {
   try {
     window.VillageHud?.init(scene, {

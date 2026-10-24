@@ -74,6 +74,13 @@
     },
     "api/econ-name-login.mjs": {
       "maxDuration": 30
+    },
+    "api/world-layout.mjs": {
+      "includeFiles": "assets/{world-layout.json,world-layouts/*.json}"
+    },
+    "api/terrain-base.mjs": {
+      "includeFiles": "assets/village-terrain.js",
+      "maxDuration": 30
     }
   },
   "crons": [
@@ -91,6 +98,21 @@
           "value": "public, max-age=31536000, immutable"
         }
       ]
+    },
+    {
+      "source": "/blob/:path*",
+      "headers": [
+        {
+          "key": "x-vercel-enable-rewrite-caching",
+          "value": "1"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/blob/:path*",
+      "destination": "https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/:path*"
     }
   ]
 }

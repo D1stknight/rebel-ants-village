@@ -148,6 +148,7 @@
       canvas.style.cursor = 'none';
       ctx.player.weapon('bow').then(w => { if (!w || st.phase === 'done') return; st.bow = w; w.onRelease(p => { if (st.shot) fire(p); }); if (st.phase === 'ready' || st.phase === 'intro') ctx.player.clip('bow_idle', { loop: true }); });
       ctx.look(camP, camT, .85);
+      let arrowFov = .85; // the arrow camera's field of view, easing to .7 (through ctx.fov: an upright phone widens it)
       const inst = {
         update(dt) {
           const realDt = dt; if (st.phase === 'flight' && ARROW_CAM) dt *= .5; // the flight in half time: arrows, wind and targets alike
@@ -158,8 +159,8 @@
             const f = st.flying[0];
             if (f && !view.land) { const d = f.v.normalizeToNew(); view.p = f.a.position.subtract(d.scale(3.2)).add(new V3(0, .55, 0)); view.t = f.a.position.add(d.scale(4)); }
             const cam = ctx.camera, k = 1 - Math.exp(-realDt * (view.land ? 6 : 14)), tg = cam.getTarget();
-            cam.position = V3.Lerp(cam.position, view.p, k); cam.setTarget(V3.Lerp(tg, view.t, k)); cam.fov += (.7 - cam.fov) * k;
-          } else { view = null; ctx.look(camP, camT, fov); }
+            cam.position = V3.Lerp(cam.position, view.p, k); cam.setTarget(V3.Lerp(tg, view.t, k)); arrowFov += (.7 - arrowFov) * k; if (ctx.fov) ctx.fov(arrowFov); else cam.fov = arrowFov;
+          } else { view = null; arrowFov = fov; ctx.look(camP, camT, fov); }
           if (st.phase === 'intro' && (st.wait -= dt) <= 0) nextArrow();
           if (st.phase === 'draw') {
             st.drawT += dt;

@@ -36,10 +36,23 @@
         + `<path d="M-34 58 L-30 65 L30 65 L34 58 Z" fill="url(#wbGold)"/><path d="M-104 -22 L-92 -18 M104 -22 L92 -18" stroke="url(#wbGold)" stroke-width="7" stroke-linecap="round"/>`
         + `<path d="M-103 -14 Q-99 52 0 56 Q99 52 103 -14" fill="none" stroke="#e9c46a" stroke-width="1.4" opacity=".55"/></g>`
         + `<g class="wb-drops"></g></svg><div class="wb-meter" style="margin:2px auto 0;width:200px;height:10px;border-radius:5px;background:rgba(10,12,20,.75);border:1px solid rgba(160,210,255,.5);overflow:hidden"><div class="wb-fill" style="height:100%;width:100%;background:linear-gradient(90deg,#3d9ad6,#9ad8ff)"></div></div>`
-        + `<div style="display:flex;justify-content:center;gap:120px;margin-top:6px;pointer-events:auto"><button type="button" data-k="q" style="width:56px;height:42px;border-radius:10px;border:1px solid #9ad8ff;background:rgba(10,14,22,.85);color:#bfe6ff;font:800 18px system-ui;touch-action:manipulation">Q ⟲</button><button type="button" data-k="e" style="width:56px;height:42px;border-radius:10px;border:1px solid #9ad8ff;background:rgba(10,14,22,.85);color:#bfe6ff;font:800 18px system-ui;touch-action:manipulation">⟳ E</button></div>`;
+        + `<div class="wb-pads" style="display:flex;justify-content:center;gap:120px;margin-top:6px;pointer-events:auto"><button type="button" data-k="q" style="width:56px;height:42px;border-radius:10px;border:1px solid #9ad8ff;background:rgba(10,14,22,.85);color:#bfe6ff;font:800 18px system-ui;touch-action:manipulation">Q ⟲</button><button type="button" data-k="e" style="width:56px;height:42px;border-radius:10px;border:1px solid #9ad8ff;background:rgba(10,14,22,.85);color:#bfe6ff;font:800 18px system-ui;touch-action:manipulation">⟳ E</button></div>`;
       hud.append(box);
       const tiltG = box.querySelector('.wb-tilt'), waterG = box.querySelector('.wb-water'), dropsG = box.querySelector('.wb-drops'), fill = box.querySelector('.wb-fill');
-      box.querySelectorAll('button').forEach(b => { const k = b.dataset.k; b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); st['in' + k.toUpperCase()] = 1; }); b.addEventListener('pointerup', () => { st['in' + k.toUpperCase()] = 0; }); b.addEventListener('pointerleave', () => { st['in' + k.toUpperCase()] = 0; }); });
+      box.querySelectorAll('button').forEach(b => { const k = b.dataset.k; b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); st['in' + k.toUpperCase()] = 1; }); b.addEventListener('pointerup', () => { st['in' + k.toUpperCase()] = 0; }); b.addEventListener('pointerleave', () => { st['in' + k.toUpperCase()] = 0; }); b.addEventListener('pointercancel', () => { st['in' + k.toUpperCase()] = 0; }); });
+      // phones (touch only, Oct 24): the pads go where the right thumb rests (the touch layer's buttons step aside while the
+      // bowl is carried: jumping only spills) and on a narrow screen the bowl moves up, out of the stick's and the map's way
+      let touchOnly = false; try { touchOnly = matchMedia('(pointer: coarse)').matches && !matchMedia('(any-pointer: fine)').matches; } catch (e) {}
+      const pads = box.querySelector('.wb-pads');
+      if (touchOnly) {
+        hud.append(pads);
+        pads.style.cssText = 'position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(max(18px,env(safe-area-inset-bottom,0px)) + 196px);display:flex;gap:12px;pointer-events:auto';
+        pads.querySelectorAll('button').forEach(b => { b.style.width = b.style.height = '64px'; b.style.borderRadius = '50%'; b.style.touchAction = 'none'; });
+        document.body.classList.add('game-hide-touch-btns');
+        if (innerWidth <= 520) Object.assign(box.style, { bottom: 'auto', top: '172px', transform: 'translateX(-50%) scale(.78)', transformOrigin: '50% 0' });
+        // a phone held sideways: the bowl sat over the Rebel in the middle of the short screen; up under the title bar
+        else if (innerHeight <= 520) Object.assign(box.style, { bottom: 'auto', top: '64px', transform: 'translateX(-50%) scale(.7)', transformOrigin: '50% 0' });
+      }
       const drops = [];
       const wave = box.querySelector('.wb-wave'), glint = box.querySelector('.wb-glint');
       function drawBowl() {
@@ -109,7 +122,7 @@
         key(e, down) { const k = e.key.toLowerCase(); if (k === 'q') { st.inQ = down ? 1 : 0; return true; } if (k === 'e') { st.inE = down ? 1 : 0; return true; } return false; },
         target() { return { x: goal.x, z: goal.z }; },
         _test: { st, goal, finish },
-        dispose() { ctx.player.hold(false); box.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
+        dispose() { ctx.player.hold(false); box.remove(); pads.remove(); document.body.classList.remove('game-hide-touch-btns'); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };
     }
   };

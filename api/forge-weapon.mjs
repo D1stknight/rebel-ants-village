@@ -52,13 +52,15 @@ const DEFAULT_MOUNT = { bone: 'Spine2', pos: [0, -0.02, -0.16], rot: [0, 0, 38],
 async function getRec(id) { const [r] = await redis([['GET', K(id)]]); try { return r?.result ? JSON.parse(r.result) : null; } catch (e) { return null; } }
 async function setRec(id, rec) { await redis([['SET', K(id), JSON.stringify(rec)]]); return rec; }
 
-// the stored NFT image of a token (the nft-image route redirects to our Blob copy), called in-process
+// the stored NFT image of a token (the nft-image route redirects to our Blob copy), called in-process; the route sends
+// browsers to /blob/ on this site (Oct 24), so its answer goes back to the store's own address for the fetch below
+const fromSitePath = (u) => (u && u.startsWith('/blob/') ? 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/' + u.slice(6) : u) || null;
 async function nftImageUrl(tokenId) {
   const mod = await import('./nft-image.mjs');
   return new Promise((resolve) => {
     const res = { statusCode: 200, headers: {}, setHeader(k, v) { this.headers[k.toLowerCase()] = v; }, status(c) { this.statusCode = c; return this; },
-      end() { resolve(this.headers.location || null); }, send() { resolve(this.headers.location || null); }, json() { resolve(this.headers.location || null); } };
-    Promise.resolve(mod.default({ method: 'GET', query: { c: 'battle_for_colony', t: String(tokenId), s: 'full' }, headers: {} }, res)).then(() => resolve(res.headers.location || null)).catch(() => resolve(null));
+      end() { resolve(fromSitePath(this.headers.location)); }, send() { resolve(fromSitePath(this.headers.location)); }, json() { resolve(fromSitePath(this.headers.location)); } };
+    Promise.resolve(mod.default({ method: 'GET', query: { c: 'battle_for_colony', t: String(tokenId), s: 'full' }, headers: {} }, res)).then(() => resolve(fromSitePath(res.headers.location))).catch(() => resolve(null));
   });
 }
 

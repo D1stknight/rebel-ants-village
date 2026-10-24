@@ -88,7 +88,8 @@
       const pad = (t, area, down, up) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.style.cssText = `grid-area:${area};border-radius:9px;border:1px solid #c79bff;background:rgba(24,10,40,.88);color:#f3e6ff;font:700 18px system-ui;cursor:pointer;touch-action:none`;
         b.onpointerdown = (e) => { e.stopPropagation(); e.preventDefault(); down(); }; if (up) { b.onpointerup = b.onpointerleave = (e) => { e.stopPropagation(); up(); }; } pads.appendChild(b); return b; };
       const holdPad = k => [() => press(k, true), () => press(k, false)];
-      pad('↻', '1 / 2', () => turn(1)); pad('⤓', '1 / 3', () => hard()); pad('←', '2 / 1', ...holdPad('left')); pad('↓', '2 / 2', ...holdPad('down')); pad('→', '2 / 3', ...holdPad('right'));
+      // ↺ = Z / Q, the turn the other way (Oct 24: phones could only turn one way)
+      pad('↺', '1 / 1', () => turn(-1)); pad('↻', '1 / 2', () => turn(1)); pad('⤓', '1 / 3', () => hard()); pad('←', '2 / 1', ...holdPad('left')); pad('↓', '2 / 2', ...holdPad('down')); pad('→', '2 / 3', ...holdPad('right'));
       const startBtn = document.createElement('button'); startBtn.type = 'button'; startBtn.textContent = 'Start'; startBtn.style.cssText = 'position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);padding:12px 28px;border-radius:12px;border:1px solid #c79bff;background:rgba(40,14,70,.92);color:#fff;font:800 18px system-ui;letter-spacing:.08em;cursor:pointer;pointer-events:auto';
       startBtn.onclick = (e) => { e.stopPropagation(); startBtn.blur(); begin(); };
       function begin() { if (st.phase !== 'ready') return; startBtn.remove(); st.phase = 'play'; pads.style.display = 'grid'; reset(); H.msg('Go', 700, `clear ${GOAL} rows`); }

@@ -46,8 +46,9 @@
       }
       // the rings (one per spear in the air) and the side glyph, in screen space
       const hud = document.getElementById('gameHud');
+      // the guard buttons fire as the finger touches (Oct 24: on click they waited for the finger to lift, late in a timing game)
       const pads = document.createElement('div'); pads.style.cssText = 'position:absolute;bottom:62px;left:50%;transform:translateX(-50%);display:none;gap:14px;pointer-events:auto';
-      ['left', 'right'].forEach((d, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = i ? '→' : '←'; b.style.cssText = 'width:64px;height:48px;border-radius:10px;border:1px solid #d8b35c;background:rgba(20,16,10,.8);color:#ffe9b0;font:700 22px Georgia,serif;cursor:pointer'; b.onclick = (e) => { e.stopPropagation(); b.blur(); guard(i); }; pads.appendChild(b); });
+      ['left', 'right'].forEach((d, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = i ? '→' : '←'; b.style.cssText = 'width:64px;height:48px;border-radius:10px;border:1px solid #d8b35c;background:rgba(20,16,10,.8);color:#ffe9b0;font:700 22px Georgia,serif;cursor:pointer;touch-action:none'; b.onpointerdown = (e) => { e.preventDefault(); e.stopPropagation(); guard(i); }; pads.appendChild(b); });
       hud.append(pads);
       const ringEl = (side) => { const r = document.createElement('div'); r.style.cssText = 'position:absolute;border:3px solid rgba(255,216,119,.95);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 12px rgba(255,190,80,.6)';
         const c = document.createElement('div'); c.style.cssText = 'position:absolute;width:58px;height:58px;border:2px solid rgba(255,255,255,.75);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;font:700 34px/58px Georgia,serif;color:#ffe9b0;text-align:center;text-shadow:0 2px 0 #000';

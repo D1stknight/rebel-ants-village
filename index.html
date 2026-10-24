@@ -674,6 +674,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 
 <!-- Video background — no Babylon needed for lobby -->
 
+<script src="assets/site-files.js"></script>
 <script src="assets/wallet-auth.js"></script>
 <script>
 // ── NFT CONFIG ──
@@ -1233,7 +1234,7 @@ function buildCard(rebel) {
   if (forgeThumb) card.classList.add('has-forge-thumb');
   const cardImage = forgeThumb || rebel.image;
   const imageHtml = cardImage
-    ? `<div class="ant-card-placeholder" style="display:none;">🐜</div><img crossorigin="anonymous" src="${cardImage}" onload="matchAntCardBackground(this)" onerror="this.onerror=null; this.style.display='none'; this.previousElementSibling.style.display='grid';"/>`
+    ? `<div class="ant-card-placeholder" style="display:none;">🐜</div><img crossorigin="anonymous" src="${viaSite(cardImage)}" onload="matchAntCardBackground(this)" onerror="this.onerror=null; this.style.display='none'; this.previousElementSibling.style.display='grid';"/>`
     : '<div class="ant-card-placeholder">🐜</div>';
 
   card.innerHTML = `${imageHtml}

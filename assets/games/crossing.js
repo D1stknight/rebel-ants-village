@@ -59,6 +59,13 @@
         setCars(); placeGoal(); P().place(COL, ROWS[0], 0); H.score(0); info(); H.msg(`Level ${k + 1}`, 1400, `${L.crossings} crossings in ${L.seconds} s`);
       }
       showPicker();
+      // on-screen arrows for phones (Oct 24): the four hops of the keys, fired as the finger touches (traffic won't wait)
+      const pads = document.createElement('div');
+      pads.style.cssText = 'position:absolute;bottom:62px;right:16px;display:none;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(3,48px);gap:6px;pointer-events:auto;touch-action:none';
+      const pad = (t, area, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.style.cssText = `grid-area:${area};border-radius:10px;border:1px solid #8fd4ff;background:rgba(10,18,28,.82);color:#e6f6ff;font:700 20px system-ui,sans-serif;cursor:pointer;touch-action:none`; b.onpointerdown = (e) => { e.stopPropagation(); e.preventDefault(); fn(); }; pads.appendChild(b); };
+      pad('\u2191', '1 / 2', () => hop(1, 0)); pad('\u2190', '2 / 1', () => hop(0, -1.5)); pad('\u2192', '2 / 3', () => hop(0, 1.5)); pad('\u2193', '3 / 2', () => hop(-1, 0));
+      document.getElementById('gameHud').append(pads);
+      let padsOn = false; const showPads = (on) => { if (on !== padsOn) { padsOn = on; pads.style.display = on ? 'grid' : 'none'; } };
       function hop(dr, dx) {
         if (st.phase !== 'play' || st.hop > 0) return;
         const row = Math.max(0, Math.min(ROWS.length - 1, st.row + dr)), x = Math.max(COL - SIDE, Math.min(COL + SIDE, st.x + dx));
@@ -74,6 +81,7 @@
       return {
         update(dt) {
           ctx.look(cam, look);
+          showPads(st.phase === 'intro' || st.phase === 'play');
           if (st.phase === 'pick') return;
           if (st.phase === 'intro' && (st.intro -= dt) <= 0) st.phase = 'play';
           // traffic (also during the intro), wrapping at the ends of the span; cars scale in and out at the ends
@@ -101,7 +109,7 @@
         pointer() {},
         restart() { if (st.phase === 'pick') return; st.phase = 'pick'; cars.forEach(c => c.root.setEnabled(false)); showPicker(); },
         _test: { st, cars, hop, ROWS, begin, LV, get L() { return L; }, SPAN },
-        dispose() { if (picker) picker.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); hidden.forEach(n => { if (!n.isDisposed()) n.setEnabled(true); }); }
+        dispose() { if (picker) picker.remove(); pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); hidden.forEach(n => { if (!n.isDisposed()) n.setEnabled(true); }); }
       };
     }
   };

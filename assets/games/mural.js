@@ -399,6 +399,12 @@
       pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); });
       function choose(k) { if (st.phase !== 'pick' || k > doneUpTo || k >= LEVELS.length) return; pick.remove(); st.phase = 'play'; build(k); const lv = LEVELS[k]; H.msg(`${lv.c} × ${lv.r}`, 1000, lv.lookalike ? 'gold on gold: some tiles only look like they belong' : lv.strays ? 'some tiles are from another wall' : lv.turn ? 'the tiles lie turned' : ''); }
       hud.appendChild(pick);
+      // a hint button for phones (Oct 24): the same as H
+      const hintBtn = document.createElement('button'); hintBtn.type = 'button'; hintBtn.textContent = 'Hint';
+      hintBtn.style.cssText = 'position:absolute;bottom:62px;left:16px;display:none;min-width:84px;height:46px;padding:0 14px;border-radius:10px;border:1px solid #ff7ae6;background:rgba(16,12,30,.88);color:#fff;font:700 15px system-ui,sans-serif;cursor:pointer;pointer-events:auto';
+      hintBtn.onclick = (e) => { e.stopPropagation(); hintBtn.blur(); if (st.held) hint(); else H.msg('Pick up a tile first', 900); };
+      hud.appendChild(hintBtn);
+      let hintShown = false;
       const P = def.player || [-MW / 2 - .3, D - 1.2, .5]; ctx.player.place(P[0], P[1], P[2]);
       const cam = def.cam || [0, 3.3, D - 9.2], look = def.at || [0, 2.5, D];
       ctx.look(cam, look, def.fov || .78);
@@ -408,6 +414,7 @@
       return {
         update(dt) {
           ctx.look(cam, look);
+          const hs = st.phase === 'play'; if (hs !== hintShown) { hintShown = hs; hintBtn.style.display = hs ? 'block' : 'none'; }
           if (!L) return;
           if (st.phase === 'play') L.t += dt;
           const T = performance.now() / 1000;
@@ -448,7 +455,7 @@
         _test: { st, choose, hold, tryGap, hint, fits, get L() { return L; }, LEVELS, ART, unlock(k) { doneUpTo = Math.max(doneUpTo, k); },
           // put the held tile, turned right, into its own gap (tests)
           solveOne() { for (const t of L.tiles) { if (t.placed || t.home < 0) continue; const keepT = t.turn; t.turn = 0; const i = L.holes.has(t.home) && fits(t, t.home) ? t.home : [...L.holes].find(i => fits(t, i)); if (i != null) { st.held = t; tryGap(i); return true; } t.turn = keepT; } return false; } },
-        dispose() { pick.remove(); if (L) L.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
+        dispose() { pick.remove(); hintBtn.remove(); if (L) L.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };
     }
   };
