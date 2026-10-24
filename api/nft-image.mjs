@@ -36,10 +36,13 @@ async function fetchImage(url) {
   }
 }
 
+// our copies go out through this site's own /blob/ path (vercel.json passes it to the store): some networks block the
+// store's host (Oct 24)
+const STORE = /^https:\/\/vg8yazzy1wnobiup\.public\.blob\.vercel-storage\.com\//i;
 function redirect(res, url) {
   res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800, immutable');
   res.statusCode = 302;
-  res.setHeader('Location', url);
+  res.setHeader('Location', String(url).replace(STORE, '/blob/'));
   return res.end();
 }
 

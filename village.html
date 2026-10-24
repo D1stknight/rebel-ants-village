@@ -1786,6 +1786,7 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
 <script src="assets/vendor/babylon/9.31.3/babylon.js"></script>
 <script src="assets/vendor/babylon/9.31.3/babylonjs.loaders.min.js"></script>
 <script src="assets/vendor/babylon/9.31.3/babylonjs.materials.min.js"></script>
+<script src="assets/site-files.js"></script>
 <script>if (window.BABYLON) BABYLON.Tools.ScriptBaseUrl = window.BABYLON_BASE = new URL('assets/vendor/babylon/9.31.3/', location.href).href; // Babylon's own extra downloads (Draco, ...) come from the same copy (tools/babylon-upgrade.mjs)</script>
 <script src="assets/forge-core.js"></script>
 <script src="assets/village-hud.js"></script>
@@ -4933,7 +4934,7 @@ function processBadgeUnlockQueue() {
   if (descEl) descEl.textContent = meta.requirement ? `${meta.requirement}. ${meta.description}` : meta.description;
   if (iconEl) {
     const image = getBadgeImageSource(getBadgeDefinitionByName(name)) || meta.localImageDataUrl || meta.imageUrl;
-    iconEl.innerHTML = image ? `<img src="${escapeHTML(image)}" alt="">` : '★';
+    iconEl.innerHTML = image ? `<img src="${escapeHTML(viaSite(image))}" alt="">` : '★';
   }
   badgePopupActive = true;
   popup.classList.add('on');
@@ -5068,7 +5069,7 @@ function isBadgeUnlocked(badge) {
 function renderBadgeIcon(badge, unlocked) {
   const imageSrc = getBadgeImageSource(badge);
   if (imageSrc) {
-    return `<div class="badge-icon"><img src="${escapeHTML(imageSrc)}" alt="${escapeHTML(badge.name)}" onerror="this.style.display='none';this.parentElement.textContent='${unlocked ? '✦' : '?'}'"></div>`;
+    return `<div class="badge-icon"><img src="${escapeHTML(viaSite(imageSrc))}" alt="${escapeHTML(badge.name)}" onerror="this.style.display='none';this.parentElement.textContent='${unlocked ? '✦' : '?'}'"></div>`;
   }
   return `<div class="badge-icon">${unlocked ? '✦' : '?'}</div>`;
 }
@@ -18550,7 +18551,7 @@ function refreshForgedNPCs() {
 function renderForgedNPCAdmin() {
   const keys = Object.keys(NPC_FORGED).sort();
   const grid = document.getElementById('forgedNPCGrid'), head = document.getElementById('forgedNPCHead');
-  if (grid) grid.innerHTML = keys.map(k => { const e = NPC_FORGED[k]; const img = e.thumbUrl ? `<img src="${e.thumbUrl}" alt="" style="width:34px;height:34px;object-fit:cover;border-radius:4px">` : '<span class="ap-icon">🐜</span>';
+  if (grid) grid.innerHTML = keys.map(k => { const e = NPC_FORGED[k]; const img = e.thumbUrl ? `<img src="${viaSite(e.thumbUrl)}" alt="" style="width:34px;height:34px;object-fit:cover;border-radius:4px">` : '<span class="ap-icon">🐜</span>';
     return `<div class="ap-card" onclick="spawnNPCFromPanel('${k}')" title="${k}">${img}<span class="ap-name">${String(e.displayName || k).replace(/[<>&"]/g, '')}</span></div>`; }).join('');
   const sel = document.getElementById('npcModelInput');
   if (sel) {
