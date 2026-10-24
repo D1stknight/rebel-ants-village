@@ -49,6 +49,17 @@
       const info = () => H.info(`Stones ${st.stones} · towers ${st.down} / ${towers.length} · angle ${Math.round(st.elev)}° · turn ${Math.round(Math.abs(st.yaw))}°${st.yaw > .5 ? ' right' : st.yaw < -.5 ? ' left' : ''} · wind ${windText() || 'still'}`);
       H.title(def.title || 'The Siege Engine'); H.score(0); info();
       H.hint('<kbd>A</kbd> <kbd>D</kbd> turn · <kbd>W</kbd> <kbd>S</kbd> angle · hold <kbd>Space</kbd> to wind, let go to throw. Watch the windsock.');
+      // aim buttons for phones (Oct 24): held like the keys (← → turn, ↑ ↓ angle); holding a finger anywhere else winds the
+      // arm and letting go throws, as before
+      const pads = document.createElement('div');
+      pads.style.cssText = 'position:absolute;bottom:62px;left:16px;display:grid;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(3,48px);gap:6px;pointer-events:auto;touch-action:none';
+      [['\u2191', '1 / 2', 'u'], ['\u2190', '2 / 1', 'l'], ['\u2192', '2 / 3', 'r'], ['\u2193', '3 / 2', 'd']].forEach(([t, area, k]) => {
+        const b = document.createElement('button'); b.type = 'button'; b.textContent = t;
+        b.style.cssText = `grid-area:${area};border-radius:10px;border:1px solid #c9a24a;background:rgba(24,18,8,.84);color:#fff1d2;font:700 20px system-ui,sans-serif;cursor:pointer;touch-action:none`;
+        const on = (v) => (e) => { e.preventDefault(); e.stopPropagation(); st.held[k] = v; };
+        b.onpointerdown = on(1); b.onpointerup = b.onpointerleave = b.onpointercancel = on(0); pads.appendChild(b);
+      });
+      document.getElementById('gameHud').append(pads);
       H.msg('The Siege Engine', 1300, `${towers.length} towers, ${STONES} stones`);
       const look = (dt) => { const sp = st.stone && (st.phase === 'flight' || st.phase === 'after') ? st.stone.p : null; const f = sp ? new V3(sp.x, Math.min(9, sp.y * .35 + 1), sp.z) : new V3(Math.sin(st.yaw * Math.PI / 180) * 40, 4, Math.cos(st.yaw * Math.PI / 180) * 40 + 8);
         st.follow = V3.Lerp(st.follow, f, Math.min(1, dt * 3)); ctx.look([-Math.sin(st.yaw * Math.PI / 180) * 12 + 1.2, 10.5, -Math.cos(st.yaw * Math.PI / 180) * 12 - 2], [st.follow.x, st.follow.y, st.follow.z], def.fov || .9); };
@@ -73,7 +84,7 @@
         st.phase = 'after'; st.after = 1.3;
       }
       function finishGame() {
-        st.phase = 'done'; H.hint(''); H.meter(null);
+        st.phase = 'done'; H.hint(''); H.meter(null); pads.remove();
         const all = st.down === towers.length, bonus = all ? st.stones * 15 : 0; st.score += bonus; H.score(st.score);
         ctx.finish({ score: st.score, label: 'points', passed: st.score >= (def.pass || 0), extra: `${st.down} of ${towers.length} towers down${all && st.stones ? `, ${st.stones} stone${st.stones > 1 ? 's' : ''} to spare (+${bonus})` : ''}.` });
       }
@@ -109,7 +120,7 @@
         },
         pointer(evt) { const T = B.PointerEventTypes; if (evt.type === T.POINTERDOWN && st.phase === 'aim') { st.phase = 'charge'; st.charge = 0; } else if (evt.type === T.POINTERUP && st.phase === 'charge') release(); },
         _test: { st, towers, release, launch, groundAt, aimAt: (yaw, elev) => { st.yaw = yaw; st.elev = elev; tre.rotation.y = yaw * Math.PI / 180; }, charge: () => { st.phase = 'charge'; st.charge = 0; }, setCharge: c => { st.charge = c; }, newWind },
-        dispose() { nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); st.traceN.forEach(n => { try { n.dispose(); } catch (e) {} }); }
+        dispose() { pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); st.traceN.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };
     }
   };
