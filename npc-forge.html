@@ -949,6 +949,14 @@ const GAMES_PACK = ['fishing_cast', 'fishing_idle', 'digging', 'plant', 'throw_o
 // the moves of a pack made before v2.30 (no move list stored with it)
 const GAMES_V1 = ['game_cast', 'game_reel', 'game_fish_wait', 'game_dig', 'game_plant', 'game_pick_up', 'game_throw', 'game_throw_far', 'game_chop', 'game_cheer', 'game_push', 'game_push_walk', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam'];
 let workerPoll = null, workerSetup = null, workerBuilding = false, workerInfo = null, packUploaded = new Set();
+// Oct 24 the rigger's version: the image's (the API reads it from the commit the image was built from) and this site's
+// (forge-worker/manifest.json: what a rebuild installs)
+let siteRigger;
+async function loadSiteRigger() {
+  if (siteRigger === undefined) { try { siteRigger = (await (await fetch('/forge-worker/manifest.json', { cache: 'no-store' })).json()).version || null; } catch (e) { siteRigger = null; } }
+  return siteRigger;
+}
+const verNewer = (a, b) => { const [a1, a2] = String(a).split('.').map(Number), [b1, b2] = String(b).split('.').map(Number); return a1 > b1 || (a1 === b1 && a2 > b2); };
 // setup.sh prints these step markers; the last one in the log tail is the current step (progress floor, %)
 const SETUP_STEPS = [['== system libs', 'Installing system libraries', 3], ['== python 3.13 + bpy', 'Installing Blender (the longest step)', 8], ['== worker code', 'Loading the rigger code', 80], ['== mocap pack', 'Loading the animation pack', 86], ['== self test', 'Testing the worker', 94]];
 const SETUP_SECONDS = 60;   // a rebuild takes about a minute (35-47 s, Oct 2026)
@@ -966,11 +974,11 @@ function paintSetup() {
   const p = setupProgress(workerSetup);
   pill.style.display = 'flex'; pill.innerHTML = `Rig worker rebuilding ${p.pct}% <span class="bar"><i style="width:${p.pct}%"></i></span>`;
   const box = $('#workerProgress');
-  if (box) box.innerHTML = `<div class="state"><b style="color:var(--amber)">Rebuilding the rig worker</b> · ${esc(p.label)} · ${mmss(p.secs)} (about a minute)</div><div class="bar"><i style="width:${p.pct}%"></i></div><div class="state" style="margin-top:4px">Forges and re-rigs started now still use the old worker. Keep this page open (or come back later): it finishes the rebuild when it checks in.</div>`;
+  if (box) box.innerHTML = `<div class="state"><b style="color:var(--amber)">Rebuilding the rig worker${siteRigger ? ` (rigger ${esc(siteRigger)})` : ''}</b> · ${esc(p.label)} · ${mmss(p.secs)} (about a minute)</div><div class="bar"><i style="width:${p.pct}%"></i></div><div class="state" style="margin-top:4px">Forges and re-rigs started now still use the old worker. Keep this page open (or come back later): it finishes the rebuild when it checks in.</div>`;
 }
 setInterval(paintSetup, 1000);
 async function loadWorker() {
-  let d; try { d = await api('/api/forge-rig-worker'); } catch (e) { $('#workerBox').innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
+  let d; try { [d] = await Promise.all([api('/api/forge-rig-worker'), loadSiteRigger()]); } catch (e) { $('#workerBox').innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
   const w = d.worker || {}; const have = new Set(d.packPaths || []); const miss = NPC_PACK.filter((p) => !have.has(p)), gmiss = GAMES_PACK.filter((p) => !have.has(p)); const s = w.setup || {};
   const was = workerBuilding; const building = s.status === 'running';
   workerBuilding = building; workerSetup = s; workerInfo = w; packUploaded = have;
@@ -979,7 +987,9 @@ async function loadWorker() {
     : info.have >= info.of ? ' · in the worker ✓' : ` · <span class="bad">in the worker: ${info.have} of ${info.of}: press Rebuild worker</span>`;
   const wc = w.snapshotId ? w.commit || null : null; if (wc !== workerCommit) { workerCommit = wc; renderList(); }
   if (was && !building) toast(s.status === 'done' ? 'Rig worker rebuilt. New forges and re-rigs use it now.' : 'The rig worker rebuild failed (see the log in the Rig worker box).');
-  $('#workerBox').innerHTML = `<div class="state">Worker image: ${w.snapshotId ? `built ${w.builtAt ? new Date(w.builtAt).toLocaleString() : ''} from ${esc(String(w.commit || '').slice(0, 7))}` : 'not built'}${s.status === 'failed' && !building ? ' · <span class="bad">last rebuild failed</span>' : ''}</div>
+  const ver = w.snapshotId && w.version ? `<div style="font:700 14px Cinzel,serif;letter-spacing:1px;color:var(--gold)">Rigger ${esc(w.version)}</div>` : '';
+  const newer = siteRigger && (!w.snapshotId || (w.version && verNewer(siteRigger, w.version))) ? ` · <span class="warn">this site has rigger ${esc(siteRigger)}${w.snapshotId ? ': press Rebuild worker' : ''}</span>` : '';
+  $('#workerBox').innerHTML = `${ver}<div class="state">Worker image: ${w.snapshotId ? `built ${w.builtAt ? new Date(w.builtAt).toLocaleString() : ''} from ${esc(String(w.commit || '').slice(0, 7))}` : 'not built'}${s.status === 'failed' && !building ? ' · <span class="bad">last rebuild failed</span>' : ''}${newer}</div>
     ${building ? '<div id="workerProgress" style="margin-top:6px"></div>' : ''}
     <div class="state" style="margin-top:4px">NPC gesture pack: ${NPC_PACK.length - miss.length} of ${NPC_PACK.length} uploaded${miss.length ? ` · missing ${miss.map((m) => m.replace('mixamo/', '').replace('.npz', '')).join(', ')}` : ' ✓'}${inImage(w.npc, !miss.length, false)}</div>
     <div class="state" style="margin-top:2px">Games pack (Rebels): ${GAMES_PACK.length - gmiss.length} of ${GAMES_PACK.length} uploaded${gmiss.length ? ` · missing ${gmiss.map((m) => m.replace('mixamo/', '').replace('.npz', '')).join(', ')}` : ' ✓'}${inImage(w.games, !gmiss.length, true)}</div>

@@ -81,7 +81,8 @@ async function status() {
       const snap = await sandbox.snapshot({ expiration: 0 });
       // Oct 16: what the image holds of the optional packs (setup.sh's self test), so a games run never starts on an
       // image built before its moves were uploaded
-      Object.assign(worker, { snapshotId: snap.snapshotId || snap.id, commit: s.commit, builtAt: new Date().toISOString(), games: packCount(log, 'games'), npc: packCount(log, 'npc') });
+      Object.assign(worker, { snapshotId: snap.snapshotId || snap.id, commit: s.commit, builtAt: new Date().toISOString(), games: packCount(log, 'games'), npc: packCount(log, 'npc'),
+        version: await riggerVersion(s.commit) });
       s.status = 'done'; s.finishedAt = worker.builtAt;
       await setJson(WORKER_KEY, worker);
     } else {
@@ -90,7 +91,22 @@ async function status() {
       try { await sandbox.stop(); } catch (e) {}
     }
   }
+  // an image built before the version was kept: read it once from the commit it was built from
+  if (worker.snapshotId && worker.commit && !worker.version) {
+    const v = await riggerVersion(worker.commit);
+    if (v) { worker.version = v; await setJson(WORKER_KEY, worker); }
+  }
   return { ok: true, worker, packFiles: Object.keys(pack).length, packPaths: Object.keys(pack).sort() };
+}
+
+// Oct 24 the rigger's version in the image (forge-worker/manifest.json at the commit setup.sh installed), for the NPC
+// Forge's Rig worker box
+async function riggerVersion(commit) {
+  try {
+    const r = await fetch(`https://raw.githubusercontent.com/${REPO}/${commit}/forge-worker/manifest.json`, { signal: AbortSignal.timeout(5000) });
+    const v = r.ok ? (await r.json())?.version : null;
+    return typeof v === 'string' && /^\d+\.\d+$/.test(v) ? v : null;
+  } catch (e) { return null; }
 }
 
 // setup.sh prints "games clips 12 of 14 missing: mixamo/gm_x.npz, ..." / "npc clips 14 of 14 ok"
