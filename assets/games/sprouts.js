@@ -151,6 +151,12 @@
       pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); });
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); H.msg(`Level ${k + 1}`, 900, k >= 3 ? 'a hard one' : label(LV[k])); }
       hud.appendChild(pick);
+      // a hint button for phones (Oct 24): the same as H
+      const hintBtn = document.createElement('button'); hintBtn.type = 'button'; hintBtn.textContent = 'Hint';
+      hintBtn.style.cssText = 'position:absolute;bottom:62px;left:16px;display:none;min-width:84px;height:46px;padding:0 14px;border-radius:10px;border:1px solid #8fd46a;background:rgba(12,24,10,.88);color:#fff;font:700 15px system-ui,sans-serif;cursor:pointer;pointer-events:auto';
+      hintBtn.onclick = (e) => { e.stopPropagation(); hintBtn.blur(); hint(); };
+      hud.appendChild(hintBtn);
+      let hintShown = false;
       const P = def.player || [AT[0] - W / 2 - 1.6, AT[1] - W / 2 - .6, Math.PI / 4]; ctx.player.place(P[0], P[1], P[2]);
       const cam = def.cam || [AT[0] + .6, 5.4 + W * .3, AT[1] - W / 2 - 3.4], at = def.look || [AT[0], 0, AT[1] + .4];
       ctx.look(cam, at, def.fov || .85);
@@ -158,6 +164,7 @@
       H.hint('Click a bed to water it (or move the ring with the arrows and press <kbd>Space</kbd>). <kbd>H</kbd> a hint, <kbd>R</kbd> start the level again.');
       return {
         update(dt) {
+          const hs = st.phase === 'play'; if (hs !== hintShown) { hintShown = hs; hintBtn.style.display = hs ? 'block' : 'none'; }
           ctx.look(cam, at);
           if (bd && st.cursor) { const p = cellPos(st.cr * bd.n + st.cc); st.cursor.position.set(p.x, .12, p.z); st.cursor.setEnabled(st.phase === 'play'); }
           if (st.hintRing?.isEnabled()) st.hintRing.position.y = .16 + Math.abs(Math.sin(performance.now() / 260)) * .25;
@@ -185,7 +192,7 @@
         },
         restart: relay,
         _test: { st, choose, water, hint, relay, solve, cellPos: i => cellPos(i), get bd() { return bd; } },
-        dispose() { pick.remove(); if (bd) bd.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
+        dispose() { pick.remove(); hintBtn.remove(); if (bd) bd.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };
     }
   };
