@@ -98,6 +98,10 @@ body.in-game #questLine,body.in-game:not(.game-roam) #miniMap,body.in-game #phot
    for a thumb */
 @media (max-width:520px){#gameHud .gh-top{flex-wrap:wrap;justify-content:center;row-gap:2px;white-space:normal;width:max-content;max-width:94vw;box-sizing:border-box}#gameHud .gh-title{font-size:11px;letter-spacing:.1em}#gameHud .gh-info{font-size:12px;text-align:center}#gameHud .gh-hint{bottom:auto;top:90px;font-size:12px;padding:5px 10px;max-width:94vw}#gameHud .gh-card:not(:empty)~.gh-hint{top:auto;bottom:22px}}
 @media (pointer:coarse){#gameHud .gh-tools button{padding:10px 14px;font-size:13px;min-height:40px}#gameHud .gh-tools kbd{display:none}}
+/* phones held sideways (Oct 24): the help line keeps low and small, under the pads games put at the bottom; the title bar
+   goes to the left edge when it would run under the buttons beside Quit (keepClear) */
+@media (pointer:coarse) and (max-height:520px){#gameHud .gh-hint{bottom:8px;font-size:12px;line-height:1.3;padding:4px 10px}}
+#gameHud .gh-top.gh-left{left:12px;transform:none;flex-wrap:wrap;white-space:normal;row-gap:2px;justify-content:flex-start;box-sizing:border-box}
 `;
   let els = null;
   function ensure() {
@@ -122,8 +126,64 @@ body.in-game #questLine,body.in-game:not(.game-roam) #miniMap,body.in-game #phot
     return els;
   }
   let msgTimer = 0, howDone = null;
+  // the HUD's own lines stay clear of buttons (Oct 24, phones): a phone held sideways has no room for the title bar
+  // between the screen edge and the buttons beside Quit, and the pads a game puts at the bottom (and the walk stick and
+  // minimap in a roam game) sit where the help line and the meter are. While a game is on (4 times a second): the title
+  // bar moves to the left edge when it would run under those buttons; the meter, then the help line, take the free
+  // stretch of their own row between what sits left and right of them, else move over it (low on the screen) or under
+  // it (high). On a screen where nothing overlaps nothing moves.
+  let clearTimer = 0;
+  const SOLID_IDS = '#vtStick, #vtBtns, #miniMap';
+  function keepClear() {
+    if (!els || !els.hud.classList.contains('on')) return;
+    const q = els.q, W = innerWidth, H = innerHeight, rect = el => el.getBoundingClientRect();
+    const shown = el => { const r = rect(el); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'; };
+    const meet = (a, b) => Math.min(a.right, b.right) - Math.max(a.left, b.left) > 4 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 4;
+    const top = q('.gh-top'), tools = q('.gh-tools'), toolsOn = [...tools.querySelectorAll('button')].some(b => !b.hidden && shown(b));
+    top.classList.remove('gh-left'); top.style.maxWidth = '';
+    if (toolsOn && shown(top)) { const tb = rect(tools); if (meet(rect(top), tb)) { top.classList.add('gh-left'); top.style.maxWidth = Math.max(160, Math.round(tb.left - 24)) + 'px'; } }
+    // what the meter and the help line keep off: a game's own boxes with buttons (pads, panels; not a box over most of
+    // the screen, e.g. a level picker), the buttons beside Quit, the game's card, the walk stick and buttons, the minimap
+    const solids = [...els.hud.children].filter(c => !/^gh-/.test(c.className) && shown(c) && c.querySelector('button'))
+      .concat(toolsOn ? [tools] : [], q('.gh-card').innerHTML ? [q('.gh-card')] : [], [...document.querySelectorAll(SOLID_IDS)])
+      .filter(shown).map(el => ({ el, r: rect(el) })).filter(s => s.r.height < H * .6);
+    for (const el of [q('.gh-meter'), q('.gh-hint')]) {
+      el.style.top = el.style.bottom = el.style.left = el.style.maxWidth = '';
+      if (!shown(el)) continue;
+      const home = rect(el), hit = solids.filter(s => meet(home, s.r));
+      if (hit.length) placeClear(el, home, hit, solids, W, H, rect, meet);
+      if (el.classList.contains('gh-meter')) solids.push({ el, r: rect(el) });
+    }
+  }
+  function placeClear(el, home, hit, solids, W, H, rect, meet) {
+    const free = () => !solids.some(s => s.el !== el && meet(rect(el), s.r));
+    // the free stretch of its own row, when what it meets sits to the sides of its middle
+    const cx = (home.left + home.right) / 2, left = hit.filter(s => s.r.right <= cx), right = hit.filter(s => s.r.left >= cx);
+    if (left.length + right.length === hit.length) {
+      const L = Math.max(8, ...left.map(s => s.r.right + 8)), R = Math.min(W - 8, ...right.map(s => s.r.left - 8));
+      if (R - L >= 240) { el.style.left = Math.round((L + R) / 2) + 'px'; el.style.maxWidth = Math.round(R - L) + 'px'; if (free()) return; el.style.left = el.style.maxWidth = ''; }
+    }
+    // over what it meets (low on the screen) or under it (high), as far as needed
+    const low = home.top + home.height / 2 > H / 2;
+    for (let i = 0; i < 4; i++) {
+      const r = rect(el), now = solids.filter(s => s.el !== el && meet(r, s.r));
+      if (!now.length) return;
+      if (low) { const up = Math.min(...now.map(s => s.r.top)); el.style.top = 'auto'; el.style.bottom = Math.round(H - up + 6) + 'px'; }
+      else { const down = Math.max(...now.map(s => s.r.bottom)); el.style.bottom = 'auto'; el.style.top = Math.round(down + 6) + 'px'; }
+      const n = rect(el); if (n.top < 50 || n.bottom > H - 8) break;
+    }
+    if (!free()) el.style.top = el.style.bottom = '';   // no clear spot: back where it was
+  }
   const HUD = {
-    show(on) { const e = ensure(); e.hud.classList.toggle('on', !!on); document.body.classList.toggle('in-game', !!on); if (!on) { HUD.reticle(null); HUD.meter(null); HUD.card(''); HUD.msg(''); HUD.tools({}); HUD.closeHowTo(); } },
+    show(on) {
+      const e = ensure(); e.hud.classList.toggle('on', !!on); document.body.classList.toggle('in-game', !!on);
+      clearInterval(clearTimer); if (on) { clearTimer = setInterval(keepClear, 250); requestAnimationFrame(keepClear); }
+      if (!on) {
+        HUD.reticle(null); HUD.meter(null); HUD.card(''); HUD.msg(''); HUD.tools({}); HUD.closeHowTo();
+        const q = e.q; q('.gh-top').classList.remove('gh-left'); q('.gh-top').style.maxWidth = '';
+        for (const el of [q('.gh-meter'), q('.gh-hint')]) el.style.top = el.style.bottom = el.style.left = el.style.maxWidth = '';
+      }
+    },
     // the buttons beside Quit (Oct 17, Miguel: "add a restart to the board ... do this to all the board games", and every
     // puzzle needs a better explanation with an example): { help: fn, restart: fn }, each shown only when given
     tools(o = {}) {
@@ -159,6 +219,7 @@ body.in-game #questLine,body.in-game:not(.game-roam) #miniMap,body.in-game #phot
       ensure().hud.appendChild(p); return p;
     },
     howToOpen: () => !!els && els.how.classList.contains('on'),
+    keepClear,
     title(t) { ensure().q('.gh-title').textContent = t || ''; },
     score(t) { ensure().q('.gh-score').textContent = t == null ? '' : String(t); },
     info(t) { ensure().q('.gh-info').textContent = t || ''; },
