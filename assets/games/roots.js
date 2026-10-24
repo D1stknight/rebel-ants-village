@@ -79,8 +79,8 @@
       ctx.player.place(0, 0, 0);
       // the pads under the view (touch)
       const hud = document.getElementById('gameHud'), pads = document.createElement('div');
-      pads.style.cssText = 'position:absolute;right:18px;bottom:70px;display:grid;grid-template-columns:52px 52px 52px;grid-template-rows:44px 44px;gap:6px;pointer-events:auto';
-      pads.innerHTML = [[0, 2, 1], [3, 1, 2], [1, 2, 2], [2, 2, 3]].map(([d, c, r]) => `<button type="button" data-d="${d}" style="grid-column:${c};grid-row:${r};border-radius:10px;border:1px solid #d8b35c;background:rgba(14,12,8,.85);color:#f3d27a;font:800 22px system-ui;touch-action:manipulation">${ARROW[d]}</button>`).join('');
+      pads.style.cssText = 'position:absolute;right:18px;bottom:70px;display:grid;grid-template-columns:52px 52px 52px;grid-template-rows:44px 44px 44px;gap:6px;pointer-events:auto';
+      pads.innerHTML = [[0, 2, 1], [3, 1, 2], [1, 3, 2], [2, 2, 3]].map(([d, c, r]) => `<button type="button" data-d="${d}" style="grid-column:${c};grid-row:${r};border-radius:10px;border:1px solid #d8b35c;background:rgba(14,12,8,.85);color:#f3d27a;font:800 22px system-ui;touch-action:manipulation">${ARROW[d]}</button>`).join('');
       pads.querySelectorAll('button').forEach(b => b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); strike(+b.dataset.d); }));
       hud.append(pads);
       H.title(def.title || 'Root Seal'); H.score(0); H.info(`Seal ${'◆'.repeat(CRACKS)} · ${SECS} s`);
