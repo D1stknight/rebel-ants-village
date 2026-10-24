@@ -510,6 +510,9 @@ body.walk-photo #photoBtn{display:block}
 @keyframes villageTravelSpin{to{transform:rotate(360deg)}}
 #returnHubBtn{position:fixed;top:78px;left:50%;transform:translateX(-50%);z-index:20;display:none;background:rgba(5,10,28,.92);border:1px solid rgba(232,197,106,.5);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:8px 14px;cursor:pointer;backdrop-filter:blur(12px)}
 #returnHubBtn.on{display:block}
+@media (max-width:520px){#returnHubBtn{top:146px}}
+html.vt-touch #interactionPrompt{bottom:auto;top:184px;max-width:92vw;white-space:normal;text-align:center}
+body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPrompt{display:none}
 #returnHubBtn:hover{background:rgba(232,197,106,.16)}
 #villageGateOverlay{position:fixed;inset:0;background:rgba(2,8,18,.62);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:70;opacity:0;pointer-events:none;transition:opacity .22s}
 #villageGateOverlay.on{opacity:1;pointer-events:all}
@@ -9036,7 +9039,8 @@ function showToast(msg, duration) {
 function setInteractionPrompt(text, visible) {
   const prompt = document.getElementById('interactionPrompt');
   if (!prompt) return;
-  prompt.textContent = text || '';
+  // touch screens press O with the Use button (assets/village-touch.js)
+  prompt.textContent = (window.VillageTouch?.on ? String(text || '').replace(/^Press O\b/, 'Tap Use') : text) || '';
   prompt.classList.toggle('on', visible === true);
 }
 
