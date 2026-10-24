@@ -57232,7 +57232,7 @@
     "haloColor": null,
     "colorCycle": false,
     "haloVerticalOffset": null,
-    "baseRotationY": 0,
+    "baseRotationY": -2.54,
     "moveSpeed": 0.6,
     "antWalkSpeed": null,
     "antAnimationSpeedRatio": null,
