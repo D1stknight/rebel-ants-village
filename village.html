@@ -3961,6 +3961,14 @@ function applyQuestNpcPlaces() {
     const v = new BABYLON.Vector3(at.x, npc.position.y, at.z);
     npc.metadata.spawn = v.clone(); npc.metadata.home = v.clone(); npc.metadata.wanderOrigin = v.clone(); npc.metadata.target = null;
   }
+  syncMochiPendant();
+}
+// Mochi gave his Rose Quartz pendant to the Lunar Witch (Moon Tales 07: the pendant spot used): his beckoning paw is empty after
+function syncMochiPendant() {
+  const k = (typeof getNPCById === 'function' ? getNPCById('cc-mochi') : null)?.metadata?.kitModel;
+  if (!k) return;
+  const given = (ProgressionState.spotsUsed || []).includes('mt-rose-quartz') || isQuestIdCompleted('moon-tales-07');
+  k.getChildMeshes(false).forEach(c => { if (/rose_quartz|chrome/.test((c.sourceMesh || c).material?.name || '')) c.setEnabled(!given); });
 }
 let TaleMoonPreview = (() => { const v = new URLSearchParams(window.location.search).get('taleMoon'); return v == null ? undefined : (v === 'none' ? null : v); })();
 
