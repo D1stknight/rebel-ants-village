@@ -3102,9 +3102,10 @@
       M.quad('glow_pink', [[-4, -4, .05], [4, -4, .05], [4, 4, .05], [-4, 4, .05]]);
     },
     cc_rose_pendant(M) { // the Rose Quartz pendant Mochi carried, now in the Lunar Witch's palm (Moon Tales 07): glows like a heartbeat; hovers
-      M.sphere('rose_quartz', [0, 0, 1.2], .085, 1.6, 6, 3); M.sphere('chrome', [0, 0, 1.36], .022, 1, 5, 3);
-      for (const dx of [-.06, .06]) M.rod('chrome', [dx, 0, 1.52], [0, 0, 1.37], .008, 3);
-      for (const a of [0, Math.PI / 2]) { const c = Math.cos(a) * .55, s = Math.sin(a) * .55; M.quad('glow_pink', [[-c, -s, .7], [c, s, .7], [c, s, 1.7], [-c, -s, 1.7]]); }
+      // before her chest (the hover lifts it .04-.4 m): higher, it hung over her face
+      M.sphere('rose_quartz', [0, 0, .78], .085, 1.6, 6, 3); M.sphere('chrome', [0, 0, .94], .022, 1, 5, 3);
+      for (const dx of [-.06, .06]) M.rod('chrome', [dx, 0, 1.1], [0, 0, .95], .008, 3);
+      for (const a of [0, Math.PI / 2]) { const c = Math.cos(a) * .55, s = Math.sin(a) * .55; M.quad('glow_pink', [[-c, -s, .28], [c, s, .28], [c, s, 1.28], [-c, -s, 1.28]]); }
     },
     // subparts (built under their own pivot so they move): the beckoning paws, Mamoru's flame, Nariko's orb
     cc_paw_black(M) { M.rod('cat_black', [0, 0, 0], [.02, -.08, .4], .11, 7); M.sphere('cat_black', [.02, -.09, .46], .14, 1, 8, 5); for (const x of [-.05, 0, .05]) M.sphere('bone', [.02 + x, -.22, .5], .028, 1, 5, 3); M.sphere('bone', [.02, -.22, .42], .045, 1, 5, 3); },
