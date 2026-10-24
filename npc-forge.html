@@ -1017,7 +1017,7 @@ const packTodo = (r) => !r.games || packOld(r);
 // Oct 20 the Free to play roster (api/free-roster.mjs): forged Rebels anyone can play from the lobby; ticked in its
 // own box (Oct 24: it was inside the Rig worker box's games packs list, behind a button)
 let freeRoster = null, freeErr = null;   // { tokens: Set, saved, env, busy }
-const FREE_NEVER = new Set(['1', '893']);
+const FREE_NEVER = new Set(['1']);
 async function loadFreeRoster() {
   try { const d = await api('/api/free-roster'); freeRoster = { tokens: new Set(d.tokens || []), saved: !!d.saved, env: d.env || null, busy: false }; }
   catch (e) { freeRoster = null; freeErr = e.message; }
@@ -1050,7 +1050,7 @@ function paintFree() {
     .sort((a, b) => Number(a.tokenId) - Number(b.tokenId));
   const n = freeRoster.tokens.size, live = freeRoster.env === 'prod';
   const row = (r) => {
-    if (FREE_NEVER.has(r.tokenId)) return `<div class="state" style="opacity:.6;padding:2px 0">#${esc(r.tokenId)} · ${r.tokenId === '1' ? 'the starter: always the first card' : 'out of the lobby until it is reforged'}</div>`;
+    if (FREE_NEVER.has(r.tokenId)) return `<div class="state" style="opacity:.6;padding:2px 0">#${esc(r.tokenId)} · the starter: always the first card</div>`;
     const on = freeRoster.tokens.has(r.tokenId), can = r.publicRig || on;
     const why = r.gone ? 'no forged character in play' : r.publicRig ? '' : 'needs a public forged character';
     const nm = r.name && !r.name.includes('#' + r.tokenId) ? ` · ${esc(r.name)}` : '';
@@ -1059,7 +1059,7 @@ function paintFree() {
   box.innerHTML = `<div class="state"><b style="color:var(--gold)">${n} Rebel${n === 1 ? '' : 's'}</b> anyone can play from ${live ? '<b style="color:var(--txt)">the live lobby</b> (rebeluniverse.io)' : 'this preview\'s lobby <span class="warn">(the live lobby keeps its own list: tick it on rebeluniverse.io)</span>'}${freeRoster.saved ? '' : ' · <span class="warn">not saved yet: the lobby shows its showcase list (ticked below)</span>'}${freeRoster.busy ? ' · saving…' : ''}</div>
     <div style="max-height:300px;overflow:auto;margin-top:6px">${all.map(row).join('') || '<div class="state">No forged Rebels in play yet.</div>'}</div>
     <div class="row" style="margin-top:6px">${freeRoster.saved ? '<button onclick="resetFree()">Back to the showcase list</button>' : ''}<button onclick="loadGamesPacks()" ${freeRoster.busy ? 'disabled' : ''}>Refresh</button></div>
-    <div class="state" style="margin-top:4px">Each tick saves at once. A greyed Rebel needs its public character first: Forge → that Rebel → Make this my Rebel (as admin). #001 and #893 are never on it.</div>`;
+    <div class="state" style="margin-top:4px">Each tick saves at once. A greyed Rebel needs its public character first: Forge → that Rebel → Make this my Rebel (as admin). #001 (the starter card) is never on it.</div>`;
 }
 async function loadGamesPacks() {
   freeErr = null;

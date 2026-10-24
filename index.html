@@ -1136,7 +1136,8 @@ const VILLAGE_RIGGED = {
   '3421': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/3421/build_1790563500246_forge_rig_thumb-3TGxeYqs0qzCPyyDj68H1Q1MyE8Zhx.jpg' },
   '609': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/609/build_1790562737903_forge_rig_thumb-A2y0hjC2OnDvVDOsPHhibxlbPkrc2s.jpg' },
   '4722': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4722/build_1790563381766_forge_rig_thumb-9DtgRRioXuNbKiuyVNvizgbXR5nQkf.jpg' },
-  '4': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4/build_1790563425986_forge_rig_thumb-pIHzHp8JxvvTnxe2lV28UNpuAlaHeF.jpg' }
+  '4': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4/build_1790563425986_forge_rig_thumb-pIHzHp8JxvvTnxe2lV28UNpuAlaHeF.jpg' },
+  '893': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/893/build_1790478443833_forge_rig_thumb-Ha0DZzDHURKT68Rvp8CkPk6N2GYbGA.jpg' }   // Oct 24: its Sept 27 rig (Miguel: "looks great")
 };
 // friend-collection playables (no NFT needed): rigged procedural characters built in the village (SamuraiKit)
 const FRIEND_PLAYABLES = [
@@ -1151,8 +1152,8 @@ const loadFriendPlayables = () => Promise.all(FRIEND_PLAYABLES.map((r) => attach
 const FRIEND_LABELS = { chumpz: 'Chumpz', saints: 'Saint' };
 const sameCollection = (a, b) => (a?.collectionKey || 'battle_for_colony') === (b?.collectionKey || 'battle_for_colony');
 // Oct 20 the Free to play roster (api/free-roster.mjs, ticked in the NPC Forge): forged Rebels anyone can play: guests,
-// wallets without a Rebel and holders whose own Rebels are not forged yet. Never #001 (the starter card) or #893.
-const FREE_NEVER = new Set(['1', '893']);
+// wallets without a Rebel and holders whose own Rebels are not forged yet. Never #001 (the starter card).
+const FREE_NEVER = new Set(['1']);
 async function loadFreeRoster() {
   let tokens = null;
   try { const d = await (await fetch('/api/free-roster', { headers: { accept: 'application/json' } })).json(); if (d && d.ok && Array.isArray(d.tokens)) tokens = d.tokens; } catch (e) {}
