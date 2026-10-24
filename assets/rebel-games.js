@@ -93,6 +93,10 @@ body.in-game #questLine,body.in-game:not(.game-roam) #miniMap,body.in-game #phot
 #gameResult .gr-btns button.primary{background:#d8b35c;color:#2a1d10;border-color:#d8b35c}
 #gameResult .gr-btns button[hidden]{display:none}
 @media (max-width:520px){#gameHud .gh-top{gap:8px;padding:6px 10px}#gameHud .gh-score{font-size:17px}#gameHud .gh-tools{top:auto;bottom:14px;right:12px}}
+/* phones (Oct 24): the help line goes up under the title bar, clear of the on-screen pads at the bottom (back down when a
+   game's own card uses that spot), and the HUD buttons are big enough for a thumb */
+@media (max-width:520px){#gameHud .gh-hint{bottom:auto;top:58px;font-size:12px;padding:5px 10px;max-width:94vw}#gameHud .gh-card:not(:empty)~.gh-hint{top:auto;bottom:22px}}
+@media (pointer:coarse){#gameHud .gh-tools button{padding:10px 14px;font-size:13px;min-height:40px}#gameHud .gh-tools kbd{display:none}}
 `;
   let els = null;
   function ensure() {
