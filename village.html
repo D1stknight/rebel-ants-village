@@ -183,7 +183,8 @@ body.walk-photo #photoBtn{display:block}
 #danceOff .do-pad{width:46px;height:40px;border-radius:10px;border:1px solid #d8b35c;background:rgba(255,216,119,.08);color:#ffe9b0;font:700 20px/38px sans-serif;cursor:pointer}
 /* the timing bar (SkillBar): stop the sliding marker in the gold */
 #skillBar{position:fixed;left:50%;bottom:24%;transform:translateX(-50%);width:min(440px,86vw);padding:14px 18px 12px;background:rgba(10,13,22,.9);border:1px solid rgba(216,179,92,.6);border-radius:12px;color:#f3e6c4;font:600 14px/1.3 Georgia,serif;text-align:center;z-index:60;display:none;box-shadow:0 8px 30px rgba(0,0,0,.45);user-select:none}
-#skillBar.on{display:block}
+#skillBar.on{display:block;touch-action:none}
+@media (pointer:coarse) and (max-width:520px){#skillBar{bottom:auto;top:190px}}
 #skillBar .sb-title{letter-spacing:.14em;text-transform:uppercase;font-size:12px;color:#d8b35c;margin-bottom:10px}
 #skillBar .sb-track{position:relative;height:20px;border-radius:10px;background:linear-gradient(90deg,#2a140e,#4a2414 40%,#4a2414 60%,#2a140e);cursor:pointer}
 #skillBar .sb-zone{position:absolute;top:0;bottom:0;border-radius:4px;background:linear-gradient(90deg,#b77b22,#ffd877,#b77b22);box-shadow:0 0 12px #ffcc66}
@@ -1710,7 +1711,7 @@ body.walk-photo #photoBtn{display:block}
 <div id="photoFlash"></div>
 <div id="photoOverlay"><div class="ph-card"><img id="photoImg" alt="Your picture"><div class="ph-cap"></div><div class="ph-btns"><button onclick="window.saveVillagePhoto()">Save</button><button onclick="window.shareVillagePhoto()">Share</button><button onclick="window.closeVillagePhoto()">Close</button></div></div></div>
 <div id="danceOff"><div class="do-title"></div><div class="do-levels"></div><div class="do-lane"><div class="do-ring"></div><div class="do-notes"></div></div><div class="do-score"><span class="do-count"></span><span class="do-judge"></span></div><div class="do-pads"><button class="do-pad" onpointerdown="event.preventDefault(); window.pressDance && window.pressDance(0)">←</button><button class="do-pad" onpointerdown="event.preventDefault(); window.pressDance && window.pressDance(1)">↑</button><button class="do-pad" onpointerdown="event.preventDefault(); window.pressDance && window.pressDance(2)">→</button><button class="do-pad" onpointerdown="event.preventDefault(); window.pressDance && window.pressDance(3)">↓</button></div><button class="mg-restart" onclick="this.blur(); window.restartDanceOff && window.restartDanceOff()">Restart</button><button class="mg-leave" onclick="this.blur(); window.leaveDanceOff && window.leaveDanceOff()">Leave</button></div>
-<div id="skillBar" onclick="window.pressSkillBar && window.pressSkillBar()"><div class="sb-title"></div><div class="sb-track"><div class="sb-zone"></div><div class="sb-mark"></div></div><div class="sb-pips"></div><div class="sb-msg"></div><button class="mg-restart" onclick="event.stopPropagation(); this.blur(); window.restartSkillBar && window.restartSkillBar()">Restart</button></div>
+<div id="skillBar" onpointerdown="if (!event.target.closest('button')) { event.preventDefault(); window.pressSkillBar && window.pressSkillBar(); }"><div class="sb-title"></div><div class="sb-track"><div class="sb-zone"></div><div class="sb-mark"></div></div><div class="sb-pips"></div><div class="sb-msg"></div><button class="mg-restart" onclick="event.stopPropagation(); this.blur(); window.restartSkillBar && window.restartSkillBar()">Restart</button></div>
 <div id="playerStartupOverlay" aria-hidden="true">
   <div id="playerStartupPanel" role="dialog" aria-modal="true" aria-labelledby="playerStartupTitle">
     <div id="playerStartupKicker">Welcome</div>
