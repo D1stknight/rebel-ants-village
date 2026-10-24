@@ -44,6 +44,8 @@ body.rebel-panel-open #questLine{display:none!important}
     b.addEventListener('click', e => { e.stopPropagation(); HUD.togglePanel(); b.blur(); });
     const q = document.createElement('div'); q.id = 'questLine'; q.innerHTML = '<b></b><span></span>'; document.body.appendChild(q);
     let open = false; try { open = localStorage.getItem('rebelAntsHudPanelOpen') === '1'; } catch (e) {}
+    // touch screens start with it folded: while it is open the stick and buttons step aside (village.html)
+    if (window.VillageTouch?.on) open = false;
     document.body.classList.toggle('rebel-panel-open', open);
     window.addEventListener('keydown', e => {
       if (e.key !== 'Tab' || e.ctrlKey || e.metaKey || e.altKey) return;

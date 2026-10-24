@@ -29560,8 +29560,12 @@ async function loadForgeCollectionsConfig() {
 }
 
 // the round Rebel button (opens the Rebel panel), the quest line beside it and the minimap (assets/village-hud.js)
-// touch screens: the stick and buttons (assets/village-touch.js) show while walking, not in admin or a board game
-setInterval(() => window.VillageTouch?.update({ walking: !!walkMode && !adminMode && !(MiniGames.on && !MiniGames.roam) && !DanceOff.on && !DanceOff.choosing }), 250);
+// touch screens: the stick and buttons (assets/village-touch.js) show while walking, not in admin or a board game, nor
+// while a talk box, a reading card, the gloves panel or the Rebel panel is open (they sat over the talk box's words and
+// the panel's buttons)
+const touchCovers = ['npcDialogueOverlay', 'panel', 'glovePanel'];
+setInterval(() => window.VillageTouch?.update({ walking: !!walkMode && !adminMode && !(MiniGames.on && !MiniGames.roam) && !DanceOff.on && !DanceOff.choosing
+  && !touchCovers.some(id => document.getElementById(id)?.classList.contains('on')) && !document.body.classList.contains('rebel-panel-open') }), 250);
 function initVillageHud() {
   try {
     window.VillageHud?.init(scene, {
