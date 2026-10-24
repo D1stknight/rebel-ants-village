@@ -117,6 +117,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #gloveBtn{margin-top:5px;width:100%;height:24px;border:1px solid rgba(232,197,106,.34);background:rgba(232,197,106,.05);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:2px;cursor:pointer;display:none}
 #gloveBtn:hover{background:rgba(232,197,106,.13)}
 body.has-gloves #gloveBtn{display:block}
+/* touch screens: Return to Hub (and, while walking, Back to Lobby) sit in the Rebel panel instead of over the view and
+   beside the stick (Miguel, Oct 24: "Return to hub should be a small button out of the way in mobile") */
+#mobHubBtn,#mobLobbyBtn{margin-top:6px;width:100%;height:34px;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:2px;cursor:pointer;display:none}
+#mobHubBtn{border:1px solid rgba(232,197,106,.45);background:rgba(232,197,106,.07);color:#e8c56a}
+#mobLobbyBtn{border:1px solid rgba(94,207,202,.34);background:rgba(94,207,202,.05);color:#5ecfca}
+html.vt-touch #mobHubBtn.on,html.vt-touch body:has(#wb.on) #mobLobbyBtn{display:block}
+html.vt-touch #returnHubBtn.on,html.vt-touch body:has(#wb.on) #backToLobbyBtn{display:none}
+html.vt-touch #selectedRebelPanel{max-height:calc(100vh - 168px);overflow-y:auto;overscroll-behavior:contain}
+/* a phone held sideways: the open panel starts at the top beside the round button, so its buttons fit on the screen */
+@media (max-height:500px){html.vt-touch body.rebel-panel-open #selectedRebelPanel{top:12px;left:100px;max-height:calc(100vh - 24px)}html.vt-touch body.rebel-panel-open #wb.on{visibility:hidden}}
 #glovePanel{position:fixed;top:124px;left:340px;width:min(300px,calc(100vw - 32px));padding:12px;background:rgba(5,10,28,.95);border:1px solid rgba(232,197,106,.45);backdrop-filter:blur(12px);z-index:30;display:none;color:#f3e6c4;font:600 12px/1.3 Georgia,serif}
 #glovePanel.on{display:block}
 #glovePanel h4{margin:0 0 8px;font:700 10px 'Cinzel Decorative',serif;letter-spacing:2px;color:#e8c56a;text-transform:uppercase}
@@ -242,9 +252,13 @@ body.walk-photo #photoBtn{display:block}
 #wb.on{top:82px;bottom:auto;left:340px;width:92px;min-height:31px;transform:none;padding:7px 8px;background:rgba(5,10,28,.95);border-color:rgba(94,207,202,.62);color:#5ecfca;font-size:8px;letter-spacing:1.5px;z-index:14;box-shadow:0 0 18px rgba(94,207,202,.12)}
 #wb.on:hover{background:rgba(94,207,202,.14);border-color:#5ecfca}
 @media (max-width:480px){#wb.on{left:auto;right:16px;top:auto;bottom:16px}}
+/* narrow screens (phones, tablets held upright) have no room for Enter Village beside Back to Lobby: it sat under it.
+   Enter Village goes above Back to Lobby, both centred, the same width */
+@media (max-width:920px){#wb:not(.on){bottom:80px;width:min(300px,calc(100vw - 56px))}body:has(#wb:not(.on)) #backToLobbyBtn{left:50%;transform:translateX(-50%)}}
 #tt{position:fixed;bottom:86px;left:50%;transform:translateX(-50%);background:rgba(5,10,28,.95);border:1px solid rgba(232,197,106,.45);padding:13px 28px;text-align:center;pointer-events:none;opacity:0;transition:opacity .3s;z-index:20;backdrop-filter:blur(12px);white-space:nowrap}
 #tt h3{font-family:'Cinzel Decorative',serif;font-size:12px;color:#e8c56a;letter-spacing:2px;margin-bottom:3px}
 #tt p{font-size:10px;color:#5ecfca;letter-spacing:1px}
+@media (max-width:920px){#tt{bottom:136px}}
 #tt.on{opacity:1}
 #panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);width:480px;max-width:92vw;max-height:88vh;overflow-y:auto;background:rgba(5,10,28,.97);border:1px solid rgba(232,197,106,.5);padding:38px;z-index:30;opacity:0;pointer-events:none;transition:all .4s cubic-bezier(.16,1,.3,1);backdrop-filter:blur(22px)}
 #panel.on{opacity:1;pointer-events:all;transform:translate(-50%,-50%) scale(1)}
@@ -1760,6 +1774,8 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
       <div class="world-status-row"><span>Quests</span><span class="world-status-value" id="hudQuestCount">0</span></div>
       <button id="journalBtn" type="button" onclick="openProgressionJournal()">Journal</button>
       <button id="gloveBtn" type="button" onclick="togglePlayerGlovePanel()">Gloves</button>
+      <button id="mobHubBtn" type="button" onclick="returnToHubVillage()">Return to Hub</button>
+      <button id="mobLobbyBtn" type="button" onclick="backToLobby()">← Back to Lobby</button>
     </div>
     <div id="questTracker">
       <div id="questTrackerTitle">Active Quest</div>
@@ -5754,6 +5770,7 @@ function updateVillageChrome() {
   if (hudVillage) hudVillage.textContent = CURRENT_VILLAGE.displayName;
   const returnBtn = document.getElementById('returnHubBtn');
   if (returnBtn) returnBtn.classList.toggle('on', CURRENT_VILLAGE_ID !== 'hub');
+  document.getElementById('mobHubBtn')?.classList.toggle('on', CURRENT_VILLAGE_ID !== 'hub');
 }
 window.returnToHubVillage = returnToHubVillage;
 // this module runs after the page has parsed (DOMContentLoaded may already have fired): update now, else on the event
@@ -9043,8 +9060,17 @@ function showToast(msg, duration) {
 function setInteractionPrompt(text, visible) {
   const prompt = document.getElementById('interactionPrompt');
   if (!prompt) return;
-  // touch screens press O with the Use button (assets/village-touch.js)
-  prompt.textContent = (window.VillageTouch?.on ? String(text || '').replace(/^Press O\b/, 'Tap Use') : text) || '';
+  const VT = window.VillageTouch;
+  if (VT?.on) {
+    // touch screens press O with the Use button (assets/village-touch.js). The button names the action ("Talk", "Open",
+    // "Play" ...); once the player has used it, the "Tap Use to ..." line up top stays away. Other lines (exits, holds,
+    // races, sealed doors) still show.
+    const t = String(text || ''), m = visible === true ? /^Press O to (\w+)/.exec(t) : null;
+    const word = m && m[1].length <= 9 ? m[1][0].toUpperCase() + m[1].slice(1).toLowerCase() : m ? 'Use' : null;
+    VT.useHint?.(word);
+    if (m && VT.learned) { prompt.classList.remove('on'); return; }
+    prompt.textContent = t.replace(/^Press O\b/, 'Tap Use');
+  } else prompt.textContent = text || '';
   prompt.classList.toggle('on', visible === true);
 }
 
@@ -11289,6 +11315,7 @@ async function startMiniGame(def, src) {
   document.body.classList.toggle('game-roam', roam);
   window._newTerrain?.birds?.setVisible(false);
   document.getElementById('interactionPrompt')?.classList.remove('on');
+  window.VillageTouch?.useHint?.(null); // the Use button goes back to "Use" (roam games keep the buttons)
   holdBadgeUnlockPopup(); // a badge card left open would sit over the game
   RebelGames.HUD.show(true);
   RebelGames.HUD.title(def.title || impl.title || 'Game');
@@ -29533,8 +29560,12 @@ async function loadForgeCollectionsConfig() {
 }
 
 // the round Rebel button (opens the Rebel panel), the quest line beside it and the minimap (assets/village-hud.js)
-// touch screens: the stick and buttons (assets/village-touch.js) show while walking, not in admin or a board game
-setInterval(() => window.VillageTouch?.update({ walking: !!walkMode && !adminMode && !(MiniGames.on && !MiniGames.roam) && !DanceOff.on && !DanceOff.choosing }), 250);
+// touch screens: the stick and buttons (assets/village-touch.js) show while walking, not in admin or a board game, nor
+// while a talk box, a reading card, the gloves panel or the Rebel panel is open (they sat over the talk box's words and
+// the panel's buttons)
+const touchCovers = ['npcDialogueOverlay', 'panel', 'glovePanel'];
+setInterval(() => window.VillageTouch?.update({ walking: !!walkMode && !adminMode && !(MiniGames.on && !MiniGames.roam) && !DanceOff.on && !DanceOff.choosing
+  && !touchCovers.some(id => document.getElementById(id)?.classList.contains('on')) && !document.body.classList.contains('rebel-panel-open') }), 250);
 function initVillageHud() {
   try {
     window.VillageHud?.init(scene, {
