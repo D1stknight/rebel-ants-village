@@ -333,6 +333,11 @@ body.walk-photo #photoBtn{display:block}
 #ld h1{font-family:'Cinzel Decorative',serif;font-size:30px;color:#e8c56a;letter-spacing:5px;margin-bottom:10px;text-shadow:0 0 40px rgba(232,197,106,.6)}
 #ld .sub{font-size:10px;color:#5ecfca;letter-spacing:7px;text-transform:uppercase;margin-bottom:48px;animation:pulse 2s infinite}
 #ldst{font-size:10px;color:rgba(232,197,106,.45);letter-spacing:2px;margin-top:18px;text-transform:uppercase;text-align:center}
+#ldProblem{box-sizing:border-box;width:min(520px,calc(100vw - 32px));margin-top:22px;padding:18px 20px;border:1px solid rgba(232,197,106,.35);border-radius:14px;background:rgba(10,16,32,.9);color:#e9e2cc;font-size:14px;line-height:1.5;text-align:left}
+#ldProblem h2{margin:0 0 8px;font-size:17px;color:#e8c56a;letter-spacing:.5px}
+#ldProblem ol{margin:10px 0 0;padding-left:20px}#ldProblem li{margin:6px 0}
+#ldProblem .btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+#ldProblem .btns a,#ldProblem .btns button{font:inherit;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;border:1px solid rgba(232,197,106,.5);background:rgba(232,197,106,.12);color:#e8c56a;text-decoration:none;cursor:pointer}
 .lb{width:240px;height:2px;background:rgba(232,197,106,.1);position:relative;overflow:hidden}
 .lf{position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,#e8c56a,transparent);animation:sw 1.6s infinite}
 @keyframes sw{to{left:100%}}@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
@@ -1554,7 +1559,7 @@ body.walk-photo #photoBtn{display:block}
   <div id="forgedNPCHead" style="font-size:9px;letter-spacing:2px;color:#e8c56a;margin:6px 8px 4px;text-transform:uppercase">Forged NPCs <a href="npc-forge.html" target="_blank" style="color:#5ecfca;text-decoration:none;margin-left:6px">NPC Forge ↗</a></div>
   <div class="ap-grid" id="forgedNPCGrid"></div>
   <div style="font-size:9px;letter-spacing:2px;color:#b48cff;margin:6px 8px 4px;text-transform:uppercase">Mystic Moons</div>
-  <div class="ap-grid"><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_mamoru')"><span class="ap-icon">🐈‍⬛</span><span class="ap-name">Mamoru</span></div><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_flower_moon')"><span class="ap-icon">🎎</span><span class="ap-name">Kokeshi Flower Moon</span></div><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_mochi')"><span class="ap-icon">🐱</span><span class="ap-name">Mochi</span></div><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_ostara')"><span class="ap-icon">🐰</span><span class="ap-name">Ostara</span></div><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_nariko')"><span class="ap-icon">⚡</span><span class="ap-name">Nariko</span></div></div>
+  <div class="ap-grid"><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_mamoru')"><span class="ap-icon">🐈‍⬛</span><span class="ap-name">Mamoru</span></div><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_flower_moon')"><span class="ap-icon">🎎</span><span class="ap-name">Kokeshi Flower Moon</span></div><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_mochi')"><span class="ap-icon">🐱</span><span class="ap-name">Mochi</span></div><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_ostara')"><span class="ap-icon">🐰</span><span class="ap-name">Ostara</span></div><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_nariko')"><span class="ap-icon">⚡</span><span class="ap-name">Nariko</span></div><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_lunar_witch')"><span class="ap-icon">🌙</span><span class="ap-name">Lunar Witch</span></div></div>
   <div style="font-size:9px;letter-spacing:2px;color:#f2c84b;margin:6px 8px 4px;text-transform:uppercase">Chumpz Apes</div>
   <div class="ap-grid"><div class="ap-card" onclick="spawnNPCFromPanel('chumpz_racer')"><span class="ap-icon">🏎️</span><span class="ap-name">Racer</span></div><div class="ap-card" onclick="spawnNPCFromPanel('chumpz_chain')"><span class="ap-icon">⛓️</span><span class="ap-name">Big Chain</span></div><div class="ap-card" onclick="spawnNPCFromPanel('chumpz_peel')"><span class="ap-icon">😎</span><span class="ap-name">Peely</span></div><div class="ap-card" onclick="spawnNPCFromPanel('chumpz_peng')"><span class="ap-icon">🐧</span><span class="ap-name">Pengu</span></div><div class="ap-card" onclick="spawnNPCFromPanel('chumpz_band')"><span class="ap-icon">🍌</span><span class="ap-name">Banana Band</span></div><div class="ap-card" onclick="spawnNPCFromPanel('chumpz_barnacle')"><span class="ap-icon">⚓</span><span class="ap-name">Barnacle</span></div></div>
   <div style="padding:0 8px 6px;display:grid;grid-template-columns:1fr 1fr;gap:5px">
@@ -1579,7 +1584,7 @@ body.walk-photo #photoBtn{display:block}
       <option value="wander">wander</option>
       <option value="patrol">patrol</option>
     </select>
-    <select id="npcModelInput" class="admin-select" style="margin-bottom:5px" title="Model"><option value="ant">Model: Ant</option><option value="kit:cc_mamoru">Model: Mamoru</option><option value="kit:cc_flower_moon">Model: Kokeshi Flower Moon</option><option value="kit:cc_mochi">Model: Mochi</option><option value="kit:cc_ostara">Model: Ostara</option><option value="kit:cc_nariko">Model: Nariko</option><option value="kit:chz_ape_racer">Model: Racer</option><option value="kit:chz_ape_chain">Model: Big Chain</option><option value="kit:chz_ape_peel">Model: Peely</option><option value="kit:chz_ape_peng">Model: Pengu</option><option value="kit:chz_ape_band">Model: Banana Band</option></select>
+    <select id="npcModelInput" class="admin-select" style="margin-bottom:5px" title="Model"><option value="ant">Model: Ant</option><option value="kit:cc_mamoru">Model: Mamoru</option><option value="kit:cc_flower_moon">Model: Kokeshi Flower Moon</option><option value="kit:cc_mochi">Model: Mochi</option><option value="kit:cc_ostara">Model: Ostara</option><option value="kit:cc_nariko">Model: Nariko</option><option value="kit:cc_lunar_witch">Model: Lunar Witch</option><option value="kit:chz_ape_racer">Model: Racer</option><option value="kit:chz_ape_chain">Model: Big Chain</option><option value="kit:chz_ape_peel">Model: Peely</option><option value="kit:chz_ape_peng">Model: Pengu</option><option value="kit:chz_ape_band">Model: Banana Band</option></select>
     <textarea id="npcDialogueInput" placeholder="Custom dialogue text" rows="4" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#ccc;padding:5px 7px;font-size:11px;margin-bottom:5px;resize:vertical"></textarea>
     <input id="npcQuestIdInput" placeholder="Quest ID (optional)" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#ccc;padding:5px 7px;font-size:11px;margin-bottom:6px">
     <button class="ctrl-btn full" onclick="applySelectedNPCChanges()" style="width:100%;background:#5ecfca;color:#000">Apply NPC Changes</button>
@@ -1778,6 +1783,7 @@ body.walk-photo #photoBtn{display:block}
 <script>if (window.BABYLON) BABYLON.Tools.ScriptBaseUrl = window.BABYLON_BASE = new URL('assets/vendor/babylon/9.31.3/', location.href).href; // Babylon's own extra downloads (Draco, ...) come from the same copy (tools/babylon-upgrade.mjs)</script>
 <script src="assets/forge-core.js"></script>
 <script src="assets/village-hud.js"></script>
+<script src="assets/village-touch.js"></script>
 <script src="assets/samurai-kit.js"></script>
 <script src="assets/walk-gen.js"></script>
 <script src="assets/forge-sfx.js"></script>
@@ -1792,6 +1798,21 @@ const NEW_TERRAIN_MODULE = new URLSearchParams(location.search).get('terrain') !
   : null;
 const canvas=document.getElementById('c');
 const setSt=t=>{const el=document.getElementById('ldst'); if(el) el.textContent=t;};
+// A start the browser can't finish (no WebGL): the loading screen says what is wrong and what to try, instead of a status
+// line that never moves.
+const showStartupProblem=(title,intro,steps)=>{
+  const ld=document.getElementById('ld'); if(!ld) return;
+  ld.querySelectorAll('.sub,.lb').forEach(el=>el.style.display='none');
+  setSt('');
+  const box=document.createElement('div'); box.id='ldProblem'; box.setAttribute('role','alert');
+  const h=document.createElement('h2'); h.textContent=title; box.appendChild(h);
+  const p=document.createElement('div'); p.textContent=intro; box.appendChild(p);
+  const ol=document.createElement('ol'); steps.forEach(t=>{const li=document.createElement('li'); li.textContent=t; ol.appendChild(li);}); box.appendChild(ol);
+  const b=document.createElement('div'); b.className='btns';
+  const again=document.createElement('button'); again.type='button'; again.textContent='Try again'; again.onclick=()=>location.reload(); b.appendChild(again);
+  const back=document.createElement('a'); back.href='index.html'; back.textContent='Back to the lobby'; b.appendChild(back);
+  box.appendChild(b); ld.appendChild(box);
+};
 const VILLAGE_REGISTRY = {
   hub: { villageId:'hub', displayName:'Hub Village', route:'village.html?village=hub', themeColor:'#5ecfca', layoutPath:'assets/world-layout.json' },
   ronin: { villageId:'ronin', displayName:'Ronin Village', route:'village.html?village=ronin', themeColor:'#8f8f8f', layoutPath:'assets/world-layouts/ronin.json' },
@@ -1940,6 +1961,7 @@ const NPC_LIBRARY = {
   mystic_moons_mochi: { npcIdPrefix: 'mm-mochi', factionId: 'cute-creepy', role: 'villager', displayName: 'Mochi', modelUrl: null, modelScale: 1, fallbackType: 'kit:cc_mochi', behavior: 'idle', wanderRadius: 5, moveSpeed: .6, customDialogue: 'Mochi lifts his right paw and beckons. Luck in, luck in!\nI am Mochi. So long as I am near, no darkness shall harm you.\nThe game hall never closes. Win or lose, nobody here walks alone.' },
   mystic_moons_ostara: { npcIdPrefix: 'mm-ostara', factionId: 'cute-creepy', role: 'villager', displayName: 'Ostara', modelUrl: null, modelScale: 1, fallbackType: 'kit:cc_ostara', behavior: 'idle', wanderRadius: 5, moveSpeed: .6, customDialogue: 'Ostara sits still as starlight, her head tilted to the moon. A tiny silver bell chimes at her neck.\nThey call me the Dreamer. I watch the moon, and the moon watches over everything that grows.\nListen. Can you hear the sap rising in the trees?' },
   mystic_moons_nariko: { npcIdPrefix: 'mm-nariko', factionId: 'cute-creepy', role: 'villager', displayName: 'Nariko', modelUrl: null, modelScale: 1, fallbackType: 'kit:cc_nariko', behavior: 'idle', wanderRadius: 5, moveSpeed: .6, customDialogue: 'Lightning crackles in the orb between her hands.\nThe graves here are restless when the storm comes. I keep them sleeping.\nStay close to the candles and the spirits will leave you be.' },
+  mystic_moons_lunar_witch: { npcIdPrefix: 'mm-lunar-witch', factionId: 'cute-creepy', role: 'villager', displayName: 'Lunar Witch', modelUrl: null, modelScale: 1, fallbackType: 'kit:cc_lunar_witch', behavior: 'idle', wanderRadius: 5, moveSpeed: .6, customDialogue: 'The Lunar Witch stirs her cauldron, and a death\'s-head moth settles on her shoulder.\nEvery moon on this hill has a tale, little Rebel, and every tale was told to me.' },
   // the Chumpz apes: rigged kit characters (they walk when they move), placeable in any village
   chumpz_racer: { npcIdPrefix: 'chumpz-racer', factionId: 'chumpz', role: 'villager', displayName: 'Racer', modelUrl: null, modelScale: 1, fallbackType: 'kit:chz_ape_racer', behavior: 'idle', wanderRadius: 6, moveSpeed: .6, customDialogue: 'The Racer revs an engine that is not there. CHUMPZ RACING, number seventy-seven!\nFastest ape on the island. Ask anyone. Ask the crabs.\nRace you to the end of the pier?' },
   chumpz_chain: { npcIdPrefix: 'chumpz-chain', factionId: 'chumpz', role: 'villager', displayName: 'Big Chain', modelUrl: null, modelScale: 1, fallbackType: 'kit:chz_ape_chain', behavior: 'idle', wanderRadius: 6, moveSpeed: .6, customDialogue: 'Big Chain polishes a glass and grins under his bucket hat.\nWelcome to the Banana Bar! First round is on the house.\nThe band plays when the sun goes down. The chumpz dance until it comes back up.' },
@@ -2870,6 +2892,10 @@ const MOON_TALES_QUESTS = [
   makeMoonTaleQuest(2, 'Lanterns Glowing with Laughter', 'Mamoru', "Five jack-o'-lanterns round the court have gone dark before the Harvest Festival.", ["Light five jack-o'-lanterns.", 'Tell Mamoru.'], ['+45 progress'], "Every jack-o'-lantern on the hill is giggling again.", ['moon-tales-01']),
   makeMoonTaleQuest(3, 'Sweet Moon Cakes', 'Mamoru', 'The witches feast on sweet moon cakes at the Harvest Festival.', ['Find three moon cakes.', 'Set them on the feast table.', 'Tell Mamoru.'], ['+45 progress'], 'Three moon cakes on the feast table, each stamped with a little moon.', ['moon-tales-02']),
   makeMoonTaleQuest(4, 'Tricksters Beyond the Veil', 'Mamoru', 'Mischievous spirits drawn to the harvest night have slipped onto the hill.', ['Hold up the skull candle to three tricksters.', 'Tell Mamoru.'], ['+50 progress'], 'Three tricksters sent back beyond the veil by the light of a skull candle.', ['moon-tales-03']),
+  makeMoonTaleQuest(5, 'A Hollow Ache', 'Mochi', 'Spring dances on the hill with blossoms and birdsong, and yet the Lunar Witch has gone quiet.', ['Look in on the Lunar Witch by her cauldron.', 'Read the page she left in her cottage.', 'Tell Mochi.'], ['+40 progress'], 'A page by the moon window, and on it a hollow ache.', ['moon-tales-01']),
+  makeMoonTaleQuest(6, 'The Beckoning Paw', 'Mochi', 'The Pink Moon rises high and glowing above the treetops, and Mochi lifts his right paw.', ['Follow the drifting petals from her cauldron.', 'Watch the Pink Moon through the blossoms.', 'Talk to the Lunar Witch.'], ['+45 progress'], 'A trail of petals, a moonlit clearing wrapped in cherry blossoms, and a white cat beckoning.', ['moon-tales-05']),
+  makeMoonTaleQuest(7, 'Rose Quartz', 'Mochi', 'In his left paw Mochi carries a Rose Quartz crystal pendant, glowing soft and warm like a heartbeat.', ["Place the pendant in the Lunar Witch's palm.", 'Talk to the Lunar Witch.'], ['+45 progress'], 'The Rose Quartz in her palm, and warmth blooming in her chest.', ['moon-tales-06']),
+  makeMoonTaleQuest(8, 'Never Walk Alone', 'Mochi', '"I will walk beside you from this day forward," says Mochi. "You shall never walk alone."', ['Walk with Mochi and the Lunar Witch to Kokeshi Flower Moon.', 'Then to Ostara.', 'Then to Nariko.', 'Talk to Mochi.'], ['+50 progress'], 'Friends yet to come, a white cat at your side, and never walking alone.', ['moon-tales-07']),
   makeMoonTaleQuest(9, "The Nightingale's Lullaby", 'Kokeshi Flower Moon', 'As the Flower Moon ascends to its throne, Kokeshi weaves her melody under the great tree.', ['Listen to her lullaby.', 'Tell her what you heard.'], ['+40 progress'], 'A lullaby as soft as a nightingale, and the whole hill breathing in.', ['moon-tales-01']),
   makeMoonTaleQuest(10, 'Slumbering Buds', 'Kokeshi Flower Moon', 'Five flower beds on the hill are sleeping through the spring.', ['Hum the lullaby over five sleeping beds.', 'Tell Kokeshi Flower Moon.'], ['+45 progress'], 'Slumbering flowers awaken, bursting into vibrant blooms.', ['moon-tales-09']),
   makeMoonTaleQuest(11, 'The Virtue of Patience', 'Kokeshi Flower Moon', 'Kokeshi Flower Moon chants an ancient truth to those who stay still long enough.', ['Sit with her for thirty seconds.', 'Talk to her.'], ['+40 progress'], 'Gratitude for the world\'s beauty, the virtue of patience, the seeds of new beginnings.', ['moon-tales-10']),
@@ -2912,6 +2938,42 @@ const MOON_TALES_WIRING = {
       { id:'ward-tricksters', objective:'Hold up the skull candle to three tricksters: the scarecrows, behind the library, behind the game hall.', objectiveType:'useQuestSpot', targetObjectId:'mt-trickster', count:3, villageId:'cute-creepy' },
       { id:'tricksters-gone', objective:'Tell Mamoru the tricksters are gone.', objectiveType:'talkToNpc', targetNpcId:'cc-mamoru', villageId:'cute-creepy',
         say:['Gone, all three, back beyond the veil. My candle burns steadier already.', 'When my sisters have told their tales, come back to me. Then the Coven gathers, and I keep the watch until dawn.'] }
+    ] },
+  5: { giver:'cc-mochi',
+    offer:['Luck in, luck in! Spring is dancing on the hill, little Rebel: blossoms and birdsong, love blooming like wildflowers.', 'And yet the Lunar Witch has gone quiet. Look in on her for me? She keeps the green cauldron by her cottage.'],
+    steps:[
+      { id:'visit-witch', objective:'Look in on the Lunar Witch by her cauldron.', objectiveType:'talkToNpc', targetNpcId:'cc-lunar-witch', villageId:'cute-creepy',
+        say:['Oh. A visitor, on a night like this.', 'Mochi sent you? He worries. I am perfectly well, little Rebel: my cauldron bubbles, my books are full, the moon tells me all her tales.', 'I was writing by the window when you came. Go in, if you like. Mind the cat.'] },
+      { id:'read-page', objective:'In her cottage, read the page she left on the table under the moon window.', objectiveType:'interactInteriorLink', targetInteriorId:'cc_witch_cottage', targetObjectId:'hotspot_cc_witch_cottage_page', villageId:'cute-creepy' },
+      { id:'tell-mochi', objective:'Tell Mochi what the page said.', objectiveType:'talkToNpc', targetNpcId:'cc-mochi', villageId:'cute-creepy',
+        say:['A hollow ache... yes. I know that ache. It comes to the wisest hearts, the ones that look after everyone else.', 'Wait for the Pink Moon, little Rebel. When it rises, I will show her something.'] }
+    ] },
+  6: { giver:'cc-mochi',
+    offer:['Look up. The Pink Moon is rising, high and glowing above the treetops.', 'Go back to her cauldron and follow the petals. I will bring her where they lead.'],
+    steps:[
+      { id:'follow-petals', objective:"Follow the drifting petals from the Lunar Witch's cauldron.", objectiveType:'useQuestSpot', targetObjectId:'mt-petals', villageId:'cute-creepy' },
+      { id:'pink-moon', objective:'Watch the Pink Moon through the blossoms.', objectiveType:'useQuestSpot', targetObjectId:'mt-pink-moon', villageId:'cute-creepy' },
+      { id:'witch-clearing', objective:'Talk to the Lunar Witch in the Blossom Clearing.', objectiveType:'talkToNpc', targetNpcId:'cc-lunar-witch', villageId:'cute-creepy',
+        say:['A clearing I never knew was here, wrapped in cherry blossoms... and that cat, lifting his right paw, beckoning me, silently.', 'I followed him. I do not know why. I only know that I wanted to.'] }
+    ] },
+  7: { giver:'cc-mochi',
+    offer:['In my left paw I carry a Rose Quartz crystal. Feel it? Soft and warm, like a heartbeat.', 'My paws are for beckoning, little Rebel. Carry it to her, and place it in her palm.'],
+    steps:[
+      { id:'give-pendant', objective:"Place the Rose Quartz pendant in the Lunar Witch's palm.", objectiveType:'useQuestSpot', targetObjectId:'mt-rose-quartz', villageId:'cute-creepy' },
+      { id:'warmth', objective:'Talk to the Lunar Witch.', objectiveType:'talkToNpc', targetNpcId:'cc-lunar-witch', villageId:'cute-creepy',
+        say:['Warmth. Here, in my chest, blooming like a flower in the sun.', 'The loneliness is melting, little Rebel, like the morning frost.'] }
+    ] },
+  8: { giver:'cc-mochi',
+    offer:['She has a pendant now, and a heart opening like a flower. What she needs is friends.', 'Walk with us, little Rebel: Kokeshi Flower Moon first, then Ostara, then Nariko. We will follow you.'],
+    steps:[
+      { id:'meet-flower', objective:'Walk with Mochi and the Lunar Witch to Kokeshi Flower Moon.', objectiveType:'talkToNpc', targetNpcId:'cc-flower-moon', villageId:'cute-creepy',
+        say:['A witch who has never heard my lullaby? Then you shall hear it every spring.', 'Welcome, Lunar Witch. Blossoms are better shared.'] },
+      { id:'meet-ostara', objective:'Now walk with them to Ostara.', objectiveType:'talkToNpc', targetNpcId:'cc-ostara', villageId:'cute-creepy',
+        say:['Shh. Stand with me and look up, Lunar Witch. The moon looks back at those who are still.', 'My ledge has room for two.'] },
+      { id:'meet-nariko', objective:'Now walk with them to Nariko.', objectiveType:'talkToNpc', targetNpcId:'cc-nariko', villageId:'cute-creepy',
+        say:['So the cat found you a heart, and the Rebel found you friends.', 'When the storms come, witch, you stand in my circle. Nobody faces them alone.'] },
+      { id:'never-alone', objective:'Talk to Mochi.', objectiveType:'talkToNpc', targetNpcId:'cc-mochi', villageId:'cute-creepy',
+        say:['"I am Mochi," he says, curling his tail around her wrist, "and I will walk beside you from this day forward."', 'So long as I am near, no darkness shall harm you, and you shall never walk alone. That goes for you too, little Rebel. Lead on.', 'That is my tale, as the moon told it. It is in your journal now.'] }
     ] },
   9: { giver:'cc-flower-moon',
     offer:['The Flower Moon is rising to its throne, little Rebel. Can you feel the air change?', 'Stand with me under the old tree and listen. The song is soft, so stay close.'],
@@ -3857,7 +3919,11 @@ const QUEST_NPC_PLACES = {
   // Nariko's circle of seven stones (Moon Tales 17-19) is centred on (-54.5, 16.5), open to the east
   'cc-ostara': [{ quest:'moon-tales-13', step:'meet-ostara', x:-22.6, z:70.2, ry:0 }, { ...FESTIVAL, x:1.25, z:6.75, ry:Math.PI }, { ...STORM_CIRCLE, x:-56.05, z:13.82, ry:.524 }],
   'cc-flower-moon': [{ ...FESTIVAL, x:-1.25, z:6.75, ry:Math.PI }, { ...STORM_CIRCLE, x:-56.05, z:19.18, ry:2.618 }],
-  'cc-mochi': [{ ...FESTIVAL, x:3.3, z:5.3, ry:-1.66 }, { ...STORM_CIRCLE, x:-52.95, z:13.82, ry:-.524 }],
+  'cc-mochi': [{ ...FESTIVAL, x:3.3, z:5.3, ry:-1.66 }, { ...STORM_CIRCLE, x:-52.95, z:13.82, ry:-.524 }, { quest:'moon-tales-08', step:'meet-flower', whileActive:true, follow:true, side:-1 },
+    { quest:'moon-tales-06', step:'witch-clearing', x:45.2, z:20.4, ry:2.28 }, { quest:'moon-tales-08', follow:true, side:-1 }],
+  // the Lunar Witch (Moon Tales 05-08): by her cauldron, in the Blossom Clearing from 06 (her pendant floating before her
+  // from 07), walking with the player through 08
+  'cc-lunar-witch': [{ ...FESTIVAL, x:0, z:8, ry:Math.PI }, { quest:'moon-tales-08', step:'meet-flower', whileActive:true, follow:true, side:1 }, { quest:'moon-tales-06', step:'witch-clearing', x:48, z:21.5, ry:Math.PI }],
   'cc-nariko': [{ ...FESTIVAL, x:-3.1, z:6.4, ry:2 }, { quest:'moon-tales-17', step:'nariko-rises', x:-54.5, z:16.5, ry:Math.PI / 2 }],
   'cc-mamoru': [{ ...FESTIVAL, step:'keep-watch', still:true, x:0, z:-53, ry:Math.PI }, { ...STORM_CIRCLE, x:-52.95, z:19.18, ry:-2.618 }],
   // the Beach Party (Chumpz Cove 20): the whole cove round the bonfire on the beach by the west pier (-38, -32), facing the fire
@@ -3888,12 +3954,21 @@ function applyQuestNpcPlaces() {
     const at = questNpcPlace(places) || m._layoutPlace;
     if (m._questPlace === at || (!m._questPlace && at.home)) continue;
     npc.metadata._questPlace = at;
+    if (at.follow) { npc.metadata.target = null; continue; } // walks beside the player from where it is (followPlayer)
     const y = getNPCGroundHeightAt?.(at.x, at.z);
     npc.position.set(at.x, Number.isFinite(y) ? y : npc.position.y, at.z);
     npc.rotation.y = at.ry || 0; npc.metadata.baseRotationY = at.ry || 0;
     const v = new BABYLON.Vector3(at.x, npc.position.y, at.z);
     npc.metadata.spawn = v.clone(); npc.metadata.home = v.clone(); npc.metadata.wanderOrigin = v.clone(); npc.metadata.target = null;
   }
+  syncMochiPendant();
+}
+// Mochi gave his Rose Quartz pendant to the Lunar Witch (Moon Tales 07: the pendant spot used): his beckoning paw is empty after
+function syncMochiPendant() {
+  const k = (typeof getNPCById === 'function' ? getNPCById('cc-mochi') : null)?.metadata?.kitModel;
+  if (!k) return;
+  const given = (ProgressionState.spotsUsed || []).includes('mt-rose-quartz') || isQuestIdCompleted('moon-tales-07');
+  k.getChildMeshes(false).forEach(c => { if (/rose_quartz|chrome/.test((c.sourceMesh || c).material?.name || '')) c.setEnabled(!given); });
 }
 let TaleMoonPreview = (() => { const v = new URLSearchParams(window.location.search).get('taleMoon'); return v == null ? undefined : (v === 'none' ? null : v); })();
 
@@ -5751,7 +5826,19 @@ function makeWebGLFallbackEngine(reason = '') {
   window._gpuMode = 'webgl';
   window._gpuFallbackReason = reason;
   setSt(reason || 'Renderer: loading WebGL mode...');
-  return new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
+  try {
+    return new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
+  } catch (err) {
+    // no WebGL: graphics acceleration off, a policy that blocks it, or no GPU
+    console.error('WebGL could not start', err);
+    window._startupProblem = 'webgl';
+    showStartupProblem('Universe needs 3D graphics (WebGL)',
+      'This browser has WebGL switched off or blocked, so Universe can\'t draw its villages.',
+      ['Chrome or Edge: Settings → System → turn on "Use graphics acceleration when available", then restart the browser.',
+       'A work or school computer may block 3D graphics: try your own computer, phone or browser.',
+       'Or open Universe in another browser (Chrome, Edge, Firefox or Safari).']);
+    return new Promise(() => {});   // the village stops here; the card says why
+  }
 }
 
 function makeTimeoutError(message) {
@@ -6015,6 +6102,8 @@ cc_flower_moon: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
 cc_mamoru: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
 cc_nariko: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
 cc_ostara: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+cc_lunar_witch: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+cc_petal_carpet: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
 cc_mochi: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
 // the Moon Tales pieces (most appear under quest spots; the feast table is a layout piece)
 cc_feast_table: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
@@ -6331,6 +6420,25 @@ lantern_1: {
   }
 };
 
+// Phones and low-memory devices: the Hub's three buildings with the biggest textures (shrine_2, dojo_7, dojo_5: ~460 MB
+// of GPU memory, pictures up to 4096 px) load copies with no picture over 1024 px (assets/buildings/lite/, ~100 MB; the
+// same meshes, byte for byte), the shadow map is 1024 px and the picture is drawn at no more than twice the CSS pixels.
+// Without it a phone runs out of memory in the Hub (Safari's "a problem repeatedly occurred" page). ?lite=1 / ?lite=0
+// force it.
+const LITE_GRAPHICS = (() => {
+  const v = new URLSearchParams(location.search).get('lite');
+  if (v === '1' || v === '0') return v === '1';
+  try {
+    const touchOnly = matchMedia('(pointer: coarse)').matches && !matchMedia('(any-pointer: fine)').matches;
+    return touchOnly || (navigator.deviceMemory > 0 && navigator.deviceMemory <= 4);
+  } catch (e) { return false; }
+})();
+window._liteGraphics = LITE_GRAPHICS;
+if (LITE_GRAPHICS) {
+  for (const k of ['shrine_2', 'dojo_7', 'dojo_5']) if (ASSETS[k]?.path) ASSETS[k].path = ASSETS[k].path.replace('/assets/buildings/', '/assets/buildings/lite/');
+  if ((window.devicePixelRatio || 1) > 2) engine.setHardwareScalingLevel(1 / 2);   // twice the CSS pixels, not 3x
+}
+
 const CORE_ASSET_KEYS = new Set(Object.keys(ASSETS));
 
   // ═══════════════════════════════════════
@@ -6533,7 +6641,7 @@ const VillagePerformanceRuntime = {
 
 const PERF_DYNAMIC_TYPES = new Set([
   'npc',
-  'cc_flower_moon', 'cc_mamoru', 'cc_nariko', 'cc_ostara', 'cc_mochi', // the gang rocks and waves
+  'cc_flower_moon', 'cc_mamoru', 'cc_nariko', 'cc_ostara', 'cc_mochi', 'cc_lunar_witch', 'cc_petal_drift', 'cc_rose_pendant', // the gang rocks and waves
   'chz_ape_racer', 'chz_ape_band', 'chz_ape_chain', 'chz_ape_peel', 'chz_ape_peng', // the apes breathe and look round
   'cc_ghost', // floats (SamuraiKit.animate): a frozen world matrix only caught up on each optimizer pass, so ghosts jumped
   'cc_trickster', 'cc_chime_light', 'cc_shadow', // hover (SamuraiKit.animate, CHAR 'hover')
@@ -11155,6 +11263,7 @@ async function startMiniGame(def, src) {
   RebelGames.HUD.loading(false);
   if (!impl || !walkMode || adminMode) { MiniGames.busy = false; if (!impl) showToast('The game did not load (slow connection?). Press O to try again.', 6000); return true; }
   closeSkillBar(); closeDanceOff(); QuestSpotRuntime.hold = null; endHoldShow(false);
+  if (!(impl.roam || def.roam)) sendFollowersHome();
   moveForward = moveBackward = turnLeft = turnRight = runKey = false; charMesh._vel = 0;
   _camOcc.dist = null; setPlayerCameraFade(1);
   const guide = scene.getTransformNodeByName?.('questTargetAutoGuide');
@@ -13132,7 +13241,7 @@ const hemi=new BABYLON.HemisphericLight("h",new BABYLON.Vector3(0,1,0),scene);
 hemi.intensity=0.65; hemi.diffuse=new BABYLON.Color3(.52,.7,.98);
 hemi.groundColor=new BABYLON.Color3(.55,.58,.48); hemi.specular=new BABYLON.Color3(0,0,0);
 
-const shadows=new BABYLON.ShadowGenerator(2048,sun);
+const shadows=new BABYLON.ShadowGenerator(LITE_GRAPHICS ? 1024 : 2048,sun);
 shadows.useExponentialShadowMap=true; shadows.bias=0.005;
 shadows.darkness=0.85; // 0 = black shadows, 1 = none: 0.85 is only a faint 15% shade
 if (SHADOW_PREVIEW) { shadows.darkness=0.45; shadows.useExponentialShadowMap=false; shadows.usePercentageCloserFiltering=true; shadows.filteringQuality=BABYLON.ShadowGenerator.QUALITY_MEDIUM; shadows.bias=0.0015; shadows.normalBias=0.02; console.log('Village shadows on (?shadows=off to disable)'); }
@@ -19277,11 +19386,75 @@ function updateNPCAnimationState(root, moving, now) {
   else root.rotation.z *= .85;
 }
 
+// Quest places with follow: true (Moon Tales 08: Mochi and the Lunar Witch walk with the Rebel to the Coven, Mochi for good
+// after it, as his tale promises): once the player is 4.5 m away the follower walks (quicker the further behind, round
+// whatever is in the way) to a place a little behind the player, to one side (place.side -1 left, 1 right), and waits
+// there facing the player, so walking up to it to talk never sends it round behind you; it is put back beside the player
+// when 30 m away or stuck for 2 s. In a board game or a dance-off it waits at home (its layout place), so every game's view
+// and its own NPCs stay as they always were.
+const NPC_FOLLOW = { back:2.4, side:1.7, near:.5, start:4.5, far:30, stuck:2, talk:2.2, apart:1.3 };
+const FollowPlayer = { dir:{ x:0, z:1 }, last:null };
+function noteFollowDirection() {
+  if (!charMesh) return;
+  const p = charMesh.position, L = FollowPlayer.last;
+  if (L) { const dx = p.x - L.x, dz = p.z - L.z, d = Math.hypot(dx, dz); if (d > .015 && d < 4) FollowPlayer.dir = { x:dx / d, z:dz / d }; }
+  FollowPlayer.last = { x:p.x, z:p.z };
+}
+// the first free place of five round the player's back, not one another NPC stands on (two followers never share one)
+function followSpot(side, self) {
+  const p = charMesh.position, f = FollowPlayer.dir, r = { x:f.z, z:-f.x }, B = NPC_FOLLOW.back, S = NPC_FOLLOW.side;
+  const taken = (x, z) => NPCManager.roots.some(o => o && o !== self && !o.isDisposed?.() && Math.hypot(o.position.x - x, o.position.z - z) < NPC_FOLLOW.apart);
+  let free = null;
+  for (const [b, sd] of [[B, side * S], [B, -side * S], [B, 0], [B * 1.6, 0], [B * .5, side * S * 1.2]]) {
+    const x = p.x - f.x * b + r.x * sd, z = p.z - f.z * b + r.z * sd;
+    if (villagePointBlocked(x, z)) continue;
+    if (!taken(x, z)) return { x, z };
+    free = free || { x, z };
+  }
+  return free || { x:p.x - f.x * B, z:p.z - f.z * B };
+}
+function placeFollower(root, t) {
+  root.position.x = t.x; root.position.z = t.z;
+  const y = getNPCGroundHeightAt(t.x, t.z); if (Number.isFinite(y)) root.position.y = y;
+  root.metadata._followStuck = 0;
+}
+function sendFollowersHome() {
+  for (const root of NPCManager.roots) {
+    const m = root?.metadata; if (!m?._questPlace?.follow || m._followHome || !m._layoutPlace) continue;
+    m._followHome = true; placeFollower(root, m._layoutPlace); root.rotation.y = m._layoutPlace.ry || 0;
+  }
+}
+function followPlayer(root, dt) {
+  const m = root.metadata;
+  if (!charMesh) return false;
+  if ((MiniGames.on && !MiniGames.roam) || DanceOff.on) { sendFollowersHome(); return false; }
+  m._followHome = false;
+  const p = charMesh.position, pd = Math.hypot(p.x - root.position.x, p.z - root.position.z);
+  if (!m._following && pd < NPC_FOLLOW.start) { turnNPCToward(root, Math.atan2(p.x - root.position.x, p.z - root.position.z), dt); return false; }
+  m._following = true;
+  const t = followSpot(m._questPlace.side || 1, root);
+  const dx = t.x - root.position.x, dz = t.z - root.position.z, d = Math.hypot(dx, dz);
+  if (pd > NPC_FOLLOW.far || (m._followStuck || 0) > NPC_FOLLOW.stuck) { placeFollower(root, t); m._following = false; return false; }
+  if (d < NPC_FOLLOW.near) { m._followStuck = 0; m._following = false; return false; }
+  const step = Math.min(d, Math.min(9.5, Math.max(1.4, d * 1.8)) * dt), a0 = Math.atan2(dx, dz);
+  for (const off of [0, .6, -.6, 1.2, -1.2]) {
+    const a = a0 + off, nx = root.position.x + Math.sin(a) * step, nz = root.position.z + Math.cos(a) * step;
+    if (villageSegmentBlocked(root.position.x, root.position.z, nx, nz)) continue;
+    root.position.x = nx; root.position.z = nz; m._followStuck = 0;
+    const y = getNPCGroundHeightAt(nx, nz); if (Number.isFinite(y)) root.position.y = y;
+    turnNPCToward(root, a, dt);
+    return true;
+  }
+  m._followStuck = (m._followStuck || 0) + dt;
+  return false;
+}
+
 function updateNPCPopulation(dt) {
   const npcControllerRoots = [...NPCManager.roots];
   if (!npcControllerRoots.length) return;
   if (ActiveInterior) return;
   const now = performance.now();
+  noteFollowDirection();
   npcControllerRoots.forEach(root => {
     let npcDt = dt;
     if (!root || root.isDisposed?.()) return;
@@ -19296,7 +19469,7 @@ function updateNPCPopulation(dt) {
       return;
     }
     const meta = root.metadata || {};
-    const distSq = charMesh
+    const distSq = charMesh && !meta._questPlace?.follow // a follower is never far for long: it catches up
       ? ((root.position.x - charMesh.position.x) ** 2 + (root.position.z - charMesh.position.z) ** 2)
       : 0;
     if (!meta.dialogueOpen && root !== selectedObject && distSq > 140 * 140) {
@@ -19324,7 +19497,8 @@ function updateNPCPopulation(dt) {
       return;
     }
     let moving = false;
-    if (meta._questPlace?.still) returnNPCToBaseRotation(root, npcDt); // keeping watch where a quest put it
+    if (meta._questPlace?.follow) moving = followPlayer(root, npcDt);
+    else if (meta._questPlace?.still) returnNPCToBaseRotation(root, npcDt); // keeping watch where a quest put it
     else if (meta.behavior === 'wander') {
       if (!meta.target && now >= (meta.waitUntil || 0)) chooseNPCWanderTarget(root);
       moving = meta.target ? moveNPCToward(root, meta.target, npcDt) : false;
@@ -19365,6 +19539,7 @@ function getNearestNPCInRange(range = 4.8) {
     const dx = root.position.x - charMesh.position.x;
     const dz = root.position.z - charMesh.position.z;
     const distSq = dx * dx + dz * dz;
+    if (root.metadata?._questPlace?.follow && distSq > Math.min(rangeSq, NPC_FOLLOW.talk * NPC_FOLLOW.talk)) return;
     if (distSq <= rangeSq && distSq < nearestDistSq) {
       nearest = root;
       nearestDistSq = distSq;
@@ -24732,9 +24907,22 @@ async function latestForgeRigUrl(url) {
   try { const ac = new AbortController(); const t = setTimeout(() => ac.abort(), 1500); const j = await (await fetch('/api/forge-rig-latest?url=' + encodeURIComponent(url), { signal: ac.signal })).json(); clearTimeout(t); return j && j.url || url; } catch (e) { return url; }
 }
 const _forgeSingleGlb = activeCharacter.singleGlb ? await latestForgeRigUrl(activeCharacter.singleGlb) : null;   // Forge Rigger bundle: one GLB, metres, all clips inside
+// The Rebel's own model is downloaded from our model storage (vercel-storage.com). A network that blocks it (a work
+// filter) or a download that breaks would leave the village without a player: load the page again with the starter
+// ant (?rig=master, our own files) and say why. Once only (rigFallback=1).
+function rigFallbackToStarter(err) {
+  const q = new URLSearchParams(location.search);
+  if (!_forgeSingleGlb || q.get('rigFallback') === '1' || q.get('rig') === 'master') return false;
+  console.warn('The Rebel\'s model did not download; starting with the starter ant instead.', err);
+  setSt("Your Rebel's 3D model couldn't download here. Starting with the starter ant...");
+  const u = new URL(location.href); u.searchParams.set('rig', 'master'); u.searchParams.set('rigFallback', '1');
+  setTimeout(() => location.replace(u.toString()), 1500);
+  return true;
+}
 (activeCharacter.procedural && window.SamuraiKit?.types?.includes(activeCharacter.kitModel)
   ? Promise.resolve({ kit: true, meshes: [], transformNodes: [], animationGroups: [], skeletons: [] })
-  : BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, _forgeSingleGlb || activeCharacter.idleFile, scene))
+  : BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, _forgeSingleGlb || activeCharacter.idleFile, scene)
+      .catch(err => { if (rigFallbackToStarter(err)) return new Promise(() => {}); throw err; }))
 .then(r => {
   const playerRoot = new BABYLON.TransformNode("playerRoot", scene);
   playerRoot.position = new BABYLON.Vector3(0, 0.25, 20);
@@ -28903,7 +29091,8 @@ refreshQuestBuilderOptions();
     } catch (e) { console.warn('bloom unavailable', e); }
   }
   if (look === 'high') setTimeout(addBloom, 3000);
-  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  // lite graphics (phones) draw at no more than twice the CSS pixels (LITE_GRAPHICS)
+  const dpr = Math.max(1, LITE_GRAPHICS ? Math.min(2, window.devicePixelRatio || 1) : (window.devicePixelRatio || 1));
   const levels = [1 / dpr]; if (dpr >= 1.75) levels.push(1 / 1.5); if (dpr > 1.01) levels.push(1);
   let li = 0, low = 0, high = 0;
   const pinned = qs.get('res') === 'native';
@@ -29305,6 +29494,8 @@ async function loadForgeCollectionsConfig() {
 }
 
 // the round Rebel button (opens the Rebel panel), the quest line beside it and the minimap (assets/village-hud.js)
+// touch screens: the stick and buttons (assets/village-touch.js) show while walking, not in admin or a board game
+setInterval(() => window.VillageTouch?.update({ walking: !!walkMode && !adminMode && !(MiniGames.on && !MiniGames.roam) && !DanceOff.on }), 250);
 function initVillageHud() {
   try {
     window.VillageHud?.init(scene, {
@@ -29390,6 +29581,12 @@ function markVillageStartupInteractive() {
   schedulePostInteractiveStartupTask(startVillagePetalEffects, 1200);
   schedulePostInteractiveStartupTask(initVillageHud, 300);
   if (PlaytestNote) schedulePostInteractiveStartupTask(() => showToast(PlaytestNote, 9000), 2500); // a playtest jump says where it put you
+  // loaded again with the starter ant because the Rebel's model didn't download (rigFallbackToStarter): say so, and take
+  // the test parameters off the address so a reload tries the Rebel again
+  if (new URLSearchParams(location.search).get('rigFallback') === '1') schedulePostInteractiveStartupTask(() => {
+    showToast("Your Rebel's 3D model couldn't download on this network (it may block vercel-storage.com), so you're playing as the starter ant. On another network your Rebel is back.", 12000);
+    try { const u = new URL(location.href); u.searchParams.delete('rig'); u.searchParams.delete('rigFallback'); history.replaceState(history.state, '', u.toString()); } catch (e) {}
+  }, 2500);
   if (GameJump) schedulePostInteractiveStartupTask(() => runGameJump(), 3000); // a game jump walks the Rebel to that game
   const ld = document.getElementById('ld');
   if (ld) { ld.style.opacity='0'; setTimeout(()=>{ ld.style.display='none'; }, 900); }

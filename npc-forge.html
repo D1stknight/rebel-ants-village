@@ -18,6 +18,9 @@ header a{margin-left:auto;color:var(--teal);text-decoration:none;font-size:12px}
 #workerPill{display:none;align-items:center;gap:8px;margin-left:auto;font-size:12px;color:var(--amber);background:#2a2412;border:1px solid #6b5520;padding:4px 10px;border-radius:12px}
 #workerPill .bar{width:120px;margin:0}
 #workerPill+a{margin-left:12px}
+#freeJump{margin-left:auto;padding:4px 10px}
+#workerPill[style*="flex"]+#freeJump{margin-left:12px}
+#freeJump+a{margin-left:12px}
 #side{overflow:auto;border-right:1px solid var(--line);padding:12px}
 #main{display:grid;grid-template-rows:1fr auto;min-height:0}
 #view{position:relative;min-height:0}
@@ -84,13 +87,15 @@ small{color:var(--dim)}
 <body>
 <div id="gate">Checking admin access...</div>
 <div id="app">
-  <header><h1>NPC FORGE</h1><span class="sub">Your renders → Rebel Forge sculpt → Forge Rigger (NPC clips) → test → approve · Cute &amp; Creepy: built in the kit</span><span id="workerPill"></span><a href="admin.html">← Admin Hub</a></header>
+  <header><h1>NPC FORGE</h1><span class="sub">Your renders → Rebel Forge sculpt → Forge Rigger (NPC clips) → test → approve · Cute &amp; Creepy: built in the kit</span><span id="workerPill"></span><button id="freeJump" class="teal" onclick="showFreeBox()" title="The lobby's Free to play roster">Free to play</button><a href="admin.html">← Admin Hub</a></header>
   <aside id="side">
     <h2>NPCs</h2>
     <div class="row" style="margin-bottom:8px"><button class="teal" id="forgeAllBtn" onclick="forgeAll()">Forge all ready</button></div>
     <div id="npcList"></div>
     <h2>Approved (in the village)</h2>
     <div id="approvedList" class="state">Loading...</div>
+    <h2 id="freeHead">Free to play (lobby)</h2>
+    <div class="card" id="freeBox"><div class="state">Loading...</div></div>
     <h2>Rig worker</h2>
     <div class="card" id="workerBox"><div class="state">Loading...</div></div>
   </aside>
@@ -173,9 +178,10 @@ const CC_KIT = {
   cc_flower_moon: { name: 'Kokeshi Flower Moon', npcId: 'cc-flower-moon', moon: 'Flower Moon', where: 'by the great tree', moves: 'rocks gently' },
   cc_mochi: { name: 'Mochi', npcId: 'cc-mochi', moon: 'Pink Moon', where: 'at the game hall', moves: 'breathes, beckons with a paw, the rose quartz pendant glows like a heartbeat' },
   cc_ostara: { name: 'Ostara', npcId: 'cc-ostara', moon: 'Hare Moon', where: 'at the library, on the Moon Ledge from Moon Tales 13', moves: 'rocks gently' },
-  cc_nariko: { name: 'Nariko', npcId: 'cc-nariko', moon: 'Thunder Moon', where: 'in the graveyard, at the stone circle from Moon Tales 17', moves: 'rocks gently, the storm orb pulses' }
+  cc_nariko: { name: 'Nariko', npcId: 'cc-nariko', moon: 'Thunder Moon', where: 'in the graveyard, at the stone circle from Moon Tales 17', moves: 'rocks gently, the storm orb pulses' },
+  cc_lunar_witch: { name: 'Lunar Witch', npcId: 'cc-lunar-witch', moon: 'Pink Moon', where: "by her cottage's cauldron, in the Blossom Clearing from Moon Tales 06", moves: 'rocks gently' }
 };
-const CC_PLANNED = { cc_lunar_witch: { name: 'Lunar Witch', why: "Mochi's tale (Moon Tales 05-08) waits on her art." } };
+const CC_PLANNED = {};   // kit characters still waiting on their art (a card that asks for it)
 const isKit = (n) => n?.collection === 'cc';
 const KIT_KEY = /^(cc_|mystic_moons_)/;   // keys of kit-built NPCs: never a forged model (it would replace the kit look)
 const groupOf = (n) => (isKit(n) ? 'cc' : COLLECTIONS[n?.collection] ? n.collection : 'rebel');
@@ -948,6 +954,14 @@ const GAMES_PACK = ['fishing_cast', 'fishing_idle', 'digging', 'plant', 'throw_o
 // the moves of a pack made before v2.30 (no move list stored with it)
 const GAMES_V1 = ['game_cast', 'game_reel', 'game_fish_wait', 'game_dig', 'game_plant', 'game_pick_up', 'game_throw', 'game_throw_far', 'game_chop', 'game_cheer', 'game_push', 'game_push_walk', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam'];
 let workerPoll = null, workerSetup = null, workerBuilding = false, workerInfo = null, packUploaded = new Set();
+// Oct 24 the rigger's version: the image's (the API reads it from the commit the image was built from) and this site's
+// (forge-worker/manifest.json: what a rebuild installs)
+let siteRigger;
+async function loadSiteRigger() {
+  if (siteRigger === undefined) { try { siteRigger = (await (await fetch('/forge-worker/manifest.json', { cache: 'no-store' })).json()).version || null; } catch (e) { siteRigger = null; } }
+  return siteRigger;
+}
+const verNewer = (a, b) => { const [a1, a2] = String(a).split('.').map(Number), [b1, b2] = String(b).split('.').map(Number); return a1 > b1 || (a1 === b1 && a2 > b2); };
 // setup.sh prints these step markers; the last one in the log tail is the current step (progress floor, %)
 const SETUP_STEPS = [['== system libs', 'Installing system libraries', 3], ['== python 3.13 + bpy', 'Installing Blender (the longest step)', 8], ['== worker code', 'Loading the rigger code', 80], ['== mocap pack', 'Loading the animation pack', 86], ['== self test', 'Testing the worker', 94]];
 const SETUP_SECONDS = 60;   // a rebuild takes about a minute (35-47 s, Oct 2026)
@@ -965,11 +979,11 @@ function paintSetup() {
   const p = setupProgress(workerSetup);
   pill.style.display = 'flex'; pill.innerHTML = `Rig worker rebuilding ${p.pct}% <span class="bar"><i style="width:${p.pct}%"></i></span>`;
   const box = $('#workerProgress');
-  if (box) box.innerHTML = `<div class="state"><b style="color:var(--amber)">Rebuilding the rig worker</b> · ${esc(p.label)} · ${mmss(p.secs)} (about a minute)</div><div class="bar"><i style="width:${p.pct}%"></i></div><div class="state" style="margin-top:4px">Forges and re-rigs started now still use the old worker. Keep this page open (or come back later): it finishes the rebuild when it checks in.</div>`;
+  if (box) box.innerHTML = `<div class="state"><b style="color:var(--amber)">Rebuilding the rig worker${siteRigger ? ` (rigger ${esc(siteRigger)})` : ''}</b> · ${esc(p.label)} · ${mmss(p.secs)} (about a minute)</div><div class="bar"><i style="width:${p.pct}%"></i></div><div class="state" style="margin-top:4px">Forges and re-rigs started now still use the old worker. Keep this page open (or come back later): it finishes the rebuild when it checks in.</div>`;
 }
 setInterval(paintSetup, 1000);
 async function loadWorker() {
-  let d; try { d = await api('/api/forge-rig-worker'); } catch (e) { $('#workerBox').innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
+  let d; try { [d] = await Promise.all([api('/api/forge-rig-worker'), loadSiteRigger()]); } catch (e) { $('#workerBox').innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
   const w = d.worker || {}; const have = new Set(d.packPaths || []); const miss = NPC_PACK.filter((p) => !have.has(p)), gmiss = GAMES_PACK.filter((p) => !have.has(p)); const s = w.setup || {};
   const was = workerBuilding; const building = s.status === 'running';
   workerBuilding = building; workerSetup = s; workerInfo = w; packUploaded = have;
@@ -978,7 +992,9 @@ async function loadWorker() {
     : info.have >= info.of ? ' · in the worker ✓' : ` · <span class="bad">in the worker: ${info.have} of ${info.of}: press Rebuild worker</span>`;
   const wc = w.snapshotId ? w.commit || null : null; if (wc !== workerCommit) { workerCommit = wc; renderList(); }
   if (was && !building) toast(s.status === 'done' ? 'Rig worker rebuilt. New forges and re-rigs use it now.' : 'The rig worker rebuild failed (see the log in the Rig worker box).');
-  $('#workerBox').innerHTML = `<div class="state">Worker image: ${w.snapshotId ? `built ${w.builtAt ? new Date(w.builtAt).toLocaleString() : ''} from ${esc(String(w.commit || '').slice(0, 7))}` : 'not built'}${s.status === 'failed' && !building ? ' · <span class="bad">last rebuild failed</span>' : ''}</div>
+  const ver = w.snapshotId && w.version ? `<div style="font:700 14px Cinzel,serif;letter-spacing:1px;color:var(--gold)">Rigger ${esc(w.version)}</div>` : '';
+  const newer = siteRigger && (!w.snapshotId || (w.version && verNewer(siteRigger, w.version))) ? ` · <span class="warn">this site has rigger ${esc(siteRigger)}${w.snapshotId ? ': press Rebuild worker' : ''}</span>` : '';
+  $('#workerBox').innerHTML = `${ver}<div class="state">Worker image: ${w.snapshotId ? `built ${w.builtAt ? new Date(w.builtAt).toLocaleString() : ''} from ${esc(String(w.commit || '').slice(0, 7))}` : 'not built'}${s.status === 'failed' && !building ? ' · <span class="bad">last rebuild failed</span>' : ''}${newer}</div>
     ${building ? '<div id="workerProgress" style="margin-top:6px"></div>' : ''}
     <div class="state" style="margin-top:4px">NPC gesture pack: ${NPC_PACK.length - miss.length} of ${NPC_PACK.length} uploaded${miss.length ? ` · missing ${miss.map((m) => m.replace('mixamo/', '').replace('.npz', '')).join(', ')}` : ' ✓'}${inImage(w.npc, !miss.length, false)}</div>
     <div class="state" style="margin-top:2px">Games pack (Rebels): ${GAMES_PACK.length - gmiss.length} of ${GAMES_PACK.length} uploaded${gmiss.length ? ` · missing ${gmiss.map((m) => m.replace('mixamo/', '').replace('.npz', '')).join(', ')}` : ' ✓'}${inImage(w.games, !gmiss.length, true)}</div>
@@ -997,18 +1013,20 @@ const gamesReady = () => { const g = workerInfo?.games; return !!(g && g.have >=
 const packMoves = (r) => r.gamesClips || GAMES_V1;
 const packOld = (r) => !!r.games && !!gamesMoves && gamesMoves.some((n) => !packMoves(r).includes(n));
 const packTodo = (r) => !r.games || packOld(r);
-// Oct 20 the Free to play roster (api/free-roster.mjs): forged Rebels anyone can play from the lobby; ticked here
-let freeRoster = null;   // { tokens: Set, saved, busy }
+// Oct 20 the Free to play roster (api/free-roster.mjs): forged Rebels anyone can play from the lobby; ticked in its
+// own box (Oct 24: it was inside the Rig worker box's games packs list, behind a button)
+let freeRoster = null, freeErr = null;   // { tokens: Set, saved, env, busy }
 const FREE_NEVER = new Set(['1', '893']);
 async function loadFreeRoster() {
-  try { const d = await api('/api/free-roster'); freeRoster = { tokens: new Set(d.tokens || []), saved: !!d.saved, busy: false }; } catch (e) { freeRoster = null; }
+  try { const d = await api('/api/free-roster'); freeRoster = { tokens: new Set(d.tokens || []), saved: !!d.saved, env: d.env || null, busy: false }; }
+  catch (e) { freeRoster = null; freeErr = e.message; }
 }
 async function setFreeRoster(body, undo) {
   if (!freeRoster || freeRoster.busy) return;
-  freeRoster.busy = true; paintGames();
+  freeRoster.busy = true; paintFree();
   try { const d = await api('/api/free-roster', body); freeRoster.tokens = new Set(d.tokens || []); freeRoster.saved = !!d.saved; }
   catch (e) { toast(e.message, 9000); if (undo) undo(); }
-  freeRoster.busy = false; paintGames();
+  freeRoster.busy = false; paintFree();
 }
 function toggleFree(tok, on) {
   if (!freeRoster) return;
@@ -1018,8 +1036,34 @@ function toggleFree(tok, on) {
   setFreeRoster({ tokens: next }, () => { freeRoster.tokens = was; });
 }
 function resetFree() { if (confirm('Put the Free to play roster back to the lobby\'s own showcase list?')) setFreeRoster({ reset: true }); }
+function showFreeBox() { $('#freeHead').scrollIntoView({ behavior: 'smooth', block: 'start' }); const b = $('#freeBox'); b.classList.add('sel'); setTimeout(() => b.classList.remove('sel'), 1600); }
+function paintFree() {
+  const box = $('#freeBox'); if (!box) return;
+  if (!gamesList || !freeRoster) {
+    box.innerHTML = freeErr ? `<div class="err">${esc(freeErr)}</div><div class="row" style="margin-top:6px"><button onclick="loadGamesPacks()">Try again</button></div>` : '<div class="state">Loading...</div>';
+    return;
+  }
+  // every forged Rebel in play (its active Forge build), and any number on the roster without one
+  const rebels = gamesList.filter((r) => r.collectionKey === 'battle_for_colony'), listed = new Set(rebels.map((r) => r.tokenId));
+  const all = [...rebels, ...[...freeRoster.tokens].filter((t) => !listed.has(t)).map((t) => ({ tokenId: t, name: '', publicRig: false, gone: true }))]
+    .sort((a, b) => Number(a.tokenId) - Number(b.tokenId));
+  const n = freeRoster.tokens.size, live = freeRoster.env === 'prod';
+  const row = (r) => {
+    if (FREE_NEVER.has(r.tokenId)) return `<div class="state" style="opacity:.6;padding:2px 0">#${esc(r.tokenId)} · ${r.tokenId === '1' ? 'the starter: always the first card' : 'out of the lobby until it is reforged'}</div>`;
+    const on = freeRoster.tokens.has(r.tokenId), can = r.publicRig || on;
+    const why = r.gone ? 'no forged character in play' : r.publicRig ? '' : 'needs a public forged character';
+    const nm = r.name && !r.name.includes('#' + r.tokenId) ? ` · ${esc(r.name)}` : '';
+    return `<label class="state" style="display:flex;gap:7px;align-items:center;padding:2px 0;cursor:${can ? 'pointer' : 'default'};${can ? 'color:var(--txt)' : 'opacity:.55'}"><input type="checkbox" data-tok="${esc(r.tokenId)}" ${on ? 'checked' : ''} ${can && !freeRoster.busy ? '' : 'disabled'} onchange="toggleFree('${esc(r.tokenId)}', this.checked)"> Rebel #${esc(r.tokenId)}${nm}${why ? ` <span style="opacity:.8">(${why})</span>` : ''}</label>`;
+  };
+  box.innerHTML = `<div class="state"><b style="color:var(--gold)">${n} Rebel${n === 1 ? '' : 's'}</b> anyone can play from ${live ? '<b style="color:var(--txt)">the live lobby</b> (rebeluniverse.io)' : 'this preview\'s lobby <span class="warn">(the live lobby keeps its own list: tick it on rebeluniverse.io)</span>'}${freeRoster.saved ? '' : ' · <span class="warn">not saved yet: the lobby shows its showcase list (ticked below)</span>'}${freeRoster.busy ? ' · saving…' : ''}</div>
+    <div style="max-height:300px;overflow:auto;margin-top:6px">${all.map(row).join('') || '<div class="state">No forged Rebels in play yet.</div>'}</div>
+    <div class="row" style="margin-top:6px">${freeRoster.saved ? '<button onclick="resetFree()">Back to the showcase list</button>' : ''}<button onclick="loadGamesPacks()" ${freeRoster.busy ? 'disabled' : ''}>Refresh</button></div>
+    <div class="state" style="margin-top:4px">Each tick saves at once. A greyed Rebel needs its public character first: Forge → that Rebel → Make this my Rebel (as admin). #001 and #893 are never on it.</div>`;
+}
 async function loadGamesPacks() {
-  try { [gamesList] = await Promise.all([api('/api/forge-games-packs').then((d) => d.rebels || []), loadFreeRoster()]); } catch (e) { const b = $('#gamesBox'); if (b) b.innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
+  freeErr = null;
+  try { [gamesList] = await Promise.all([api('/api/forge-games-packs').then((d) => d.rebels || []), loadFreeRoster()]); }
+  catch (e) { freeErr = e.message; const b = $('#gamesBox'); if (b) b.innerHTML = `<div class="err">${esc(e.message)}</div>`; paintFree(); return; }
   try { gamesMoves = (await (await fetch('/forge-worker/anim/clips_games.json', { cache: 'no-store' })).json()).map((c) => c.name); } catch (e) { gamesMoves = null; }
   paintGames();
   // jobs still running (started on this or another computer): watch them, so they finish and none is started twice
@@ -1027,6 +1071,7 @@ async function loadGamesPacks() {
   if (running.length && !gamesRun.on) runGamesJobs(running);
 }
 function paintGames() {
+  paintFree();
   const box = $('#gamesBox'); if (!box) return;
   if (!gamesList) { box.innerHTML = `<button onclick="loadGamesPacks()">Rebels' games packs</button>`; return; }
   const have = gamesList.filter((r) => r.games && !packOld(r)).length, todo = gamesList.filter(packTodo), old = todo.filter((r) => r.games).length;
@@ -1040,17 +1085,10 @@ function paintGames() {
     if (j.gamesError) return `<span class="bad">made but not saved: ${esc(j.gamesError)}</span>`;
     return `<span class="bad">made on a worker image without the games moves${j.gamesMissing?.length ? ` (${j.gamesMissing.length} of ${GAMES_PACK.length} missing)` : ''}: make again</span>`;
   };
-  const free = (r) => {
-    if (!freeRoster || r.collectionKey !== 'battle_for_colony') return '';
-    if (FREE_NEVER.has(r.tokenId)) return ` · <span style="opacity:.6">${r.tokenId === '1' ? 'the starter' : 'not free until reforged'}</span>`;
-    const on = freeRoster.tokens.has(r.tokenId), can = r.publicRig || on;
-    return ` · <label title="${can ? 'On the lobby\'s Free to play roster: anyone can play it' : 'Needs a public forged character: make it in the Forge as admin (Make this my Rebel)'}" style="${can ? '' : 'opacity:.5'}"><input type="checkbox" ${on ? 'checked' : ''} ${can && !freeRoster.busy ? '' : 'disabled'} onchange="toggleFree('${esc(r.tokenId)}', this.checked)"> Free to play</label>`;
-  };
   const what = old ? (old === todo.length ? `the ${old} older` : `${todo.length}`) : `the missing ${todo.length}`;
   const label = gamesRun.on ? (gamesRun.note ? 'Rebuilding the worker…' : 'Making…') : gamesReady() ? `Make ${what}` : `Rebuild worker, then make ${what}`;
   box.innerHTML = `<div class="state"><b>Games packs</b>: ${have} of ${gamesList.length} Rebels in play${old ? ` · ${old} older (without the new moves)` : ''}${gamesRun.note ? ` · ${esc(gamesRun.note)}` : gamesRun.on ? ` · making ${gamesRun.active.size} now` : ''}</div>
-    ${freeRoster ? `<div class="state" style="margin-top:2px"><b>Free to play</b>: ${freeRoster.tokens.size} Rebel${freeRoster.tokens.size === 1 ? '' : 's'} on the lobby's roster${freeRoster.saved ? ` · <a href="#" style="color:#5ecfca" onclick="resetFree();return false">back to the showcase list</a>` : ' (the showcase list)'}${freeRoster.busy ? ' · saving…' : ''}</div>` : ''}
-    <div style="max-height:180px;overflow:auto;margin-top:4px">${gamesList.map((r) => `<div class="state">${esc(r.name || '#' + r.tokenId)} <span style="opacity:.6">${esc(r.collectionKey)} ${esc(r.tokenId)}</span> · ${line(r)}${free(r)}</div>`).join('') || '<div class="state">No Rebels with a Forge rig in play.</div>'}</div>
+    <div style="max-height:180px;overflow:auto;margin-top:4px">${gamesList.map((r) => `<div class="state">${esc(r.name || '#' + r.tokenId)} <span style="opacity:.6">${esc(r.collectionKey)} ${esc(r.tokenId)}</span> · ${line(r)}</div>`).join('') || '<div class="state">No Rebels with a Forge rig in play.</div>'}</div>
     <div class="row" style="margin-top:6px"><button class="teal" onclick="makeGamesPacks()" ${gamesRun.on || !todo.length ? 'disabled' : ''}>${label}</button><button onclick="loadGamesPacks()" ${gamesRun.on ? 'disabled' : ''}>Refresh</button></div>
     <div class="state" style="margin-top:4px">Each one re-runs the Rigger on that Rebel's own sculpt (about 4 minutes, two at a time) and keeps only the games moves; the rig and its weapon moves are not changed. Keep this page open while they run.</div>`;
 }
@@ -1126,7 +1164,7 @@ async function rebuildWorker(ask = true) {
   try { const d = await (await fetch('/api/admin-session', { cache: 'no-store' })).json(); if (!d.authenticated) { location.href = 'index.html'; return; } }
   catch (e) { location.href = 'index.html'; return; }
   $('#gate').style.display = 'none'; $('#app').style.display = 'grid'; engine.resize();
-  load(); renderList(); loadApproved(); loadWorker();
+  load(); renderList(); loadApproved(); loadWorker(); loadGamesPacks();
   // resume NPCs that were forging here when the page closed (ones forged on another computer show Continue)
   st.npcs.filter((n) => !isKit(n) && ['uploading', 'building', 'sculpting', 'storing', 'rigging'].includes(n.phase)).forEach((n) => forgeOne(n.id, { batch: true }));
   if (st.npcs[0]) select(st.npcs[0].id);
