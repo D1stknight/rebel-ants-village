@@ -163,6 +163,19 @@
         const last = [...frames].reverse().find(f => f.total != null); H.score(last ? last.total : 0);
         H.info(state.frame < 10 ? `Frame ${state.frame + 1} · ball ${state.k + 1}` : 'Final');
       }
+      // step buttons for phones (Oct 24): held like A / D to move along the foul line while aiming (a tap anywhere else
+      // sets the aim, the power and the spin, as before)
+      const pads = document.createElement('div');
+      pads.style.cssText = 'position:absolute;bottom:62px;left:16px;display:none;gap:8px;pointer-events:auto;touch-action:none';
+      [['\u2190', 'a'], ['\u2192', 'd']].forEach(([t, k]) => {
+        const b = document.createElement('button'); b.type = 'button'; b.textContent = t;
+        b.style.cssText = 'width:56px;height:48px;border-radius:10px;border:1px solid #b08cff;background:rgba(22,12,40,.86);color:#f1e8ff;font:700 20px system-ui,sans-serif;cursor:pointer;touch-action:none';
+        const on = (v) => (e) => { e.preventDefault(); e.stopPropagation(); state.keys[k] = v; };
+        b.onpointerdown = on(true); b.onpointerup = b.onpointerleave = b.onpointercancel = on(false); pads.appendChild(b);
+      });
+      document.getElementById('gameHud').append(pads);
+      let padsOn = false;
+      const showPads = (on) => { if (on === padsOn) return; padsOn = on; pads.style.display = on ? 'flex' : 'none'; if (!on) state.keys.a = state.keys.d = false; };
       function beginAim() {
         state.phase = 'aim'; state.t = 0; arrow.setEnabled(true); ballNode.setEnabled(true); setStand(); ctx.player.idle();
         if (state.hidden) { state.hidden = false; ctx.player.show(true); }
@@ -227,6 +240,7 @@
         update(dt) {
           state.t += dt;
           const ph = state.phase;
+          showPads(ph === 'aim');
           if (ph === 'intro') { camTo([L.x + 1.2, 3.2, L.foul + 4.6], [L.x, .4, L.head], dt, 2.5); if ((state.wait -= dt) <= 0) beginAim(); }
           if (ph === 'aim' || ph === 'power' || ph === 'spin') {
             if (ph === 'aim') {
@@ -273,6 +287,7 @@
         pointer(evt) { if (evt.type === B.PointerEventTypes.POINTERDOWN) lock(); },
         _test: { state, sim, lock, ballNode }, // headless tests drive the rolls
         dispose() {
+          pads.remove();
           pinNodes.forEach(({ n, own, rest }) => { if (!own) return; n.setEnabled(true); n.position.copyFrom(rest.p); n.rotationQuaternion = null; n.rotation.copyFrom(rest.r); });
           if (ballPart && ballRest) { ballPart.setEnabled(true); ballPart.position.copyFrom(ballRest.p); ballPart.rotationQuaternion = ballRest.q || null; if (!ballRest.q) ballPart.rotation.copyFrom(ballRest.r); }
         }
