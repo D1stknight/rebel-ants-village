@@ -74,6 +74,9 @@
     },
     "api/econ-name-login.mjs": {
       "maxDuration": 30
+    },
+    "api/world-layout.mjs": {
+      "includeFiles": "assets/{world-layout.json,world-layouts/*.json}"
     }
   },
   "crons": [

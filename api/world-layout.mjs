@@ -1,3 +1,7 @@
+import { readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { isAdminRequest } from './_admin-auth.mjs';
 
 const REPO = 'D1stknight/rebel-ants-village';
@@ -209,6 +213,38 @@ async function readWorldLayout(token, filePath, options = {}) {
   }
 }
 
+// Oct 24: players get the layout that shipped with this deploy (vercel.json includeFiles puts the layout files in this
+// function): no GitHub call per village load, and production shows the layouts merged into main, not dev's. A signed-in
+// admin still reads the dev branch, the layout a Hard Save writes onto (editing an older copy would save over dev's).
+const siteBodies = new Map();
+
+async function readSiteLayoutBytes(filePath) {
+  const places = [path.join(process.cwd(), filePath)];
+  try { places.push(fileURLToPath(new URL('../' + filePath, import.meta.url))); } catch (e) {}
+  for (const at of places) {
+    try {
+      return await readFile(at);
+    } catch (err) {
+      if (err?.code !== 'ENOENT') console.warn('world-layout: site copy unreadable', at, err?.message || err);
+    }
+  }
+  return null;
+}
+
+// the players' answer, made once per warm instance (a deploy's files never change)
+async function siteLayoutBody(villageId, filePath) {
+  if (siteBodies.has(filePath)) return siteBodies.get(filePath);
+  const bytes = await readSiteLayoutBytes(filePath);
+  if (!bytes) return null;
+  const layout = JSON.parse(bytes.toString('utf8'));
+  if (!Array.isArray(layout)) throw new Error('Site layout is not an array: ' + filePath);
+  // git's id for these bytes: the sha GitHub gives the same content, so the page's layout version checks read alike
+  const sha = createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
+  const body = JSON.stringify({ ok: true, villageId, filePath, sha, layout, source: 'site' });
+  siteBodies.set(filePath, body);
+  return body;
+}
+
 async function writeWorldLayout(token, layout, filePath) {
   let sha;
 
@@ -330,6 +366,25 @@ export default async function handler(req, res) {
       return res.status(401).json({ ok: false, error: 'Admin authentication required' });
     }
 
+    const deployBranch = process.env.VERCEL_GIT_COMMIT_REF || null;
+    let admin = true;
+    if (req.method === 'GET') {
+      try { admin = isAdminRequest(req); } catch (err) { admin = false; }
+    }
+
+    if (req.method === 'GET' && !admin) {
+      try {
+        const body = await siteLayoutBody(villageId, filePath);
+        if (body) {
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          return res.status(200).send(body);
+        }
+        console.warn('world-layout: no site copy of', filePath, '- reading the deployed commit from GitHub');
+      } catch (err) {
+        console.warn('world-layout: site copy failed', filePath, err?.message || err);
+      }
+    }
+
     const token = getGitHubToken();
 
     if (!token) {
@@ -337,8 +392,10 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'GET') {
-      const { layout, sha } = await readWorldLayout(token, filePath, { emptyOnMissing: villageId !== 'hub' });
-      return res.status(200).json({ ok: true, villageId, filePath, sha: sha || null, layout });
+      // a player only gets here when this deploy has no copy of the file: the same content, from the deployed commit
+      const ref = admin ? BRANCH : (process.env.VERCEL_GIT_COMMIT_SHA || BRANCH);
+      const { layout, sha } = await readWorldLayout(token, filePath, { ref, emptyOnMissing: villageId !== 'hub' });
+      return res.status(200).json({ ok: true, villageId, filePath, sha: sha || null, layout, source: admin ? 'dev' : 'deploy', deployBranch });
     }
 
     const { layout } = req.body || {};
@@ -365,6 +422,7 @@ return res.status(200).json({
   villageId,
   filePath,
   receivedCount: layout.length,
+  deployBranch,
   ...saveResult
 });
   } catch (err) {

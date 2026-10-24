@@ -25366,6 +25366,8 @@ function applyObjectTransform(node, data){
 
 let _worldLayoutSaveChain = Promise.resolve();
 let _layoutDirty = false;
+// the branch this site was built from (the layout API tells admins): players get that copy, Hard Save writes to dev
+var _layoutDeployBranch = null;
 let _lastLocalCacheAt = Number(localStorage.getItem('rebelAntsLayoutLocalCacheAt:' + CURRENT_VILLAGE_ID) || 0);
 let _lastHardSaveAt = Number(localStorage.getItem('rebelAntsLayoutHardSaveAt:' + CURRENT_VILLAGE_ID) || 0);
 
@@ -25821,7 +25823,10 @@ return Promise.resolve(true);
       localStorage.setItem('rebelAntsLayoutHardSaveAt:' + CURRENT_VILLAGE_ID, String(_lastHardSaveAt));
       if (result.githubContentSha) safeStorageSet(localStorage, 'rebelAntsLayoutRemoteSha:' + CURRENT_VILLAGE_ID, result.githubContentSha);
       updateLayoutCacheStatus();
-     showToast('✓ Saved to GitHub — ' + data.length + ' objects');
+      if (result.deployBranch) _layoutDeployBranch = result.deployBranch;
+     showToast(result.deployBranch === 'main'
+       ? '✓ Saved to dev — ' + data.length + ' objects. Players here get it with the next merge to main.'
+       : '✓ Saved to GitHub — ' + data.length + ' objects');
       return true;
     } catch (e) {
       console.error("World layout GitHub save failed", e);
@@ -25858,7 +25863,8 @@ function updateLayoutCacheStatus() {
   const el = document.getElementById('layoutCacheStatus');
   if (!el) return;
   const dirtyText = _layoutDirty ? 'Unsaved changes' : 'No unsaved changes';
-  el.textContent = `${dirtyText} | Local cache: ${formatLayoutSaveTime(_lastLocalCacheAt)} | Hard save: ${formatLayoutSaveTime(_lastHardSaveAt)}`;
+  el.textContent = `${dirtyText} | Local cache: ${formatLayoutSaveTime(_lastLocalCacheAt)} | Hard save: ${formatLayoutSaveTime(_lastHardSaveAt)}`
+    + (_layoutDeployBranch === 'main' ? ' | Hard Save goes to dev: players here get it with the next merge to main' : '');
 }
 
 function cacheLayoutLocally() {
@@ -29426,6 +29432,7 @@ async function initWorldLayout() {
     if (resp.ok) {
       const d = await resp.json();
       if (d.ok && Array.isArray(d.layout)) remote = { layout: d.layout, sha: d.sha || null };
+      if (d.deployBranch) { _layoutDeployBranch = d.deployBranch; updateLayoutCacheStatus(); }
     }
     if (!remote) console.warn('World layout service did not return a layout. Status:', resp.status);
   } catch(e) {
