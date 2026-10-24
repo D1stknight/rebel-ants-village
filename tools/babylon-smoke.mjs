@@ -9,7 +9,8 @@
 //   SMOKE_CACHE = a folder for the outside files the pages fetch (Rebel rig, fonts, gsap), so both runs see the same bytes
 // Writes <dir>/smoke.json and a picture per page (<dir>/<id>.jpg).
 // Every /api/ call is answered here (layouts from the repo files, no sign-in), cdn.babylonjs.com and the other Babylon sites
-// are refused and listed (nothing should need them), other outside hosts get a 404 unless listed in OUTSIDE.
+// are refused and listed (nothing should need them), other outside hosts get a 404 unless listed in OUTSIDE. The pages ask
+// for stored files at /blob/<path> on the site (assets/site-files.js): those come from the store, as vercel.json's rewrite does.
 import http from 'http';
 import fs from 'fs';
 import os from 'os';
@@ -24,6 +25,10 @@ const PORT = +arg('port', 8790), WAIT = +arg('wait', 240) * 1000, HOST = `127.0.
 const CACHE = path.resolve(process.env.SMOKE_CACHE || path.join(os.tmpdir(), 'babylon-smoke-cache'));
 const OUTSIDE = /^(fonts\.googleapis\.com|fonts\.gstatic\.com|cdn\.jsdelivr\.net|[a-z0-9]+\.public\.blob\.vercel-storage\.com)$/;
 const BABYLON_SITES = /(^|\.)babylonjs\.com$/;
+// /blob/<path> = the store's <path> (vercel.json's rewrite, Oct 24)
+const BLOB_TO = (() => {
+  try { const r = (JSON.parse(fs.readFileSync(path.join(ROOT, 'vercel.json'), 'utf8')).rewrites || []).find((x) => x.source === '/blob/:path*'); return r ? r.destination.replace(/:path\*$/, '') : null; } catch (e) { return null; }
+})();
 const RIG = '609';   // a showcase Forge rig built into the village (CHARACTER_REGISTRY forged_rig_609, in Blob)
 fs.mkdirSync(OUT, { recursive: true }); fs.mkdirSync(CACHE, { recursive: true });
 
@@ -111,8 +116,8 @@ function apiAnswer(u, admin) {
   if (u.pathname === '/api/admin-session') return json(200, { ok: true, authenticated: !!admin });
   return json(404, { ok: false, error: 'not in the smoke test' });
 }
-async function outside(route, rec) {
-  const url = route.request().url(), file = path.join(CACHE, crypto.createHash('sha1').update(url).digest('hex'));
+async function outside(route, rec, url = route.request().url()) {
+  const file = path.join(CACHE, crypto.createHash('sha1').update(url).digest('hex'));
   try {
     if (!fs.existsSync(file)) {
       const r = await fetch(url, { headers: { 'user-agent': 'Mozilla/5.0 babylon-smoke' } });
@@ -143,6 +148,7 @@ for (const pg of RUN) {
   });
   await ctx.route('**/*', (route) => {
     const u = new URL(route.request().url());
+    if (u.host === HOST && BLOB_TO && u.pathname.startsWith('/blob/')) return outside(route, rec, BLOB_TO + u.pathname.slice(6) + u.search);
     if (u.host === HOST) return u.pathname.startsWith('/api/') ? route.fulfill(apiAnswer(u, pg.admin)) : route.continue();
     if (u.protocol === 'data:' || u.protocol === 'blob:') return route.continue();
     if (BABYLON_SITES.test(u.hostname)) { rec.babylonSites.push(u.hostname + u.pathname); return route.abort('blockedbyclient'); }
