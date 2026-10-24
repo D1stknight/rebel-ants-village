@@ -77,6 +77,10 @@
     },
     "api/world-layout.mjs": {
       "includeFiles": "assets/{world-layout.json,world-layouts/*.json}"
+    },
+    "api/terrain-base.mjs": {
+      "includeFiles": "assets/village-terrain.js",
+      "maxDuration": 30
     }
   },
   "crons": [

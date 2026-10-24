@@ -864,7 +864,12 @@ function spireHeight(sp, x, z, s, seed) {
 }
 
 // Heightmap with droplet erosion; roads along the two axes follow a smoothed copy of the land; courtyard flat.
-export function buildHeightmap(recipe) {
+// The heightmap in two parts. heightmapBase: the seeded noise, the water erosion, terraces, roads, coast and mesa, i.e. the
+// ground before the village is built into it, which is the slow part (tens of thousands of eroding drops). It is pre-built
+// per village into assets/terrain/<village>.bin (tools/bake-terrain.mjs) and loaded by loadHeightmapBase; buildHeightmap
+// then does the rest (the village's terraces and paving, the river) exactly as before, so a village from its file is the
+// same to the bit as one worked out here.
+export function heightmapBase(recipe) {
   const baseHeight = makeBaseHeight(recipe);
   const H = new Float32Array(N * N), flow = new Float32Array(N * N);
   for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) H[j * N + i] = baseHeight(i * CELL - SIZE / 2, j * CELL - SIZE / 2);
@@ -919,6 +924,20 @@ export function buildHeightmap(recipe) {
   if (coast) for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const k = j * N + i; H[k] = Math.min(H[k], coast(i * CELL - SIZE / 2, j * CELL - SIZE / 2)); }
   const mesa = makeMesa(recipe);
   if (mesa) for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const k = j * N + i; H[k] -= mesa.cut(i * CELL - SIZE / 2, j * CELL - SIZE / 2); }
+  return { H, flow, path };
+}
+// where water runs, as the ground mask's red channel (0-255, before the river's wet banks are added): the drops' flow on a
+// log scale against the most-run cell; null if no water ran anywhere (the mask stays 0 then, as it always did)
+export function flowToR(flow) {
+  let fmax = 0; for (let k = 0; k < flow.length; k++) fmax = Math.max(fmax, Math.log1p(flow[k]));
+  if (!(fmax > 0)) return null;
+  const r = new Uint8Array(flow.length);
+  for (let k = 0; k < flow.length; k++) r[k] = Math.round(255 * Math.min(1, Math.log1p(flow[k]) / (fmax * .7)));
+  return r;
+}
+export function buildHeightmap(recipe, base) {
+  base = base || heightmapBase(recipe);
+  const { H, path } = base, flowR = base.flowR !== undefined ? base.flowR : flowToR(base.flow), baseHeight = makeBaseHeight(recipe), f0 = recipe.flatHalf;
   let pave = null; const Hb = new Float32Array(H); // ground before the village is built into it
   if (recipe.village) {
     const V = makeVillageShape(recipe.village); pave = new Uint8Array(N * N);
@@ -931,7 +950,7 @@ export function buildHeightmap(recipe) {
     }
   }
   const water = recipe.water ? carveWater(H, recipe.water) : null;
-  return { H, Hb, flow, path, pave, baseHeight, water };
+  return { H, Hb, flowR, path, pave, baseHeight, water };
 }
 
 // ── River + waterfall ─────────────────────────────────────
@@ -1035,6 +1054,58 @@ export function makeOldHubSampler() {
 }
 
 // ── Babylon side ─────────────────────────────────────────
+// A village's heightmap base, packed (api/terrain-base.mjs works it out once and sends it gzipped; the CDN and the browser
+// keep it): [ 'RATH' | u32 header length | header JSON | arrays ], H (the ground before the village, Float32) as its bit
+// patterns' deltas (wrapping u32) in 4 byte planes, flowR and path (Uint8) as they are. code = the SHA-256 of this
+// module's bytes, so a base is only ever used by the very code that made it.
+export function packHeightmapBase(base, code, village) {
+  const flowR = base.flowR || flowToR(base.flow); if (!flowR) return null;
+  const arrays = [['H', 'f32', base.H], ['flowR', 'u8', flowR], ['path', 'u8', base.path]];
+  const head = new TextEncoder().encode(JSON.stringify({ v: 1, village, code, n: N, arrays: arrays.map(([k, t, a]) => [k, t, a.length]) }));
+  const size = 8 + head.length + arrays.reduce((s, [, t, a]) => s + a.length * (t === 'f32' ? 4 : 1), 0), out = new Uint8Array(size);
+  out.set([82, 65, 84, 72]); new DataView(out.buffer).setUint32(4, head.length, true); out.set(head, 8);
+  let at = 8 + head.length;
+  for (const [, t, a] of arrays) {
+    if (t === 'u8') { out.set(a, at); at += a.length; continue; }
+    const u = new Uint32Array(a.buffer, a.byteOffset, a.length), n = u.length;
+    for (let k = 0, prev = 0; k < n; k++) { const d = (u[k] - prev) >>> 0; prev = u[k]; out[at + k] = d & 255; out[at + n + k] = (d >>> 8) & 255; out[at + 2 * n + k] = (d >>> 16) & 255; out[at + 3 * n + k] = d >>> 24; }
+    at += n * 4;
+  }
+  return out;
+}
+// unpackHeightmapBase(raw): the unzipped bytes back to { H, flowR, path }, or null when they are for another version of
+// this module or another village
+export function unpackHeightmapBase(raw, code, village) {
+  const bytes = new Uint8Array(raw), dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  if (bytes.length < 8 || String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]) !== 'RATH') return null;
+  const hl = dv.getUint32(4, true), head = JSON.parse(new TextDecoder().decode(bytes.subarray(8, 8 + hl)));
+  if (head.v !== 1 || head.code !== code || head.village !== village || head.n !== N) return null;
+  const out = {}; let at = 8 + hl;
+  for (const [key, type, len] of head.arrays) {
+    if (len !== N * N) return null;
+    if (type === 'u8') { out[key] = bytes.slice(at, at + len); at += len; continue; }
+    const u = new Uint32Array(len);
+    for (let k = 0, prev = 0; k < len; k++) { prev = (prev + (bytes[at + k] | bytes[at + len + k] << 8 | bytes[at + 2 * len + k] << 16 | bytes[at + 3 * len + k] << 24)) >>> 0; u[k] = prev; }
+    out[key] = new Float32Array(u.buffer); at += len * 4;
+  }
+  return out.H && out.flowR && out.path && at === bytes.length ? out : null;
+}
+// loadHeightmapBase(village): the village's heightmap base from the site (its address names this module's version, the
+// SHA-256 of the bytes the browser loaded, so a cached copy is never stale); null when the site has none, the browser
+// can't unzip it or it doesn't match (the village's terrain is then worked out here, the same). ?terrainBake=0 skips it.
+export async function loadHeightmapBase(village) {
+  try {
+    if (typeof DecompressionStream !== 'function' || !globalThis.crypto?.subtle || new URLSearchParams(location.search).get('terrainBake') === '0') return null;
+    const code = await fetch(import.meta.url, { cache: 'force-cache' }).then(r => r.ok ? r.arrayBuffer() : null);
+    if (!code) return null;
+    const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', code))].map(b => b.toString(16).padStart(2, '0')).join('');
+    const file = await fetch('/api/terrain-base?village=' + encodeURIComponent(village) + '&v=' + hash).then(r => r.ok ? r.blob() : null);
+    if (!file) return null;
+    const raw = await new Response(file.stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+    return unpackHeightmapBase(raw, hash, village);
+  } catch (e) { console.warn('Pre-built terrain not used', e); return null; }
+}
+
 export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   const t0 = performance.now();
   const recipe = { ...baseRecipe, grass: { ...baseRecipe.grass }, pines: { ...baseRecipe.pines }, rocks: { ...baseRecipe.rocks }, deadTrees: baseRecipe.deadTrees && { ...baseRecipe.deadTrees }, flowers: baseRecipe.flowers && { ...baseRecipe.flowers } };
@@ -1042,7 +1113,7 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   if (Number.isFinite(c.grass)) recipe.grass.count = c.grass;
   if (Number.isFinite(c.pines)) recipe.pines.count = c.pines;
   if (Number.isFinite(c.rocks)) recipe.rocks.count = c.rocks;
-  const hm = buildHeightmap(recipe);
+  const hm = buildHeightmap(recipe, opts.heightmapBase || null);
   const H0 = hm.H, H = new Float32Array(H0), path0 = hm.path, path = new Uint8Array(path0);
   const ground = BABYLON.MeshBuilder.CreateGround('gnd', { width: SIZE, height: SIZE, subdivisions: SUBDIV, updatable: true }, scene);
   let pos = ground.getVerticesData(BABYLON.VertexBuffer.PositionKind);
@@ -1071,9 +1142,8 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   const wallA = new Uint8Array(N * N).fill(255);
   if (VS) { const [X0, Z0, X1, Z1] = VS.rect;
     for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const x = i * CELL - SIZE / 2, z = j * CELL - SIZE / 2; if (x > X0 && x < X1 && z > Z0 && z < Z1 && VS.isWall(x, z)) wallA[j * N + i] = 0; } }
-  let fmax = 0; for (let k = 0; k < hm.flow.length; k++) fmax = Math.max(fmax, Math.log1p(hm.flow[k]));
   const mask = new Uint8Array(N * N * 4);
-  function writeMask() { for (let k = 0; k < N * N; k++) { mask[k * 4] = Math.round(255 * Math.min(1, Math.max(Math.log1p(hm.flow[k]) / (fmax * .7), hm.water ? hm.water.wet[k] : 0))); mask[k * 4 + 1] = path[k]; mask[k * 4 + 2] = hm.pave ? hm.pave[k] : 0; mask[k * 4 + 3] = wallA[k]; } }
+  function writeMask() { for (let k = 0; k < N * N; k++) { mask[k * 4] = hm.flowR ? Math.max(hm.flowR[k], hm.water ? Math.round(255 * Math.min(1, hm.water.wet[k])) : 0) : 0; mask[k * 4 + 1] = path[k]; mask[k * 4 + 2] = hm.pave ? hm.pave[k] : 0; mask[k * 4 + 3] = wallA[k]; } }
   writeMask();
   const maskTex = new BABYLON.RawTexture(mask, N, N, BABYLON.Engine.TEXTUREFORMAT_RGBA, scene, false, false, BABYLON.Texture.BILINEAR_SAMPLINGMODE);
   maskTex.wrapU = maskTex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
@@ -1130,7 +1200,7 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   }
 
   const T = {
-    recipe, ground, far, material, maskTex, subdiv: SUBDIV, buildMs: Math.round(performance.now() - t0),
+    recipe, ground, far, material, maskTex, subdiv: SUBDIV, buildMs: Math.round(performance.now() - t0), prebuilt: !!opts.heightmapBase,
     villageGround, villageShape: VS, sea, seaY,
     // the sea is not walkable (piers and boats add their own walk surfaces)
     seaBlocks(x, z) { return seaY !== null && T.heightAt(x, z) < seaY + .35; },

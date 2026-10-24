@@ -1841,6 +1841,9 @@ const FACTION_VILLAGES = ['ronin','samurai','bushi','warrior','shogun','buke','k
 const urlVillageId = new URLSearchParams(window.location.search).get('village') || 'hub';
 const CURRENT_VILLAGE_ID = VILLAGE_REGISTRY[urlVillageId] ? urlVillageId : 'hub';
 const CURRENT_VILLAGE = VILLAGE_REGISTRY[CURRENT_VILLAGE_ID];
+// the village's heightmap base from the site (api/terrain-base: worked out once there, then kept by the CDN and the browser)
+// downloads while the page sets up; null = worked out here
+const NEW_TERRAIN_BASE = NEW_TERRAIN_MODULE?.loadHeightmapBase && NEW_TERRAIN_MODULE.TERRAIN_RECIPES[CURRENT_VILLAGE_ID] ? NEW_TERRAIN_MODULE.loadHeightmapBase(CURRENT_VILLAGE_ID) : null;
 // Village shadows (default since Sept 30, chosen by Miguel after the ?shadows=all preview): buildings, trees and rocks
 // cast and receive frozen static shadows at a stronger shade. Lanterns, glows, mist, signs, gates and characters stay
 // shadowless. ?shadows=off brings back the old faint, mostly-off look.
@@ -20441,10 +20444,13 @@ function ensureEditableRootUniqueName(node) {
 
 // ── GROUND / TERRAIN ─────────────────────────
 setSt("Village: building terrain...");
+// the pre-built heightmap if it has come (a slow download waits 4 s at most here: the ground is then worked out, the same)
+const _terrainBase = NEW_TERRAIN_BASE ? await Promise.race([NEW_TERRAIN_BASE, new Promise(r => setTimeout(() => r(null), 4000))]) : null;
 // Large grass base
 const _newTerrain = (NEW_TERRAIN_MODULE && NEW_TERRAIN_MODULE.TERRAIN_RECIPES[CURRENT_VILLAGE_ID]) ? (() => {
   try {
     return NEW_TERRAIN_MODULE.createVillageTerrain(scene, NEW_TERRAIN_MODULE.TERRAIN_RECIPES[CURRENT_VILLAGE_ID], {
+      heightmapBase: _terrainBase,
       oldHeightAt: NEW_TERRAIN_MODULE.makeOldHubSampler(),
       counts: Object.fromEntries(['grass', 'pines', 'rocks'].map(k => [k, Number(new URLSearchParams(location.search).get(k) ?? NaN)]))
     });
@@ -20452,7 +20458,7 @@ const _newTerrain = (NEW_TERRAIN_MODULE && NEW_TERRAIN_MODULE.TERRAIN_RECIPES[CU
 })() : null;
 window._newTerrain = _newTerrain;
 if (_newTerrain && typeof updateSky === 'function') try { updateSky(); } catch (e) {} // fog, light and hour of this village at once
-if (_newTerrain) console.log('New terrain on (' + CURRENT_VILLAGE_ID + '), built in', _newTerrain.buildMs, 'ms');
+if (_newTerrain) console.log('New terrain on (' + CURRENT_VILLAGE_ID + '), built in', _newTerrain.buildMs, 'ms', _newTerrain.prebuilt ? '(pre-built heightmap)' : '(heightmap worked out)');
 // the village's sky (heavier and hazier for some villages)
 if (_newTerrain?.recipe.sky) Object.assign(skyMat, _newTerrain.recipe.sky);
 const ground=_newTerrain ? _newTerrain.ground : BABYLON.MeshBuilder.CreateGround("gnd",{width:700,height:700,subdivisions:120},scene);
