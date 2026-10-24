@@ -11278,14 +11278,14 @@ async function startMiniGame(def, src) {
   moveForward = moveBackward = turnLeft = turnRight = runKey = false; charMesh._vel = 0;
   _camOcc.dist = null; setPlayerCameraFade(1);
   const guide = scene.getTransformNodeByName?.('questTargetAutoGuide');
-  MiniGames.saved = { x:charMesh.position.x, z:charMesh.position.z, ry:charMesh.rotation.y, fov:walk.fov, camYaw:_orbitAngleH, guide, guideOn:guide?.isEnabled() };
+  MiniGames.saved = { x:charMesh.position.x, z:charMesh.position.z, ry:charMesh.rotation.y, fov:walk.fov, fovMode:walk.fovMode, camYaw:_orbitAngleH, guide, guideOn:guide?.isEnabled() };
   guide?.setEnabled(false);
   MiniGames.saved.hidden = [src.root, ...(ActiveInterior ? getInteriorHotspotRoots() : [])].filter(n => n?.isEnabled?.());
   MiniGames.saved.hidden.forEach(n => n.setEnabled(false));
   // a roam game (impl.roam: runs, chases, lights to keep lit) keeps the walk: the keys walk, the camera follows, the
   // minimap stays; the game watches the player and gets a key first (O, Space ...)
   const roam = !!(impl.roam || def.roam);
-  Object.assign(MiniGames, { on:true, busy:false, impl, def, src, objs:[], escAt:0, roam, holdWalk:false, walkLight:null });
+  Object.assign(MiniGames, { on:true, busy:false, impl, def, src, objs:[], escAt:0, roam, holdWalk:false, walkLight:null, vfov:walk.fov, fitK:1, fitWant:1, fitAt:.2 });
   document.body.classList.toggle('game-roam', roam);
   window._newTerrain?.birds?.setVisible(false);
   document.getElementById('interactionPrompt')?.classList.remove('on');
@@ -11355,6 +11355,19 @@ function grantMiniGameRebelPoints(def, points, cap) {
   try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ gameId:def.id, points:give, total:ProgressionState.rebelPoints } })); } catch(e) {}
   return give;
 }
+// phones held upright (Oct 24): the boards were framed for a 16:9 screen and an upright phone cut them off at both sides.
+// A fixed game camera there shows at most a 16:9 screen's width and closes in on the game's things (RebelGames.util.upright:
+// measured every 0.4 s, eased); wider screens keep the game's own view
+function applyMiniGameFov() {
+  if (!MiniGames.on || MiniGames.roam) return;
+  RebelGames.util.upright.apply(walk, MiniGames.vfov || walk.fov, MiniGames.fitK ?? 1);
+}
+function updateMiniGameFit(dt) {
+  if (MiniGames.roam || !MiniGames.ctx || !RebelGames.util.upright.is(walk)) return;
+  if ((MiniGames.fitAt = (MiniGames.fitAt || 0) - dt) <= 0) { MiniGames.fitAt = .4; MiniGames.fitWant = RebelGames.util.upright.fit(walk, MiniGames.ctx.frame, MiniGames.vfov || walk.fov); }
+  const k = MiniGames.fitK ?? 1, want = MiniGames.fitWant ?? k;
+  if (Math.abs(want - k) > .002) { MiniGames.fitK = k + (want - k) * Math.min(1, dt * 5); applyMiniGameFov(); }
+}
 function buildMiniGameCtx(def, src, frame) {
   const V3 = BABYLON.Vector3;
   const frameYaw = () => { const q = new BABYLON.Quaternion(); frame.getWorldMatrix().decompose(undefined, q); return q.toEulerAngles().y; };
@@ -11370,7 +11383,9 @@ function buildMiniGameCtx(def, src, frame) {
     toWorld: (x, y, z) => V3.TransformCoordinates(new V3(x, y, z), frame.getWorldMatrix()),
     toLocal: (p) => V3.TransformCoordinates(p, BABYLON.Matrix.Invert(frame.getWorldMatrix())),
     // the camera: at local position p, looking at local point t
-    look(p, t, fov) { walk.position.copyFrom(ctx.toWorld(p[0], p[1], p[2])); walk.setTarget(ctx.toWorld(t[0], t[1], t[2])); if (fov) walk.fov = fov; },
+    look(p, t, fov) { walk.position.copyFrom(ctx.toWorld(p[0], p[1], p[2])); walk.setTarget(ctx.toWorld(t[0], t[1], t[2])); if (fov) MiniGames.vfov = fov; applyMiniGameFov(); },
+    // the field of view by itself (as look's fov: what a 16:9 screen shows top to bottom)
+    fov(v) { if (v) MiniGames.vfov = v; applyMiniGameFov(); },
     // keep a game object: disposed with the game; lit by the room's lights in a room
     add(node) {
       if (!node) return node;
@@ -11624,7 +11639,8 @@ function playMiniGameClip(name, o = {}) {
 function updateMiniGame(dt) {
   if (!MiniGames.on || !MiniGames.inst) return;
   if (!walkMode) { endMiniGame(); return; }
-  try { MiniGames.inst.update?.(Math.min(.1, dt)); } catch (e) { console.warn('mini-game update', e); showToast('The game hit a snag.'); endMiniGame(); }
+  try { MiniGames.inst.update?.(Math.min(.1, dt)); } catch (e) { console.warn('mini-game update', e); showToast('The game hit a snag.'); endMiniGame(); return; }
+  try { updateMiniGameFit(Math.min(.1, dt)); } catch (e) {}
 }
 function miniGameKey(e, down) {
   const key = e.key.toLowerCase();
@@ -11790,7 +11806,7 @@ function endMiniGame() {
     charMesh._vel = 0; charMesh.getChildMeshes(false).forEach(m => { m.visibility = 1; });
     const g = animGroups[animState]; if (animState !== 0 && g?.isPlaying) g.stop(); animState = -1; switchAnim(0, true);
   }
-  if (s) { walk.fov = s.fov; if (s.guide && !s.guide.isDisposed?.()) s.guide.setEnabled(!!s.guideOn); (s.hidden || []).forEach(n => { if (!n.isDisposed?.()) n.setEnabled(true); }); }
+  if (s) { walk.fovMode = s.fovMode ?? BABYLON.Camera.FOVMODE_VERTICAL_FIXED; walk.fov = s.fov; if (s.guide && !s.guide.isDisposed?.()) s.guide.setEnabled(!!s.guideOn); (s.hidden || []).forEach(n => { if (!n.isDisposed?.()) n.setEnabled(true); }); }
   if (!roam) snapWalkCameraBehindPlayer();
   setTimeout(processBadgeUnlockQueue, 400); // a badge earned in the game
 }
@@ -27338,7 +27354,7 @@ scene.onPointerObservable.add(evt=>{
     else{ orbit.alpha=-Math.PI/2.1;orbit.beta=Math.PI/3.6;orbit.radius=150;orbit.target=new BABYLON.Vector3(0,6,0); }
   }
 });
-window.addEventListener('resize',()=>engine.resize());
+window.addEventListener('resize',()=>{ engine.resize(); applyMiniGameFov(); }); // (a phone turned mid-game)
 
 
 // ── MOON & STARS ──────────────────────────────

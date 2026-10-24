@@ -229,5 +229,38 @@ body.in-game #questLine,body.in-game:not(.game-roam) #miniMap,body.in-game #phot
     get() { let n = 0; try { n = Math.max(0, Number(localStorage.getItem(k)) || 0); } catch (e) {} return n; },
     open(max) { return levelsOpen() ? max - 1 : Math.min(max - 1, this.get()); },
     set(n) { try { if (n > this.get()) localStorage.setItem(k, String(n)); } catch (e) {} } }; };
-  window.RebelGames = { register, load, games, HUD, showResult, hideResult, resultOpen, resultBoard, util: { clamp, pingPong, levelStore } };
+  // Phones held upright (Oct 24): a game's camera is framed for a 16:9 screen (v = its vertical field of view there); an
+  // upright phone shows at most that screen's width (the field of view fixed across, more above and below) and closes in
+  // on the game's own things near what the camera looks at when they need less: never closer than the game's own view
+  // on this screen. fit(cam, frame, v) = the share of the 16:9 width to show (1 = all of it); apply(cam, v, k).
+  const upright = {
+    is(cam) { const e = cam.getEngine(); return e.getRenderWidth() < e.getRenderHeight(); },
+    apply(cam, v, k = 1) {
+      const B = window.BABYLON, up = upright.is(cam);
+      cam.fovMode = up ? B.Camera.FOVMODE_HORIZONTAL_FIXED : B.Camera.FOVMODE_VERTICAL_FIXED;
+      cam.fov = up ? 2 * Math.atan(Math.tan(v / 2) * 16 / 9 * k) : v;
+    },
+    fit(cam, frame, v) {
+      const B = window.BABYLON, e = cam.getEngine(), aspect = e.getRenderWidth() / e.getRenderHeight();
+      const t16 = Math.tan(v / 2) * 16 / 9, tMin = Math.tan(v / 2) * aspect;
+      if (!frame || !(t16 > 0)) return 1;
+      cam.computeWorldMatrix(true);
+      const view = cam.getViewMatrix(true), tgt = cam.getTarget ? cam.getTarget() : null;
+      const R = tgt ? B.Vector3.Distance(cam.position, tgt) * 2.5 + 2 : 1e9;
+      let need = 0, n = 0;
+      for (const m of frame.getChildMeshes(false)) {
+        if (!m.isEnabled() || !m.isVisible || m.visibility <= .01 || !m.getTotalVertices?.()) continue;
+        if (m.hasThinInstances && m.thinInstanceCount > 0) m.thinInstanceRefreshBoundingInfo(false);
+        const bb = m.getBoundingInfo().boundingBox;
+        if (tgt && (B.Vector3.Distance(bb.centerWorld, tgt) > R || bb.extendSizeWorld.length() > R)) continue; // far things, ground planes, backdrops
+        for (const p of bb.vectorsWorld) {
+          const c = B.Vector3.TransformCoordinates(p, view); if (c.z <= .05) continue;
+          // across: within ~91 % of the width; up and down: within the middle ~62 % (the title, help line and buttons)
+          need = Math.max(need, Math.abs(c.x) / c.z * 1.1, Math.abs(c.y) / c.z * aspect * 1.6); n++;
+        }
+      }
+      return n ? clamp(need / t16, Math.min(1, tMin / t16), 1) : 1;
+    }
+  };
+  window.RebelGames = { register, load, games, HUD, showResult, hideResult, resultOpen, resultBoard, util: { clamp, pingPong, levelStore, upright } };
 })();
