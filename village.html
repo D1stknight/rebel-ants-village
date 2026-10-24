@@ -194,6 +194,8 @@ body.walk-photo #photoBtn{display:block}
 #skillBar .sb-msg{margin-top:8px;min-height:18px;font-size:13px;color:#ffe9b0}
 #skillBar.miss .sb-track{animation:sbShake .25s}
 .mg-restart{margin-top:8px;font:600 12px Georgia,serif;letter-spacing:.08em;padding:5px 14px;border-radius:6px;border:1px solid #8a6a2a;background:#2a1d10;color:#ffe9b0;cursor:pointer}
+.mg-leave{margin:8px 0 0 8px;font:600 12px Georgia,serif;letter-spacing:.08em;padding:5px 14px;border-radius:6px;border:1px solid #8a6a2a;background:#2a1d10;color:#ffe9b0;cursor:pointer}
+@media (pointer:coarse){#danceOff .do-pad{width:58px;height:50px;touch-action:none}.mg-restart,.mg-leave{padding:10px 16px;font-size:13px}}
 @keyframes sbShake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 #questTrackerObjective{
   font-size:8px;
@@ -1707,7 +1709,7 @@ body.walk-photo #photoBtn{display:block}
 <button id="photoBtn" title="Take a picture (P)" onclick="window.takeVillagePhoto && window.takeVillagePhoto()">&#128247;</button>
 <div id="photoFlash"></div>
 <div id="photoOverlay"><div class="ph-card"><img id="photoImg" alt="Your picture"><div class="ph-cap"></div><div class="ph-btns"><button onclick="window.saveVillagePhoto()">Save</button><button onclick="window.shareVillagePhoto()">Share</button><button onclick="window.closeVillagePhoto()">Close</button></div></div></div>
-<div id="danceOff"><div class="do-title"></div><div class="do-levels"></div><div class="do-lane"><div class="do-ring"></div><div class="do-notes"></div></div><div class="do-score"><span class="do-count"></span><span class="do-judge"></span></div><div class="do-pads"><button class="do-pad" onclick="window.pressDance && window.pressDance(0)">←</button><button class="do-pad" onclick="window.pressDance && window.pressDance(1)">↑</button><button class="do-pad" onclick="window.pressDance && window.pressDance(2)">→</button><button class="do-pad" onclick="window.pressDance && window.pressDance(3)">↓</button></div><button class="mg-restart" onclick="this.blur(); window.restartDanceOff && window.restartDanceOff()">Restart</button></div>
+<div id="danceOff"><div class="do-title"></div><div class="do-levels"></div><div class="do-lane"><div class="do-ring"></div><div class="do-notes"></div></div><div class="do-score"><span class="do-count"></span><span class="do-judge"></span></div><div class="do-pads"><button class="do-pad" onpointerdown="event.preventDefault(); window.pressDance && window.pressDance(0)">←</button><button class="do-pad" onpointerdown="event.preventDefault(); window.pressDance && window.pressDance(1)">↑</button><button class="do-pad" onpointerdown="event.preventDefault(); window.pressDance && window.pressDance(2)">→</button><button class="do-pad" onpointerdown="event.preventDefault(); window.pressDance && window.pressDance(3)">↓</button></div><button class="mg-restart" onclick="this.blur(); window.restartDanceOff && window.restartDanceOff()">Restart</button><button class="mg-leave" onclick="this.blur(); window.leaveDanceOff && window.leaveDanceOff()">Leave</button></div>
 <div id="skillBar" onclick="window.pressSkillBar && window.pressSkillBar()"><div class="sb-title"></div><div class="sb-track"><div class="sb-zone"></div><div class="sb-mark"></div></div><div class="sb-pips"></div><div class="sb-msg"></div><button class="mg-restart" onclick="event.stopPropagation(); this.blur(); window.restartSkillBar && window.restartSkillBar()">Restart</button></div>
 <div id="playerStartupOverlay" aria-hidden="true">
   <div id="playerStartupPanel" role="dialog" aria-modal="true" aria-labelledby="playerStartupTitle">
@@ -12130,6 +12132,8 @@ function restartDanceOff() {
   return openDanceOff(root, cfg, level);
 }
 window.restartDanceOff = restartDanceOff;
+// Leave (Oct 24, phones): what Esc does; a phone had no way out mid-song (the touch layer hides during a dance-off)
+window.leaveDanceOff = () => { const playing = DanceOff.on; closeDanceOff(); if (playing) MoonTaleSounds.stop(); };
 function closeDanceOff() { DanceOff.on = false; DanceOff.choosing = false; stopDanceOffLoop(); document.getElementById('danceOff')?.classList.remove('on', 'choose'); setTimeout(processBadgeUnlockQueue, 400); }
 function updateDanceOff() {
   if (DanceOff.choosing && (!walkMode || ActiveInterior || !charMesh || Math.hypot(charMesh.position.x - DanceOff.px, charMesh.position.z - DanceOff.pz) > 2)) { closeDanceOff(); return; }
@@ -29502,7 +29506,7 @@ async function loadForgeCollectionsConfig() {
 
 // the round Rebel button (opens the Rebel panel), the quest line beside it and the minimap (assets/village-hud.js)
 // touch screens: the stick and buttons (assets/village-touch.js) show while walking, not in admin or a board game
-setInterval(() => window.VillageTouch?.update({ walking: !!walkMode && !adminMode && !(MiniGames.on && !MiniGames.roam) && !DanceOff.on }), 250);
+setInterval(() => window.VillageTouch?.update({ walking: !!walkMode && !adminMode && !(MiniGames.on && !MiniGames.roam) && !DanceOff.on && !DanceOff.choosing }), 250);
 function initVillageHud() {
   try {
     window.VillageHud?.init(scene, {
