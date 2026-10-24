@@ -26,6 +26,8 @@
 .vtBtn b{font-size:20px;line-height:1}
 .vtBtn.down{background:rgba(232,197,106,.45);color:#1a1206}
 .vtBtn.use{grid-column:2;grid-row:1 / span 2;align-self:center;width:72px;height:72px}
+.vtBtn.use.ready{border-color:#ffe08a;color:#fff3cf;animation:vtReady 1.6s ease-in-out infinite}
+@keyframes vtReady{0%,100%{box-shadow:0 0 0 2px rgba(232,197,106,.35),0 0 12px rgba(232,197,106,.45)}50%{box-shadow:0 0 0 5px rgba(232,197,106,.16),0 0 22px rgba(232,197,106,.75)}}
 body.game-hide-touch-btns #vtBtns{display:none}
 html.vt-touch #ctrl{display:none}
 `;
@@ -33,7 +35,7 @@ html.vt-touch #ctrl{display:none}
   const root = document.createElement('div'); root.id = 'vtouch';
   root.innerHTML = '<div id="vtStick"><div id="vtKnob"></div></div><div id="vtBtns">' +
     '<button type="button" class="vtBtn" data-key=" " aria-label="Jump"><b>⤴</b>Jump</button>' +
-    '<button type="button" class="vtBtn use" data-key="o" aria-label="Use or talk"><b>✋</b>Use</button>' +
+    '<button type="button" class="vtBtn use" data-key="o" aria-label="Use or talk"><b>✋</b><span>Use</span></button>' +
     '<button type="button" class="vtBtn" data-key="f" aria-label="Attack"><b>⚔</b>Hit</button></div>';
   // the corner list of keys (W A S D, mouse, Esc) and the welcome card's controls are for keyboards: on a touch screen the
   // list goes and the card names the touch controls
@@ -87,6 +89,25 @@ html.vt-touch #ctrl{display:none}
     b.addEventListener('pointerdown', (e) => { e.preventDefault(); if (id !== null) return; id = e.pointerId; try { b.setPointerCapture(e.pointerId); } catch (_) {} b.classList.add('down'); press(key, true); });
     ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((t) => b.addEventListener(t, (e) => { if (e.pointerId === id) up(); }));
   });
+
+  // ── the Use button names what it does ("Talk", "Open", "Play" ...) and glows while the walk prompt offers something
+  // (village.html setInteractionPrompt calls VT.useHint). Once it has been pressed on such an offer the player knows it,
+  // and the "Tap Use to ..." line up top stays away from then on (VT.learned; Miguel, Oct 24: it covered the view)
+  const LEARNED_KEY = 'rebelAntsTouchUseLearned:v1';
+  try { VT.learned = localStorage.getItem(LEARNED_KEY) === '1'; } catch (e) { VT.learned = false; }
+  const useBtn = root.querySelector('.vtBtn.use'), useWord = useBtn.querySelector('span');
+  let hint = null;
+  VT.useHint = (label) => {
+    label = label || null;
+    if (label === hint) return;
+    hint = label; useWord.textContent = label || 'Use'; useBtn.classList.toggle('ready', !!label);
+  };
+  // capture: before the press itself, whose talk / door / game can clear the hint at once
+  useBtn.addEventListener('pointerdown', () => {
+    if (!hint || VT.learned) return;
+    VT.learned = true;
+    try { localStorage.setItem(LEARNED_KEY, '1'); } catch (e) {}
+  }, true);
 
   let shown = false;
   VT.release = () => { if (stickId !== null) stickEnd(); else hold(new Set()); };

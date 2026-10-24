@@ -9060,8 +9060,17 @@ function showToast(msg, duration) {
 function setInteractionPrompt(text, visible) {
   const prompt = document.getElementById('interactionPrompt');
   if (!prompt) return;
-  // touch screens press O with the Use button (assets/village-touch.js)
-  prompt.textContent = (window.VillageTouch?.on ? String(text || '').replace(/^Press O\b/, 'Tap Use') : text) || '';
+  const VT = window.VillageTouch;
+  if (VT?.on) {
+    // touch screens press O with the Use button (assets/village-touch.js). The button names the action ("Talk", "Open",
+    // "Play" ...); once the player has used it, the "Tap Use to ..." line up top stays away. Other lines (exits, holds,
+    // races, sealed doors) still show.
+    const t = String(text || ''), m = visible === true ? /^Press O to (\w+)/.exec(t) : null;
+    const word = m && m[1].length <= 9 ? m[1][0].toUpperCase() + m[1].slice(1).toLowerCase() : m ? 'Use' : null;
+    VT.useHint?.(word);
+    if (m && VT.learned) { prompt.classList.remove('on'); return; }
+    prompt.textContent = t.replace(/^Press O\b/, 'Tap Use');
+  } else prompt.textContent = text || '';
   prompt.classList.toggle('on', visible === true);
 }
 
@@ -11306,6 +11315,7 @@ async function startMiniGame(def, src) {
   document.body.classList.toggle('game-roam', roam);
   window._newTerrain?.birds?.setVisible(false);
   document.getElementById('interactionPrompt')?.classList.remove('on');
+  window.VillageTouch?.useHint?.(null); // the Use button goes back to "Use" (roam games keep the buttons)
   holdBadgeUnlockPopup(); // a badge card left open would sit over the game
   RebelGames.HUD.show(true);
   RebelGames.HUD.title(def.title || impl.title || 'Game');
