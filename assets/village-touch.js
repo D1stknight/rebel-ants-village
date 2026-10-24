@@ -26,6 +26,7 @@
 .vtBtn b{font-size:20px;line-height:1}
 .vtBtn.down{background:rgba(232,197,106,.45);color:#1a1206}
 .vtBtn.use{grid-column:2;grid-row:1 / span 2;align-self:center;width:72px;height:72px}
+html.vt-touch #ctrl{display:none}
 `;
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
   const root = document.createElement('div'); root.id = 'vtouch';
@@ -33,7 +34,12 @@
     '<button type="button" class="vtBtn" data-key=" " aria-label="Jump"><b>⤴</b>Jump</button>' +
     '<button type="button" class="vtBtn use" data-key="o" aria-label="Use or talk"><b>✋</b>Use</button>' +
     '<button type="button" class="vtBtn" data-key="f" aria-label="Attack"><b>⚔</b>Hit</button></div>';
-  const mount = () => document.body.appendChild(root);
+  // the corner list of keys (W A S D, mouse, Esc) and the welcome card's controls are for keyboards: on a touch screen the
+  // list goes and the card names the touch controls
+  document.documentElement.classList.add('vt-touch');
+  const TOUCH_HELP = [['Move', 'The stick, bottom left'], ['Run', 'Push the stick to its rim'], ['Look', 'Drag anywhere else'], ['Jump', 'Jump button'], ['Use / talk', 'Use button'], ['Journal', 'Journal button']];
+  const touchHelp = () => { const list = document.getElementById('playerStartupList'); if (list) list.innerHTML = TOUCH_HELP.map(([b, t]) => `<div class="startup-control"><b>${b}</b>${t}</div>`).join(''); };
+  const mount = () => { document.body.appendChild(root); touchHelp(); };
   if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);
   root.addEventListener('contextmenu', (e) => e.preventDefault());
 
