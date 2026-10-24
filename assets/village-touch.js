@@ -26,6 +26,7 @@
 .vtBtn b{font-size:20px;line-height:1}
 .vtBtn.down{background:rgba(232,197,106,.45);color:#1a1206}
 .vtBtn.use{grid-column:2;grid-row:1 / span 2;align-self:center;width:72px;height:72px}
+body.game-hide-touch-btns #vtBtns{display:none}
 html.vt-touch #ctrl{display:none}
 `;
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
