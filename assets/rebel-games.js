@@ -310,7 +310,7 @@ body.in-game #questLine,body.in-game:not(.game-roam) #miniMap,body.in-game #phot
       const R = tgt ? B.Vector3.Distance(cam.position, tgt) * 2.5 + 2 : 1e9;
       let need = 0, n = 0;
       for (const m of frame.getChildMeshes(false)) {
-        if (!m.isEnabled() || !m.isVisible || m.visibility <= .01 || !m.getTotalVertices?.()) continue;
+        if (!m.isEnabled() || !m.isVisible || m.visibility <= .01 || !m.getTotalVertices?.() || m.metadata?.fitSkip) continue; // fitSkip: glows and the like
         if (m.hasThinInstances && m.thinInstanceCount > 0) m.thinInstanceRefreshBoundingInfo(false);
         const bb = m.getBoundingInfo().boundingBox;
         if (tgt && (B.Vector3.Distance(bb.centerWorld, tgt) > R || bb.extendSizeWorld.length() > R)) continue; // far things, ground planes, backdrops
