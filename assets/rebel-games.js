@@ -263,7 +263,7 @@ body.in-game #questLine,body.in-game:not(.game-roam) #miniMap,body.in-game #phot
     c.querySelector('.gr-kicker').textContent = o.kicker || 'Game over';
     c.querySelector('.gr-title').textContent = o.title || '';
     c.querySelector('.gr-score').textContent = String(o.score ?? 0);
-    c.querySelector('.gr-label').textContent = o.label || 'points';
+    c.querySelector('.gr-label').textContent = o.label || 'score';
     const best = c.querySelector('.gr-best'); best.innerHTML = '';
     if (o.newBest) { const n = document.createElement('span'); n.className = 'gr-new'; n.textContent = 'New best!'; best.append(n); }
     else if (o.best != null) { best.append('Your best: '); const b = document.createElement('b'); b.textContent = String(o.best); best.append(b); }
