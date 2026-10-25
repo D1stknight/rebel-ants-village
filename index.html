@@ -1136,7 +1136,8 @@ const VILLAGE_RIGGED = {
   '3421': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/3421/build_1790563500246_forge_rig_thumb-3TGxeYqs0qzCPyyDj68H1Q1MyE8Zhx.jpg' },
   '609': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/609/build_1790562737903_forge_rig_thumb-A2y0hjC2OnDvVDOsPHhibxlbPkrc2s.jpg' },
   '4722': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4722/build_1790563381766_forge_rig_thumb-9DtgRRioXuNbKiuyVNvizgbXR5nQkf.jpg' },
-  '4': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4/build_1790563425986_forge_rig_thumb-pIHzHp8JxvvTnxe2lV28UNpuAlaHeF.jpg' }
+  '4': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4/build_1790563425986_forge_rig_thumb-pIHzHp8JxvvTnxe2lV28UNpuAlaHeF.jpg' },
+  '893': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/893/build_1790478443833_forge_rig_thumb-Ha0DZzDHURKT68Rvp8CkPk6N2GYbGA.jpg' }   // Oct 24: its Sept 27 rig (Miguel: "looks great")
 };
 // friend-collection playables (no NFT needed): rigged procedural characters built in the village (SamuraiKit)
 const FRIEND_PLAYABLES = [
@@ -1150,23 +1151,35 @@ const loadFriendPlayables = () => Promise.all(FRIEND_PLAYABLES.map((r) => attach
 // card's collection along so their holders forge them
 const FRIEND_LABELS = { chumpz: 'Chumpz', saints: 'Saint' };
 const sameCollection = (a, b) => (a?.collectionKey || 'battle_for_colony') === (b?.collectionKey || 'battle_for_colony');
-// Oct 20 the Free to play roster (api/free-roster.mjs, ticked in the NPC Forge): forged Rebels anyone can play: guests,
-// wallets without a Rebel and holders whose own Rebels are not forged yet. Never #001 (the starter card) or #893.
-const FREE_NEVER = new Set(['1', '893']);
+// VILLAGE_RIGGED lists Rebels: a Chumpz or Saint with the same number is another character
+const villageRigged = (rebel) => (sameCollection(rebel, {}) ? VILLAGE_RIGGED[String(rebel?.tokenId || '')] || null : null);
+// Oct 20 the Free to play roster (api/free-roster.mjs, ticked in the NPC Forge): forged characters anyone can play:
+// guests, wallets without a Rebel and holders whose own Rebels are not forged yet. An entry is a Rebel's number or, since
+// Oct 25, a Chumpz / Saint as '<collection>:<token>'. Never #001 (the starter card) nor the Racer (its own card).
+const FREE_NEVER = new Set(['1', 'chumpz:900001']);
+const freeEntry = (e) => { const m = /^([a-z_]+):(\d+)$/.exec(String(e)); return m ? { col: m[1], tok: m[2] } : { col: 'battle_for_colony', tok: String(e) }; };
+const cardKey = (r) => `${r?.collectionKey || 'battle_for_colony'}:${r?.tokenId || ''}`;   // a Chumpz #5 is not Rebel #5
 async function loadFreeRoster() {
   let tokens = null;
   try { const d = await (await fetch('/api/free-roster', { headers: { accept: 'application/json' } })).json(); if (d && d.ok && Array.isArray(d.tokens)) tokens = d.tokens; } catch (e) {}
   return (tokens || Object.keys(VILLAGE_RIGGED)).map(String).filter((t) => !FREE_NEVER.has(t));
 }
-const freeRosterCards = (tokens) => Promise.all(tokens.map((t) => attachActiveForgeCharacter({
-  id: 'rebel_' + t, rebelId: 'rebel_' + t, tokenId: t, name: 'Rebel #' + t, collectionKey: 'battle_for_colony', free: true,
-  image: `/api/nft-image?c=battle_for_colony&t=${t}&s=thumb`, imageFull: `/api/nft-image?c=battle_for_colony&t=${t}&s=full`
-})));
+const freeRosterCards = async (entries) => (await Promise.all(entries.map((e) => {
+  const { col, tok } = freeEntry(e), label = col === 'battle_for_colony' ? null : FRIEND_LABELS[col];
+  if (col !== 'battle_for_colony' && !label) return null;
+  // a Chumpz / Saint card like a holder's (its tag, its Forge character), with the Free badge
+  const id = label ? `${col}_${tok}` : 'rebel_' + tok;
+  return attachActiveForgeCharacter({
+    id, rebelId: id, tokenId: tok, name: `${label || 'Rebel'} #${tok}`, collectionKey: col, free: true,
+    ...(label ? { friend: true, friendLabel: label, formLabel: label } : {}),
+    image: `/api/nft-image?c=${col}&t=${tok}&s=thumb`, imageFull: `/api/nft-image?c=${col}&t=${tok}&s=full`
+  });
+}))).filter(Boolean);
 function getRebelForgeStatus(rebel, hasForgeCharacter) {
   if (rebel.playerModel) return 'ready';
   const afc = rebel.activeForgeCharacter || {};
   if (hasForgeCharacter === undefined) hasForgeCharacter = Boolean(afc.activeGlbUrl || rebel.activeGlbUrl);
-  if (afc.forgeRigGlbUrl || afc.characterBundle?.forgeRigGlbUrl || VILLAGE_RIGGED[String(rebel.tokenId || '')]) return 'ready';
+  if (afc.forgeRigGlbUrl || afc.characterBundle?.forgeRigGlbUrl || villageRigged(rebel)) return 'ready';
   if (hasForgeCharacter || rebel.playableType === 'forge_build' || rebel.forgedBuild) return 'forged';
   return '';
 }
@@ -1191,7 +1204,7 @@ async function markForgedBuilds(list) {
 }
 function getRebelForgeThumb(rebel) {
   const afc = rebel.activeForgeCharacter || {};
-  return afc.forgeRigThumbUrl || afc.characterBundle?.forgeRigThumbUrl || VILLAGE_RIGGED[String(rebel.tokenId || '')]?.thumb || '';
+  return afc.forgeRigThumbUrl || afc.characterBundle?.forgeRigThumbUrl || villageRigged(rebel)?.thumb || '';
 }
 function sortRebelsByForgeStatus(list) {
   const rank = { ready: 0, forged: 1, '': 2 };
@@ -1222,7 +1235,7 @@ function buildCard(rebel) {
   const hasForgeCharacter = Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl);
   const status = getRebelForgeStatus(rebel, hasForgeCharacter);
   const tokenNumber = getRebelCardNumber(rebel);
-  card.title = [rebel.name, rebel.free ? 'Free to play: anyone can play this forged Rebel' : status === 'ready' ? 'Playable 3D character ready' : status === 'forged' ? (rebel.forgedBuild && !hasForgeCharacter ? '3D character forged: awaken it in the Forge and make it yours to play it' : '3D character forged') : ''].filter(Boolean).join(' · ');
+  card.title = [rebel.name, rebel.free ? `Free to play: anyone can play this forged ${rebel.friendLabel || 'Rebel'}` : status === 'ready' ? 'Playable 3D character ready' : status === 'forged' ? (rebel.forgedBuild && !hasForgeCharacter ? '3D character forged: awaken it in the Forge and make it yours to play it' : '3D character forged') : ''].filter(Boolean).join(' · ');
   if (status) card.classList.add('is-' + status);
 
   const cardLabel = `
@@ -1257,8 +1270,8 @@ async function showDefaultCard() {
   // Guest mode (and wallets without a Rebel): the Free to play roster, each card loaded fresh from the server, so a
   // new "Make this my Rebel" shows here right away. Older local copies of the same Rebel are dropped.
   const showcase = await freeRosterCards(await loadFreeRoster());
-  const showTokens = new Set(showcase.map((r) => String(r.tokenId)));
-  const savedForgePlayables = (await loadSavedForgePlayableCards()).filter((r) => !showTokens.has(String(r.tokenId || '')));
+  const showKeys = new Set(showcase.map(cardKey));
+  const savedForgePlayables = (await loadSavedForgePlayableCards()).filter((r) => !showKeys.has(cardKey(r)));
   const friends = await loadFriendPlayables();
   ownedRebels = [defaultRebel, ...friends, ...sortRebelsByForgeStatus([...showcase, ...dedupeForgePlayablesByToken(savedForgePlayables)])];
 
@@ -1324,13 +1337,12 @@ async function loadNFTs(walletAddress) {
     await markForgedBuilds(walletRebels);   // forged in the Forge but not made the holder's character yet: Forged badge
     const savedForgePlayables = await loadSavedForgePlayableCards();
     const walletIds = new Set(walletRebels.map((rebel) => rebel.id));
-    const tokKey = (rebel) => `${rebel.collectionKey || 'battle_for_colony'}:${rebel.tokenId || ''}`;   // a Chumpz #5 is not Rebel #5
-    const walletTokens = new Set(walletRebels.map(tokKey));
+    const walletTokens = new Set(walletRebels.map(cardKey));
     // Forged Rebels first (Ready, then Forged), then the rest in wallet order. Saved Forge playables for a
     // token that is already in the wallet are duplicates of that card, so they are dropped.
     ownedRebels = sortRebelsByForgeStatus([
       ...walletRebels,
-      ...dedupeForgePlayablesByToken(savedForgePlayables.filter((rebel) => !walletIds.has(rebel.id) && !walletTokens.has(tokKey(rebel))))
+      ...dedupeForgePlayablesByToken(savedForgePlayables.filter((rebel) => !walletIds.has(rebel.id) && !walletTokens.has(cardKey(rebel))))
     ]);
 
     // the friend playables sit after the wallet's ready Rebels; they are never picked by default
@@ -1339,15 +1351,15 @@ async function loadNFTs(walletAddress) {
     ownedRebels.splice(firstNotReady < 0 ? ownedRebels.length : firstNotReady, 0, ...(await loadFriendPlayables()));
     // none of the wallet's Rebels is forged yet: the Free to play roster comes after them (never picked by default)
     if (!walletReady) {
-      const held = new Set(ownedRebels.filter((rebel) => sameCollection(rebel, {})).map((rebel) => String(rebel.tokenId || '')));   // the roster is Rebels
-      ownedRebels.push(...(await freeRosterCards((await loadFreeRoster()).filter((t) => !held.has(t)))));
+      const held = new Set(ownedRebels.filter((rebel) => !rebel.playerModel).map(cardKey));   // its own Rebels, Chumpz and Saints
+      ownedRebels.push(...(await freeRosterCards((await loadFreeRoster()).filter((e) => { const p = freeEntry(e); return !held.has(`${p.col}:${p.tok}`); }))));
     }
     const forgedReadyRebel = ownedRebels.find((rebel) => {
       if (rebel.playerModel || rebel.free) return false;
       return Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl) || getRebelForgeStatus(rebel) === 'ready';
     });
     const readyCount = ownedRebels.filter((rebel) => !rebel.playerModel && !rebel.free && getRebelForgeStatus(rebel) === 'ready').length;
-    const freeCount = ownedRebels.filter((rebel) => rebel.free).length, friendCount = ownedRebels.filter((rebel) => rebel.friend).length;
+    const freeCount = ownedRebels.filter((rebel) => rebel.free).length, friendCount = ownedRebels.filter((rebel) => rebel.friend && !rebel.free).length;
     const ownCount = ownedRebels.filter((rebel) => !rebel.free && !rebel.friend && !rebel.playerModel).length;   // the wallet's Rebels
 
     // the Rebel last picked here or set in the Forge ("Make this my Rebel") comes first, if this wallet holds it
@@ -1718,7 +1730,7 @@ function enterForge() {
   }
 
   const r = ownedRebels.find((x) => x.id === selectedAnt);
-  const url = r && r.friend && r.tokenId ? `forge-v2.html?col=${encodeURIComponent(r.collectionKey)}&token=${encodeURIComponent(r.tokenId)}` : 'forge-v2.html';
+  const url = r && r.friend && !r.free && r.tokenId ? `forge-v2.html?col=${encodeURIComponent(r.collectionKey)}&token=${encodeURIComponent(r.tokenId)}` : 'forge-v2.html';   // a Free card is not the player's to forge
   setTimeout(() => {
     window.location.href = url;   // the new Forge room (the old forge.html is admin-only now)
   }, 900);

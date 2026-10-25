@@ -1014,10 +1014,14 @@ const gamesReady = () => { const g = workerInfo?.games; return !!(g && g.have >=
 const packMoves = (r) => r.gamesClips || GAMES_V1;
 const packOld = (r) => !!r.games && !!gamesMoves && gamesMoves.some((n) => !packMoves(r).includes(n));
 const packTodo = (r) => !r.games || packOld(r);
-// Oct 20 the Free to play roster (api/free-roster.mjs): forged Rebels anyone can play from the lobby; ticked in its
-// own box (Oct 24: it was inside the Rig worker box's games packs list, behind a button)
+// Oct 20 the Free to play roster (api/free-roster.mjs): forged characters anyone can play from the lobby; ticked in
+// its own box (Oct 24: it was inside the Rig worker box's games packs list, behind a button). Oct 25 Chumpz and Saints
+// too: a Rebel's entry is its number ('262'), a friend's '<collection>:<token>' ('chumpz:1270')
 let freeRoster = null, freeErr = null;   // { tokens: Set, saved, env, busy }
-const FREE_NEVER = new Set(['1', '893']);
+const FREE_COLS = [['battle_for_colony', 'Rebel', 'Rebels'], ['chumpz', 'Chumpz', 'Chumpz'], ['saints', 'Saint', 'Saints']];
+const FREE_NEVER = { '1': 'the starter: always the first card', 'chumpz:900001': 'the Chumpz Racer: its own card in the lobby' };
+const freeKey = (col, tok) => (col === 'battle_for_colony' ? String(tok) : `${col}:${tok}`);
+const freeParse = (k) => { const m = /^([a-z_]+):(\d+)$/.exec(k); return m ? { col: m[1], tok: m[2] } : { col: 'battle_for_colony', tok: k }; };
 async function loadFreeRoster() {
   try { const d = await api('/api/free-roster'); freeRoster = { tokens: new Set(d.tokens || []), saved: !!d.saved, env: d.env || null, busy: false }; }
   catch (e) { freeRoster = null; freeErr = e.message; }
@@ -1044,22 +1048,26 @@ function paintFree() {
     box.innerHTML = freeErr ? `<div class="err">${esc(freeErr)}</div><div class="row" style="margin-top:6px"><button onclick="loadGamesPacks()">Try again</button></div>` : '<div class="state">Loading...</div>';
     return;
   }
-  // every forged Rebel in play (its active Forge build), and any number on the roster without one
-  const rebels = gamesList.filter((r) => r.collectionKey === 'battle_for_colony'), listed = new Set(rebels.map((r) => r.tokenId));
-  const all = [...rebels, ...[...freeRoster.tokens].filter((t) => !listed.has(t)).map((t) => ({ tokenId: t, name: '', publicRig: false, gone: true }))]
-    .sort((a, b) => Number(a.tokenId) - Number(b.tokenId));
-  const n = freeRoster.tokens.size, live = freeRoster.env === 'prod';
+  // every forged Rebel, Chumpz and Saint in play (its active Forge build), and anything on the roster without one
+  const cols = new Map(FREE_COLS.map(([c]) => [c, []])), listed = new Set();
+  gamesList.forEach((r) => { if (cols.has(r.collectionKey)) { const k = freeKey(r.collectionKey, r.tokenId); listed.add(k); cols.get(r.collectionKey).push({ ...r, key: k }); } });
+  [...freeRoster.tokens].filter((k) => !listed.has(k)).forEach((k) => { const p = freeParse(k); if (cols.has(p.col)) cols.get(p.col).push({ collectionKey: p.col, tokenId: p.tok, key: k, name: '', publicRig: false, gone: true }); });
+  const one = Object.fromEntries(FREE_COLS.map(([c, a]) => [c, a]));
+  const counts = FREE_COLS.map(([c, a, b]) => { const k = [...freeRoster.tokens].filter((t) => freeParse(t).col === c).length; return k ? `${k} ${k === 1 ? a : b}` : ''; }).filter(Boolean);
+  const live = freeRoster.env === 'prod';
   const row = (r) => {
-    if (FREE_NEVER.has(r.tokenId)) return `<div class="state" style="opacity:.6;padding:2px 0">#${esc(r.tokenId)} · ${r.tokenId === '1' ? 'the starter: always the first card' : 'out of the lobby until it is reforged'}</div>`;
-    const on = freeRoster.tokens.has(r.tokenId), can = r.publicRig || on;
+    const label = `${one[r.collectionKey]} #${esc(r.tokenId)}`;
+    if (FREE_NEVER[r.key]) return `<div class="state" style="opacity:.6;padding:2px 0">${label} · ${FREE_NEVER[r.key]}</div>`;
+    const on = freeRoster.tokens.has(r.key), can = r.publicRig || on;
     const why = r.gone ? 'no forged character in play' : r.publicRig ? '' : 'needs a public forged character';
     const nm = r.name && !r.name.includes('#' + r.tokenId) ? ` · ${esc(r.name)}` : '';
-    return `<label class="state" style="display:flex;gap:7px;align-items:center;padding:2px 0;cursor:${can ? 'pointer' : 'default'};${can ? 'color:var(--txt)' : 'opacity:.55'}"><input type="checkbox" data-tok="${esc(r.tokenId)}" ${on ? 'checked' : ''} ${can && !freeRoster.busy ? '' : 'disabled'} onchange="toggleFree('${esc(r.tokenId)}', this.checked)"> Rebel #${esc(r.tokenId)}${nm}${why ? ` <span style="opacity:.8">(${why})</span>` : ''}</label>`;
+    return `<label class="state" style="display:flex;gap:7px;align-items:center;padding:2px 0;cursor:${can ? 'pointer' : 'default'};${can ? 'color:var(--txt)' : 'opacity:.55'}"><input type="checkbox" data-tok="${esc(r.key)}" ${on ? 'checked' : ''} ${can && !freeRoster.busy ? '' : 'disabled'} onchange="toggleFree('${esc(r.key)}', this.checked)"> ${label}${nm}${why ? ` <span style="opacity:.8">(${why})</span>` : ''}</label>`;
   };
-  box.innerHTML = `<div class="state"><b style="color:var(--gold)">${n} Rebel${n === 1 ? '' : 's'}</b> anyone can play from ${live ? '<b style="color:var(--txt)">the live lobby</b> (rebeluniverse.io)' : 'this preview\'s lobby <span class="warn">(the live lobby keeps its own list: tick it on rebeluniverse.io)</span>'}${freeRoster.saved ? '' : ' · <span class="warn">not saved yet: the lobby shows its showcase list (ticked below)</span>'}${freeRoster.busy ? ' · saving…' : ''}</div>
-    <div style="max-height:300px;overflow:auto;margin-top:6px">${all.map(row).join('') || '<div class="state">No forged Rebels in play yet.</div>'}</div>
+  const groups = FREE_COLS.map(([c, , many]) => { const rs = cols.get(c).sort((a, b) => Number(a.tokenId) - Number(b.tokenId)); return rs.length ? `<div class="state" data-free-col="${c}" style="margin-top:6px;font:700 11px Cinzel,serif;letter-spacing:1px;color:var(--gold)">${many.toUpperCase()}</div>${rs.map(row).join('')}` : ''; }).join('');
+  box.innerHTML = `<div class="state"><b style="color:var(--gold)">${counts.join(' · ') || '0 Rebels'}</b> anyone can play from ${live ? '<b style="color:var(--txt)">the live lobby</b> (rebeluniverse.io)' : 'this preview\'s lobby <span class="warn">(the live lobby keeps its own list: tick it on rebeluniverse.io)</span>'}${freeRoster.saved ? '' : ' · <span class="warn">not saved yet: the lobby shows its showcase list (ticked below)</span>'}${freeRoster.busy ? ' · saving…' : ''}</div>
+    <div style="max-height:360px;overflow:auto;margin-top:2px">${groups || '<div class="state">Nothing forged in play yet.</div>'}</div>
     <div class="row" style="margin-top:6px">${freeRoster.saved ? '<button onclick="resetFree()">Back to the showcase list</button>' : ''}<button onclick="loadGamesPacks()" ${freeRoster.busy ? 'disabled' : ''}>Refresh</button></div>
-    <div class="state" style="margin-top:4px">Each tick saves at once. A greyed Rebel needs its public character first: Forge → that Rebel → Make this my Rebel (as admin). #001 and #893 are never on it.</div>`;
+    <div class="state" style="margin-top:4px">Each tick saves at once. A greyed one needs its public character first: Forge → it → Make this my Rebel / Chumpz / Saint (as admin). #001 (the starter card) and the Chumpz Racer (its own card) are never on it.</div>`;
 }
 async function loadGamesPacks() {
   freeErr = null;

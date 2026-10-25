@@ -34,13 +34,17 @@ if [ -z "$NPC" ] && [ -n "${FORGE_FRIEND:-}" ]; then FRIEND="$FORGE_FRIEND"; exp
 # spine keeps its sculpted curve (retarget / retarget_bvh: the Rebel master's and the Mixamo actor's turns are added to
 # the Saint's own rest instead of copying their spine angles, which tipped a forward-leaning human chest 22 deg back),
 # the head carriage counts the chest's lean from its sculpted rest, and the neck takes half of the head's turn about
-# its own axis (headfix: the fight stance turned the head 44 deg at the jaw). Chumpz, Rebels and NPCs unchanged.
-if [ "$FRIEND" = human ]; then export FORGE_NO_SPINE_ALIGN=1 FORGE_HEAD_CHEST_REST=1 FORGE_NECK_TWIST_SHARE="${FORGE_NECK_TWIST_SHARE:-0.5}"; fi
+# its own axis (headfix: the fight stance turned the head 44 deg at the jaw). Rebels and NPCs unchanged (Chumpz: v2.39).
+if [ -n "$FRIEND" ]; then export FORGE_NO_SPINE_ALIGN=1 FORGE_HEAD_CHEST_REST=1 FORGE_NECK_TWIST_SHARE="${FORGE_NECK_TWIST_SHARE:-0.5}"; fi
 # v2.38 Saints players only (Miguel: "still looks hunch back a little" in the fight stance): the fight moves' guard
 # leans from the waist with a straighter upper back (humanspine, before headfix). The upper arm / shoulder "blocky" in
 # the fight moves: the sleeve takes the arm's turn over half the upper arm instead of its first third, and the shoulder
 # weights are smoothed far enough to matter on a human mesh (shoulderfix).
-if [ "$FRIEND" = human ]; then export FORGE_SLEEVE_RAMP="${FORGE_SLEEVE_RAMP:--0.08,0.55}" FORGE_SHOULDER_SMOOTH="${FORGE_SHOULDER_SMOOTH:-30}" FORGE_SHOULDER_CAP_SMOOTH="${FORGE_SHOULDER_CAP_SMOOTH:-120}"; fi
+# v2.39 Chumpz players too (Miguel on Chumpz #1270: "his stand is not straight", the head turned in the fight stance,
+# shoulders and arms "like the saints"): the same spine, head, neck and shoulder handling as the Saints; on its sculpt
+# the idle went from leaning 2.6 deg back (chest pulled back, belly out, neck jutting) to 6.4 forward (its sculpted
+# 6.8), the fight stance's head turn from 43 deg at the jaw to 21 neck + 24 head. Rebels and NPCs unchanged.
+if [ -n "$FRIEND" ]; then export FORGE_SLEEVE_RAMP="${FORGE_SLEEVE_RAMP:--0.08,0.55}" FORGE_SHOULDER_SMOOTH="${FORGE_SHOULDER_SMOOTH:-30}" FORGE_SHOULDER_CAP_SMOOTH="${FORGE_SHOULDER_CAP_SMOOTH:-120}"; fi
 SPECIES="${FORGE_NPC_SPECIES:-}"
 if [ -n "$NPC" ]; then
   MOVES="$FW/anim/clips_npc.json"
@@ -131,7 +135,7 @@ step cleanup;    run "$R/fixarm.py" -- "$O/anim6_ma.blend" "$O/anim6_fix.blend"
                  run "$R/padfix.py" -- "$O/anim6_ff0.blend" "$O/anim6_ff1.blend"
                  run "$R/smoothfix.py" -- "$O/anim6_ff1.blend" "$O/anim6_ff2.blend"
                  run "$R/layerfix.py" -- "$O/anim6_ff2.blend" "$O/anim6_ff2.blend"
-if [ "$FRIEND" = human ]; then run "$R/humanspine.py" -- "$O/anim6_ff2.blend" "$O/anim6_ff2.blend"; fi   # v2.38 Saints players: the guard leans from the waist
+if [ -n "$FRIEND" ]; then run "$R/humanspine.py" -- "$O/anim6_ff2.blend" "$O/anim6_ff2.blend"; fi   # v2.38 Saints players (v2.39 Chumpz too): the guard leans from the waist
                  run "$R/headfix.py" -- "$O/anim6_ff2.blend" "$O/anim6_ff.blend"   # v1.8 head carriage; v2.19 NPCs: yaw from the twist (no turn-round in the jump)
                  run "$R/armpitfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v1.9c no shards under the arms
                  run "$R/armorfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # re-assert after the cloth cleanups
@@ -147,7 +151,11 @@ if [ -n "$NPC" ]; then run "$R/npcarms.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.b
 elif [ -n "$FRIEND" ]; then run "$R/cufftwist.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"; fi  # v2.36 friend players' cuff bones too (after shoulderfix / antennafix)
 step export;     FORGE_NAME="$NAME" FORGE_DECIMATE="${FORGE_DECIMATE:-0.35}" FORGE_TEX_BASE=$([ -n "$NPC" ] && echo 1024 || echo 2048) FORGE_TEX_OTHER=512 run "$R/export.py" -- "$O/anim6_ff.blend" "$JOB/rig.glb"
 # v2.12 head cloth: skully-wrap flaps / bandana tails get spring chains (cloth_flap_*), on the finished GLB. Optional.
+# v2.39 not for Chumpz players: an ape's ears are thin sheets off the side of the head, so they came out as two flaps
+# swinging on springs (Chumpz #1270: 569 + 437 ear vertices fully on cloth_flap chains; Miguel: "his ears are flappy").
+if [ "$FRIEND" != ape ]; then
 step headcloth;  run "$R/headcloth.py" "$JOB/rig.glb" "$JOB/rig.glb" --report "$JOB/headcloth.json" || echo "headcloth failed (non-fatal)" >> "$JOB/log"
+fi
 if [ -z "$NPC" ]; then
 step movespack;  run "$R/exp_moves.py" -- "$O/anim6_ff.blend" "$FORGE_WEAPON_CLIPS" "$JOB/moves.glb"
 fi
