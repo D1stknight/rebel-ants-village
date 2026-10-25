@@ -1813,6 +1813,7 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
 <script>if (window.BABYLON) BABYLON.Tools.ScriptBaseUrl = window.BABYLON_BASE = new URL('assets/vendor/babylon/9.31.3/', location.href).href; // Babylon's own extra downloads (Draco, ...) come from the same copy (tools/babylon-upgrade.mjs)</script>
 <script src="assets/forge-core.js"></script>
 <script src="assets/village-hud.js"></script>
+<script src="assets/village-weather.js"></script>
 <script src="assets/village-touch.js"></script>
 <script src="assets/samurai-kit.js"></script>
 <script src="assets/walk-gen.js"></script>
@@ -13626,9 +13627,9 @@ function updateSky(){
 
 const WEATHER_MODES = {
   clear: { label:'Clear', rain:0, speed:0, fog:BABYLON.Scene.FOGMODE_NONE },
-  'light-rain': { label:'Light Rain', rain:48, speed:0.82, splashes:16, puddles:5, wet:true, wind:.22, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.004, fogColor:new BABYLON.Color3(.44,.55,.64), sun:.72, hemi:.86 },
-  'heavy-rain': { label:'Heavy Rain', rain:92, speed:1.08, splashes:30, puddles:7, wet:true, wind:.48, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.008, fogColor:new BABYLON.Color3(.28,.36,.45), sun:.48, hemi:.68 },
-  storm: { label:'Storm', rain:132, speed:1.36, splashes:42, puddles:9, wet:true, wind:.9, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.014, fogColor:new BABYLON.Color3(.09,.12,.18), sun:.16, hemi:.36, lightning:true },
+  'light-rain': { label:'Light Rain', rain:.3, speed:0.82, puddles:5, wet:true, wind:.22, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.004, fogColor:new BABYLON.Color3(.44,.55,.64), sun:.72, hemi:.86 },
+  'heavy-rain': { label:'Heavy Rain', rain:.65, speed:1.08, puddles:7, wet:true, wind:.48, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.008, fogColor:new BABYLON.Color3(.28,.36,.45), sun:.48, hemi:.68 },
+  storm: { label:'Storm', rain:1, speed:1.36, puddles:9, wet:true, wind:.9, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.014, fogColor:new BABYLON.Color3(.09,.12,.18), sun:.16, hemi:.36, lightning:true },
   fog: { label:'Fog', rain:0, speed:0, wind:.12, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.025, fogColor:new BABYLON.Color3(.5,.58,.62), sun:.58, hemi:.76 },
   heat: { label:'Heat Haze / Hot Day', rain:0, speed:0, wind:.1, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.004, fogColor:new BABYLON.Color3(.9,.66,.38), sun:1.2, hemi:1.02, warm:true },
   cold: { label:'Cold / Frosty Mood', rain:0, speed:0, wind:.18, frost:12, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.01, fogColor:new BABYLON.Color3(.62,.76,.86), sun:.78, hemi:.9, cold:true },
@@ -13730,17 +13731,13 @@ const WeatherManager = {
   transitionFrom: 'clear',
   transitionStartedAt: performance.now(),
   transitionMs: 8000,
-  rainMeshes: [],
   snowMeshes: [],
-  splashMeshes: [],
   puddleMeshes: [],
   frostMeshes: [],
   lightningUntil: 0,
   thunderCueUntil: 0,
   nextLightningAt: performance.now() + 9000,
-  rainMat: null,
   snowMat: null,
-  splashMat: null,
   puddleMat: null,
   frostMat: null,
   distantLightningRoot: null,
@@ -13867,7 +13864,7 @@ function getWeatherVisualConfig() {
   const from = WEATHER_MODES[WeatherManager.transitionFrom] || target;
   const t = getWeatherTransitionProgress();
   const cfg = { ...target };
-  ['rain','snow','splashes','puddles','frost','sun','hemi','fogDensity','wind'].forEach(key => {
+  ['rain','snow','puddles','frost','sun','hemi','fogDensity','wind'].forEach(key => {
     if (from[key] !== undefined || target[key] !== undefined) cfg[key] = lerpWeatherNumber(from[key], target[key], t);
   });
   cfg.speed = t < 1 ? (target.speed || from.speed || 0) : (target.speed || 0);
@@ -14271,7 +14268,7 @@ function footstepWeatherSurface(base) {
 function getFootstepSurfaceType() { return footstepWeatherSurface(footstepBaseSurface()); }
 // rain wets the ground and it dries again; snow lies and melts (WeatherManager.wetness / snowCover, 0..1)
 function updateGroundWeather(dt) {
-  const cfg = getWeatherVisualConfig(), W = WeatherManager, rain = Math.min(1, (cfg.rain || 0) / 90), snow = Math.min(1, (cfg.snow || 0) / 80);
+  const cfg = getWeatherVisualConfig(), W = WeatherManager, rain = Math.min(1, cfg.rain || 0), snow = Math.min(1, (cfg.snow || 0) / 80);
   W.wetness = rain > .05 ? Math.min(1, (W.wetness || 0) + dt * rain / 20) : Math.max(0, (W.wetness || 0) - dt / 180);
   W.snowCover = snow > .05 ? Math.min(1, (W.snowCover || 0) + dt * snow / 60) : Math.max(0, (W.snowCover || 0) - dt / (W.mode === 'cold' ? 900 : 240));
 }
@@ -14631,40 +14628,6 @@ function updateDistantLightning() {
   root.setEnabled(on && now < WeatherManager.distantLightningUntil);
 }
 
-function ensureWeatherRainPool(count) {
-  if (!WeatherManager.rainMat) {
-    WeatherManager.rainMat = new BABYLON.StandardMaterial('weatherRainMat', scene);
-    WeatherManager.rainMat.diffuseColor = new BABYLON.Color3(.58,.88,1);
-    WeatherManager.rainMat.emissiveColor = new BABYLON.Color3(.32,.72,1);
-    WeatherManager.rainMat.alpha = .42;
-    WeatherManager.rainMat.disableLighting = true;
-    WeatherManager.rainMat.backFaceCulling = false;
-  }
-
-  while (WeatherManager.rainMeshes.length < count) {
-    const drop = BABYLON.MeshBuilder.CreateBox('weatherRainDrop_' + WeatherManager.rainMeshes.length, { width:.018, height:2.8, depth:.018 }, scene);
-    drop.material = WeatherManager.rainMat;
-    drop.isPickable = false;
-    drop.checkCollisions = false;
-    drop.receiveShadows = false;
-    drop.rotation.z = .22;
-    drop.setEnabled(false);
-    WeatherManager.rainMeshes.push(drop);
-  }
-
-  WeatherManager.rainMeshes.forEach((drop, index) => drop.setEnabled(index < count));
-}
-
-function resetWeatherRainDrop(drop, center) {
-  const angle = Math.random() * Math.PI * 2;
-  const radius = Math.sqrt(Math.random()) * 42;
-  drop.position.set(
-    center.x + Math.cos(angle) * radius,
-    center.y + 13 + Math.random() * 18,
-    center.z + Math.sin(angle) * radius
-  );
-}
-
 function getWeatherGroundY(x, z) {
   if (typeof getVillageGroundHeightAt === 'function') {
     const y = getVillageGroundHeightAt(x, z);
@@ -14768,32 +14731,10 @@ function updateWeatherSnow() {
 
 function updateWeatherGroundEffects() {
   const cfg = getWeatherVisualConfig();
-  cfg.splashes = Math.round(cfg.splashes || 0);
   cfg.puddles = Math.round(cfg.puddles || 0);
   cfg.frost = Math.round(cfg.frost || 0);
   const center = getWeatherCenter();
   const now = performance.now() * .001;
-
-  ensureWeatherRingPool('splashMeshes', 'splash', new BABYLON.Color3(.62,.9,1), new BABYLON.Color3(.32,.72,1), .58, cfg.splashes || 0, i => {
-    const ring = BABYLON.MeshBuilder.CreateTorus('weatherSplash_' + i, { diameter:.55, thickness:.016, tessellation:20 }, scene);
-    ring.rotation.x = Math.PI / 2;
-    ring.metadata = { phase: Math.random() * 10 };
-    return ring;
-  });
-
-  WeatherManager.splashMeshes.forEach((splash, index) => {
-    if (index >= (cfg.splashes || 0)) return;
-    if (!splash.metadata._placed || now + splash.metadata.phase > (splash.metadata.nextReset || 0)) {
-      placeWeatherGroundMesh(splash, center, 32);
-      splash.metadata._placed = true;
-      splash.metadata.nextReset = now + .65 + Math.random() * .9;
-      splash.metadata.phase = Math.random() * 10;
-    }
-    const life = 1 - Math.max(0, (splash.metadata.nextReset - now) / 1.55);
-    const scale = .45 + life * 1.55;
-    splash.scaling.set(scale, scale, scale);
-    if (splash.material) splash.material.alpha = .5 * (1 - life);
-  });
 
   ensureWeatherRingPool('puddleMeshes', 'puddle', new BABYLON.Color3(.06,.15,.2), new BABYLON.Color3(.08,.22,.28), .42, cfg.puddles || 0, i => {
     const puddle = BABYLON.MeshBuilder.CreateCylinder('weatherPuddle_' + i, { diameter:2.0, height:.05, tessellation:32 }, scene);
@@ -14833,29 +14774,17 @@ function updateWeatherGroundEffects() {
   });
 }
 
+// the rain (assets/village-weather.js: streaks and splashes drawn on the GPU, stopped by roofs)
 function updateWeatherRain() {
-  const cfg = getWeatherVisualConfig();
-  cfg.rain = Math.round(cfg.rain || 0);
-  ensureWeatherRainPool(cfg.rain);
-  if (!cfg.rain) return;
-
-  const center = getWeatherCenter();
-  const dt = Math.min(48, scene.getEngine().getDeltaTime()) / 16.67;
-  WeatherManager.rainMeshes.forEach((drop, index) => {
-    if (index >= cfg.rain) return;
-    if (
-      (drop.position.x === 0 && drop.position.y === 0 && drop.position.z === 0) ||
-      drop.position.y < center.y - 2 ||
-      Math.abs(drop.position.x - center.x) > 48 ||
-      Math.abs(drop.position.z - center.z) > 48
-    ) {
-      resetWeatherRainDrop(drop, center);
-      return;
-    }
-    drop.position.x -= .22 * cfg.speed * dt;
-    drop.position.y -= .95 * cfg.speed * dt;
-    drop.position.z += .08 * cfg.speed * dt;
-  });
+  const W = window.VillageWeather; if (!W) return;
+  if (!W._inited) { W.init(scene, { lite: LITE_GRAPHICS }); W._inited = true; }
+  const cfg = getWeatherVisualConfig(), now = performance.now();
+  const dt = Math.min(.1, (now - (WeatherManager._rainAt || now)) / 1000); WeatherManager._rainAt = now;
+  const L = hemi.diffuse.scale(hemi.intensity * .75).add(sun.diffuse.scale(sun.intensity * .3));
+  const light = new BABYLON.Color3(Math.max(.13, Math.min(1, L.r)), Math.max(.14, Math.min(1, L.g)), Math.max(.17, Math.min(1, L.b)));
+  W.update({ cam: scene.activeCamera, focus: walkMode && charMesh ? charMesh.position : null, dt, rain: cfg.rain || 0, fall: (cfg.speed || 1) * 7.2,
+    wind: (cfg.wind || 0) * 6.5, fogDensity: scene.fogMode === BABYLON.Scene.FOGMODE_EXP2 ? scene.fogDensity : 0, light,
+    flash: WeatherManager._flashOn ? 1 : 0, ring: .35 + .4 * (WeatherManager.wetness || 0), rooms: !!ActiveInterior });
 }
 
 function applyWeatherLighting() {
@@ -14865,6 +14794,7 @@ function applyWeatherLighting() {
   const flashK = cfg.lightning || boltFlash ? 1 : .6; // heat lightning under the Thunder Moon is softer than a storm's
   const flash = document.getElementById('weatherLightningFlash');
   if (flash) flash.style.opacity = lightningActive ? (.78 * flashK).toFixed(2) : '0';
+  WeatherManager._flashOn = lightningActive;
   const heat = document.getElementById('weatherHeatHaze');
   if (heat) heat.style.opacity = cfg.warm ? '.22' : '0';
   if (cfg.fog === BABYLON.Scene.FOGMODE_NONE && window._newTerrain) {
@@ -14988,13 +14918,12 @@ function setWeatherCycleSpeed(speed) {
 function updateWeatherManager() {
   if (ActiveInterior) {
     [
-      ...(WeatherManager.rainMeshes || []),
       ...(WeatherManager.snowMeshes || []),
-      ...(WeatherManager.splashMeshes || []),
       ...(WeatherManager.puddleMeshes || []),
       ...(WeatherManager.frostMeshes || [])
     ].forEach(mesh => mesh?.setEnabled?.(false));
     WeatherManager.distantLightningRoot?.setEnabled?.(false);
+    window.VillageWeather?.hide?.();
     setInteriorWeatherOverlaysVisible(false);
     updateWeatherAudio();
     updateVillageMusic();
@@ -30681,9 +30610,8 @@ function getActiveAudioSourceCount() {
 }
 
 function getWeatherFxCount() {
-  return (WeatherManager.rainMeshes?.filter(m => m.isEnabled()).length || 0) +
+  return (window.VillageWeather?.count?.() || 0) +
     (WeatherManager.snowMeshes?.filter(m => m.isEnabled()).length || 0) +
-    (WeatherManager.splashMeshes?.filter(m => m.isEnabled()).length || 0) +
     (WeatherManager.puddleMeshes?.filter(m => m.isEnabled()).length || 0) +
     (WeatherManager.frostMeshes?.filter(m => m.isEnabled()).length || 0);
 }
