@@ -2,8 +2,9 @@
 // and holders whose own Rebels are not forged yet), with real Rebel Points when signed in. The NPC Forge's Free to play
 // box ticks them.
 //   GET                      -> { ok, tokens: ['262', 'chumpz:1270', ...], saved, updatedAt, env }   (public; saved false = the default)
-//   POST { tokens: [...] }   -> save the roster (admin). Each one needs a public forged character with a rig (the
-//                               forge:active-character:v1:local_testing_wallet:<collection>:<token> record guests load)
+//   POST { tokens: [...] }   -> save the roster (admin). Each one it adds needs a public forged character with a rig
+//                               (the forge:active-character:v1:local_testing_wallet:<collection>:<token> record guests
+//                               load); ones already on it stay while they wait for theirs (answered as waiting)
 //   POST { reset: true }     -> back to the default (admin)
 // An entry is a Rebel's number ('262') or, since Oct 25, a Chumpz / Saint as '<collection>:<token>' ('chumpz:1270',
 // 'saints:1998'). Never #001 (the starter, always the first card; #893 joined Oct 24 with its Sept 27 rig) nor the
@@ -65,12 +66,19 @@ export default async function handler(req, res) {
     const entries = tokens.map(parseEntry);
     const never = entries.filter((p) => NEVER.has(p.key));
     if (never.length) return res.status(400).json({ ok: false, error: `${never.map(label).join(', ')} can't be on the roster (#001 is the starter, the Chumpz Racer has its own card)` });
+    // Oct 25 (Miguel ticked Chumpz #1270: "No public forged character with a rig for #893"): a tick saves the whole
+    // list, so only what it adds needs its public character; entries already on the roster (the saved list, or the
+    // showcase while none is saved) stay and wait for theirs
+    const [cur] = await redis([['GET', KEY]]);
+    let was = null; try { was = cur?.result ? JSON.parse(cur.result) : null; } catch (e) {}
+    const onRoster = new Set(Array.isArray(was?.tokens) ? was.tokens : DEFAULT_TOKENS);
     const rigs = await publicRigs(entries);
-    const missing = entries.filter((p) => !rigs.has(p.key));
+    const missing = entries.filter((p) => !rigs.has(p.key) && !onRoster.has(p.key));
     if (missing.length) return res.status(400).json({ ok: false, code: 'no_public_rig', missing: missing.map((p) => p.key), error: `No public forged character with a rig for ${missing.map(label).join(', ')}: make one in the Forge as admin first ("Make this my Rebel / Chumpz / Saint")` });
+    const waiting = entries.filter((p) => !rigs.has(p.key)).map((p) => p.key);
     const out = { tokens, updatedAt: new Date().toISOString() };
     await redis([['SET', KEY, JSON.stringify(out)]]);
-    return res.status(200).json({ ok: true, ...out, saved: true, env: ENV });
+    return res.status(200).json({ ok: true, ...out, saved: true, env: ENV, ...(waiting.length ? { waiting } : {}) });
   } catch (e) {
     return res.status(500).json({ ok: false, error: e?.message || 'Roster failed' });
   }
