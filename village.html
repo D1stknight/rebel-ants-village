@@ -586,7 +586,7 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
 .journal-progress{height:7px;background:rgba(255,255,255,.08);border:1px solid rgba(94,207,202,.18);border-radius:999px;overflow:hidden;margin-top:6px}
 .journal-progress div{height:100%;background:linear-gradient(90deg,#5ecfca,#e8c56a)}
 .badge-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:7px}
-.badge-chip{display:grid;grid-template-columns:44px 1fr;gap:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.035);border-radius:6px;padding:8px;min-height:64px}
+.badge-chip{display:grid;grid-template-columns:64px 1fr;gap:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.035);border-radius:6px;padding:8px;min-height:64px}
 .badge-chip.unlocked{border-color:rgba(232,197,106,.55);box-shadow:0 0 18px rgba(232,197,106,.08)}
 .badge-chip.locked{opacity:.58;filter:saturate(.35)}
 .badge-chip.current{border-color:rgba(94,207,202,.72);box-shadow:0 0 20px rgba(94,207,202,.16)}
@@ -595,9 +595,10 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
 .badge-chip.rarity-epic{border-color:rgba(178,93,255,.42)}
 .badge-chip.rarity-legendary{border-color:rgba(232,197,106,.62);box-shadow:0 0 20px rgba(232,197,106,.09)}
 .badge-chip.rarity-mythic{border-color:rgba(255,92,158,.7);box-shadow:0 0 24px rgba(255,92,158,.12)}
-.badge-icon{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(232,197,106,.38);background:radial-gradient(circle,rgba(232,197,106,.22),rgba(94,207,202,.08));color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:16px;overflow:hidden}
-.badge-icon img{width:100%;height:100%;object-fit:cover}
-.badge-chip.locked .badge-icon{background:rgba(255,255,255,.05);color:rgba(255,255,255,.32);border-color:rgba(255,255,255,.16)}
+.badge-icon{width:64px;height:64px;display:grid;place-items:center;color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:16px}
+.badge-icon.glyph{width:42px;height:42px;margin:11px;border-radius:50%;border:1px solid rgba(232,197,106,.38);background:radial-gradient(circle,rgba(232,197,106,.22),rgba(94,207,202,.08));overflow:hidden}
+.badge-icon img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.55))}
+.badge-chip.locked .badge-icon.glyph{background:rgba(255,255,255,.05);color:rgba(255,255,255,.32);border-color:rgba(255,255,255,.16)}
 .badge-chip b{display:block;color:#e8c56a;font-size:10px;letter-spacing:1px;margin-bottom:3px}
 .badge-chip small{display:block;color:#5ecfca;font-size:8px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px}
 .badge-chip em{display:block;color:rgba(255,255,255,.68);font-size:10px;line-height:1.3;font-style:normal}
@@ -643,6 +644,14 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
 #badgeUnlockPopup .badge-kicker{font-family:'Cinzel Decorative',serif;color:#5ecfca;font-size:10px;letter-spacing:3px;text-transform:uppercase;margin-bottom:7px}
 #badgeUnlockIcon{width:74px;height:74px;margin:0 auto 10px;border-radius:50%;display:grid;place-items:center;overflow:hidden;border:1px solid rgba(232,197,106,.62);background:radial-gradient(circle,rgba(232,197,106,.28),rgba(94,207,202,.08));box-shadow:0 0 28px rgba(232,197,106,.18);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:22px}
 #badgeUnlockIcon img{width:100%;height:100%;object-fit:cover}
+/* the badge's own medal (badge-art.js): bigger, uncropped, a shine sweeping over it */
+#badgeUnlockIcon.art{width:148px;height:148px;margin:0 auto 4px;border:0;border-radius:0;background:none;box-shadow:none;overflow:visible;position:relative}
+#badgeUnlockIcon.art img{object-fit:contain;filter:drop-shadow(0 0 16px rgba(232,197,106,.3)) drop-shadow(0 4px 6px rgba(0,0,0,.6))}
+#badgeUnlockPopup.on #badgeUnlockIcon.art img{animation:badgeArtIn .7s cubic-bezier(.2,1.5,.4,1) both}
+#badgeUnlockIcon.art::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;background:linear-gradient(110deg,transparent 42%,rgba(255,255,255,.75) 50%,transparent 58%) 0 0/300% 100% no-repeat;-webkit-mask:var(--badge-art) center/contain no-repeat;mask:var(--badge-art) center/contain no-repeat}
+#badgeUnlockPopup.on #badgeUnlockIcon.art::after{animation:badgeShine 1.5s .5s ease-in-out 2}
+@keyframes badgeArtIn{0%{transform:scale(.4) rotate(-12deg);opacity:0}100%{transform:none;opacity:1}}
+@keyframes badgeShine{0%{opacity:1;background-position:100% 0}100%{opacity:1;background-position:0 0}}
 #badgeUnlockPopup .badge-name{font-family:'Cinzel Decorative',serif;color:#e8c56a;font-size:20px;letter-spacing:2px;text-shadow:0 0 14px rgba(232,197,106,.35);animation:badgePulse 1.2s ease-in-out infinite alternate}
 #badgeUnlockPopup .badge-category{color:rgba(255,255,255,.72);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-top:6px}
 #badgeUnlockPopup .badge-desc{color:rgba(255,255,255,.78);font-size:12px;line-height:1.45;margin-top:10px}
@@ -1809,6 +1818,7 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
 <script src="assets/forge-core.js"></script>
 <script src="assets/village-hud.js"></script>
 <script src="assets/village-weather.js"></script>
+<script src="assets/badge-art.js"></script>
 <script src="assets/village-touch.js"></script>
 <script src="assets/samurai-kit.js"></script>
 <script src="assets/walk-gen.js"></script>
@@ -4602,36 +4612,24 @@ function checkAutoBadges(silent = false) {
   } finally { _autoBadgeCheck = false; }
 }
 
-// Badge art: uploaded art (admin) when there is some, else a medallion drawn here: a ring in the rarity's
-// colour, a dark lacquer face and the faction emblem (village badges) or the category's mark.
-const BADGE_ART_RING = { Common:'#8fb8b2', Uncommon:'#79c27a', Rare:'#5e9fe6', Epic:'#ad7ae8', Legendary:'#e8c56a', Mythic:'#e8605a' };
-const BADGE_ART_MARK = { explorer:'✧', story:'❖', ronin:'✋', samurai:'⚔', arcade:'◆', community:'❂', builder:'⚒', villages:'⛩', secrets:'✶', collector:'◎' };
+// Badge art: uploaded art (admin) when there is some, else the badge's medal drawn by assets/badge-art.js
+// (BadgeArtKit: the shape says what kind of badge, the metal and stars how rare, the colours and emblem which village or
+// path, the icon the badge itself). tools/gen-badge-art.mjs writes the same pictures to assets/badges/medals/ for RAAP.
+// mystery = a hidden badge not found yet (a dark medal with a question mark: no spoilers).
 const BadgeArt = { cache:new Map(), emblems:{} };
-function getBadgeArtDataUrl(badge) {
-  if (!badge) return '';
-  const key = badge.badgeId + (badge.emblem && BadgeArt.emblems[badge.emblem]?.complete ? ':e' : '');
+// drawn again once the emblem picture or the font (the numbers) has loaded
+function badgeArtKey(badge, size, mystery) {
+  const fonts = document.fonts?.check ? document.fonts.check("900 20px 'Cinzel Decorative'") : true;
+  return `${badge.badgeId}:${size}:${mystery ? 'm' : ''}${badge.emblem && BadgeArt.emblems[badge.emblem]?.complete ? 'e' : ''}${fonts ? 'f' : ''}`;
+}
+function getBadgeArtDataUrl(badge, size = 160, mystery = false) {
+  if (!badge || !window.BadgeArtKit) return '';
+  const key = badgeArtKey(badge, size, mystery);
   if (BadgeArt.cache.has(key)) return BadgeArt.cache.get(key);
-  const S = 128, c = document.createElement('canvas'); c.width = c.height = S;
-  const g = c.getContext('2d'), ring = BADGE_ART_RING[badge.rarity] || BADGE_ART_RING.Common;
-  const face = g.createRadialGradient(S * .42, S * .36, 6, S / 2, S / 2, S / 2);
-  face.addColorStop(0, '#2a2f3a'); face.addColorStop(1, '#0b0d12');
-  g.beginPath(); g.arc(S / 2, S / 2, S / 2 - 3, 0, Math.PI * 2); g.fillStyle = ring; g.fill();
-  g.beginPath(); g.arc(S / 2, S / 2, S / 2 - 11, 0, Math.PI * 2); g.fillStyle = face; g.fill();
-  g.beginPath(); g.arc(S / 2, S / 2, S / 2 - 16, 0, Math.PI * 2); g.strokeStyle = ring; g.globalAlpha = .45; g.lineWidth = 1.5; g.stroke(); g.globalAlpha = 1;
-  for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; g.beginPath(); g.arc(S / 2 + Math.cos(a) * (S / 2 - 7), S / 2 + Math.sin(a) * (S / 2 - 7), 1.6, 0, Math.PI * 2); g.fillStyle = '#0b0d12'; g.fill(); }
-  const img = badge.emblem && BadgeArt.emblems[badge.emblem];
-  if (img?.complete && img.naturalWidth) {
-    // the white emblem mask, tinted with the ring colour
-    const t = document.createElement('canvas'); t.width = t.height = 80; const tg = t.getContext('2d');
-    const k = Math.min(80 / img.naturalWidth, 80 / img.naturalHeight);
-    tg.drawImage(img, (80 - img.naturalWidth * k) / 2, (80 - img.naturalHeight * k) / 2, img.naturalWidth * k, img.naturalHeight * k);
-    tg.globalCompositeOperation = 'source-in'; tg.fillStyle = ring; tg.fillRect(0, 0, 80, 80);
-    g.drawImage(t, 24, 24);
-  } else {
-    g.fillStyle = ring; g.font = '52px Georgia, serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillText(BADGE_ART_MARK[badge.category] || '✦', S / 2, S / 2 + 3);
-  }
-  const url = c.toDataURL('image/png');
+  const [c, g] = BadgeArtKit.canvas2d(size);
+  try { BadgeArtKit.draw(g, badge, size, { mystery, assets: { emblems: BadgeArt.emblems } }); }
+  catch (e) { console.warn('badge art', badge.badgeId, e); return ''; }
+  const url = c.toDataURL('image/png'); // PNG: ~1 ms a badge (WebP took 10x longer to encode)
   BadgeArt.cache.set(key, url);
   return url;
 }
@@ -4681,10 +4679,31 @@ function getBadgeDefinitions(options = {}) {
     }));
   return [...mergedDefaults, ...customBadges].filter(badge => includeArchived || !badge.archived);
 }
-function getBadgeImageSource(badge) {
+function getUploadedBadgeImage(badge) {
+  return badge ? badge.localImageDataUrl || BadgeConfig?.[badge.badgeId]?.imageUrl || (badge.custom ? badge.imageUrl : '') : '';
+}
+function getBadgeImageSource(badge, size) {
   if (!badge) return '';
-  const uploaded = badge.localImageDataUrl || BadgeConfig?.[badge.badgeId]?.imageUrl || (badge.custom ? badge.imageUrl : '');
-  return uploaded || getBadgeArtDataUrl(badge);
+  return getUploadedBadgeImage(badge) || getBadgeArtDataUrl(badge, size);
+}
+// the journal's badges are drawn a few at a time once it is open (each one is a canvas drawing; open sections first)
+const BADGE_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+function fillBadgeArt(scope) {
+  const imgs = [...scope.querySelectorAll('img[data-art]:not([data-done])')].sort((a, b) => (b.closest('details')?.open ? 1 : 0) - (a.closest('details')?.open ? 1 : 0));
+  let i = 0;
+  const ch = new MessageChannel(); // yields to the page between slices without setTimeout's delays (the village keeps many timers)
+  const step = () => {
+    const t0 = performance.now();
+    while (i < imgs.length && performance.now() - t0 < 12) {
+      const im = imgs[i++]; if (!im.isConnected || im.dataset.done) continue;
+      im.dataset.done = '1';
+      const url = getBadgeArtDataUrl(getBadgeDefinitionById(im.dataset.art), 160, im.dataset.m === '1');
+      if (url) im.src = url;
+    }
+    if (i < imgs.length) ch.port2.postMessage(0); else ch.port1.close();
+  };
+  ch.port1.onmessage = step;
+  step();
 }
 function getBadgeDefinitionByName(name, options = {}) {
   return getBadgeDefinitions(options).find(badge => badge.name === name) || null;
@@ -4980,8 +4999,10 @@ function processBadgeUnlockQueue() {
   if (categoryEl) categoryEl.textContent = `${meta.categoryLabel} / ${meta.rarity}`;
   if (descEl) descEl.textContent = meta.requirement ? `${meta.requirement}. ${meta.description}` : meta.description;
   if (iconEl) {
-    const image = getBadgeImageSource(getBadgeDefinitionByName(name)) || meta.localImageDataUrl || meta.imageUrl;
+    const image = getBadgeImageSource(getBadgeDefinitionByName(name), 320) || meta.localImageDataUrl || meta.imageUrl;
     iconEl.innerHTML = image ? `<img src="${escapeHTML(viaSite(image))}" alt="">` : '★';
+    iconEl.classList.toggle('art', !!image);
+    iconEl.style.setProperty('--badge-art', image ? `url("${viaSite(image)}")` : 'none');
   }
   badgePopupActive = true;
   popup.classList.add('on');
@@ -5114,11 +5135,16 @@ function isBadgeUnlocked(badge) {
 }
 
 function renderBadgeIcon(badge, unlocked) {
-  const imageSrc = getBadgeImageSource(badge);
+  const mystery = !!badge.hidden && !isBadgeUnlocked(badge), uploaded = mystery ? '' : getUploadedBadgeImage(badge);
+  if (!uploaded && window.BadgeArtKit) { // the medal, drawn by fillBadgeArt (at once when it is drawn already)
+    const ready = BadgeArt.cache.get(badgeArtKey(badge, 160, mystery));
+    return `<div class="badge-icon"><img src="${ready || BADGE_PIXEL}" data-art="${escapeHTML(badge.badgeId)}" data-m="${mystery ? 1 : 0}"${ready ? ' data-done="1"' : ''} alt="${escapeHTML(mystery ? 'Unknown Badge' : badge.name)}"></div>`;
+  }
+  const imageSrc = uploaded;
   if (imageSrc) {
     return `<div class="badge-icon"><img src="${escapeHTML(viaSite(imageSrc))}" alt="${escapeHTML(badge.name)}" onerror="this.style.display='none';this.parentElement.textContent='${unlocked ? '✦' : '?'}'"></div>`;
   }
-  return `<div class="badge-icon">${unlocked ? '✦' : '?'}</div>`;
+  return `<div class="badge-icon glyph">${unlocked ? '✦' : '?'}</div>`;
 }
 
 function renderBadgeCard(badge) {
@@ -5145,7 +5171,7 @@ function renderBadgeGallery() {
     const badges = definitions.filter(badge => badge.category === category);
     if (!badges.length) return '';
     const open = category === 'explorer' ? ' open' : '';
-    return `<details class="journal-card full"${open}><summary><strong>${PROGRESSION_BADGE_CATEGORIES[category]} Badges</strong></summary><div class="badge-gallery">${badges.map(renderBadgeCard).join('')}</div></details>`;
+    return `<details class="journal-card full"${open} ontoggle="if(this.open)fillBadgeArt(this)"><summary><strong>${PROGRESSION_BADGE_CATEGORIES[category]} Badges</strong></summary><div class="badge-gallery">${badges.map(renderBadgeCard).join('')}</div></details>`;
   }).join('');
 }
 
@@ -5202,6 +5228,7 @@ function renderProgressionJournal() {
     : `${info.nextBadge} - ${info.progressCurrent} / ${info.progressRequired} progress`;
   if (activeJournalTab === 'badges') {
     grid.innerHTML = renderBadgeGallery();
+    fillBadgeArt(grid);
     return;
   }
   if (activeJournalTab === 'collections') {
@@ -37776,6 +37803,8 @@ window.clearTestCollectibles = clearTestCollectibles;
 window.openProgressionJournal = openProgressionJournal;
 window.closeProgressionJournal = closeProgressionJournal;
 window.setProgressionJournalTab = setProgressionJournalTab;
+window.showBadgeUnlockPopup = showBadgeUnlockPopup; // tests (the badge card)
+window.fillBadgeArt = fillBadgeArt; // the journal's sections (ontoggle)
 window.closeBadgeUnlockPopup = closeBadgeUnlockPopup;
 window.resetLocalProgression = resetLocalProgression;
 window.renderBadgeBuilderList = renderBadgeBuilderList;
