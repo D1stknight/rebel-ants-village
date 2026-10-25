@@ -10413,8 +10413,8 @@ function updateInteractionPrompt() {
   }
 
   if (ActiveInterior && (getNearestInteriorHotspotInRange() || getNearestInteriorVideoScreenInRange())) {
-    const g = getNearestInteriorHotspotInRange()?.metadata?.game;
-    setInteractionPrompt(g ? `Press O to play ${g.title || 'the game'}` : 'Press O to Interact', true);
+    const hm = getNearestInteriorHotspotInRange()?.metadata, g = hm?.game;
+    setInteractionPrompt(g ? `Press O to play ${g.title || 'the game'}` : (hm?.prompt || 'Press O to Interact'), true);
     return;
   }
 
@@ -31744,7 +31744,17 @@ function getInteriorTypeLabel(type) {
   return getInteriorDefinition(normalizeInteriorType(type)).title;
 }
 
+// a door's own name (its interiorDefinition title in the layout: "Antthony's Comedy Club", "The Tiki Lounge"), else the
+// room type's ("Chz Tiki Lounge" from chz_tiki_lounge)
+function getInteriorEntranceTitle(entrance, type) {
+  const own = String(entrance?.metadata?.interiorDefinition?.title || '').trim();
+  return own ? own[0].toUpperCase() + own.slice(1) : getInteriorTypeLabel(type || entrance?.metadata?.interiorType);
+}
+
 function getInteriorEntrancePromptText(entranceOrType) {
+  // a door in the world says its own prompt (Admin > Doors > Prompt, saved with it)
+  const own = typeof entranceOrType === 'object' ? String(entranceOrType?.metadata?.promptText || '').trim() : '';
+  if (own) return own;
   const type = typeof entranceOrType === 'string'
     ? normalizeInteriorType(entranceOrType)
     : normalizeInteriorType(entranceOrType?.metadata?.interiorType);
@@ -33659,6 +33669,8 @@ function serializeInteriorHotspot(hotspot) {
     ...(meta.secretId ? { secretId: meta.secretId } : {}),
     ...(meta.requires ? { requires: meta.requires } : {}),
     ...(meta.sound ? { sound: meta.sound } : {}),
+    ...(meta.prompt ? { prompt: meta.prompt } : {}),
+    ...(meta.kicker ? { kicker: meta.kicker } : {}),
     ...(meta.game ? { game: meta.game } : {}),
     ...serializeNodeTransform(hotspot)
   };
@@ -34369,6 +34381,8 @@ function createInteriorHotspot(parent, config = {}) {
     secretId: config.secretId || '', // a secret inside a room (found on the first O)
     requires: config.requires || null, // { time, weather, hint } like quest spots
     sound: config.sound || '', // a quest sound when it is used (MoonTaleSounds: the dice rattling on the casino felt)
+    prompt: config.prompt || '', // its own prompt ("Press O to Grab the Mic"), else "Press O to Interact"
+    kicker: config.kicker || '', // the small heading on its card, else "Interior Link"
     game: normalizeMiniGameDef(config.game, hotspotId), // a mini-game played here (MiniGames)
     questObjectiveType:'interactInteriorHotspot'
   };
@@ -34429,7 +34443,7 @@ function interactInteriorHotspot(hotspot) {
   if (meta.actionType === 'futureQuest') {
     window.dispatchEvent(new CustomEvent('rebelAntsInteriorFutureQuest', { detail:{ hotspotId:meta.hotspotId, interiorId:meta.interiorId, name:meta.linkName } }));
   }
-  openInteriorInfoPanel(meta.linkName || 'Interior Link', meta.description || meta.url || 'Future Rebel Ants interaction.', 'Interior Link', {
+  openInteriorInfoPanel(meta.linkName || 'Interior Link', meta.description || meta.url || 'Future Rebel Ants interaction.', meta.kicker || 'Interior Link', {
     linkUrl: meta.url || '',
     linkLabel: meta.url ? 'Open Link' : ''
   });
@@ -35936,7 +35950,7 @@ function enterInterior(entrance, options = {}) {
       }
       if (!walkMode && !adminMode) toggleWalk(); // the walk camera and Enter Village's state too, not only the flag
       walkMode = true;
-      setInteriorTitle(getInteriorTypeLabel(type), entrance.metadata.targetInteriorId || 'Interior');
+      setInteriorTitle(getInteriorEntranceTitle(entrance, type), entrance.metadata.targetInteriorId || 'Interior');
       recordInteriorQuestHook(entrance, 'enterInterior');
       updateWeatherAudio();
       updateVillageMusic();
