@@ -151,7 +151,11 @@ if [ -n "$NPC" ]; then run "$R/npcarms.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.b
 elif [ -n "$FRIEND" ]; then run "$R/cufftwist.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"; fi  # v2.36 friend players' cuff bones too (after shoulderfix / antennafix)
 step export;     FORGE_NAME="$NAME" FORGE_DECIMATE="${FORGE_DECIMATE:-0.35}" FORGE_TEX_BASE=$([ -n "$NPC" ] && echo 1024 || echo 2048) FORGE_TEX_OTHER=512 run "$R/export.py" -- "$O/anim6_ff.blend" "$JOB/rig.glb"
 # v2.12 head cloth: skully-wrap flaps / bandana tails get spring chains (cloth_flap_*), on the finished GLB. Optional.
+# v2.39 not for Chumpz players: an ape's ears are thin sheets off the side of the head, so they came out as two flaps
+# swinging on springs (Chumpz #1270: 569 + 437 ear vertices fully on cloth_flap chains; Miguel: "his ears are flappy").
+if [ "$FRIEND" != ape ]; then
 step headcloth;  run "$R/headcloth.py" "$JOB/rig.glb" "$JOB/rig.glb" --report "$JOB/headcloth.json" || echo "headcloth failed (non-fatal)" >> "$JOB/log"
+fi
 if [ -z "$NPC" ]; then
 step movespack;  run "$R/exp_moves.py" -- "$O/anim6_ff.blend" "$FORGE_WEAPON_CLIPS" "$JOB/moves.glb"
 fi
