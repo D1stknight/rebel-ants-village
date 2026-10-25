@@ -892,16 +892,21 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
       <button id="terrainBrushRaiseBtn" class="ctrl-btn" onclick="setTerrainBrushMode('raise')" title="Raise mode pushes the selected terrain upward under the brush.">Raise</button>
       <button id="terrainBrushLowerBtn" class="ctrl-btn" onclick="setTerrainBrushMode('lower')" title="Lower mode pulls the selected terrain downward under the brush.">Lower</button>
     </div>
-    <label class="admin-field" title="Surface Type affects footstep sounds for terrain and walk patches.">Surface Type
+    <label class="admin-field" title="Surface Type sets the footstep sound on a terrain or walk patch (it wins over the ground under it).">Surface Type
       <select id="terrainSurfaceType" class="admin-select" onchange="updateTerrainBrushToolLive()">
         <option value="dirt">dirt</option>
         <option value="stone">stone</option>
         <option value="wood">wood</option>
-        <option value="wet">wet</option>
+        <option value="grass">grass</option>
+        <option value="sand">sand</option>
+        <option value="mud">mud</option>
+        <option value="water">water</option>
         <option value="snow">snow</option>
+        <option value="metal">metal</option>
+        <option value="tatami">tatami</option>
       </select>
     </label>
-    <div class="admin-note">Surface types affect footstep sounds only and use helper colors.</div>
+    <div class="admin-note">Surface types set footstep sounds only (helper colours). Rain and snow change them by themselves: wet stone, mud, wet grass, snow.</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
       <button class="ctrl-btn" onclick="flattenSelectedWalkSurfacePatch()" title="Flatten the selected terrain/walk patch to the current ground height.">Flatten Selected</button>
       <button class="ctrl-btn" onclick="raiseSelectedWalkSurfacePatch(0.25)" title="Raise the selected terrain/walk patch slightly.">Raise</button>
@@ -1571,6 +1576,8 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
     <label style="font-size:9px;color:#8aa;letter-spacing:1px">Interaction <input id="interactionVolumeSlider" type="range" min="0" max="1" step="0.05" value="0.7" oninput="setInteractionVolume(this.value)" style="width:100%"></label>
     <label style="font-size:9px;color:#8aa;letter-spacing:1px">Footsteps <input id="footstepVolumeSlider" type="range" min="0" max="1" step="0.05" value="0.55" oninput="setFootstepVolume(this.value)" style="width:100%"></label>
   </div>
+  <div class="admin-note">Hear the footsteps (three steps on each ground; the walk picks them by what is underfoot).</div>
+  <div id="footstepTestGrid" style="padding:0 8px 8px;display:grid;grid-template-columns:repeat(3,1fr);gap:4px"></div>
   </div>
   <hr class="ap-divider">
   <div class="ap-section">NPCs</div>
@@ -13702,10 +13709,6 @@ const INTERACTION_AUDIO = {
   progressMilestone: { id:'progression-progress-milestone', path:'/assets/audio/progression/progress-milestone.mp3', volume:.36, cooldownMs:1600 },
   levelUp: { id:'progression-level-up', path:'/assets/audio/progression/level-up.mp3', volume:.54, cooldownMs:1400 },
   secretFound: { id:'progression-secret-found', path:'/assets/audio/progression/secret-found.mp3', volume:.5, cooldownMs:1400 },
-  footstepDirt: { id:'footstep-dirt', path:'/assets/audio/footsteps/dirt-1.mp3', volume:.42, cooldownMs:120 },
-  footstepWet: { id:'footstep-wet', path:'/assets/audio/footsteps/wet-1.mp3', volume:.44, cooldownMs:120 },
-  footstepSnow: { id:'footstep-snow', path:'/assets/audio/footsteps/snow-1.mp3', volume:.48, cooldownMs:120 },
-  footstepStone: { id:'footstep-stone', path:'/assets/audio/footsteps/stone-1.mp3', volume:.4, cooldownMs:120 },
   hubBirds: { id:'env-hub-birds', path:'/assets/audio/ambience/birds.mp3', volume:.28, cooldownMs:12000 },
   distantCrow: { id:'env-distant-crow', path:'/assets/audio/ambience/distant-crow.mp3', volume:.34, cooldownMs:14000 },
   templeBell: { id:'env-temple-bell', path:'/assets/audio/ambience/temple-bell.mp3', volume:.28, cooldownMs:16000 },
@@ -13717,10 +13720,6 @@ const INTERACTION_AUDIO = {
   softChime: { id:'env-soft-chime', path:'/assets/audio/ambience/soft-chime.mp3', volume:.26, cooldownMs:10000 }
 };
 
-const WALK_STEP_MS = 520;
-const RUN_STEP_MS = 320;
-const FOOTSTEP_MIN_VOLUME = 0.24;
-const FOOTSTEP_MAX_VOLUME = 0.62;
 
 const WeatherManager = {
   mode: 'clear',
@@ -14211,102 +14210,155 @@ function playInteractionAudio(key) {
   audio.play().catch(error => { markAudioPlayFailure(audio, error); });
 }
 
-function getFootstepSurfaceType() {
-  if (WeatherManager.mode === 'snow' || WeatherManager.mode === 'cold') return 'snow';
-  if (WeatherManager.mode === 'light-rain' || WeatherManager.mode === 'heavy-rain' || WeatherManager.mode === 'storm') return 'wet';
+// ── footsteps (Oct 25, Miguel: "the footsteps inside the village should sound different then out into the mud or water
+// or grass"): the ground under the Rebel picks the sound. Six takes a surface in assets/audio/footsteps/v2/ (made from
+// the four recordings in footsteps/ plus synthesis: scratchpad steps/make_steps.py). The surface: a room's floor, the deck
+// stood on (piers, bridges, stairs, building floors: their own surfaceType), wading water, else the terrain
+// (_newTerrain.surfaceAt: paving, yards, roads, beach sand, rock, grass). Rain wets the ground over ~20 s (stone -> wet
+// stone, dirt -> mud, grass -> wet grass, wood -> wet wood) and it dries ~3 min after; snow covers it outdoors over ~1 min.
+// Played through Web Audio: another take each step, a little pitch and level change, the feet a touch left and right.
+const FOOTSTEP_SURFACES = ['stone', 'wet-stone', 'wood', 'wet-wood', 'dirt', 'sand', 'grass', 'wet-grass', 'mud', 'water', 'snow', 'metal', 'tatami'];
+const FOOTSTEP_GAIN = { sand:.9, grass:.9, 'wet-grass':.95, snow:.95, metal:.9, tatami:.85 };
+const FOOTSTEP_LEVEL = .14;   // the takes are made ~10 dB hotter than the old recordings: this keeps the old loudness
+const FOOTSTEP_WET = { stone:'wet-stone', wood:'wet-wood', grass:'wet-grass', dirt:'mud' };
+// rooms: tatami in the dojos, stone underground and in the forges, wood elsewhere
+const FOOTSTEP_ROOM = [[/dojo|duel|meditation|throne|rite/, 'tatami'], [/tunnel|crypt|vault|descent|old_door|debts|ancestors|forge|falls|shrine|bell|garage|sl_hq|war_stores|war_armory/, 'stone']];
+const FootstepAudio = { ctx:null, out:null, buf:{}, loading:{}, last:{}, side:1, dist:0, lastPos:null, surface:'dirt', base:'dirt' };
+function normalizeFootstepSurface(s) {
+  s = String(s || '').toLowerCase();
+  if (FOOTSTEP_SURFACES.includes(s)) return s;
+  return { wet:'mud', gravel:'dirt', path:'dirt', concrete:'stone', cobble:'stone', rock:'stone', ice:'snow', carpet:'tatami', iron:'metal' }[s] || 'dirt';
+}
+// a walk floor placed by hand without a surface type sounds like the piece it belongs to (a Saints roof: concrete)
+function footstepPieceSurface(type) {
+  const t = String(type || '');
+  return /^sl_|wall|gate|tower|turret|keep|bastion|well|lantern|shrine|stone|rock|plinth|altar|grave|crypt/.test(t) ? 'stone' : 'wood';
+}
+function footstepRoomSurface() {
+  const kit = String(ActiveInterior?.root?.metadata?.kitRoom || ActiveInterior?.interiorType || '');
+  for (const [re, s] of FOOTSTEP_ROOM) if (re.test(kit)) return s;
+  return 'wood';
+}
+function footstepBaseSurface() {
   if (!charMesh) return 'dirt';
-  const x = charMesh.position.x;
-  const z = charMesh.position.z;
-  const paintedSurface = typeof getVillageWalkSurfaceInfoAt === 'function' ? getVillageWalkSurfaceInfoAt(x, z) : null;
-  if (paintedSurface?.surfaceType) return paintedSurface.surfaceType;
-  const inCourtyard = Math.abs(x) <= 110 && Math.abs(z) <= 110;
-  const onStonePath = (Math.abs(x) <= 5 && Math.abs(z) <= 150) || (Math.abs(z) <= 5 && Math.abs(x) <= 150);
+  if (ActiveInterior) return footstepRoomSurface();
+  if (SWIM.on || SWIM.wading) return 'water';
+  const x = charMesh.position.x, z = charMesh.position.z;
+  const footY = Number.isFinite(charMesh._terrainY) ? charMesh._terrainY : charMesh.position.y;
+  // the floor stood on: a deck, ramp, walk box or painted patch within half a metre of the feet (not a bridge overhead)
+  let deck = null, best = .5;
+  villageSurfacesAt(x, z, (sf, local) => {
+    let y = sf.y;
+    if (sf.kind === 'terrain_stamp') { const h = getTerrainStampLocalHeight(sf.terrainStampType, sf.shape, local.x, local.z); y = Number.isFinite(h) ? sf.centerY + h : NaN; }
+    else if (sf.kind === 'ramp') y = villageRampHeightAt(sf, local);
+    const d = Math.abs(y - footY);
+    if (Number.isFinite(d) && d < best) { best = d; deck = sf; }
+  });
+  if (deck) return normalizeFootstepSurface(deck.surfaceType || footstepPieceSurface(deck.owner));
+  const NT = window._newTerrain;
+  if (NT?.surfaceAt) return NT.surfaceAt(x, z);
+  // the old ground (no terrain recipe): the courtyard stone and its two paths
+  const inCourtyard = Math.abs(x) <= 110 && Math.abs(z) <= 110, onStonePath = (Math.abs(x) <= 5 && Math.abs(z) <= 150) || (Math.abs(z) <= 5 && Math.abs(x) <= 150);
   return inCourtyard || onStonePath ? 'stone' : 'dirt';
 }
-
-function getFootstepKeyForSurface(surface) {
-  if (surface === 'snow') return 'footstepSnow';
-  if (surface === 'wet') return 'footstepWet';
-  if (surface === 'stone' || surface === 'wood') return 'footstepStone';
-  return 'footstepDirt';
+// the weather on the ground: snow covers it, rain wets it (rooms, water, metal and tatami stay as they are)
+function footstepWeatherSurface(base) {
+  if (ActiveInterior || base === 'water' || base === 'metal' || base === 'tatami') return base;
+  if ((WeatherManager.snowCover || 0) > .45) return 'snow';
+  if ((WeatherManager.wetness || 0) > .4) return FOOTSTEP_WET[base] || base;
+  return base;
 }
-
+function getFootstepSurfaceType() { return footstepWeatherSurface(footstepBaseSurface()); }
+// rain wets the ground and it dries again; snow lies and melts (WeatherManager.wetness / snowCover, 0..1)
+function updateGroundWeather(dt) {
+  const cfg = getWeatherVisualConfig(), W = WeatherManager, rain = Math.min(1, (cfg.rain || 0) / 90), snow = Math.min(1, (cfg.snow || 0) / 80);
+  W.wetness = rain > .05 ? Math.min(1, (W.wetness || 0) + dt * rain / 20) : Math.max(0, (W.wetness || 0) - dt / 180);
+  W.snowCover = snow > .05 ? Math.min(1, (W.snowCover || 0) + dt * snow / 60) : Math.max(0, (W.snowCover || 0) - dt / (W.mode === 'cold' ? 900 : 240));
+}
+function footstepCtx() {
+  if (FootstepAudio.ctx) return FootstepAudio.ctx;
+  try {
+    FootstepAudio.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    FootstepAudio.out = FootstepAudio.ctx.createGain(); FootstepAudio.out.connect(FootstepAudio.ctx.destination);
+  } catch (e) { FootstepAudio.ctx = null; }
+  return FootstepAudio.ctx;
+}
+function loadFootstepSurface(surface) {
+  if (FootstepAudio.buf[surface] || FootstepAudio.loading[surface]) return FootstepAudio.loading[surface] || null;
+  const ctx = footstepCtx(); if (!ctx) return null;
+  const one = i => fetch(`assets/audio/footsteps/v2/${surface}-${i}.mp3`).then(r => r.ok ? r.arrayBuffer() : null)
+    .then(b => b ? new Promise(res => ctx.decodeAudioData(b, res, () => res(null))) : null).catch(() => null);
+  return (FootstepAudio.loading[surface] = Promise.all([1, 2, 3, 4, 5, 6].map(one)).then(list => { FootstepAudio.buf[surface] = list.filter(Boolean); }));
+}
+function playFootstep(surface, run, level = 1) {
+  if (!WeatherManager.footstepAudioEnabled) return false;
+  const ctx = footstepCtx(); if (!ctx) return false;
+  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+  const list = FootstepAudio.buf[surface];
+  if (!list) { loadFootstepSurface(surface); return false; }   // the first step on a new ground: it loads
+  if (!list.length) return false;
+  let i = Math.floor(Math.random() * list.length);
+  if (list.length > 1 && i === FootstepAudio.last[surface]) i = (i + 1) % list.length;
+  FootstepAudio.last[surface] = i;
+  const src = ctx.createBufferSource(), g = ctx.createGain(), pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+  src.buffer = list[i]; src.playbackRate.value = .94 + Math.random() * .12;
+  g.gain.value = WeatherManager.masterVolume * WeatherManager.footstepVolume * (FOOTSTEP_GAIN[surface] || 1) * (run ? 1.12 : .92) * (.86 + Math.random() * .14) * FOOTSTEP_LEVEL * level;
+  src.connect(g);
+  if (pan) { FootstepAudio.side = -FootstepAudio.side; pan.pan.value = FootstepAudio.side * .08; g.connect(pan).connect(FootstepAudio.out); } else g.connect(FootstepAudio.out);
+  src.start();
+  return true;
+}
 function updateFootstepDebug(surface, status = {}) {
   WeatherManager.currentFootstepSurface = surface || 'dirt';
   const badge = document.getElementById('footstepDebugBadge');
   if (!badge) return;
-  const enabled = WeatherManager.footstepAudioEnabled ? 'enabled' : 'muted';
-  const moving = status.moving ? 'moving' : 'idle';
-  const grounded = status.grounded === false ? 'air' : 'grounded';
-  badge.textContent = `Footsteps: ${enabled} | ${moving} | ${grounded} | surface: ${WeatherManager.currentFootstepSurface}`;
+  const W = WeatherManager, base = FootstepAudio.base;
+  badge.textContent = `Footsteps: ${W.footstepAudioEnabled ? 'on' : 'muted'} | ${status.moving ? 'moving' : 'idle'} | ${surface}${base !== surface ? ' (' + base + ')' : ''} | wet ${Math.round(100 * (W.wetness || 0))}% | snow ${Math.round(100 * (W.snowCover || 0))}%`;
   badge.classList.toggle('on', adminMode === true);
 }
-
-function getFootstepAudioForSurface(surface) {
-  const key = getFootstepKeyForSurface(surface);
-  const cfg = INTERACTION_AUDIO[key];
-  let audio = cfg ? getInteractionAudioTrack(cfg.id, cfg.path) : null;
-  if (audio && !canRetryUnavailableAudio(audio) && key !== 'footstepDirt') audio = null;
-  if ((!audio || audio._unavailable) && key !== 'footstepDirt') {
-    const fallback = INTERACTION_AUDIO.footstepDirt;
-    audio = getInteractionAudioTrack(fallback.id, fallback.path);
-    if (audio) canRetryUnavailableAudio(audio);
-    return audio && !audio._unavailable ? { audio, cfg: fallback } : null;
-  }
-  if (audio) canRetryUnavailableAudio(audio);
-  if ((!audio || audio._unavailable) && key === 'footstepDirt') {
-    return { audio:null, cfg:INTERACTION_AUDIO.footstepDirt, unavailable:true };
-  }
-  return audio && !audio._unavailable ? { audio, cfg } : null;
-}
-
 function playFootstepAudio() {
-  if (!WeatherManager.footstepAudioEnabled) return;
-  const surface = getFootstepSurfaceType();
-  updateFootstepDebug(surface);
-  const footstep = getFootstepAudioForSurface(surface);
-  if (!footstep) return;
-  if (footstep.unavailable || !footstep.audio) return;
-  const { audio, cfg } = footstep;
-  const stepVolume = Math.max(FOOTSTEP_MIN_VOLUME, Math.min(FOOTSTEP_MAX_VOLUME, cfg.volume || .4));
-  audio.loop = false;
-  audio.volume = stepVolume * WeatherManager.masterVolume * WeatherManager.footstepVolume;
-  audio.pause();
-  audio.currentTime = 0;
-  audio.play().catch(error => { markAudioPlayFailure(audio, error); });
+  const surface = FootstepAudio.surface = getFootstepSurfaceType();
+  playFootstep(surface, runKey);
 }
-
 function stopFootstepAudio() {
-  ['footstep-dirt','footstep-wet','footstep-snow','footstep-stone'].forEach(id => {
-    const audio = WeatherManager.oneShotTracks[id];
-    if (!audio || audio.paused) return;
-    audio.pause();
-    audio.currentTime = 0;
-  });
+  FootstepAudio.dist = 0; FootstepAudio.lastPos = null;
   WeatherManager.lastFootstepAt = 0;
 }
-
+// a step every stride walked (the walk ~2.2 m, the run ~2.7 m at their speeds), the first one soon after setting off
 function updateFootstepAudio() {
   const hasMoveInput = moveForward || moveBackward || runKey;
   const forcedMode = window.forgePlayerForcedMode || '';
-  const jumping = forcedMode === 'jump' || forcedMode === 'runJump';
-  const grounded = charMesh && !jumping;
-  const surface = getFootstepSurfaceType();
-  const moving = !!(walkMode && !adminMode && charMesh && hasMoveInput && grounded && Math.abs(charMesh._vel || 0) >= .015);
-  updateFootstepDebug(surface, { moving, grounded: !!grounded });
-  if (!walkMode || adminMode || !charMesh || !hasMoveInput || !grounded || Math.abs(charMesh._vel || 0) < .015) {
-    WeatherManager.lastFootstepPosition = charMesh ? charMesh.position.clone() : null;
-    stopFootstepAudio();
-    return;
-  }
+  const grounded = charMesh && forcedMode !== 'jump' && forcedMode !== 'runJump';
+  const moving = !!(walkMode && !adminMode && charMesh && hasMoveInput && grounded && Math.abs(charMesh._vel || 0) >= .015 && !SWIM.on);
   const now = performance.now();
-  if (!WeatherManager.lastFootstepPosition) WeatherManager.lastFootstepPosition = charMesh.position.clone();
-  WeatherManager.lastFootstepPosition.copyFrom(charMesh.position);
-  const stepMs = runKey ? RUN_STEP_MS : WALK_STEP_MS;
-  if (!WeatherManager.lastFootstepAt || now - WeatherManager.lastFootstepAt >= stepMs) {
-    WeatherManager.lastFootstepAt = now;
-    playFootstepAudio();
+  if (!FootstepAudio.checkedAt || now - FootstepAudio.checkedAt > 220) {   // what is underfoot, a few times a second
+    FootstepAudio.checkedAt = now;
+    FootstepAudio.base = footstepBaseSurface();
+    FootstepAudio.surface = footstepWeatherSurface(FootstepAudio.base);
+    loadFootstepSurface(FootstepAudio.surface);
+    updateFootstepDebug(FootstepAudio.surface, { moving });
   }
+  if (!moving) { stopFootstepAudio(); return; }
+  const p = charMesh.position, lp = FootstepAudio.lastPos;
+  if (!lp) { FootstepAudio.lastPos = p.clone(); FootstepAudio.dist = (runKey ? 2.7 : 2.2) * .6; return; }
+  FootstepAudio.dist += Math.min(1.5, Math.hypot(p.x - lp.x, p.z - lp.z));
+  lp.copyFrom(p);
+  const stride = runKey ? 2.7 : 2.2;
+  if (FootstepAudio.dist >= stride) {
+    FootstepAudio.dist -= stride;
+    WeatherManager.lastFootstepAt = now;
+    playFootstep(FootstepAudio.surface, runKey);
+  }
+}
+// admin: hear a surface (Admin > Audio)
+document.addEventListener('DOMContentLoaded', fillFootstepTestGrid);
+function fillFootstepTestGrid() {
+  const g = document.getElementById('footstepTestGrid'); if (!g || g.childElementCount) return;
+  g.innerHTML = FOOTSTEP_SURFACES.map(f => `<button class="ctrl-btn" type="button" style="font-size:9px;padding:5px 2px" onclick="testFootstepSurface('${f}')">${f}</button>`).join('');
+}
+fillFootstepTestGrid();
+function testFootstepSurface(surface) {
+  loadFootstepSurface(surface)?.then(() => { playFootstep(surface, false); setTimeout(() => playFootstep(surface, false), 520); setTimeout(() => playFootstep(surface, false), 1040); });
 }
 
 function updateEnvironmentalOneShotAudio() {
@@ -14967,6 +15019,7 @@ function updateWeatherManager() {
     playWeatherThunderAudio(WeatherManager.nextLightningAt);
   }
 
+  updateGroundWeather(Math.min(.5, (now - (WeatherManager._groundAt || now)) / 1000)); WeatherManager._groundAt = now;
   applyWeatherLighting();
   updateWeatherRain();
   updateWeatherSnow();
@@ -28151,7 +28204,8 @@ function addManualCollisionProxyToWorld(node, blockers, walkableSurfaces) {
       rampSign: rise >= 0 ? -1 : 1,
       type: 'collision_proxy',
       name: `${node.name}_manual_ramp`,
-      surfaceType: node.metadata.terrainSurfaceType || 'dirt'
+      surfaceType: node.metadata.terrainSurfaceType || null, // unset: footsteps go by the piece it belongs to
+      owner: node.metadata.proxyOwnerType || null
     });
     return;
   }
@@ -28168,7 +28222,8 @@ function addManualCollisionProxyToWorld(node, blockers, walkableSurfaces) {
     y,
     type: 'collision_proxy',
     name: `${node.name}_manual_walk`,
-    surfaceType: node.metadata.terrainSurfaceType || 'dirt'
+    surfaceType: node.metadata.terrainSurfaceType || null, // unset: footsteps go by the piece it belongs to
+    owner: node.metadata.proxyOwnerType || null
   });
 }
 
@@ -28529,7 +28584,9 @@ function getKitWalkTable(type) {
       console.warn('assets/kit-walk.json is out of date for', type, '- worked out here (run tools/gen-kit-walk.mjs)');
     }
   } catch (e) { console.warn('kit walk table failed for', type, e); }
-  return (_kitWalkLive[type] = t ? { decks: t.decks.map(d => [...d, 'w']), blockers: t.walls, auto: true } : null);
+  // a generated floor sounds like its piece: stone walls, gates, towers, wells, lanterns, shrines, stone stairs; wood the rest
+  const floor = /wall|gate|tower|turret|keep|bastion|well|lantern|shrine|stairs_stone|stairs_cliff|plinth|altar|grave|crypt|stone|rock|bell|kiln|forge/.test(type) ? 's' : /stairs_fire|grate|crane/.test(type) ? 'm' : 'w';
+  return (_kitWalkLive[type] = t ? { decks: t.decks.map(d => [...d, floor]), blockers: t.walls, auto: true } : null);
 }
 function addGlbBuildingWalk(node, spec, blockers, surfaces) {
   node.computeWorldMatrix(true);
@@ -28541,7 +28598,7 @@ function addGlbBuildingWalk(node, spec, blockers, surfaces) {
   if (kx < 1e-6 || kz < 1e-6) return;
   const axisX = { x: (ux.x - P.x) / kx, z: (ux.z - P.z) / kx }, axisZ = { x: (uz.x - P.x) / kz, z: (uz.z - P.z) / kz }, yaw = Math.atan2(axisZ.x, axisZ.z);
   const box = (x0, z0, x1, z1, y) => { const c = at((x0 + x1) / 2, y, (z0 + z1) / 2); return { centerX: c.x, centerZ: c.z, y: c.y, axisX, axisZ, yaw, halfX: (x1 - x0) / 2 * kx, halfZ: (z1 - z0) / 2 * kz }; };
-  const floors = spec.decks.map(([x0, z0, x1, z1, y, s]) => ({ kind: 'flat', type: 'kit_deck', name: node.name, surfaceType: s === 'w' ? 'wood' : 'stone', ...box(x0, z0, x1, z1, y) }));
+  const floors = spec.decks.map(([x0, z0, x1, z1, y, s]) => ({ kind: 'flat', type: 'kit_deck', name: node.name, surfaceType: s === 'w' ? 'wood' : s === 'm' ? 'metal' : 'stone', ...box(x0, z0, x1, z1, y) }));
   const reach = list => Math.max(0, ...list.flatMap(([x0, z0, x1, z1]) => [Math.hypot(x0, z0), Math.hypot(x0, z1), Math.hypot(x1, z0), Math.hypot(x1, z1)]));
   if (spec.auto) { if (floors.length) { if (spec._rd == null) spec._rd = reach(spec.decks); surfaces.push({ kind: 'group', type: 'kit_deck', name: node.name, x: P.x, z: P.z, r: spec._rd * Math.max(kx, kz) + .5, items: floors }); } }
   else surfaces.push(...floors);
@@ -36541,7 +36598,13 @@ function getTerrainSurfaceMaterial(surface = 'dirt', alpha = .34) {
     stone: new BABYLON.Color3(.38, .39, .37),
     wood: new BABYLON.Color3(.38, .2, .1),
     wet: new BABYLON.Color3(.06, .13, .16),
-    snow: new BABYLON.Color3(.84, .91, .95)
+    snow: new BABYLON.Color3(.84, .91, .95),
+    grass: new BABYLON.Color3(.22, .42, .16),
+    sand: new BABYLON.Color3(.78, .68, .46),
+    mud: new BABYLON.Color3(.24, .16, .09),
+    water: new BABYLON.Color3(.12, .36, .52),
+    metal: new BABYLON.Color3(.46, .5, .56),
+    tatami: new BABYLON.Color3(.66, .62, .38)
   };
   mat.diffuseColor = colors[surface] || colors.dirt;
   mat.emissiveColor = mat.diffuseColor.scale(.1);
@@ -37998,6 +38061,8 @@ window.toggleMasterAudio = toggleMasterAudio;
 window.toggleWeatherAudio = toggleWeatherAudio;
 window.toggleInteractionAudio = toggleInteractionAudio;
 window.toggleFootstepAudio = toggleFootstepAudio;
+window.testFootstepSurface = testFootstepSurface;
+window._footsteps = { audio:FootstepAudio, surface:getFootstepSurfaceType, base:footstepBaseSurface, play:playFootstep, weather:WeatherManager }; // tests
 window.toggleMusicAudio = toggleMusicAudio;
 window.setMasterVolume = setMasterVolume;
 window.setAmbienceVolume = setAmbienceVolume;

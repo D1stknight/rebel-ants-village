@@ -1240,6 +1240,29 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
       const d = (D[j * n + i] * (1 - fu) + D[j * n + i + 1] * fu) * (1 - fv) + (D[(j + 1) * n + i] * (1 - fu) + D[(j + 1) * n + i + 1] * fu) * fv;
       return Math.max(0, 1 - Math.max(0, d - 6) / 170) ** 1.2;
     },
+    // what the ground is at (x, z), as the terrain shader paints it (for footsteps): 'stone' (the village's paving and
+    // terrace walls, rock faces, a city's streets and sidewalks), 'dirt' (yards, roads), 'sand' (a beach), 'mud' (a wet
+    // stream bank), else 'grass'
+    surfaceAt(x, z) {
+      const e = .7, y = T.heightAt(x, z), gx = (T.heightAt(x + e, z) - T.heightAt(x - e, z)) / (2 * e), gz = (T.heightAt(x, z + e) - T.heightAt(x, z - e)) / (2 * e);
+      const slope = 1 - 1 / Math.sqrt(1 + gx * gx + gz * gz);
+      if (VS && VS.inside(x, z)) {
+        if (VS.isWall(x, z) || (VS.pave(x, z) > .5 && slope < .4)) return 'stone';
+        if (VS.dirt(x, z) > .5) return 'dirt';
+      }
+      if (slope > .38) return 'stone';
+      const C = recipe.city;
+      if (C && Math.max(Math.abs(x), Math.abs(z)) < C.extent && slope < .12) {
+        const md = (v, g) => Math.abs((((v + g / 2) % g) + g) % g - g / 2);
+        const dx = md(x - C.cx, C.gx), dz = md(z - C.cz, C.gz);
+        if (dx <= C.w / 2 + C.sw || dz <= C.w / 2 + C.sw) return 'stone';
+      }
+      if (seaY !== null && y < seaY + 1.2 && slope < .45) return 'sand';
+      const i = Math.round((x + SIZE / 2) / CELL), j = Math.round((z + SIZE / 2) / CELL);
+      if (i >= 0 && j >= 0 && i < N && j < N && mask[(j * N + i) * 4 + 1] > 128) return 'dirt';
+      if (hm.water && T.waterEdgeDist(x, z) < 2.5) return 'mud';
+      return 'grass';
+    },
     // metres from the water's edge (negative = in the water), 255 when far away
     waterEdgeDist(x, z) {
       if (!hm.water) return 255;
