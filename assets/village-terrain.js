@@ -1201,6 +1201,14 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
 
   const T = {
     recipe, ground, far, material, maskTex, subdiv: SUBDIV, buildMs: Math.round(performance.now() - t0), prebuilt: !!opts.heightmapBase,
+    // the weather on the ground (village.html, every frame): { wet, snow, rain } 0..1, sky / sun Color3, sunDir Vector3 (toward the sun)
+    setWeather(o) {
+      const W = material.metadata.wx;
+      W.v.set(o.wet || 0, o.snow || 0, (performance.now() / 1000) % 1000, o.rain || 0);
+      if (o.sky) W.sky.copyFrom(o.sky);
+      if (o.sun) W.sun.copyFrom(o.sun);
+      if (o.sunDir) W.dir.copyFrom(o.sunDir);
+    },
     villageGround, villageShape: VS, sea, seaY,
     // the sea is not walkable (piers and boats add their own walk surfaces)
     seaBlocks(x, z) { return seaY !== null && T.heightAt(x, z) < seaY + .35; },
@@ -1335,7 +1343,13 @@ function makeTerrainMaterial(scene, maskTex, P, V, SEA, MESA, CITY) {
   m.AddUniform('uGrassTex', 'sampler2D', new BABYLON.Texture('assets/ground_diffuse.jpg', scene));
   m.AddUniform('uRockTex', 'sampler2D', new BABYLON.Texture('assets/stone_diffuse.jpg', scene));
   m.AddUniform('uMaskTex', 'sampler2D', maskTex);
+  // weather on the ground (Oct 25): x wetness, y snow cover, z time, w rain (0..1); the sky the puddles mirror, the sun's
+  // colour and the way to it (village.html sets them every frame through T.setWeather)
+  const WX = { v: new BABYLON.Vector4(0, 0, 0, 0), sky: new BABYLON.Color3(.62, .68, .74), sun: new BABYLON.Color3(0, 0, 0), dir: new BABYLON.Vector3(0, 1, 0) };
+  m.AddUniform('uWx', 'vec4', WX.v); m.AddUniform('uWxSky', 'vec3', WX.sky); m.AddUniform('uWxSun', 'vec3', WX.sun); m.AddUniform('uWxSunDir', 'vec3', WX.dir);
+  m.metadata.wx = WX;
   m.Fragment_Definitions(`
+    float gRoad = 0.0, gPave = 0.0, gSlope = 0.0, gMicro = 0.5, gPud = 0.0, gWet = 0.0, gSnow = 0.0;
     float th2(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
     float tvn(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(th2(i),th2(i+vec2(1.,0.)),f.x), mix(th2(i+vec2(0.,1.)),th2(i+vec2(1.,1.)),f.x), f.y); }
     float tfbm(vec2 p){ float a=.5, s=0.; for(int i=0;i<4;i++){ s+=a*tvn(p); p*=2.03; a*=.5; } return s; }
@@ -1347,6 +1361,7 @@ function makeTerrainMaterial(scene, maskTex, P, V, SEA, MESA, CITY) {
       float wet = mask.r * inside, road = mask.g * inside, pave = mask.b * inside;
       float vil = step(${vr[0].toFixed(1)}, p.x) * step(p.x, ${vr[2].toFixed(1)}) * step(${vr[1].toFixed(1)}, p.y) * step(p.y, ${vr[3].toFixed(1)});
       float macro = tfbm(p*0.018), micro = tfbm(p*0.4);
+      gRoad = road; gPave = pave; gSlope = slope; gMicro = micro;
       vec3 grass = mix(${v3(P.grassA)}, ${v3(P.grassB)}, smoothstep(0.3,0.75,macro));
       grass = mix(grass, ${v3(P.wet)}, wet*0.8);
       float gl = dot(texture2D(uGrassTex, p*0.33).rgb, vec3(0.333)), gl2 = dot(texture2D(uGrassTex, p*0.047).rgb, vec3(0.333));
@@ -1415,7 +1430,47 @@ function makeTerrainMaterial(scene, maskTex, P, V, SEA, MESA, CITY) {
       return col;
     }
   `);
-  m.Fragment_Custom_Diffuse(`diffuseColor = terrainColor(vPositionW, normalize(vNormalW));`);
+  m.Fragment_Custom_Diffuse(`
+    diffuseColor = terrainColor(vPositionW, normalize(vNormalW));
+    {
+      // rain: the ground darkens as it soaks, puddles gather on flat ground (more on worn paths and yards);
+      // snow lies on what faces up, thinner on paths; a snowy ground does not look wet
+      vec3 nw = normalize(vNormalW);
+      float wetK = uWx.x * (1.0 - uWx.y);
+      float pn = tfbm(vPositionW.xz * 0.2 + vec2(13.1, 7.7)) + 0.1 * tvn(vPositionW.xz * 1.3) + 0.08 * max(gRoad, gPave);
+      float thr = mix(0.76, 0.64, wetK); // the wetter, the bigger the puddles
+      gPud = smoothstep(thr, thr + 0.045, pn) * smoothstep(0.93, 0.995, nw.y) * smoothstep(0.3, 0.9, wetK);
+      gWet = wetK;
+      diffuseColor *= mix(1.0, 0.6, wetK * (1.0 - 0.4 * smoothstep(0.3, 0.6, gSlope)));
+      diffuseColor = mix(diffuseColor, diffuseColor * vec3(0.42, 0.46, 0.5), gPud);
+      gSnow = clamp(uWx.y * smoothstep(0.5, 0.8, nw.y) * (0.7 + 0.3 * gMicro) * (1.0 - 0.6 * max(gRoad, gPave)) * 1.3, 0.0, 1.0);
+      diffuseColor = mix(diffuseColor, vec3(0.9, 0.93, 0.97) * (0.92 + 0.08 * gMicro), gSnow);
+    }
+  `);
+  // rain rings on the puddles: in each 45 cm cell a drop lands now and then and its ring spreads (they bend the normal)
+  m.Fragment_Before_Lights(`
+    if (gPud > 0.01 && uWx.w > 0.01) {
+      vec2 rp = vPositionW.xz * 2.2, base = floor(rp), g = vec2(0.0);
+      for (int i = -1; i <= 1; i++) for (int j = -1; j <= 1; j++) {
+        vec2 cell = base + vec2(float(i), float(j));
+        float h = th2(cell), ph = fract(uWx.z * (0.8 + 0.6 * h) + h * 7.0);
+        vec2 d = rp - (cell + vec2(th2(cell + 3.1), th2(cell + 7.7)));
+        float r = length(d), R = ph * 1.1;
+        float w = exp(-pow((r - R) * 9.0, 2.0)) * (1.0 - ph) * step(th2(cell + 11.3), uWx.w * 0.9 + 0.1);
+        g += (d / max(r, 0.001)) * w * sin((r - R) * 30.0);
+      }
+      normalW = normalize(normalW + vec3(g.x, 0.0, g.y) * 0.35 * gPud);
+    }
+  `);
+  // wet ground and puddles mirror the sky (more at a glancing look) and catch the sun
+  m.Fragment_Before_Fog(`
+    if (gWet + gPud > 0.001) {
+      vec3 eyeV = normalize(vEyePosition.xyz - vPositionW);
+      float fr = pow(1.0 - max(dot(normalW, eyeV), 0.0), 5.0);
+      color.rgb = mix(color.rgb, uWxSky, clamp(gPud * (0.22 + 0.73 * fr) + gWet * 0.16 * fr, 0.0, 0.95));
+      color.rgb += uWxSun * pow(max(dot(normalW, normalize(uWxSunDir + eyeV)), 0.0), 90.0) * (gPud * 0.9 + gWet * 0.12);
+    }
+  `);
   return m;
 }
 
@@ -1481,6 +1536,8 @@ async function buildDecor(scene, T, avoid) {
     const nrm = []; BABYLON.VertexData.ComputeNormals(bp, bi, nrm); vd.normals = nrm.map((v, i) => i % 3 === 1 ? 1 : v * .2); vd.applyToMesh(blade);
     const gm = new BABYLON.CustomMaterial('terrainGrassMat', scene); gm.backFaceCulling = false; gm.specularColor = BABYLON.Color3.Black(); gm.AddUniform('uTime', 'float', 0);
     gm.Vertex_After_WorldPosComputed(`worldPos.x += sin(uTime*1.7 + worldPos.x*0.13 + worldPos.z*0.07) * 0.16 * position.y; worldPos.z += cos(uTime*1.3 + worldPos.x*0.05 + worldPos.z*0.11) * 0.08 * position.y;`);
+    gm.AddUniform('uWx', 'vec4', T.material.metadata.wx.v); // the ground's weather: wet blades darker, snowy ones white
+    gm.Fragment_Custom_Diffuse(`baseColor.rgb *= mix(1.0, 0.72, uWx.x * (1.0 - uWx.y)); baseColor.rgb = mix(baseColor.rgb, vec3(0.88, 0.91, 0.95), clamp(uWx.y * 0.85, 0.0, 1.0));`);
     gm.onBindObservable.add(() => gm.getEffect()?.setFloat('uTime', performance.now() / 1000));
     scene.onBeforeRenderObservable.add(() => { if (gm._newUniformInstances) gm._newUniformInstances['float-uTime'] = performance.now() / 1000; });
     blade.material = gm; blade.useVertexColors = true; blade.hasVertexAlpha = false;
@@ -1532,6 +1589,8 @@ async function buildDecor(scene, T, avoid) {
     const fm = new BABYLON.CustomMaterial('terrainFlowerMat', scene); fm.backFaceCulling = false; fm.specularColor = BABYLON.Color3.Black(); fm.AddUniform('uTime', 'float', 0);
     fm.Vertex_After_WorldPosComputed(`worldPos.x += sin(uTime*1.7 + worldPos.x*0.13 + worldPos.z*0.07) * 0.12 * position.y; worldPos.z += cos(uTime*1.3 + worldPos.x*0.05 + worldPos.z*0.11) * 0.06 * position.y;`);
     fm.Fragment_Before_FragColor(`color.rgb = max(color.rgb, vColor.rgb * 0.55);`);
+    fm.AddUniform('uWx', 'vec4', T.material.metadata.wx.v);
+    fm.Fragment_Custom_Diffuse(`baseColor.rgb *= mix(1.0, 0.75, uWx.x * (1.0 - uWx.y)); baseColor.rgb = mix(baseColor.rgb, vec3(0.88, 0.91, 0.95), clamp(uWx.y * 0.6, 0.0, 1.0));`);
     fm.onBindObservable.add(() => fm.getEffect()?.setFloat('uTime', performance.now() / 1000));
     scene.onBeforeRenderObservable.add(() => { if (fm._newUniformInstances) fm._newUniformInstances['float-uTime'] = performance.now() / 1000; });
     flower.material = fm; flower.useVertexColors = true; flower.hasVertexAlpha = false;

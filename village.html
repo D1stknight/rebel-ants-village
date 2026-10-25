@@ -13627,8 +13627,8 @@ function updateSky(){
 
 const WEATHER_MODES = {
   clear: { label:'Clear', rain:0, speed:0, fog:BABYLON.Scene.FOGMODE_NONE },
-  'light-rain': { label:'Light Rain', rain:.3, speed:0.82, puddles:5, wet:true, wind:.22, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.004, fogColor:new BABYLON.Color3(.44,.55,.64), sun:.72, hemi:.86 },
-  'heavy-rain': { label:'Heavy Rain', rain:.65, speed:1.08, puddles:7, wet:true, wind:.48, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.008, fogColor:new BABYLON.Color3(.28,.36,.45), sun:.48, hemi:.68 },
+  'light-rain': { label:'Light Rain', rain:.3, speed:0.82, puddles:5, wet:true, wind:.22, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.004, fogColor:new BABYLON.Color3(.44,.55,.64), sun:.45, hemi:.82 },
+  'heavy-rain': { label:'Heavy Rain', rain:.65, speed:1.08, puddles:7, wet:true, wind:.48, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.008, fogColor:new BABYLON.Color3(.28,.36,.45), sun:.14, hemi:.62 },
   storm: { label:'Storm', rain:1, speed:1.36, puddles:9, wet:true, wind:.9, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.014, fogColor:new BABYLON.Color3(.09,.12,.18), sun:.16, hemi:.36, lightning:true },
   fog: { label:'Fog', rain:0, speed:0, wind:.12, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.025, fogColor:new BABYLON.Color3(.5,.58,.62), sun:.58, hemi:.76 },
   heat: { label:'Heat Haze / Hot Day', rain:0, speed:0, wind:.1, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.004, fogColor:new BABYLON.Color3(.9,.66,.38), sun:1.2, hemi:1.02, warm:true },
@@ -14269,8 +14269,13 @@ function getFootstepSurfaceType() { return footstepWeatherSurface(footstepBaseSu
 // rain wets the ground and it dries again; snow lies and melts (WeatherManager.wetness / snowCover, 0..1)
 function updateGroundWeather(dt) {
   const cfg = getWeatherVisualConfig(), W = WeatherManager, rain = Math.min(1, cfg.rain || 0), snow = Math.min(1, (cfg.snow || 0) / 80);
-  W.wetness = rain > .05 ? Math.min(1, (W.wetness || 0) + dt * rain / 20) : Math.max(0, (W.wetness || 0) - dt / 180);
+  const wetTo = Math.min(1, rain * 1.6); // light rain leaves the ground half wet, heavy rain soaks it
+  W.wetness = (W.wetness || 0) < wetTo ? Math.min(wetTo, (W.wetness || 0) + dt * rain / 20) : Math.max(wetTo, (W.wetness || 0) - dt / 180);
   W.snowCover = snow > .05 ? Math.min(1, (W.snowCover || 0) + dt * snow / 60) : Math.max(0, (W.snowCover || 0) - dt / (W.mode === 'cold' ? 900 : 240));
+  // the ground shows it (assets/village-terrain.js setWeather): darker and glossy when wet, puddles with rain rings, snow
+  const T = window._newTerrain; if (!T?.setWeather) return;
+  const toSun = sun.direction.scale(-1).normalize();
+  T.setWeather({ wet: W.wetness, snow: W.snowCover, rain, sky: (scene.fogColor || WeatherManager.baseFogColor).scale(1.08), sun: sun.diffuse.scale(sun.intensity), sunDir: toSun });
 }
 function footstepCtx() {
   if (FootstepAudio.ctx) return FootstepAudio.ctx;
@@ -14842,6 +14847,11 @@ function applyWeatherLighting() {
     skyMat.turbidity = 5;
     skyMat.mieCoefficient = 0.003;
   }
+  const _rk = Math.min(1, cfg.rain || 0);
+  if (!WeatherManager.baseSky) WeatherManager.baseSky = { rayleigh: skyMat.rayleigh, luminance: skyMat.luminance };
+  skyMat.rayleigh = WeatherManager.baseSky.rayleigh * (1 - .7 * _rk);
+  skyMat.luminance = WeatherManager.baseSky.luminance * (1 - .35 * _rk);
+  if (_rk > 0 && !lightningActive && !cfg.warm && !cfg.cold) skyMat.turbidity = 5 + 13 * _rk;
 }
 
 function updateWeatherLabel() {
