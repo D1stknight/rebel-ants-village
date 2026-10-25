@@ -434,6 +434,8 @@ body.walk-photo #photoBtn{display:block}
 #assetPanel .ctrl-btn.danger{border-color:rgba(220,60,60,.3);color:rgba(220,100,100,.8)}
 #assetPanel .ctrl-btn.danger:hover{background:rgba(220,60,60,.15);border-color:rgba(220,60,60,.6);color:#e86060}
 #assetPanel .ctrl-btn.full{grid-column:1/-1}
+#assetPanel .ctrl-btn.on{border-color:rgba(94,207,202,.75);color:#5ecfca;background:rgba(94,207,202,.12)}
+#assetPanel .ctrl-btn .wx-i{display:block;font-size:15px;line-height:1.1;margin-bottom:2px}
 #assetPanel .admin-select{width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(94,207,202,.35);border-radius:5px;color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:1px;padding:7px 8px;outline:none}
 #assetPanel .admin-select option{background:#050a1c;color:#e8c56a}
 #assetPanel .admin-section-body{padding:0 8px 8px}
@@ -1528,19 +1530,8 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
   <hr class="ap-divider">
   <div class="ap-section">Weather</div>
   <div class="admin-section-body" data-admin-section-body="weather">
-  <div class="admin-note">Weather controls change the current sky, cycle timing, and forecast only.</div>
-  <div style="padding:0 8px 6px">
-    <select id="weatherSelect" class="admin-select" onchange="setWeatherMode(this.value, true)">
-      <option value="clear">Clear</option>
-      <option value="light-rain">Light Rain</option>
-      <option value="heavy-rain">Heavy Rain</option>
-      <option value="storm">Storm</option>
-      <option value="fog">Fog</option>
-      <option value="heat">Heat Haze / Hot Day</option>
-      <option value="cold">Cold / Frosty Mood</option>
-      <option value="snow">Snow</option>
-    </select>
-  </div>
+  <div class="admin-note">Tap a weather to see it now. Rain falls as streaks and splashes and wets the ground; storms bring clouds, bolts and thunder that comes later the further away it strikes; snow lies on the ground; fog lies low; heat shimmers; the cold frosts the ground and shows the Rebel's breath.</div>
+  <div id="weatherModeGrid" style="padding:0 8px 6px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px"></div>
   <div style="padding:0 8px 6px;display:grid;grid-template-columns:1fr 1fr;gap:5px">
     <button class="ctrl-btn" id="weatherPauseBtn" onclick="setWeatherCyclePaused(true)">Pause Cycle</button>
     <button class="ctrl-btn" id="weatherResumeBtn" onclick="setWeatherCyclePaused(false)">Resume Cycle</button>
@@ -1553,6 +1544,13 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
       <option value="test">Test</option>
     </select>
   </div>
+  <div class="admin-note">The ground: drag to see it wet or snowy at once (the weather carries on from there).</div>
+  <div style="padding:0 8px 6px;display:grid;gap:5px">
+    <label style="font-size:9px;color:#8aa;letter-spacing:1px">Wet ground <input id="weatherWetSlider" type="range" min="0" max="1" step="0.05" value="0" oninput="setWeatherGround('wetness', this.value)" style="width:100%"></label>
+    <label style="font-size:9px;color:#8aa;letter-spacing:1px">Snow cover <input id="weatherSnowSlider" type="range" min="0" max="1" step="0.05" value="0" oninput="setWeatherGround('snowCover', this.value)" style="width:100%"></label>
+  </div>
+  <div style="padding:0 8px 6px"><button class="ctrl-btn full" onclick="strikeWeatherLightning()">Strike Lightning (with its thunder)</button></div>
+  <div id="weatherReadout" class="admin-note" style="padding:0 10px 8px;font-family:monospace;font-size:9px"></div>
   </div>
   <div class="ap-section">Audio</div>
   <div class="admin-section-body" data-admin-section-body="audio">
@@ -14744,8 +14742,24 @@ function updateWeatherLabel() {
     label.textContent = 'Weather: ' + weatherText + ' → ' + nextText + ' · ' + countdown + (performance.now() < WeatherManager.thunderCueUntil ? ' · Thunder' : '');
     label.classList.toggle('on', adminMode === true);
   }
-  const select = document.getElementById('weatherSelect');
-  if (select && select.value !== WeatherManager.mode) select.value = WeatherManager.mode;
+  const grid = document.getElementById('weatherModeGrid');
+  if (grid && !grid.childElementCount) {
+    getWeatherModeIds().forEach(id => {
+      const b = document.createElement('button'); b.className = 'ctrl-btn'; b.dataset.wx = id;
+      b.innerHTML = `<span class="wx-i">${WEATHER_ICONS[id] || ''}</span>${(WEATHER_MODES[id].label || id).replace(/ \/.*| Haze/g, '')}`;
+      b.onclick = () => setWeatherMode(id, true);
+      grid.appendChild(b);
+    });
+  }
+  grid?.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.wx === WeatherManager.mode));
+  for (const [id, key] of [['weatherWetSlider', 'wetness'], ['weatherSnowSlider', 'snowCover']]) {
+    const sl = document.getElementById(id); if (sl && document.activeElement !== sl) sl.value = (WeatherManager[key] || 0).toFixed(2);
+  }
+  const ro = document.getElementById('weatherReadout');
+  if (ro && adminMode) {
+    const cfg = getWeatherVisualConfig(), w = window.VillageWeather?.wind, pct = v => Math.round((v || 0) * 100) + '%';
+    ro.textContent = `rain ${pct(cfg.rain)} · snow ${pct(cfg.snow)} · wind ${w ? Math.hypot(w.x, w.z).toFixed(1) : '0.0'} m/s · ground wet ${pct(WeatherManager.wetness)} · snow cover ${pct(WeatherManager.snowCover)} · drops ${(window.VillageWeather?.count?.() || 0).toLocaleString()}` + (WeatherManager.lastStrike ? ` · last strike ${Math.round(WeatherManager.lastStrike.dist)} m` : '');
+  }
   const speedSelect = document.getElementById('weatherCycleSpeedSelect');
   if (speedSelect && speedSelect.value !== WeatherManager.cycleSpeed) speedSelect.value = WeatherManager.cycleSpeed;
   const pauseBtn = document.getElementById('weatherPauseBtn');
@@ -37850,6 +37864,11 @@ window.clearAdminPlacement = clearAdminPlacement;
 window.deselectAdminSelection = deselectAdminSelection;
 window.toggleWorklight = toggleWorklight;
 window.setWeatherMode = setWeatherMode;
+window._weather = { strike: (flash = true) => triggerDistantLightning(flash), manager: WeatherManager }; // (tests)
+// admin > Weather: the ground's wetness / snow at once, and a strike on demand
+function setWeatherGround(key, v) { if (key === 'wetness' || key === 'snowCover') WeatherManager[key] = Math.max(0, Math.min(1, +v || 0)); }
+function strikeWeatherLightning() { WeatherManager.lightningUntil = performance.now() + 380; WeatherManager.thunderCueUntil = performance.now() + 2200; triggerDistantLightning(true); }
+window.setWeatherGround = setWeatherGround; window.strikeWeatherLightning = strikeWeatherLightning;
 window.setWeatherCyclePaused = setWeatherCyclePaused;
 window.setWeatherCycleSpeed = setWeatherCycleSpeed;
 window.muteAllAudio = muteAllAudio;
