@@ -27068,6 +27068,7 @@ function toggleWalk() {
     wb.textContent = 'EXIT WALK'; wb.classList.add('on'); xh.classList.remove('on');
     runVillagePerformancePass(true);
     buildVillageHudMap();
+    if (PendingRoomRestore) enterPendingRoomRestore();
   } else {
     if (!configureInteriorEditCamera()) {
       scene.activeCamera = orbit; orbit.attachControl(canvas, true); walk.detachControl();
@@ -31815,6 +31816,10 @@ function getInteriorEntranceBySessionId(interiorId) {
     null;
 }
 
+// a room remembered from the last visit waits for the first Enter Village (Oct 25, Miguel: back from the lobby the room
+// showed from up top and Enter Village took two presses: it was entered while the page was still in its overview, so the
+// overview camera stayed and walk mode was on without the walk camera, and the first press turned walking off)
+var PendingRoomRestore = null; // var: toggleWalk can run before this line is reached (a click while the module still loads)
 function restoreActiveInteriorSessionAfterStartup() {
   if (restoreActiveInteriorSessionAfterStartup._ran) return;
   restoreActiveInteriorSessionAfterStartup._ran = true;
@@ -31829,6 +31834,20 @@ function restoreActiveInteriorSessionAfterStartup() {
     clearActiveInteriorSession('invalid interior');
     return;
   }
+  if (!walkMode || adminMode) { PendingRoomRestore = session; console.log('Interior session kept for Enter Village', session); return; }
+  enterRestoredInteriorSession(entrance, session);
+}
+
+function enterPendingRoomRestore() {
+  const session = PendingRoomRestore;
+  PendingRoomRestore = null;
+  if (!session || ActiveInterior || adminMode) return;
+  const entrance = getInteriorEntranceBySessionId(session.interiorId);
+  if (!entrance) { clearActiveInteriorSession('invalid interior'); return; }
+  enterRestoredInteriorSession(entrance, session);
+}
+
+function enterRestoredInteriorSession(entrance, session) {
   console.log('Interior session restored after refresh', session);
   const entered = enterInterior(entrance, { restoreSession:true });
   if (!entered) {
@@ -35882,6 +35901,7 @@ function enterInterior(entrance, options = {}) {
         charMesh._vel = 0;
         groundPlayableVisualToTerrain(activeFloorY);
       }
+      if (!walkMode && !adminMode) toggleWalk(); // the walk camera and Enter Village's state too, not only the flag
       walkMode = true;
       setInteriorTitle(getInteriorTypeLabel(type), entrance.metadata.targetInteriorId || 'Interior');
       recordInteriorQuestHook(entrance, 'enterInterior');
