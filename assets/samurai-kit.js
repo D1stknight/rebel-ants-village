@@ -5,7 +5,8 @@
 /* global BABYLON */
 (function () {
   const TILE = { roof: [1.6, 1.4], roof_brown: [1.6, 1.4], plaster_old: [3, 3], slate: [2.4, 2.4], wood: [1.6, 1.6], darkwood: [1.6, 1.6], plaster: [3, 3], stone: [2.4, 2.4], thatch: [2, 1.6], bark: [1.4, 1.6], earth: [4, 4], shoji: [1.2, 1.5],
-    facade_apt: [6, 4.6], facade_stucco: [5, 4.6], facade_brick: [6, 4.6], facade_office: [6, 4.2], facade_glass: [4, 4], facade_shop: [8, 5.2], rollup: [3, 3], sl_brick: [2.4, 2.4], stucco: [3, 3], deco: [3, 3], seigaiha: [2.4, 2.4], sand_ring: [4, 4], checker_cc: [3.2, 3.2], bamboo_wall: [2.4, 2.4] };
+    facade_apt: [6, 4.6], facade_stucco: [5, 4.6], facade_brick: [6, 4.6], facade_office: [6, 4.2], facade_glass: [4, 4], facade_shop: [8, 5.2], rollup: [3, 3], sl_brick: [2.4, 2.4], stucco: [3, 3], deco: [3, 3], seigaiha: [2.4, 2.4], sand_ring: [4, 4], checker_cc: [3.2, 3.2], bamboo_wall: [2.4, 2.4],
+    club_brick: [2.4, 2.4], club_wall: [3, 3], club_wall_ext: [3, 3], club_floor: [1.6, 1.6] };
   const tileOf = m => TILE[m] || [1, 1];
 
   // ── textures (drawn once on small canvases) ─────────────────────────────
@@ -408,7 +409,7 @@
     T.sign_prizes = cv('sign_prizes', 512, 128, (c, W, H) => { c.clearRect(0, 0, W, H); neonText(c, 'PRIZES', W / 2, H / 2 + 4, 76, '#ffd43b'); });
     T.sign_claw = cv('sign_claw', 512, 128, (c, W, H) => { c.fillStyle = '#120a24'; c.fillRect(0, 0, W, H); neonText(c, 'ANT CLAW', W / 2, H / 2 + 4, 64, '#3bd5ff'); });
     T.war_map = pixelTex(scene, 'war_map', S, (x, y, i) => { const e = Math.min(x, 1 - x, y, 1 - y); if (e < .03) return [92, 64, 36]; const v = mp[i]; if (Math.abs(y - .5 - .18 * Math.sin(x * 7)) < .015) return [70, 110, 120]; return v > .62 ? [96, 112, 70] : v > .45 ? [150, 150, 96] : [196, 178, 128]; });
-    T._cv = cv; // for ROOM_TEX
+    T._cv = cv; T._neon = neonText; // for ROOM_TEX
     return T;
   }
   // ── room-only textures: drawn the first time a room material asks for one (cv: makeTextures' canvas helper) ──
@@ -418,6 +419,39 @@
     c.fillStyle = 'rgba(110,70,20,.18)'; for (let y = 0; y < H; y += 32) c.fillRect(0, y, W, 1); for (let x = 0; x < W; x += 32) c.fillRect(x, 0, 1, H);
   };
   const ROOM_TEX = {
+    // Antthony's Comedy Club (Hub, Oct 25): the ANTTHONY neon ring over the stage (after Miguel's picture), the club's name on
+    // the rooftop sign and over the door, the snack bar and the wall of fame signs, the Roast Champion plaque, the purple noren
+    // with the mic crest (drawn once across its four panels)
+    neon_antthony: (cv, T) => cv('neon_antthony', 1024, 576, (c, W, H) => {
+      c.clearRect(0, 0, W, H);
+      const line = (col, lw, blur, f) => { c.save(); c.strokeStyle = col; c.lineWidth = lw; c.shadowColor = col; c.shadowBlur = blur; c.lineCap = 'round'; c.lineJoin = 'round'; c.beginPath(); f(); c.stroke(); c.restore(); };
+      const ring = () => c.ellipse(W / 2, H / 2, W * .46, H * .44, 0, 0, Math.PI * 2);
+      line('#ff6418', 24, 40, ring); line('#ffe2a8', 7, 8, ring);
+      T._neon(c, 'ANTTHONY', W / 2, H * .4, 220, '#ff7a22', W * .86);
+      const mx = W / 2, my = H * .74, k = 1.45, mic = () => { c.moveTo(mx - 22 * k, my - 40 * k); c.arc(mx, my - 40 * k, 22 * k, Math.PI, 0); c.lineTo(mx + 22 * k, my - 6 * k); c.arc(mx, my - 6 * k, 22 * k, 0, Math.PI); c.closePath(); c.moveTo(mx, my + 16 * k); c.lineTo(mx, my + 46 * k); c.moveTo(mx - 24 * k, my + 46 * k); c.lineTo(mx + 24 * k, my + 46 * k); };
+      line('#ff6418', 16, 28, mic); line('#ffe2a8', 5, 6, mic);
+      for (const sd of [-1, 1]) for (const a of [-.55, 0, .55]) line('#ff8a2a', 10, 18, () => { const x0 = mx + sd * 52 * k, y0 = my - 22 * k; c.moveTo(x0 + sd * 10 * k * Math.cos(a), y0 + 10 * k * Math.sin(a)); c.lineTo(x0 + sd * 40 * k * Math.cos(a), y0 + 40 * k * Math.sin(a)); });
+    }),
+    club_marquee: (cv, T) => cv('club_marquee', 1024, 256, (c, W, H) => {
+      const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#22102e'); g.addColorStop(1, '#0e0716'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      c.strokeStyle = '#c9a452'; c.lineWidth = 6; c.strokeRect(8, 8, W - 16, H - 16);
+      T._neon(c, "ANTTHONY'S", W / 2, 76, 78, '#ffb02e', W - 120);
+      T._neon(c, 'COMEDY CLUB', W / 2, 178, 96, '#b25aff', W - 70);
+    }),
+    sign_snacks: (cv, T) => cv('sign_snacks', 512, 128, (c, W, H) => { c.clearRect(0, 0, W, H); T._neon(c, 'SNACKS', W / 2, H / 2 + 4, 76, '#ff3b8d', W - 30); }),
+    sign_fame: (cv, T) => cv('sign_fame', 1024, 128, (c, W, H) => { c.clearRect(0, 0, W, H); T._neon(c, 'WALL OF FAME', W / 2, H / 2 + 4, 80, '#ffd43b', W - 40); }),
+    plaque_champion: cv => cv('plaque_champion', 512, 128, (c, W, H) => {
+      const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#f0cf7a'); g.addColorStop(.5, '#c9a040'); g.addColorStop(1, '#8a6a22'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      c.strokeStyle = '#5a4210'; c.lineWidth = 6; c.strokeRect(10, 10, W - 20, H - 20);
+      c.fillStyle = '#2a1e08'; c.font = '900 54px Georgia, serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('ROAST CHAMPION', W / 2, H / 2 + 3);
+    }),
+    noren_comedy: cv => cv('noren_comedy', 1024, 256, (c, W, H) => {
+      c.fillStyle = '#3a1652'; c.fillRect(0, 0, W, H); c.fillStyle = '#28103a'; c.fillRect(0, 0, W, 16); c.fillRect(0, H - 24, W, 24);
+      const cx = W / 2, cy = H * .48; c.strokeStyle = '#e8c56a'; c.lineWidth = 10; c.beginPath(); c.arc(cx, cy, 86, 0, Math.PI * 2); c.stroke();
+      c.fillStyle = '#e8c56a'; c.beginPath(); c.arc(cx, cy - 26, 24, Math.PI, 0); c.lineTo(cx + 24, cy + 6); c.arc(cx, cy + 6, 24, 0, Math.PI); c.closePath(); c.fill();
+      c.fillRect(cx - 5, cy + 30, 10, 24); c.fillRect(cx - 24, cy + 52, 48, 8);
+      c.lineWidth = 7; c.beginPath(); c.arc(cx, cy + 4, 36, .25, Math.PI - .25); c.stroke();
+    }),
     // Shogun Throne Room: cranes and clouds on gold (the side walls); the great pine on gold leaf (the screen behind the throne)
     fusuma_cranes: cv => cv('fusuma_cranes', 512, 384, (c, W, H) => {
       goldLeaf(c, W, H, 61, [226, 196, 128]); const r = rng(62);
@@ -921,6 +955,14 @@
     la_skyline: { tex: 'la_skyline', self: true }, deco_dome: { tex: 'deco_dome', em: [.2, .18, .14] }, mural_la: { tex: 'mural_la', em: [.14, .1, .08] },
     neon_open: { tex: 'neon_open', self: true, alphaTex: true }, neon_block: { tex: 'neon_block', self: true, alphaTex: true }, scoreboard: { tex: 'scoreboard', self: true }, court_maple: { tex: 'court_maple', spec: [.4, .35, .3], power: 40 },
     glass_green: { col: [.2, .7, .3], em: [.3, .8, .35] }, slot_reels: { tex: 'slot_reels', self: true }, jungle_wall: { tex: 'plaster', tint: [.34, .52, .34] }, velvet: { col: [.3, .08, .26] }, records: { col: [.03, .03, .04], spec: [.7, .7, .7], power: 80 }, white: { col: [.94, .94, .92] },
+    // Antthony's Comedy Club (Hub, Oct 25): the room's plum walls, the brick behind the stage, the dark boards, the plum walls
+    // outside; velvet; the neon signs; the marquee bulbs; popcorn; the candle glass on the tables; the spotlight beams; two of
+    // Miguel's Antthony pictures as the posters by the door
+    club_wall: { tex: 'plaster', tint: [.44, .3, .5] }, club_wall_ext: { tex: 'plaster', tint: [.66, .54, .72] }, club_brick: { tex: 'brick', tint: [.8, .62, .62] }, club_floor: { tex: 'darkwood', tint: [1.05, .92, 1.02] },
+    velvet_red: { col: [.42, .035, .06], spec: [.3, .12, .12], power: 10 }, neon_antthony: { tex: 'neon_antthony', self: true, alphaTex: true }, club_marquee: { tex: 'club_marquee', self: true },
+    sign_snacks: { tex: 'sign_snacks', self: true, alphaTex: true }, sign_fame: { tex: 'sign_fame', self: true, alphaTex: true }, plaque_champion: { tex: 'plaque_champion', em: [.22, .17, .06] }, noren_comedy: { tex: 'noren_comedy' },
+    bulb: { col: [1, .9, .62], em: [1, .8, .45] }, popcorn: { col: [.98, .86, .48], em: [.16, .12, .04] }, candle_glass: { col: [.86, .26, .2], em: [.72, .2, .12], alpha: .8 }, shaft_spot: { shaft: [1, .84, .58], alpha: .1 },
+    poster_neon: { img: 'assets/interiors/antthony/neon-sign.webp', em: [.3, .3, .3] }, poster_micdrop: { img: 'assets/interiors/antthony/mic-drop.webp', em: [.3, .3, .3] },
     glow: { glow: [.95, .5, .16] } // soft pool of lantern light on the ground (night only)
   };
   let TEX = null; const MATS = {};
@@ -945,7 +987,7 @@
     TEX = TEX || makeTextures(scene);
     const room = name.startsWith('rm_'), d = MAT[room ? name.slice(3) : name]; // rm_<name>: a room's copy (see ROOMS)
     if (d.faction && !TEX[d.tex]) TEX[d.tex] = bannerTex(scene, d.faction, ...FACTION_BANNERS[d.faction], 'logo:' + d.faction); // made on first use
-    if (d.tex && !TEX[d.tex] && ROOM_TEX[d.tex]) TEX[d.tex] = ROOM_TEX[d.tex](TEX._cv); // room textures too
+    if (d.tex && !TEX[d.tex] && ROOM_TEX[d.tex]) TEX[d.tex] = ROOM_TEX[d.tex](TEX._cv, TEX); // room textures too
     if (d.shaft) { // a sheet of light falling from a window or a slit: additive, bright at the top, gone at the floor (rooms)
       const m = new BABYLON.StandardMaterial('samKit_' + name, scene), tx = shaftTex(scene);
       m.diffuseColor = BABYLON.Color3.Black(); m.specularColor = BABYLON.Color3.Black(); m.disableLighting = true;
@@ -2067,6 +2109,59 @@
       for (const [x, y] of [[-W / 4, -.23], [-W / 4 + O, -.11]]) for (let k = 1; k < 4; k++) M.block('darkwood', x - W / 4 + k * W / 8, y, .12, .03, .02, H - .1);
       M.block('darkwood', 0, -.16, H + .42, 1.3, .1, 1.3); M.quad('emblem_rebel', [[-.55, -.22, H + .47], [.55, -.22, H + .47], [.55, -.22, H + 1.57], [-.55, -.22, H + 1.57]]);
       for (const sd of [-1, 1]) { const x = sd * (W / 2 + .14); M.rod('darkwood', [x, -.37, 3.3], [x, -.64, 3.3], .03, 3); lantern(M, x, -.64, 2.7, .2); }
+    },
+    // Antthony's Comedy Club (Hub, Oct 25: Miguel, "a dojo ... just for antthony and call it Antthonys comedy club ... in the
+    // forest but not too far from the village"): a dojo made over as a comedy club. A stone base, steps with a red carpet up
+    // between velvet ropes, plum walls with glowing shoji, a big hip roof with the club's name in neon on a sign over the front
+    // eave (bulbs round it), a marquee canopy over the doors, a purple noren with the mic crest, two of Miguel's Antthony
+    // pictures as posters, purple lanterns under the eaves, stone lanterns by the steps; front faces -y (the room's door is a
+    // layout door in front of the recess)
+    hub_comedy_club(M) {
+      const W = 20, D = 14, Z = .9, WH = 5.4, wy = .6, yF = wy - (D - 3) / 2, yB = -(D + 1.6) / 2; // yF: the front wall, yB: the base's front edge
+      M.block('stone', 0, 0, 0, W + 1.6, D + 1.6, Z);
+      steps(M, 0, yB, Z, 7.4, 3);
+      M.remap = { plaster: 'club_wall_ext', wood: 'darkwood' };
+      walls(M, 0, wy, Z, W - 3, D - 3, WH, { door: [4.4, 3.9], windows: [['left', -2.4, Z + 1.7, 2.6, 1.8], ['left', 2.4, Z + 1.7, 2.6, 1.8], ['right', -2.4, Z + 1.7, 2.6, 1.8], ['right', 2.4, Z + 1.7, 2.6, 1.8], ['back', -4.2, Z + 1.7, 3, 1.8], ['back', 4.2, Z + 1.7, 3, 1.8]] });
+      M.remap = null;
+      M.roof(0, wy, Z + WH + .25, W + 1.4, D + 1.4, 3.6, { lift: .9 });
+      // the red carpet up the steps and across the porch, velvet ropes either side of it
+      for (let i = 0; i < 3; i++) {
+        const top = Z - i * Z / 3, y0 = yB - i * .45, y1 = y0 - .45;
+        M.quad('runner', [[-1.6, y1, top + .012], [1.6, y1, top + .012], [1.6, y0, top + .012], [-1.6, y0, top + .012]], [[0, 0], [1, 0], [1, .07], [0, .07]]);
+        M.quad('runner', [[-1.6, y1 - .012, top - Z / 3], [1.6, y1 - .012, top - Z / 3], [1.6, y1 - .012, top], [-1.6, y1 - .012, top]], [[0, 0], [1, 0], [1, .05], [0, .05]]);
+      }
+      M.quad('runner', [[-1.6, yB, Z + .012], [1.6, yB, Z + .012], [1.6, yF - .15, Z + .012], [-1.6, yF - .15, Z + .012]], [[0, 0], [1, 0], [1, (yF - .15 - yB) / 6.4], [0, (yF - .15 - yB) / 6.4]]);
+      for (const sd of [-1, 1]) {
+        const x = sd * 2.5, ys = [yB + .35, yB + 1.55, yB + 2.75];
+        for (const y of ys) { M.cyl('brass', [x, y, Z], .16, .06, 10); M.cyl('brass', [x, y, Z + .06], .05, 1.15, 8); M.sphere('brass', [x, y, Z + 1.26], .09, 1, 8, 4); }
+        for (let k = 0; k < 2; k++) { const a = ys[k], b = ys[k + 1], m = (a + b) / 2; M.rod('velvet_red', [x, a, Z + 1.12], [x, m, Z + .86], .045, 6); M.rod('velvet_red', [x, m, Z + .86], [x, b, Z + 1.12], .045, 6); }
+      }
+      // the doors: the noren with the mic crest, the marquee canopy with bulbs along its edge and under it
+      noren(M, 0, yF - .2, Z + 3.85, 4.2, 1, 'noren_comedy');
+      const cz = Z + 4.15, cy0 = yF - .15, cy1 = yF - 1.9;
+      M.block('lacquer_black', 0, (cy0 + cy1) / 2, cz, 6.4, cy0 - cy1, .42); M.block('gold', 0, cy1 - .03, cz + .14, 6.5, .06, .14);
+      for (let k = 0; k <= 12; k++) { const x = -3 + k * .5; M.sphere('bulb', [x, cy1 - .08, cz + .3], .07, 1, 6, 3); M.sphere('bulb', [x, cy1 + .35, cz - .02], .06, 1, 6, 3); }
+      for (const sd of [-1, 1]) M.rod('lacquer_black', [sd * 3, cy1 + .2, cz + .4], [sd * 3, cy0, cz + 1.9], .04, 4);
+      // the posters either side of the doors (two of Miguel's pictures), gold frames, a lamp over each
+      for (const [sd, mat] of [[-1, 'poster_neon'], [1, 'poster_micdrop']]) {
+        const x = sd * 3.82, yp = yF - .19, zb = Z + .9, s2 = 1.9;
+        M.block('gold', x, yp + .02, zb - .08, s2 + .16, .06, s2 + .16); M.quad(mat, [[x - s2 / 2, yp - .02, zb], [x + s2 / 2, yp - .02, zb], [x + s2 / 2, yp - .02, zb + s2], [x - s2 / 2, yp - .02, zb + s2]]);
+        M.rod('brass', [x - .5, yp - .35, zb + s2 + .25], [x + .5, yp - .35, zb + s2 + .25], .04, 6); M.rod('brass', [x, yp, zb + s2 + .35], [x, yp - .35, zb + s2 + .27], .02, 4);
+      }
+      // the club's name on a sign over the front eave, bulbs round it, struts down to the roof behind it
+      const sy2 = wy - (D + 1.4) / 2 + .7, sz0 = Z + WH + .45, sh = 3, sw = 12;
+      M.block('lacquer_black', 0, sy2, sz0, sw + .4, .3, sh + .4); M.quad('club_marquee', [[-sw / 2, sy2 - .16, sz0 + .2], [sw / 2, sy2 - .16, sz0 + .2], [sw / 2, sy2 - .16, sz0 + .2 + sh], [-sw / 2, sy2 - .16, sz0 + .2 + sh]]);
+      for (let k = 0; k <= 24; k++) { const x = -sw / 2 + k * sw / 24; for (const z of [sz0 + .08, sz0 + sh + .32]) M.sphere('bulb', [x, sy2 - .2, z], .08, 1, 6, 3); }
+      for (let k = 1; k < 6; k++) for (const sd of [-1, 1]) M.sphere('bulb', [sd * (sw / 2 + .12), sy2 - .2, sz0 + .08 + k * (sh + .24) / 6], .08, 1, 6, 3);
+      for (const sd of [-1, 1]) M.rod('darkwood', [sd * 4.5, sy2 + .15, sz0 + 1.5], [sd * 4.5, sy2 + 2.6, sz0 + .3], .1, 6);
+      // purple lanterns under the front eave and the corners, stone lanterns by the steps
+      M.remap = { lantern: 'lantern_violet' }; for (const x of [-9.6, -6.4, 6.4, 9.6]) lantern(M, x, yB + .9, Z + 5.2, .3); M.remap = null;
+      for (const sd of [-1, 1]) {
+        const x = sd * 5, y = yB - .9;
+        M.block('stone', x, y, 0, .8, .8, .35); M.block('stone', x, y, .35, .32, .32, 1); M.block('stone', x, y, 1.35, .7, .7, .14);
+        M.block('window_glow', x, y, 1.49, .44, .44, .42); for (const t of [-1, 1]) { M.block('stone', x + t * .25, y, 1.49, .08, .6, .42); M.block('stone', x, y + t * .25, 1.49, .6, .08, .42); }
+        M.block('stone', x, y, 1.91, .9, .9, .16); M.cyl('stone', [x, y, 2.07], .14, .18, 6, .03);
+      }
     },
     // the game hall's back-room door (the Game Hall's): a purple arched door with a pumpkin lamp either side; front faces -y
     cc_hall_door(M) {
@@ -3838,6 +3933,12 @@
     TIER: { y0: -2, d: 2.3, r: .4, n: 6 }, BACK: 2.4, SCR: { w: 14.2, h: 8, z0: 1.7 } };
   // Hub Gathering Hall: the stage (ST), the raised hearth (HE: centre y, half size, height), the canopy ropes (ROPES)
   const GH = { HX: 24, HY: 20, H: 13, DW: 7, DH: 6, ST: { x0: -9, x1: 9, y0: -20, y1: -14.5, h: 1.2 }, HE: { cy: -1, s: 3.5, h: .45 }, ROPES: [-12, -8, -4, 0, 4, 8, 12, 16], COLS: [[-14, -8], [14, -8], [-14, 6], [14, 6]] };
+  // Hub Antthony's Comedy Club: the stage across the back (ST: x0..x1, y0..y1, height h; its stairs from the floor at sx0..sx1,
+  // y1..sy), the mic and the stool on it, the cocktail tables (TX x TY), the snack bar in the front right corner (SNACK: x0, y0),
+  // the trophy case in the front left (TROPHY), the wall of fame (PY along each side wall, pictures PS square, centred at PZ)
+  const AC = { HX: 15, HY: 13, H: 9, DW: 3.6, DH: 4.6, ST: { x0: -9, x1: 9, y0: -13, y1: -6.2, h: 1.1, sx0: 2.6, sx1: 4.8, sy: -4 },
+    MIC: [0, -8.4], STOOL: [2.3, -9.3], TX: [-10.5, -6, 6, 10.5], TY: [-1.6, 3, 7.6], SNACK: [6.4, 9.8], TROPHY: [-8, 11.4],
+    PY: [-5.2, -2.9, -.6, 1.7, 4, 6.3, 8.6], PS: 1.9, PZ: 4 };
   // Shogun rooms (rebel scale: a Rebel stands 3.4 m, so chairs sit at .85 and tables at 1.45)
   // TS Throne Room: the long table (y0..y1, half width, height), the seats, the chairs' x, the banner poles' x, the dais and its
   // stairs, the throne's y, the canopy posts [x, yBack, yFront], the colonnade (x, ys)
@@ -4041,6 +4142,16 @@
         { box: [-2.5, GH.ST.y1, 2.5, GH.ST.y1 + 2.4], y0: 0, y1: GH.ST.h, axis: 'z', steps: 4, flip: true }],
       blockers: [{ box: [-1.6, GH.HE.cy - 1.6, 1.6, GH.HE.cy + 1.6] }, { box: [-10, -9, -8.4, 7] }, { box: [8.4, -9, 10, 7] }, ...GH.COLS.map(([x, z]) => ({ circle: [x, z, .62] })),
         { circle: [-5.5, -17.6, 1.35], minY: 1 }, { circle: [5.5, -17.6, 1.35], minY: 1 }, { box: [-8.6, GH.ST.y0, 8.6, -19] }]
+    },
+    room_hub_comedy: {
+      bounds: [-AC.HX, AC.HX, -AC.HY, AC.HY + .2], spawn: [0, AC.HY - 4.6, Math.PI], exit: [0, AC.HY + .3], ceil: AC.H,
+      hemi: { i: .36, c: [.8, .66, .96], g: [.14, .09, .14] },
+      lights: [{ p: [0, 7.2, -8.6], c: [1, .9, .74], i: 1.25, r: 11 }, { p: [-6, 6.2, -9.4], c: [.62, .34, 1], i: .8, r: 9 }, { p: [6, 6.2, -9.4], c: [1, .34, .46], i: .7, r: 9 },
+        { p: [0, 4.2, 2.4], c: [1, .68, .42], i: .6, r: 15, flicker: .12 }, { p: [10.6, 4.6, 10.4], c: [1, .8, .52], i: .6, r: 8 }, { p: [-8, 5, 8.6], c: [.86, .78, 1], i: .4, r: 10 }],
+      decks: [{ box: [AC.ST.x0, AC.ST.y0, AC.ST.x1, AC.ST.y1], y: AC.ST.h }, { box: [AC.ST.sx0, AC.ST.y1, AC.ST.sx1, AC.ST.sy], y0: 0, y1: AC.ST.h, axis: 'z', steps: 4, flip: true }],
+      blockers: [{ box: [-9.1, -6.98, -6.75, -6.4], minY: .5 }, { box: [6.75, -6.98, 9.1, -6.4], minY: .5 }, { box: [-12.45, -11.9, -10.75, -10.5] }, { box: [10.75, -11.9, 12.45, -10.5] },
+        { circle: [...AC.MIC, .42], minY: .5 }, { circle: [...AC.STOOL, .5], minY: .5 }, ...AC.TX.flatMap(x => AC.TY.map(y => ({ circle: [x, y + .45, 1.3] }))),
+        { box: [AC.SNACK[0], AC.SNACK[1], AC.HX, AC.HY] }, { box: [AC.TROPHY[0] - 1.45, AC.TROPHY[1] - 1.05, AC.TROPHY[0] + 1.45, AC.TROPHY[1] + 1.05] }]
     },
     room_sam_dojo: {
       bounds: [-SD.HX, SD.HX, -SD.HY, SD.HY + .2], spawn: [0, 11.6, Math.PI], exit: [0, SD.HY + .3],
@@ -5201,6 +5312,99 @@
       M.block('darkwood', -10, HY - .3, 4.15, 4.6, .3, .18);
       // lamps along the walls
       for (const sd of [-1, 1]) for (const y of [-12, 0, 12]) andon(M, sd * (HX - 1.2), y, 0, 1.2);
+    },
+    // the Hub's Antthony's Comedy Club (Oct 25, Miguel: "a dojo ... just for antthony", his pictures on the walls): the stage
+    // across the back under purple and red washes, the ANTTHONY neon ring on the brick behind the mic and the stool, red velvet
+    // legs and a valance, three spotlights on a truss with their beams, footlights, speaker stacks either side; cocktail tables
+    // with candles, a red runner from the door to the stage stairs; the wall of fame down both side walls (the pictures are the
+    // room config's frames: here their black mats, gold liners and picture lights); the snack bar with the popcorn machine, the
+    // Roast Champion trophy in its case; the club's name over the door; purple lanterns
+    room_hub_comedy(M) {
+      M.room = true;
+      const { HX, HY, H, DW, DH, ST, MIC, STOOL, TX, TY, SNACK, TROPHY, PY, PS, PZ } = AC;
+      hall(M, { HX, HY, H, DW, DH, floor: 'club_floor', wall: 'club_wall', wain: 'lacquer_black', wainH: 1.6, rail: 'gold', post: 'lacquer_black', posts: [-HY, -6.9, 10.1, HY], beam: 'lacquer_black', ceil: 'lacquer_black', ceilBeam: 'darkwood', ceilEvery: 3.25 });
+      for (const s2 of [-1, 1]) M.block('neon_purple', s2 * (HX - .2), 0, H - .55, .06, 2 * HY, .07);
+      // the stage: its front with a gold nosing, the stairs up at the front right, a purple rug under the mic, footlights
+      const sy = (ST.y0 + ST.y1) / 2, sw = ST.x1 - ST.x0, sd = ST.y1 - ST.y0, z0 = ST.h;
+      M.block('darkwood', 0, sy, 0, sw, sd, z0 - .05); M.block('wood', 0, sy, z0 - .05, sw, sd, .05);
+      M.block('lacquer_black', 0, ST.y1 + .02, .04, sw, .05, z0 - .12); M.block('gold', 0, ST.y1 + .05, z0 - .1, sw + .06, .06, .06);
+      stairsK(M, 'darkwood', ST.sx0, ST.sx1, ST.y1, ST.sy, 0, z0, 4, -1, 'gold');
+      M.quad('cloth_purple', [[-3.4, -10.8, z0 + .01], [3.4, -10.8, z0 + .01], [3.4, -7, z0 + .01], [-3.4, -7, z0 + .01]]);
+      for (let k = 0; k < 11; k++) { const x = -7.5 + k * 1.5; if (x > ST.sx0 - .5 && x < ST.sx1 + .5) continue; M.block('lacquer_black', x, ST.y1 - .24, z0, .5, .3, .12); M.block('bulb', x, ST.y1 - .26, z0 + .12, .36, .2, .07); }
+      // the brick behind it, the ANTTHONY neon in its glow
+      wallArt(M, 'back', 0, 0, 2 * HX, H, 'club_brick', HX, HY, .26, [[0, 0], [2 * HX / 2.4, 0], [2 * HX / 2.4, H / 2.4], [0, H / 2.4]]);
+      wallArt(M, 'back', 0, 3, 10.6, 6, 'glow', HX, HY, .3);
+      wallArt(M, 'back', 0, 3.6, 8.4, 4.72, 'neon_antthony', HX, HY, .33);
+      // red velvet legs either side (tied back), a drape down each side, the valance across the top with a gold fringe
+      for (const s2 of [-1, 1]) {
+        for (let k = 0; k < 7; k++) M.box('velvet_red', [s2 * (6.95 + k * .32), ST.y1 - .5 - (k % 2) * .16, (z0 + H) / 2], [.34, .18, H - z0]);
+        M.rod('gold', [s2 * 6.8, ST.y1 - .3, 3.5], [s2 * 9.1, ST.y1 - .3, 3.9], .05, 6);
+        M.block('velvet_red', s2 * (ST.x1 - .1), sy - .4, z0, .14, sd - .8, H - z0);
+      }
+      for (let k = 0; k < 36; k++) { const x = -9.4 + (k + .5) * 18.8 / 36; M.box('velvet_red', [x, ST.y1 - .2 - (k % 2) * .1, H - .75 + (k % 3) * .06], [18.8 / 36 + .02, .16, 1.5 - (k % 3) * .12]); }
+      M.rod('gold', [-9.5, ST.y1 - .05, H - 1.52], [9.5, ST.y1 - .05, H - 1.52], .05, 6);
+      // the mic on its stand (its grille toward the house, the cable coiled at its foot), the stool with a glass of water
+      const [mx, my] = MIC, [tx, ty] = STOOL;
+      M.cyl('iron', [mx, my, z0], .36, .05, 16); M.rod('steel', [mx, my, z0], [mx, my, z0 + 2.55], .035, 8);
+      M.rod('lacquer_black', [mx, my, z0 + 2.5], [mx, my + .12, z0 + 2.78], .06, 8); M.sphere('chrome', [mx, my + .16, z0 + 2.86], .11, 1.15, 12, 6);
+      for (let k = 0; k < 7; k++) { const a = k * .9; M.rod('lacquer_black', [mx + .45 + .3 * Math.cos(a), my + .3 * Math.sin(a), z0 + .02], [mx + .45 + .3 * Math.cos(a + .9), my + .3 * Math.sin(a + .9), z0 + .02], .02, 4); }
+      M.cyl('darkwood', [tx, ty, z0 + 1.42], .44, .1, 16); M.cyl('steel', [tx, ty, z0 + .7], .36, .03, 16);
+      for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + .6; M.rod('steel', [tx + .38 * Math.cos(a), ty + .38 * Math.sin(a), z0], [tx + .2 * Math.cos(a), ty + .2 * Math.sin(a), z0 + 1.42], .035, 6); }
+      M.cyl('glass', [tx + .12, ty, z0 + 1.52], .09, .26, 10); M.cyl('water', [tx + .12, ty, z0 + 1.53], .075, .17, 10);
+      // speaker stacks on the floor either side of the stage
+      for (const s2 of [-1, 1]) { const x = s2 * 11.6; M.block('lacquer_black', x, -11.2, 0, 1.6, 1.3, 2.6); M.block('lacquer_black', x, -11.2, 2.6, 1.4, 1.2, 1.4);
+        for (const [z, r] of [[.9, .42], [1.95, .3], [3.3, .36]]) M.tube('iron', [x, -10.56, z], [x, -10.5, z], r, r, 16); }
+      // the truss with three spotlights, their beams and the pools they throw on the stage
+      M.rod('lacquer_black', [-8, -4.8, H - .7], [8, -4.8, H - .7], .08, 8); for (const x of [-6, 6]) M.rod('lacquer_black', [x, -4.8, H - .7], [x, -4.8, H], .04, 4);
+      for (const x of [-4.5, 0, 4.5]) {
+        M.tube('lacquer_black', [x, -4.9, H - .85], [x, -5.35, H - 1.5], .26, .3, 12); M.tube('bulb', [x, -5.33, H - 1.47], [x, -5.37, H - 1.53], .27, .27, 12);
+        M.quad('shaft_spot', [[x - 1.5, -8.6, z0 + .03], [x + 1.5, -8.6, z0 + .03], [x + .3, -5.4, H - 1.55], [x - .3, -5.4, H - 1.55]]);
+        M.quad('shaft_spot', [[x, -9.8, z0 + .03], [x, -7.4, z0 + .03], [x, -5.2, H - 1.55], [x, -5.6, H - 1.55]]);
+        M.quad('glow', [[x - 1.5, -10.1, z0 + .02], [x + 1.5, -10.1, z0 + .02], [x + 1.5, -7.1, z0 + .02], [x - 1.5, -7.1, z0 + .02]]);
+      }
+      // the house: cocktail tables with a candle each and two chairs facing the stage, the runner up the aisle
+      for (const x of TX) for (const y of TY) {
+        M.cyl('lacquer_black', [x, y, 0], .5, .06, 14); M.cyl('lacquer_black', [x, y, .06], .1, 1.34, 8); M.cyl('darkwood', [x, y, 1.4], .78, .07, 20); M.cyl('gold', [x, y, 1.4], .8, .02, 20);
+        M.cyl('candle_glass', [x, y - .1, 1.47], .1, .22, 10); M.sphere('fire', [x, y - .1, 1.74], .04, 1.6, 5, 3);
+        for (const t of [-1, 1]) { const cx = x + t * .62, cy = y + 1.05; M.block('cushion', cx, cy, .82, .72, .72, .12); for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) M.block('lacquer_black', cx + a * .3, cy + b * .3, 0, .07, .07, .82); M.block('lacquer_black', cx, cy + .34, .94, .72, .08, 1.1); }
+      }
+      M.quad('runner', [[-1.5, ST.sy - 2, .012], [1.5, ST.sy - 2, .012], [1.5, HY, .012], [-1.5, HY, .012]], [[0, 0], [1, 0], [1, (HY - ST.sy + 2) / 6.4], [0, (HY - ST.sy + 2) / 6.4]]);
+      // the wall of fame: a black mat with a gold liner and a picture light over each of the frames, the sign over them
+      for (const s2 of [-1, 1]) {
+        const side = s2 < 0 ? 'left' : 'right', x = s2 * (HX - .32);
+        for (const y of PY) {
+          wallArt(M, side, y, PZ - PS / 2 - .3, PS + .6, PS + .6, 'lacquer_black', HX, HY, .04);
+          wallArt(M, side, y, PZ - PS / 2 - .12, PS + .24, PS + .24, 'gold', HX, HY, .06);
+          wallArt(M, side, y, PZ + PS / 2 - .5, PS + 1, 1.4, 'glow', HX, HY, .08);
+          M.rod('brass', [x, y - .55, PZ + PS / 2 + .55], [x, y + .55, PZ + PS / 2 + .55], .05, 8);
+          for (const t of [-1, 1]) M.rod('brass', [s2 * (HX - .04), y + t * .4, PZ + PS / 2 + .7], [x, y + t * .4, PZ + PS / 2 + .58], .02, 4);
+        }
+        wallArt(M, side, (PY[0] + PY[PY.length - 1]) / 2, PZ + PS / 2 + 1.05, 7.2, .9, 'sign_fame', HX, HY, .08);
+      }
+      // the snack bar: the counter, the popcorn machine full of popcorn, buckets by it, shelves of buckets and bottles behind
+      const [bx0, by0] = SNACK, bx1 = HX - .1, bw = bx1 - bx0, bcx = (bx0 + bx1) / 2, bcy = by0 + .6;
+      M.block('lacquer_red', bcx, bcy, 0, bw, 1.2, 1.55); M.block('darkwood', bcx, bcy, 1.55, bw + .1, 1.35, .1); M.block('gold', bcx, by0 - .02, 1.25, bw, .04, .06);
+      const px = bx0 + 2.2, pz = 1.65;
+      M.block('lacquer_red', px, bcy, pz, 1.3, 1, .3); M.box('glass', [px, bcy, pz + .95], [1.24, .94, 1.3]);
+      for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) M.block('lacquer_red', px + a * .6, bcy + b * .45, pz + .3, .08, .08, 1.3);
+      M.block('lacquer_red', px, bcy, pz + 1.6, 1.36, 1.06, .22); M.block('gold', px, bcy - .54, pz + 1.66, 1.2, .03, .1);
+      for (let k = 0; k < 40; k++) M.sphere('popcorn', [px - .5 + (k % 8) * .14, bcy - .3 + ((k / 8) | 0) * .14, pz + .36 + (k % 3) * .06], .07, 1, 5, 3);
+      for (const [dx, dz] of [[1.35, 0], [1.8, 0], [1.58, .55]]) { M.cyl('lacquer_red', [px + dx, bcy, pz + dz], .2, .5, 12, .25); M.cyl('white', [px + dx, bcy, pz + dz + .3], .23, .08, 12, .24); M.sphere('popcorn', [px + dx, bcy, pz + dz + .5], .22, .5, 8, 4); }
+      for (const z of [2.2, 3.4]) M.block('darkwood', bcx, HY - .35, z, bw, .6, .08);
+      for (let k = 0; k < 10; k++) { const x = bx0 + .6 + k * (bw - 1.2) / 9; M.cyl('lacquer_red', [x, HY - .35, 2.28], .17, .42, 10, .21); M.cyl('white', [x, HY - .35, 2.5], .2, .07, 10, .2); M.cyl(k % 2 ? 'bottle_green' : 'bottle_brown', [x, HY - .35, 3.48], .1, .5, 8); }
+      wallArt(M, 'front', bcx, 4.4, 4.8, 1.2, 'sign_snacks', HX, HY, .1);
+      // the trophy case: a gold cup with a gold mic on top on a black foot, the glass, the Roast Champion plaque on its front
+      const [qx, qy] = TROPHY;
+      M.block('darkwood', qx, qy, 0, 2.8, 2, 1.4); M.block('gold', qx, qy, 1.4, 2.9, 2.1, .06); M.box('glass', [qx, qy, 2.51], [2.6, 1.8, 2.1]);
+      for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) M.block('gold', qx + a * 1.28, qy + b * .88, 1.46, .05, .05, 2.1);
+      M.block('darkwood', qx, qy, 3.56, 2.8, 2, .1);
+      M.block('lacquer_black', qx, qy, 1.46, .7, .7, .3);
+      atK(M, qx, qy, 1.76, 0, () => lathe(M, 'gold', [[.001, 0], [.24, 0], [.08, .1], [.06, .42], [.3, .62], [.36, .96], [.001, .96]], 16));
+      M.rod('gold', [qx, qy, 2.7], [qx, qy, 3.02], .05, 8); M.sphere('gold', [qx, qy, 3.12], .13, 1.15, 12, 6);
+      M.quad('plaque_champion', [[qx + .9, qy - 1.01, .6], [qx - .9, qy - 1.01, .6], [qx - .9, qy - 1.01, 1.05], [qx + .9, qy - 1.01, 1.05]]);
+      // the club's name over the door, purple lanterns over the house
+      wallArt(M, 'front', 0, DH + .5, 5.6, 1.4, 'club_marquee', HX, HY, .1);
+      M.remap = { lantern: 'lantern_violet' }; for (const [x, y] of [[-8.25, .7], [8.25, .7], [-8.25, 5.3], [8.25, 5.3]]) chochin(M, x, y, H - .4, 1.7, .45, 1); M.remap = null;
     },
     room_sam_dojo(M) {
       M.room = true;
