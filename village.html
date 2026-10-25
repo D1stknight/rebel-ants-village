@@ -1813,12 +1813,36 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
 <script src="assets/rebel-weapon.js"></script>
 <script src="assets/rebel-games.js"></script>
 <script type="module">
+// The story save (Oct 25; assets/story-save.js, api/story-save.mjs): signed in, the story kept under the player's Rebel
+// Economy account joins this browser's before the game reads it, so another device starts where they left off and nothing
+// done on either is lost. A device remembers whose story it holds: another account signing in gets its own story (the
+// device's is kept aside under rebelAntsStoryAside:<account>). A playtest save never goes to an account.
+const StorySave = await import('./assets/story-save.js').catch(e => { console.warn('Story save did not load', e); return null; });
+const STORY_LS = { owner:'rebelAntsStoryOwner:v1', signed:'rebelAntsEconSignedIn:v1', sync:'rebelAntsStorySync:v1', aside:'rebelAntsStoryAside:' };
+const storyEarly = { late:false };
+const storyEarlyRun = (async () => {
+  if (!StorySave || storyPlaytest() || storyLsGet(STORY_LS.signed) !== '1') return null;
+  const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 4000);
+  let d = null;
+  try {
+    const r = await fetch('/api/story-save', { credentials:'same-origin', cache:'no-store', signal:ctl.signal });
+    if (r.status === 401) { storyLsSet(STORY_LS.signed, null); return null; }
+    d = await r.json().catch(() => null);
+  } catch (e) { return null; } finally { clearTimeout(tm); }
+  if (!d?.ok || !d.account || storyEarly.late) return null;
+  const res = storyAdopt(d, storyLocal());
+  if (storyEarly.late) return null;   // too late: the game has read its save (the sync after sign-in takes over)
+  storyCommit(res, d);
+  return { account:d.account, ver:d.ver, upload:res.upload, changed:res.changed };
+})();
 // New terrain (Oct 2026): villages with a terrain recipe (hub, ronin, samurai) get the Terrain Lab ground: eroded hills, painted
 // ground, far mountains, grass, trees, rocks (the hub also has its river and waterfall). ?terrain=old shows the previous
 // ground. Villages without a recipe keep the old ground.
 const NEW_TERRAIN_MODULE = new URLSearchParams(location.search).get('terrain') !== 'old'
   ? await import('./assets/village-terrain.js').catch(e => { console.warn('New terrain did not load', e); return null; })
   : null;
+const STORY_EARLY = await Promise.race([storyEarlyRun, new Promise(r => setTimeout(() => r(null), 3000))]);
+storyEarly.late = true;
 const canvas=document.getElementById('c');
 const setSt=t=>{const el=document.getElementById('ldst'); if(el) el.textContent=t;};
 // A start the browser can't finish (no WebGL): the loading screen says what is wrong and what to try, instead of a status
@@ -3674,6 +3698,7 @@ function loadSideQuestState() {
 
 function saveSideQuestState() {
   try { localStorage.setItem(SIDE_QUEST_KEY, JSON.stringify(SideQuestState)); } catch(e) {}
+  storySoon();
   try { updateQuestTracker(); } catch(e) {}
   try { refreshTaleDawn(); } catch(e) {} // first: the moon refresh may read the clock (and would skip the sunrise)
   try { refreshTaleMoon(); } catch(e) {}
@@ -4868,6 +4893,7 @@ function saveProgressionState() {
   if (!ProgressionState.customJournalEntries || typeof ProgressionState.customJournalEntries !== 'object') ProgressionState.customJournalEntries = {};
   ProgressionState.updatedAt = new Date().toISOString();
   localStorage.setItem(PROGRESSION_KEY, JSON.stringify(ProgressionState));
+  storySoon();
   updateProgressionHud();
 }
 
@@ -5253,6 +5279,7 @@ function resetLocalProgression() {
   });
   updateProgressionHud();
   closeProgressionJournal();
+  storyStartOver();
   showToast('Local progression reset');
 }
 
@@ -5267,6 +5294,7 @@ function resetHubTutorialQuest() {
   ProgressionState.completedQuests = (ProgressionState.completedQuests || []).filter(id => !HUB_TUTORIAL_QUEST_IDS.has(id));
   ProgressionState.badges = (ProgressionState.badges || []).filter(name => name !== 'Hub Initiate');
   saveProgressionState();
+  storyStartOver();
   if (activeJournalTab === 'story' || activeJournalTab === 'badges') renderProgressionJournal();
   showToast('Hub Journey reset');
 }
@@ -5303,6 +5331,7 @@ function removeBadgeFromProgressionState(badge) {
   if (!badge) return;
   ProgressionState.badges = (ProgressionState.badges || []).filter(name => name !== badge.name);
   saveProgressionState();
+  storyStartOver();
 }
 
 function renderArchivedBadgeList() {
@@ -5744,6 +5773,7 @@ function lockSelectedBadgeFromAdmin() {
   if (!badge) return;
   ProgressionState.badges = ProgressionState.badges.filter(name => name !== badge.name);
   saveProgressionState();
+  storyStartOver();
   showToast('Badge locked: ' + badge.name);
 }
 
@@ -9081,6 +9111,92 @@ function setInteractionPrompt(text, visible) {
 // (ProgressionState.rebelPoints) and never carried over. While signed in, which chests are looted and which riddles are
 // solved follows the account, so a chest first opened as a guest still pays the account once.
 const Econ = { checked:false, configured:false, on:false, kind:'', name:'', avatar:null, balance:null, today:0, cap:2000, owed:0, claimed:new Set(), hinted:false };
+// ── the story save (the early sync at the top of this script; assets/story-save.js) ──
+// Signed in, the story goes to the account: a few seconds after something is saved, every 30 s while it changes, and when
+// the page is left. A sign-in on the lobby or in the journal joins the account's story to this browser's (a reload when
+// the account's had more). StorySync is a var: the save functions call storySoon() from the start.
+var StorySync = { account:STORY_EARLY?.account || null, pending:!!STORY_EARLY?.upload, busy:false, timer:0, lastPut:0, savedAt:STORY_EARLY ? Date.now() : 0, attaching:false };
+function storyLsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function storyLsSet(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
+function storyPlaytest() { return !!storyLsGet('rebelAntsPlaytestBackup') || new URLSearchParams(location.search).has('play'); }
+function storyHash(s) { if (s == null) return '-'; let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return (h >>> 0).toString(36) + ':' + s.length; }
+function storyReadSnap() { try { const v = JSON.parse(storyLsGet(STORY_LS.sync) || 'null'); if (v && typeof v === 'object') return { hashes:v.hashes || {}, t:v.t || {}, account:v.account || null }; } catch (e) {} return { hashes:{}, t:{}, account:null }; }
+function storyLocal(snap = storyReadSnap()) { const keys = {}; for (const k of StorySave.STORY_KEYS) keys[k] = storyLsGet(k); return { keys, t:{ ...snap.t } }; }
+// what to do with the account's story: { next (the story this browser keeps), changed (next differs from it), upload }
+function storyAdopt(d, local) {
+  const owner = storyLsGet(STORY_LS.owner), cloud = d.story || null;
+  if (owner && owner !== d.account) {   // another account's story is on this device: kept aside, this account gets its own
+    storyLsSet(STORY_LS.aside + owner, JSON.stringify(local.keys));
+    const next = cloud || { keys:{}, t:{} };
+    return { next, changed:StorySave.STORY_KEYS.some(k => (next.keys[k] ?? null) !== (local.keys[k] ?? null)), upload:false };
+  }
+  if (!cloud) return { next:local, changed:false, upload:true };   // a guest's story becomes the account's
+  const adds = StorySave.storyAdds(local, cloud), next = adds ? StorySave.mergeStory(local, cloud) : local;
+  return { next, changed:adds, upload:StorySave.storyAdds(cloud, next) };
+}
+function storyCommit(res, d) {
+  if (res.changed) for (const k of StorySave.STORY_KEYS) storyLsSet(k, res.next.keys[k] ?? null);
+  storyLsSet(STORY_LS.owner, d.account);
+  const snap = storyReadSnap();
+  // what the account holds now (an upload still to go keeps the device's own changes marked)
+  snap.hashes = Object.fromEntries(StorySave.STORY_KEYS.map(k => [k, storyHash((d.story || { keys:{} }).keys[k] ?? null)]));
+  snap.t = { ...(d.story?.t || {}), ...res.next.t }; snap.account = d.account;
+  storyLsSet(STORY_LS.sync, JSON.stringify(snap));
+}
+async function storyAttach() {
+  if (!StorySave || StorySync.attaching || storyPlaytest()) return;
+  StorySync.attaching = true;
+  try {
+    const r = await fetch('/api/story-save', { credentials:'same-origin', cache:'no-store' });
+    const d = await r.json().catch(() => null);
+    if (!r.ok || !d?.ok || !d.account) return;
+    const res = storyAdopt(d, storyLocal());
+    storyCommit(res, d);
+    Object.assign(StorySync, { account:d.account, pending:res.upload, savedAt:Date.now() });
+    if (res.changed) {   // the account's story had more than this browser: the game reads it again
+      let again = false; try { again = Date.now() - Number(sessionStorage.getItem('rebelAntsStoryReload') || 0) < 60000; sessionStorage.setItem('rebelAntsStoryReload', String(Date.now())); } catch (e) {}
+      if (!again) { showToast('Loading your story from your account…', 3000); setTimeout(() => location.reload(), 1400); return; }
+    }
+    storySoon(1500);
+  } catch (e) { console.warn('story sync', e); } finally { StorySync.attaching = false; }
+}
+function storySyncOnEcon() {
+  if (!StorySave || !Econ.checked) return;
+  if (!Econ.on) { StorySync.account = null; storyLsSet(STORY_LS.signed, null); return; }
+  storyLsSet(STORY_LS.signed, '1');
+  if (StorySync.account) storySoon(); else storyAttach();
+}
+function storySoon(ms = 4000) {
+  if (!StorySync?.account) return;
+  clearTimeout(StorySync.timer);
+  StorySync.timer = setTimeout(() => storyPut(), Math.max(ms, 12000 - (Date.now() - StorySync.lastPut)));
+}
+async function storyPut(opt = {}) {
+  if (!StorySave || !StorySync?.account || StorySync.busy || storyPlaytest()) return;
+  const snap = storyReadSnap(), local = storyLocal(snap);
+  const changed = StorySave.STORY_KEYS.filter(k => storyHash(local.keys[k]) !== snap.hashes[k]);
+  const replace = !!(opt.replace || StorySync.replaceNext);
+  if (!changed.length && !StorySync.pending && !replace) return;
+  for (const k of changed) snap.t[k] = Date.now();
+  local.t = { ...snap.t };
+  const body = JSON.stringify({ story:local, replace });
+  StorySync.busy = true; StorySync.lastPut = Date.now();
+  try {
+    const r = await fetch('/api/story-save', { method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json' }, body, keepalive:!!opt.leaving && body.length < 60000 });
+    const d = await r.json().catch(() => null);
+    if (r.status === 401) { StorySync.account = null; storyLsSet(STORY_LS.signed, null); return; }
+    if (!d?.ok) { StorySync.pending = true; return; }
+    snap.hashes = Object.fromEntries(StorySave.STORY_KEYS.map(k => [k, storyHash(local.keys[k])])); snap.account = StorySync.account;
+    storyLsSet(STORY_LS.sync, JSON.stringify(snap));
+    StorySync.pending = false; StorySync.savedAt = Date.now(); if (replace) StorySync.replaceNext = false;
+  } catch (e) { StorySync.pending = true; } finally { StorySync.busy = false; }
+}
+// an admin reset starts the story over on purpose: the account's copy is replaced, not joined (else it comes back)
+function storyStartOver() { if (!StorySync?.account) return; StorySync.replaceNext = true; storySoon(500); }
+setInterval(() => { if (StorySync.account) storyPut(); }, 30000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') storyPut({ leaving:true }); });
+window.addEventListener('pagehide', () => storyPut({ leaving:true }));
+window._story = { sync:StorySync, put:storyPut, attach:storyAttach, early:STORY_EARLY }; // tests
 const ECON_PENDING_KEY = 'rebelAntsEconPending:v1';   // awards the server didn't take (offline, signed out): sent again
 const econClaimed = (kind, id) => Econ.claimed.has(`${kind}:${id}`);
 let econCheckAt = 0;
@@ -9097,6 +9213,7 @@ async function refreshEcon(force) {
   if (d.paidNow) showToast(`+${Number(d.paidNow).toLocaleString('en-US')} Rebel points held from an earlier day went to your account.`, 6000);
   if (was !== Econ.on || wasClaimed !== [...Econ.claimed].sort().join('|')) refreshEconWorld();
   if (Econ.on) flushEconPending();
+  storySyncOnEcon();
   renderJournalIfOpen();
 }
 function renderJournalIfOpen() {
@@ -9179,6 +9296,7 @@ async function econNameSubmit(action) {
 async function econSignOut() {
   try { await fetch('/api/econ-me', { method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ action:'logout' }) }); } catch (e) {}
   Object.assign(Econ, { on:false, kind:'', name:'', avatar:null, balance:null, today:0, owed:0, claimed:new Set() });
+  storySyncOnEcon();
   refreshEconWorld(); renderJournalIfOpen(); renderEconBadge();
   showToast('Signed out. Points are practice points on this device until you sign in again.', 5000);
 }
@@ -9247,7 +9365,7 @@ function econJournalCard() {
     return `<div class="journal-card full econ-card"><strong>Practice Points</strong><div class="econ-row"><div class="econ-num"><b>${local}</b>`
       + `<small>Practice points stay on this device and don't carry over.</small></div><button type="button" class="econ-btn econ-discord" onclick="econSignIn()">Sign in with Discord</button></div>`
       + form
-      + `<div class="econ-meta">Signed in, every chest, first game clear and riddle pays real Rebel points to your account: the points that forge your Rebel.</div></div>`;
+      + `<div class="econ-meta">Signed in, every chest, first game clear and riddle pays real Rebel points to your account (the points that forge your Rebel), and your story is saved there for any device.</div></div>`;
   }
   const pct = Math.min(100, Math.round(100 * (Econ.today || 0) / (Econ.cap || 2000)));
   const bal = Econ.balance == null ? '—' : Number(Econ.balance).toLocaleString('en-US');
@@ -9256,6 +9374,7 @@ function econJournalCard() {
     + `<div class="econ-num"><b>${bal}</b><small>Signed in as ${escapeHTML(Econ.name || 'Rebel')}${Econ.kind === 'discord' ? ' (Discord)' : ''}</small></div>`
     + `<button type="button" class="econ-btn" onclick="econSignOut()">Sign out</button></div>`
     + `<div class="econ-meta">Earned today ${(Econ.today || 0).toLocaleString('en-US')} of ${(Econ.cap || 2000).toLocaleString('en-US')}${Econ.owed ? ` · ${Number(Econ.owed).toLocaleString('en-US')} held for tomorrow` : ''}</div>`
+    + (StorySync.account ? `<div class="econ-meta">Your story is saved to your account${StorySync.savedAt ? ` · ${Date.now() - StorySync.savedAt < 60000 ? 'just now' : Math.round((Date.now() - StorySync.savedAt) / 60000) + ' min ago'}` : ''}: play on, on any device.</div>` : '')
     + `<div class="journal-progress"><div style="width:${pct}%"></div></div></div>`;
 }
 try { const bc = new BroadcastChannel('ra-econ'); bc.onmessage = () => refreshEcon(true); } catch (e) {}
@@ -14949,6 +15068,7 @@ function saveQuestState() {
   if (!Array.isArray(QuestState.completedQuestIds)) QuestState.completedQuestIds = [];
   if (!QuestState.objectiveProgress || typeof QuestState.objectiveProgress !== 'object') QuestState.objectiveProgress = {};
   localStorage.setItem(QUEST_STATE_KEY, JSON.stringify(QuestState));
+  storySoon();
   updateQuestTracker();
   if (typeof updateQuestTargetMarkers === 'function') updateQuestTargetMarkers(0);
   if (typeof updateQuestBuilderStatus === 'function') updateQuestBuilderStatus();

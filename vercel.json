@@ -72,6 +72,10 @@
     "api/econ-award.mjs": {
       "maxDuration": 30
     },
+    "api/story-save.mjs": {
+      "maxDuration": 30,
+      "includeFiles": "assets/story-save.js"
+    },
     "api/econ-name-login.mjs": {
       "maxDuration": 30
     },
