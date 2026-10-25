@@ -888,6 +888,11 @@
     halo_gold: { col: [.6, .43, .14], em: [.08, .055, .015], spec: [.3, .25, .15], power: 20 }, star_core: { col: [.86, 1, 1], em: [.8, 1, 1] }, star_haze: { col: [.3, .9, .95], em: [.25, .85, .92], alpha: .3 }, glow_cyan: { glow: [.15, .7, .75] },
     bolt_core: { col: [.95, .97, 1], em: [.92, .95, 1] }, glow_white: { glow: [.55, .6, .75] }, beam_white: { shaft: [.9, .95, 1], alpha: .62 },
     lotus_ray: { shaft: [.6, .95, .85], alpha: .3 }, glow_mint: { glow: [.25, .8, .62] }, glow_violet: { glow: [.4, .3, .9] },
+    // Avelor, the Owl of Summoning: his card in moonlight, his feathered back, his wings; the covens' circle and constellation
+    owl_front: { img: 'assets/npcs/owl-avelor-front.jpg', em: [.08, .08, .12] }, owl_back: { img: 'assets/npcs/owl-avelor-back.jpg', em: [.08, .08, .12] }, owl_wing: { img: 'assets/npcs/owl-avelor-wing.png', em: [.07, .07, .11] },
+    owl_talon: { col: [.74, .74, .86], em: [.05, .05, .08] }, owl_claw: { col: [.22, .23, .28], spec: [.5, .5, .6], power: 40 }, glow_moon: { glow: [.35, .45, .85] },
+    star_dim: { col: [.3, .36, .42], em: [.03, .06, .08] }, star_line: { col: [.75, .85, 1], em: [.55, .65, .9], alpha: .5 }, glow_star: { glow: [.45, .55, .9] }, glow_cyan_soft: { glow: [.05, .26, .3] },
+    moss_hang: { col: [.17, .22, .15] }, fungus_glow: { col: [.3, .85, .8], em: [.22, .7, .66] },
     skin_w: { col: [.95, .92, .9] }, skin_blue: { col: [.72, .82, .93] }, hair_black: { col: [.06, .06, .07], spec: [.3, .3, .35], power: 30 }, hair_blue: { col: [.06, .12, .3], spec: [.3, .4, .6], power: 30 },
     obi_red: { col: [.62, .07, .1] }, obi_silver: { col: [.78, .82, .88], spec: [.6, .6, .7], power: 40 }, obi_black: { col: [.06, .07, .08] }, horn: { col: [.88, .9, .95] }, ear_os: { col: [.1, .14, .18] },
     flower_pink: { col: [.95, .55, .66] }, flower_teal: { col: [.3, .75, .7], em: [.05, .2, .18] }, flower_orange: { col: [.95, .5, .12] }, ear_pink: { col: [.95, .62, .7] },
@@ -1472,6 +1477,112 @@
       M.poly('dark', [P(R - .004, a0, -.002), P(R + .016, a0, -.002), P(R + .016, a1, -.002), P(R - .004, a1, -.002)]);
     }
     for (let k = 0; k < 64; k++) { const a = (k + .5) / 64 * 2 * Math.PI, w = .011, ca = Math.cos(a), sa = Math.sin(a); M.poly('dark', [[ca * (R + .03) - sa * w, y, z + sa * (R + .03) + ca * w], [ca * (R + .075) - sa * w, y, z + sa * (R + .075) + ca * w], [ca * (R + .075) + sa * w, y, z + sa * (R + .075) - ca * w], [ca * (R + .03) + sa * w, y, z + sa * (R + .03) - ca * w]]); }
+  }
+  // Avelor, the Owl of Summoning (Moon Tales 21-24): Vicky's owl card ("use it and just change colours to suit") turned
+  // from sunset to moonlight (assets/npcs/owl-avelor-front.jpg). His egg-shaped body is a lathe of the card's outline in
+  // metres, z 0 at his perch (the branch top under his feet on the card); the picture paints his front above the art's
+  // branch (zCut), the feathers of his back the rest; ear tufts and tail are flat pieces painted from the same picture
+  const OWL = {
+    prof: [[.000, -.081], [.086, -.072], [.154, -.051], [.193, -.030], [.220, -.009], [.238, .013], [.249, .034], [.255, .055], [.256, .068], [.275, .093], [.291, .119], [.301, .144], [.319, .170], [.329, .196], [.337, .221], [.343, .246], [.347, .272], [.349, .297], [.351, .323], [.351, .348], [.350, .374], [.348, .400], [.343, .425], [.337, .451], [.330, .476], [.320, .501], [.310, .527], [.298, .552], [.283, .578], [.262, .604], [.236, .629], [.240, .654], [.246, .680], [.246, .706], [.244, .714], [.240, .729], [.235, .745], [.228, .760], [.218, .775], [.207, .790], [.194, .806], [.178, .821], [.159, .836], [.135, .852], [.104, .867], [.052, .883], [.030, .886], [.000, .888]],
+    uv: [-.361, .722, -.240, 1.198], zCut: .068,
+    tuft: [[.229, .947], [.216, .918], [.201, .875], [.184, .842], [.165, .820], [.137, .799], [.124, .769], [.193, .765], [.218, .786], [.239, .812], [.254, .842], [.250, .863], [.259, .874], [.252, .892], [.240, .926]],
+    tail: [[-.165, -.078], [.166, -.078], [.175, -.111], [.165, -.144], [.139, -.178], [.097, -.208], [.045, -.225], [.000, -.230], [-.045, -.225], [-.096, -.208], [-.138, -.178], [-.164, -.144], [-.174, -.111]],
+    eyes: [[-.109, .678], [.109, .678]], shoulder: [.275, .552], feet: [-.090, .090], back: .04,
+  };
+  // his body: the card's front within arc degrees of his front and above zCut, the feathers of his back round the rest
+  function owlBody(M) {
+    const prof = OWL.prof, z0 = prof[0][1], H = prof[prof.length - 1][1] - z0, segs = 32, arc = 80 * Math.PI / 180, b = OWL.back, uv = OWL.uv;
+    const P = (r, z, a) => [r * Math.cos(a), b + r * Math.sin(a), z];
+    for (let i = 0; i < prof.length - 1; i++) for (let j = 0; j < segs; j++) {
+      const a0 = j / segs * Math.PI * 2, a1 = (j + 1) / segs * Math.PI * 2, [r0, za] = prof[i], [r1, zb] = prof[i + 1];
+      const q = [[r0, za, a0, j], [r0, za, a1, j + 1], [r1, zb, a1, j + 1], [r1, zb, a0, j]].filter((e, k, A) => k === 0 || !(e[0] < 1e-6 && A[k - 1][0] < 1e-6));
+      const pts = q.map(e => P(e[0], e[1], e[2])), front = Math.abs((a0 + a1) / 2 - 1.5 * Math.PI) < arc && (za + zb) / 2 > OWL.zCut;
+      if (front) M.poly('owl_front', pts, pts.map(p => [(p[0] - uv[0]) / uv[1], (p[2] - uv[2]) / uv[3]]));
+      else M.poly('owl_back', pts, q.map(e => [e[3] / segs, (e[1] - z0) / H]));
+    }
+    const UVp = p => [(p[0] - uv[0]) / uv[1], (p[2] - uv[2]) / uv[3]];
+    for (const sd of [-1, 1]) { // the ear tufts: horns painted from his card, a little thickness, dark edges
+      const T = OWL.tuft.map(([x, z]) => [x * sd, z]), A = T.slice(0, 7), Bq = [T[0]].concat(T.slice(7).reverse());
+      const rs = (L, n) => { const d = [0]; for (let k = 1; k < L.length; k++) d.push(d[k - 1] + Math.hypot(L[k][0] - L[k - 1][0], L[k][1] - L[k - 1][1])); const out = []; for (let k = 0; k < n; k++) { const t = d[d.length - 1] * k / (n - 1); let m = 1; while (m < d.length - 1 && d[m] < t) m++; const f = (t - d[m - 1]) / ((d[m] - d[m - 1]) || 1); out.push([L[m - 1][0] + (L[m][0] - L[m - 1][0]) * f, L[m - 1][1] + (L[m][1] - L[m - 1][1]) * f]); } return out; };
+      const a = rs(A, 7), c = rs(Bq, 7), yF = -.1, yB = -.065;
+      for (let k = 0; k < 6; k++) {
+        const f = [[a[k][0], yF, a[k][1]], [c[k][0], yF, c[k][1]], [c[k + 1][0], yF, c[k + 1][1]], [a[k + 1][0], yF, a[k + 1][1]]];
+        M.poly('owl_front', f, f.map(UVp)); M.poly('owl_back', f.map(q => [q[0], yB, q[2]]), [[.1, .9], [.12, .9], [.12, .95], [.1, .95]]);
+        for (const L of [a, c]) M.poly('dark', [[L[k][0], yF, L[k][1]], [L[k + 1][0], yF, L[k + 1][1]], [L[k + 1][0], yB, L[k + 1][1]], [L[k][0], yB, L[k][1]]]);
+      }
+    }
+    { // the tail: hanging behind his perch, painted from the card, tipped back as it falls
+      const zt = OWL.tail[0][1], pts = OWL.tail.map(([x, z]) => [x, b + .1 + (zt - z) * .55, z]);
+      M.poly('owl_front', pts, pts.map(UVp));
+    }
+    for (const fx of OWL.feet) { // talons gripping his branch: three toes over its front, one behind, dark claws
+      M.sphere('owl_talon', [fx, -.03, .045], .05, .75, 8, 4);
+      for (const dx of [-.032, 0, .032]) {
+        const path = curveTube(M, 'owl_talon', [[fx + dx * .5, -.03, .03], [fx + dx, -.075, .02], [fx + dx * 1.1, -.105, -.02], [fx + dx * 1.1, -.1, -.065]], [.02, .018, .015, .011], { segs: 6, n: 3, ridge: 0, bump: 0, cap: false });
+        const e = path[path.length - 1]; M.tube('owl_claw', e, [e[0], e[1] + .025, e[2] - .045], .011, .001, 5);
+      }
+      const bk = curveTube(M, 'owl_talon', [[fx, 0, .03], [fx, .065, -.01], [fx, .085, -.06]], [.018, .014, .01], { segs: 6, n: 3, ridge: 0, bump: 0, cap: false });
+      const e = bk[bk.length - 1]; M.tube('owl_claw', e, [e[0], e[1] - .02, e[2] - .04], .01, .001, 5);
+    }
+    for (const [ex, ez] of OWL.eyes) { const y = b - Math.sqrt(Math.max(0, .246 * .246 - ex * ex)) - .008; M.quad('glow_moon', [[ex - .05, y, ez - .05], [ex + .05, y, ez - .05], [ex + .05, y, ez + .05], [ex - .05, y, ez + .05]]); } // eyes holding a thousand moons
+  }
+  // a spread wing (the right one; the left is its mirror): root at his shoulder, 1.45 m out, the leading edge forward,
+  // a little camber; the feathers are in its picture (alpha cut)
+  function owlWing(M) {
+    const S = 1.45, Cf = -.16, Cb = .56, I = 7, J = 3;
+    const pt = (i, j) => { const x = i / I * S, y = Cf + (Cb - Cf) * j / J, t = (y - Cf) / (Cb - Cf); return [x, y, .05 * Math.sin(Math.PI * t) * (1 - .6 * x / S) + .04 * (x / S) ** 2]; };
+    for (let i = 0; i < I; i++) for (let j = 0; j < J; j++) M.poly('owl_wing', [pt(i, j), pt(i + 1, j), pt(i + 1, j + 1), pt(i, j + 1)], [[i / I, 1 - j / J], [(i + 1) / I, 1 - j / J], [(i + 1) / I, 1 - (j + 1) / J], [i / I, 1 - (j + 1) / J]]);
+  }
+  // the ancient tree of Ophira's glade: a huge gnarled trunk on spreading roots, crooked limbs, hanging moss, glowing
+  // fungi, and one long low branch reaching out along +x: the Owl of Summoning's perch (OWL_PERCH, the top of the branch)
+  const OWL_PERCH = [2.5, 0, 2.71];
+  function ancientTree(M) {
+    blob(M, 'moss', [0, 0, .02], 2.4, 2.2, .42, { flat: .5, amp: .3, seed: 8, segs: 14, rings: 6 });
+    curveTube(M, 'bark_old', [[0, 0, -.3], [.12, .1, 1.2], [-.08, .16, 2.5], [.18, 0, 3.9], [-.05, -.1, 5.2], [.1, 0, 6.2]], [1.05, .78, .62, .5, .36, .2], { segs: 16, n: 5, ridge: .24, bump: .16, seed: 31, k: 7 });
+    for (let k = 0; k < 7; k++) { const a = k * .9 + .3, c = Math.cos(a), sn = Math.sin(a); curveTube(M, 'bark_old', [[c * .5, sn * .5, .9], [c * 1.5, sn * 1.5, .35], [c * 2.5, sn * 2.5, .05], [c * 3.2, sn * 3.2, -.12]], [.5, .3, .16, .06], { segs: 8, n: 3, seed: 40 + k }); }
+    curveTube(M, 'bark_old', [[.25, 0, 2.25], [1.2, -.05, 2.45], [2.2, 0, 2.56], [3.05, .05, 2.6], [3.85, 0, 2.74]], [.36, .22, .14, .11, .05], { segs: 10, n: 5, ridge: .05, bump: .03, seed: 33 }); // the perch
+    curveTube(M, 'bark_old', [[3.1, .04, 2.62], [3.4, .25, 2.95], [3.55, .3, 3.3]], [.05, .02], { segs: 5, n: 3, seed: 34 });
+    curveTube(M, 'bark_old', [[1.6, -.05, 2.5], [1.8, -.35, 2.85], [1.75, -.5, 3.2]], [.06, .02], { segs: 5, n: 3, seed: 35 });
+    const limbs = [[2.3, 4.2, 3.4, 6.4], [3.6, 4.8, 3.8, 7.2], [5.0, 4.4, 3.2, 6.8], [.8, 5.4, 2.8, 7.6], [4.2, 5.8, 2.4, 7.9]];
+    limbs.forEach(([a, z0, L, z1], k) => { const c = Math.cos(a), sn = Math.sin(a); curveTube(M, 'bark_old', [[c * .2, sn * .2, z0], [c * L * .4, sn * L * .4, z0 + .9], [c * L * .75 - sn * .5, sn * L * .75 + c * .5, z1 - .4], [c * L, sn * L, z1]], [.3, .18, .09, .03], { segs: 8, n: 3, seed: 50 + k }); });
+    for (const [x, y, z, L] of [[.9, -.1, 2.4, 1], [1.7, .06, 2.48, .8], [2.9, -.05, 2.54, 1.2], [3.5, .02, 2.64, .7], [-.9, .6, 4.5, 1.1], [1.1, -1.2, 5, .9], [-1.4, -.8, 5.3, 1.3]]) // hanging moss
+      for (let q = 0; q < 3; q++) { const dx = (q - 1) * .09, L2 = L * (.7 + .3 * ((q * 7) % 3) / 2); M.poly('moss_hang', [[x + dx - .035, y, z], [x + dx + .035, y, z], [x + dx + .01, y, z - L2], [x + dx - .01, y, z - L2]]); }
+    for (let k = 0; k < 9; k++) { const a = k * 2.3 + .4, r = 1.1 + .7 * ((k * 5) % 4) / 3; M.sphere('fungus_glow', [Math.cos(a) * r, Math.sin(a) * r, .12 + .04 * (k % 2)], .07 + .03 * (k % 3), .45, 7, 3); }
+    M.quad('glow_cyan_soft', [[-2.6, -2.6, .06], [2.6, -2.6, .06], [2.6, 2.6, .06], [-2.6, 2.6, .06]]);
+  }
+  // Ophira's star laid on the ground in a ring of runes, where the covens gather (Moon Tales 24): dim until it is woken
+  function groundStroke(M, m, a, b, w, z) {
+    const L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, nx = -(b[1] - a[1]) / L * w / 2, ny = (b[0] - a[0]) / L * w / 2;
+    M.poly(m, [[a[0] + nx, a[1] + ny, z], [b[0] + nx, b[1] + ny, z], [b[0] - nx, b[1] - ny, z], [a[0] - nx, a[1] - ny, z]]);
+  }
+  function sacredCircle(M, lit) {
+    const R = 4.6, m = lit ? 'star_core' : 'star_dim', z = .045, n = 64;
+    for (const [r, w] of [[R, .08], [R - .42, .05]]) for (let k = 0; k < n; k++) { const a0 = k / n * 2 * Math.PI, a1 = (k + 1) / n * 2 * Math.PI; groundStroke(M, m, [Math.cos(a0) * r, Math.sin(a0) * r], [Math.cos(a1) * r, Math.sin(a1) * r], w, z); }
+    const pt = k => { const a = Math.PI / 2 + k * 2 * Math.PI / 5; return [Math.cos(a) * (R - .42), Math.sin(a) * (R - .42)]; };
+    for (let k = 0; k < 5; k++) groundStroke(M, m, pt(k), pt(k + 2), .07, z + .002);
+    for (let k = 0; k < 30; k++) { const a = (k + .5) / 30 * 2 * Math.PI, r0 = R - .33, r1 = R - .09, tw = .12 * Math.sin(k * 2.7); groundStroke(M, m, [Math.cos(a + tw * .02) * r0, Math.sin(a + tw * .02) * r0], [Math.cos(a - tw * .02) * r1, Math.sin(a - tw * .02) * r1], .03, z); }
+    for (let k = 0; k < 5; k++) { const [x, y] = pt(k); M.cyl(m, [x, y, 0], .16, .06, 10); if (lit) M.quad('glow_cyan', [[x - .8, y - .8, .07], [x + .8, y - .8, .07], [x + .8, y + .8, .07], [x - .8, y + .8, .07]]); }
+    if (lit) M.quad('glow_cyan_soft', [[-R - .8, -R - .8, .065], [R + .8, -R - .8, .065], [R + .8, R + .8, .065], [-R - .8, R + .8, .065]]);
+  }
+  // the constellation the covens weave above the forest (Moon Tales 24): an owl with spread wings in stars, ~26 m across,
+  // high over the glade and leaning down to face it (centre C, plane axes X / Y); it stays in the sky after
+  const OWL_STARS = { tl: [-2.2, 7], tr: [2.2, 7], cr: [0, 5.6], el: [-1.2, 4.2], er: [1.2, 4.2], bk: [0, 2.9], ch: [0, .4], bl: [0, -3.6], ta: [0, -6.6], tbl: [-1.6, -8.4], tbr: [1.6, -8.4],
+    sl: [-2.4, 1.8], sr: [2.4, 1.8], ml: [-7, 3.8], mr: [7, 3.8], wl: [-13, 1.8], wr: [13, 1.8], fl: [-10, -1.4], fr: [10, -1.4], il: [-5, -2.1], ir: [5, -2.1] };
+  const OWL_LINES = [['tl', 'cr'], ['cr', 'tr'], ['tl', 'el'], ['tr', 'er'], ['el', 'bk'], ['er', 'bk'], ['bk', 'ch'], ['ch', 'bl'], ['bl', 'ta'], ['ta', 'tbl'], ['ta', 'tbr'],
+    ['ch', 'sl'], ['ch', 'sr'], ['sl', 'ml'], ['ml', 'wl'], ['wl', 'fl'], ['fl', 'il'], ['il', 'bl'], ['sr', 'mr'], ['mr', 'wr'], ['wr', 'fr'], ['fr', 'ir'], ['ir', 'bl']];
+  const OWL_SKY = { C: [0, 26, 36], X: [1, 0, 0], Y: [0, -.772, .636] };
+  function owlConstellation(M) {
+    const { C, X, Y } = OWL_SKY, at = (u, v) => [C[0] + u * X[0] + v * Y[0], C[1] + u * X[1] + v * Y[1], C[2] + u * X[2] + v * Y[2]];
+    const N = [0, -.636, -.772]; // the plane's normal, toward the glade: quads lie in the plane
+    for (const [a, b] of OWL_LINES) {
+      const [u0, v0] = OWL_STARS[a], [u1, v1] = OWL_STARS[b], L = Math.hypot(u1 - u0, v1 - v0) || 1, nu = -(v1 - v0) / L * .09, nv = (u1 - u0) / L * .09;
+      M.poly('star_line', [at(u0 + nu, v0 + nv), at(u1 + nu, v1 + nv), at(u1 - nu, v1 - nv), at(u0 - nu, v0 - nv)]);
+    }
+    for (const [k, [u, v]] of Object.entries(OWL_STARS)) {
+      const big = /^(el|er|cr|wl|wr|ta)$/.test(k), r = big ? .42 : .28, g = big ? 2.4 : 1.5, c = at(u, v);
+      M.sphere('star_core', c, r, 1, 8, 5);
+      M.poly('glow_star', [at(u - g, v - g), at(u + g, v - g), at(u + g, v + g), at(u - g, v + g)].map(q => [q[0] + N[0] * .05, q[1] + N[1] * .05, q[2] + N[2] * .05]));
+    }
   }
   // the light pouring down from Lunara's lotus (painted on her, as on her card) onto the ground in front of her, fanning
   // out, and a soft mint glow where it lands (c = the lotus's centre)
@@ -3248,6 +3359,13 @@
       }
     },
     cc_witch_lunara(M) { matryoshka(M, 'witch_lunara_front', 'witch_lunara_back', WITCH_DOLLS.lunara.prof, WITCH_DOLLS.lunara.uv); witchHalo(M, 1.778, .529); lotusLight(M, [0, -.5, .3]); }, // Lunar Witch 583, Keeper of Moonlit Blooms
+    // ── Avelor, the Owl of Summoning (an actor: buildOwl), his ancient tree, the covens' circle and their constellation ──
+    cc_owl_avelor(M) { owlBody(M); },
+    cc_owl_wing(M) { owlWing(M); },
+    cc_ancient_tree(M) { ancientTree(M); },
+    cc_sacred_circle(M) { sacredCircle(M, false); },
+    cc_sacred_circle_lit(M) { sacredCircle(M, true); },
+    cc_owl_constellation(M) { owlConstellation(M); },
     cc_witch_seer(M) { // Lunar Witch 492, Ophira the Seer: her crystal ball glows; the beams out of her closed eyes are the subpart cc_seer_beams
       matryoshka(M, 'witch_seer_front', 'witch_seer_back', WITCH_DOLLS.seer.prof, WITCH_DOLLS.seer.uv);
       M.quad('glow_violet', [[-.32, -.62, .2], [.32, -.62, .2], [.32, -.62, .84], [-.32, -.62, .84]]);
@@ -3866,6 +3984,7 @@
     for (let i = actors.length - 1; i >= 0; i--) {
       const a = actors[i]; if (a.body.isDisposed?.()) { actors.splice(i, 1); continue; }
       if (a.kind === 'ape') { animateApe(a, t); continue; }
+      if (a.kind === 'owl') { animateOwl(a, t); continue; }
       if (a.kind === 'still') { /* only the subparts move */ }
       else if (a.kind === 'rock') { a.body.rotation.z = .07 * Math.sin(t * 1.5 + a.ph); a.body.rotation.x = .035 * Math.sin(t * 1.1 + a.ph * 2); }
       else if (a.kind === 'hover') { a.body.position.y = .22 + .18 * Math.sin(t * 2.2 + a.ph); a.body.rotation.z = .12 * Math.sin(t * 1.4 + a.ph); a.body.rotation.y = .35 * Math.sin(t * .7 + a.ph); }
@@ -3934,6 +4053,35 @@
     const reach = (th, k) => APE_L1 * Math.cos(th) + APE_L2 * Math.cos(th + k);
     a.body.position.y = Math.max(reach(thL, knL), reach(thR, knR)) - APE_L1 - APE_L2 + lift;
   }
+  // the Owl of Summoning: his wings are pivots at his shoulders, folded away on the branch and spread in flight; like the
+  // apes he reads his motion from how fast the root moves (or root.metadata.owlAir: true holds him in the air, false on a perch)
+  function buildOwl(root, type, scene, shadows, skipShadows) {
+    const body = new BABYLON.TransformNode(root.name + '_body', scene); body.parent = root;
+    buildInto(body, type, scene, root, shadows, skipShadows);
+    const wing = sd => { const n = new BABYLON.TransformNode(root.name + '_wing' + (sd > 0 ? 'R' : 'L'), scene); n.parent = body; n.position.set(sd * OWL.shoulder[0], OWL.shoulder[1], OWL.back); buildInto(n, 'cc_owl_wing', scene, root, shadows, skipShadows); n.scaling.set(sd * .001, .001, .001); n.setEnabled(false); return n; };
+    actors.push({ kind: 'owl', root, body, wR: wing(1), wL: wing(-1), subs: [], ph: 0, ph0: Math.random() * 6.28, open: 0, v: 0, vy: 0, tl: null, last: null });
+    ensureAnim(scene);
+  }
+  function animateOwl(a, t) {
+    const dt = a.tl == null ? 0 : Math.min(.1, Math.max(0, t - a.tl)); a.tl = t;
+    const p = a.root.getAbsolutePosition(); let sp = 0, vy = 0;
+    if (a.last && dt > 0) { const d = Math.hypot(p.x - a.last.x, p.z - a.last.z); if (d < 6) { sp = d / dt; vy = (p.y - a.last.y) / dt; } }
+    a.last = { x: p.x, y: p.y, z: p.z };
+    const k = Math.min(1, dt * 5); a.v += (sp - a.v) * k; a.vy += (vy - a.vy) * k;
+    const md = a.root.metadata || {}, air = md.owlAir != null ? !!md.owlAir : a.v > .6 || Math.abs(a.vy) > .4;
+    a.open += ((air ? 1 : 0) - a.open) * Math.min(1, dt * (air ? 5 : 2.5)); const o = a.open;
+    const rate = air ? (a.v < 1.2 ? 3.4 : 2.1) + Math.max(0, a.vy) * .45 : 1.2;            // a hover flutters, a climb beats harder
+    a.ph += dt * rate * 2 * Math.PI;
+    const glide = air && a.v > 3 && a.vy < -.25 ? .35 : 1, flap = o * (.14 + .6 * glide * Math.sin(a.ph));
+    a.wR.rotation.z = flap; a.wL.rotation.z = -flap;
+    const sc = Math.max(.001, o); a.wR.scaling.set(sc, sc, sc); a.wL.scaling.set(-sc, sc, sc);
+    const on = o > .03; if (a.wR.isEnabled() !== on) { a.wR.setEnabled(on); a.wL.setEnabled(on); }
+    a.body.rotation.x = -.42 * o * Math.min(1, .35 + a.v / 4);                              // leaning into the flight
+    a.body.position.y = o * .05 * Math.sin(a.ph + 1.2);
+    const br = Math.sin(t * 1.6 + a.ph0) * (1 - o), cock = Math.max(0, Math.min(1, (Math.sin(t * .23 + a.ph0) - .45) / .25)) * (1 - o);
+    a.body.scaling.set(1 + .015 * br, 1 - .01 * br, 1 + .015 * br);
+    a.body.rotation.z = .2 * cock * Math.sin(t * .9 + a.ph0);                                  // on the branch he breathes and cocks his head
+  }
   function actorAction(root, kind, dur) { const a = actors.find(x => x.root === root); if (a) a.act = { kind, t0: null, dur: dur || (kind === 'jump' ? .9 : kind === 'dance' ? 1.92 : 1.1) }; return !!a; }
   const actorBusy = root => !!actors.find(x => x.root === root)?.act; // a one-shot still playing
   function ensureAnim(scene) { if (!scene._kitFloat) scene._kitFloat = scene.onBeforeRenderObservable.add(() => animate(performance.now() / 1000)); }
@@ -3953,6 +4101,7 @@
   function build(root, type, scene, shadows, skipShadows) {
     if (!B[type]) return false;
     if (APE_LOOK[type.slice(8)] && type.startsWith('chz_ape_')) { buildApe(root, type, scene, shadows, skipShadows); return true; }
+    if (type === 'cc_owl_avelor') { buildOwl(root, type, scene, shadows, skipShadows); return true; }
     if (CHAR[type]) { // a body node to rock, subparts on pivots inside it
       const body = new BABYLON.TransformNode(root.name + '_body', scene); body.parent = root;
       const subs = (SUBPARTS[type] || []).map(([st, [x, y, z], kind]) => { const n = new BABYLON.TransformNode(root.name + '_' + st, scene); n.parent = body; n.position.set(x, z, y); buildInto(n, st, scene, root, shadows, skipShadows); return { node: n, kind }; });
@@ -7439,5 +7588,5 @@
     }
     return walkTriangles(parts);
   }
-  window.SamuraiKit = { build, setLightFactor, animate, actorAction, actorBusy, protoMeshes, decks, rooms: ROOMS, stairsSteps, refreshStairs, types: Object.keys(B), walkEligible, walkTriangles, walkTrianglesOf, walkRoomParts, _Kit: Kit, _B: B, _org: { blob, curveTube } };
+  window.SamuraiKit = { owlPerch: OWL_PERCH, owlSky: { ...OWL_SKY, stars: OWL_STARS }, build, setLightFactor, animate, actorAction, actorBusy, protoMeshes, decks, rooms: ROOMS, stairsSteps, refreshStairs, types: Object.keys(B), walkEligible, walkTriangles, walkTrianglesOf, walkRoomParts, _Kit: Kit, _B: B, _org: { blob, curveTube } };
 })();
