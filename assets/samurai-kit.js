@@ -3336,7 +3336,7 @@
       M.rod('cat_white', [-.3, -.28, .74], [-.36, -.48, .7], .1, 6); M.sphere('cat_white', [-.36, -.5, .7], .12, 1, 6, 4);
       for (const [x, y, z, r] of [[.5, -.3, .1, .13], [.62, 0, .25, .11], [-.62, .1, .2, .12], [.55, -.2, .45, .1]]) ccFlower(M, 'flower_pink', x, y, z, r);
     },
-    // the Lunar Witch of Mochi's tale (Moon Tales 05-08): Vicky's moth witch, a matryoshka doll in purple with a gold band
+    // Ghostwing (Lunar Witch 374, Beacon to Wandering Souls), the witch of Mochi's tale (Moon Tales 05-08): Vicky's moth witch, a matryoshka doll in purple with a gold band
     // across her eyes, a dark moon in a lavender crescent and a death's-head moth; outline and front straight from her art
     cc_lunar_witch(M) { matryoshka(M, 'witch_moth_front', 'witch_moth_back', WITCH_MOTH.prof, WITCH_MOTH.uv); },
     // ── Vicky's Lunar Witches of the Owl of Summoning (Moon Tales 21-24) ──
@@ -3386,7 +3386,7 @@
       for (let k = 0; k < 260; k++) { const a = r() * 6.283, d = 8.5 * Math.sqrt(r()); ccPetal(M, Math.cos(a) * d, Math.sin(a) * d, .03, .06 + .05 * r(), r() * 6.283, 0); }
       M.quad('glow_pink', [[-4, -4, .05], [4, -4, .05], [4, 4, .05], [-4, 4, .05]]);
     },
-    cc_rose_pendant(M) { // the Rose Quartz pendant Mochi carried, now in the Lunar Witch's palm (Moon Tales 07): glows like a heartbeat; hovers
+    cc_rose_pendant(M) { // the Rose Quartz pendant Mochi carried, now in Ghostwing's palm (Moon Tales 07): glows like a heartbeat; hovers
       // before her chest (the hover lifts it .04-.4 m): higher, it hung over her face
       M.sphere('rose_quartz', [0, 0, .78], .085, 1.6, 6, 3); M.sphere('chrome', [0, 0, .94], .022, 1, 5, 3);
       for (const dx of [-.06, .06]) M.rod('chrome', [dx, 0, 1.1], [0, 0, .95], .008, 3);

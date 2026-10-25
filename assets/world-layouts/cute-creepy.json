@@ -45301,7 +45301,7 @@
       "style": "dojo",
       "kit": "room_cc_witch",
       "prompt": "Press O to Enter",
-      "description": "The Lunar Witch's cottage: the cauldron bubbling green, potions on every shelf, bats in the beams, the black cat by the fire.",
+      "description": "Ghostwing's cottage: the cauldron bubbling green, potions on every shelf, bats in the beams, the black cat by the fire.",
       "modelUrl": "",
       "musicPath": "",
       "accent": {
@@ -45676,10 +45676,10 @@
           {
             "interiorId": "cc_witch_cottage",
             "hotspotId": "hotspot_cc_witch_cottage_cauldron",
-            "linkName": "The Lunar Witch's Cauldron",
+            "linkName": "Ghostwing's Cauldron",
             "actionType": "showInfo",
             "url": "",
-            "description": "Something green and friendly is bubbling. Her note is pinned to the beam above it, in silver ink: \"One for each moon. A cherry petal for the Pink, a sleepy bud for the Flower, a silver chime for the Hare, a crumb of moon cake for the Harvest. Stir until it tastes like friendship.\" The Lunar Witch says it is soup. The bats say otherwise.",
+            "description": "Something green and friendly is bubbling. Her note is pinned to the beam above it, in silver ink: \"One for each moon. A cherry petal for the Pink, a sleepy bud for the Flower, a silver chime for the Hare, a crumb of moon cake for the Harvest. Stir until it tastes like friendship.\" Ghostwing says it is soup. The bats say otherwise.",
             "enabled": true,
             "position": {
               "x": 0,
@@ -45703,7 +45703,7 @@
             "linkName": "The Spell Book",
             "actionType": "showInfo",
             "url": "",
-            "description": "Half the pages are spells, half are recipes, and the Lunar Witch is not always sure which is which.",
+            "description": "Half the pages are spells, half are recipes, and Ghostwing is not always sure which is which.",
             "enabled": true,
             "position": {
               "x": 4.8,
@@ -45727,7 +45727,7 @@
             "linkName": "The Witch's Brew",
             "actionType": "showInfo",
             "url": "",
-            "description": "The Lunar Witch's recipe page lies open by the cauldron: a riddle for each ingredient. Pour them in order.",
+            "description": "Ghostwing's recipe page lies open by the cauldron: a riddle for each ingredient. Pour them in order.",
             "enabled": true,
             "position": {
               "x": -2.6,
@@ -45770,7 +45770,7 @@
           {
             "interiorId": "cc_witch_cottage",
             "hotspotId": "hotspot_cc_witch_cottage_page",
-            "linkName": "The Lunar Witch's page",
+            "linkName": "Ghostwing's page",
             "actionType": "showInfo",
             "url": "",
             "description": "Her handwriting runs silver across the page:\n\nSpring again. The hill dances with blossoms and birdsong, and love blooms like wildflowers everywhere I look. They call me wise, and they call me kind.\n\nThen why, on nights like these, this hollow ache in my heart?",
@@ -46227,7 +46227,7 @@
       "radius": 2.2,
       "secretId": "cc-midnight-brew",
       "secretName": "Midnight Brew",
-      "text": "Round and round. The green brew goes purple, then gold, and a bubble the size of a pumpkin floats up and pops: it smells of toffee apples. The Lunar Witch would be proud."
+      "text": "Round and round. The green brew goes purple, then gold, and a bubble the size of a pumpkin floats up and pops: it smells of toffee apples. Ghostwing would be proud."
     }
   },
   {
@@ -57220,13 +57220,13 @@
     "npcId": "cc-lunar-witch",
     "factionId": "cute-creepy",
     "role": "villager",
-    "displayName": "Lunar Witch",
+    "displayName": "Ghostwing",
     "modelUrl": null,
     "modelScale": 1,
     "fallbackType": "kit:cc_lunar_witch",
     "behavior": "idle",
     "dialogueId": "default",
-    "customDialogue": "The Lunar Witch stirs her cauldron, and a death's-head moth settles on her shoulder.\nEvery moon on this hill has a tale, little Rebel, and every tale was told to me.\nThe cottage is open. Mind the cat, and do not drink anything green.",
+    "customDialogue": "Ghostwing stirs her cauldron, and a death's-head moth settles on her shoulder.\nEvery moon on this hill has a tale, little Rebel, and every tale was told to me.\nThe cottage is open. Mind the cat, and do not drink anything green.",
     "questId": null,
     "smallAntInstanceId": null,
     "haloColor": null,
@@ -57560,7 +57560,7 @@
         "A curious shimmer stirs in the shadows.",
         "From that light steps a cat, his fur white as clouds, his eyes like pools of emerald."
       ],
-      "text": "Mochi lifts his right paw and beckons, and the Lunar Witch comes softly through the blossoms."
+      "text": "Mochi lifts his right paw and beckons, and Ghostwing comes softly through the blossoms."
     }
   },
   {
