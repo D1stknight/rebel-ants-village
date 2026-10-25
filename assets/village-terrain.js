@@ -1201,6 +1201,8 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
 
   const T = {
     recipe, ground, far, material, maskTex, subdiv: SUBDIV, buildMs: Math.round(performance.now() - t0), prebuilt: !!opts.heightmapBase,
+    // a flat stone ground material that takes the same weather (the Hub's courtyard, plaza and paths)
+    wetMaterial(name, paveK) { return makeWetGroundMaterial(scene, name, material.metadata.wx, paveK); },
     // the weather on the ground (village.html, every frame): { wet, snow, rain } 0..1, sky / sun Color3, sunDir Vector3 (toward the sun)
     setWeather(o) {
       const W = material.metadata.wx;
@@ -1334,6 +1336,66 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   return T;
 }
 
+// weather on a ground material (Oct 25): the rain rings on puddles and the wet sheen / sky mirror, shared by the terrain
+// and the flat courtyard stone of villages without a ground of their own (the Hub). They read the globals gPud / gWet.
+const WX_RIPPLES = `
+    if (gPud > 0.01 && uWx.w > 0.01) {
+      vec2 rp = vPositionW.xz * 2.2, base = floor(rp), g = vec2(0.0);
+      for (int i = -1; i <= 1; i++) for (int j = -1; j <= 1; j++) {
+        vec2 cell = base + vec2(float(i), float(j));
+        float h = th2(cell), ph = fract(uWx.z * (0.8 + 0.6 * h) + h * 7.0);
+        vec2 d = rp - (cell + vec2(th2(cell + 3.1), th2(cell + 7.7)));
+        float r = length(d), R = ph * 1.1;
+        float w = exp(-pow((r - R) * 9.0, 2.0)) * (1.0 - ph) * step(th2(cell + 11.3), uWx.w * 0.9 + 0.1);
+        g += (d / max(r, 0.001)) * w * sin((r - R) * 30.0);
+      }
+      normalW = normalize(normalW + vec3(g.x, 0.0, g.y) * 0.35 * gPud);
+    }
+  `;
+const WX_SHEEN = `
+    if (gWet + gPud > 0.001) {
+      vec3 eyeV = normalize(vEyePosition.xyz - vPositionW);
+      float fr = pow(1.0 - max(dot(normalW, eyeV), 0.0), 5.0);
+      color.rgb = mix(color.rgb, uWxSky, clamp(gPud * (0.22 + 0.73 * fr) + gWet * 0.16 * fr, 0.0, 0.95));
+      color.rgb += uWxSun * pow(max(dot(normalW, normalize(uWxSunDir + eyeV)), 0.0), 90.0) * (gPud * 0.9 + gWet * 0.12);
+    }
+  `;
+function addWxUniforms(m, WX) {
+  m.AddUniform('uWx', 'vec4', WX.v); m.AddUniform('uWxSky', 'vec3', WX.sky); m.AddUniform('uWxSun', 'vec3', WX.sun); m.AddUniform('uWxSunDir', 'vec3', WX.dir);
+}
+
+// a flat stone ground (a StandardMaterial with its texture) that wets, puddles and takes snow like the terrain
+// (paveK 1: paving, more puddles and less snow)
+function makeWetGroundMaterial(scene, name, WX, paveK = 1) {
+  const m = new BABYLON.CustomMaterial(name, scene);
+  m.metadata = { perfKeepLive: true };
+  addWxUniforms(m, WX);
+  m.Fragment_Definitions(`
+    float gPud = 0.0, gWet = 0.0;
+    float th2(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
+    float tvn(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(th2(i),th2(i+vec2(1.,0.)),f.x), mix(th2(i+vec2(0.,1.)),th2(i+vec2(1.,1.)),f.x), f.y); }
+    float tfbm(vec2 p){ float a=.5, s=0.; for(int i=0;i<4;i++){ s+=a*tvn(p); p*=2.03; a*=.5; } return s; }
+  `);
+  m.Fragment_Custom_Diffuse(`
+    {
+      float wetK = uWx.x * (1.0 - uWx.y), pk = ${Number(paveK).toFixed(2)};
+      float pn = tfbm(vPositionW.xz * 0.2 + vec2(13.1, 7.7)) + 0.1 * tvn(vPositionW.xz * 1.3) + 0.08 * pk;
+      float thr = mix(0.76, 0.64, wetK);
+      gPud = smoothstep(thr, thr + 0.045, pn) * smoothstep(0.3, 0.9, wetK);
+      gWet = wetK;
+      // the stone's colour is over 1 (lit stone clamps at its texture), so the water darkens the texture itself
+      baseColor.rgb *= mix(1.0, 0.6, wetK);
+      baseColor.rgb = mix(baseColor.rgb, baseColor.rgb * vec3(0.42, 0.46, 0.5), gPud);
+      float sn = clamp(uWx.y * (0.7 + 0.3 * tvn(vPositionW.xz * 0.8)) * (1.0 - 0.6 * pk) * 1.3, 0.0, 1.0);
+      diffuseColor = mix(diffuseColor, vec3(1.0), sn);
+      baseColor.rgb = mix(baseColor.rgb, vec3(0.9, 0.93, 0.97), sn);
+    }
+  `);
+  m.Fragment_Before_Lights(WX_RIPPLES);
+  m.Fragment_Before_Fog(WX_SHEEN);
+  return m;
+}
+
 function makeTerrainMaterial(scene, maskTex, P, V, SEA, MESA, CITY) {
   const vr = V ? V.rect : [0, 0, 0, 0];
   const v3 = a => `vec3(${a.map(n => n.toFixed(3)).join(',')})`, f = v => Number(v).toFixed(2);
@@ -1346,7 +1408,7 @@ function makeTerrainMaterial(scene, maskTex, P, V, SEA, MESA, CITY) {
   // weather on the ground (Oct 25): x wetness, y snow cover, z time, w rain (0..1); the sky the puddles mirror, the sun's
   // colour and the way to it (village.html sets them every frame through T.setWeather)
   const WX = { v: new BABYLON.Vector4(0, 0, 0, 0), sky: new BABYLON.Color3(.62, .68, .74), sun: new BABYLON.Color3(0, 0, 0), dir: new BABYLON.Vector3(0, 1, 0) };
-  m.AddUniform('uWx', 'vec4', WX.v); m.AddUniform('uWxSky', 'vec3', WX.sky); m.AddUniform('uWxSun', 'vec3', WX.sun); m.AddUniform('uWxSunDir', 'vec3', WX.dir);
+  addWxUniforms(m, WX);
   m.metadata.wx = WX;
   m.Fragment_Definitions(`
     float gRoad = 0.0, gPave = 0.0, gSlope = 0.0, gMicro = 0.5, gPud = 0.0, gWet = 0.0, gSnow = 0.0;
@@ -1447,30 +1509,10 @@ function makeTerrainMaterial(scene, maskTex, P, V, SEA, MESA, CITY) {
       diffuseColor = mix(diffuseColor, vec3(0.9, 0.93, 0.97) * (0.92 + 0.08 * gMicro), gSnow);
     }
   `);
-  // rain rings on the puddles: in each 45 cm cell a drop lands now and then and its ring spreads (they bend the normal)
-  m.Fragment_Before_Lights(`
-    if (gPud > 0.01 && uWx.w > 0.01) {
-      vec2 rp = vPositionW.xz * 2.2, base = floor(rp), g = vec2(0.0);
-      for (int i = -1; i <= 1; i++) for (int j = -1; j <= 1; j++) {
-        vec2 cell = base + vec2(float(i), float(j));
-        float h = th2(cell), ph = fract(uWx.z * (0.8 + 0.6 * h) + h * 7.0);
-        vec2 d = rp - (cell + vec2(th2(cell + 3.1), th2(cell + 7.7)));
-        float r = length(d), R = ph * 1.1;
-        float w = exp(-pow((r - R) * 9.0, 2.0)) * (1.0 - ph) * step(th2(cell + 11.3), uWx.w * 0.9 + 0.1);
-        g += (d / max(r, 0.001)) * w * sin((r - R) * 30.0);
-      }
-      normalW = normalize(normalW + vec3(g.x, 0.0, g.y) * 0.35 * gPud);
-    }
-  `);
+  // rain rings on the puddles: in each 45 cm cell a drop lands now and then and its ring spreads (they bend the normal);
   // wet ground and puddles mirror the sky (more at a glancing look) and catch the sun
-  m.Fragment_Before_Fog(`
-    if (gWet + gPud > 0.001) {
-      vec3 eyeV = normalize(vEyePosition.xyz - vPositionW);
-      float fr = pow(1.0 - max(dot(normalW, eyeV), 0.0), 5.0);
-      color.rgb = mix(color.rgb, uWxSky, clamp(gPud * (0.22 + 0.73 * fr) + gWet * 0.16 * fr, 0.0, 0.95));
-      color.rgb += uWxSun * pow(max(dot(normalW, normalize(uWxSunDir + eyeV)), 0.0), 90.0) * (gPud * 0.9 + gWet * 0.12);
-    }
-  `);
+  m.Fragment_Before_Lights(WX_RIPPLES);
+  m.Fragment_Before_Fog(WX_SHEEN);
   return m;
 }
 

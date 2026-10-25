@@ -20544,9 +20544,10 @@ if (_newTerrain) _newTerrain.castShadow = m => { m.metadata = { ...(m.metadata |
             ground.createNormals(true);
         })();
 
-// Courtyard — stone tiles
+// Courtyard — stone tiles (on the new terrain they wet, puddle and take snow like the ground round them)
+const courtGroundMat=name=>(_newTerrain?.wetMaterial&&!_newTerrain.villageGround)?_newTerrain.wetMaterial(name,1):new BABYLON.StandardMaterial(name,scene);
 const court=BABYLON.MeshBuilder.CreateGround("ct",{width:220,height:220},scene);
-const courtMat=new BABYLON.StandardMaterial("courtMat",scene);
+const courtMat=courtGroundMat("courtMat");
 const courtDiff=new BABYLON.Texture("assets/cracked_concrete.jpg",scene);
 courtDiff.uScale=18;courtDiff.vScale=18;
 courtMat.diffuseTexture=courtDiff;
@@ -20556,7 +20557,7 @@ court.material=courtMat; court.position.y=.06; court.receiveShadows=true;
 
 // Inner plaza
 const plaza=BABYLON.MeshBuilder.CreateGround("pl",{width:90,height:90},scene);
-const stoneMat=new BABYLON.StandardMaterial("stoneMat",scene);
+const stoneMat=courtGroundMat("stoneMat");
 const stoneDiff=new BABYLON.Texture("assets/stone_diffuse.jpg",scene);
 stoneDiff.uScale=12;stoneDiff.vScale=12;
 stoneMat.diffuseTexture=stoneDiff;
@@ -20571,7 +20572,7 @@ if (_newTerrain?.recipe.court) {
 }
 
 // Paths
-const pathMat=new BABYLON.StandardMaterial("pathMat",scene);
+const pathMat=courtGroundMat("pathMat");
 const pathDiff=new BABYLON.Texture("assets/stone_diffuse.jpg",scene);
 pathDiff.uScale=6;pathDiff.vScale=6;
 pathMat.diffuseTexture=pathDiff;
