@@ -674,7 +674,7 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
       <button class="ctrl-btn full" onclick="resetPlayerOnboardingForAdmin()" style="width:100%">Reset Player Onboarding</button>
     </div>
     <div class="ap-section">Buildings</div>
-    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('dojo_5')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_5</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_6')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_6</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_7')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_7</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_9')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_9</span></div><div class="ap-card" onclick="spawnAssetFromPanel('hub_inner_door')"><span class="ap-icon">🚪</span><span class="ap-name">Inner Door</span></div><div class="ap-card" onclick="spawnAssetFromPanel('shrine_2')"><span class="ap-icon">⛩️</span><span class="ap-name">shrine_2</span></div><div class="ap-card" onclick="spawnAssetFromPanel('village_gate')"><span class="ap-icon">🌀</span><span class="ap-name">Village Gate</span></div><div class="ap-card" onclick="spawnAssetFromPanel('fence_1')"><span class="ap-icon">🪵</span><span class="ap-name">fence_1</span></div></div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('dojo_5')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_5</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_6')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_6</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_7')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_7</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_9')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_9</span></div><div class="ap-card" onclick="spawnAssetFromPanel('hub_inner_door')"><span class="ap-icon">🚪</span><span class="ap-name">Inner Door</span></div><div class="ap-card" onclick="spawnAssetFromPanel('hub_comedy_club')"><span class="ap-icon">🎤</span><span class="ap-name">Comedy Club</span></div><div class="ap-card" onclick="spawnAssetFromPanel('shrine_2')"><span class="ap-icon">⛩️</span><span class="ap-name">shrine_2</span></div><div class="ap-card" onclick="spawnAssetFromPanel('village_gate')"><span class="ap-icon">🌀</span><span class="ap-name">Village Gate</span></div><div class="ap-card" onclick="spawnAssetFromPanel('fence_1')"><span class="ap-icon">🪵</span><span class="ap-name">fence_1</span></div></div>
     <div class="ap-section">Samurai Buildings</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('sam_great_dojo')"><span class="ap-icon">🏯</span><span class="ap-name">Great Dojo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_library')"><span class="ap-icon">📚</span><span class="ap-name">Library</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_forge')"><span class="ap-icon">🔥</span><span class="ap-name">Forge</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_market_stall')"><span class="ap-icon">🏮</span><span class="ap-name">Market Stall</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_house')"><span class="ap-icon">🏠</span><span class="ap-name">House</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_gate')"><span class="ap-icon">⛩️</span><span class="ap-name">Gatehouse</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_palisade')"><span class="ap-icon">🪵</span><span class="ap-name">Palisade Wall</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_watchtower')"><span class="ap-icon">🗼</span><span class="ap-name">Watchtower</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_well')"><span class="ap-icon">🪣</span><span class="ap-name">Well</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_burrow')"><span class="ap-icon">🕳️</span><span class="ap-name">Ant Burrow</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_banner_pole')"><span class="ap-icon">🚩</span><span class="ap-name">Banner Pole</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_training_post')"><span class="ap-icon">🥋</span><span class="ap-name">Training Post</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_weapon_rack')"><span class="ap-icon">⚔️</span><span class="ap-name">Weapon Rack</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_stone_lantern')"><span class="ap-icon">🏮</span><span class="ap-name">Stone Lantern</span></div></div>
     <div class="ap-section">Wokou Harbour</div>
@@ -4204,6 +4204,12 @@ const MoonTaleSounds = (() => {
     hoops: { fx:t0 => { for (let r = 0; r < 5; r++) { const t = t0 + r * 2; for (const d of [0, .38]) { tone(92, t + d, .22, .3, [[1, 1, 1]]); noise(t + d, .08, .2, 'lowpass', 500); } noise(t + 1.1, .4, .14, 'highpass', 2600); } } },
     // the 3-point contest: a swish through the net, a clang off the rim, a bounce on the court
     swish: { fx:t0 => noise(t0, .35, .16, 'highpass', 2600) },
+    // Antthony's Comedy Club: the drummer's rimshot after a joke (two toms, the kick, the cymbal: ba-dum-tss) and the crowd's
+    // applause (a few hundred claps that swell and fade, a whistle)
+    rimshot: { fx:t0 => { for (const [d, f0, f1] of [[0, 210, 150], [.16, 150, 105]]) { glide(f0, f1, t0 + d, .22, .34); noise(t0 + d, .06, .2, 'bandpass', 700, 1.2); }
+      glide(110, 46, t0 + .36, .28, .42); noise(t0 + .36, .05, .25, 'lowpass', 300); noise(t0 + .5, 1.6, .2, 'highpass', 5200); noise(t0 + .5, .5, .14, 'bandpass', 8500, 1.5); } },
+    applause: { fx:t0 => { for (let k = 0; k < 220; k++) { const u = Math.random(), env = Math.sin(Math.PI * u); noise(t0 + u * 3.2, .018 + Math.random() * .02, (.05 + Math.random() * .09) * (.3 + .7 * env), 'bandpass', 900 + Math.random() * 2400, 1.4); }
+      glide(1900, 2700, t0 + .9, .35, .05); glide(2700, 2100, t0 + 1.3, .3, .05); } },
     clang: { fx:t0 => { tone(540, t0, .5, .14, [[1, 1, 1], [2.76, .5, .5], [5.4, .25, .3]]); noise(t0, .05, .2, 'bandpass', 2200, 2); } },
     // a hammer on hot steel on the anvil: the strike's crack, the anvil's bright ring (its partials out of tune, as a
     // block of iron rings), a thud of the stump; each blow a little higher or lower
@@ -6105,6 +6111,7 @@ wok_shed_wall: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
 war_cellar_door: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
 war_armory_door: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
 hub_inner_door: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+hub_comedy_club: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
 cc_hall_door: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
 chz_lounge_door: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
 chz_casino_door: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
@@ -26137,7 +26144,7 @@ let _heldSmallAntLayoutItems = [];
 // correctly. Each object is raised by (new ground − old ground) at its spot when the layout loads, and lowered by the
 // same amount whenever the layout is collected (saves, undo, backups, export); the round trip is exact. Collision boxes move with their owner. Buildings outside the
 // courtyard get a flat yard in the new ground first.
-const NEW_TERRAIN_PAD_TYPES = /^(dojo_|shrine_|torii|village_gate|temple|house|tower|hut|altar|sam_(great_dojo|library|forge|market_stall|house|gate|palisade|watchtower|well|burrow))/;
+const NEW_TERRAIN_PAD_TYPES = /^(dojo_|shrine_|torii|village_gate|temple|house|tower|hut|altar|hub_comedy_club|sam_(great_dojo|library|forge|market_stall|house|gate|palisade|watchtower|well|burrow))/;
 function newTerrainFlatGroundAt(x, z, isNew) {
   let y = -Infinity;
   const pathHalf = isNew ? 110 : 150;
@@ -26157,7 +26164,7 @@ function newTerrainDeltaAt(x, z) {
 // Building footprints in metres at scale 1 (measured from the GLBs), so a yard never depends on load timing.
 const NEW_TERRAIN_FOOTPRINTS = { dojo_9: [33.0, 23.5], dojo_5: [12.09, 8.05], shrine_2: [3.19, 1.075],
   sam_great_dojo: [24, 20], sam_library: [14.4, 12.7], sam_forge: [11, 9], sam_market_stall: [6, 3.6], sam_house: [10, 9.6],
-  sam_gate: [14, 5], sam_palisade: [8, 1.3], sam_watchtower: [4.8, 4.8], sam_well: [3, 2.5], sam_burrow: [8.4, 7] };
+  sam_gate: [14, 5], sam_palisade: [8, 1.3], sam_watchtower: [4.8, 4.8], sam_well: [3, 2.5], sam_burrow: [8.4, 7], hub_comedy_club: [22, 18] };
 function newTerrainFootprintRadius(item) {
   const base = NEW_TERRAIN_FOOTPRINTS[item.type];
   if (!base) return /^(torii|village_gate)/.test(item.type) ? 6 : 10;
@@ -33767,6 +33774,8 @@ function serializeInteriorNftFrame(frame) {
     frameStatus: meta.frameStatus || 'Owned',
     imageUrl: meta.imageUrl || '',
     title: meta.title || '',
+    ...(meta.caption ? { caption: meta.caption } : {}),
+    ...(meta.kicker ? { kicker: meta.kicker } : {}),
     enabled: meta.enabled !== false,
     ...serializeNodeTransform(frame)
   };
@@ -34814,6 +34823,8 @@ function createInteriorNftFrameSlot(parent, config = {}) {
     frameStatus: config.frameStatus || 'Owned',
     imageUrl: config.imageUrl || '',
     title: config.title || '',
+    caption: config.caption || '',
+    kicker: config.kicker || '',
     enabled: config.enabled !== false,
     questObjectiveType:'inspectInteriorNFTFrame'
   };
@@ -34874,6 +34885,10 @@ function inspectInteriorNftFrame(frame) {
   const meta = frame.metadata || {};
   recordInteriorQuestHook({ metadata: { interiorType: ActiveInterior?.interiorType, targetInteriorId: ActiveInterior?.targetInteriorId, interiorName: meta.frameName, frameId:meta.frameId, label:meta.frameName, title:meta.resolvedTitle || meta.title || meta.frameName, collection:meta.resolvedCollection } }, 'inspectInteriorNFTFrame');
   const title = meta.resolvedTitle || meta.title || meta.frameName || 'Rebel Frame';
+  if (meta.caption) {
+    openInteriorInfoPanel(title, meta.caption, meta.kicker || 'Picture', { imageUrl: meta.resolvedImageUrl || '', compact: true });
+    return true;
+  }
   const details = [
     meta.frameName && meta.frameName !== title ? meta.frameName : '',
     meta.resolvedCollection ? 'Collection: ' + meta.resolvedCollection : '',
