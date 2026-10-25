@@ -33671,6 +33671,7 @@ function serializeInteriorHotspot(hotspot) {
     ...(meta.sound ? { sound: meta.sound } : {}),
     ...(meta.prompt ? { prompt: meta.prompt } : {}),
     ...(meta.kicker ? { kicker: meta.kicker } : {}),
+    ...(meta.book ? { book: meta.book } : {}),
     ...(meta.game ? { game: meta.game } : {}),
     ...serializeNodeTransform(hotspot)
   };
@@ -34383,6 +34384,7 @@ function createInteriorHotspot(parent, config = {}) {
     sound: config.sound || '', // a quest sound when it is used (MoonTaleSounds: the dice rattling on the casino felt)
     prompt: config.prompt || '', // its own prompt ("Press O to Grab the Mic"), else "Press O to Interact"
     kicker: config.kicker || '', // the small heading on its card, else "Interior Link"
+    book: config.book && typeof config.book === 'object' ? config.book : null, // a book that opens (assets/games/book.js), then its card
     game: normalizeMiniGameDef(config.game, hotspotId), // a mini-game played here (MiniGames)
     questObjectiveType:'interactInteriorHotspot'
   };
@@ -34435,6 +34437,12 @@ function interactInteriorHotspot(hotspot) {
   if (meta.sound) MoonTaleSounds.play(meta.sound);
   recordInteriorQuestHook({ metadata: { interiorType: ActiveInterior?.interiorType, targetInteriorId: ActiveInterior?.targetInteriorId, interiorName: meta.linkName, hotspotId:meta.hotspotId, targetObjectId:meta.hotspotId, label:meta.linkName, title:meta.linkName, url:meta.url, actionType:meta.actionType } }, 'interactInteriorHotspot');
   if (meta.secretId && recordQuestSpotSecret({ secretId: meta.secretId, secretName: meta.linkName, text: meta.description })) return true; // the celebration shows its text
+  // the Library's book (Oct 25): it opens (glow, sound) and its card links to the Colony Library. A show through the games
+  // system that is never scored or listed (not a game field); in admin the info card as before
+  if (meta.book && walkMode && !adminMode && window.RebelGames) {
+    startMiniGame({ type:'book', id:'book:' + meta.hotspotId, title:meta.book.title || 'The Warning', ...meta.book, text:meta.description || '' }, { kind:'hotspot', root:hotspot, meta });
+    return true;
+  }
   if (meta.actionType === 'openUrl' && meta.url) {
     window.open(meta.url, '_blank', 'noopener');
     showToast('Opening: ' + (meta.linkName || 'Interior link'));
