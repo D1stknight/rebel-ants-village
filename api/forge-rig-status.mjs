@@ -111,8 +111,8 @@ export default async function handler(req, res) {
     try { await sandbox.stop(); } catch (e) {}
     // a build whose gloves were forged keeps a list of its rigs (+ the one replaced now): all of them lead to the new file.
     // v2.37 so does an admin re-rig of a Saints player's build (the Forge's RE-RIG WITH THE LATEST RIGGER): its saved
-    // character follows the new rig. Rebels, Chumpz and NPCs as before.
-    const relink = fr.rigHistory?.length || (fr.options?.friend === 'human' && rec.output?.forgeRigGlbUrl);
+    // character follows the new rig; Oct 25 a Chumpz player's too. Rebels and NPCs as before.
+    const relink = fr.rigHistory?.length || (['human', 'ape'].includes(fr.options?.friend) && rec.output?.forgeRigGlbUrl);
     const links = relink ? [...new Set([...(fr.rigHistory || []), rec.output?.forgeRigGlbUrl])].filter((u) => BLOB.test(u || '') && u !== blob.url).slice(-20) : [];
     if (links.length) { try { await redis(links.map((u) => ['SET', `forge:rig-latest:v1:${u}`, blob.url])); } catch (e) {} }
     const at = new Date().toISOString(), gj = glovesJob(fr) ? (({ prev, ...g }) => g)(fr.gloves) : null;

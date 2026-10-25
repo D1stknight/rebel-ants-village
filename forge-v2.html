@@ -2316,7 +2316,7 @@ function rememberSelected(ac, buildId, url) {
    (the NPCs' moves to the glove), so the whole move is applied in the hand's own space.
    Saints players (Oct 22, rigger 2.36 friend rigs) fit theirs too: their Hand bone turns about the glove's middle and
    the cuff has a bone of its own, as the NPC Forge's NPCs since 2.21, so their move goes to that pivot and the cuff
-   bone (the NPC Forge Hands panel's preview). Chumpz keep the gloves they were forged with.
+   bone (the NPC Forge Hands panel's preview). Chumpz players too since Oct 25 (the same rigs, on an ape).
    ========================================================= */
 const GL_STEP = 0.025, GL0 = { along: 0, thumb: 0, back: 0, size: 1, cuffSize: 1, cuffLen: 1 }, GL_KEYS = Object.keys(GL0);
 const GL_PRESETS = [['Ink', '#1b1b1f'], ['Bone', '#e9e2d0'], ['Crimson', '#8c1c1c'], ['Ember', '#d9622b'], ['Gold', '#d8b35c'], ['Moss', '#4f6b3a'],
@@ -2583,7 +2583,7 @@ async function glCheck() {
 }
 // the awakened card's Gloves box
 function glBoxHTML() {
-  if (glMaster() || (FRIEND && FRIEND.species !== 'human')) return '';   // Chumpz keep the gloves they were forged with (Saints fit theirs, Oct 22)
+  if (glMaster()) return '';   // Saints fit theirs since Oct 22, Chumpz since Oct 25
   return `<div class="gbox" id="glBox"><div class="sep"></div><div class="eyebrow">GLOVES · <span class="jp">手袋</span>${canForge() ? '' : ' · PREVIEW'}</div><div id="glBoxIn"></div></div>`;
 }
 function glBox() {
@@ -2603,7 +2603,7 @@ function glBox() {
 }
 // Oct 21 (rigger 2.37, Saints players stand like their sculpt): an admin re-rigs a forged Saint with the current rigger.
 // Same sculpt, no forge or points used; the new rig goes into the viewer and the holder's saved character (glWear), and
-// the replaced file leads to it (forge-rig-status links it). Saints only: Chumpz and Rebels have no such button.
+// the replaced file leads to it (forge-rig-status links it). Saints, and Chumpz since Oct 25: Rebels have no such button.
 const RR = { job: false, poll: null, tick: null, err: null, wearing: false, step: 'starting', pct: 0, t0: 0, done: null };
 // Oct 22 (Miguel: "when you re-rig in forge can you add a progress bar"): where each rig step starts, as a share of a
 // Saint's rig job (local job log, 325 s: bind 31 s, moves 93, cleanup 183, export 265, qa 306), so the bar moves at the
@@ -2627,7 +2627,7 @@ function rrProgressUI() {
   if (e) e.textContent = RR.wearing ? 'done in a moment' : `${(left => left < 60 ? 'under a minute' : `about ${fmtMin(left)}`)(Math.max(15, RR_EST * (1 - p / 100)))} left · you can close this page`;
 }
 function rrBoxHTML() {
-  if (FRIEND?.species !== 'human' || !state.own?.admin || !state.assets?.buildId || !state.assets?.glb) return '';
+  if (!FRIEND || !state.own?.admin || !state.assets?.buildId || !state.assets?.glb) return '';
   return `<div class="gbox" id="rrBox"><div class="sep"></div><div class="eyebrow">ADMIN · RIGGER</div><div id="rrIn"></div></div>`;
 }
 function rrBox() {

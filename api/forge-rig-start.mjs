@@ -92,10 +92,9 @@ async function startGloves(req, res, rec, buildId, admin, gloves) {
   const cur = rec.forgeRig || {}, rigUrl = rec.output?.forgeRigGlbUrl || '';
   if (cur.options?.npc) return res.status(400).json({ ok: false, error: 'NPC hands are fitted in the NPC Forge' });
   // Oct 22: Saints players fit their gloves too (rigger 2.36 gloves on a human: the same fit as the NPC Forge's hands);
-  // Chumpz keep the gloves they were forged with
+  // Oct 25 Chumpz players too (the same gloves, on an ape)
   const friend = cur.options?.friend || (await friendSpeciesOf(rec)) || '';
-  if (friend && friend !== 'human') return res.status(400).json({ ok: false, error: 'Chumpz keep the gloves they were forged with', code: 'friend_gloves' });
-  const noun = friend ? 'Saint' : 'Rebel';
+  const noun = friend === 'ape' ? 'Chumpz' : friend ? 'Saint' : 'Rebel';
   if (isMaster(rec)) return res.status(403).json({ ok: false, error: 'Rebel #001 keeps its gloves', code: 'master' });
   if (!BLOB.test(rigUrl)) return res.status(409).json({ ok: false, error: `Forge this ${noun} first`, code: 'no_rig' });
   if (cur.status === 'running') return res.status(200).json({ ok: true, forgeRig: cur, alreadyRunning: true });
