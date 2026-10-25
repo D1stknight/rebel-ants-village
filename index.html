@@ -1151,6 +1151,8 @@ const loadFriendPlayables = () => Promise.all(FRIEND_PLAYABLES.map((r) => attach
 // card's collection along so their holders forge them
 const FRIEND_LABELS = { chumpz: 'Chumpz', saints: 'Saint' };
 const sameCollection = (a, b) => (a?.collectionKey || 'battle_for_colony') === (b?.collectionKey || 'battle_for_colony');
+// VILLAGE_RIGGED lists Rebels: a Chumpz or Saint with the same number is another character
+const villageRigged = (rebel) => (sameCollection(rebel, {}) ? VILLAGE_RIGGED[String(rebel?.tokenId || '')] || null : null);
 // Oct 20 the Free to play roster (api/free-roster.mjs, ticked in the NPC Forge): forged Rebels anyone can play: guests,
 // wallets without a Rebel and holders whose own Rebels are not forged yet. Never #001 (the starter card).
 const FREE_NEVER = new Set(['1']);
@@ -1167,7 +1169,7 @@ function getRebelForgeStatus(rebel, hasForgeCharacter) {
   if (rebel.playerModel) return 'ready';
   const afc = rebel.activeForgeCharacter || {};
   if (hasForgeCharacter === undefined) hasForgeCharacter = Boolean(afc.activeGlbUrl || rebel.activeGlbUrl);
-  if (afc.forgeRigGlbUrl || afc.characterBundle?.forgeRigGlbUrl || VILLAGE_RIGGED[String(rebel.tokenId || '')]) return 'ready';
+  if (afc.forgeRigGlbUrl || afc.characterBundle?.forgeRigGlbUrl || villageRigged(rebel)) return 'ready';
   if (hasForgeCharacter || rebel.playableType === 'forge_build' || rebel.forgedBuild) return 'forged';
   return '';
 }
@@ -1192,7 +1194,7 @@ async function markForgedBuilds(list) {
 }
 function getRebelForgeThumb(rebel) {
   const afc = rebel.activeForgeCharacter || {};
-  return afc.forgeRigThumbUrl || afc.characterBundle?.forgeRigThumbUrl || VILLAGE_RIGGED[String(rebel.tokenId || '')]?.thumb || '';
+  return afc.forgeRigThumbUrl || afc.characterBundle?.forgeRigThumbUrl || villageRigged(rebel)?.thumb || '';
 }
 function sortRebelsByForgeStatus(list) {
   const rank = { ready: 0, forged: 1, '': 2 };
