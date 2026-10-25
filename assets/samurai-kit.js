@@ -880,6 +880,14 @@
     face_fm: { tex: 'face_fm' }, face_nr: { tex: 'face_nr', em: [.08, .14, .3] }, face_os: { tex: 'face_os', em: [.06, .1, .1] }, face_mamoru: { tex: 'face_mamoru' }, face_mochi: { tex: 'face_mochi' },
     coat_mamoru: { tex: 'coat_mamoru' }, coat_mochi: { tex: 'coat_mochi' }, kimono_fm: { tex: 'kimono_fm' }, kimono_nr: { tex: 'kimono_nr' }, kimono_os: { tex: 'kimono_os' },
     witch_moth_front: { img: 'assets/npcs/lunar-witch-moth-front.jpg', em: [.07, .05, .09] }, witch_moth_back: { img: 'assets/npcs/lunar-witch-moth-back.jpg', em: [.07, .05, .09] },
+    witch_ophira_front: { img: 'assets/npcs/lunar-witch-ophira-front.jpg', em: [.07, .05, .09] }, witch_ophira_back: { img: 'assets/npcs/lunar-witch-ophira-back.jpg', em: [.07, .05, .09] },
+    witch_elyndra_front: { img: 'assets/npcs/lunar-witch-elyndra-front.jpg', em: [.07, .05, .09] }, witch_elyndra_back: { img: 'assets/npcs/lunar-witch-elyndra-back.jpg', em: [.07, .05, .09] },
+    witch_lunara_front: { img: 'assets/npcs/lunar-witch-lunara-front.jpg', em: [.07, .05, .09] }, witch_lunara_back: { img: 'assets/npcs/lunar-witch-lunara-back.jpg', em: [.07, .05, .09] },
+    witch_seer_front: { img: 'assets/npcs/lunar-witch-seer-front.jpg', em: [.07, .05, .09] }, witch_seer_back: { img: 'assets/npcs/lunar-witch-seer-back.jpg', em: [.07, .05, .09] },
+    // their magic: the gold halo, Ophira's star, Elyndra's lightning, the Seer's beams, Lunara's lotus and its light
+    halo_gold: { col: [.6, .43, .14], em: [.08, .055, .015], spec: [.3, .25, .15], power: 20 }, star_core: { col: [.86, 1, 1], em: [.8, 1, 1] }, star_haze: { col: [.3, .9, .95], em: [.25, .85, .92], alpha: .3 }, glow_cyan: { glow: [.15, .7, .75] },
+    bolt_core: { col: [.95, .97, 1], em: [.92, .95, 1] }, glow_white: { glow: [.55, .6, .75] }, beam_white: { shaft: [.9, .95, 1], alpha: .62 },
+    lotus_ray: { shaft: [.6, .95, .85], alpha: .3 }, glow_mint: { glow: [.25, .8, .62] }, glow_violet: { glow: [.4, .3, .9] },
     skin_w: { col: [.95, .92, .9] }, skin_blue: { col: [.72, .82, .93] }, hair_black: { col: [.06, .06, .07], spec: [.3, .3, .35], power: 30 }, hair_blue: { col: [.06, .12, .3], spec: [.3, .4, .6], power: 30 },
     obi_red: { col: [.62, .07, .1] }, obi_silver: { col: [.78, .82, .88], spec: [.6, .6, .7], power: 40 }, obi_black: { col: [.06, .07, .08] }, horn: { col: [.88, .9, .95] }, ear_os: { col: [.1, .14, .18] },
     flower_pink: { col: [.95, .55, .66] }, flower_teal: { col: [.3, .75, .7], em: [.05, .2, .18] }, flower_orange: { col: [.95, .5, .12] }, ear_pink: { col: [.95, .62, .7] },
@@ -1441,6 +1449,39 @@
     prof: [[.27, 0], [.3, .025], [.318, .073], [.326, .11], [.397, .293], [.426, .33], [.472, .404], [.507, .477], [.534, .55], [.559, .66], [.573, .77], [.573, .88], [.555, 1.064], [.52, 1.21], [.488, 1.321], [.477, 1.394], [.479, 1.651], [.456, 1.761], [.426, 1.834], [.408, 1.871], [.353, 1.944], [.316, 1.981], [.268, 2.018], [.202, 2.054], [.087, 2.091], [0, 2.1]],
     uv: [-.6041, 1.2105, -.0321, 2.1642],
   };
+  // Vicky's four other Lunar Witches, the same doll template as the moth witch, each read off her own card the same way
+  // (assets/npcs/lunar-witch-<name>-front.jpg; Oct 25): the outline in metres (2.1 m tall) and where her picture sits round her
+  const WITCH_DOLLS = {
+    ophira: { prof: [[.093, .000], [.224, .042], [.298, .084], [.335, .126], [.350, .169], [.365, .211], [.381, .253], [.396, .295], [.430, .337], [.457, .379], [.480, .421], [.501, .463], [.516, .505], [.531, .548], [.543, .590], [.552, .632], [.560, .674], [.567, .716], [.569, .758], [.573, .800], [.573, .843], [.571, .885], [.569, .927], [.565, .969], [.560, 1.011], [.554, 1.053], [.545, 1.095], [.537, 1.137], [.527, 1.179], [.514, 1.222], [.501, 1.264], [.487, 1.306], [.480, 1.348], [.476, 1.390], [.474, 1.432], [.474, 1.474], [.476, 1.516], [.478, 1.559], [.479, 1.601], [.479, 1.643], [.478, 1.685], [.473, 1.727], [.463, 1.769], [.448, 1.811], [.428, 1.854], [.402, 1.896], [.368, 1.938], [.326, 1.980], [.268, 2.022], [.231, 2.043], [.194, 2.060], [.160, 2.073], [.123, 2.083], [.081, 2.092], [.000, 2.100]], uv: [-0.6014, 1.2048, -0.0295, 2.159] },
+    elyndra: { prof: [[.082, .000], [.230, .046], [.306, .092], [.338, .138], [.354, .184], [.372, .230], [.389, .276], [.418, .322], [.449, .368], [.476, .414], [.499, .460], [.517, .505], [.533, .551], [.544, .597], [.554, .643], [.562, .689], [.568, .735], [.571, .781], [.572, .827], [.572, .873], [.570, .919], [.565, .965], [.561, 1.011], [.554, 1.057], [.544, 1.103], [.534, 1.149], [.522, 1.195], [.508, 1.241], [.493, 1.287], [.482, 1.333], [.476, 1.379], [.473, 1.425], [.476, 1.470], [.482, 1.516], [.478, 1.562], [.478, 1.608], [.474, 1.654], [.468, 1.700], [.457, 1.746], [.441, 1.792], [.422, 1.838], [.398, 1.884], [.365, 1.930], [.319, 1.976], [.262, 2.022], [.234, 2.038], [.198, 2.056], [.163, 2.070], [.124, 2.082], [.083, 2.091], [.000, 2.100]], uv: [-0.6031, 1.2085, -0.0322, 2.1643] },
+    lunara: { prof: [[.082, .000], [.230, .046], [.306, .092], [.338, .138], [.354, .184], [.372, .230], [.389, .276], [.418, .322], [.449, .368], [.476, .414], [.499, .460], [.517, .505], [.533, .551], [.544, .597], [.554, .643], [.562, .689], [.568, .735], [.571, .781], [.572, .827], [.572, .873], [.570, .919], [.565, .965], [.561, 1.011], [.554, 1.057], [.544, 1.103], [.534, 1.149], [.522, 1.195], [.508, 1.241], [.493, 1.287], [.482, 1.333], [.476, 1.379], [.473, 1.425], [.476, 1.470], [.482, 1.516], [.478, 1.562], [.478, 1.608], [.474, 1.654], [.468, 1.700], [.457, 1.746], [.441, 1.792], [.422, 1.838], [.398, 1.884], [.365, 1.930], [.319, 1.976], [.262, 2.022], [.234, 2.038], [.198, 2.056], [.163, 2.070], [.124, 2.082], [.083, 2.091], [.000, 2.100]], uv: [-0.6031, 1.2085, -0.0322, 2.1643] },
+    seer: { prof: [[.093, .000], [.224, .042], [.298, .084], [.335, .126], [.350, .169], [.365, .211], [.381, .253], [.396, .295], [.430, .337], [.457, .379], [.480, .421], [.501, .463], [.516, .505], [.531, .548], [.543, .590], [.552, .632], [.560, .674], [.567, .716], [.569, .758], [.573, .800], [.573, .843], [.571, .885], [.569, .927], [.565, .969], [.560, 1.011], [.554, 1.053], [.545, 1.095], [.537, 1.137], [.527, 1.179], [.514, 1.222], [.501, 1.264], [.487, 1.306], [.480, 1.348], [.476, 1.390], [.474, 1.432], [.474, 1.474], [.476, 1.516], [.478, 1.559], [.479, 1.601], [.479, 1.643], [.478, 1.685], [.473, 1.727], [.463, 1.769], [.448, 1.811], [.428, 1.854], [.402, 1.896], [.368, 1.938], [.326, 1.980], [.268, 2.022], [.231, 2.043], [.194, 2.060], [.160, 2.073], [.123, 2.083], [.081, 2.092], [.000, 2.100]], uv: [-0.6014, 1.2048, -0.0295, 2.159] },
+  };
+  // a flat stroke in her picture's plane (x across, z up) at depth y: magic drawn on the air in front of / behind her
+  function airStroke(M, m, a, b, w, y) {
+    const L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, nx = -(b[1] - a[1]) / L * w / 2, nz = (b[0] - a[0]) / L * w / 2;
+    M.poly(m, [[a[0] + nx, y, a[1] + nz], [b[0] + nx, y, b[1] + nz], [b[0] - nx, y, b[1] - nz], [a[0] - nx, y, a[1] - nz]]);
+  }
+  // the gold halo behind Elyndra's and Lunara's heads (centre z, radius R): the disc, its dark rim, a ring of sunburst
+  // ticks; a little behind her middle, so from the front only what stands out round her head shows, as on the card
+  function witchHalo(M, z, R) {
+    const n = 48, y = .03, P = (r, a, d = 0) => [Math.cos(a) * r, y + d, z + Math.sin(a) * r];
+    for (let k = 0; k < n; k++) {
+      const a0 = k / n * 2 * Math.PI, a1 = (k + 1) / n * 2 * Math.PI;
+      M.poly('halo_gold', [[0, y, z], P(R, a0), P(R, a1)]);
+      M.poly('dark', [P(R - .004, a0, -.002), P(R + .016, a0, -.002), P(R + .016, a1, -.002), P(R - .004, a1, -.002)]);
+    }
+    for (let k = 0; k < 64; k++) { const a = (k + .5) / 64 * 2 * Math.PI, w = .011, ca = Math.cos(a), sa = Math.sin(a); M.poly('dark', [[ca * (R + .03) - sa * w, y, z + sa * (R + .03) + ca * w], [ca * (R + .075) - sa * w, y, z + sa * (R + .075) + ca * w], [ca * (R + .075) + sa * w, y, z + sa * (R + .075) - ca * w], [ca * (R + .03) + sa * w, y, z + sa * (R + .03) - ca * w]]); }
+  }
+  // the light pouring down from Lunara's lotus (painted on her, as on her card) onto the ground in front of her, fanning
+  // out, and a soft mint glow where it lands (c = the lotus's centre)
+  function lotusLight(M, c) {
+    for (let k = 0; k < 5; k++) {
+      const x0 = c[0] + (k - 2) * .14, x1 = c[0] + (k - 2) * .42, y0 = c[1] - .06, y1 = c[1] - .42 - .1 * Math.abs(k - 2);
+      M.poly('lotus_ray', [[x0 - .07, y0, c[2]], [x0 + .07, y0, c[2]], [x1 + .2, y1, .01], [x1 - .2, y1, .01]], [[0, 1], [1, 1], [1, 0], [0, 0]]);
+    }
+    M.quad('glow_mint', [[c[0] - 1.1, c[1] - 1.5, .04], [c[0] + 1.1, c[1] - 1.5, .04], [c[0] + 1.1, c[1] + .5, .04], [c[0] - 1.1, c[1] + .5, .04]]);
+  }
   function ccPetal(M, x, y, z, s, a, tilt) {
     const c = Math.cos(a), si = Math.sin(a), ct = Math.cos(tilt), st = Math.sin(tilt), P = (u, v) => [x + (u * c - v * si * ct), y + (u * si + v * c * ct), z + v * st];
     M.poly('petal_pink', [P(-s, 0), P(-s * .3, -s * .45), P(s, 0), P(s * .3, s * .45)]);
@@ -3187,6 +3228,37 @@
     // the Lunar Witch of Mochi's tale (Moon Tales 05-08): Vicky's moth witch, a matryoshka doll in purple with a gold band
     // across her eyes, a dark moon in a lavender crescent and a death's-head moth; outline and front straight from her art
     cc_lunar_witch(M) { matryoshka(M, 'witch_moth_front', 'witch_moth_back', WITCH_MOTH.prof, WITCH_MOTH.uv); },
+    // ── Vicky's Lunar Witches of the Owl of Summoning (Moon Tales 21-24) ──
+    cc_witch_ophira(M) { matryoshka(M, 'witch_ophira_front', 'witch_ophira_back', WITCH_DOLLS.ophira.prof, WITCH_DOLLS.ophira.uv); }, // Lunar Witch 617, Keeper of Ancient Wisdom; her star is the subpart cc_ophira_star
+    cc_ophira_star(M) { // her glowing pentagram as on her card, in her middle plane: only what stands out round her shows, and it meets the lines painted across her at her outline
+      const P = { T: [0, 2.344], UL: [-.905, 1.681], UR: [.907, 1.681], LL: [-.81, .385], LR: [.791, .385] };
+      for (const [a, b] of [['T', 'LL'], ['T', 'LR'], ['UL', 'UR'], ['UL', 'LR'], ['UR', 'LL']]) { airStroke(M, 'star_core', P[a], P[b], .02, 0); airStroke(M, 'star_haze', P[a], P[b], .075, .004); }
+      for (const q of Object.values(P)) M.quad('glow_cyan', [[q[0] - .22, -.02, q[1] - .22], [q[0] + .22, -.02, q[1] - .22], [q[0] + .22, -.02, q[1] + .22], [q[0] - .22, -.02, q[1] + .22]]);
+    },
+    cc_witch_elyndra(M) { matryoshka(M, 'witch_elyndra_front', 'witch_elyndra_back', WITCH_DOLLS.elyndra.prof, WITCH_DOLLS.elyndra.uv); witchHalo(M, 1.776, .529); }, // Lunar Witch 501, Born of Starlight & Moonfire; her lightning is the subpart cc_elyndra_bolts
+    cc_elyndra_bolts(M) { // the white lightning out of her eyes, up through her hood and out past her halo, as on her card; it crackles
+      const jag = (a, b, n, amp, seed) => { const out = [a]; for (let i = 1; i < n; i++) { const t = i / n, L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, j = amp * Math.sin(seed + i * 2.7) * (i % 2 ? 1 : -.7); out.push([a[0] + (b[0] - a[0]) * t - (b[1] - a[1]) / L * j, a[1] + (b[1] - a[1]) * t + (b[0] - a[0]) / L * j]); } out.push(b); return out; };
+      for (const sd of [-1, 1]) {
+        const key = [[.146, 1.551], [.19, 1.72], [.29, 1.95], [.43, 2.08], [.7, 2.18], [.92, 2.2], [.99, 2.29]];
+        let pts = []; for (let i = 0; i < key.length - 1; i++) pts = pts.concat(jag(key[i], key[i + 1], 3, .028, i * 1.3 + (sd > 0 ? .9 : 0)).slice(i ? 1 : 0));
+        pts = pts.map(q => [q[0] * sd, q[1]]);
+        for (let i = 0; i < pts.length - 1; i++) { const w = .024 - .0007 * i; airStroke(M, 'bolt_core', pts[i], pts[i + 1], Math.max(.01, w), -.5); }
+        const f = pts[Math.floor(pts.length * .6)]; airStroke(M, 'bolt_core', f, [f[0] + .1 * sd, f[1] + .14], .011, -.5); // a fork; then a soft glow along it
+        for (let k = 0; k < pts.length; k += 2) { const q = pts[k], r = k ? .085 : .1; M.quad('glow_white', [[q[0] - r, -.52, q[1] - r], [q[0] + r, -.52, q[1] - r], [q[0] + r, -.52, q[1] + r], [q[0] - r, -.52, q[1] + r]]); }
+      }
+    },
+    cc_witch_lunara(M) { matryoshka(M, 'witch_lunara_front', 'witch_lunara_back', WITCH_DOLLS.lunara.prof, WITCH_DOLLS.lunara.uv); witchHalo(M, 1.778, .529); lotusLight(M, [0, -.5, .3]); }, // Lunar Witch 583, Keeper of Moonlit Blooms
+    cc_witch_seer(M) { // Lunar Witch 492, Ophira the Seer: her crystal ball glows; the beams out of her closed eyes are the subpart cc_seer_beams
+      matryoshka(M, 'witch_seer_front', 'witch_seer_back', WITCH_DOLLS.seer.prof, WITCH_DOLLS.seer.uv);
+      M.quad('glow_violet', [[-.32, -.62, .2], [.32, -.62, .2], [.32, -.62, .84], [-.32, -.62, .84]]);
+    },
+    cc_seer_beams(M) { // the beams of light out of her closed eyes, up and out past her hood, as on her card
+      for (const sd of [-1, 1]) {
+        const e = [sd * .146, 1.539], d = [sd * Math.cos(.49), Math.sin(.49)], n = [-d[1], d[0]], L = 1.6, w0 = .06, w1 = .36, f = [e[0] + d[0] * L, e[1] + d[1] * L];
+        M.poly('beam_white', [[e[0] - n[0] * w0, -.5, e[1] - n[1] * w0], [e[0] + n[0] * w0, -.5, e[1] + n[1] * w0], [f[0] + n[0] * w1, -.5, f[1] + n[1] * w1], [f[0] - n[0] * w1, -.5, f[1] - n[1] * w1]], [[0, 1], [1, 1], [1, 0], [0, 0]]);
+        M.quad('glow_white', [[e[0] - .14, -.52, e[1] - .12], [e[0] + .14, -.52, e[1] - .12], [e[0] + .14, -.52, e[1] + .14], [e[0] - .14, -.52, e[1] + .14]]);
+      }
+    },
     cc_petal_drift(M) { // a swirl of cherry petals drifting a metre up: Mochi's trail to the Blossom Clearing (Moon Tales 06); hovers
       for (let k = 0; k < 22; k++) ccPetal(M, Math.cos(k * 2.4) * (.14 + .035 * k), Math.sin(k * 2.4) * (.14 + .035 * k), .8 + .05 * k, .1, k * 1.3, .6 + .2 * (k % 3));
       M.quad('glow_pink', [[-.9, -.9, .05], [.9, -.9, .05], [.9, .9, .05], [-.9, .9, .05]]);
@@ -3787,8 +3859,8 @@
   // floating pieces (ghosts): their instances bob and sway under the placed root, so saved positions never move
   const FLOAT = new Set(['cc_ghost']), floaters = [];
   // characters: the body rocks (kokeshi) or breathes (cats); subparts under their own pivots wave, flicker, pulse
-  const CHAR = { cc_storm_stone_lit: 'still', cc_storm_orb: 'still', chz_torch_lit: 'still', chz_bonfire_lit: 'still', chz_crab: 'rock', chz_crab_shades: 'rock', cc_flower_moon: 'rock', cc_nariko: 'rock', cc_ostara: 'rock', cc_lunar_witch: 'rock', cc_petal_drift: 'hover', cc_rose_pendant: 'hover', cc_mamoru: 'bob', cc_mochi: 'bob', cc_trickster: 'hover', cc_chime_light: 'hover', cc_shadow: 'hover' };
-  const SUBPARTS = { cc_storm_stone_lit: [['cc_storm_spark', [.14, -.02, 3.12], 'pulse']], cc_storm_orb: [['cc_storm_orb_core', [0, 0, 3.7], 'pulse']], chz_torch_lit: [['chz_torch_flame', [0, 0, 2.5], 'flicker']], chz_bonfire_lit: [['chz_bonfire_flame', [0, 0, .05], 'flicker']], cc_mamoru: [['cc_paw_black', [.36, -.25, .92], 'wave'], ['cc_candle_flame', [0, 0, 2.17], 'flicker']], cc_mochi: [['cc_paw_white', [.36, -.25, .92], 'wave']], cc_nariko: [['cc_orb', [0, -.56, .74], 'pulse']] };
+  const CHAR = { cc_storm_stone_lit: 'still', cc_storm_orb: 'still', chz_torch_lit: 'still', chz_bonfire_lit: 'still', chz_crab: 'rock', chz_crab_shades: 'rock', cc_flower_moon: 'rock', cc_nariko: 'rock', cc_ostara: 'rock', cc_lunar_witch: 'rock', cc_witch_ophira: 'rock', cc_witch_elyndra: 'rock', cc_witch_lunara: 'rock', cc_witch_seer: 'rock', cc_petal_drift: 'hover', cc_rose_pendant: 'hover', cc_mamoru: 'bob', cc_mochi: 'bob', cc_trickster: 'hover', cc_chime_light: 'hover', cc_shadow: 'hover' };
+  const SUBPARTS = { cc_storm_stone_lit: [['cc_storm_spark', [.14, -.02, 3.12], 'pulse']], cc_storm_orb: [['cc_storm_orb_core', [0, 0, 3.7], 'pulse']], chz_torch_lit: [['chz_torch_flame', [0, 0, 2.5], 'flicker']], chz_bonfire_lit: [['chz_bonfire_flame', [0, 0, .05], 'flicker']], cc_mamoru: [['cc_paw_black', [.36, -.25, .92], 'wave'], ['cc_candle_flame', [0, 0, 2.17], 'flicker']], cc_mochi: [['cc_paw_white', [.36, -.25, .92], 'wave']], cc_nariko: [['cc_orb', [0, -.56, .74], 'pulse']], cc_witch_ophira: [['cc_ophira_star', [0, 0, 0], 'shimmer']], cc_witch_elyndra: [['cc_elyndra_bolts', [0, 0, 0], 'crackle']], cc_witch_seer: [['cc_seer_beams', [0, 0, 0], 'shimmer']] };
   const actors = [];
   function animateActors(t) {
     for (let i = actors.length - 1; i >= 0; i--) {
@@ -3801,6 +3873,8 @@
       for (const s of a.subs) {
         if (s.kind === 'wave') s.node.rotation.x = .25 - .55 * Math.max(0, Math.sin(t * 3 + a.ph));
         else if (s.kind === 'flicker') { const f = 1 + .22 * Math.sin(t * 13 + a.ph) + .12 * Math.sin(t * 31); s.node.scaling.set(1 - .1 * (f - 1), f, 1 - .1 * (f - 1)); }
+        else if (s.kind === 'shimmer') s.node.scaling.setAll(1 + .02 * Math.sin(t * 2.1 + a.ph) + .008 * Math.sin(t * 7.3)); // breathing light that never turns
+        else if (s.kind === 'crackle') { s.node.setEnabled(Math.sin(t * 23 + a.ph) + Math.sin(t * 37 + 2 * a.ph) > -1.25); s.node.scaling.set(1 + .03 * Math.sin(t * 41), 1, 1 + .025 * Math.sin(t * 53)); } // lightning: flickers out now and then
         else { const p = 1 + .1 * Math.sin(t * 5 + a.ph) + .05 * Math.sin(t * 17); s.node.scaling.setAll(p); s.node.rotation.y = t * 1.3; }
       }
     }
