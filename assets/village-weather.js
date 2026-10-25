@@ -248,6 +248,11 @@ void main() {
       layer('weatherRainNear', Math.round(3600 * k), [24, 16, 24], 7, 2, .008, .075, .72),
       layer('weatherRainFar', Math.round(5200 * k), [96, 44, 96], 34, 8, .012, .085, .46)
     ];
+    // snow: the same drops as soft round flakes that sway as they fall (the shader's uSnow)
+    FX.snow = [
+      layer('weatherSnowNear', Math.round(2400 * k), [26, 14, 26], 6, 2, .034, 0, .95),
+      layer('weatherSnowFar', Math.round(4200 * k), [90, 40, 90], 30, 8, .045, 0, .7)
+    ];
     if (occ) {
       const mesh = quadMesh('weatherRainSplash', Math.round(900 * k), 2, 3);
       const mat = material('weatherRainSplashMat', 'weatherSplash', ['uCam', 'uC', 'uR', 'uTime', 'uDensity', 'uFogD', 'uRing', 'uColor', 'uAlpha', 'uOccP'], 3, true);
@@ -271,47 +276,54 @@ void main() {
 
   // o: { cam (camera), focus (Vector3: where the player is), dt (s), rain (0..1), fall (m/s), wind (m/s), fogDensity,
   //      light (Color3: the light the drops catch), flash (0..1), rooms (true: inside, nothing shows) }
+  // o: { cam (camera), focus (Vector3: where the player is), dt (s), rain / snow (0..1), fall / snowFall (m/s), wind (m/s),
+  //      fogDensity, light (Color3: the light the drops catch), flash (0..1), ring (0..1), rooms (true: inside, nothing shows) }
   VW.update = function (o) {
     if (!scene) return;
-    const rain = Math.max(0, Math.min(1, o.rain || 0));
-    if (!rain || o.rooms || !o.cam) { VW.hide(); return; }
+    const c01 = v => Math.max(0, Math.min(1, v || 0)), rain = c01(o.rain), snow = c01(o.snow);
+    if ((!rain && !snow) || o.rooms || !o.cam) { hideRain(); return; }
     if (!made) make();
     const t = (performance.now() / 1000) % 3600, dt = Math.min(.1, Math.max(0, o.dt || 0));
     const cam = o.cam, cp = cam.globalPosition || cam.position, focus = o.focus || cp;
     const fwd = cam.getDirection ? cam.getDirection(BABYLON.Axis.Z) : V3(0, 0, 1), fl = Math.hypot(fwd.x, fwd.z) || 1, fx = fwd.x / fl, fz = fwd.z / fl;
-    const w = wind(t, o.wind || 0), fall = o.fall || 8;
-    // the height map round the player: again every 1.5 s while it rains (meshes still loading come in), at once after a move
+    const w = wind(t, o.wind || 0);
+    // the height map round the player: again every 1.5 s while it falls (meshes still loading come in), at once after a move
     if (OCC.map && (performance.now() - OCC.at > 1500 || Math.hypot(focus.x - OCC.cx, focus.z - OCC.cz) > 18)) renderOcc(focus.x, focus.y, focus.z);
     const occP = OCC.on ? occParams() : new BABYLON.Vector4(0, 0, 0, 0);
     const fov = cam.fov || .8, H = engine.getRenderHeight() || 720, pix = 2 * Math.tan(fov / 2) / H;
     const L = o.light || new BABYLON.Color3(.7, .74, .8), fl2 = o.flash || 0;
     const col = new BABYLON.Color3(Math.min(1.4, L.r + fl2 * .9), Math.min(1.4, L.g + fl2 * .95), Math.min(1.4, L.b + fl2));
-    const vel = V3(w.x, -fall, w.z), fog = o.fogDensity || 0;
-    for (const R of FX.rain) {
-      R.off.addInPlace(vel.scale(dt));
-      const wrap = R.box.scale(20); // a whole number of boxes (see jit in the shader)
-      R.off.x %= wrap.x; R.off.y %= wrap.y; R.off.z %= wrap.z;
-      const m = R.mat;
-      m.setVector3('uCam', cp);
-      m.setVector3('uBox', R.box);
-      m.setVector3('uBoxC', V3(cp.x + fx * R.ahead, cp.y + R.lift, cp.z + fz * R.ahead));
-      m.setVector3('uOff', R.off);
-      m.setVector3('uVel', vel);
-      m.setFloat('uTime', t);
-      R.lastDensity = R === FX.rain[0] ? Math.min(1, rain * 1.15) : rain;
-      m.setFloat('uDensity', R.lastDensity);
-      m.setFloat('uPix', pix);
-      m.setFloat('uSnow', 0);
-      m.setFloat('uFogD', fog);
-      m.setFloat('uLen', R.len);
-      m.setFloat('uWid', R.wid);
-      m.setColor3('uColor', col);
-      m.setFloat('uAlpha', R.alpha * (.75 + .25 * rain));
-      m.setVector4('uOccP', occP);
-      R.mesh.setEnabled(true);
-    }
+    const fog = o.fogDensity || 0;
+    const drive = (layers, amount, vel, isSnow, colr) => {
+      for (const R of layers) {
+        if (!amount) { R.mesh.setEnabled(false); R.lastDensity = 0; continue; }
+        R.off.addInPlace(vel.scale(dt));
+        const wrap = R.box.scale(20); // a whole number of boxes (see jit in the shader)
+        R.off.x %= wrap.x; R.off.y %= wrap.y; R.off.z %= wrap.z;
+        const m = R.mat;
+        m.setVector3('uCam', cp);
+        m.setVector3('uBox', R.box);
+        m.setVector3('uBoxC', V3(cp.x + fx * R.ahead, cp.y + R.lift, cp.z + fz * R.ahead));
+        m.setVector3('uOff', R.off);
+        m.setVector3('uVel', vel);
+        m.setFloat('uTime', t);
+        R.lastDensity = R === layers[0] ? Math.min(1, amount * 1.15) : amount;
+        m.setFloat('uDensity', R.lastDensity);
+        m.setFloat('uPix', pix);
+        m.setFloat('uSnow', isSnow ? 1 : 0);
+        m.setFloat('uFogD', fog);
+        m.setFloat('uLen', R.len);
+        m.setFloat('uWid', R.wid);
+        m.setColor3('uColor', colr);
+        m.setFloat('uAlpha', R.alpha * (.75 + .25 * amount));
+        m.setVector4('uOccP', occP);
+        R.mesh.setEnabled(true);
+      }
+    };
+    drive(FX.rain, rain, V3(w.x, -(o.fall || 8), w.z), false, col);
+    drive(FX.snow, snow, V3(w.x * .8, -(o.snowFall || 1.15), w.z * .8), true, new BABYLON.Color3(Math.min(1.3, col.r * 1.08), Math.min(1.3, col.g * 1.08), Math.min(1.3, col.b * 1.08)));
     if (FX.splash) {
-      const m = FX.splash.mat, on = OCC.on;
+      const m = FX.splash.mat, on = OCC.on && rain > 0;
       FX.splash.mesh.setEnabled(on);
       if (on) {
         m.setVector3('uCam', cp);
@@ -328,16 +340,214 @@ void main() {
     }
   };
 
+  // ── the cloud deck: one big sheet high over the camera, fbm clouds drifting with the wind; thick parts dark, thin
+  // edges catch the light, far away it melts into the fog; a lightning flash lights it up from inside round the strike ──
+  const CLOUD_VS = `
+precision highp float;
+attribute vec3 position;
+uniform mat4 viewProjection;
+uniform vec3 uCam;
+uniform float uY, uR;
+varying vec3 vW;
+void main() {
+  vec3 p = vec3(uCam.x + position.x * uR, uY, uCam.z + position.z * uR);
+  vW = p;
+  gl_Position = viewProjection * vec4(p, 1.0);
+}`;
+  const CLOUD_FS = `
+precision highp float;
+varying vec3 vW;
+uniform vec3 uCam, uBase, uLit, uFog, uFlashPos;
+uniform vec2 uOff;
+uniform float uCover, uFlash, uR, uFogD;
+float h2(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float vn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h2(i), h2(i + vec2(1.0, 0.0)), f.x), mix(h2(i + vec2(0.0, 1.0)), h2(i + vec2(1.0, 1.0)), f.x), f.y); }
+float fbm(vec2 p) { float a = 0.5, s = 0.0; for (int i = 0; i < 5; i++) { s += a * vn(p); p = p * 2.03 + vec2(1.7, 9.2); a *= 0.5; } return s; }
+void main() {
+  vec2 q = (vW.xz + uOff) * 0.0022;
+  float n = (fbm(q) + 0.35 * fbm(q * 3.1 + vec2(uOff.y, -uOff.x) * 0.0004)) / 1.3;
+  float dens = smoothstep(1.0 - uCover - 0.12, 1.0 - uCover + 0.22, n);
+  float d = length(vW.xz - uCam.xz);
+  // the underside's own relief: rolls and darker cores even where the deck is closed (a storm)
+  float relief = fbm(q * 1.9 + vec2(-uOff.y, uOff.x) * 0.0006 + 7.3);
+  vec3 col = mix(uLit, uBase, clamp(smoothstep(0.2, 0.9, dens) * 0.55 + smoothstep(0.3, 0.75, relief) * 0.6, 0.0, 1.0));
+  col += vec3(0.75, 0.82, 1.0) * uFlash * exp(-length(vW.xz - uFlashPos.xz) / 260.0) * (0.6 + 0.8 * dens);
+  float fogK = 1.0 - exp(-pow(d * uFogD * 0.12, 2.0)); // (thinner than the ground fog: the deck is above the rain)
+  col = mix(col, uFog, clamp(fogK, 0.0, 1.0) * 0.85);
+  float a = dens * (1.0 - smoothstep(uR * 0.55, uR * 0.98, d)) * mix(0.75, 0.98, uCover);
+  if (a < 0.003) discard;
+  gl_FragColor = vec4(col, a);
+}`;
+  const CLOUD = { mesh: null, mat: null, off: new BABYLON.Vector2(0, 0) };
+  function makeClouds() {
+    shader('weatherCloud', CLOUD_VS, CLOUD_FS);
+    const m = BABYLON.MeshBuilder.CreateGround('weatherCloudDeck', { width: 2, height: 2, subdivisions: 1 }, scene);
+    m.alwaysSelectAsActiveMesh = true; m.isPickable = false; m.doNotSyncBoundingInfo = true; m.receiveShadows = false; m.alphaIndex = -100; // before the rain
+    m.metadata = { camSkip: true, weatherFx: true };
+    const mat = new BABYLON.ShaderMaterial('weatherCloudMat', scene, { vertex: 'weatherCloud', fragment: 'weatherCloud' }, {
+      attributes: ['position'], uniforms: ['viewProjection', 'uCam', 'uY', 'uR', 'uBase', 'uLit', 'uFog', 'uFlashPos', 'uOff', 'uCover', 'uFlash', 'uFogD'], needAlphaBlending: true });
+    mat.backFaceCulling = false; mat.disableDepthWrite = true; mat.alphaMode = BABYLON.Engine.ALPHA_COMBINE; mat.metadata = { perfKeepLive: true };
+    m.material = mat; m.setEnabled(false);
+    CLOUD.mesh = m; CLOUD.mat = mat;
+  }
+  // o: { cam, cover 0..1, base / lit / fog (Color3), fogDensity, flash 0..1, flashAt (Vector3), dt, rooms }
+  VW.clouds = function (o) {
+    if (!scene) return;
+    const cover = Math.max(0, Math.min(1, o.cover || 0));
+    if (!cover || o.rooms || !o.cam) { CLOUD.mesh?.setEnabled(false); return; }
+    if (!CLOUD.mesh) makeClouds();
+    const cp = o.cam.globalPosition || o.cam.position, m = CLOUD.mat, dt = Math.min(.1, Math.max(0, o.dt || 0));
+    CLOUD.off.x += (WIND.x * 3 + 1.2) * dt; CLOUD.off.y += (WIND.z * 3 + .6) * dt; // high winds: they drift even on a still day
+    m.setVector3('uCam', cp); m.setFloat('uY', cp.y + 170); m.setFloat('uR', 1500);
+    m.setColor3('uBase', o.base); m.setColor3('uLit', o.lit); m.setColor3('uFog', o.fog);
+    m.setVector3('uFlashPos', o.flashAt || cp); m.setFloat('uFlash', o.flash || 0);
+    m.setVector2('uOff', CLOUD.off); m.setFloat('uCover', cover); m.setFloat('uFogD', o.fogDensity || 0);
+    CLOUD.mesh.setEnabled(true);
+  };
+
+  // ── a lightning bolt from the cloud deck to the ground far away: a jagged main channel and forks, a hot core in a
+  // blue glow, flickering two or three times (village.html times the flash and the thunder) ──
+  const BOLT = { meshes: [], mat: null, glow: null };
+  VW.bolt = function (to, fromY) {
+    if (!scene) return null;
+    if (!BOLT.mat) {
+      const mk = (n, c, a) => { const m = new BABYLON.StandardMaterial(n, scene); m.disableLighting = true; m.diffuseColor = BABYLON.Color3.Black(); m.specularColor = BABYLON.Color3.Black();
+        m.emissiveColor = new BABYLON.Color3(...c); m.alpha = a; m.alphaMode = BABYLON.Engine.ALPHA_ADD; m.disableDepthWrite = true; m.fogEnabled = false; m.backFaceCulling = false; m.metadata = { perfKeepLive: true }; return m; };
+      BOLT.mat = mk('weatherBoltMat', [.9, .95, 1], 1); BOLT.glow = mk('weatherBoltGlow', [.3, .45, 1], .28);
+    }
+    BOLT.meshes.forEach(m => m.dispose()); BOLT.meshes = [];
+    const V = BABYLON.Vector3, R = Math.random;
+    const jag = (a, b, n, amp) => { const pts = []; for (let i = 0; i <= n; i++) { const u = i / n, q = V.Lerp(a, b, u); if (i && i < n) { const k = amp * Math.sin(Math.PI * u); q.x += (R() - .5) * k; q.z += (R() - .5) * k; q.y += (R() - .5) * k * .25; } pts.push(q); } return pts; };
+    const top = new V(to.x + (R() - .5) * 60, fromY, to.z + (R() - .5) * 60), len = fromY - to.y;
+    const main = jag(top, to, 22, len * .12), paths = [main];
+    for (let f = 0; f < 2 + Math.floor(R() * 3); f++) {
+      const i = 3 + Math.floor(R() * 12), a = main[i];
+      paths.push(jag(a, a.add(new V((R() - .5) * len * .45, -len * (.12 + R() * .2), (R() - .5) * len * .45)), 8, len * .05));
+    }
+    const w = Math.max(.5, len / 140);
+    paths.forEach((path, k) => {
+      for (const [mat, r] of [[BOLT.mat, (k ? .35 : .6) * w], [BOLT.glow, (k ? 1.4 : 2.4) * w]]) {
+        const m = BABYLON.MeshBuilder.CreateTube('weatherBolt_beam', { path, radius: r, tessellation: 5, cap: BABYLON.Mesh.NO_CAP }, scene);
+        m.material = mat; m.isPickable = false; m.applyFog = false; m.alwaysSelectAsActiveMesh = true; m.metadata = { camSkip: true, weatherFx: true, _perfNeverFreeze: true };
+        BOLT.meshes.push(m);
+      }
+    });
+    const mine = BOLT.meshes, show = v => mine.forEach(m => { if (!m.isDisposed()) m.setEnabled(v); });
+    setTimeout(() => show(false), 70); setTimeout(() => show(true), 120); // it strikes again down the same channel
+    if (R() < .5) { setTimeout(() => show(false), 170); setTimeout(() => show(true), 230); }
+    setTimeout(() => { mine.forEach(m => m.dispose()); if (BOLT.meshes === mine) BOLT.meshes = []; }, 320);
+    return { top, to };
+  };
+
+  // a soft puff (fog banks, breath): a round blob with ragged edges
+  let PUFF = null;
+  function puffTex() {
+    if (PUFF) return PUFF;
+    const S = 128, t = new BABYLON.DynamicTexture('weatherPuffTex', { width: S, height: S }, scene, true), c = t.getContext(), img = c.createImageData(S, S);
+    const h = (x, y) => { const v = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return v - Math.floor(v); };
+    const vn = (x, y) => { const i = Math.floor(x), j = Math.floor(y), u = x - i, v = y - j, a = h(i, j), b = h(i + 1, j), cc = h(i, j + 1), d = h(i + 1, j + 1), su = u * u * (3 - 2 * u), sv = v * v * (3 - 2 * v); return a + (b - a) * su + (cc - a) * sv + (a - b - cc + d) * su * sv; };
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+      const u = x / S - .5, v = y / S - .5, r = Math.hypot(u, v) * 2, n = vn(x / 18, y / 18) * .5 + vn(x / 7, y / 7) * .25 - .375;
+      const a = Math.max(0, Math.min(1, (1 - r) * 1.25 + n)) * Math.max(0, 1 - r) ** .8, k = (y * S + x) * 4;
+      img.data[k] = img.data[k + 1] = img.data[k + 2] = 255; img.data[k + 3] = Math.round(255 * a);
+    }
+    c.putImageData(img, 0, 0); t.update(); t.hasAlpha = true;
+    return (PUFF = t);
+  }
+
+  // ── fog banks: soft billboards lying low round the player, drifting with the wind (the fog weather) ──
+  const FOG = { ps: null, warm: false };
+  VW.fogBanks = function (o) { // { focus (Vector3), amount 0..1, color (Color3), rooms }
+    if (!scene) return;
+    const a = Math.max(0, Math.min(1, o.amount || 0));
+    if (!a || o.rooms || !o.focus) { if (FOG.ps) FOG.ps.emitRate = 0; if (o.rooms && FOG.ps) FOG.ps.reset(); return; }
+    if (!FOG.ps) {
+      const ps = FOG.ps = new BABYLON.ParticleSystem('weatherFogBanks', lite ? 160 : 320, scene);
+      ps.particleTexture = puffTex(); ps.emitter = V3(0, 0, 0);
+      ps.minEmitBox = V3(-55, .1, -55); ps.maxEmitBox = V3(55, 3.2, 55);
+      ps.addColorGradient(0, new BABYLON.Color4(1, 1, 1, 0)); ps.addColorGradient(.25, new BABYLON.Color4(1, 1, 1, .2));
+      ps.addColorGradient(.75, new BABYLON.Color4(1, 1, 1, .2)); ps.addColorGradient(1, new BABYLON.Color4(1, 1, 1, 0));
+      ps.minSize = 9; ps.maxSize = 20; ps.minLifeTime = 28; ps.maxLifeTime = 46;
+      ps.minEmitPower = .15; ps.maxEmitPower = .5; ps.minAngularSpeed = -.04; ps.maxAngularSpeed = .04; ps.minInitialRotation = 0; ps.maxInitialRotation = 6.28;
+      ps.gravity = V3(0, 0, 0); ps.blendMode = BABYLON.ParticleSystem.BLENDMODE_STANDARD; ps.updateSpeed = .016;
+      ps.preWarmCycles = 140; ps.preWarmStepOffset = 14; // fog from the first frame
+      ps.start();
+    }
+    const ps = FOG.ps;
+    ps.emitter.copyFrom(o.focus);
+    ps.direction1 = V3(WIND.x * .2 - .3, 0, WIND.z * .2 - .2); ps.direction2 = V3(WIND.x * .2 + .3, .03, WIND.z * .2 + .2);
+    ps.emitRate = (lite ? 4 : 8) * a;
+    const col = o.color || new BABYLON.Color3(.7, .74, .78);
+    ps.textureMask = new BABYLON.Color4(col.r, col.g, col.b, Math.min(1, .5 + .5 * a));
+  };
+
+  // ── heat shimmer: the picture wobbles a little where the ground meets the distance (the hot weather; not on phones) ──
+  const HEAT_FS = `
+precision highp float;
+varying vec2 vUV;
+uniform sampler2D textureSampler;
+uniform float uTime, uAmt;
+float h2(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float vn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h2(i), h2(i + vec2(1.0, 0.0)), f.x), mix(h2(i + vec2(0.0, 1.0)), h2(i + vec2(1.0, 1.0)), f.x), f.y); }
+void main() {
+  float band = smoothstep(0.28, 0.56, vUV.y) * (1.0 - smoothstep(0.64, 0.9, vUV.y));
+  vec2 q = vUV * vec2(26.0, 70.0);
+  vec2 o = vec2(vn(q + vec2(0.0, -uTime * 2.2)) - 0.5, vn(q * 1.3 + vec2(19.0, -uTime * 1.7)) - 0.5) * 0.0045 * uAmt * band;
+  gl_FragColor = texture2D(textureSampler, vUV + o);
+}`;
+  const HEAT = { pp: null, cam: null, amt: 0 };
+  VW.heat = function (o) { // { cam, amount 0..1, rooms }
+    if (!scene) return;
+    const a = Math.max(0, Math.min(1, o.amount || 0));
+    if (!a || o.rooms || lite || !o.cam) { if (HEAT.pp && HEAT.cam) { try { HEAT.cam.detachPostProcess(HEAT.pp); } catch (e) {} HEAT.cam = null; } return; }
+    if (!HEAT.pp) {
+      BABYLON.Effect.ShadersStore.weatherHeatFragmentShader = HEAT_FS;
+      HEAT.pp = new BABYLON.PostProcess('weatherHeat', 'weatherHeat', ['uTime', 'uAmt'], null, 1, null, BABYLON.Texture.BILINEAR_SAMPLINGMODE, engine);
+      HEAT.pp.onApply = e => { e.setFloat('uTime', (performance.now() / 1000) % 1000); e.setFloat('uAmt', HEAT.amt); };
+    }
+    if (HEAT.cam !== o.cam) { if (HEAT.cam) try { HEAT.cam.detachPostProcess(HEAT.pp); } catch (e) {} o.cam.attachPostProcess(HEAT.pp); HEAT.cam = o.cam; }
+    HEAT.amt = a;
+  };
+
+  // ── breath: a small puff in front of the Rebel's face every few seconds (cold and snow) ──
+  const BREATH = { ps: null, next: 0 };
+  VW.breath = function (o) { // { head (Vector3: the mouth), fwd (Vector3), amount 0..1, light (Color3), rooms }
+    if (!scene || !o.amount || o.rooms || !o.head) return;
+    if (!BREATH.ps) {
+      const ps = BREATH.ps = new BABYLON.ParticleSystem('weatherBreath', 60, scene);
+      ps.particleTexture = puffTex(); ps.emitter = V3(0, 0, 0);
+      ps.minEmitBox = V3(-.03, -.03, -.03); ps.maxEmitBox = V3(.03, .03, .03);
+      ps.addColorGradient(0, new BABYLON.Color4(1, 1, 1, 0)); ps.addColorGradient(.12, new BABYLON.Color4(1, 1, 1, .34)); ps.addColorGradient(1, new BABYLON.Color4(1, 1, 1, 0));
+      ps.addSizeGradient(0, .08); ps.addSizeGradient(1, .6);
+      ps.minLifeTime = 1.1; ps.maxLifeTime = 1.7; ps.minEmitPower = .35; ps.maxEmitPower = .7; ps.gravity = V3(0, .12, 0);
+      ps.minAngularSpeed = -.6; ps.maxAngularSpeed = .6; ps.emitRate = 0; ps.blendMode = BABYLON.ParticleSystem.BLENDMODE_STANDARD;
+      ps.start();
+    }
+    const now = performance.now(), ps = BREATH.ps;
+    if (now < BREATH.next) return;
+    BREATH.next = now + 2600 + Math.random() * 1500;
+    const f = o.fwd || V3(0, 0, 1);
+    ps.emitter.copyFrom(o.head);
+    ps.direction1 = V3(f.x - .15, .05, f.z - .15); ps.direction2 = V3(f.x + .15, .25, f.z + .15);
+    const L = o.light || new BABYLON.Color3(.9, .92, .95);
+    ps.textureMask = new BABYLON.Color4(Math.min(1, L.r), Math.min(1, L.g), Math.min(1, L.b), Math.min(1, o.amount));
+    ps.manualEmitCount = 10;
+  };
+
+  function hideRain() { for (const R of [...(FX.rain || []), ...(FX.snow || [])]) R.mesh.setEnabled(false); FX.splash?.mesh.setEnabled(false); }
   VW.hide = function () {
-    for (const R of FX.rain || []) R.mesh.setEnabled(false);
-    FX.splash?.mesh.setEnabled(false);
+    hideRain();
+    CLOUD.mesh?.setEnabled(false);
+    if (FOG.ps) { FOG.ps.emitRate = 0; FOG.ps.reset(); }
+    if (HEAT.pp && HEAT.cam) { try { HEAT.cam.detachPostProcess(HEAT.pp); } catch (e) {} HEAT.cam = null; }
+    BOLT.meshes.forEach(m => m.setEnabled(false));
   };
 
   // how many drops show (the admin's weather readout)
   VW.count = function () {
     let n = 0;
-    for (const R of FX.rain || []) if (R.mesh.isEnabled()) n += Math.round(R.mesh.getTotalVertices() / 4 * (R.lastDensity ?? 1));
+    for (const R of [...(FX.rain || []), ...(FX.snow || [])]) if (R.mesh.isEnabled()) n += Math.round(R.mesh.getTotalVertices() / 4 * (R.lastDensity ?? 1));
     return n;
   };
-  VW._fx = FX; VW._occ = OCC; VW._renderOcc = renderOcc; // (tests)
+  VW._fx = FX; VW._occ = OCC; VW._renderOcc = renderOcc; VW._cloud = CLOUD; VW._bolt = BOLT; VW._fog = FOG; VW._heat = HEAT; VW._breath = BREATH; // (tests)
 })();
