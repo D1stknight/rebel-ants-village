@@ -443,7 +443,7 @@
     plaque_champion: cv => cv('plaque_champion', 512, 128, (c, W, H) => {
       const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#f0cf7a'); g.addColorStop(.5, '#c9a040'); g.addColorStop(1, '#8a6a22'); c.fillStyle = g; c.fillRect(0, 0, W, H);
       c.strokeStyle = '#5a4210'; c.lineWidth = 6; c.strokeRect(10, 10, W - 20, H - 20);
-      c.fillStyle = '#2a1e08'; c.font = '900 54px Georgia, serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('ROAST CHAMPION', W / 2, H / 2 + 3);
+      c.fillStyle = '#2a1e08'; c.font = '900 46px Georgia, serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('ROAST CHAMPION', W / 2, H / 2 + 3, W - 70);
     }),
     noren_comedy: cv => cv('noren_comedy', 1024, 256, (c, W, H) => {
       c.fillStyle = '#3a1652'; c.fillRect(0, 0, W, H); c.fillStyle = '#28103a'; c.fillRect(0, 0, W, 16); c.fillRect(0, H - 24, W, 24);
@@ -5401,7 +5401,7 @@
       M.block('lacquer_black', qx, qy, 1.46, .7, .7, .3);
       atK(M, qx, qy, 1.76, 0, () => lathe(M, 'gold', [[.001, 0], [.24, 0], [.08, .1], [.06, .42], [.3, .62], [.36, .96], [.001, .96]], 16));
       M.rod('gold', [qx, qy, 2.7], [qx, qy, 3.02], .05, 8); M.sphere('gold', [qx, qy, 3.12], .13, 1.15, 12, 6);
-      M.quad('plaque_champion', [[qx + .9, qy - 1.01, .6], [qx - .9, qy - 1.01, .6], [qx - .9, qy - 1.01, 1.05], [qx + .9, qy - 1.01, 1.05]]);
+      M.quad('plaque_champion', [[qx - .9, qy - 1.01, .6], [qx + .9, qy - 1.01, .6], [qx + .9, qy - 1.01, 1.05], [qx - .9, qy - 1.01, 1.05]]);
       // the club's name over the door, purple lanterns over the house
       wallArt(M, 'front', 0, DH + .5, 5.6, 1.4, 'club_marquee', HX, HY, .1);
       M.remap = { lantern: 'lantern_violet' }; for (const [x, y] of [[-8.25, .7], [8.25, .7], [-8.25, 5.3], [8.25, 5.3]]) chochin(M, x, y, H - .4, 1.7, .45, 1); M.remap = null;
