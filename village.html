@@ -18645,7 +18645,9 @@ async function tryLoadNPCModel(root, npc) {
     importedNodes.forEach(node => {
       if (!node.parent || !importedNodeSet.has(node.parent)) node.parent = modelRoot;
     });
-    const visibleMeshCount = (result.meshes || []).filter(mesh => mesh && mesh.isEnabled() && mesh.getTotalVertices && mesh.getTotalVertices() > 0).length;
+    // the mesh's own flag, not its parents': an NPC hidden while its model downloads (the player in a room, NPCs hidden)
+    // kept its placeholder ant, which showed at its feet once the NPC was shown again (Oct 25, Miguel's Ashigaru villager)
+    const visibleMeshCount = (result.meshes || []).filter(mesh => mesh && mesh.isEnabled(false) && mesh.getTotalVertices && mesh.getTotalVertices() > 0).length;
     if (visibleMeshCount > 0) {
       root.metadata.placeholderPieces?.forEach(mesh => {
         try { mesh.dispose(false, true); } catch(e) {}
