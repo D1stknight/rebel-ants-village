@@ -45983,8 +45983,8 @@
             "enabled": true,
             "position": {
               "x": 0,
-              "y": 1.4,
-              "z": 0
+              "y": 0.65,
+              "z": 1.3
             },
             "rotation": {
               "x": 0,
@@ -45995,6 +45995,14 @@
               "x": 0.25,
               "y": 0.5,
               "z": 1
+            },
+            "prompt": "Press O to Open The Warning",
+            "book": {
+              "title": "The Warning",
+              "sub": "Volume 1 · by Miguel Concepcion",
+              "url": "https://library.rebelants.io/",
+              "sample": "https://library.rebelants.io/index.html?start=0",
+              "cover": "assets/interiors/library/the-warning-cover.webp"
             }
           },
           {
