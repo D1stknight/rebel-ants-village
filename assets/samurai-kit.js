@@ -418,6 +418,18 @@
     for (let y = 0; y < H; y += 32) for (let x = 0; x < W; x += 32) { const f = .9 + .18 * r(); c.fillStyle = `rgb(${base[0] * f | 0},${base[1] * f | 0},${base[2] * f | 0})`; c.fillRect(x, y, 32, 32); }
     c.fillStyle = 'rgba(110,70,20,.18)'; for (let y = 0; y < H; y += 32) c.fillRect(0, y, W, 1); for (let x = 0; x < W; x += 32) c.fillRect(x, 0, 1, H);
   };
+  // the After Dark crest (the ant on its sign, head up): head, thorax, abdomen, antennae, mandibles and six legs in neon strokes
+  // (size s from the antenna tips to the abdomen); glow = the shadow blur (0 = a flat print)
+  const adCrest = (c, x, y, s, col, glow = 18) => {
+    c.save(); c.strokeStyle = col; c.shadowColor = col; c.shadowBlur = glow; c.lineWidth = Math.max(2, s * .045); c.lineCap = 'round'; c.lineJoin = 'round';
+    const P = (dx, dy) => [x + dx * s, y + dy * s], L = pts => { c.beginPath(); pts.forEach((p, i) => { const [a, b] = P(...p); if (i) c.lineTo(a, b); else c.moveTo(a, b); }); c.stroke(); };
+    for (const [cy, rx, ry] of [[-.3, .1, .09], [-.12, .075, .09], [.16, .13, .19]]) { c.beginPath(); c.ellipse(...P(0, cy), rx * s, ry * s, 0, 0, Math.PI * 2); c.stroke(); }
+    for (const sd of [-1, 1]) {
+      L([[sd * .05, -.37], [sd * .16, -.5], [sd * .27, -.47]]); L([[sd * .03, -.39], [sd * .08, -.44], [sd * .03, -.47]]);
+      L([[sd * .06, -.16], [sd * .24, -.26], [sd * .36, -.16]]); L([[sd * .07, -.11], [sd * .28, -.08], [sd * .4, .04]]); L([[sd * .06, -.05], [sd * .22, .08], [sd * .3, .3]]);
+    }
+    c.restore();
+  };
   const ROOM_TEX = {
     // Antthony's Comedy Club (Hub, Oct 25): the ANTTHONY neon ring over the stage (after Miguel's picture), the club's name on
     // the rooftop sign and over the door, the snack bar and the wall of fame signs, the Roast Champion plaque, the purple noren
@@ -451,6 +463,122 @@
       c.fillStyle = '#e8c56a'; c.beginPath(); c.arc(cx, cy - 26, 24, Math.PI, 0); c.lineTo(cx + 24, cy + 6); c.arc(cx, cy + 6, 24, 0, Math.PI); c.closePath(); c.fill();
       c.fillRect(cx - 5, cy + 30, 10, 24); c.fillRect(cx - 24, cy + 52, 48, 8);
       c.lineWidth = 7; c.beginPath(); c.arc(cx, cy + 4, 36, .25, Math.PI - .25); c.stroke();
+    }),
+    // Rebel Ants After Dark (the Hub's south-east courtyard dojo, Oct 26; after afterdark.rebelants.io): the neon sign with the
+    // ant crest over the back wall, the colony's motto over the door, the Hold Em felt with the crest, the community cards and
+    // the card backs, the Colony Clash bracket, the game signs, the Spinner reels, the Drop board, the wheel's hub, the points
+    // sign, the community sign, the moon window's night, the After Dark code plaque
+    ad_sign: (cv, T) => cv('ad_sign', 1024, 512, (c, W, H) => {
+      c.clearRect(0, 0, W, H);
+      adCrest(c, W / 2, 92, 150, '#ff5a1e');
+      T._neon(c, 'REBEL ANTS', W / 2, 262, 150, '#ff2a2a', W - 40);
+      T._neon(c, 'A F T E R   D A R K', W / 2, 398, 84, '#a64dff', W - 150);
+      c.save(); c.strokeStyle = '#ffcf5a'; c.shadowColor = '#ffcf5a'; c.shadowBlur = 14; c.lineWidth = 5; c.lineCap = 'round';
+      for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(W / 2 + sd * 330, 398); c.lineTo(W / 2 + sd * 470, 398); c.stroke(); c.beginPath(); c.arc(W / 2 + sd * 480, 398, 8, 0, Math.PI * 2); c.stroke(); }
+      c.restore();
+      T._neon(c, '♠  ♥  ♦  ♣', W / 2, 474, 44, '#ffcf5a', 320);
+    }),
+    ad_never: (cv, T) => cv('ad_never', 1024, 128, (c, W, H) => { c.clearRect(0, 0, W, H); T._neon(c, 'THE COLONY NEVER SLEEPS', W / 2, H / 2 + 4, 70, '#ffcf5a', W - 40); }),
+    ad_felt: cv => cv('ad_felt', 1024, 1024, (c, W, H) => {
+      c.fillStyle = '#1a0f1c'; c.fillRect(0, 0, W, H); const r = rng(401);
+      for (let k = 0; k < 9000; k++) { const v = 22 + r() * 18 | 0; c.fillStyle = `rgba(${v + 8},${v - 6},${v + 10},.35)`; c.fillRect(r() * W, r() * H, 2, 2); }
+      c.strokeStyle = 'rgba(201,164,82,.55)'; c.lineWidth = 6; c.beginPath(); c.arc(W / 2, H / 2, 470, 0, Math.PI * 2); c.stroke();
+      c.lineWidth = 2; c.beginPath(); c.arc(W / 2, H / 2, 448, 0, Math.PI * 2); c.stroke();
+      c.globalAlpha = .62; adCrest(c, W / 2, H / 2 - 40, 300, '#c98a3a', 8); c.globalAlpha = 1;
+      c.fillStyle = 'rgba(214,176,96,.8)'; c.font = '900 64px Georgia, serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('REBEL HOLD EM', W / 2, H / 2 + 230);
+      c.font = '700 30px Georgia, serif'; c.fillStyle = 'rgba(214,176,96,.55)'; c.fillText('POINTS ONLY  ·  BRAGGING RIGHTS', W / 2, H / 2 + 290);
+    }),
+    ad_cards: cv => cv('ad_cards', 640, 192, (c, W, H) => {
+      c.clearRect(0, 0, W, H);
+      const cards = [['10', '♣'], ['J', '♦'], ['Q', '♥'], ['7', '♣'], ['2', '♠']];
+      cards.forEach(([rk, su], k) => {
+        const x = 8 + k * 126, y = 12, w = 116, h = 168, red = su === '♦' || su === '♥';
+        c.fillStyle = '#f4efe2'; c.beginPath(); c.roundRect(x, y, w, h, 12); c.fill(); c.strokeStyle = '#8a7a5a'; c.lineWidth = 2; c.stroke();
+        c.fillStyle = red ? '#c4161c' : '#16121a'; c.textAlign = 'left'; c.textBaseline = 'top'; c.font = '900 34px Georgia, serif'; c.fillText(rk, x + 9, y + 8); c.font = '30px serif'; c.fillText(su, x + 10, y + 44);
+        c.textAlign = 'center'; c.textBaseline = 'middle';
+        if (rk === 'J' || rk === 'Q') { c.strokeStyle = '#c9a452'; c.lineWidth = 4; c.strokeRect(x + 30, y + 38, w - 44, h - 62); c.font = '900 56px Georgia, serif'; c.fillText(rk, x + w / 2 + 6, y + h / 2 + 8); }
+        else { c.font = '76px serif'; c.fillText(su, x + w / 2 + 6, y + h / 2 + 10); }
+      });
+    }),
+    ad_back: cv => cv('ad_back', 128, 176, (c, W, H) => {
+      c.fillStyle = '#f4efe2'; c.fillRect(0, 0, W, H); c.fillStyle = '#7a1018'; c.fillRect(8, 8, W - 16, H - 16);
+      c.strokeStyle = '#c9a452'; c.lineWidth = 3; c.strokeRect(16, 16, W - 32, H - 32);
+      c.strokeStyle = 'rgba(201,164,82,.45)'; c.lineWidth = 2; for (let k = -H; k < W + H; k += 14) { c.beginPath(); c.moveTo(k, 16); c.lineTo(k + H, H - 16); c.stroke(); }
+      adCrest(c, W / 2, H / 2, 70, '#ffcf5a', 0);
+    }),
+    ad_bracket: (cv, T) => cv('ad_bracket', 1024, 576, (c, W, H) => {
+      const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#120a22'); g.addColorStop(1, '#07040e'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      c.strokeStyle = '#c9a452'; c.lineWidth = 6; c.strokeRect(6, 6, W - 12, H - 12);
+      const top = 46, bot = H - 88, rounds = 5, colW = 92;
+      for (const sd of [-1, 1]) for (let r = 0; r < rounds; r++) {
+        const n = 16 >> r, xs = sd < 0 ? 30 + r * colW : W - 30 - r * colW, xe = xs - sd * (colW - 24), step = (bot - top) / n;
+        for (let i = 0; i < n; i++) {
+          const y = top + (i + .5) * step, lit = r < 2 ? (i * 7 + r * 3) % 3 : 1;
+          c.save(); c.strokeStyle = r === rounds - 1 ? '#ffcf5a' : sd < 0 ? '#a64dff' : '#ff3a5a'; c.shadowColor = c.strokeStyle; c.shadowBlur = 8; c.globalAlpha = lit ? 1 : .45; c.lineWidth = 3;
+          c.beginPath(); c.moveTo(xs, y); c.lineTo(xe, y); c.stroke();
+          if (i % 2 === 0 && r < rounds - 1) { const y2 = top + (i + 1.5) * step; c.beginPath(); c.moveTo(xe, y); c.lineTo(xe, y2); c.stroke(); }
+          c.restore();
+          if (r === 0) { c.fillStyle = '#2a1840'; c.fillRect(Math.min(xs, xe) - 2, y - 7, colW - 20, 14); c.fillStyle = 'rgba(255,255,255,.55)'; c.fillRect(Math.min(xs, xe) + 6, y - 2, 30 + (i * 13) % 26, 4); }
+        }
+      }
+      c.save(); c.translate(W / 2, (top + bot) / 2 - 6); c.strokeStyle = '#ffcf5a'; c.shadowColor = '#ffcf5a'; c.shadowBlur = 16; c.lineWidth = 6; c.lineJoin = 'round';
+      c.beginPath(); c.moveTo(-60, -60); c.lineTo(60, -60); c.lineTo(48, 0); c.quadraticCurveTo(0, 40, -48, 0); c.closePath(); c.stroke();
+      for (const sd of [-1, 1]) { c.beginPath(); c.arc(sd * 66, -34, 20, sd < 0 ? Math.PI * .5 : Math.PI * 1.5, sd < 0 ? Math.PI * 1.5 : Math.PI * .5); c.stroke(); }
+      c.beginPath(); c.moveTo(0, 26); c.lineTo(0, 62); c.moveTo(-34, 72); c.lineTo(34, 72); c.stroke(); c.restore();
+      T._neon(c, 'UP TO 128 ANTS', W / 2, H - 46, 46, '#ffcf5a', W - 260);
+    }),
+    ad_clash: (cv, T) => cv('ad_clash', 1024, 160, (c, W, H) => { c.clearRect(0, 0, W, H); T._neon(c, 'COLONY CLASH', W / 2, H / 2 + 4, 104, '#ff8a2a', W - 40); }),
+    ad_21: (cv, T) => cv('ad_21', 512, 192, (c, W, H) => { c.clearRect(0, 0, W, H); T._neon(c, 'REBEL 21', W / 2, H / 2 + 6, 110, '#ff4fd8', W - 30); }),
+    ad_spinner: (cv, T) => cv('ad_spinner', 1024, 160, (c, W, H) => { c.clearRect(0, 0, W, H); T._neon(c, 'REBEL SPINNER', W / 2, H / 2 + 4, 104, '#a64dff', W - 40); }),
+    ad_wheel_sign: (cv, T) => cv('ad_wheel_sign', 512, 128, (c, W, H) => { c.clearRect(0, 0, W, H); T._neon(c, 'REBEL WHEEL', W / 2, H / 2 + 4, 74, '#a64dff', W - 24); }),
+    ad_drop_sign: (cv, T) => cv('ad_drop_sign', 512, 128, (c, W, H) => { c.clearRect(0, 0, W, H); T._neon(c, 'REBEL DROP', W / 2, H / 2 + 4, 74, '#ff3a3a', W - 24); }),
+    ad_reels: cv => cv('ad_reels', 384, 160, (c, W, H) => {
+      c.fillStyle = '#0c0712'; c.fillRect(0, 0, W, H); c.strokeStyle = '#c9a452'; c.lineWidth = 6; c.strokeRect(3, 3, W - 6, H - 6);
+      for (let k = 0; k < 3; k++) {
+        const x = 16 + k * 120, cx = x + 52, cy = H / 2;
+        const g = c.createLinearGradient(0, 14, 0, H - 14); g.addColorStop(0, '#9a8f86'); g.addColorStop(.5, '#f6f1e6'); g.addColorStop(1, '#9a8f86'); c.fillStyle = g; c.fillRect(x, 14, 104, H - 28);
+        if (k === 0) adCrest(c, cx, cy, 92, '#e2401a', 0);
+        else if (k === 1) { c.fillStyle = '#d8a520'; c.beginPath(); c.moveTo(cx - 34, cy + 26); c.lineTo(cx - 38, cy - 22); c.lineTo(cx - 17, cy); c.lineTo(cx, cy - 32); c.lineTo(cx + 17, cy); c.lineTo(cx + 38, cy - 22); c.lineTo(cx + 34, cy + 26); c.closePath(); c.fill(); c.fillStyle = '#c4161c'; c.beginPath(); c.arc(cx, cy + 10, 7, 0, Math.PI * 2); c.fill(); }
+        else { c.fillStyle = '#5a1fa0'; c.font = '96px serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('♠', cx, cy + 6); }
+      }
+      c.fillStyle = 'rgba(255,40,40,.75)'; c.fillRect(8, H / 2 - 2, W - 16, 4);
+    }),
+    ad_drop: cv => cv('ad_drop', 512, 704, (c, W, H) => {
+      const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#160c26'); g.addColorStop(1, '#0a0614'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      c.strokeStyle = '#c9a452'; c.lineWidth = 8; c.strokeRect(4, 4, W - 8, H - 8);
+      const rows = 11, top = 70, gap = 50;
+      for (let r = 0; r < rows; r++) { const n = 3 + r, y = top + r * gap; for (let i = 0; i < n; i++) { const x = W / 2 + (i - (n - 1) / 2) * 42; c.save(); c.fillStyle = '#f3e9ff'; c.shadowColor = '#c07bff'; c.shadowBlur = 10; c.beginPath(); c.arc(x, y, 6, 0, Math.PI * 2); c.fill(); c.restore(); } }
+      const slots = 13, sw = (W - 40) / slots, cols = ['#ff2a2a', '#ff6a1e', '#ffb02e', '#ffd84a', '#7ad0ff', '#3b8dff', '#6a4dff', '#3b8dff', '#7ad0ff', '#ffd84a', '#ffb02e', '#ff6a1e', '#ff2a2a'];
+      for (let k = 0; k < slots; k++) { const x = 20 + k * sw; c.save(); c.fillStyle = cols[k]; c.shadowColor = cols[k]; c.shadowBlur = 12; c.fillRect(x + 3, H - 96, sw - 6, 64); c.restore(); c.fillStyle = 'rgba(0,0,0,.35)'; c.fillRect(x + 3, H - 64, sw - 6, 32); }
+      c.strokeStyle = 'rgba(255,255,255,.18)'; c.lineWidth = 2; for (let k = 0; k <= slots; k++) { const x = 20 + k * sw; c.beginPath(); c.moveTo(x, H - 110); c.lineTo(x, H - 30); c.stroke(); }
+    }),
+    ad_hub: cv => cv('ad_hub', 256, 256, (c, W, H) => { c.fillStyle = '#08050c'; c.fillRect(0, 0, W, H); adCrest(c, W / 2, H / 2 + 6, 170, '#ff5a1e'); }),
+    ad_points: (cv, T) => cv('ad_points', 1024, 192, (c, W, H) => { c.clearRect(0, 0, W, H); T._neon(c, '$REBEL POINTS', W / 2, H / 2 + 6, 112, '#ffcf5a', W - 40); }),
+    ad_community: (cv, T) => cv('ad_community', 1024, 256, (c, W, H) => {
+      c.clearRect(0, 0, W, H);
+      c.save(); c.strokeStyle = '#8f7bff'; c.shadowColor = '#8f7bff'; c.shadowBlur = 18; c.lineWidth = 9; c.lineJoin = 'round';
+      c.beginPath(); c.roundRect(60, 46, 150, 104, 26); c.stroke(); c.beginPath(); c.moveTo(96, 150); c.lineTo(86, 194); c.lineTo(128, 150); c.stroke();
+      for (const x of [102, 135, 168]) { c.beginPath(); c.arc(x, 98, 7, 0, Math.PI * 2); c.stroke(); } c.restore();
+      T._neon(c, 'COMMUNITY STRONG', 612, 96, 82, '#a64dff', 740);
+      T._neon(c, 'JOIN THE COLONY', 612, 190, 56, '#3bd5ff', 600);
+    }),
+    ad_moon: cv => cv('ad_moon', 512, 512, (c, W, H) => {
+      const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#0b0620'); g.addColorStop(.6, '#2a0f3a'); g.addColorStop(1, '#3d1430'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      const r = rng(77); for (let k = 0; k < 140; k++) { c.fillStyle = `rgba(255,255,255,${.25 + r() * .6})`; c.fillRect(r() * W, r() * H * .6, 2, 2); }
+      c.save(); c.fillStyle = '#d42a2a'; c.shadowColor = '#ff3a2a'; c.shadowBlur = 60; c.beginPath(); c.arc(W * .66, H * .34, 84, 0, Math.PI * 2); c.fill(); c.restore();
+      c.fillStyle = 'rgba(120,20,20,.35)'; for (const [x, y, rr] of [[.62, .3, 14], [.7, .38, 9], [.66, .26, 7]]) { c.beginPath(); c.arc(W * x, H * y, rr, 0, Math.PI * 2); c.fill(); }
+      c.fillStyle = '#05030a';
+      const pagoda = (x, base, w, tiers) => { let y = base; for (let t = 0; t < tiers; t++) { const ww = w * (1 - t * .16); c.beginPath(); c.moveTo(x - ww / 2 - 14, y - 6); c.quadraticCurveTo(x, y - 26, x + ww / 2 + 14, y - 6); c.lineTo(x + ww / 2, y - 22); c.lineTo(x - ww / 2, y - 22); c.closePath(); c.fill(); c.fillRect(x - ww / 2 + 8, y - 44, ww - 16, 24); y -= 44; } c.fillRect(x - 2, y - 26, 4, 26); return y; };
+      c.fillRect(0, H * .82, W, H); pagoda(140, H * .84, 110, 4); pagoda(330, H * .86, 80, 3); pagoda(450, H * .85, 60, 2);
+      c.fillStyle = '#ffb04a'; for (const [x, y] of [[120, .74], [160, .74], [136, .65], [320, .78], [345, .78], [450, .8]]) c.fillRect(x - 4, H * y - 4, 8, 7);
+      c.strokeStyle = 'rgba(255,90,60,.65)'; c.lineWidth = 2; c.beginPath(); c.moveTo(0, H * .6); c.quadraticCurveTo(W / 2, H * .7, W, H * .58); c.stroke();
+      for (let k = 1; k < 9; k++) { const x = k * W / 9, y = H * .6 + Math.sin(k / 9 * Math.PI) * H * .06 + 4; c.fillStyle = k % 2 ? '#ff4a3a' : '#ffb04a'; c.beginPath(); c.ellipse(x, y + 8, 6, 9, 0, 0, Math.PI * 2); c.fill(); }
+    }),
+    ad_code: cv => cv('ad_code', 512, 192, (c, W, H) => {
+      const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#f0cf7a'); g.addColorStop(.5, '#c9a040'); g.addColorStop(1, '#8a6a22'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      c.strokeStyle = '#5a4210'; c.lineWidth = 6; c.strokeRect(10, 10, W - 20, H - 20);
+      c.fillStyle = '#2a1e08'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = '900 40px Georgia, serif'; c.fillText('POINTS ONLY', W / 2, 66, W - 60);
+      c.font = '700 26px Georgia, serif'; c.fillText('BRAGGING RIGHTS  ·  COMMUNITY PLAY', W / 2, 124, W - 50);
     }),
     // Shogun Throne Room: cranes and clouds on gold (the side walls); the great pine on gold leaf (the screen behind the throne)
     fusuma_cranes: cv => cv('fusuma_cranes', 512, 384, (c, W, H) => {
@@ -976,6 +1104,16 @@
     sign_snacks: { tex: 'sign_snacks', self: true, alphaTex: true }, sign_fame: { tex: 'sign_fame', self: true, alphaTex: true }, plaque_champion: { tex: 'plaque_champion', em: [.22, .17, .06] }, noren_comedy: { tex: 'noren_comedy' },
     bulb: { col: [1, .9, .62], em: [1, .8, .45] }, popcorn: { col: [.98, .86, .48], em: [.16, .12, .04] }, candle_glass: { col: [.86, .26, .2], em: [.72, .2, .12], alpha: .8 }, shaft_spot: { shaft: [1, .84, .58], alpha: .1 },
     poster_neon: { img: 'assets/interiors/antthony/neon-sign.webp', em: [.3, .3, .3] }, poster_micdrop: { img: 'assets/interiors/antthony/mic-drop.webp', em: [.3, .3, .3] },
+    // Rebel Ants After Dark (the Hub's south-east dojo)
+    ad_wall: { tex: 'plaster', tint: [.26, .14, .22] }, ad_floor: { tex: 'darkwood', tint: [.8, .64, .72] }, neon_red: { col: [1, .16, .12], em: [1, .12, .08] }, ad_felt21: { col: [.2, .07, .26] },
+    ad_sign: { tex: 'ad_sign', self: true, alphaTex: true }, ad_never: { tex: 'ad_never', self: true, alphaTex: true }, ad_felt: { tex: 'ad_felt' }, ad_cards: { tex: 'ad_cards', alphaTex: true, em: [.22, .21, .19] },
+    ad_back: { tex: 'ad_back', em: [.12, .06, .06] }, ad_bracket: { tex: 'ad_bracket', self: true }, ad_clash: { tex: 'ad_clash', self: true, alphaTex: true }, ad_21: { tex: 'ad_21', self: true, alphaTex: true },
+    ad_spinner: { tex: 'ad_spinner', self: true, alphaTex: true }, ad_wheel_sign: { tex: 'ad_wheel_sign', self: true, alphaTex: true }, ad_drop_sign: { tex: 'ad_drop_sign', self: true, alphaTex: true },
+    ad_reels: { tex: 'ad_reels', self: true }, ad_drop: { tex: 'ad_drop', self: true }, ad_hub: { tex: 'ad_hub', self: true }, ad_points: { tex: 'ad_points', self: true, alphaTex: true },
+    ad_community: { tex: 'ad_community', self: true, alphaTex: true }, ad_moon: { tex: 'ad_moon', self: true }, ad_code: { tex: 'ad_code', em: [.22, .17, .06] },
+    ad_poster: { img: 'assets/interiors/afterdark/after-dark.webp', em: [.35, .35, .35] }, ad_poster_icon: { img: 'assets/interiors/afterdark/after-dark-icon.webp', em: [.35, .35, .35] },
+    ad_chip_red: { col: [.72, .1, .12], spec: [.3, .3, .3], power: 30 }, ad_chip_purple: { col: [.36, .16, .6], spec: [.3, .3, .3], power: 30 },
+    ad_seg_purple: { col: [.34, .12, .52], em: [.14, .04, .22] }, ad_seg_red: { col: [.56, .06, .08], em: [.22, .02, .03] },
     glow: { glow: [.95, .5, .16] } // soft pool of lantern light on the ground (night only)
   };
   let TEX = null; const MATS = {};
@@ -4174,6 +4312,13 @@
   const AC = { HX: 15, HY: 13, H: 9, DW: 3.6, DH: 4.6, ST: { x0: -9, x1: 9, y0: -13, y1: -6.2, h: 1.1, sx0: 2.6, sx1: 4.8, sy: -4 },
     MIC: [0, -8.4], STOOL: [2.3, -9.3], TX: [-10.5, -6, 6, 10.5], TY: [-1.6, 3, 7.6], SNACK: [6.4, 9.8], TROPHY: [-8, 11.4],
     PY: [-5.2, -2.9, -.6, 1.7, 4, 6.3, 8.6], PS: 1.9, PZ: 4 };
+  // Hub Rebel Ants After Dark (the south-east courtyard dojo, Oct 26; afterdark.rebelants.io in the colony): the Hold Em table in
+  // the middle (TAB: centre x, y, top radius, height), Rebel 21's half-moon table against the left wall (T21: centre, radius), the
+  // Colony Clash bracket on the left wall (CL: centre y, width), the Spinner machines on the right wall (SP: their ys), the Wheel
+  // and the Drop board on the back wall (WH: x, centre height, radius; DR: x, centre height, width, height), the points counter in
+  // the front right (PT: x0, y0, y1), the community sign over its bench on the left wall (CM: y), the moon window (MW: y, z, r)
+  const AD = { HX: 17, HY: 15, H: 9.5, DW: 4, DH: 4.8, TAB: [0, -2.5, 3, 1.45], T21: [-13.4, 6.4, 2.3], CL: [-4, 8], SP: [-8.4, -5.8, -3.2, -.6],
+    WH: [-9.6, 4.4, 2.6], DR: [9.6, 4.3, 4.4, 5.6], PT: [9.4, 11.2, 12.7], CM: 11.4, MW: [7, 4.8, 1.9] };
   // Shogun rooms (rebel scale: a Rebel stands 3.4 m, so chairs sit at .85 and tables at 1.45)
   // TS Throne Room: the long table (y0..y1, half width, height), the seats, the chairs' x, the banner poles' x, the dais and its
   // stairs, the throne's y, the canopy posts [x, yBack, yFront], the colonnade (x, ys)
@@ -4387,6 +4532,18 @@
       blockers: [{ box: [-9.1, -6.98, -6.75, -6.4], minY: .5 }, { box: [6.75, -6.98, 9.1, -6.4], minY: .5 }, { box: [-12.45, -11.9, -10.75, -10.5] }, { box: [10.75, -11.9, 12.45, -10.5] },
         { circle: [...AC.MIC, .42], minY: .5 }, { circle: [...AC.STOOL, .5], minY: .5 }, ...AC.TX.flatMap(x => AC.TY.map(y => ({ circle: [x, y + .45, 1.3] }))),
         { box: [AC.SNACK[0], AC.SNACK[1], AC.HX, AC.HY] }, { box: [AC.TROPHY[0] - 1.45, AC.TROPHY[1] - 1.05, AC.TROPHY[0] + 1.45, AC.TROPHY[1] + 1.05] }]
+    },
+    room_hub_afterdark: {
+      bounds: [-AD.HX, AD.HX, -AD.HY, AD.HY + .2], spawn: [0, AD.HY - 4.6, Math.PI], exit: [0, AD.HY + .3], ceil: AD.H,
+      hemi: { i: .32, c: [.74, .56, .9], g: [.12, .07, .12] },
+      lights: [{ p: [0, 6.4, -2.5], c: [1, .82, .6], i: 1.15, r: 10 }, { p: [0, 6.8, -12.5], c: [1, .28, .22], i: .85, r: 14 }, { p: [-12, 5.5, -1], c: [.62, .32, 1], i: .7, r: 15 },
+        { p: [12, 5.5, -3], c: [.85, .3, 1], i: .6, r: 14 }, { p: [0, 4.6, 10.5], c: [1, .8, .56], i: .55, r: 12 }, { p: [13, 4.2, 9], c: [1, .45, .32], i: .45, r: 9 }],
+      parts: [{ type: 'room_ad_wheel', p: [AD.WH[0], AD.WH[1], -AD.HY + .55], anim: { spinZ: .3 } }],
+      blockers: [{ circle: [AD.TAB[0], AD.TAB[1], AD.TAB[2] + .2] }, ...[1, 2, 3, 4, 5, 6, 7].map(k => { const a = -Math.PI / 2 + k * Math.PI / 4; return { circle: [AD.TAB[0] + Math.cos(a) * (AD.TAB[2] + .85), AD.TAB[1] + Math.sin(a) * (AD.TAB[2] + .85), .5] }; }),
+        { box: [AD.T21[0] - .1, AD.T21[1] - AD.T21[2] - .15, AD.T21[0] + AD.T21[2] + .15, AD.T21[1] + AD.T21[2] + .15] }, ...[-1.05, -.35, .35, 1.05].map(a => ({ circle: [AD.T21[0] + Math.cos(a) * (AD.T21[2] + .75), AD.T21[1] + Math.sin(a) * (AD.T21[2] + .75), .45] })),
+        { box: [-AD.HX, AD.CL[0] - AD.CL[1] / 2 + .15, -AD.HX + 1.05, AD.CL[0] + AD.CL[1] / 2 - .15] }, { box: [AD.HX - 1.55, AD.SP[0] - .85, AD.HX, AD.SP[AD.SP.length - 1] + .85] },
+        { box: [AD.WH[0] - 2.5, -AD.HY, AD.WH[0] + 2.5, -AD.HY + 1.55] }, { box: [AD.DR[0] - 2.5, -AD.HY, AD.DR[0] + 2.5, -AD.HY + 1.55] },
+        { box: [AD.PT[0] - .05, AD.PT[1] - .05, AD.HX, AD.HY] }, { box: [-4.55, AD.HY - 1.65, -3.45, AD.HY - .75] }, { box: [-AD.HX, AD.CM - 1.85, -AD.HX + .95, AD.CM + 1.85] }]
     },
     room_sam_dojo: {
       bounds: [-SD.HX, SD.HX, -SD.HY, SD.HY + .2], spawn: [0, 11.6, Math.PI], exit: [0, SD.HY + .3],
@@ -5640,6 +5797,142 @@
       // the club's name over the door, purple lanterns over the house
       wallArt(M, 'front', 0, DH + .5, 5.6, 1.4, 'club_marquee', HX, HY, .1);
       M.remap = { lantern: 'lantern_violet' }; for (const [x, y] of [[-8.25, .7], [8.25, .7], [-8.25, 5.3], [8.25, 5.3]]) chochin(M, x, y, H - .4, 1.7, .45, 1); M.remap = null;
+    },
+    // Rebel Ants After Dark (the Hub's south-east courtyard dojo): the colony's points-only game lounge after the After Dark site.
+    // The Hold Em table under its red neon ring, Rebel 21 by the left wall, the Colony Clash bracket, the Spinner machines, the
+    // Wheel and the Drop board under the REBEL ANTS AFTER DARK neon, the points counter, the community corner, the moon window
+    room_hub_afterdark(M) {
+      M.room = true;
+      const { HX, HY, H, DW, DH, TAB, T21, CL, SP, WH, DR, PT, CM, MW } = AD;
+      hall(M, { HX, HY, H, DW, DH, floor: 'ad_floor', wall: 'ad_wall', wain: 'lacquer_black', wainH: 1.4, rail: 'gold', post: 'lacquer_black', posts: [-HY, -10.2, 2.6, HY], beam: 'lacquer_black', ceil: 'lacquer_black', ceilBeam: 'darkwood', ceilEvery: 3 });
+      for (const s2 of [-1, 1]) M.block(s2 < 0 ? 'neon_purple' : 'neon_red', s2 * (HX - .2), 0, H - .55, .06, 2 * HY, .07);
+      M.block('neon_red', 0, -HY + .2, H - .55, 2 * HX, .06, .07);
+      // the floor: a round rug under the Hold Em table, the red runner from the door to it
+      const [tx, ty, tr, th] = TAB;
+      discK(M, 'cloth_purple', [tx, ty, .012], [1, 0, 0], [0, 1, 0], tr + 2.4, 40);
+      M.quad('runner', [[-1.4, ty + tr + 2.2, .014], [1.4, ty + tr + 2.2, .014], [1.4, HY, .014], [-1.4, HY, .014]], [[0, 0], [1, 0], [1, (HY - ty - tr - 2.2) / 6.4], [0, (HY - ty - tr - 2.2) / 6.4]]);
+      // REBEL ANTS AFTER DARK in neon on the back wall, its glow; the colony's motto over the door
+      wallArt(M, 'back', 0, 3.9, 13, 5.2, 'glow', HX, HY, .3);
+      wallArt(M, 'back', 0, 4.1, 9.6, 4.8, 'ad_sign', HX, HY, .33);
+      wallArt(M, 'front', 0, DH + .45, 8.4, 1.05, 'ad_never', HX, HY, .1);
+      // the Hold Em table: a black drum, the walnut slab, the felt with the crest, a padded rail, the red neon band round its edge;
+      // chips at each of the seven seats, two cards face down at each, the five community cards, the dealer button
+      M.cyl('lacquer_black', [tx, ty, 0], tr - .25, th - .14, 40);
+      M.cyl('darkwood', [tx, ty, th - .14], tr + .15, .14, 48);
+      discK(M, 'ad_felt', [tx, ty, th + .004], [-1, 0, 0], [0, -1, 0], tr - .25, 48);
+      M.tube('velvet', [tx, ty, th], [tx, ty, th + .1], tr + .15, tr + .1, 48, false); M.tube('velvet', [tx, ty, th + .1], [tx, ty, th + .02], tr - .1, tr - .24, 48, false);
+      for (let k = 0; k < 48; k++) { const a0 = k / 48 * Math.PI * 2, a1 = (k + 1) / 48 * Math.PI * 2, P = (r, a) => [tx + Math.cos(a) * r, ty + Math.sin(a) * r, th + .1]; M.quad('velvet', [P(tr - .1, a0), P(tr + .1, a0), P(tr + .1, a1), P(tr - .1, a1)]); }
+      M.tube('neon_red', [tx, ty, th - .2], [tx, ty, th - .15], tr + .17, tr + .17, 48, false);
+      const seats = Array.from({ length: 8 }, (_, k) => -Math.PI / 2 + k * Math.PI / 4).filter((a, k) => k !== 0); // seat 0 (toward the back) is the dealer's
+      const chips = ['ad_chip_red', 'ad_chip_purple', 'gold', 'white'];
+      seats.forEach((a, s) => {
+        const cx = tx + Math.cos(a) * (tr - 1.1), cy = ty + Math.sin(a) * (tr - 1.1);
+        for (let q = 0; q < 3; q++) { const qa = a + (q - 1) * .2, qx = tx + Math.cos(qa) * (tr - .62), qy = ty + Math.sin(qa) * (tr - .62); for (let z = 0; z < 2 + (s + q * 2) % 5; z++) M.cyl(chips[(s + q) % 4], [qx, qy, th + .006 + z * .035], .13, .03, 12); }
+        atK(M, cx, cy, th + .008, a + Math.PI / 2, () => { M.quad('ad_back', [[-.2, -.14, 0], [.06, -.14, 0], [.06, .22, 0], [-.2, .22, 0]]); M.quad('ad_back', [[-.02, -.16, .002], [.24, -.16, .002], [.24, .2, .002], [-.02, .2, .002]]); });
+      });
+      M.quad('ad_cards', [[tx + 1.1, ty - .59, th + .01], [tx - 1.1, ty - .59, th + .01], [tx - 1.1, ty - 1.25, th + .01], [tx + 1.1, ty - 1.25, th + .01]]);
+      M.cyl('white', [tx + 1.6, ty - 1.4, th + .006], .16, .04, 14);
+      // the chairs, backs to the room
+      for (const a of seats) atK(M, tx + Math.cos(a) * (tr + .85), ty + Math.sin(a) * (tr + .85), 0, a - Math.PI / 2, () => {
+        M.block('velvet', 0, 0, .74, .82, .78, .12); for (const [p, q] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) M.block('lacquer_black', p * .34, q * .32, 0, .07, .07, .74);
+        M.block('lacquer_black', 0, .38, .86, .82, .08, 1.15); M.block('gold', 0, .38, 2.0, .86, .1, .05);
+      });
+      // over the table: a ring of red neon on three rods, the light falling from it
+      M.tube('neon_red', [tx, ty, H - 1.7], [tx, ty, H - 1.62], 2.4, 2.4, 40, false); for (let k = 0; k < 3; k++) { const a = k / 3 * Math.PI * 2 + .3; M.rod('lacquer_black', [tx + Math.cos(a) * 2.4, ty + Math.sin(a) * 2.4, H - 1.62], [tx, ty, H], .025, 4); }
+      for (const a of [0, Math.PI / 2]) { const c2 = Math.cos(a), s3 = Math.sin(a); M.quad('shaft_spot', [[tx - 2.6 * c2, ty - 2.6 * s3, th + .05], [tx + 2.6 * c2, ty + 2.6 * s3, th + .05], [tx + 2.2 * c2, ty + 2.2 * s3, H - 1.7], [tx - 2.2 * c2, ty - 2.2 * s3, H - 1.7]]); }
+      // Rebel 21: the half-moon table against the left wall (the dealer's straight side to the wall), its felt, the card shoe,
+      // chips and cards at four seats, its neon on the wall above
+      const [ux, uy, ur] = T21, arc = (r, a) => [ux + Math.cos(a) * r, uy + Math.sin(a) * r], A = k => -Math.PI / 2 + k / 24 * Math.PI;
+      const fan = (mat, r, z) => { for (let k = 0; k < 24; k++) M.poly(mat, [[ux, uy, z], [...arc(r, A(k)), z], [...arc(r, A(k + 1)), z]]); };
+      const band = (mat, r, z0, z1) => { for (let k = 0; k < 24; k++) M.quad(mat, [[...arc(r, A(k)), z0], [...arc(r, A(k + 1)), z0], [...arc(r, A(k + 1)), z1], [...arc(r, A(k)), z1]]); };
+      band('lacquer_black', ur - .2, 0, th - .12); M.block('lacquer_black', ux - .05, uy, 0, .1, 2 * (ur - .2), th - .12);
+      fan('darkwood', ur + .12, th - .12); fan('darkwood', ur + .12, th); band('darkwood', ur + .12, th - .12, th); M.block('darkwood', ux - .05, uy, th - .12, .1, 2 * (ur + .12), .12);
+      fan('ad_felt21', ur - .1, th + .004); band('neon_red', ur + .13, th - .1, th - .05);
+      M.block('lacquer_black', ux + .45, uy - .9, th, .5, .34, .22); M.block('ad_chip_red', ux + .45, uy - .9, th + .22, .5, .34, .02);
+      const seats21 = [-1.05, -.35, .35, 1.05];
+      seats21.forEach((a, s) => {
+        const cx = ux + Math.cos(a) * (ur - .55), cy = uy + Math.sin(a) * (ur - .55);
+        atK(M, cx, cy, th + .008, a + Math.PI / 2, () => { M.quad('ad_cards', [[-.22, -.15, 0], [.12, -.15, 0], [.12, .3, 0], [-.22, .3, 0]], [[.6 - s * .2, 0], [.79 - s * .2, 0], [.79 - s * .2, 1], [.6 - s * .2, 1]]); });
+        for (let z = 0; z < 3 + s % 3; z++) M.cyl(chips[(s + 1) % 4], [ux + Math.cos(a) * (ur - .32), uy + Math.sin(a) * (ur - .32), th + .006 + z * .035], .12, .03, 12);
+        atK(M, ux + Math.cos(a) * (ur + .75), uy + Math.sin(a) * (ur + .75), 0, a - Math.PI / 2, () => {
+          M.block('velvet', 0, 0, .74, .78, .74, .12); M.cyl('gold', [0, 0, 0], .34, .05, 12); M.cyl('lacquer_black', [0, 0, .05], .06, .69, 8);
+          M.block('lacquer_black', 0, .36, .86, .78, .08, .9);
+        });
+      });
+      wallArt(M, 'left', uy, 4.3, 4.4, 1.65, 'ad_21', HX, HY, .1);
+      // the lamp over it: a black shade on its rod, the light falling onto the felt
+      const lx = ux + .9; M.rod('lacquer_black', [lx, uy, H], [lx, uy, 4.1], .03, 4); M.tube('lacquer_black', [lx, uy, 3.55], [lx, uy, 4.1], .9, .22, 20); M.sphere('bulb', [lx, uy, 3.62], .16, 1, 10, 5);
+      M.quad('shaft_spot', [[lx - 1.5, uy - 1.7, th + .02], [lx - 1.5, uy + 1.7, th + .02], [lx - .5, uy + .7, 3.56], [lx - .5, uy - .7, 3.56]]); M.quad('shaft_spot', [[lx + .9, uy - 1.7, th + .02], [lx + .9, uy + 1.7, th + .02], [lx + .4, uy + .7, 3.56], [lx + .4, uy - .7, 3.56]]);
+      M.quad('glow', [[ux, uy - 1.9, th + .012], [ux + 2.2, uy - 1.9, th + .012], [ux + 2.2, uy + 1.9, th + .012], [ux, uy + 1.9, th + .012]]);
+      // Colony Clash: the lit bracket on the left wall, its neon over it, the long sideboard under it with the colony's trophies
+      wallArt(M, 'left', CL[0], 2.5, CL[1], CL[1] * .5625, 'ad_bracket', HX, HY, .05);
+      M.block('gold', -HX + .06, CL[0], 2.38, .1, CL[1] + .24, .12); M.block('gold', -HX + .06, CL[0], 2.5 + CL[1] * .5625, .1, CL[1] + .24, .12);
+      wallArt(M, 'left', CL[0], 7.1, 7.4, 1.16, 'ad_clash', HX, HY, .08);
+      M.block('lacquer_black', -HX + .5, CL[0], 0, 1, CL[1] - .4, 1.1); M.block('gold', -HX + .5, CL[0], 1.1, 1.04, CL[1] - .36, .05);
+      for (const [dy, h] of [[-2.4, .6], [0, .85], [2.4, .6]]) { const y = CL[0] + dy; M.cyl('lacquer_black', [-HX + .5, y, 1.15], .2, .1, 12); atK(M, -HX + .5, y, 1.25, 0, () => lathe(M, 'gold', [[.001, 0], [.18, 0], [.06, .08], [.05, .3 * h], [.24, .46 * h], [.28, .75 * h], [.001, .75 * h]], 14)); }
+      // the Spinner machines along the right wall (reels, a lever, the topper), their neon over them
+      for (const y of SP) {
+        const x = HX - .75;
+        M.block('lacquer_black', x, y, 0, 1.5, 1.6, .3); M.block('ad_chip_purple', x, y, .3, 1.4, 1.5, 2.5); M.block('lacquer_black', x, y, 2.8, 1.5, 1.6, .5);
+        M.quad('ad_reels', [[x - .76, y + .62, 1.75], [x - .76, y - .62, 1.75], [x - .76, y - .62, 2.38], [x - .76, y + .62, 2.38]]);
+        M.quad('glow_violet', [[x - .78, y + .9, 1.4], [x - .78, y - .9, 1.4], [x - .78, y - .9, 2.75], [x - .78, y + .9, 2.75]]);
+        M.box('lacquer_black', [x - .9, y, 1.3], [.4, 1.4, .12], 0, 0, -.3); for (let k = 0; k < 3; k++) M.cyl(['neon_red', 'neon_gold', 'neon_purple'][k], [x - .96, y - .36 + k * .36, 1.36], .07, .05, 10);
+        M.rod('chrome', [x - .3, y - .86, 1.6], [x - .3, y - .9, 2.3], .035, 6); M.sphere('neon_red', [x - .3, y - .9, 2.38], .1, 1, 8, 4);
+        for (const t of [-1, 1]) M.box('neon_purple', [x - .76, y + t * .78, 1.55], [.05, .05, 2.5]);
+        M.quad('neon_gold', [[x - .76, y + .7, 2.95], [x - .76, y - .7, 2.95], [x - .76, y - .7, 3.1], [x - .76, y + .7, 3.1]]);
+      }
+      wallArt(M, 'right', (SP[0] + SP[SP.length - 1]) / 2, 4.5, 8.6, 1.34, 'ad_spinner', HX, HY, .08);
+      // the Rebel Wheel on the back wall (the wheel itself turns: a part), its frame, bulbs and pointer, the plinth under it
+      const [wx, wz, wr] = WH, wy = -HY + .3;
+      M.tube('lacquer_black', [wx, wy - .2, wz], [wx, wy + .25, wz], wr + .32, wr + .32, 48, false); discK(M, 'lacquer_black', [wx, wy - .2, wz], [1, 0, 0], [0, 0, 1], wr + .32, 48);
+      M.tube('gold', [wx, wy + .2, wz], [wx, wy + .27, wz], wr + .34, wr + .34, 48, false);
+      for (let k = 0; k < 24; k++) { const a = k / 24 * Math.PI * 2; M.sphere('bulb', [wx + Math.cos(a) * (wr + .2), wy + .3, wz + Math.sin(a) * (wr + .2)], .07, 1, 5, 3); }
+      M.poly('neon_red', [[wx, wy + .75, wz + wr - .3], [wx - .32, wy + .75, wz + wr + .5], [wx + .32, wy + .75, wz + wr + .5]]);
+      M.block('lacquer_black', wx, -HY + .75, 0, 5, 1.5, 1.3); M.block('gold', wx, -HY + 1.47, 1.2, 5, .06, .06);
+      wallArt(M, 'back', wx, wz + wr + .75, 4.6, 1.15, 'ad_wheel_sign', HX, HY, .1);
+      // the Rebel Drop board on the back wall: its face, pegs standing out of it, a puck on its way down, the plinth under it
+      const [dx, dz, dw, dh] = DR, dy0 = -HY + .26;
+      M.block('lacquer_black', dx, -HY + .14, dz - dh / 2 - .2, dw + .4, .3, dh + .4);
+      M.quad('ad_drop', [[dx + dw / 2, dy0 + .04, dz - dh / 2], [dx - dw / 2, dy0 + .04, dz - dh / 2], [dx - dw / 2, dy0 + .04, dz + dh / 2], [dx + dw / 2, dy0 + .04, dz + dh / 2]]);
+      for (let r = 0; r < 11; r++) { const n = 3 + r, zz = dz + dh / 2 - (70 + r * 50) / 704 * dh; for (let i = 0; i < n; i++) M.rod('chrome', [dx - (i - (n - 1) / 2) * 42 / 512 * dw, dy0 + .04, zz], [dx - (i - (n - 1) / 2) * 42 / 512 * dw, dy0 + .2, zz], .035, 5); }
+      discK(M, 'neon_red', [dx + .35, dy0 + .24, dz + .2], [1, 0, 0], [0, 0, 1], .16, 16);
+      M.block('glass', dx, dy0 + .3, dz - dh / 2, dw, .04, dh);
+      M.block('lacquer_black', dx, -HY + .75, 0, 5, 1.5, 1.3); M.block('gold', dx, -HY + 1.47, 1.2, 5, .06, .06);
+      wallArt(M, 'back', dx, dz + dh / 2 + .55, 4.4, 1.1, 'ad_drop_sign', HX, HY, .1);
+      // the points counter in the front right: the counter, the shelves of chip trays behind it, $REBEL POINTS over it
+      const [px0, py0, py1] = PT, pw = HX - .1 - px0, pcx = (px0 + HX - .1) / 2, pcy = (py0 + py1) / 2;
+      M.block('lacquer_black', pcx, pcy, 0, pw, py1 - py0, 1.5); M.block('darkwood', pcx, pcy, 1.5, pw + .12, py1 - py0 + .2, .1); M.block('neon_red', pcx, py0 - .02, 1.3, pw, .05, .05);
+      M.block('gold', pcx, py0 - .02, .25, pw, .04, .06);
+      for (let k = 0; k < 6; k++) { const x = px0 + .6 + k * (pw - 1.2) / 5; for (let z = 0; z < 4; z++) M.cyl(chips[(k + z) % 4], [x, pcy, 1.6 + z * .035], .13, .03, 12); }
+      for (const z of [2.1, 3.1]) { M.block('darkwood', pcx, HY - .32, z, pw, .55, .08); for (let k = 0; k < 7; k++) { const x = px0 + .5 + k * (pw - 1) / 6; M.block('lacquer_black', x, HY - .32, z + .08, .7, .45, .1); for (let q = 0; q < 3; q++) M.cyl(chips[(k + q) % 4], [x - .2 + q * .2, HY - .32, z + .18], .09, .14, 10); } }
+      wallArt(M, 'front', pcx, 4.2, 6.2, 1.16, 'ad_points', HX, HY, .1);
+      // the community corner on the left wall: its neon, the bench under it; the After Dark posters (the front wall and the
+      // right wall by the counter), the moon window on the right wall, the code plaque on its pedestal by the door
+      wallArt(M, 'left', CM, 3.7, 5.6, 1.4, 'ad_community', HX, HY, .08);
+      M.block('lacquer_black', -HX + .45, CM, 0, .9, 3.6, .55); M.block('velvet', -HX + .45, CM, .55, .86, 3.5, .2); M.block('lacquer_black', -HX + .12, CM, .75, .24, 3.6, .7);
+      for (const [wall, u, z, w, h, mat] of [['front', -9.6, 3.3, 7.2, 4.05, 'ad_poster'], ['right', 12.9, 4.4, 2.7, 2.7, 'ad_poster_icon']]) {
+        wallArt(M, wall, u, z - .2, w + .4, h + .4, 'lacquer_black', HX, HY, .04); wallArt(M, wall, u, z - .08, w + .16, h + .16, 'gold', HX, HY, .06);
+        wallArt(M, wall, u, z, w, h, mat, HX, HY, .08);
+      }
+      const [my, mz, mr] = MW;
+      discK(M, 'ad_moon', [HX - .14, my, mz], [0, -1, 0], [0, 0, 1], mr, 40); M.tube('darkwood', [HX - .08, my, mz], [HX - .3, my, mz], mr + .22, mr + .22, 40, false); M.tube('gold', [HX - .3, my, mz], [HX - .34, my, mz], mr + .24, mr + .24, 40, false);
+      M.box('darkwood', [HX - .2, my, mz], [.08, .1, 2 * mr]); M.box('darkwood', [HX - .2, my, mz], [.08, 2 * mr, .1]);
+      M.block('lacquer_black', -4, HY - 1.2, 0, 1, .8, 1.2); M.block('gold', -4, HY - 1.2, 1.2, 1.04, .84, .05);
+      wallArt(M, 'front', -4, 1.55, 2.2, .82, 'ad_code', HX, HY, .06);
+      // lanterns: red over the tables, violet over the sides
+      for (const [x, y] of [[-7, 1.5], [7, 1.5], [-4.4, -9], [4.4, -9]]) chochin(M, x, y, H - .4, 1.8, .5, 1.15);
+      M.remap = { lantern: 'lantern_violet' }; for (const [x, y] of [[-12.5, 1.6], [12.5, 2.4], [-12.5, 10], [0, 9.5]]) chochin(M, x, y, H - .4, 1.6, .45, 1); M.remap = null;
+    },
+    // the Rebel Wheel (a part turning about its axle out of the wall): sixteen point zones, gold spokes, bulbs, the crest hub
+    room_ad_wheel(M) {
+      M.room = true; const R = AD.WH[2], n = 16, cols = ['ad_seg_purple', 'ad_seg_red', 'lacquer_black', 'ad_seg_red'];
+      for (let k = 0; k < n; k++) {
+        const a0 = k / n * Math.PI * 2, a1 = (k + 1) / n * Math.PI * 2, am = (a0 + a1) / 2;
+        M.poly(cols[k % 4], [[0, .02, 0], [Math.cos(a0) * R, .02, Math.sin(a0) * R], [Math.cos(a1) * R, .02, Math.sin(a1) * R]]);
+        M.rod('gold', [0, .05, 0], [Math.cos(a0) * R, .05, Math.sin(a0) * R], .03, 3); M.sphere('bulb', [Math.cos(am) * (R - .25), .08, Math.sin(am) * (R - .25)], .07, 1, 5, 3);
+      }
+      M.tube('neon_purple', [0, -.02, 0], [0, .12, 0], R + .04, R + .04, 48, false);
+      discK(M, 'ad_hub', [0, .14, 0], [1, 0, 0], [0, 0, 1], R * .3, 28); M.tube('gold', [0, .06, 0], [0, .16, 0], R * .3 + .04, R * .3 + .04, 28, false);
     },
     room_sam_dojo(M) {
       M.room = true;
