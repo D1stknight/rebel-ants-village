@@ -1220,6 +1220,7 @@ function dedupeForgePlayablesByToken(list) {
 }
 function getRebelCardNumber(rebel) {
   if (rebel.playerModel) return '';
+  if (rebel.id === 'ant_1') return '001';
   if (rebel.tokenId) return String(rebel.tokenId);
   const m = /#\s*(\d+)/.exec(rebel.name || '');
   return m ? m[1] : '';
@@ -1233,7 +1234,7 @@ function buildCard(rebel) {
   card.onclick = () => selectAnt(rebel.id);
 
   const hasForgeCharacter = Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl);
-  const status = getRebelForgeStatus(rebel, hasForgeCharacter);
+  const status = rebel.id === 'ant_1' ? '' : getRebelForgeStatus(rebel, hasForgeCharacter);   // #001's card looks as it always has
   const tokenNumber = getRebelCardNumber(rebel);
   card.title = [rebel.name, rebel.free ? `Free to play: anyone can play this forged ${rebel.friendLabel || 'Rebel'}` : status === 'ready' ? 'Playable 3D character ready' : status === 'forged' ? (rebel.forgedBuild && !hasForgeCharacter ? '3D character forged: awaken it in the Forge and make it yours to play it' : '3D character forged') : ''].filter(Boolean).join(' · ');
   if (status) card.classList.add('is-' + status);
@@ -1259,18 +1260,23 @@ async function showDefaultCard() {
   const charRow = document.getElementById('char-row');
   charRow.innerHTML = '';
 
+  // Oct 26 (rigger 2.40): #001 plays its own body on the Forge Rigger once an admin made that rig its public character
+  // (token 1); until then, and when the rig can't load, the village plays the starter files as before
   const starterRebel = {
     id: 'ant_1',
     name: 'Rebel #001',
     image: 'assets/lobby/ant_1.JPG',
-    collectionKey: 'battle_for_colony'
+    collectionKey: 'battle_for_colony',
+    tokenId: '1',
+    rebelId: 'rebel_1'
   };
 
   const defaultRebel = await attachActiveForgeCharacter(starterRebel);
   // Guest mode (and wallets without a Rebel): the Free to play roster, each card loaded fresh from the server, so a
-  // new "Make this my Rebel" shows here right away. Older local copies of the same Rebel are dropped.
+  // new "Make this my Rebel" shows here right away. Older local copies of the same Rebel are dropped (and of #001:
+  // the card above is it).
   const showcase = await freeRosterCards(await loadFreeRoster());
-  const showKeys = new Set(showcase.map(cardKey));
+  const showKeys = new Set([cardKey(defaultRebel), ...showcase.map(cardKey)]);
   const savedForgePlayables = (await loadSavedForgePlayableCards()).filter((r) => !showKeys.has(cardKey(r)));
   const friends = await loadFriendPlayables();
   ownedRebels = [defaultRebel, ...friends, ...sortRebelsByForgeStatus([...showcase, ...dedupeForgePlayablesByToken(savedForgePlayables)])];
