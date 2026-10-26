@@ -121,7 +121,7 @@ export default async function handler(req, res) {
       qa: result.qa || null, verdict: result.qa?.verdict || null, finishedAt: at, ...(links.length ? { rigHistory: links } : {}), ...(gj ? { gloves: { ...gj, doneAt: at, url: blob.url } } : {})
     }, { forgeRigGlbUrl: blob.url, ...(thumbUrl ? { forgeRigThumbUrl: thumbUrl } : {}) });
     // a paid forge keeps its points once a rig of a build made in its window finishes (not a gloves re-rig, not an NPC)
-    if (!gj && rec.collectionKey && rec.collectionKey !== 'npc' && !fr.options?.npc) {
+    if (!gj && rec.collectionKey && rec.collectionKey !== 'npc' && !fr.options?.npc && !rec.master001) {   // (#001's own body: an admin rig, never a forge)
       try { await keepForge(rec.collectionKey, String(rec.tokenId), Date.parse(rec.createdAt || '') || Date.now()); } catch (e) { console.warn('[forge-rig-status] keep', e.message); }
     }
     return res.status(200).json({ ok: true, forgeRig: next.forgeRig, forgeRigGlbUrl: blob.url, percent: 100 });

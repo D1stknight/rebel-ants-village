@@ -37,7 +37,8 @@
       "maxDuration": 120
     },
     "api/forge-rig-start.mjs": {
-      "maxDuration": 120
+      "maxDuration": 120,
+      "includeFiles": "assets/forge/sources/rebel001_apose.joints.json"
     },
     "api/forge-rig-status.mjs": {
       "maxDuration": 120
