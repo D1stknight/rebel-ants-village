@@ -2976,7 +2976,11 @@ const MOON_TALES_QUESTS = [
   makeMoonTaleQuest(17, 'Storm-Wrought Slumber', 'Nariko', 'The Thunder Moon rises over a sacred circle of seven ancient stones, and Nariko wakes from her storm-wrought slumber.', ['Wake the seven ancient stones.', 'Stand in the circle as the Thunder Moon rises.', 'Talk to Nariko.'], ['+45 progress'], 'Seven ancient stones woke one by one, the Thunder Moon rose, and Nariko rose with it from the centre of the circle.', ['moon-tales-01']),
   makeMoonTaleQuest(18, 'The Storm Orb', 'Nariko', 'With hands aglow, Nariko summons a crackling orb of energy from the storm.', ['Call the lightning down into her orb.', 'Stand with her, from root to sky.', 'Talk to Nariko.'], ['+50 progress'], 'Bolts of lightning arced down from the heavens and fed the orb, and from root to sky Nariko grew stronger with every heartbeat.', ['moon-tales-17']),
   makeMoonTaleQuest(19, 'Lightning in the Darkness', 'Nariko', "Nariko's thunder spell lifts the weight from others: the Coven's pain, anger and fear.", ['Ask Mamoru what she carries.', 'Ask Kokeshi Flower Moon what she carries.', 'Ask Ostara what she carries.', 'Release the burdens in the stone circle with the Coven.', 'Talk to Nariko.'], ['+60 progress'], 'Pain, anger, fear: not destroyed, transformed. The Mystic Moons stood taller, brighter, fiercer, and whispered her name in thanks.', ['moon-tales-18']),
-  Object.assign(makeMoonTaleQuest(20, 'Until the First Blush of Dawn', 'Mamoru', 'The Mystic Moon Coven gathers for the Harvest Festival, and Mamoru keeps watch through the night.', ['Give thanks with the Coven at the feast table.', 'Return to Mamoru at the gate.', 'Keep watch beside Mamoru until dawn.', 'Talk to Mamoru.'], ['+80 progress', 'Badge: Mystic Moon Coven'], 'The Coven feasted, Mamoru kept watch, and for the first time the sky over the hill turned to dawn.', ['moon-tales-04', 'moon-tales-08', 'moon-tales-12', 'moon-tales-16']), { badgeRewardId:'moon-tales-coven' })
+  Object.assign(makeMoonTaleQuest(20, 'Until the First Blush of Dawn', 'Mamoru', 'The Mystic Moon Coven gathers for the Harvest Festival, and Mamoru keeps watch through the night.', ['Give thanks with the Coven at the feast table.', 'Return to Mamoru at the gate.', 'Keep watch beside Mamoru until dawn.', 'Talk to Mamoru.'], ['+80 progress', 'Badge: Mystic Moon Coven'], 'The Coven feasted, Mamoru kept watch, and for the first time the sky over the hill turned to dawn.', ['moon-tales-04', 'moon-tales-08', 'moon-tales-12', 'moon-tales-16']), { badgeRewardId:'moon-tales-coven' }),
+  makeMoonTaleQuest(21, 'The Distant Covens', 'Ophira', 'Beneath a great full moon, Ophira, Keeper of Ancient Wisdom, sees that the covens have grown distant.', ['Sit with Ophira beneath the full moon.', 'Talk to Ophira.'], ['+45 progress'], 'The Owl of Summoning settled on the ancient branch: "They have not forgotten. They have simply forgotten the strength they find together."', ['moon-tales-20']),
+  makeMoonTaleQuest(22, "The Owl's Call", 'Ophira', 'The Owl of Summoning spreads his magnificent wings and takes flight, and his haunting call echoes through the night.', ['Follow the Owl over the hill.', 'Talk to Ophira.'], ['+50 progress'], 'Across mist-covered valleys, sleeping forests and mountains crowned with starlight, his call echoed through the night.', ['moon-tales-21']),
+  makeMoonTaleQuest(23, 'And the Witches Answered', 'Ophira', "The covens answer the Owl's call: from the heavens, the wildwood, beyond the veil and the darkness itself.", ['Greet Elyndra, Lunara, Ophira the Seer and Ghostwing as they arrive.', 'Talk to Ophira.'], ['+55 progress'], 'Celestial Bodies, Lunar Nature, Dark Arts and Nocturnal Creatures: four covens, come home to the hill.', ['moon-tales-22']),
+  Object.assign(makeMoonTaleQuest(24, 'A Constellation Above the Forest', 'Ophira', 'Together the covens gather beneath the full moon, and the Owl circles above them.', ['Stand at the heart of the sacred circle with the five witches.', 'Talk to Ophira.'], ['+80 progress', 'Badge: Moonlit Gathering'], 'Their magic intertwined, rising like silver ribbons into the night, weaving a magnificent constellation above the forest.', ['moon-tales-23']), { badgeRewardId:'moon-tales-gathering' })
 ];
 const MOON_TALES_WIRING = {
   1: { giver:'cc-mamoru',
@@ -3139,6 +3143,43 @@ const MOON_TALES_WIRING = {
       { id:'keep-watch', objective:'Keep watch beside Mamoru until dawn.', objectiveType:'useQuestSpot', targetObjectId:'mt-dawn-watch', villageId:'cute-creepy' },
       { id:'dawn-told', objective:'Talk to Mamoru.', objectiveType:'talkToNpc', targetNpcId:'cc-mamoru', villageId:'cute-creepy',
         say:['The first blush of dawn. Their joy is safe, and so are you.', 'Each year, when the Harvest Moon rises again, I will return. That is my tale. It is in your journal now.'] }
+    ] },
+  // the Owl of Summoning (Vicky's tale): Ophira in her glade on the manor terrace's east lawn, the Owl on the ancient
+  // tree's branch (OwlTale flies him), the four covens arriving where the Owl's call reached them, the sacred circle
+  21: { giver:'cc-ophira',
+    offer:['The Harvest Festival is over, little Rebel, and look: a great full moon.', 'I am Ophira, Keeper of Ancient Wisdom. Lately the wisdom tells me the covens have grown distant. Some have retreated into the shadows, guarding their secrets. Others wander alone, forgetting the bonds that once united them.', 'Sit with me beneath the moon a while. Stand on the glowing mark, and be still.'],
+    steps:[
+      { id:'sit-beneath', objective:'Sit with Ophira beneath the full moon: stand on the glowing mark and be still.', objectiveType:'useQuestSpot', targetObjectId:'mt-owl-wait', villageId:'cute-creepy' },
+      { id:'owl-reply', objective:'Talk to Ophira.', objectiveType:'talkToNpc', targetNpcId:'cc-ophira', villageId:'cute-creepy',
+        say:['"Why have they forgotten one another?" I whispered, and he came.', 'The Owl of Summoning: sacred familiar of the Lunar Witch, guardian of ancient wisdom, messenger between the realms. His eyes hold the memories of a thousand moons.', '"They have not forgotten," he replied. "They have simply forgotten the strength they find together."'] }
+    ] },
+  22: { giver:'cc-ophira',
+    offer:['He is ready, little Rebel. Look at him up on the branch, his wings itching.', 'Stand by the tree and he will take flight. Keep up with him: across the valleys, the sleeping forests, the mountains crowned with starlight.'],
+    steps:[
+      { id:'follow-call', objective:'Follow the Owl of Summoning as he flies over the hill.', objectiveType:'useQuestSpot', targetObjectId:'mt-owl-call', villageId:'cute-creepy' },
+      { id:'call-heard', objective:'Talk to Ophira.', objectiveType:'talkToNpc', targetNpcId:'cc-ophira', villageId:'cute-creepy',
+        say:['You heard it too. His haunting call, echoing through the whole night.', 'Now listen, little Rebel. Do you hear them? The witches are answering.'] }
+    ] },
+  23: { giver:'cc-ophira',
+    offer:['They are coming. Four covens, four lights on the hill.', 'Go and greet them as they arrive: one on the high ground under the stars, one in the wildwood among the blossoms, one beyond the veil at the crypt, and one rising from the dark of the graveyard.'],
+    steps:[
+      { id:'greet-elyndra', objective:'Greet the witch on the high ground, west of the manor.', anyOrder:'greet', anyOrderText:'Greet the four covens as they arrive: the high ground, the wildwood, the crypt, the graveyard (any order).', objectiveType:'talkToNpc', targetNpcId:'cc-elyndra', villageId:'cute-creepy',
+        say:['From the celestial heavens I came, little Rebel, carrying the magic of stars and moonlight.', 'I am Elyndra, born of starlight and moonfire, of the Coven of Celestial Bodies. I heard his call across a thousand skies.'] },
+      { id:'greet-lunara', objective:'Greet the witch in the wildwood, among the blossoms.', anyOrder:'greet', anyOrderText:'Greet the four covens as they arrive: the high ground, the wildwood, the crypt, the graveyard (any order).', objectiveType:'talkToNpc', targetNpcId:'cc-lunara', villageId:'cute-creepy',
+        say:['From the enchanted wildwood I emerged, and my footsteps woke the ancient roots. See how they glow?', 'I am Lunara, Keeper of Moonlit Blooms, of the Coven of Lunar Nature. The roots carried his call to me.'] },
+      { id:'greet-seer', objective:'Greet the witch beyond the veil, at the crypt.', anyOrder:'greet', anyOrderText:'Greet the four covens as they arrive: the high ground, the wildwood, the crypt, the graveyard (any order).', objectiveType:'talkToNpc', targetNpcId:'cc-seer', villageId:'cute-creepy',
+        say:['From beyond the veil I came. My eyes are closed, little Rebel. They do not need to be open to see you.', 'I am Ophira the Seer, of the Coven of Dark Arts, guardian of shadow and forgotten secrets. Yes, another Ophira. The veil has a sense of humour.'] },
+      { id:'greet-ghostwing', objective:'Greet the witch rising from the dark of the graveyard.', anyOrder:'greet', anyOrderText:'Greet the four covens as they arrive: the high ground, the wildwood, the crypt, the graveyard (any order).', objectiveType:'talkToNpc', targetNpcId:'cc-lunar-witch', villageId:'cute-creepy',
+        say:["From the darkness itself I rose, little Rebel, guided by the Owl's moonlit song.", 'You know me: Ghostwing, beacon to wandering souls, of the Coven of Nocturnal Creatures. Ophira is my coven-sister. Of course I came.'] },
+      { id:'all-here', objective:'Talk to Ophira.', objectiveType:'talkToNpc', targetNpcId:'cc-ophira', villageId:'cute-creepy',
+        say:['All four of them. I felt each one arrive, like stars coming out one by one.', 'Come back to me when you are ready. Tonight, we gather beneath the full moon.'] }
+    ] },
+  24: { giver:'cc-ophira',
+    offer:['Together, at last. We gather in the sacred circle beneath the full moon.', 'Stand at the heart of the circle with us, little Rebel, and stay still. Whatever you see, stay still.'],
+    steps:[
+      { id:'gather', objective:'Stand at the heart of the sacred circle with the five witches, and stay still.', objectiveType:'useQuestSpot', targetObjectId:'mt-gathering', villageId:'cute-creepy' },
+      { id:'tale-told', objective:'Talk to Ophira.', objectiveType:'talkToNpc', targetNpcId:'cc-ophira', villageId:'cute-creepy',
+        say:['"A single star may shine brightly," he called, "but together the stars create constellations."', 'Look up, little Rebel. A symbol of unity. A promise that no witch need walk her path alone.', 'That is the tale of the Owl of Summoning. It is in your journal now.'] }
     ] }
 };
 
@@ -3978,9 +4019,31 @@ const MOON_TALES = [
       'The entire Mystic Moon Coven felt the surge in their bones. One by one, they turned toward the sky, drawn to her rising magic. For Nariko did not wield this power for herself alone, she used it to lift the weight from others. With her thunder spell, she taught the coven to release the burdens they carried: pain, anger, fear. Her magic did not destroy, it transformed.',
       'And in that storm-lit moment, the Mystic Moons were reborn. Energised by Nariko’s connection to the earth and sky, they stood taller, brighter, fiercer.',
       'With determination, focus, and fire in their hearts, they too became lightning in the darkness, each Mystic whispering her name in thanks: Nariko Thunder Moon. The Dragon Witch who taught us to own our fire and fear nothing.'
-    ] }
+    ] },
+  { id:'owl', teller:'Ophira', moonName:'Full Moon', unlockQuestId:'moon-tales-24', title:"The Owl of Summoning", subtitle:"The Keeper of the Moonlit Gathering",
+    moon:{ pos:[-140, 205, 430], size:5.6, color:[.94, .96, 1], halo:[.4, .48, .82], light:[.6, .66, .96] },
+    text:[
+      "One night, sat beneath a great full moon, the Lunar Witch noticed that the covens had grown distant. Some had retreated into the shadows, guarding their secrets, while others wandered alone, forgetting the bonds that once united them.",
+      "“Why have they forgotten one another?” she whispered.",
+      "The Owl settled next to her upon an ancient branch.",
+      "He was the Owl of Summoning, sacred familiar of the Lunar Witch, guardian of ancient wisdom and messenger between the realms.",
+      "His eyes held the memories of a thousand moons, and his wings carried a magic older than the forests themselves.",
+      "“They have not forgotten,” he replied. “They have simply forgotten the strength they find together.”",
+      "With that, he spread his magnificent wings and took flight.",
+      "Across mist-covered valleys, sleeping forests and mountains crowned with starlight, his haunting call echoed through the night.",
+      "And the witches answered.",
+      "From the celestial heavens came the Coven of Celestial Bodies, carrying the magic of stars and moonlight.",
+      "From the enchanted wildwood emerged the Coven of Lunar Nature, their footsteps awakening ancient roots.",
+      "From beyond the veil came the mysterious Coven of Dark Arts, guardians of shadow and forgotten secrets.",
+      "And from the darkness itself rose the Coven of Nocturnal Creatures, guided by the Owl’s moonlit song.",
+      "Together, they gathered beneath the full moon.",
+      "The Owl circled above them, his silver feathers shimmering.",
+      "“A single star may shine brightly,” he called, “but together the stars create constellations.”",
+      "The Lunar Witch raised her hands towards the heavens, and the covens joined her in a sacred circle. Their magic intertwined, rising like silver ribbons into the night, weaving a magnificent constellation above the forest.",
+      "A symbol of unity. A promise that no witch need walk her path alone."
+    ] },
 ];
-const MOON_TALE_QUEST_MOONS = { 1:['harvest', 'tell-mamoru'], 2:'harvest', 3:'harvest', 4:'harvest', 6:'pink', 7:'pink', 8:'pink', 9:'flower', 10:'flower', 11:'flower', 12:'flower', 14:['hare', 'starlight-told'], 15:'hare', 16:'hare', 17:['nariko', 'watch-rise'], 18:'nariko', 19:'nariko', 20:'harvest' };
+const MOON_TALE_QUEST_MOONS = { 1:['harvest', 'tell-mamoru'], 2:'harvest', 3:'harvest', 4:'harvest', 6:'pink', 7:'pink', 8:'pink', 9:'flower', 10:'flower', 11:'flower', 12:'flower', 14:['hare', 'starlight-told'], 15:'hare', 16:'hare', 17:['nariko', 'watch-rise'], 18:'nariko', 19:'nariko', 20:'harvest', 21:'owl', 22:'owl', 23:'owl', 24:'owl' };
 // NPCs that move with a quest: once a quest reaches a step (or is done), the NPC lives there (Ostara on her Moon Ledge).
 // whileActive places hold only while their quest runs (the Coven round the feast table at the Harvest Festival); still =
 // no patrol or wander there (Mamoru keeping watch at the gate). Without a place the NPC stands at its own layout spot.
@@ -3993,7 +4056,16 @@ const QUEST_NPC_PLACES = {
     { quest:'moon-tales-06', step:'witch-clearing', x:45.2, z:20.4, ry:2.28 }, { quest:'moon-tales-08', follow:true, side:-1 }],
   // Ghostwing, the Lunar Witch of Mochi's tale (Moon Tales 05-08): by her cauldron, in the Blossom Clearing from 06 (her pendant floating before her
   // from 07), walking with the player through 08
-  'cc-lunar-witch': [{ ...FESTIVAL, x:0, z:8, ry:Math.PI }, { quest:'moon-tales-08', step:'meet-flower', whileActive:true, follow:true, side:1 }, { quest:'moon-tales-06', step:'witch-clearing', x:48, z:21.5, ry:Math.PI }],
+  'cc-lunar-witch': [{ ...FESTIVAL, x:0, z:8, ry:Math.PI }, { quest:'moon-tales-08', step:'meet-flower', whileActive:true, follow:true, side:1 }, { quest:'moon-tales-06', step:'witch-clearing', x:48, z:21.5, ry:Math.PI },
+    { quest:'moon-tales-22', done:true, x:-55, z:43, ry:2.214 }, { quest:'moon-tales-24', whileActive:true, still:true, x:26.6, z:52.37, ry:-1.542 }, { quest:'moon-tales-24', x:48, z:21.5, ry:Math.PI }],
+  // the Owl of Summoning (Moon Tales 21-24): the covens arrive where his call reached (once 22 is done: done = a place
+  // that holds only after its quest, not while it runs; out of sight until you come near: OwlTale), stand on the five
+  // points of the sacred circle (centre (22, 52.5)) through 24, and live in Ophira's glade after it; Ghostwing goes home
+  // to the Blossom Clearing
+  'cc-ophira': [{ quest:'moon-tales-24', whileActive:true, still:true, x:23.55, z:56.83, ry:-2.799 }],
+  'cc-elyndra': [{ quest:'moon-tales-22', done:true, x:-27, z:55.5, ry:2.051 }, { quest:'moon-tales-24', whileActive:true, still:true, x:18.36, z:55.31, ry:2.228 }, { quest:'moon-tales-24', x:17.5, z:59.5, ry:2.57 }],
+  'cc-lunara': [{ quest:'moon-tales-22', done:true, x:51.5, z:16.5, ry:-1.279 }, { quest:'moon-tales-24', whileActive:true, still:true, x:18.2, z:49.91, ry:.971 }, { quest:'moon-tales-24', x:30.5, z:55.5, ry:-1.91 }],
+  'cc-seer': [{ quest:'moon-tales-22', done:true, x:-46.5, z:61.5, ry:2.776 }, { quest:'moon-tales-24', whileActive:true, still:true, x:23.29, z:48.09, ry:-.285 }, { quest:'moon-tales-24', x:29.5, z:47, ry:-.938 }],
   'cc-nariko': [{ ...FESTIVAL, x:-3.1, z:6.4, ry:2 }, { quest:'moon-tales-17', step:'nariko-rises', x:-54.5, z:16.5, ry:Math.PI / 2 }],
   'cc-mamoru': [{ ...FESTIVAL, step:'keep-watch', still:true, x:0, z:-53, ry:Math.PI }, { ...STORM_CIRCLE, x:-52.95, z:19.18, ry:-2.618 }],
   // the Beach Party (Chumpz Cove 20): the whole cove round the bonfire on the beach by the west pier (-38, -32), facing the fire
@@ -4315,6 +4387,32 @@ const MoonTaleSounds = (() => {
     thanks: { beat:.42, notes:[['C5', 0], ['E5', 1], ['G5', 2], ['E5', 3], ['F5', 4], ['A5', 5], ['G5', 6, 1.8], ['E5', 8], ['G5', 9], ['C6', 10], ['A5', 11], ['G5', 12], ['E5', 13], ['C5', 14, 2.4]],
       bass:[['C3', 0], ['G3', 4], ['C3', 8], ['C3', 12]] },
     sap: { beat:1.1, notes:[['C4', 0, 2.6], ['G3', 1, 2.6], ['C4', 2, 3]], gain:.2 },
+    // the Owl of Summoning (Moon Tales 21-24): him coming over the trees (21's hold: wind, a far hoot, a nearer one, his
+    // wing beats landing), his haunting call (a hoot, two more, an echo), a soft hoo, wing beats; the covens arriving (a
+    // falling star, roots waking, the veil parting, moths rising); the gathering (a pad swelling chord by chord, Am F C G
+    // then C, under music-box arpeggios that quicken, a bright bell chord at the end)
+    owlarrive: { fx:t0 => { const hoot = (t, f, d, g) => { glide(f * .94, f, t, d * .35, g); glide(f, f * .9, t + d * .3, d * .7, g * .8); noise(t, d, g * .1, 'bandpass', f, 6); };
+      wind(t0, 14, .05, 300, 520, 2); hoot(t0 + 2.2, 360, .5, .05); hoot(t0 + 3, 340, .7, .04); hoot(t0 + 7.4, 380, .45, .12); hoot(t0 + 8.2, 352, .6, .1);
+      for (const d of [10.6, 10.9, 11.2, 11.6, 12.1]) noise(t0 + d, .2, .16, 'bandpass', 560, 1.2); [N.E5, N.G5, N.C6].forEach((f, i) => note(f, t0 + 12.4 + i * .14, 2, .1)); } },
+    owlcall: { fx:t0 => { const hoot = (t, f, d, g) => { glide(f * .94, f, t, d * .35, g); glide(f, f * .9, t + d * .3, d * .7, g * .8); noise(t, d, g * .12, 'bandpass', f, 6); };
+      hoot(t0, 392, .5, .3); hoot(t0 + .85, 370, .32, .24); hoot(t0 + 1.25, 349, .62, .28); hoot(t0 + 2.6, 330, .5, .1); hoot(t0 + 3.05, 311, .5, .07); } },
+    hoo: { fx:t0 => { glide(372, 392, t0, .16, .18); glide(392, 352, t0 + .15, .4, .16); noise(t0, .5, .02, 'bandpass', 380, 6); } },
+    wings: { fx:t0 => { for (let k = 0; k < 5; k++) noise(t0 + k * .26, .2, .2 * (1 - k * .12), 'bandpass', 520 + k * 30, 1.2); } },
+    starfall: { fx:t0 => { glide(900, 3600, t0, .55, .05, 'triangle'); noise(t0, .55, .12, 'bandpass', 3000, 1.5);
+      noise(t0 + .52, .5, .4, 'lowpass', 300); tone(110, t0 + .52, .5, .25, [[1, 1, 1]]); [N.C6, N.E6, N.G5, N.C5].forEach((f, i) => note(f, t0 + .58 + i * .07, 2.2, .14)); } },
+    roots: { fx:t0 => { for (let k = 0; k < 3; k++) glide(150 - k * 18, 96 - k * 10, t0 + k * .42, .5, .06, 'sawtooth'); noise(t0, 1.4, .05, 'lowpass', 400);
+      [N.E5, N.G5, N.B4, N.E6].forEach((f, i) => note(f, t0 + .9 + i * .16, 2, .12)); } },
+    veil: { fx:t0 => { wind(t0, 2.6, .16, 240, 520, 3); swell(98, 147, t0, 2.4, .05); tone(98, t0 + 1.6, 3, .2, [[1, 1, 1], [2.76, .3, .5], [5.4, .12, .3]]);
+      [N.E5, N.D5, N.A4].forEach((f, i) => note(f, t0 + 1.8 + i * .2, 2, .08)); } },
+    moths: { fx:t0 => { for (let k = 0; k < 70; k++) { const u = Math.random(); noise(t0 + u * 2.4, .03 + Math.random() * .03, (.03 + Math.random() * .05) * Math.sin(Math.PI * u), 'bandpass', 1800 + Math.random() * 2200, 3); }
+      [N.A4, N.C5, N.E5].forEach((f, i) => note(f, t0 + .6 + i * .3, 2.4, .08)); } },
+    gathering: { fx:t0 => {
+      const pad = (fs, t, d, g) => fs.forEach(f => { swell(f, f * 1.003, t, d, g, 'triangle'); swell(f * 2, f * 2.004, t, d, g * .35, 'sine'); });
+      const ch = [[N.A3, N.C4, N.E4], [N.F3, N.A3, N.C4], [N.C4, N.E4, N.G4], [N.G3, N.B4 / 2, N.D4], [N.C4, N.E4, N.G4, N.C5]];
+      ch.forEach((c, i) => { const t = t0 + i * 3.8; pad(c, t, i === 4 ? 6 : 4.2, .045 + i * .006);
+        c.concat(c.map(f => f * 2)).forEach((f, j) => note(f * 2, t + .4 + j * (.42 - i * .05), 1.6, .07 + i * .012)); });
+      [N.C5, N.E5, N.G5, N.C6, N.E6].forEach((f, i) => note(f, t0 + 18.6 + i * .06, 3.2, .14));
+    } },
     chant: { beat:2.4, notes:[['C4', 0, 3.4], ['E4', 1, 3.4], ['G4', 2, 3.4], ['A4', 3, 3.4], ['G4', 4, 3.4], ['E4', 5, 3.4], ['D4', 6, 3.4], ['C4', 7, 3.4], ['E4', 8, 3.4], ['G4', 9, 3.4], ['E4', 10, 3.4], ['C4', 11, 4]], bass:[['C3', 0], ['C3', 4], ['C3', 8]] }
   };
   function stop(fade = .6) { if (bus && ctx) { const b = bus; b.gain.setTargetAtTime(0, ctx.currentTime, fade / 3); setTimeout(() => { try { b.disconnect(); } catch (e) {} }, fade * 1500); } bus = null; }
@@ -4540,6 +4638,7 @@ const DEFAULT_BADGE_DEFINITIONS = [
   { badgeId:'saints-la-party', name:'Saint of the Block', category:'story', rarity:'Legendary', imageUrl:'', emblem:null, requirementType:'quest', requirementValue:'saints-la-20', requirementText:'Dance at the Saints Block Party', description:'You helped the whole block get ready and danced on the court until the stars came out.' },
   { badgeId:'chumpz-cove-party', name:'Life of the Party', category:'story', rarity:'Legendary', imageUrl:'', emblem:null, requirementType:'quest', requirementValue:'chumpz-cove-20', requirementText:'Dance at the Chumpz Cove Beach Party', description:'You got the whole cove ready for the Beach Party and danced until the stars came out.' },
   { badgeId:'moon-tales-coven', name:'Mystic Moon Coven', category:'story', rarity:'Legendary', imageUrl:'', emblem:null, requirementType:'quest', requirementValue:'moon-tales-20', requirementText:'Keep watch with Mamoru at the Harvest Festival', description:'You kept the Coven\'s joy safe until the first blush of dawn.' },
+  { badgeId:'moon-tales-gathering', name:'Moonlit Gathering', category:'story', rarity:'Legendary', imageUrl:'', emblem:null, requirementType:'quest', requirementValue:'moon-tales-24', requirementText:'Gather the covens with the Owl of Summoning', description:'You followed the Owl\'s call, greeted the four covens and watched a constellation woven above the forest.' },
   { badgeId:'book1-colony-awake', name:'Colony Awake', category:'story', rarity:'Legendary', imageUrl:'/assets/badges/book1-colony-awake.png', requirementType:'quest', requirementValue:'book1-main-50', requirementText:'Complete Book 1', description:'You helped the villages remember they are one colony.' },
   { badgeId:'story-tunnel-witness', name:'Tunnel Witness', category:'story', rarity:'Uncommon', imageUrl:'/assets/badges/story-tunnel-witness.png', requirementType:'story', requirementValue:'future-tunnels', requirementText:'Future Book 1 story milestone', description:'You witnessed signs beneath the roots.' },
   { badgeId:'story-dust-reader', name:'Dust Reader', category:'story', rarity:'Rare', imageUrl:'/assets/badges/story-dust-reader.png', requirementType:'story', requirementValue:'future-red-dust', requirementText:'Future Book 1 story milestone', description:'You learned to read the red dust.' },
@@ -10804,6 +10903,9 @@ function normalizeQuestSpotConfig(cfg = {}) {
     holdTake: Array.isArray(cfg.holdTake) ? cfg.holdTake.map(String) : null,
     holdCast: Number(cfg.holdCast) || 0,
     holdBite: Number(cfg.holdBite) || 0,
+    // the camera eases over the Rebel's shoulder and looks up there while a hold lasts (HoldLook): [x, y, z] from the spot,
+    // 'npc:<id>' (the Owl flying in), 'owlsky' (the constellation the covens weave)
+    holdLook: Array.isArray(cfg.holdLook) ? cfg.holdLook.slice(0, 3).map(Number) : typeof cfg.holdLook === 'string' && /^(npc:[a-z0-9-]+|owlsky)$/.test(cfg.holdLook) ? cfg.holdLook : null,
     // a sound when the spot is used (after a hold's own sound: the splash of a catch)
     doneSound: cfg.doneSound ? String(cfg.doneSound) : null,
     // a lightning bolt from the sky when the spot is used (strikeTaleBolt): an NPC id (its orb) or [x, y, z] in the spot's frame
@@ -10839,7 +10941,9 @@ function normalizeQuestSpotConfig(cfg = {}) {
     // a timed run: from this spot through path [[x, z], ...] (in order, within pathRadius) in seconds (0 = a walk, no time limit)
     ...(action === 'race' ? { seconds: Number(cfg.seconds) === 0 ? 0 : Math.max(3, Number(cfg.seconds) || 20), path: (Array.isArray(cfg.path) ? cfg.path : []).filter(q => Array.isArray(q) && q.length >= 2).map(q => [Number(q[0]), Number(q[1])]),
       pathRadius: Math.max(1, Number(cfg.pathRadius) || 2.5), startText: String(cfg.startText || ''), failText: String(cfg.failText || ''),
-      pathPiece: cfg.pathPiece ? String(cfg.pathPiece) : null, pointSound: cfg.pointSound ? String(cfg.pointSound) : null } : {}),
+      pathPiece: cfg.pathPiece ? String(cfg.pathPiece) : null, pointSound: cfg.pointSound ? String(cfg.pointSound) : null,
+      // the Owl of Summoning leads this walk (OwlTale): at these path points he calls, with a line of the tale
+      owlCalls: Array.isArray(cfg.owlCalls) ? cfg.owlCalls.filter(c => c && Number.isFinite(Number(c.at))).map(c => ({ at:Math.floor(Number(c.at)), text:String(c.text || '') })) : null } : {}),
     // follow: stay within followRadius of the nearest layout piece of followType (its moving part) for followSeconds
     ...(action === 'follow' ? { followType: String(cfg.followType || ''), followRadius: Math.max(1, Number(cfg.followRadius) || 2), followSeconds: Math.max(3, Number(cfg.followSeconds) || 20),
       startText: String(cfg.startText || ''), failText: String(cfg.failText || '') } : {})
@@ -11401,6 +11505,382 @@ function strikeTaleBolt(to) {
   return true;
 }
 window._taleBolt = { state:TaleBolt, strike:strikeTaleBolt, target:taleBoltTarget, sky:() => taleThunderSky() }; // tests
+
+// ═══════════════════════════════════════
+// THE OWL OF SUMMONING (Moon Tales 21-24, Vicky's tale, Oct 25): Ophira's glade on the manor terrace, the Owl on the
+// ancient tree's branch, the four covens arriving, the gathering in the sacred circle and the constellation it weaves.
+// The Owl is an NPC (cc-owl, kit cc_owl_avelor) that OwlTale moves itself (gameHold keeps the NPC loop off him): out of
+// sight until he flies in through 21's hold (mt-owl-wait), then on his branch (SamuraiKit.owlPerch through the tree's
+// matrix), ahead of the Rebel on the 22 walk (mt-owl-call: he flies to the next point, calling at its owlCalls), over
+// the circle through 24. The covens come once 22 is done: each waits out of sight at her place (QUEST_NPC_PLACES) until
+// the Rebel looks her way within OWL_TALE.arriveR (or stands right by her place), then appears with her own arrival (a
+// falling star, roots waking, the veil, moths).
+// 24's hold (mt-gathering): ribbons rise from the five witches and weave the constellation (OwlSky), which stays in the
+// sky once mt-gathering is used; the circle (mt-circle) is lit from 24 on. Tests: window._owlTale.
+// ═══════════════════════════════════════
+const OWL_TALE = {
+  owl:'cc-owl', tree:'cc_ancient_tree', inSpot:'mt-owl-wait', callSpot:'mt-owl-call', gatherSpot:'mt-gathering', circleSpot:'mt-circle',
+  arriveR:26, hover:6.5, circleR:6.8, circleH:9.5, skyYaw:-.315, vmax:11,
+  // the four who answer the call (Moon Tales 23): her greeting step, her arrival, its colour
+  covens:{ 'cc-elyndra':{ step:'greet-elyndra', fx:'starfall', color:[1, .9, .62] }, 'cc-lunara':{ step:'greet-lunara', fx:'roots', color:[.5, 1, .78] },
+    'cc-seer':{ step:'greet-seer', fx:'veil', color:[.72, .46, 1] }, 'cc-lunar-witch':{ step:'greet-ghostwing', fx:'moths', color:[1, .82, .4] } },
+  // the five in the circle (Moon Tales 24) and the stars their ribbons reach (the owl's ear tufts, wing tips, tail)
+  weavers:['cc-ophira', 'cc-elyndra', 'cc-lunara', 'cc-seer', 'cc-lunar-witch'], anchors:['tl', 'tr', 'wl', 'wr', 'ta']
+};
+const OwlTale = { mode:'hidden', p:null, v:null, yaw:0, u:0, landed:false, orbit:0, called:new Set(), lastNext:-1, hooAt:0, arrived:new Set(), litCircle:null, cache:{} };
+const owlDone = q => isQuestIdCompleted(q) || (SideQuestState.done || []).includes(q);
+const owlSpotUsed = id => (ProgressionState.spotsUsed || []).includes(id);
+const owlSmooth = x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+function owlNode(key, find) {
+  const c = OwlTale.cache[key];
+  if (c && !c.isDisposed?.()) return c;
+  return (OwlTale.cache[key] = find() || null);
+}
+const owlSpot = id => owlNode('spot:' + id, () => scene.transformNodes.find(n => n.metadata?.type === 'quest_spot' && n.metadata.spotConfig?.spotId === id));
+// the top of the ancient tree's long branch (the kit's owlPerch, kit x / depth / up = Babylon x / z / y) and its direction
+function owlPerch() {
+  const tree = owlNode('tree', () => scene.transformNodes.find(n => n.metadata?.type === OWL_TALE.tree && n.metadata.isClone && !n.isDisposed?.()));
+  const P = window.SamuraiKit?.owlPerch; if (!tree || !P) return null;
+  const m = tree.computeWorldMatrix(true);
+  return { at:BABYLON.Vector3.TransformCoordinates(new BABYLON.Vector3(P[0], P[2], P[1]), m), b:BABYLON.Vector3.TransformNormal(new BABYLON.Vector3(1, 0, 0), m).normalize() };
+}
+// where the covens gather (the middle of the sacred circle)
+function owlCircleCentre() { const r = owlSpot(OWL_TALE.gatherSpot) || owlSpot(OWL_TALE.circleSpot); return r ? r.getAbsolutePosition().clone() : null; }
+
+// what the Owl is doing now: out of sight, flying in (21's hold), on his branch, leading the walk (22), over the circle (24)
+function owlWantMode() {
+  if (owlDone('moon-tales-24')) return 'perch';
+  if (SideQuestState.active?.['moon-tales-24']) return 'circle';
+  if (QuestSpotRuntime.race?.root?.metadata?.spotConfig?.spotId === OWL_TALE.callSpot) return 'lead';
+  if (owlDone('moon-tales-21') || owlSpotUsed(OWL_TALE.inSpot)) return 'perch';
+  if (SideQuestState.active?.['moon-tales-21']) return 'arrive';
+  return 'hidden';
+}
+// 21: from high over the trees toward the moon, wide round over the glade, in along the branch from its tip
+function owlArrivePoint(u, perch) {
+  const P3 = perch.at, b = perch.b, n = new BABYLON.Vector3(-.31, 0, .95);
+  const P0 = P3.add(n.scale(66)).add(new BABYLON.Vector3(0, 32, 0)), P1 = P3.add(n.scale(18)).add(b.scale(22)).add(new BABYLON.Vector3(0, 15, 0)), P2 = P3.add(b.scale(7)).add(new BABYLON.Vector3(0, 2.4, 0));
+  const a = 1 - u;
+  return P0.scale(a * a * a).add(P1.scale(3 * a * a * u)).add(P2.scale(3 * a * u * u)).add(P3.scale(u * u * u));
+}
+// fly toward a point: the speed eases off within a few metres, the turn of the velocity takes a moment
+function owlSteer(T, dt, vmax) {
+  const d = T.subtract(OwlTale.p), dist = d.length();
+  const want = dist > .01 ? d.scale(Math.min(vmax, dist * 1.6) / dist) : BABYLON.Vector3.Zero();
+  OwlTale.v = BABYLON.Vector3.Lerp(OwlTale.v, want, 1 - Math.exp(-dt * 3.2));
+  OwlTale.p.addInPlace(OwlTale.v.scale(dt));
+  return dist;
+}
+function updateOwlFlight(dt) {
+  const npc = typeof getNPCById === 'function' ? getNPCById(OWL_TALE.owl) : null;
+  if (!npc || npc.isDisposed?.()) return;
+  const m = npc.metadata, perch = owlPerch();
+  m.gameHold = m.gameHold || { clip:'idle' }; // he flies by OwlTale, not the NPC loop
+  const mode = owlWantMode();
+  if (mode !== OwlTale.mode) {
+    if (mode === 'lead' || (mode === 'circle' && OwlTale.landed)) try { MoonTaleSounds.fx('wings'); } catch (e) {}
+    if (mode === 'lead') { OwlTale.called.clear(); OwlTale.lastNext = -1; }
+    OwlTale.mode = mode;
+  }
+  if (!OwlTale.p) { OwlTale.p = (perch ? perch.at : npc.position).clone(); OwlTale.v = BABYLON.Vector3.Zero(); OwlTale.landed = true; OwlTale.u = owlSpotUsed(OWL_TALE.inSpot) ? 1 : 0; }
+  let hidden = mode === 'hidden' || (!perch && mode !== 'lead' && mode !== 'circle'), air = true, face = null; // no tree yet: no branch to sit on
+  if (ActiveInterior) { m._questHidden = hidden; return; }
+  if (mode === 'arrive' && perch) {
+    // driven by the hold: he lands as it ends; a broken hold sends him back up the way he came
+    const h = QuestSpotRuntime.hold, hc = h?.root?.metadata?.spotConfig, held = hc?.spotId === OWL_TALE.inSpot ? (performance.now() - h.startedAt) / 1000 : -1;
+    const goal = held >= 0 ? Math.min(1, held / (hc.holdSeconds * .92)) : 0;
+    OwlTale.u += Math.max(-.3 * dt, Math.min(dt / Math.max(4, hc?.holdSeconds || 14) * 1.25, goal - OwlTale.u));
+    if (OwlTale.u <= .002) { hidden = true; OwlTale.u = 0; }
+    const q = owlArrivePoint(owlSmooth(OwlTale.u * .5 + .5) * 2 - 1, perch); // quick out of the sky, slow onto the branch
+    OwlTale.v = q.subtract(OwlTale.p).scale(1 / Math.max(dt, 1e-3)); OwlTale.p.copyFrom(q);
+    if (OwlTale.u >= .999) { air = false; OwlTale.p.copyFrom(perch.at); }
+    OwlTale.landed = !air;
+  } else if (mode === 'perch' && perch) {
+    const dist = OwlTale.landed ? 0 : owlSteer(perch.at, dt, OWL_TALE.vmax);
+    if (OwlTale.landed || (dist < .25 && OwlTale.v.length() < 1.4)) { OwlTale.p.copyFrom(perch.at); OwlTale.v.setAll(0); OwlTale.landed = true; air = false; }
+  } else if (mode === 'lead') {
+    const race = QuestSpotRuntime.race, rc = race.root.metadata.spotConfig, pts = rc.path || [], i = Math.min(race.next, pts.length - 1), q = pts[i];
+    OwlTale.landed = false;
+    if (q) {
+      const gy = Number.isFinite(getNPCGroundHeightAt?.(q[0], q[1])) ? getNPCGroundHeightAt(q[0], q[1]) : OwlTale.p.y - OWL_TALE.hover;
+      const d2 = Math.hypot(q[0] - OwlTale.p.x, q[1] - OwlTale.p.z);
+      OwlTale.orbit += dt * .9;
+      const T = d2 < 3.5 ? new BABYLON.Vector3(q[0] + 1.8 * Math.cos(OwlTale.orbit), gy + OWL_TALE.hover, q[1] + 1.8 * Math.sin(OwlTale.orbit))
+        : new BABYLON.Vector3(q[0], gy + OWL_TALE.hover + Math.min(6, d2 * .22), q[1]);
+      owlSteer(T, dt, OWL_TALE.vmax);
+      // his call where the tale's places are (owlCalls), a softer hoot while he waits for you
+      const call = (rc.owlCalls || []).find(c => c.at === i);
+      if (d2 < 4.5 && call && !OwlTale.called.has(i)) { OwlTale.called.add(i); OwlTale.hooAt = performance.now() + 7000; try { MoonTaleSounds.fx('owlcall'); } catch (e) {} if (call.text) showToast(call.text, 6500); }
+      else if (d2 < 4.5 && performance.now() > OwlTale.hooAt) { OwlTale.hooAt = performance.now() + 6500 + Math.random() * 3000; try { MoonTaleSounds.fx('hoo'); } catch (e) {} }
+    }
+  } else if (mode === 'circle') {
+    const C = owlCircleCentre();
+    OwlTale.landed = false;
+    if (C) { OwlTale.orbit += dt * .52; owlSteer(new BABYLON.Vector3(C.x + OWL_TALE.circleR * Math.cos(OwlTale.orbit), C.y + OWL_TALE.circleH, C.z + OWL_TALE.circleR * Math.sin(OwlTale.orbit)), dt, OWL_TALE.vmax); }
+  }
+  // facing: where he flies; on the branch, the circle below (or you, while you talk to him)
+  const vh = Math.hypot(OwlTale.v.x, OwlTale.v.z);
+  if (air && vh > .4) face = Math.atan2(OwlTale.v.x, OwlTale.v.z);
+  else if (!air) { const C = m.dialogueOpen && charMesh ? charMesh.position : owlCircleCentre(); if (C) face = Math.atan2(C.x - OwlTale.p.x, C.z - OwlTale.p.z); }
+  if (face != null) { const d = Math.atan2(Math.sin(face - OwlTale.yaw), Math.cos(face - OwlTale.yaw)); OwlTale.yaw += d * (1 - Math.exp(-dt * (air ? 4 : 2.5))); }
+  npc.position.copyFrom(OwlTale.p); npc.rotation.y = OwlTale.yaw;
+  const kit = m.kitModel; if (kit) (kit.metadata ||= {}).owlAir = air;
+  m._questHidden = hidden;
+  m.talkYield = true; m.noTalk = air; // he answers from his branch, and only when no one else is in range (Ophira first)
+}
+
+// ── the covens' arrivals (Moon Tales 23) ──
+function covenGreeted(stepId) { return (SideQuestState.active?.['moon-tales-23']?.steps?.['group:greet']?.ids || []).includes(stepId); }
+function updateCovenArrivals() {
+  const came = owlDone('moon-tales-22'), all = owlDone('moon-tales-23');
+  for (const [id, c] of Object.entries(OWL_TALE.covens)) {
+    const npc = typeof getNPCById === 'function' ? getNPCById(id) : null; if (!npc) continue;
+    let hide = false;
+    if (!came) hide = id !== 'cc-lunar-witch'; // not come yet (Ghostwing is at home in the Blossom Clearing)
+    else if (!all && !covenGreeted(c.step) && !OwlTale.arrived.has(id)) {
+      // she comes as you look her way within arriveR (or are right by her place), so her arrival is seen
+      const d = charMesh ? Math.hypot(npc.position.x - charMesh.position.x, npc.position.z - charMesh.position.z) : Infinity;
+      const cam = scene.activeCamera, f = cam?.getDirection?.(BABYLON.Axis.Z), cx = npc.position.x - (cam?.position.x || 0), cz = npc.position.z - (cam?.position.z || 0);
+      const seen = !f || (cx * f.x + cz * f.z) / ((Math.hypot(cx, cz) || 1) * (Math.hypot(f.x, f.z) || 1)) > .8;
+      const near = walkMode && !adminMode && !ActiveInterior && (d < 9 || (d < OWL_TALE.arriveR && seen));
+      if (near) { OwlTale.arrived.add(id); covenArrive(npc, c); } else hide = true;
+    }
+    npc.metadata._questHidden = hide;
+  }
+}
+// an arrival: a column of light in her colour and sparks (a star falling first for Elyndra), and her sound
+const CovenFX = { tex:null, mats:{} };
+function covenFxMat(key, rgb, alpha) {
+  const k = key + rgb.join(','), have = CovenFX.mats[k]; if (have && !have.isDisposed?.()) return have;
+  const mt = new BABYLON.StandardMaterial('covenFx_' + key, scene);
+  mt.disableLighting = true; mt.diffuseColor = BABYLON.Color3.Black(); mt.specularColor = BABYLON.Color3.Black(); mt.emissiveColor = new BABYLON.Color3(...rgb);
+  mt.alpha = alpha; mt.alphaMode = BABYLON.Engine.ALPHA_ADD; mt.disableDepthWrite = true; mt.fogEnabled = false; mt.backFaceCulling = false; mt.metadata = { perfKeepLive:true };
+  return (CovenFX.mats[k] = mt);
+}
+function covenFxFade(mesh, mat, a0, ms, after) {
+  const t0 = performance.now(), ob = scene.onBeforeRenderObservable.add(() => {
+    const u = (performance.now() - t0) / ms;
+    if (u >= 1 || mesh.isDisposed()) { scene.onBeforeRenderObservable.remove(ob); if (!mesh.isDisposed()) mesh.dispose(); mat.dispose(); after?.(); return; }
+    mat.alpha = a0 * (1 - u) * (1 - u);
+  });
+}
+function covenFxColumn(p, rgb) {
+  const mat = covenFxMat('col', rgb, .5).clone('covenFx_colA'), col = BABYLON.MeshBuilder.CreateCylinder('covenFx_column', { diameterTop:1.1, diameterBottom:2.4, height:10, tessellation:18, cap:BABYLON.Mesh.NO_CAP }, scene);
+  col.position.set(p.x, p.y + 5, p.z); col.material = mat; col.isPickable = false; col.applyFog = false; col.metadata = { _perfNeverFreeze:true, camSkip:true };
+  covenFxFade(col, mat, .5, 1900);
+}
+function covenFxBurst(p, c) {
+  if (!CovenFX.tex) CovenFX.tex = new BABYLON.Texture('assets/vendor/babylon/flare.png', scene);
+  const k = c.fx, ps = new BABYLON.ParticleSystem('covenFx_' + k, 420, scene), [r, g, b] = c.color;
+  ps.particleTexture = CovenFX.tex; ps.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
+  ps.emitter = new BABYLON.Vector3(p.x, p.y + (k === 'roots' ? .15 : 1.1), p.z);
+  ps.color1 = new BABYLON.Color4(r, g, b, 1); ps.color2 = new BABYLON.Color4(Math.min(1, r * .7 + .3), Math.min(1, g * .7 + .3), Math.min(1, b * .7 + .3), .9); ps.colorDead = new BABYLON.Color4(r * .3, g * .3, b * .3, 0);
+  const S = { starfall:{ e:() => ps.createSphereEmitter(1, 1), size:[.12, .42], life:[.5, 1.5], pow:[3, 8], grav:-6, rate:0, burst:320 },
+    roots:{ e:() => ps.createCylinderEmitter(2.6, .2, 0, .2), size:[.1, .34], life:[1.4, 3], pow:[.5, 1.6], grav:.5, rate:200 },
+    veil:{ e:() => ps.createSphereEmitter(1.6, 1), size:[1.2, 3.2], life:[1.4, 2.8], pow:[.4, 1.4], grav:.15, rate:110 },
+    moths:{ e:() => ps.createCylinderEmitter(1.4, 2, 0, .6), size:[.14, .36], life:[1.6, 3.2], pow:[1, 3], grav:.7, rate:150 } }[k] || { e:() => ps.createSphereEmitter(1, 1), size:[.2, .5], life:[1, 2], pow:[1, 3], grav:0, rate:150 };
+  S.e(); ps.minSize = S.size[0]; ps.maxSize = S.size[1]; ps.minLifeTime = S.life[0]; ps.maxLifeTime = S.life[1]; ps.minEmitPower = S.pow[0]; ps.maxEmitPower = S.pow[1];
+  ps.gravity = new BABYLON.Vector3(0, S.grav, 0); if (k === 'moths') { ps.minAngularSpeed = -7; ps.maxAngularSpeed = 7; }
+  if (k === 'veil') { ps.color1.a = .42; ps.color2.a = .3; }
+  if (S.burst) ps.manualEmitCount = S.burst; else { ps.emitRate = S.rate; ps.targetStopDuration = 1.3; }
+  ps.start(); // the flare texture is shared (the sky's glows too): dispose the system, keep the texture
+  if (S.burst) setTimeout(() => { try { ps.stop(); } catch (e) {} }, 200);
+  setTimeout(() => { try { ps.dispose(false); } catch (e) {} }, 5200);
+}
+// Elyndra: a star falls out of the sky onto the high ground, and she is standing where it lands
+function covenFxStarfall(p, c, land) {
+  const top = new BABYLON.Vector3(p.x + 14, p.y + 75, p.z - 18), to = new BABYLON.Vector3(p.x, p.y + 1, p.z), mat = covenFxMat('star', c.color, .95).clone('covenFx_starA');
+  const streak = BABYLON.MeshBuilder.CreateTube('covenFx_streak', { path:[top, to], radius:.16, tessellation:6, cap:BABYLON.Mesh.NO_CAP, updatable:true }, scene);
+  streak.material = mat; streak.isPickable = false; streak.applyFog = false; streak.alwaysSelectAsActiveMesh = true; streak.metadata = { _perfNeverFreeze:true, camSkip:true };
+  const t0 = performance.now(), ob = scene.onBeforeRenderObservable.add(() => {
+    const u = Math.min(1, (performance.now() - t0) / 520), head = BABYLON.Vector3.Lerp(top, to, u), tail = BABYLON.Vector3.Lerp(top, to, Math.max(0, u - .35));
+    BABYLON.MeshBuilder.CreateTube('covenFx_streak', { path:[tail, head], radius:.16, instance:streak });
+    if (u >= 1) { scene.onBeforeRenderObservable.remove(ob); covenFxFade(streak, mat, .95, 420); land(); }
+  });
+}
+function covenArrive(npc, c) {
+  const p = npc.position.clone();
+  try { MoonTaleSounds.fx(c.fx); } catch (e) {}
+  const land = () => { covenFxColumn(p, c.color); covenFxBurst(p, c); };
+  if (c.fx === 'starfall') covenFxStarfall(p, c, land); else land();
+}
+
+// ── the sacred circle: dim until 24, lit from then on (the spot's donePiece once the gathering is done) ──
+function updateOwlCircle() {
+  const root = owlSpot(OWL_TALE.circleSpot); if (!root || !window.SamuraiKit) return;
+  const cfg = root.metadata.spotConfig, lit = !!SideQuestState.active?.['moon-tales-24'] && !owlSpotUsed(OWL_TALE.gatherSpot);
+  if (lit && !OwlTale.litCircle) {
+    const h = new BABYLON.TransformNode('owlCircleLit', scene); h.parent = root; h.metadata = { _perfNeverFreeze:true };
+    const o = cfg.pieceOffset || [0, 0, 0]; h.position.set(o[0] || 0, o[1] || 0, o[2] || 0); h.rotation.y = cfg.pieceRy || 0; h.scaling.setAll(cfg.pieceScale || 1);
+    window.SamuraiKit.build(h, 'cc_sacred_circle_lit', scene, null, true); OwlTale.litCircle = h;
+  } else if (!lit && OwlTale.litCircle) { OwlTale.litCircle.dispose(false, false); OwlTale.litCircle = null; }
+  const piece = root.metadata._piece; if (piece && piece.isEnabled() === !!OwlTale.litCircle) piece.setEnabled(!OwlTale.litCircle);
+}
+
+// ── the constellation (OwlSky): the kit's owl of stars (SamuraiKit.owlSky: centre C, plane axes X / Y, stars [u, v]),
+// above the circle and turned toward the moon (skyYaw); thin instances of a star, its glow and the lines between them,
+// each shown as far as its reveal (0..1): the weave lights them star by star, then it stays, twinkling ──
+const OwlSky = { meshes:null, mats:null, lv:{}, ll:null, full:false, geo:null, depth:null, at:0 };
+function owlSkyGeo() {
+  const root = owlSpot(OWL_TALE.gatherSpot), K = window.SamuraiKit?.owlSky; if (!root || !K) return null;
+  if (OwlSky.geo && OwlSky.geo.root === root) return OwlSky.geo;
+  const th = OWL_TALE.skyYaw + (root.rotation?.y || 0), c = Math.cos(th), s = Math.sin(th), O = root.getAbsolutePosition();
+  const rot = (x, y, z) => new BABYLON.Vector3(x * c + z * s, y, -x * s + z * c); // kit (x, depth, up) -> Babylon (x, up, depth), turned
+  const kit = (a) => rot(a[0], a[2], a[1]);
+  const C = kit(K.C).add(O), X = kit(K.X).normalize(), Y = kit(K.Y).normalize(), N = BABYLON.Vector3.Cross(X, Y).normalize();
+  const star = {}; for (const [k, [u, v]] of Object.entries(K.stars)) star[k] = C.add(X.scale(u)).add(Y.scale(v));
+  const lines = []; for (const [a, b] of window.SamuraiKit.owlSky.lines || []) lines.push([a, b]);
+  return (OwlSky.geo = { root, C, X, Y, N, star, lines, big:new Set(['el', 'er', 'cr', 'wl', 'wr', 'ta']) });
+}
+// how far each star is from the five the ribbons reach (lines walked out from them): the order they light in
+function owlSkyDepth(g) {
+  if (OwlSky.depth) return OwlSky.depth;
+  const d = {}, q = [];
+  for (const a of OWL_TALE.anchors) if (g.star[a]) { d[a] = 0; q.push(a); }
+  while (q.length) { const a = q.shift(); for (const [x, y] of g.lines) { const o = x === a ? y : y === a ? x : null; if (o && d[o] == null) { d[o] = d[a] + 1; q.push(o); } } }
+  for (const k of Object.keys(g.star)) if (d[k] == null) d[k] = 3;
+  return (OwlSky.depth = d);
+}
+function owlSkyBuild(g) {
+  if (OwlSky.meshes) return;
+  const mk = (n, rgb, a, tex) => { const mt = new BABYLON.StandardMaterial(n, scene); mt.disableLighting = true; mt.diffuseColor = BABYLON.Color3.Black(); mt.specularColor = BABYLON.Color3.Black();
+    mt.emissiveColor = new BABYLON.Color3(...rgb); mt.alpha = a; mt.alphaMode = BABYLON.Engine.ALPHA_ADD; mt.disableDepthWrite = true; mt.fogEnabled = false; mt.backFaceCulling = false; mt.metadata = { perfKeepLive:true };
+    if (tex) mt.opacityTexture = tex; return mt; };
+  // the glow: its tint where the flare is bright (the flare has no alpha: its brightness is the opacity)
+  const glowTex = new BABYLON.Texture('assets/vendor/babylon/flare.png', scene); glowTex.getAlphaFromRGB = true;
+  OwlSky.mats = { core:mk('owlSkyCore', [.96, .98, 1], 1), glow:mk('owlSkyGlow', [.62, .74, 1], .9, glowTex), line:mk('owlSkyLine', [.66, .78, 1], .5) };
+  const n = Object.keys(g.star).length, nl = g.lines.length;
+  const core = BABYLON.MeshBuilder.CreateSphere('owlSky_core', { diameter:1, segments:6 }, scene), glow = BABYLON.MeshBuilder.CreatePlane('owlSky_glow', { size:1 }, scene), line = BABYLON.MeshBuilder.CreatePlane('owlSky_line', { size:1 }, scene);
+  [[core, OwlSky.mats.core, n], [glow, OwlSky.mats.glow, n], [line, OwlSky.mats.line, nl]].forEach(([m, mt, k]) => {
+    m.material = mt; m.isPickable = false; m.applyFog = false; m.alwaysSelectAsActiveMesh = true; m.metadata = { _perfNeverFreeze:true, camSkip:true };
+    m.thinInstanceSetBuffer('matrix', (m._owlBuf = new Float32Array(16 * k)), 16, false);
+  });
+  OwlSky.meshes = { core, glow, line };
+}
+// a matrix from its three axes (rows: x, y, z scaled) and a position, into buf at i
+function owlSkyPut(buf, i, ax, ay, az, p) {
+  const o = i * 16; buf.set([ax.x, ax.y, ax.z, 0, ay.x, ay.y, ay.z, 0, az.x, az.y, az.z, 0, p.x, p.y, p.z, 1], o);
+}
+function owlSkyUpdate() {
+  const g = owlSkyGeo(); if (!g) return;
+  const full = owlSpotUsed(OWL_TALE.gatherSpot), weaving = !!Weave.ribbons.length || Weave.fade > 0;
+  if (!full && !weaving) { if (OwlSky.meshes) Object.values(OwlSky.meshes).forEach(m => m.setEnabled(false)); return; }
+  owlSkyBuild(g);
+  const on = !ActiveInterior; Object.values(OwlSky.meshes).forEach(m => { if (m.isEnabled() !== on) m.setEnabled(on); });
+  if (!on) return;
+  const t = performance.now() / 1000, keys = Object.keys(g.star), lv = k => full && !weaving ? 1 : (OwlSky.lv[k] || 0);
+  const cb = OwlSky.meshes.core._owlBuf, gb = OwlSky.meshes.glow._owlBuf, lb = OwlSky.meshes.line._owlBuf;
+  keys.forEach((k, i) => {
+    const l = lv(k), big = g.big.has(k), r = (big ? .42 : .28) * 2 * l, tw = 1 + .14 * Math.sin(t * (1.1 + i * .13) + i * 1.7), gs = (big ? 4.8 : 3) * l * tw, p = g.star[k];
+    owlSkyPut(cb, i, new BABYLON.Vector3(r, 0, 0), new BABYLON.Vector3(0, r, 0), new BABYLON.Vector3(0, 0, r), p);
+    owlSkyPut(gb, i, g.X.scale(gs), g.Y.scale(gs), g.N, p.add(g.N.scale(.05)));
+  });
+  g.lines.forEach(([a, b], i) => {
+    const A = g.star[a], Bp = g.star[b], la = lv(a), lb2 = lv(b), d = Bp.subtract(A), L = d.length() || 1, dir = d.scale(1 / L);
+    // a line grows out from the star that lit first
+    const fromA = (OwlSky.depth?.[a] ?? 0) <= (OwlSky.depth?.[b] ?? 0), lvl = full && !weaving ? 1 : (OwlSky.ll?.[i] || 0), len = L * lvl, start = fromA ? A : Bp, sd = fromA ? dir : dir.scale(-1);
+    const mid = start.add(sd.scale(len / 2)), across = BABYLON.Vector3.Cross(g.N, sd).normalize().scale(.17 * Math.min(1, la + lb2));
+    owlSkyPut(lb, i, sd.scale(len), across, g.N, mid);
+  });
+  OwlSky.meshes.core.thinInstanceBufferUpdated('matrix'); OwlSky.meshes.glow.thinInstanceBufferUpdated('matrix'); OwlSky.meshes.line.thinInstanceBufferUpdated('matrix');
+}
+
+// ── 24's weave: silver ribbons from the five witches up to the owl's five outer stars, then the stars light outward ──
+const Weave = { ribbons:[], mats:null, fade:0, fadeAt:0 };
+function weaveStart(root) {
+  const g = owlSkyGeo(); if (!g) return;
+  owlSkyDepth(g);
+  if (!Weave.mats) {
+    const mk = (n, rgb, a) => { const mt = new BABYLON.StandardMaterial(n, scene); mt.disableLighting = true; mt.diffuseColor = BABYLON.Color3.Black(); mt.specularColor = BABYLON.Color3.Black();
+      mt.emissiveColor = new BABYLON.Color3(...rgb); mt.alpha = a; mt.alphaMode = BABYLON.Engine.ALPHA_ADD; mt.disableDepthWrite = true; mt.fogEnabled = false; mt.backFaceCulling = false; mt.metadata = { perfKeepLive:true }; return mt; };
+    Weave.mats = { core:mk('weaveCore', [.9, .95, 1], .95), glow:mk('weaveGlow', [.4, .55, 1], .32) };
+  }
+  Weave.mats.core.alpha = .95; Weave.mats.glow.alpha = .32; Weave.fade = 0;
+  const C = owlCircleCentre() || root.getAbsolutePosition();
+  const witches = OWL_TALE.weavers.map(id => getNPCById?.(id)).filter(n => n && n.isEnabled());
+  const bearing = v => Math.atan2(v.x - C.x, v.z - C.z);
+  // pair each witch with a star round the circle the same way (the fewest crossings): try every turn of the star ring
+  const ws = witches.map(n => ({ n, a:bearing(n.position) })).sort((x, y) => x.a - y.a), ss = OWL_TALE.anchors.filter(k => g.star[k]).map(k => ({ k, a:bearing(g.star[k]) })).sort((x, y) => x.a - y.a);
+  let best = 0, bestCost = Infinity;
+  for (let sh = 0; sh < ss.length; sh++) { let cost = 0; ws.forEach((w, i) => { const s = ss[(i + sh) % ss.length]; cost += Math.abs(Math.atan2(Math.sin(s.a - w.a), Math.cos(s.a - w.a))); }); if (cost < bestCost) { bestCost = cost; best = sh; } }
+  Weave.ribbons = ws.map((w, i) => {
+    const S = w.n.position.add(new BABYLON.Vector3(0, 2.05, 0)), E = g.star[ss[(i + best) % ss.length].k], N = 64, path = [];
+    const sv = S.subtract(C), ev = E.subtract(C), fs = Math.atan2(sv.x, sv.z), fe = Math.atan2(ev.x, ev.z), rs = Math.hypot(sv.x, sv.z), re = Math.hypot(ev.x, ev.z);
+    const df = Math.atan2(Math.sin(fe - fs), Math.cos(fe - fs));
+    for (let k = 0; k < N; k++) {
+      const u = k / (N - 1), f = fs + df * u + 1.15 * Math.sin(Math.PI * u), r = rs + (re - rs) * u + 1.6 * Math.sin(Math.PI * u);
+      path.push(new BABYLON.Vector3(C.x + r * Math.sin(f), S.y + (E.y - S.y) * Math.pow(u, 1.3), C.z + r * Math.cos(f)));
+    }
+    const mk = (mat, radius) => { const m = BABYLON.MeshBuilder.CreateTube('weave_ribbon', { path:path.map(() => S.clone()), radius, tessellation:6, cap:BABYLON.Mesh.NO_CAP, updatable:true }, scene);
+      m.material = mat; m.isPickable = false; m.applyFog = false; m.alwaysSelectAsActiveMesh = true; m.metadata = { _perfNeverFreeze:true, camSkip:true }; return m; };
+    return { path, core:mk(Weave.mats.core, .06), glow:mk(Weave.mats.glow, .26), shown:-1 };
+  });
+}
+function weaveUpdate(p) {
+  const rf = owlSmooth((p - .05) / .5), t = performance.now() / 1000;
+  for (const rb of Weave.ribbons) {
+    const N = rb.path.length, x = rf * (N - 1), k = Math.floor(x), f = x - k;
+    if (Math.abs(x - rb.shown) < .02) continue;
+    rb.shown = x;
+    const tip = k >= N - 1 ? rb.path[N - 1] : BABYLON.Vector3.Lerp(rb.path[k], rb.path[k + 1], f), path = rb.path.map((q, j) => j <= k ? q : tip);
+    BABYLON.MeshBuilder.CreateTube('weave_ribbon', { path, radius:.06, instance:rb.core }); BABYLON.MeshBuilder.CreateTube('weave_ribbon', { path, radius:.26, instance:rb.glow });
+  }
+  Weave.mats.core.alpha = .82 + .13 * Math.sin(t * 7); // the silver shimmers
+  // the stars: the five outer ones as the ribbons reach them, then out along the lines
+  const g = OwlSky.geo, d = OwlSky.depth; if (!g || !d) return;
+  const ts = k => .56 + .075 * d[k];
+  for (const k of Object.keys(g.star)) OwlSky.lv[k] = owlSmooth((p - ts(k)) / .06);
+  OwlSky.ll = g.lines.map(([a, b]) => { const t0 = Math.min(ts(a), ts(b)), t1 = Math.max(ts(a), ts(b)) + (d[a] === d[b] ? .075 : 0); return owlSmooth((p - t0) / Math.max(.04, t1 - t0)); });
+}
+// the hold over: done (the ribbons fade, the constellation stays) or broken (all of it fades away)
+function weaveEnd(done) {
+  const rs = Weave.ribbons; Weave.ribbons = []; Weave.fade = 1; Weave.fadeAt = performance.now();
+  const keep = done, lv0 = { ...OwlSky.lv }, ll0 = (OwlSky.ll || []).slice();
+  const ob = scene.onBeforeRenderObservable.add(() => {
+    const u = Math.min(1, (performance.now() - Weave.fadeAt) / (done ? 2600 : 1100));
+    if (Weave.mats) { Weave.mats.core.alpha = .95 * (1 - u); Weave.mats.glow.alpha = .32 * (1 - u); }
+    if (!keep) { for (const k of Object.keys(lv0)) OwlSky.lv[k] = lv0[k] * (1 - u); OwlSky.ll = ll0.map(v => v * (1 - u)); }
+    if (u >= 1) { scene.onBeforeRenderObservable.remove(ob); rs.forEach(r => { r.core.dispose(); r.glow.dispose(); }); Weave.fade = 0; if (!keep) { OwlSky.lv = {}; OwlSky.ll = null; } }
+  });
+}
+function updateGatheringWeave() {
+  const h = QuestSpotRuntime.hold, hc = h?.root?.metadata?.spotConfig;
+  if (hc?.spotId === OWL_TALE.gatherSpot && !ActiveInterior) {
+    if (!Weave.ribbons.length && !Weave.fade) weaveStart(h.root);
+    if (Weave.ribbons.length) weaveUpdate(Math.min(1, (performance.now() - h.startedAt) / 1000 / hc.holdSeconds));
+  } else if (Weave.ribbons.length) weaveEnd(owlSpotUsed(OWL_TALE.gatherSpot));
+}
+
+// ── the hold camera (spotConfig.holdLook): over the Rebel's shoulder and looking up there, easing in and back out (the
+// quest guide's beam and label stay out of the way meanwhile) ──
+const HoldLook = { w:0, at:null };
+function holdLookPoint() {
+  const h = QuestSpotRuntime.hold, L = h?.root?.metadata?.spotConfig?.holdLook;
+  if (!L || !walkMode || adminMode || ActiveInterior) return null;
+  if (L === 'owlsky') return owlSkyGeo()?.C.clone() || null;
+  if (typeof L === 'string') { const n = getNPCById?.(L.slice(4)); return n && n.isEnabled() ? n.position.add(new BABYLON.Vector3(0, .8, 0)) : null; }
+  return h.root.getAbsolutePosition().add(new BABYLON.Vector3(L[0], L[1], L[2]));
+}
+function applyHoldLook(dc, target, dt) {
+  const L = holdLookPoint(); if (L) HoldLook.at = L;
+  HoldLook.w += ((L ? 1 : 0) - HoldLook.w) * (1 - Math.exp(-(Number.isFinite(dt) ? dt : .016) * 1.8));
+  if (HoldLook.w < .004 || !HoldLook.at || !charMesh) return dc;
+  const w = owlSmooth(HoldLook.w), A = HoldLook.at, P = charMesh.position, hx = P.x - A.x, hz = P.z - A.z, hl = Math.hypot(hx, hz) || 1, bx = hx / hl, bz = hz / hl;
+  target.copyFrom(BABYLON.Vector3.Lerp(target, A, w * .88));
+  // back from the Rebel, 2.3 m to its right and above its head: the Rebel never stands in front of what it looks at
+  return BABYLON.Vector3.Lerp(dc, new BABYLON.Vector3(P.x + bx * 5.4 - bz * 2.3, P.y + 3.6, P.z + bz * 5.4 + bx * 2.3), w);
+}
+
+function updateOwlTale(dt) {
+  if (CURRENT_VILLAGE_ID !== 'cute-creepy' || !scene) return;
+  dt = Math.min(.1, Math.max(0, Number(dt) || 0));
+  updateOwlFlight(dt);
+  updateCovenArrivals();
+  updateOwlCircle();
+  updateGatheringWeave();
+  owlSkyUpdate();
+}
+window._owlTale = { state:OwlTale, sky:OwlSky, weave:Weave, look:HoldLook, arrive:covenArrive, perch:owlPerch, skyGeo:owlSkyGeo, mode:() => OwlTale.mode }; // tests
 // Nariko's Thunder Moon (a tale moon with storm: true) up in the sky: heat lightning over the hill (the storm's flash,
 // softer, its distant bolts and thunder), no rain
 function taleThunderSky() {
@@ -16303,7 +16783,7 @@ function updateQuestTargetMarkers(dt = 0) {
         }
       }
     }
-    const active = root === activeMarker && meta.enabled !== false && !ActiveInterior;
+    const active = root === activeMarker && meta.enabled !== false && !ActiveInterior && !(meta.autoGuide && HoldLook.w > .05);
     const visible = isEditorVisualMode() ? QuestTargetMarkerManager.visible : active;
     setQuestTargetMarkerVisible(root, visible, active);
   });
@@ -29335,6 +29815,7 @@ engine.runRenderLoop(()=>{
     _orbitDist+=(9-_orbitDist)*0.06;
     let dc=new BABYLON.Vector3(charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
     const _camTarget = new BABYLON.Vector3(charMesh.position.x,charMesh.position.y+2.8,charMesh.position.z);
+    dc = applyHoldLook(dc, _camTarget, dt);
     if (MiniGames.on && !MiniGames.roam) { /* the game drives the camera */ }
     else if (!ActiveInterior) {
       // a building between the head and the camera pulls the camera in front of it (snaps in, eases back out)
@@ -29376,6 +29857,7 @@ engine.runRenderLoop(()=>{
   if (!MiniGames.on && !MiniGames.busy) { tryAutoOpenVillageGateFromWalkthrough(); updateCollectiblesSafe(dt); } // busy: a game is loading (the relay's finish card, at the gate)
   updateWeatherManager();
   updateNPCPopulation(dt);
+  try { updateOwlTale(dt); } catch (e) { if (!updateOwlTale.warned) { updateOwlTale.warned = true; console.warn('owl tale', e); } }
   updateSmallVillageAntPopulation(dt);
   runVillagePerformancePass(false);
   updatePerformanceDebugPanel();
