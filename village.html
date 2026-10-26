@@ -1825,6 +1825,7 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
 <script src="assets/forge-sfx.js"></script>
 <script src="assets/rebel-weapon.js"></script>
 <script src="assets/rebel-games.js"></script>
+<script src="assets/village-multiplayer.js"></script>
 <script type="module">
 // The story save (Oct 25; assets/story-save.js, api/story-save.mjs): signed in, the story kept under the player's Rebel
 // Economy account joins this browser's before the game reads it, so another device starts where they left off and nothing
@@ -9367,6 +9368,7 @@ async function refreshEcon(force) {
   if (was !== Econ.on || wasClaimed !== [...Econ.claimed].sort().join('|')) refreshEconWorld();
   if (Econ.on) flushEconPending();
   storySyncOnEcon();
+  mpOnEcon();
   renderJournalIfOpen();
 }
 function renderJournalIfOpen() {
@@ -9450,6 +9452,7 @@ async function econSignOut() {
   try { await fetch('/api/econ-me', { method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ action:'logout' }) }); } catch (e) {}
   Object.assign(Econ, { on:false, kind:'', name:'', avatar:null, balance:null, today:0, owed:0, claimed:new Set() });
   storySyncOnEcon();
+  mpOnEcon();
   refreshEconWorld(); renderJournalIfOpen(); renderEconBadge();
   showToast('Signed out. Points are practice points on this device until you sign in again.', 5000);
 }
@@ -30105,6 +30108,41 @@ async function loadForgeCollectionsConfig() {
 const touchCovers = ['npcDialogueOverlay', 'panel', 'glovePanel'];
 setInterval(() => window.VillageTouch?.update({ walking: !!walkMode && !adminMode && !(MiniGames.on && !MiniGames.roam) && !DanceOff.on && !DanceOff.choosing
   && !touchCovers.some(id => document.getElementById(id)?.classList.contains('on')) && !document.body.classList.contains('rebel-panel-open') }), 250);
+// ── Multiplayer, step 2: the other players in this village (assets/village-multiplayer.js; the rooms: realtime/, tickets:
+// api/mp-ticket.mjs). This page sends where the Rebel is, its move and its room; the others are drawn by the client.
+const MP_ANIMS = ['idle', 'walk', 'run', 'kick', 'jump'];
+function mpAnimName() {
+  if (animState < 0) return 'idle';
+  if (animState === 0 && window._forgeFightStance) return 'fight_idle';
+  if (animState < 5) return MP_ANIMS[animState];
+  if (SWIM.slot != null && animState === SWIM.slot) return 'swim';
+  const slots = window._forgeClipSlots || {};
+  for (const k in slots) if (slots[k] === animState) return k;
+  return 'idle';
+}
+let mpAccount = null;
+function startVillageMultiplayer() {
+  if (!window.VillageMP || startVillageMultiplayer.on) return;
+  startVillageMultiplayer.on = true;
+  window.VillageMP.start({
+    scene, village: CURRENT_VILLAGE_ID, lite: LITE_GRAPHICS,
+    shadows: () => shadows,
+    player: () => charMesh ? { x: charMesh.position.x, y: charMesh.position.y, z: charMesh.position.z, yaw: charMesh.rotation.y, anim: mpAnimName(),
+      interior: ActiveInterior ? String(ActiveInterior.targetInteriorId || ActiveInterior.interiorType || 'room') : null } : null,
+    canSend: () => walkMode && !adminMode,
+    character: () => { const c = window.activeCharacter || activeCharacter; return { col: c.collectionKey || 'battle_for_colony', tok: c.tokenId ? String(c.tokenId) : '' }; },
+    viaSite: u => (window.viaSite ? window.viaSite(u) : u),
+    toast: m => showToast(m, 6000)
+  });
+  scene.onBeforeRenderObservable.add(() => window.VillageMP.tick(Math.min(.1, engine.getDeltaTime() / 1000)));
+}
+// signed in or out while here: the room hears the new name (a new ticket)
+function mpOnEcon() {
+  if (!Econ.checked) return;
+  const a = Econ.on ? Econ.kind + ':' + Econ.name : '';
+  if (mpAccount !== null && a !== mpAccount) window.VillageMP?.reconnect?.();
+  mpAccount = a;
+}
 function initVillageHud() {
   try {
     window.VillageHud?.init(scene, {
@@ -30189,6 +30227,7 @@ function markVillageStartupInteractive() {
   schedulePostInteractiveStartupTask(loadForgeCollectionsConfig, 650);
   schedulePostInteractiveStartupTask(startVillagePetalEffects, 1200);
   schedulePostInteractiveStartupTask(initVillageHud, 300);
+  schedulePostInteractiveStartupTask(startVillageMultiplayer, 1500); // the other players (VillageMP)
   if (PlaytestNote) schedulePostInteractiveStartupTask(() => showToast(PlaytestNote, 9000), 2500); // a playtest jump says where it put you
   // loaded again with the starter ant because the Rebel's model didn't download (rigFallbackToStarter): say so, and take
   // the test parameters off the address so a reload tries the Rebel again
