@@ -1134,7 +1134,23 @@ const FRIEND = REF ? null : FRIEND_COLS[COL] || null;
 const NOUN = FRIEND ? FRIEND.one : 'Rebel';
 const SPECIES = REF ? (/^[a-z]{2,20}$/.test(Q.get('species') || '') ? Q.get('species') : 'ape') : FRIEND ? FRIEND.species : null;
 const REF_NAME = REF ? String(Q.get('name') || '').slice(0, 60) : '';
-async function refDataUrl() { const b = await (await fetch(REF)).blob(); return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); }); }
+// Oct 26: ?art=/assets/forge/sources/<file> (admins): the brush paints the Rebel from that artwork instead of its NFT
+// picture and the NFT's traits are left out (Rebel #001's NFT art is another character; Miguel's drawing is #001).
+// &gang=<Colony> picks the costume brief, &leave=quiver,arrows what every drawing leaves out (the API keeps only its
+// own list of such words). A forge started this way keeps them in its session (S.art, S.leave): a reload goes on with them.
+const ART = !REF && /^\/assets\/forge\/sources\/[\w.-]+\.(png|jpe?g|webp)$/.test(Q.get('art') || '') ? Q.get('art') : null;
+const ART_GANG = /^[A-Z][a-z]{2,11}$/.test(Q.get('gang') || '') ? Q.get('gang') : null;
+const LEAVE = String(Q.get('leave') || '').toLowerCase().split(',').map((w) => w.trim()).filter((w) => /^[a-z]{2,16}$/.test(w)).slice(0, 6);
+async function dataUrlOf(path) { const b = await (await fetch(path)).blob(); return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); }); }
+const refDataUrl = () => dataUrlOf(REF);
+// what this link asks for (admins only); a running forge reads its own session instead
+const linkArt = () => (ART && state.own?.admin ? { path: ART, gang: ART_GANG } : null);
+const linkLeave = () => (state.own?.admin ? LEAVE : []);
+const shownArt = () => (active() ? S.art || null : linkArt());
+function withArt(meta) {
+  const a = shownArt(); if (!a || !meta) return meta;
+  return { ...meta, img: a.path, thumb: a.path, traits: [{ trait_type: 'Source', value: 'Artwork' }, ...(a.gang ? [{ trait_type: 'Gang Names', value: a.gang }] : [])] };
+}
 const VARIANTS = Math.max(1, Math.min(3, parseInt(Q.get('variants') || '3', 10) || 3));
 // v5: Meshy's A-pose by default. Keeping the drawing's own pose (?pose=none, used for #4998's bulky armour) leaves the
 // arms hanging against the hips, and the sculpt fuses the fists into the thighs (#893: gloves stayed at the hips).
@@ -1172,7 +1188,8 @@ function saveS() { if (!S) return; try { localStorage.setItem(SKEY(S.token), JSO
 function loadS(t) { try { const s = JSON.parse(localStorage.getItem(SKEY(t)) || 'null'); return s && s.v === 1 && s.token === t ? s : null; } catch (e) { return null; } }
 function newSession() {
   S = { v: 1, token: state.token, id: `fv2_${state.token}_${Date.now()}`, phase: 'concept', t: { concept: { a: Date.now() } }, builds: [], startedAt: Date.now() };
-  saveS(); return S;
+  const art = linkArt(), leave = linkLeave(); if (art) S.art = art; if (leave.length) S.leave = leave;
+  GI_CACHE = null; saveS(); return S;
 }
 function liveStep() { if (!S) return 0; const p = PH[S.phase]; return p.seg >= 4 ? 4 : p.seg; }
 function active() { return !!(S && !S.done); }
@@ -1325,17 +1342,21 @@ function rebelId() { return selectedRebel()?.rebelId || (COL === 'battle_for_col
 let GI_CACHE = null;
 function GI() {
   if (GI_CACHE && GI_CACHE.tokenId === String(state.token)) return GI_CACHE;
-  const traits = {}; (state.meta?.traits || []).forEach((t) => { traits[t.trait_type] = t.value; });
-  const sel = selectedRebel() || {};
+  const art = S?.art || null;   // an art forge: its artwork (uploaded to the store first) and only its colony, never the NFT's traits
+  const traits = {};
+  if (art) { if (art.gang) traits['Gang Names'] = art.gang; } else (state.meta?.traits || []).forEach((t) => { traits[t.trait_type] = t.value; });
+  const sel = art ? {} : selectedRebel() || {};
   const rebel = {
     id: rebelId(), tokenId: String(state.token), collectionKey: COL, name: REF || FRIEND ? (state.meta?.name || `${NOUN} #${state.token}`) : `Rebel #${state.token}`,
-    image: REF ? location.origin + REF : `/api/nft-image?c=${COL}&t=${encodeURIComponent(state.token)}&s=full`,   // resolved to our Blob copy server-side
-    traits: Object.keys(traits).length ? traits : (sel.traits || {}), gangName: traits['Gang Names'] || sel.gangName || null
+    image: art ? S.artUrl || location.origin + art.path : REF ? location.origin + REF : `/api/nft-image?c=${COL}&t=${encodeURIComponent(state.token)}&s=full`,   // resolved to our Blob copy server-side
+    traits: art || Object.keys(traits).length ? traits : (sel.traits || {}), gangName: traits['Gang Names'] || sel.gangName || null
   };
   const bp = window.buildCharacterBlueprint(rebel, { formType: 'starter', formLabel: 'Starter 3D Form', hasGeneratedModel: false, bundleId: 'starter_ant' });
   GI_CACHE = window.buildForgeGenerationInput(bp);
   if (REF) GI_CACHE = { ...GI_CACHE, species: SPECIES, name: state.meta?.name || GI_CACHE.name, referenceImage: true };
   if (FRIEND) GI_CACHE = { ...GI_CACHE, species: SPECIES, name: state.meta?.name || GI_CACHE.name, friendTraits: (state.meta?.traits || []).slice(0, 20) };
+  if (art) GI_CACHE = { ...GI_CACHE, sourceArt: art.path };
+  if (S?.leave?.length) GI_CACHE = { ...GI_CACHE, leaveOut: S.leave };
   return GI_CACHE;
 }
 function refConcept(kind, imageUrl, extra) {
@@ -1376,6 +1397,8 @@ async function twice(fn) {
 const RUN = {
   async concept() {
     if (REF) { S.conceptUrl = await upload('concept', await refDataUrl()); return; }   // the finished render is the reference
+    // the artwork goes to the store first: the image steps read it from there (a preview site can't be read by the server)
+    if (S.art && !S.artUrl) { S.artUrl = await upload('art', await dataUrlOf(S.art.path)); GI_CACHE = null; saveS(); }
     const d = await twice(() => api('/api/forge-generate-fullbody-preview', { generationInput: GI() }));
     S.conceptUrl = await upload('concept', d.previewImage?.dataUrl);
   },
@@ -1547,7 +1570,9 @@ function renderChooser() {
 /* ---- approval (auto-continues after 30 s so the forge never stalls) ---- */
 let approveTimer = null, approveLeft = 0;
 function startApproveTimer() {
-  clearInterval(approveTimer); approveLeft = 30; refreshStep();
+  clearInterval(approveTimer);
+  if (S?.art) { approveLeft = 0; refreshStep(); return; }   // an art forge waits for the admin's look (no 30 s go-on)
+  approveLeft = 30; refreshStep();
   approveTimer = setInterval(() => {
     approveLeft--; const n = $('#autoN'); if (n) n.textContent = approveLeft;
     if (approveLeft <= 0) { clearInterval(approveTimer); acceptConcept(); }
@@ -1812,6 +1837,12 @@ function errBox() {
   return `<div class="errbox"><b>${limit ? 'Daily forge limit reached' : 'The forge stumbled'}</b><span>${esc(S.err)}</span>${limit ? '' : `<button class="btn" id="retryBtn">↻ TRY AGAIN</button>`}</div>`;
 }
 function bindErr() { const r = $('#retryBtn'); if (r) r.onclick = retry; }
+// an art forge says what it paints from (admins only: the link's art, or the running forge's)
+function artNoteHTML() {
+  const a = shownArt(), leave = active() ? S.leave || [] : linkLeave();
+  if (!a && !leave.length) return '';
+  return `<div class="note artnote">ADMIN · ${a ? `painting from <b>${esc(a.path.split('/').pop())}</b>, not the NFT picture or its traits${a.gang ? ` · costume: ${esc(a.gang)}` : ''}` : 'painting from the NFT'}${leave.length ? ` · leaving out: ${esc(leave.join(', '))}` : ''}</div>`;
+}
 
 /* ---- 1. SUMMON 召 ---- */
 function renderSummon(prev, quiet) {
@@ -1846,6 +1877,7 @@ function renderSummon(prev, quiet) {
     <div class="traits" id="traitList">${rows || '<div class="note">Reading traits…</div>'}</div>
     <div class="cta">${cta}</div>
     <div class="note">${active() ? `Forging now · about ${fmtMin(forgeProgress().rem)} left.` : `The forge paints your ${NOUN}, draws all four sides, sculpts three versions for you to choose from, then gives it a skeleton and 24 moves. About ${Math.round(total / 60)} minutes. ${allowanceNote()}`}</div>
+    ${artNoteHTML()}
     ${m1BoxHTML()}
   `, quiet);
   if (isM1()) { rrBox(); m1PickUp(); }
@@ -1883,7 +1915,7 @@ function inkSmokeIn(node) {
 async function selectToken(t) {
   if (t === state.token || active()) { if (active()) toast('Finish or wait for the current forge first'); return; }
   state.token = t; state.summoned = false; state.maxStep = 0; GI_CACHE = null; S = loadS(t);
-  state.meta = await loadToken(t); updateTokPill(); renderSummon();
+  state.meta = withArt(await loadToken(t)); updateTokPill(); renderSummon();
   state.assets = await loadAssets(t);
   if (!S) S = recoverSession(state.assets);
   refreshStep(); if (active()) runPipeline();
@@ -1966,7 +1998,7 @@ function renderInk(prev, quiet) {
     ${errBox()}
     <div class="sep"></div>
     ${waiting ? `<div class="cta"><button class="btn" id="againBtn">↻ PAINT AGAIN</button><button class="btn fire wide" id="acceptBtn">ACCEPT →</button></div>
-      <div class="note">Continues on its own in <b id="autoN">${approveLeft}</b> s. Paint again uses one of today's paintings.</div>` : ''}
+      <div class="note">${S.art ? 'Waiting for you: a forge from artwork never goes on by itself.' : `Continues on its own in <b id="autoN">${approveLeft}</b> s.`} Paint again uses one of today's paintings.</div>` : ''}
     ${past ? `<div class="cta"><button class="btn fire wide" id="nextBtn">${liveStep() >= 3 ? 'TO THE FORGE →' : 'THE BLUEPRINT →'}</button></div>` : ''}
     ${S?.prodUrl || S?.conceptUrl ? `<div class="dl"><span>KEEP THE ART</span>${S.prodUrl ? `<button class="chip" id="dlProd">⤓ Clean drawing</button>` : ''}${S.conceptUrl ? `<button class="chip" id="dlConcept">⤓ Painted concept</button>` : ''}</div>` : ''}
     ${S?.history?.length ? `<div class="kept"><span>${waiting ? 'YOUR PAINTINGS · TAP ONE TO USE IT' : 'EARLIER PAINTINGS'}</span><div class="kthumbs">${S.history.map((h, k) => `<button class="kthumb" data-k="${k}" title="${waiting ? 'Use this painting' : 'Download'}"><img src="${esc(viaSite(h.prodUrl))}" alt=""></button>`).join('')}</div></div>` : ''}
@@ -2995,8 +3027,9 @@ function updateTokPill() { const g = FRIEND ? FRIEND.name : traitVal('Gang Names
   if (state.token) {
     S = loadS(state.token);
     const [meta, assets, own] = await Promise.all([loadToken(state.token), loadAssets(state.token), loadOwn(state.token)]);
-    state.meta = meta; state.assets = assets; state.own = own; updateTokPill();
+    state.meta = meta; state.assets = assets; state.own = own;
     if (!S) S = recoverSession(assets);
+    state.meta = withArt(meta); updateTokPill();
     if (S?.done && S.rigUrl) {
       // a re-rig (rigger fix) replaces the build's rig on the server: the server's current file wins over the one remembered here
       const cur = (assets.builds || []).find((b) => b.buildId === S.picked && b.output?.forgeRigGlbUrl);
