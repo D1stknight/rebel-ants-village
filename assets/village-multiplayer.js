@@ -85,6 +85,7 @@
   function dropAll() { for (const id of [...peers.keys()]) removePeer(id); }
   function setState(p, s) {
     if (!Array.isArray(s) || s.length < 6) return;
+    if (ONCE.has(s[4]) && s[4] !== p.s?.[4]) p.once = s[4]; // a jump / kick plays even when it is over before our next frame
     p.s = s;
     if (!p.pos) { p.pos = new B.Vector3(s[0], s[1], s[2]); p.yaw = s[3]; }
   }
@@ -232,10 +233,10 @@
     try { if (p.cur && p.cur !== g) p.cur.stop(); } catch (e) {}
     p.cur = g; g.start(!ONCE.has(a), 1, g.from, g.to);
   }
-  function playOnce(p, a) {
+  function playOnce(p, a, over) { // over: it plays to its end even if they walk on meanwhile (an emote stops when they move)
     if (!p.model) return;
     const g = groupFor(p, a);
-    p.hold = { a, until: performance.now() + (g ? Math.max(.4, (g.to - g.from) / 60) * 1000 : 900) }; p.anim = '';
+    p.hold = { a, over: !!over, until: performance.now() + (g ? Math.max(.4, (g.to - g.from) / 60) * 1000 : 900) }; p.anim = '';
     playAnim(p, a);
   }
 
@@ -258,10 +259,10 @@
     // the others: eased toward their last state; the nearest few in the same place as their own model
     const k = 1 - Math.exp(-dt * 10), here = me ? me.interior || null : null, list = [];
     for (const p of peers.values()) {
-      if (!p.s || !p.pos) { p.holder.setEnabled(false); continue; }
+      if (!p.s || !p.pos) { p.holder.setEnabled(false); p.once = null; continue; }
       const same = (p.s[5] || null) === here;
       p.holder.setEnabled(same);
-      if (!same) continue;
+      if (!same) { p.once = null; continue; }
       const tx = p.s[0], ty = p.s[1], tz = p.s[2];
       if (Math.hypot(tx - p.pos.x, tz - p.pos.z) > 10 || Math.abs(ty - p.pos.y) > 6) p.pos.set(tx, ty, tz); // a teleport (a door, a gate jump)
       else { p.pos.x += (tx - p.pos.x) * k; p.pos.y += (ty - p.pos.y) * k; p.pos.z += (tz - p.pos.z) * k; }
@@ -282,10 +283,12 @@
       if (!full && p.model) disposeModel(p);
       if (!p.model) capsuleOf(p).setEnabled(true); else if (p.capsule) p.capsule.setEnabled(false);
       if (p.model) {
-        const a = p.s[4] || 'idle';
-        playAnim(p, p.hold && now < p.hold.until && a === 'idle' ? p.hold.a : a);
+        if (p.once) playOnce(p, p.once, true);
+        const a = p.s[4] || 'idle', held = p.hold && now < p.hold.until && (a === 'idle' || (p.hold.over && !ONCE.has(a)));
+        playAnim(p, held ? p.hold.a : a);
         if (p.hold && now >= p.hold.until) p.hold = null;
       }
+      p.once = null;
     });
   }
   const angle = a => Math.atan2(Math.sin(a), Math.cos(a));
