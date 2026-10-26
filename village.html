@@ -30120,7 +30120,6 @@ function mpAnimName() {
   for (const k in slots) if (slots[k] === animState) return k;
   return 'idle';
 }
-let mpAccount = null;
 function startVillageMultiplayer() {
   if (!window.VillageMP || startVillageMultiplayer.on) return;
   startVillageMultiplayer.on = true;
@@ -30136,12 +30135,13 @@ function startVillageMultiplayer() {
   });
   scene.onBeforeRenderObservable.add(() => window.VillageMP.tick(Math.min(.1, engine.getDeltaTime() / 1000)));
 }
-// signed in or out while here: the room hears the new name (a new ticket)
+// signed in or out while here: the room hears the new name (a new ticket). The account seen last lives on the function:
+// the first refreshEcon can answer before the module has run this far (a let here was not set up yet and threw)
 function mpOnEcon() {
   if (!Econ.checked) return;
   const a = Econ.on ? Econ.kind + ':' + Econ.name : '';
-  if (mpAccount !== null && a !== mpAccount) window.VillageMP?.reconnect?.();
-  mpAccount = a;
+  if (mpOnEcon.account != null && a !== mpOnEcon.account) window.VillageMP?.reconnect?.();
+  mpOnEcon.account = a;
 }
 function initVillageHud() {
   try {
