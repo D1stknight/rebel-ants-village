@@ -4014,7 +4014,7 @@ const QUEST_NPC_PLACES = {
 function questNpcPlace(places) {
   const reached = p => SideQuestState.active?.[p.quest] && (!p.step || questStepReached(p.quest, SideQuestState.active[p.quest].step, p.step));
   return places.find(p => p.whileActive && reached(p))
-    || [...places].reverse().find(p => !p.whileActive && (isQuestIdCompleted(p.quest) || SideQuestState.done?.includes(p.quest) || reached(p))) || null;
+    || [...places].reverse().find(p => !p.whileActive && (isQuestIdCompleted(p.quest) || SideQuestState.done?.includes(p.quest) || (!p.done && reached(p)))) || null;
 }
 function applyQuestNpcPlaces() {
   for (const [npcId, places] of Object.entries(QUEST_NPC_PLACES)) {
@@ -4373,7 +4373,7 @@ function renderMoonTalesJournal() {
   return MOON_TALES.map(t => {
     const open = !t.pending && isQuestIdCompleted(t.unlockQuestId);
     const head = `<div class="tale-head">${disc(t)}<div><b>${escapeHTML(open ? t.title : (t.pending ? `${t.teller}'s tale` : t.moonName))}</b><span>${escapeHTML(t.pending ? 'Her tale is still being written.' : `Told by ${t.teller}`)}</span></div></div>`;
-    const body = open ? `<div class="tale-text">${t.text.map(p => `<p>${escapeHTML(p)}</p>`).join('')}</div>`
+    const body = open ? `<div class="tale-text">${t.subtitle ? `<p><i>${escapeHTML(t.subtitle)}</i></p>` : ''}${t.text.map(p => `<p>${escapeHTML(p)}</p>`).join('')}</div>`
       : `<div class="tale-locked">${t.pending ? 'Come back when the moon turns again.' : `Finish ${escapeHTML(t.teller)}'s tale in Cute &amp; Creepy to read it.`}</div>`;
     return `<div class="journal-card full tale-page ${open ? '' : 'locked'}">${head}${body}</div>`;
   }).join('');
@@ -19561,8 +19561,9 @@ function updateNPCPopulation(dt) {
   npcControllerRoots.forEach(root => {
     let npcDt = dt;
     if (!root || root.isDisposed?.()) return;
-    root.setEnabled(NPCManager.visible);
-    if (!NPCManager.visible) return;
+    const questHidden = !adminMode && !!root.metadata?._questHidden; // a quest keeps it out of sight for now (OwlTale)
+    root.setEnabled(NPCManager.visible && !questHidden);
+    if (!NPCManager.visible || questHidden) return;
     if (adminMode) {
       updateNPCAnimationState(root, false, now);
       return;
@@ -19637,18 +19638,21 @@ function getNearestNPCInRange(range = 4.8) {
   const rangeSq = range * range;
   let nearest = null;
   let nearestDistSq = Infinity;
+  // talkYield: answers only when no one else is in range (the Owl on his branch beside Ophira); noTalk: not now (in flight)
+  let quiet = null, quietDistSq = Infinity;
   NPCManager.roots.forEach(root => {
-    if (!root || root.isDisposed?.() || !root.isEnabled() || root.metadata?.villageId !== CURRENT_VILLAGE_ID) return;
+    if (!root || root.isDisposed?.() || !root.isEnabled() || root.metadata?.villageId !== CURRENT_VILLAGE_ID || root.metadata?.noTalk) return;
     const dx = root.position.x - charMesh.position.x;
     const dz = root.position.z - charMesh.position.z;
     const distSq = dx * dx + dz * dz;
     if (root.metadata?._questPlace?.follow && distSq > Math.min(rangeSq, NPC_FOLLOW.talk * NPC_FOLLOW.talk)) return;
+    if (distSq <= rangeSq && root.metadata?.talkYield) { if (distSq < quietDistSq) { quiet = root; quietDistSq = distSq; } return; }
     if (distSq <= rangeSq && distSq < nearestDistSq) {
       nearest = root;
       nearestDistSq = distSq;
     }
   });
-  return nearest;
+  return nearest || quiet;
 }
 
 function handleNPCQuestEvent(npc, finishedDialogue = false) {
