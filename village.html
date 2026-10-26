@@ -34177,6 +34177,8 @@ function serializeInteriorHotspot(hotspot) {
     ...(meta.kicker ? { kicker: meta.kicker } : {}),
     ...(meta.book ? { book: meta.book } : {}),
     ...(meta.game ? { game: meta.game } : {}),
+    ...(meta.linkLabel ? { linkLabel: meta.linkLabel } : {}),
+    ...(meta.imageUrl ? { imageUrl: meta.imageUrl } : {}),
     ...serializeNodeTransform(hotspot)
   };
 }
@@ -34889,6 +34891,8 @@ function createInteriorHotspot(parent, config = {}) {
     prompt: config.prompt || '', // its own prompt ("Press O to Grab the Mic"), else "Press O to Interact"
     kicker: config.kicker || '', // the small heading on its card, else "Interior Link"
     book: config.book && typeof config.book === 'object' ? config.book : null, // a book that opens (assets/games/book.js), then its card
+    linkLabel: config.linkLabel || '', // its card's link button ("Play Rebel 21"), else "Open Link"
+    imageUrl: config.imageUrl || '', // a picture on its card (the compact card with the picture beside the words)
     game: normalizeMiniGameDef(config.game, hotspotId), // a mini-game played here (MiniGames)
     questObjectiveType:'interactInteriorHotspot'
   };
@@ -34957,7 +34961,8 @@ function interactInteriorHotspot(hotspot) {
   }
   openInteriorInfoPanel(meta.linkName || 'Interior Link', meta.description || meta.url || 'Future Rebel Ants interaction.', meta.kicker || 'Interior Link', {
     linkUrl: meta.url || '',
-    linkLabel: meta.url ? 'Open Link' : ''
+    linkLabel: meta.url ? (meta.linkLabel || 'Open Link') : '',
+    imageUrl: meta.imageUrl || '', compact: !!meta.imageUrl
   });
   return true;
 }
