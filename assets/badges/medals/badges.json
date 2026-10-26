@@ -146,6 +146,17 @@
       "image": "assets/badges/medals/moon-tales-coven.webp"
     },
     {
+      "badgeId": "moon-tales-gathering",
+      "name": "Moonlit Gathering",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Legendary",
+      "description": "You followed the Owl's call, greeted the four covens and watched a constellation woven above the forest.",
+      "requirement": "Gather the covens with the Owl of Summoning",
+      "hidden": false,
+      "image": "assets/badges/medals/moon-tales-gathering.webp"
+    },
+    {
       "badgeId": "book1-colony-awake",
       "name": "Colony Awake",
       "category": "story",

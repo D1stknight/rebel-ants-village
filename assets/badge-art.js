@@ -61,6 +61,7 @@
     'saints-la-party': { ...VILLAGE_LOOK['saints-la'], nebula: false },
     'chumpz-cove-party': { ...VILLAGE_LOOK.chumpz, nebula: false },
     'moon-tales-coven': { ...VILLAGE_LOOK['cute-creepy'], ink: '#e9d4ff', nebula: false },
+    'moon-tales-gathering': { field: ['#04071a', '#33468f'], pattern: 'stars', ink: '#eef3ff', nebula: true },
     'story-tunnel-witness': { field: ['#160c05', '#6e4626'], pattern: 'kikko' },
     'story-dust-reader': { field: ['#260805', '#ab3e26'], pattern: 'stars' },
     'story-old-roots': { field: ['#061609', '#2f6d36'], pattern: 'asanoha' },
@@ -71,7 +72,7 @@
     'explorer-sprout': 'sprout', 'explorer-forest-wanderer': 'pine', 'explorer-pathfinder': 'compass',
     'explorer-realm-traveler': 'portal', 'explorer-root-runner': 'root',
     'story-hub-initiate': 'ninja', 'story-first-warning': 'bell', 'book1-echo-witness': 'echo', 'book1-faction-envoy': 'scroll',
-    'book1-storm-watcher': 'storm', 'saints-la-party': 'halo', 'chumpz-cove-party': 'banana', 'moon-tales-coven': 'moon',
+    'book1-storm-watcher': 'storm', 'saints-la-party': 'halo', 'chumpz-cove-party': 'banana', 'moon-tales-coven': 'moon', 'moon-tales-gathering': 'owl',
     'book1-colony-awake': 'sunrise', 'story-tunnel-witness': 'tunnel', 'story-dust-reader': 'dust', 'story-old-roots': 'tree',
     'ronin-watcher': 'eye', 'ronin-shadow-walker': 'steps', 'ronin-unseen-hand': 'hand',
     'samurai-initiate': 'kabuto', 'samurai-honor-guard': 'shield',
@@ -287,6 +288,15 @@
     shard: g => {
       fillPoly(g, [[0, -1], [.4, -.35], [.3, .55], [0, .98], [-.3, .55], [-.4, -.35]]);
       cut(g, () => { g.lineWidth = .05; g.beginPath(); g.moveTo(0, -1); g.lineTo(-.08, .2); g.lineTo(0, .98); g.moveTo(-.4, -.35); g.lineTo(-.08, .2); g.lineTo(.3, .55); g.stroke(); });
+    },
+    // the Owl of Summoning: ear tufts, round eyes, a little beak, wings folded down his sides, chevrons on his breast
+    owl: g => {
+      g.beginPath(); g.moveTo(0, -.6); g.bezierCurveTo(.5, -.62, .78, -.2, .7, .3); g.bezierCurveTo(.62, .75, .3, .95, 0, .95); g.bezierCurveTo(-.3, .95, -.62, .75, -.7, .3); g.bezierCurveTo(-.78, -.2, -.5, -.62, 0, -.6); g.closePath(); g.fill();
+      fillPoly(g, [[-.62, -.3], [-.7, -.98], [-.2, -.58]]); fillPoly(g, [[.62, -.3], [.7, -.98], [.2, -.58]]);
+      cut(g, () => { ell(g, -.27, -.18, .21, .21); ell(g, .27, -.18, .21, .21); fillPoly(g, [[-.07, -.02], [.07, -.02], [0, .15]]); });
+      ell(g, -.27, -.18, .09, .09); ell(g, .27, -.18, .09, .09);
+      cut(g, () => stroke(g, .06, () => { g.moveTo(-.5, -.02); g.quadraticCurveTo(-.64, .45, -.33, .8); g.moveTo(.5, -.02); g.quadraticCurveTo(.64, .45, .33, .8);
+        for (const y of [.3, .5, .7]) { g.moveTo(-.17, y); g.lineTo(0, y + .1); g.lineTo(.17, y); } }));
     },
     moon: g => { ell(g, -.1, 0, .72, .72); cut(g, () => ell(g, .24, -.18, .62, .62)); star5(g, .5, .3, .2); star5(g, .72, -.42, .12); star5(g, .2, .72, .1); },
     halo: g => {
