@@ -892,7 +892,7 @@
     owl_front: { img: 'assets/npcs/owl-avelor-front.jpg', em: [.08, .08, .12] }, owl_back: { img: 'assets/npcs/owl-avelor-back.jpg', em: [.08, .08, .12] }, owl_wing: { img: 'assets/npcs/owl-avelor-wing.png', em: [.07, .07, .11] },
     owl_talon: { col: [.74, .74, .86], em: [.05, .05, .08] }, owl_claw: { col: [.22, .23, .28], spec: [.5, .5, .6], power: 40 }, glow_moon: { glow: [.35, .45, .85] },
     star_dim: { col: [.3, .36, .42], em: [.03, .06, .08] }, star_line: { col: [.75, .85, 1], em: [.55, .65, .9], alpha: .5 }, glow_star: { glow: [.45, .55, .9] }, glow_cyan_soft: { glow: [.05, .26, .3] },
-    moss_hang: { col: [.17, .22, .15] }, fungus_glow: { col: [.3, .85, .8], em: [.22, .7, .66] },
+    moss_hang: { col: [.17, .22, .15] }, fungus_glow: { col: [.3, .85, .8], em: [.22, .7, .66] }, root_vein: { col: [.22, .52, .42], em: [.26, .92, .7] },
     skin_w: { col: [.95, .92, .9] }, skin_blue: { col: [.72, .82, .93] }, hair_black: { col: [.06, .06, .07], spec: [.3, .3, .35], power: 30 }, hair_blue: { col: [.06, .12, .3], spec: [.3, .4, .6], power: 30 },
     obi_red: { col: [.62, .07, .1] }, obi_silver: { col: [.78, .82, .88], spec: [.6, .6, .7], power: 40 }, obi_black: { col: [.06, .07, .08] }, horn: { col: [.88, .9, .95] }, ear_os: { col: [.1, .14, .18] },
     flower_pink: { col: [.95, .55, .66] }, flower_teal: { col: [.3, .75, .7], em: [.05, .2, .18] }, flower_orange: { col: [.95, .5, .12] }, ear_pink: { col: [.95, .62, .7] },
@@ -1583,6 +1583,17 @@
       M.sphere('star_core', c, r, 1, 8, 5);
       M.poly('glow_star', [at(u - g, v - g), at(u + g, v - g), at(u + g, v + g), at(u - g, v + g)].map(q => [q[0] + N[0] * .05, q[1] + N[1] * .05, q[2] + N[2] * .05]));
     }
+  }
+  // the ancient roots Lunara's footsteps wake (Moon Tales 23): gnarled roots spreading out from where she stands, a mint
+  // light running along their tops, a soft glow under them
+  function wildRoots(M) {
+    for (let k = 0; k < 9; k++) {
+      const a = k * .698 + .2 + .15 * Math.sin(k * 3.1), L = 2.4 + .45 * ((k * 7) % 3), c = Math.cos(a), sn = Math.sin(a), w = .25 * Math.sin(k * 1.9);
+      const pts = [[c * .3, sn * .3, .12], [c * L * .35 - sn * w, sn * L * .35 + c * w, .16], [c * L * .7 + sn * w, sn * L * .7 - c * w, .07], [c * L, sn * L, -.04]];
+      curveTube(M, 'bark_old', pts, [.2, .14, .08, .03], { segs: 8, n: 3, seed: 60 + k });
+      curveTube(M, 'root_vein', pts.map(([x, y, z], i) => [x, y, z + [.18, .13, .08, .025][i]]), [.035, .03, .022, .01], { segs: 8, n: 3, seed: 70 + k });
+    }
+    M.quad('glow_mint', [[-3.2, -3.2, .05], [3.2, -3.2, .05], [3.2, 3.2, .05], [-3.2, 3.2, .05]]);
   }
   // the light pouring down from Lunara's lotus (painted on her, as on her card) onto the ground in front of her, fanning
   // out, and a soft mint glow where it lands (c = the lotus's centre)
@@ -3366,6 +3377,7 @@
     cc_sacred_circle(M) { sacredCircle(M, false); },
     cc_sacred_circle_lit(M) { sacredCircle(M, true); },
     cc_owl_constellation(M) { owlConstellation(M); },
+    cc_wild_roots(M) { wildRoots(M); }, // where Lunara arrives (a spot's donePiece once the covens answer)
     cc_witch_seer(M) { // Lunar Witch 492, Ophira the Seer: her crystal ball glows; the beams out of her closed eyes are the subpart cc_seer_beams
       matryoshka(M, 'witch_seer_front', 'witch_seer_back', WITCH_DOLLS.seer.prof, WITCH_DOLLS.seer.uv);
       M.quad('glow_violet', [[-.32, -.62, .2], [.32, -.62, .2], [.32, -.62, .84], [-.32, -.62, .84]]);
@@ -7588,5 +7600,5 @@
     }
     return walkTriangles(parts);
   }
-  window.SamuraiKit = { owlPerch: OWL_PERCH, owlSky: { ...OWL_SKY, stars: OWL_STARS }, build, setLightFactor, animate, actorAction, actorBusy, protoMeshes, decks, rooms: ROOMS, stairsSteps, refreshStairs, types: Object.keys(B), walkEligible, walkTriangles, walkTrianglesOf, walkRoomParts, _Kit: Kit, _B: B, _org: { blob, curveTube } };
+  window.SamuraiKit = { owlPerch: OWL_PERCH, owlSky: { ...OWL_SKY, stars: OWL_STARS, lines: OWL_LINES }, build, setLightFactor, animate, actorAction, actorBusy, protoMeshes, decks, rooms: ROOMS, stairsSteps, refreshStairs, types: Object.keys(B), walkEligible, walkTriangles, walkTrianglesOf, walkRoomParts, _Kit: Kit, _B: B, _org: { blob, curveTube } };
 })();
