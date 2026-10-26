@@ -74,7 +74,27 @@ step head;       curl -fsSL --retry 3 "$FORGE_HEAD_URL" -o "$JOB/head.glb"
                  mv "$JOB/src_head.glb" "$JOB/src.glb"
 fi
 step normalize;  run "$R/normalize.py" -- "$JOB/src.glb" "$O/norm"
+# v2.40 #001 (FORGE_JOINTS, set only for the admin's #001 rig): its own skeleton's 29 joints instead of the silhouette
+# landmarks, which put its right shoulder 9-10 cm back toward the quiver (the arm then tore the side open). Checked
+# first: the same 29 joints landmarks gives, three finite numbers each, inside the 1.8 m body, arms on opposite sides.
+# Unset (every other job): landmarks exactly as before.
+if [ -n "${FORGE_JOINTS:-}" ]; then
+step landmarks;  "$PY" - "$O/joints.json" >> "$JOB/log" 2>&1 <<'PY'
+import json, math, os, sys
+J = json.loads(os.environ['FORGE_JOINTS'])
+S = ('Shoulder', 'Arm', 'ForeArm', 'Hand', '_handC', '_tip', 'UpLeg', 'Leg', 'Foot', 'ToeBase', 'Toe_End')
+want = {'Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head', 'HeadTop_End'} | {s + k for s in ('Left', 'Right') for k in S}
+if not isinstance(J, dict) or set(J) != want: sys.exit(f'FORGE_JOINTS: need exactly the joints {sorted(want)}')
+for k, v in J.items():
+    if not (isinstance(v, list) and len(v) == 3 and all(isinstance(c, (int, float)) and math.isfinite(c) for c in v)): sys.exit(f'FORGE_JOINTS {k}: not three numbers')
+    if abs(v[0]) > 1.5 or abs(v[1]) > 1.0 or not -0.1 <= v[2] <= 2.0: sys.exit(f'FORGE_JOINTS {k}: outside the 1.8 m body')
+if J['LeftArm'][0] * J['RightArm'][0] >= 0: sys.exit('FORGE_JOINTS: the arms are on the same side')
+json.dump({k: list(map(float, v)) for k, v in J.items()}, open(sys.argv[1], 'w'), indent=0)
+print('joints', len(J), '(FORGE_JOINTS)')
+PY
+else
 step landmarks;  run "$R/detect.py"
+fi
 step skeleton;   run "$R/buildrig.py"
 step weights;    run "$R/weights2.py"
                  run "$R/dumpbones.py" -- "$O/rigged.blend" "$O/bones.json"
