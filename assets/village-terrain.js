@@ -782,6 +782,8 @@ function makeNoise(seed) {
   const ridged = (x, y, o = 5) => { let s = 0, a = .5, f = 1, w = 1; for (let i = 0; i < o; i++) { let n = 1 - Math.abs(perlin(x * f + 17, y * f - 9)); n *= n * w; w = Math.min(1, n * 2); s += a * n; f *= 2.1; a *= .5; } return s; };
   return { perlin, fbm, ridged };
 }
+// scattered models with a phone copy in /assets/buildings/lite/ (the same meshes, smaller pictures: tools/lite-glb.py)
+const LITE_FILES = new Set(['pine_1.glb', 'cherry_blossom.glb']);
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 const rng = seed => { let s = seed; return () => (s = (s * 16807) % 2147483647) / 2147483647; };
 
@@ -1675,7 +1677,8 @@ async function buildDecor(scene, T, avoid) {
     if (spec.build) parts = [spec.build(scene)];
     else if (spec.kit) parts = window.SamuraiKit?.protoMeshes?.(scene, spec.kit) || []; // a procedural kit plant (palms, bananas)
     else {
-      const res = await BABYLON.SceneLoader.ImportMeshAsync('', '/assets/buildings/', spec.file, scene);
+      const lite = window._liteGraphics && LITE_FILES.has(spec.file); // (phones: the same meshes with smaller pictures)
+      const res = await BABYLON.SceneLoader.ImportMeshAsync('', lite ? '/assets/buildings/lite/' : '/assets/buildings/', spec.file, scene);
       parts = res.meshes.filter(mm => mm.getTotalVertices() > 0);
       parts.forEach(mm => { mm.setParent(null); mm.bakeCurrentTransformIntoVertices(); });
       res.meshes.filter(mm => mm.getTotalVertices() === 0).forEach(mm => mm.dispose());

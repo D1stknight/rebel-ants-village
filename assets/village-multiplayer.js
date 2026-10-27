@@ -8,6 +8,9 @@
 // kit ape) for the nearest few in the same place, a plain stand-in for the rest and while a model downloads, a name tag
 // over each. Players in a room are seen only by players in that room. ?mp=0 turns it off; ?mp=ws://127.0.0.1:<port>
 // (tests) uses a local room server.
+// Step 3 (text chat): the chat window is assets/village-chat.js (window.VillageChat): this file hands it the room's news
+// (VillageChat.room(kind, data)) and gives it VillageMP.chat (send, report, the players here); it says who is hidden
+// (Block, 'Show other players') and whether name tags show. A kick or a ban ends the connection for this page.
 (function () {
   'use strict';
   const PROTOCOL = 'rebel-universe.v1', FULL_R = 80, TAG_R = 45, SEND_MS = 150, BEAT_MS = 12000, PING_MS = 25000;
@@ -17,7 +20,10 @@
   // moves that play once (the rest loop); a move the other's model lacks: a kick for these, else idle
   const ONCE = new Set(['jump', 'kick', 'flip_kick', 'front_kick', 'roundhouse_kick', 'side_kick', 'punch_combo', 'cartwheel', 'jump_run', 'backflip', 'front_flip', 'hurricane_kick', 'spin_flip_kick', 'crescent_kick', 'jab', 'cross_punch', 'hook_punch', 'elbow_punch', 'hit_reaction', 'knockdown', 'get_up']);
   let H = null, B = null, root = null, ws = null, connecting = false, you = 0, room = null, closedFor = null, retry = 0, retryAt = 0, maxFull = 8;
-  const peers = new Map(), containers = new Map();
+  const VC = () => window.VillageChat;
+  const tell = (kind, d) => { try { VC()?.room?.(kind, d); } catch (e) { log('chat', e); } };
+  const peers = new Map(), files = new Map(), clips = new Map();
+  let keepIdle = 4, keepMs = 60000, lastSweep = 0; // (phones: 1 file, 20 s)
   let last = null, lastSent = 0, lastBeat = 0, moving = false, stillSince = 0, enabled = true, capsuleSrc = null;
   const log = (...a) => { if (window._mpDebug) console.log('[mp]', ...a); };
   const q = new URLSearchParams(location.search), override = q.get('mp');
@@ -31,11 +37,18 @@
     try {
       const ch = H.character() || {};
       let t;
-      try {
-        const r = await fetch(`/api/mp-ticket?village=${encodeURIComponent(H.village)}&col=${encodeURIComponent(ch.col || '')}&tok=${encodeURIComponent(ch.tok || '')}`, { credentials: 'same-origin', cache: 'no-store' });
-        t = await r.json().catch(() => ({}));
-        if (!r.ok || !t.ok) { log('no ticket', r.status, t.error); if (r.status === 503 || r.status === 404) enabled = false; else backoff(); return; } // 503: the rooms are off
-      } catch (e) { backoff(); return; }
+      for (let tries = 0; ; tries++) {
+        const asked = performance.now();
+        try {
+          const r = await fetch(`/api/mp-ticket?village=${encodeURIComponent(H.village)}&col=${encodeURIComponent(ch.col || '')}&tok=${encodeURIComponent(ch.tok || '')}`, { credentials: 'same-origin', cache: 'no-store' });
+          t = await r.json().catch(() => ({}));
+          if (!r.ok || !t.ok) { log('no ticket', r.status, t.error); if (r.status === 503 || r.status === 404) enabled = false; else backoff(); return; } // 503: the rooms are off
+        } catch (e) { backoff(); return; }
+        // a ticket lasts 120 s from when the server made it (after `asked`): one this page took over 90 s to read (a long
+        // frozen frame) would be turned away at the door (401), so it asks again
+        if (performance.now() - asked < 90000 || tries >= 2) break;
+        log('ticket too old, again');
+      }
       if (!enabled) return;
       let s;
       try { s = new WebSocket((localServer || t.url) + '/v1/room?village=' + encodeURIComponent(H.village), [PROTOCOL, 't.' + t.ticket]); } catch (e) { backoff(); return; }
@@ -43,8 +56,9 @@
       s.onmessage = e => { if (ws === s) { try { onMessage(JSON.parse(e.data)); } catch (err) { log('bad message', err); } } };
       s.onclose = e => {
         if (ws !== s) return; // an older socket (a reconnect) going
-        ws = null; dropAll(); log('closed', e.code);
+        ws = null; dropAll(); log('closed', e.code); tell('closed');
         if (e.code === 4001) { closedFor = 'dup'; H.toast?.('Universe is open in another tab: other players show there.'); return; }
+        if (e.code === 4003) { closedFor = closedFor || 'kick'; return; }
         backoff();
       };
       s.onerror = () => {};
@@ -52,10 +66,24 @@
   }
   function backoff() { retry = Math.min(retry + 1, 6); retryAt = performance.now() + Math.min(30000, 1000 * 2 ** retry) * (.75 + Math.random() * .5); }
   const send = o => { if (ws && ws.readyState === 1) { ws.send(typeof o === 'string' ? o : JSON.stringify(o)); return true; } return false; };
+  // the room sent this page away (another tab of the same account, an admin's kick or ban): it says so and closes the
+  // socket itself (the room's own close can take a while to come through), and knocks no more
+  function sentAway(why, m) {
+    closedFor = why;
+    const s = ws; ws = null; dropAll();
+    try { s?.close(1000, why); } catch (e) {}
+    if (why === 'dup') H.toast?.('Universe is open in another tab: other players show there.');
+    else H.toast?.(why === 'banned' ? 'An admin has banned you from the rooms.' : 'An admin removed you from the room. Reload to come back.');
+    if (m) tell('msg', m);
+    tell('closed');
+  }
   function onMessage(m) {
-    if (m.t === 'hi') { you = m.you; room = m.room; retry = 0; for (const p of m.peers || []) addPeer(p); last = null; return; }
-    if (m.t === 'j') return addPeer(m);
-    if (m.t === 'l') return removePeer(m.id);
+    if (m.t === 'hi') { you = m.you; room = m.room; retry = 0; for (const p of m.peers || []) addPeer(p); last = null; tell('hello', m); return; }
+    if (m.t === 'j') { addPeer(m); tell('join', m); return; }
+    if (m.t === 'l') { tell('leave', m.id); return removePeer(m.id); }
+    if (m.t === 'kick') return sentAway(m.why === 'banned' ? 'banned' : 'kick', m);
+    if (m.t === 'dup') return sentAway('dup');
+    if (m.t === 'c' || m.t === 'cx' || m.t === 'cd' || m.t === 'cc' || m.t === 'cfg' || m.t === 'cm' || m.t === 'rpok') return tell('msg', m);
     if (m.t === 'u') { const p = peers.get(m.id); if (p) setState(p, m.s); return; }
     if (m.t === 'e') { const p = peers.get(m.id); if (p) playOnce(p, m.e === 'cheer' ? 'jump' : m.e); return; }
   }
@@ -70,7 +98,8 @@
     if (!d || d.id === you) return;
     removePeer(d.id);
     const holder = new B.TransformNode('mpPlayer_' + d.id, H.scene); holder.parent = root;
-    const p = { id: d.id, n: String(d.n || 'Rebel'), k: d.k, look: d.look || { t: 'starter' }, holder, pos: null, yaw: 0, s: null, model: null, loading: false, capsule: null, tag: null, anim: '', cur: null, hold: null, d: 0 };
+    const p = { id: d.id, n: String(d.n || 'Rebel'), k: d.k, u: typeof d.u === 'string' ? d.u : '', look: d.look || { t: 'starter' }, holder, pos: null, yaw: 0, s: null, model: null, loading: false, capsule: null, tag: null, anim: '', cur: null, hold: null, d: null };
+    p.label = label(p.look);
     peers.set(p.id, p);
     makeTag(p);
     if (d.s) setState(p, d.s);
@@ -127,10 +156,35 @@
     return (p.capsule = c);
   }
 
-  // ---- their models: a downloaded file is kept and each player gets its own copy of it ----
+  // ---- their models: a downloaded file is kept while a player here wears it (each gets its own copy of it) and a little
+  // after (someone stepping in and out of the nearest few); then its meshes, materials and pictures go. Kept for the whole
+  // visit, a phone in a busy village held every Rebel that ever came near (about 35 MB each) until it ran out of memory ----
   function container(url) {
-    if (!containers.has(url)) containers.set(url, B.SceneLoader.LoadAssetContainerAsync('', H.viaSite(url), H.scene).catch(e => { containers.delete(url); throw e; }));
-    return containers.get(url);
+    let f = files.get(url);
+    if (!f) {
+      f = { url, users: 0, idle: 0, c: null };
+      f.p = B.SceneLoader.LoadAssetContainerAsync('', H.viaSite(url), H.scene).then(c => { f.c = c; f.idle = performance.now(); return c; }, e => { if (files.get(url) === f) files.delete(url); throw e; });
+      files.set(url, f);
+    }
+    return f.p;
+  }
+  // a copy of a file's model made: the file stays until the copy goes (list: the copy's files)
+  function useFile(url, list) { const f = files.get(url); if (f) { f.users++; list.push(f); } }
+  function dropFiles(list) { const now = performance.now(); for (const f of list) if (--f.users <= 0) { f.users = 0; f.idle = now; } list.length = 0; }
+  // the files no one here wears: the newest keepIdle stay keepMs, the others go
+  function sweepFiles(now) {
+    const idle = [...files.values()].filter(f => f.c && f.users <= 0).sort((a, b) => b.idle - a.idle);
+    idle.forEach((f, i) => { if (i < keepIdle && now - f.idle < keepMs) return; files.delete(f.url); try { f.c.dispose(); } catch (e) {} log('file released', f.url.split('/').pop()); });
+  }
+  // the starter ant's other moves: each of their files holds the whole ant again, so only the move is kept (its keys)
+  function starterClip(file) {
+    if (!clips.has(file)) clips.set(file, B.SceneLoader.LoadAssetContainerAsync('', H.viaSite(STARTER.base + file), H.scene).then(c => {
+      const g = c.animationGroups[0] || null;
+      if (g) c.animationGroups = c.animationGroups.filter(x => x !== g);
+      try { c.dispose(); } catch (e) {}
+      return g;
+    }, e => { clips.delete(file); throw e; }));
+    return clips.get(file);
   }
   // as the village does for its own player: the rig's PBR materials take at most 4 lights (the village's 16 overflow the
   // skinned shader: the model went invisible), no emissive, both faces
@@ -148,7 +202,7 @@
   async function loadModel(p) {
     if (p.loading || p.model) return;
     p.loading = true;
-    const look = p.look || {}, prefix = 'mpPlayer_' + p.id + '_';
+    const look = p.look || {}, prefix = 'mpPlayer_' + p.id + '_', used = [];
     try {
       if (look.t === 'kit' && window.SamuraiKit?.types?.includes(look.type)) {
         const kit = new B.TransformNode(prefix + 'kit', H.scene); kit.parent = p.holder; kit.rotation.y = Math.PI; // kit fronts face -z, players +z
@@ -157,9 +211,10 @@
         meshes.forEach(m => { markPeer(m); delete m._editRoot; if (!/player/i.test(m.name)) m.name = prefix + m.name; }); // (the minimap leaves players out by name)
         p.model = { kind: 'kit', node: kit, groups: {}, meshes, extra: [] };
       } else {
-        const rig = look.t === 'rig' && typeof look.url === 'string' && STORE.test(look.url);
-        const c = await container(rig ? look.url : STARTER.base + STARTER.idle);
+        const rig = look.t === 'rig' && typeof look.url === 'string' && STORE.test(look.url), url = rig ? look.url : STARTER.base + STARTER.idle;
+        const c = await container(url);
         if (!peers.has(p.id)) return;
+        useFile(url, used);
         const inst = c.instantiateModelsToScene(n => prefix + n, false, { doNotInstantiate: true });
         const meshes = [], groups = {}, extra = [];
         for (const r of inst.rootNodes) { if (r instanceof B.AbstractMesh) meshes.push(r); meshes.push(...r.getChildMeshes(false)); }
@@ -178,20 +233,20 @@
           if (inst.animationGroups[0]) { groups.idle = inst.animationGroups[0]; noHipTravel(groups.idle); }
           await Promise.all(Object.entries(STARTER.clips).map(async ([name, file]) => {
             try {
-              const cc = await container(STARTER.base + file), src = cc.animationGroups[0]; if (!src || !peers.has(p.id)) return;
+              const src = await starterClip(file); if (!src || !peers.has(p.id)) return;
               const g = src.clone(prefix + name, t => nodes.get(t.name) || null);
               noHipTravel(g); g.stop(); groups[name] = g; extra.push(g);
             } catch (e) {}
           }));
         }
-        if (!peers.has(p.id)) { inst.dispose(); extra.forEach(g => g.dispose()); return; }
+        if (!peers.has(p.id)) { inst.dispose(); extra.forEach(g => g.dispose()); dropFiles(used); return; }
         p.holder.scaling.setAll(rig ? RIG_SCALE : STARTER_SCALE);
         const sh = H.shadows?.(); if (sh) meshes.forEach(m => { try { sh.addShadowCaster(m); } catch (e) {} });
-        p.model = { kind: rig ? 'rig' : 'starter', inst, groups, meshes, extra };
+        p.model = { kind: rig ? 'rig' : 'starter', inst, groups, meshes, extra, files: used };
       }
       placeTag(p);
       p.anim = ''; p.cur = null; log('model', p.id, p.model.kind);
-    } catch (e) { log('model failed', p.id, e?.message); p.look = { t: 'capsule' }; }
+    } catch (e) { log('model failed', p.id, e?.message); p.look = { t: 'capsule' }; if (!p.model) dropFiles(used); }
     finally { p.loading = false; }
   }
   // the name over the model's head (its bind pose; the starter ant's sits about 1.6 m under its feet, as the village's own)
@@ -217,6 +272,7 @@
     // their materials and geometry stay (the downloaded file's, shared with the other copies)
     if (m.inst) for (const x of m.meshes) { if (m.inst.rootNodes.includes(x)) continue; try { if (!x.isDisposed()) x.dispose(false, false); } catch (e) {} }
     try { if (m.inst) m.inst.dispose(); else m.node?.dispose(false, false); } catch (e) {}
+    if (m.files) dropFiles(m.files);
     p.holder.scaling.setAll(1); placeTag(p);
   }
   function groupFor(p, a) {
@@ -252,7 +308,7 @@
   }
   function step(dt) {
     const now = performance.now(), me = H.player(), cam = H.scene.activeCamera?.globalPosition;
-    if (!ws && !connecting && closedFor !== 'dup' && now >= retryAt && me) { retryAt = now + 2000; connect(); }
+    if (!ws && !connecting && !closedFor && now >= retryAt && me) { retryAt = now + 2000; connect(); }
     if (ws && ws.readyState === 1 && me && H.canSend()) {
       const ch = !last || Math.hypot(me.x - last.x, me.z - last.z) > .05 || Math.abs(me.y - last.y) > .05 || Math.abs(angle(me.yaw - last.yaw)) > .05 || me.anim !== last.anim || me.interior !== last.interior;
       if (ch) { moving = true; stillSince = now; }
@@ -261,30 +317,48 @@
       else if (now - lastBeat > BEAT_MS) sendState(me, 0, now);
     }
     // the others: eased toward their last state; the nearest few in the same place as their own model
-    const k = 1 - Math.exp(-dt * 10), here = me ? me.interior || null : null, list = [];
+    const k = 1 - Math.exp(-dt * 10), here = me ? me.interior || null : null, list = [], chat = VC(), names = chat?.namesOn?.() !== false;
     for (const p of peers.values()) {
-      if (!p.s || !p.pos) { p.holder.setEnabled(false); p.once = null; continue; }
-      const same = (p.s[5] || null) === here;
-      p.holder.setEnabled(same);
-      if (!same) { p.once = null; continue; }
+      if (!p.s || !p.pos) { p.holder.setEnabled(false); p.once = null; p.d = null; continue; }
+      const same = (p.s[5] || null) === here, hidden = !!chat?.hidePeer?.(p); // (Block, or 'Show other players' off)
+      // a player the camera stands inside is not drawn (no view from inside their Rebel)
+      const inCam = !!(cam && p.pos && Math.hypot(cam.x - p.pos.x, cam.z - p.pos.z) < 1.3 && cam.y > p.pos.y - .5 && cam.y < p.pos.y + 4.2);
+      p.holder.setEnabled(same && !hidden && !inCam);
+      // in another place (a room) its model goes too: it is not drawn there, and kept it would add to the nearest few
+      if (!same || hidden) { p.once = null; p.d = same ? p.d : null; if (!same) { if (p.model) disposeModel(p); continue; } }
       const tx = p.s[0], ty = p.s[1], tz = p.s[2];
       if (Math.hypot(tx - p.pos.x, tz - p.pos.z) > 10 || Math.abs(ty - p.pos.y) > 6) p.pos.set(tx, ty, tz); // a teleport (a door, a gate jump)
       else { p.pos.x += (tx - p.pos.x) * k; p.pos.y += (ty - p.pos.y) * k; p.pos.z += (tz - p.pos.z) * k; }
       p.yaw += angle(p.s[3] - p.yaw) * k;
       p.holder.position.copyFrom(p.pos); p.holder.rotation.y = p.yaw;
       p.d = me ? Math.hypot(p.pos.x - me.x, p.pos.z - me.z) : 0;
+      if (hidden) { if (p.model) disposeModel(p); continue; }
       list.push(p);
       if (p.tag) {
-        p.tag.setEnabled(p.d < TAG_R); p.tag.visibility = p.d < TAG_R - 10 ? 1 : Math.max(0, (TAG_R - p.d) / 10);
-        const dc = cam ? B.Vector3.Distance(cam, p.pos) : p.d; // the same size on screen past 14 m, so far names stay readable
-        p.tag.scaling.setAll(Math.min(3, Math.max(1, dc / 14)) / p.holder.scaling.x);
+        p.tag.setEnabled(names && p.d < TAG_R); p.tag.visibility = p.d < TAG_R - 10 ? 1 : Math.max(0, (TAG_R - p.d) / 10);
+        // the same size on screen past 14 m (far names stay readable), and nearer than the walk camera's 9 m (a player
+        // right by the camera gets no tag across the screen); the chat bubble keeps to the tag's size
+        const ty = p.pos.y + p.tag.position.y * p.holder.scaling.y, dc = cam ? Math.hypot(cam.x - p.pos.x, cam.y - ty, cam.z - p.pos.z) : p.d; // (to the tag itself)
+        p.tag.scaling.setAll((dc < 9 ? Math.max(.12, dc / 9) : Math.min(3, Math.max(1, dc / 14))) / p.holder.scaling.x);
       }
     }
     list.sort((a, b) => a.d - b.d);
+    // the nearest few as their own model, at most maxFull: one drawn stays while it is within two places or 4 m of the
+    // nearest few (and 8 m past the range), until someone clearly nearer (3 m) needs its place, so players at about the same
+    // distance don't swap back and forth (each swap made a new copy, and loaded the file again once it had gone)
+    const able = p => p.look?.t !== 'capsule', edge = list.length ? list[Math.min(list.length, maxFull) - 1].d : 0;
+    let free = maxFull;
+    list.forEach((p, i) => { if (!p.model && !p.loading) return; if (able(p) && p.d < FULL_R + 8 && (i < maxFull + 2 || p.d < edge + 4)) free--; else if (p.model) disposeModel(p); });
     list.forEach((p, i) => {
-      const full = i < maxFull && p.d < FULL_R && p.look?.t !== 'capsule';
-      if (full && !p.model && !p.loading) loadModel(p);
-      if (!full && p.model) disposeModel(p);
+      if (i >= maxFull || p.d >= FULL_R || p.model || p.loading || !able(p)) return;
+      if (free <= 0) {
+        let far = null; for (const q of list) if (q.model && q !== p) far = q; // (the farthest drawn)
+        if (!far || far.d < p.d + 3) return;
+        disposeModel(far); free++;
+      }
+      free--; loadModel(p);
+    });
+    list.forEach(p => {
       if (!p.model) capsuleOf(p).setEnabled(true); else if (p.capsule) p.capsule.setEnabled(false);
       if (p.model) {
         if (p.once) playOnce(p, p.once, true);
@@ -294,6 +368,7 @@
       }
       p.once = null;
     });
+    if (now - lastSweep > 2000) { lastSweep = now; sweepFiles(now); }
   }
   const angle = a => Math.atan2(Math.sin(a), Math.cos(a));
   const round = v => Math.round(v * 100) / 100;
@@ -303,12 +378,20 @@
 
   function start(host) {
     if (H || !host || !window.BABYLON) return;
-    H = host; B = window.BABYLON; maxFull = H.lite ? 4 : 8;
+    H = host; B = window.BABYLON; maxFull = H.lite ? 4 : 8; keepIdle = H.lite ? 1 : 4; keepMs = H.lite ? 20000 : 60000;
     root = new B.TransformNode('mpPlayersRoot', H.scene); root.metadata = { keepInInteriors: true }; // rooms hide the village, not the players (each is shown in its own place)
     setInterval(() => send('{"t":"ping"}'), PING_MS); // (timers, not frames: a hidden tab draws nothing)
     document.addEventListener('visibilitychange', () => { const me = H.player(); if (document.hidden && me && H.canSend()) sendState(me, 1, performance.now()); });
     log('start', H.village, localServer || '');
   }
   function emote(name) { return send({ t: 'e', e: String(name || '') }); }
-  window.VillageMP = { start, tick, reconnect, emote, peers, get state() { return { enabled, open: !!ws && ws.readyState === 1, you, room, peers: peers.size, closedFor }; }, stop() { enabled = false; const s = ws; ws = null; try { s?.close(1000); } catch (e) {} dropAll(); } };
+  // for the chat window (village-chat.js): the players here are the live records (n, k, u, label, d (null: another place),
+  // holder, tag)
+  const chat = {
+    send: (ch, x, to) => send({ t: 'c', ch, x: String(x || ''), ...(ch === 'w' ? { to: +to || 0 } : {}) }),
+    report: o => send({ t: 'rp', ...(o.i ? { i: +o.i } : { id: +o.id || 0 }), why: o.why || 'other', ...(o.note ? { note: String(o.note).slice(0, 200) } : {}) }),
+    peers: () => [...peers.values()],
+    peer: id => peers.get(+id) || null
+  };
+  window.VillageMP = { start, tick, reconnect, emote, peers, chat, get state() { return { enabled, open: !!ws && ws.readyState === 1, you, room, peers: peers.size, closedFor, files: files.size }; }, stop() { enabled = false; const s = ws; ws = null; try { s?.close(1000); } catch (e) {} dropAll(); sweepFiles(Infinity); tell('closed'); } };
 })();

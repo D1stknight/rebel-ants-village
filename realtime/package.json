@@ -8,6 +8,9 @@
     "deploy:dev": "wrangler deploy --env dev",
     "deploy": "wrangler deploy"
   },
+  "dependencies": {
+    "obscenity": "0.4.6"
+  },
   "devDependencies": {
     "wrangler": "4.149.0"
   }

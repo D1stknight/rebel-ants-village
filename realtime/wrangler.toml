@@ -1,7 +1,8 @@
 # Rebel Universe rooms (see src/index.js). Two workers from this one file:
 #   npx wrangler deploy --env dev   -> rebel-universe-rooms-dev  (the dev preview and local tests; SITE dev)
 #   npx wrangler deploy             -> rebel-universe-rooms      (rebeluniverse.io; SITE prod)
-# TICKET_KEYS = the public keys Universe signs tickets with (GET /api/mp-ticket?key=1 on that site): not secrets.
+# TICKET_KEYS = the public keys Universe signs tickets with, ADMIN_KEYS the ones it signs Admin Hub commands with (GET
+# /api/mp-ticket?key=1 on that site: key, admin): public keys, not secrets.
 name = "rebel-universe-rooms"
 main = "src/index.js"
 compatibility_date = "2026-10-01"
@@ -10,6 +11,7 @@ workers_dev = true
 [vars]
 SITE = "prod"
 TICKET_KEYS = '{"prod":["4mWrU7JB6FzdanweMWbDmPqBq4MqPZ1amgsFKCXbDSA"]}'
+ADMIN_KEYS = '{}'
 ALLOWED_ORIGINS = "https://rebeluniverse.io,https://www.rebeluniverse.io,https://rebel-ants-village.vercel.app"
 ROOM_MAX = "50"
 
@@ -17,9 +19,17 @@ ROOM_MAX = "50"
 name = "ROOMS"
 class_name = "RoomCopy"
 
+[[durable_objects.bindings]]
+name = "CONTROL"
+class_name = "RoomControl"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["RoomCopy"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["RoomControl"]
 
 [env.dev]
 name = "rebel-universe-rooms-dev"
@@ -28,6 +38,7 @@ workers_dev = true
 [env.dev.vars]
 SITE = "dev"
 TICKET_KEYS = '{"dev":["vpY3tguDgnHCEIroe4rR9SQBXdyrB21i4nepUkDPtmg"]}'
+ADMIN_KEYS = '{"dev":["x8vRx7LaFuUS3cAAwwjujf0d0rZk5OWrci2NFwsmseE"]}'
 ALLOWED_ORIGINS = "https://rebel-ants-village-git-dev-miguel-concepcions-projects.vercel.app"
 ALLOWED_ORIGIN_SUFFIX = "-miguel-concepcions-projects.vercel.app"
 ALLOW_LOCAL = "1"
@@ -37,6 +48,14 @@ ROOM_MAX = "50"
 name = "ROOMS"
 class_name = "RoomCopy"
 
+[[env.dev.durable_objects.bindings]]
+name = "CONTROL"
+class_name = "RoomControl"
+
 [[env.dev.migrations]]
 tag = "v1"
 new_sqlite_classes = ["RoomCopy"]
+
+[[env.dev.migrations]]
+tag = "v2"
+new_sqlite_classes = ["RoomControl"]

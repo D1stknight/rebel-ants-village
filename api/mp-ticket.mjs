@@ -1,8 +1,9 @@
 // GET /api/mp-ticket?village=<id>&col=<collection>&tok=<token>  -> { ok, ticket, url, site, exp, you: { name, kind } }
-// GET /api/mp-ticket?key=1                                     -> { ok, site, key }
+// GET /api/mp-ticket?key=1                                     -> { ok, site, key, admin }
 // A ticket into the multiplayer rooms (realtime/: a Cloudflare Worker). The ticket = base64url(JSON) + '.' + base64url(an
 // Ed25519 signature); the key is worked out from VILLAGE_SESSION_SECRET and the site (prod / dev), so there is nothing new
-// to set up and a dev ticket never opens a production room. The room server holds only the public key (?key=1).
+// to set up and a dev ticket never opens a production room. The room server holds only the public key (?key=1: key; admin
+// = the public key of the admin key api/mp-admin.mjs signs the Admin Hub's commands with, worked out apart from it).
 // Who: a signed-in player (ra_econ: Discord or name + PIN) by their Rebel Economy account, else a guest (a new id each time).
 // What they look like: the Forge character of the Rebel they play (col + tok), as the server finds it: the wallet's own
 // forged character when the signed-in wallet holds that NFT, else its public character (the showcase / Free to play),
@@ -19,16 +20,24 @@ const FRIEND_KITS = { chumpz: 'chz_ape_racer' }; // an unforged friend NFT plays
 const STORE = /^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\/[A-Za-z0-9._~%\/-]{1,400}\.glb$/;
 
 export const siteOf = () => (process.env.VERCEL_ENV === 'production' ? 'prod' : 'dev');
-let keyCache = null;
-export function ticketKey(site = siteOf()) {
+// the room server's address for this site: wss for the players, https for api/mp-admin.mjs (MP_ROOMS_URL wins: tests)
+export function roomsUrl(site = siteOf()) {
+  const url = String(process.env.MP_ROOMS_URL || ROOM_SERVERS[site] || '');
+  return /^wss:\/\/[a-z0-9.-]+(:\d+)?$/.test(url) || (site === 'dev' && /^ws:\/\/127\.0\.0\.1:\d+$/.test(url)) ? url : '';
+}
+const keyCache = new Map();
+function edKey(purpose, site) {
   const secret = String(process.env.VILLAGE_SESSION_SECRET || '');
   if (secret.length < 16) throw Object.assign(new Error('Multiplayer is not set up yet'), { status: 503 });
-  if (keyCache && keyCache.site === site && keyCache.secret === secret) return keyCache;
-  const seed = crypto.createHmac('sha256', `rebel-universe:mp-ticket:v1:${site}`).update(secret).digest();
+  const c = keyCache.get(purpose + ':' + site);
+  if (c && c.secret === secret) return c;
+  const seed = crypto.createHmac('sha256', `rebel-universe:${purpose}:v1:${site}`).update(secret).digest();
   const priv = crypto.createPrivateKey({ key: Buffer.concat([Buffer.from('302e020100300506032b657004220420', 'hex'), seed]), format: 'der', type: 'pkcs8' });
   const pub = crypto.createPublicKey(priv).export({ format: 'der', type: 'spki' }).subarray(-32).toString('base64url');
-  return (keyCache = { site, secret, priv, pub });
+  const k = { site, secret, priv, pub }; keyCache.set(purpose + ':' + site, k); return k;
 }
+export const ticketKey = (site = siteOf()) => edKey('mp-ticket', site);
+export const adminKey = (site = siteOf()) => edKey('mp-admin', site);
 export function signTicket(payload, site = siteOf()) {
   const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
   return `${body}.${crypto.sign(null, Buffer.from(body), ticketKey(site).priv).toString('base64url')}`;
@@ -61,9 +70,9 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') { res.setHeader('Allow', 'GET'); return res.status(405).json({ ok: false, error: 'Method not allowed' }); }
   const q = req.query || {}, site = siteOf();
   try {
-    if (q.key) return res.status(200).json({ ok: true, site, key: ticketKey(site).pub });
-    const url = String(process.env.MP_ROOMS_URL || ROOM_SERVERS[site] || '');
-    if (!/^wss:\/\/[a-z0-9.-]+(:\d+)?$/.test(url) && !(site === 'dev' && /^ws:\/\/127\.0\.0\.1:\d+$/.test(url))) return res.status(503).json({ ok: false, error: 'The rooms are not switched on yet' });
+    if (q.key) return res.status(200).json({ ok: true, site, key: ticketKey(site).pub, admin: adminKey(site).pub });
+    const url = roomsUrl(site);
+    if (!url) return res.status(503).json({ ok: false, error: 'The rooms are not switched on yet' });
     const village = String(q.village || ''), col = String(q.col || ''), tok = String(q.tok || '');
     if (!VILLAGES.has(village) || (col && !/^[a-z0-9_]{1,64}$/.test(col)) || (tok && !/^(0|[1-9][0-9]{0,77})$/.test(tok))) return res.status(400).json({ ok: false, error: 'Bad request' });
     const s = econSessionOf(req);

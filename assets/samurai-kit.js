@@ -3906,6 +3906,7 @@
 
   // ── templates + placement ───────────────────────────────────────────────
   const templates = {};
+  const placed = []; // every placed piece: its node and type (the snow on roofs: village-weather.js snowCaps)
   let parkRoot = null, roomPark = null;
   function template(scene, type) {
     const t = templates[type];
@@ -4261,8 +4262,9 @@
       return true;
     }
     if (FLOAT.has(type)) { floaters.push({ root, ph: (root.position.x * 1.7 + root.position.z) % 6.28 }); if (!scene._kitFloat) scene._kitFloat = scene.onBeforeRenderObservable.add(() => animate(performance.now() / 1000)); }
-    if (STAIRS[type]) { buildStairsFor(root, type, scene, shadows, skipShadows); return true; }
+    if (STAIRS[type]) { buildStairsFor(root, type, scene, shadows, skipShadows); placed.push({ root, type, stairs: true }); return true; }
     buildInto(root, type, scene, root, shadows, skipShadows);
+    if (!FLOAT.has(type) && !type.startsWith('room_')) placed.push({ root, type });
     return true;
   }
   function buildInto(parent, type, scene, editRoot, shadows, skipShadows) {
@@ -7893,5 +7895,7 @@
     }
     return walkTriangles(parts);
   }
-  window.SamuraiKit = { owlPerch: OWL_PERCH, owlSky: { ...OWL_SKY, stars: OWL_STARS, lines: OWL_LINES }, build, setLightFactor, animate, actorAction, actorBusy, protoMeshes, decks, rooms: ROOMS, stairsSteps, refreshStairs, types: Object.keys(B), walkEligible, walkTriangles, walkTrianglesOf, walkRoomParts, _Kit: Kit, _B: B, _org: { blob, curveTube } };
+  window.SamuraiKit = { owlPerch: OWL_PERCH, owlSky: { ...OWL_SKY, stars: OWL_STARS, lines: OWL_LINES }, build, setLightFactor, animate, actorAction, actorBusy, protoMeshes, decks, rooms: ROOMS, stairsSteps, refreshStairs, types: Object.keys(B), walkEligible, walkTriangles, walkTrianglesOf, walkRoomParts,
+    placed: () => { for (let i = placed.length - 1; i >= 0; i--) if (placed[i].root.isDisposed()) placed.splice(i, 1); return placed; },
+    templateMeshes: (scene, type) => (B[type] ? template(scene, type) : []), _Kit: Kit, _B: B, _org: { blob, curveTube } };
 })();

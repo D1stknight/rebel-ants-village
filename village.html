@@ -242,6 +242,7 @@ body.walk-photo #photoBtn{display:block}
 }
 
 #td{position:fixed;top:20px;left:50%;transform:translateX(-50%);font-family:'Cinzel Decorative',serif;font-size:11px;color:rgba(232,197,106,.65);letter-spacing:3px;pointer-events:none;z-index:10}
+@media (max-width:640px){html.vt-touch #td{left:auto;right:max(14px,env(safe-area-inset-right,0px));top:calc(max(12px,env(safe-area-inset-top,0px)) + 52px);transform:none;font-size:10px;letter-spacing:2px}} /* (an upright phone: under the chat button, off the logo) */
 #xhair{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:8;opacity:0;transition:opacity .3s;width:22px;height:22px}
 #xhair.on{opacity:1}
 #xhair::before,#xhair::after{content:'';position:absolute;background:rgba(255,255,255,.8);border-radius:1px}
@@ -1826,6 +1827,7 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
 <script src="assets/rebel-weapon.js"></script>
 <script src="assets/rebel-games.js"></script>
 <script src="assets/village-multiplayer.js"></script>
+<script src="assets/village-chat.js"></script>
 <script type="module">
 // The story save (Oct 25; assets/story-save.js, api/story-save.mjs): signed in, the story kept under the player's Rebel
 // Economy account joins this browser's before the game reads it, so another device starts where they left off and nothing
@@ -6644,8 +6646,29 @@ const LITE_GRAPHICS = (() => {
   } catch (e) { return false; }
 })();
 window._liteGraphics = LITE_GRAPHICS;
+// phones: pictures larger than 1024 px come in at 1024 (Babylon scales them down as it loads them): a 2048 texture takes a
+// quarter of the memory, which an iPhone needs (it closed the page once the Hub, its Rebel and another player passed its
+// limit). ?texcap=<px> (0 = none) to compare.
+const TEX_CAP = (() => { const v = new URLSearchParams(location.search).get('texcap'); return v != null && /^\d+$/.test(v) ? +v : (LITE_GRAPHICS ? 1024 : 0); })();
+if (TEX_CAP >= 256) { const caps = engine.getCaps(); caps.maxTextureSize = Math.min(caps.maxTextureSize, TEX_CAP); }
+window._texCap = TEX_CAP;
+// Babylon keeps a JS Vector3 for every vertex of a mesh each time its bounds are refreshed (for picking a skinned mesh in
+// its current pose), and every instanced kit piece refreshes its template's: about 110 MB of the Hub's memory on a phone.
+// Universe never picks a mesh in a moved pose, so bounds are refreshed without that copy (a pick still builds one from
+// the geometry, only for the meshes it tests). The bounds themselves are the same.
+for (const C of [BABYLON.AbstractMesh, BABYLON.Mesh, BABYLON.InstancedMesh]) {
+  const proto = C && C.prototype;
+  if (!proto || !Object.prototype.hasOwnProperty.call(proto, 'refreshBoundingInfo') || proto.refreshBoundingInfo._noPositions) continue;
+  const orig = proto.refreshBoundingInfo;
+  proto.refreshBoundingInfo = function (a = false, m = false) {
+    return orig.call(this, a && typeof a === 'object' ? { updatePositionsArray: false, ...a } : { applySkeleton: a, applyMorph: m, updatePositionsArray: false });
+  };
+  proto.refreshBoundingInfo._noPositions = true;
+}
 if (LITE_GRAPHICS) {
-  for (const k of ['shrine_2', 'dojo_7', 'dojo_5']) if (ASSETS[k]?.path) ASSETS[k].path = ASSETS[k].path.replace('/assets/buildings/', '/assets/buildings/lite/');
+  for (const k of ['shrine_2', 'dojo_7', 'dojo_5', 'pine_1', 'cherry_blossom']) if (ASSETS[k]?.path) ASSETS[k].path = ASSETS[k].path.replace('/assets/buildings/', '/assets/buildings/lite/');
+  // (pine and cherry pictures at 512, the two small pick-ups at 256: tools/lite-glb.py, the same meshes byte for byte)
+  for (const k of ['flame_shard', 'root_memory']) if (COLLECTIBLE_TYPES[k]?.modelUrl) COLLECTIBLE_TYPES[k].modelUrl = COLLECTIBLE_TYPES[k].modelUrl.replace('/assets/collectibles/', '/assets/collectibles/lite/');
   if ((window.devicePixelRatio || 1) > 2) engine.setHardwareScalingLevel(1 / 2);   // twice the CSS pixels, not 3x
 }
 
@@ -15272,6 +15295,13 @@ function updateWeatherRain() {
     snow: cfg.snow || 0, snowFall: (cfg.snowSpeed || .34) * 3.4,
     wind: (cfg.wind || 0) * 6.5, fogDensity: scene.fogMode === BABYLON.Scene.FOGMODE_EXP2 ? scene.fogDensity : 0, light,
     flash: WeatherManager._flashOn ? 1 : 0, ring: .35 + .4 * (WeatherManager.wetness || 0), rooms: !!ActiveInterior });
+  // snow on the roofs and buildings while it lies on the ground (Oct 27)
+  W.snowCaps?.({ cover: WeatherManager.snowCover || 0, rooms: !!ActiveInterior, focus: walkMode && charMesh ? charMesh.position : scene.activeCamera?.target || null, models: snowCapModels });
+}
+// model buildings that take snow on top (VillageWeather.snowCaps: one cap per placed copy; kit pieces come from the kit)
+const SNOW_CAP_MODELS = new Set(['dojo_9', 'dojo_5', 'dojo_6', 'dojo_7', 'shrine_2', 'fence_1', 'rock_1', 'wooden_sign', 'small_bridge', 'lantern_1']);
+function snowCapModels() {
+  return scene.transformNodes.filter(n => !n.parent && SNOW_CAP_MODELS.has(n.metadata?.type) && (n.metadata.isClone === true || n.name?.includes('RootClone_')) && n.isEnabled());
 }
 
 function applyWeatherLighting() {
@@ -30180,9 +30210,10 @@ async function loadForgeCollectionsConfig() {
 // the panel's buttons)
 const touchCovers = ['npcDialogueOverlay', 'panel', 'glovePanel'];
 setInterval(() => window.VillageTouch?.update({ walking: !!walkMode && !adminMode && !(MiniGames.on && !MiniGames.roam) && !DanceOff.on && !DanceOff.choosing
-  && !touchCovers.some(id => document.getElementById(id)?.classList.contains('on')) && !document.body.classList.contains('rebel-panel-open') }), 250);
+  && !touchCovers.some(id => document.getElementById(id)?.classList.contains('on')) && !document.body.classList.contains('rebel-panel-open') && !document.body.classList.contains('vc-open') }), 250);
 // ── Multiplayer, step 2: the other players in this village (assets/village-multiplayer.js; the rooms: realtime/, tickets:
 // api/mp-ticket.mjs). This page sends where the Rebel is, its move and its room; the others are drawn by the client.
+// Step 3: the text chat (assets/village-chat.js), through the same room.
 const MP_ANIMS = ['idle', 'walk', 'run', 'kick', 'jump'];
 function mpAnimName() {
   if (animState < 0) return 'idle';
@@ -30207,6 +30238,17 @@ function startVillageMultiplayer() {
     toast: m => showToast(m, 6000)
   });
   scene.onBeforeRenderObservable.add(() => window.VillageMP.tick(Math.min(.1, engine.getDeltaTime() / 1000)));
+  // step 3, the chat (assets/village-chat.js): Enter opens it when the keys are not the game's; guests read and are
+  // offered the journal's sign-in card (Discord, or a name and PIN)
+  window.VillageChat?.start({
+    scene, mp: window.VillageMP,
+    canChat: () => walkMode && !adminMode && !MiniGames.on && !DanceOff.on && !DanceOff.choosing && !SkillBar.on && !activeNPCDialogue && !isVillageGateMenuOpen()
+      && !['panel', 'photoOverlay'].some(id => document.getElementById(id)?.classList.contains('on')),
+    signedIn: () => !!Econ.on,
+    signIn: () => { activeJournalTab = 'overview'; openProgressionJournal(); },
+    playerNode: () => charMesh,
+    toast: m => showToast(m, 6000)
+  });
 }
 // signed in or out while here: the room hears the new name (a new ticket). The account seen last lives on the function:
 // the first refreshEcon can answer before the module has run this far (a let here was not set up yet and threw)
@@ -30286,8 +30328,9 @@ function showSavedMinimap() {
 function buildVillageHudMap() {
   if (!window.VillageHud?.buildMap || buildVillageHudMap.done) return;
   buildVillageHudMap.done = true;
-  setTimeout(() => window.VillageHud.buildMap(320, 1536), 600);
-  setTimeout(() => window.VillageHud.buildMap(320, 1536), 30000);
+  const mapPx = LITE_GRAPHICS ? 768 : 1536; // (a phone shows it as a 124 px circle: 768 is still sharper than that, at a quarter of the memory)
+  setTimeout(() => window.VillageHud.buildMap(320, mapPx), 600);
+  setTimeout(() => window.VillageHud.buildMap(320, mapPx), 30000);
 }
 
 function markVillageStartupInteractive() {

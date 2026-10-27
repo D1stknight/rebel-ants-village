@@ -211,6 +211,47 @@ body{
 #bjs-verdict a{color:#5ecfca}
 #bjs-status{color:#5ecfca;font-size:11px;letter-spacing:1px}
 #bjs-status.err{color:#e07a6a}
+#mpa{border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);padding:22px;display:flex;flex-direction:column;gap:12px}
+#mpa h2{font-family:'Cinzel Decorative',serif;color:#c8922a;font-size:16px;letter-spacing:2px}
+#mpa p{color:#b7a98b;font-size:12px;line-height:1.7}
+#mpa .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+#mpa button{padding:9px 14px;background:transparent;border:1px solid rgba(200,146,42,.45);color:#c8922a;font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer}
+#mpa button.primary{background:rgba(200,146,42,.16);border-color:rgba(200,146,42,.8);color:#f3e6bf}
+#mpa button.bad{border-color:rgba(224,122,106,.6);color:#f0a093}
+#mpa button.sm{padding:5px 9px;font-size:9px;letter-spacing:1px}
+#mpa button:disabled{opacity:.45;cursor:default}
+#mpa .ver{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+#mpa .ver div{border:1px solid rgba(200,146,42,.18);background:rgba(0,0,0,.25);padding:10px 12px}
+#mpa .ver span{display:block;color:#8a7a5a;font-size:10px;letter-spacing:2px;text-transform:uppercase}
+#mpa .ver b{display:block;color:#f3e6bf;font:600 20px Georgia,serif;margin:4px 0 2px}
+#mpa .ver small{color:#8a7a5a;font-size:11px}
+#mpa-tabs{display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid rgba(200,146,42,.18);padding-bottom:10px}
+#mpa-tabs button.on{background:rgba(94,207,202,.14);border-color:#5ecfca;color:#d9fffc}
+#mpa-body{display:flex;flex-direction:column;gap:8px;font-family:-apple-system,'Segoe UI',Arial,sans-serif;font-size:13px;color:#e7dcc0}
+#mpa-body .room{border:1px solid rgba(200,146,42,.18);background:rgba(0,0,0,.22);padding:10px 12px}
+#mpa-body .room h3{font:600 12px 'Cinzel',serif;letter-spacing:2px;color:#c8922a;margin-bottom:6px}
+#mpa-body .who{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:6px 0;border-top:1px solid rgba(255,255,255,.05)}
+#mpa-body .who:first-of-type{border-top:0}
+#mpa-body .who .n{font-weight:700;min-width:120px}
+#mpa-body .k-discord{color:#a9bbff}#mpa-body .k-name{color:#ffd36a}#mpa-body .k-guest{color:#d6d1e2}
+#mpa-body .dim{color:#8a7a5a;font-size:12px}
+#mpa-body .tag{font-size:10px;letter-spacing:1px;text-transform:uppercase;border:1px solid rgba(255,255,255,.2);padding:2px 6px;color:#e8c56a}
+#mpa-body .acts{margin-left:auto;display:flex;flex-wrap:wrap;gap:6px}
+#mpa-body .msg{display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;padding:7px 0;border-top:1px solid rgba(255,255,255,.05);align-items:start}
+#mpa-body .msg .t{color:#8a7a5a;font-size:11px;white-space:nowrap}
+#mpa-body .msg .x{overflow-wrap:anywhere}
+#mpa-body .msg .raw{color:#e8a87a;font-size:12px}
+#mpa-body .msg.del .x{text-decoration:line-through;opacity:.55}
+#mpa-body .ch-w{color:#f4a6dc}#mpa-body .ch-v{color:#5ecfca}
+#mpa-body .rep{border-left:3px solid #e8c56a;background:rgba(0,0,0,.25);padding:10px 12px}
+#mpa-body .rep.done{border-color:#5ecfca;opacity:.7}
+#mpa-body .rep .ctx{margin-top:6px;color:#b7a98b;font-size:12px;line-height:1.55}
+#mpa-body input[type=text],#mpa-body input[type=number],#mpa-body select,#mpa-body textarea{background:rgba(0,0,0,.35);border:1px solid rgba(200,146,42,.3);color:#f3e6bf;padding:8px 9px;font:13px -apple-system,'Segoe UI',Arial,sans-serif}
+#mpa-body textarea{width:100%;min-height:90px;resize:vertical}
+#mpa-body label.tg{display:flex;gap:10px;align-items:center;cursor:pointer}
+#mpa-body label.tg input{width:18px;height:18px;accent-color:#5ecfca}
+#mpa-status{color:#5ecfca;font-size:11px;letter-spacing:1px}
+#mpa-status.err{color:#e07a6a}
 #hub-note{
   color:#8a7a5a;
   font-size:11px;
@@ -305,6 +346,26 @@ body{
       <span id="bjs-status"></span>
     </div>
     <p>Put it on dev = the dev preview runs it right away (try it there); the live site gets it with the next dev → main, like any other change. Staying on the version you have is always safe: updating every month or two is plenty.</p>
+  </section>
+
+  <section id="mpa">
+    <h2>🗣 Multiplayer: players and chat</h2>
+    <p>Who is in Universe right now, the chat (every message, with the words as typed beside the ones the filter starred), the players' reports, and the tools: mute, kick or ban an account, delete a message, clear a village's chat, and the chat settings. Signed-in players write; guests read. These are this site's rooms only (the dev preview has its own).</p>
+    <div class="ver">
+      <div><span>Online now</span><b id="mpa-online">…</b><small id="mpa-online-at"></small></div>
+      <div><span>Open reports</span><b id="mpa-reports">…</b><small>from players</small></div>
+      <div><span>Chat</span><b id="mpa-chat">…</b><small id="mpa-chat-sub"></small></div>
+    </div>
+    <div id="mpa-tabs">
+      <button type="button" data-t="online">Online now</button>
+      <button type="button" data-t="log">Chat log</button>
+      <button type="button" data-t="reports">Reports</button>
+      <button type="button" data-t="mods">Muted &amp; banned</button>
+      <button type="button" data-t="cfg">Settings</button>
+      <button type="button" onclick="mpaLoad(true)">↻</button>
+    </div>
+    <div id="mpa-body"></div>
+    <div class="row"><span id="mpa-status"></span></div>
   </section>
 
   <div id="hub-note">
@@ -450,7 +511,157 @@ async function bjsRun() {
   btn.disabled = false;
 }
 
-checkAdminSession().then(() => { loadAnnouncements(); bjsLoad(); });
+// Multiplayer card (Oct 27): /api/mp-admin signs each command for the rooms (realtime/: the control desk keeps the
+// settings, mutes and bans, the chat log and the reports). Everything players wrote goes in by textContent.
+const mpa = { tab: 'online', online: null, log: null, reports: null, mods: null, cfg: null, filter: { village: '', q: '', sub: '' }, allReports: false };
+const VILLAGE_NAMES = { hub: 'Hub', ronin: 'Ronin', samurai: 'Samurai', shogun: 'Shogun', bushi: 'Bushi', buke: 'Buke', ashigaru: 'Ashigaru', kenshi: 'Kenshi', yamabushi: 'Yamabushi', sohei: 'Sohei', wokou: 'Wokou', warrior: 'Warrior', 'cute-creepy': 'Cute & Creepy', chumpz: 'Chumpz', 'saints-la': 'Saints of LA' };
+const mpaWhen = ms => (ms ? new Date(ms).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '');
+const mpaUntil = ms => (ms > Date.now() + 300 * 86400000 ? 'no end' : mpaWhen(ms));
+function mpaStatus(text, err) { const s = document.getElementById('mpa-status'); s.textContent = text || ''; s.className = err ? 'err' : ''; }
+async function mpaCmd(cmd, args = {}) {
+  const r = await fetch('/api/mp-admin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cmd, args }) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || d.ok === false) throw new Error(d.error || 'The rooms did not answer');
+  return d;
+}
+const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const btn = (label, fn, cls = 'sm') => { const b = mk('button', cls, label); b.type = 'button'; b.onclick = async () => { b.disabled = true; try { await fn(); } catch (e) { mpaStatus(e.message, true); } b.disabled = false; }; return b; };
+const villageOf = room => { const v = String(room || '').split(':')[1] || ''; return VILLAGE_NAMES[v] || v; };
+// what an admin can do to an account (from anywhere on the card)
+function accountActs(sub, n, k) {
+  const box = mk('span', 'acts');
+  if (!sub) return box;
+  box.append(
+    btn('Mute 10 min', () => mpaAct('mute', { sub, n, minutes: 10 }, `${n} muted for 10 minutes`)),
+    btn('Mute 1 day', () => mpaAct('mute', { sub, n, minutes: 1440 }, `${n} muted for a day`)),
+    btn('Kick', () => mpaAct('kick', { sub, n }, `${n} sent out of the room`), 'sm bad'));
+  if (k !== 'guest') box.append(
+    btn('Ban 7 days', () => confirm(`Ban ${n} from the rooms for 7 days?`) && mpaAct('ban', { sub, n, hours: 168, why: 'admin' }, `${n} banned for 7 days`), 'sm bad'),
+    btn('Ban', () => confirm(`Ban ${n} from the rooms with no end? (You can lift it in Muted & banned.)`) && mpaAct('ban', { sub, n, hours: 0, why: 'admin' }, `${n} banned`), 'sm bad'),
+    btn('Their messages', async () => { mpa.filter = { village: '', q: '', sub }; await mpaShow('log'); }));
+  return box;
+}
+async function mpaAct(cmd, args, done) {
+  const d = await mpaCmd(cmd, args);
+  mpaStatus(done + (d.reached ? ` (reached ${d.reached} ${d.reached === 1 ? 'socket' : 'sockets'})` : ''));
+  await mpaLoad(true);
+}
+async function mpaLoad(fresh) {
+  try {
+    const [on, rp, cfg] = await Promise.all([mpaCmd('online'), mpaCmd('reports', { all: mpa.allReports }), mpaCmd('cfg-get')]);
+    mpa.online = on; mpa.reports = rp; mpa.cfg = cfg.cfg;
+    document.getElementById('mpa-online').textContent = on.total;
+    document.getElementById('mpa-online-at').textContent = on.rooms.length ? `in ${on.rooms.length} village ${on.rooms.length === 1 ? 'copy' : 'copies'}` : 'nobody right now';
+    document.getElementById('mpa-reports').textContent = rp.open;
+    document.getElementById('mpa-chat').textContent = cfg.cfg.chat ? 'On' : 'Off';
+    document.getElementById('mpa-chat-sub').textContent = `one message every ${cfg.cfg.slow} s · links ${cfg.cfg.links ? 'allowed' : 'taken out'}`;
+    if (fresh) mpaStatus('Updated ' + new Date().toLocaleTimeString());
+    await mpaShow(mpa.tab);
+  } catch (e) {
+    ['mpa-online', 'mpa-reports', 'mpa-chat'].forEach(id => (document.getElementById(id).textContent = '–'));
+    mpaStatus(e.message, true);
+    document.getElementById('mpa-body').replaceChildren(mk('p', 'dim', 'The rooms are not reachable from this site right now. ' + e.message));
+  }
+}
+async function mpaShow(tab) {
+  mpa.tab = tab;
+  document.querySelectorAll('#mpa-tabs button[data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
+  const body = document.getElementById('mpa-body'), out = [];
+  if (tab === 'online') {
+    const rooms = mpa.online?.rooms || [];
+    if (!rooms.length) out.push(mk('p', 'dim', 'Nobody is in Universe right now.'));
+    for (const r of rooms) {
+      const box = mk('div', 'room'), h = mk('h3', '', `${villageOf(r.room)} · copy ${r.copy} · ${r.players.length} ${r.players.length === 1 ? 'player' : 'players'}`);
+      box.append(h, btn('Clear this chat', () => confirm(`Clear the chat in ${villageOf(r.room)} copy ${r.copy}? (The log keeps it.)`) && mpaAct('clear', { room: r.room }, 'Chat cleared'), 'sm'));
+      for (const p of r.players) {
+        const row = mk('div', 'who');
+        const lab = p.look?.col && p.look?.tok ? (p.look.col === 'battle_for_colony' ? 'Rebel #' : p.look.col === 'chumpz' ? 'Chumpz #' : p.look.col === 'saints' ? 'Saint #' : '#') + p.look.tok : p.k === 'guest' ? 'Visitor' : '';
+        row.append(mk('span', 'n k-' + p.k, p.n), mk('span', 'dim', [lab, p.k === 'guest' ? 'guest' : p.k === 'name' ? 'name account' : 'Discord', p.s ? (p.s[5] ? 'in ' + p.s[5] : `at ${Math.round(p.s[0])}, ${Math.round(p.s[2])}`) : 'not walking', 'since ' + mpaWhen(p.j)].filter(Boolean).join(' · ')));
+        if (p.mute) row.append(mk('span', 'tag', 'muted until ' + mpaWhen(p.mute)));
+        row.append(accountActs(p.sub, p.n, p.k));
+        box.append(row);
+      }
+      out.push(box);
+    }
+  }
+  if (tab === 'log') {
+    const f = mpa.filter, bar = mk('div', 'row');
+    const sel = mk('select'); sel.append(new Option('Every village', '')); for (const [v, n] of Object.entries(VILLAGE_NAMES)) sel.append(new Option(n, v)); sel.value = f.village;
+    const q = mk('input'); q.type = 'text'; q.placeholder = 'Words or a name'; q.value = f.q;
+    bar.append(sel, q, btn('Search', async () => { mpa.filter = { village: sel.value, q: q.value.trim(), sub: '' }; await mpaShow('log'); }, 'sm primary'));
+    if (f.sub) bar.append(mk('span', 'tag', 'one account'), btn('Show everyone', async () => { mpa.filter.sub = ''; await mpaShow('log'); }));
+    out.push(bar);
+    const d = await mpaCmd('log', { village: f.village || undefined, q: f.q || undefined, sub: f.sub || undefined, limit: 200 });
+    if (!d.rows.length) out.push(mk('p', 'dim', 'No messages.'));
+    for (const m of d.rows) {
+      const row = mk('div', 'msg' + (m.del ? ' del' : ''));
+      const left = mk('div'); left.append(mk('div', 't', mpaWhen(m.at)), mk('div', 't', villageOf(m.room) + ' · ' + (m.ch === 'w' ? 'whisper' : m.ch === 'v' ? 'village' : 'nearby')));
+      const mid = mk('div', 'x'); const nm = mk('b', 'k-' + m.k, m.n); mid.append(nm);
+      if (m.ch === 'w') mid.append(mk('span', 'ch-w', ' → ' + (m.tn || '')));
+      mid.append(document.createTextNode(': ' + m.x));
+      if (m.raw) mid.append(mk('div', 'raw', 'typed: ' + m.raw));
+      if (m.del) mid.append(mk('div', 'dim', 'deleted'));
+      const acts = mk('div', 'acts');
+      if (!m.del) acts.append(btn('Delete', () => mpaAct('del', { room: m.room, i: m.i }, 'Message deleted'), 'sm bad'));
+      acts.append(btn('Account…', async () => { // (the account's tools under the message, once)
+        if (row.nextElementSibling?.classList.contains('who')) return row.nextElementSibling.remove();
+        const w = mk('div', 'who'); w.append(accountActs(m.sub, m.n, m.k)); row.after(w);
+      }));
+      row.append(left, mid, acts);
+      out.push(row);
+    }
+  }
+  if (tab === 'reports') {
+    const bar = mk('div', 'row');
+    bar.append(btn(mpa.allReports ? 'Open ones only' : 'Show done ones too', async () => { mpa.allReports = !mpa.allReports; mpa.reports = await mpaCmd('reports', { all: mpa.allReports }); await mpaShow('reports'); }));
+    out.push(bar);
+    const rows = mpa.reports?.rows || [];
+    if (!rows.length) out.push(mk('p', 'dim', 'No reports.'));
+    for (const r of rows) {
+      const box = mk('div', 'rep' + (r.state !== 'open' ? ' done' : ''));
+      const top = mk('div'); top.append(mk('b', 'k-' + (r.by?.k || ''), r.by?.n || '?'), document.createTextNode(` reported `), mk('b', 'k-' + (r.target?.k || ''), r.target?.n || '?'), document.createTextNode(` for ${r.why} · ${villageOf(r.room)} · ${mpaWhen(r.at)}${r.state !== 'open' ? ' · ' + r.state : ''}`));
+      box.append(top);
+      if (r.note) box.append(mk('div', 'dim', 'Their note: ' + r.note));
+      if (r.msg) box.append(mk('div', 'x', `The message (${r.msg.ch === 'w' ? 'a whisper' : r.msg.ch === 'v' ? 'village' : 'nearby'}): ${r.msg.x}`));
+      if (r.context?.length) { const c = mk('div', 'ctx'); c.append(mk('div', 'dim', 'The chat around it:')); for (const m of r.context) c.append(mk('div', '', `${new Date(m.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} ${m.n}: ${m.x}`)); box.append(c); }
+      const acts = mk('div', 'row'); acts.style.marginTop = '8px';
+      if (r.msg && r.state === 'open') acts.append(btn('Delete the message', () => mpaAct('del', { room: r.room, i: r.msg.i }, 'Message deleted'), 'sm bad'));
+      acts.append(accountActs(r.target?.sub, r.target?.n, r.target?.k));
+      if (r.state === 'open') acts.append(btn('Done', () => mpaAct('report-state', { id: r.id, state: 'done' }, 'Report done')), btn('Dismiss', () => mpaAct('report-state', { id: r.id, state: 'dismissed' }, 'Report dismissed')));
+      else acts.append(btn('Open again', () => mpaAct('report-state', { id: r.id, state: 'open' }, 'Report open again')));
+      box.append(acts); out.push(box);
+    }
+  }
+  if (tab === 'mods') {
+    const d = await mpaCmd('mods');
+    if (!d.rows.length) out.push(mk('p', 'dim', 'Nobody is muted or banned.'));
+    for (const m of d.rows) {
+      const row = mk('div', 'who');
+      row.append(mk('span', 'n', m.n || m.sub), mk('span', 'dim', m.sub));
+      if (m.mute > Date.now()) row.append(mk('span', 'tag', 'muted until ' + mpaUntil(m.mute)), btn('Unmute', () => mpaAct('unmute', { sub: m.sub }, 'Unmuted')));
+      if (m.ban > Date.now()) row.append(mk('span', 'tag', 'banned until ' + mpaUntil(m.ban)), btn('Lift the ban', () => mpaAct('unban', { sub: m.sub }, 'Ban lifted')));
+      out.push(row);
+    }
+  }
+  if (tab === 'cfg') {
+    const c = mpa.cfg || {};
+    const tg = (key, label, val) => { const l = mk('label', 'tg'); const i = mk('input'); i.type = 'checkbox'; i.checked = !!val; i.id = 'mpa-cfg-' + key; l.append(i, mk('span', '', label)); return l; };
+    const slow = mk('input'); slow.type = 'number'; slow.min = 2; slow.max = 120; slow.value = c.slow || 2; slow.id = 'mpa-cfg-slow';
+    const words = mk('textarea'); words.id = 'mpa-cfg-words'; words.placeholder = 'One word or phrase per line'; words.value = (c.words || []).join('\n');
+    const sr = mk('div', 'row'); sr.append(mk('span', '', 'Slow mode: one message every'), slow, mk('span', '', 'seconds (2 = normal)'));
+    out.push(tg('chat', 'Chat on everywhere (off: nobody can write; everyone sees "Chat is switched off")', c.chat !== false), sr,
+      tg('filter', 'Word filter (swear words and slurs starred out)', c.filter !== false), tg('links', 'Allow links (off: links are taken out, except rebelants.io and rebeluniverse.io)', c.links === true),
+      mk('div', 'dim', 'Your own words to star out, besides the filter:'), words,
+      btn('Save the settings', async () => {
+        const args = { chat: document.getElementById('mpa-cfg-chat').checked, slow: +document.getElementById('mpa-cfg-slow').value, filter: document.getElementById('mpa-cfg-filter').checked, links: document.getElementById('mpa-cfg-links').checked, words: document.getElementById('mpa-cfg-words').value.split('\n').map(w => w.trim()).filter(Boolean) };
+        await mpaAct('cfg-set', args, 'Settings saved');
+      }, 'primary'));
+  }
+  body.replaceChildren(...out);
+}
+document.querySelectorAll('#mpa-tabs button[data-t]').forEach(b => (b.onclick = () => mpaShow(b.dataset.t).catch(e => mpaStatus(e.message, true))));
+
+checkAdminSession().then(() => { loadAnnouncements(); bjsLoad(); mpaLoad(); });
 </script>
 
 </body>
