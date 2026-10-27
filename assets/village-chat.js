@@ -99,14 +99,16 @@ body.in-game #vcChat,body.in-game #vcBtn,body.in-game #vcPanel,body.in-game #vcM
     el.input.addEventListener('keyup', e => e.stopPropagation());
     el.input.addEventListener('input', paintCount);
     el.log.addEventListener('click', e => { const n = e.target.closest('.vn'); if (n && !n.classList.contains('me')) { e.stopPropagation(); openMenu({ id: +n.dataset.id || 0, u: n.dataset.u || '', n: n.textContent, k: n.dataset.k, i: +n.dataset.i || 0 }, e); } });
-    // Enter opens the line (when the game is not using the keys); a click elsewhere closes it, the menus too
-    // (added before village.html's own key handler, so it runs first: Esc with the chat open only closes the chat)
-    document.addEventListener('keydown', e => {
-      if (e.target?.tagName === 'INPUT' || e.target?.tagName === 'TEXTAREA') return;
+    // Enter opens the line (when the game is not using the keys); a click elsewhere closes it, the menus too.
+    // On the window, before anything else hears the key (village.html's own key handler on the document came first):
+    // Esc with the chat, a name menu or a panel open only closes the chat, never leaves walking.
+    window.addEventListener('keydown', e => {
+      const t = e.target, typing = t && (t.tagName === 'TEXTAREA' || t.isContentEditable || (t.tagName === 'INPUT' && !/^(checkbox|radio|button|range)$/i.test(t.type || '')));
+      if (typing) return; // (the chat line handles its own keys; other fields are someone else's)
       if (e.key === 'Escape' && (open || el.menu.classList.contains('on') || el.panel.classList.contains('on'))) { e.preventDefault(); e.stopImmediatePropagation(); close(); return; }
       if (e.key !== 'Enter' || e.repeat || !live || open || !H.canChat()) return;
-      e.preventDefault(); openChat();
-    });
+      e.preventDefault(); e.stopImmediatePropagation(); openChat();
+    }, true);
     document.addEventListener('pointerdown', e => {
       if (el.menu.classList.contains('on') && !el.menu.contains(e.target)) closeMenu();
       if (el.panel.classList.contains('on') && !el.panel.contains(e.target) && !e.target.closest?.('.vc-ico')) el.panel.classList.remove('on');
