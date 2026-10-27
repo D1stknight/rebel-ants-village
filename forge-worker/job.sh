@@ -176,6 +176,11 @@ step export;     FORGE_NAME="$NAME" FORGE_DECIMATE="${FORGE_DECIMATE:-0.35}" FOR
 if [ "$FRIEND" != ape ]; then
 step headcloth;  run "$R/headcloth.py" "$JOB/rig.glb" "$JOB/rig.glb" --report "$JOB/headcloth.json" || echo "headcloth failed (non-fatal)" >> "$JOB/log"
 fi
+# v2.41 #001's jaw (FORGE_JAW, set only for #001's rig when an admin asks for it): a mixamorig_Jaw joint under Head; the
+# cloth over its mouth opens when something turns it (a voice app). Nothing keys it, so every move looks as before.
+if [ -n "${FORGE_JAW:-}" ]; then
+step jaw;        run "$R/jaw.py" "$JOB/rig.glb" "$JOB/rig.glb" --report "$JOB/jaw.json"
+fi
 if [ -z "$NPC" ]; then
 step movespack;  run "$R/exp_moves.py" -- "$O/anim6_ff.blend" "$FORGE_WEAPON_CLIPS" "$JOB/moves.glb"
 fi
