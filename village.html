@@ -242,6 +242,7 @@ body.walk-photo #photoBtn{display:block}
 }
 
 #td{position:fixed;top:20px;left:50%;transform:translateX(-50%);font-family:'Cinzel Decorative',serif;font-size:11px;color:rgba(232,197,106,.65);letter-spacing:3px;pointer-events:none;z-index:10}
+@media (max-width:640px){html.vt-touch #td{left:auto;right:max(14px,env(safe-area-inset-right,0px));top:calc(max(12px,env(safe-area-inset-top,0px)) + 52px);transform:none;font-size:10px;letter-spacing:2px}} /* (an upright phone: under the chat button, off the logo) */
 #xhair{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:8;opacity:0;transition:opacity .3s;width:22px;height:22px}
 #xhair.on{opacity:1}
 #xhair::before,#xhair::after{content:'';position:absolute;background:rgba(255,255,255,.8);border-radius:1px}
