@@ -326,7 +326,7 @@ body.in-game #vcChat,body.in-game #vcBtn,body.in-game #vcPanel,body.in-game #vcM
       if (now > b.until) { dropBubble(key); continue; }
       let pos = null, k = 1;
       if (key === 'me') {
-        const n = H.playerNode?.(); if (n && n.isEnabled()) { pos = n.getAbsolutePosition().add(new B.Vector3(0, 3.95, 0)); k = cam ? Math.min(2.4, Math.max(.9, B.Vector3.Distance(cam, pos) / 14)) : 1; }
+        const n = H.playerNode?.(); if (n && n.isEnabled()) { pos = n.getAbsolutePosition().add(new B.Vector3(0, 3.95, 0)); const dc = cam ? B.Vector3.Distance(cam, pos) : 9; k = dc < 9 ? Math.max(.12, dc / 10) : Math.min(2.4, Math.max(.9, dc / 14)); } // (a camera pulled in by a wall or a room: the same size on screen)
       } else {
         const p = H.mp.chat.peer(+key);
         if (p && p.holder.isEnabled() && p.d != null && p.d < BUBBLE_R) {

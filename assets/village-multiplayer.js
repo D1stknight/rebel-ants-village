@@ -303,8 +303,10 @@
       list.push(p);
       if (p.tag) {
         p.tag.setEnabled(names && p.d < TAG_R); p.tag.visibility = p.d < TAG_R - 10 ? 1 : Math.max(0, (TAG_R - p.d) / 10);
-        const dc = cam ? B.Vector3.Distance(cam, p.pos) : p.d; // the same size on screen past 14 m, so far names stay readable
-        p.tag.scaling.setAll(Math.min(3, Math.max(1, dc / 14)) / p.holder.scaling.x);
+        // the same size on screen past 14 m (far names stay readable), and nearer than the walk camera's 9 m (a player
+        // right by the camera gets no tag across the screen); the chat bubble keeps to the tag's size
+        const ty = p.pos.y + p.tag.position.y * p.holder.scaling.y, dc = cam ? Math.hypot(cam.x - p.pos.x, cam.y - ty, cam.z - p.pos.z) : p.d; // (to the tag itself)
+        p.tag.scaling.setAll((dc < 9 ? Math.max(.12, dc / 9) : Math.min(3, Math.max(1, dc / 14))) / p.holder.scaling.x);
       }
     }
     list.sort((a, b) => a.d - b.d);
