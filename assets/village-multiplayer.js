@@ -22,7 +22,8 @@
   let H = null, B = null, root = null, ws = null, connecting = false, you = 0, room = null, closedFor = null, retry = 0, retryAt = 0, maxFull = 8;
   const VC = () => window.VillageChat;
   const tell = (kind, d) => { try { VC()?.room?.(kind, d); } catch (e) { log('chat', e); } };
-  const peers = new Map(), containers = new Map();
+  const peers = new Map(), files = new Map(), clips = new Map();
+  let keepIdle = 4, keepMs = 60000, lastSweep = 0; // (phones: 1 file, 20 s)
   let last = null, lastSent = 0, lastBeat = 0, moving = false, stillSince = 0, enabled = true, capsuleSrc = null;
   const log = (...a) => { if (window._mpDebug) console.log('[mp]', ...a); };
   const q = new URLSearchParams(location.search), override = q.get('mp');
@@ -155,10 +156,35 @@
     return (p.capsule = c);
   }
 
-  // ---- their models: a downloaded file is kept and each player gets its own copy of it ----
+  // ---- their models: a downloaded file is kept while a player here wears it (each gets its own copy of it) and a little
+  // after (someone stepping in and out of the nearest few); then its meshes, materials and pictures go. Kept for the whole
+  // visit, a phone in a busy village held every Rebel that ever came near (about 35 MB each) until it ran out of memory ----
   function container(url) {
-    if (!containers.has(url)) containers.set(url, B.SceneLoader.LoadAssetContainerAsync('', H.viaSite(url), H.scene).catch(e => { containers.delete(url); throw e; }));
-    return containers.get(url);
+    let f = files.get(url);
+    if (!f) {
+      f = { url, users: 0, idle: 0, c: null };
+      f.p = B.SceneLoader.LoadAssetContainerAsync('', H.viaSite(url), H.scene).then(c => { f.c = c; f.idle = performance.now(); return c; }, e => { if (files.get(url) === f) files.delete(url); throw e; });
+      files.set(url, f);
+    }
+    return f.p;
+  }
+  // a copy of a file's model made: the file stays until the copy goes (list: the copy's files)
+  function useFile(url, list) { const f = files.get(url); if (f) { f.users++; list.push(f); } }
+  function dropFiles(list) { const now = performance.now(); for (const f of list) if (--f.users <= 0) { f.users = 0; f.idle = now; } list.length = 0; }
+  // the files no one here wears: the newest keepIdle stay keepMs, the others go
+  function sweepFiles(now) {
+    const idle = [...files.values()].filter(f => f.c && f.users <= 0).sort((a, b) => b.idle - a.idle);
+    idle.forEach((f, i) => { if (i < keepIdle && now - f.idle < keepMs) return; files.delete(f.url); try { f.c.dispose(); } catch (e) {} log('file released', f.url.split('/').pop()); });
+  }
+  // the starter ant's other moves: each of their files holds the whole ant again, so only the move is kept (its keys)
+  function starterClip(file) {
+    if (!clips.has(file)) clips.set(file, B.SceneLoader.LoadAssetContainerAsync('', H.viaSite(STARTER.base + file), H.scene).then(c => {
+      const g = c.animationGroups[0] || null;
+      if (g) c.animationGroups = c.animationGroups.filter(x => x !== g);
+      try { c.dispose(); } catch (e) {}
+      return g;
+    }, e => { clips.delete(file); throw e; }));
+    return clips.get(file);
   }
   // as the village does for its own player: the rig's PBR materials take at most 4 lights (the village's 16 overflow the
   // skinned shader: the model went invisible), no emissive, both faces
@@ -176,7 +202,7 @@
   async function loadModel(p) {
     if (p.loading || p.model) return;
     p.loading = true;
-    const look = p.look || {}, prefix = 'mpPlayer_' + p.id + '_';
+    const look = p.look || {}, prefix = 'mpPlayer_' + p.id + '_', used = [];
     try {
       if (look.t === 'kit' && window.SamuraiKit?.types?.includes(look.type)) {
         const kit = new B.TransformNode(prefix + 'kit', H.scene); kit.parent = p.holder; kit.rotation.y = Math.PI; // kit fronts face -z, players +z
@@ -185,9 +211,10 @@
         meshes.forEach(m => { markPeer(m); delete m._editRoot; if (!/player/i.test(m.name)) m.name = prefix + m.name; }); // (the minimap leaves players out by name)
         p.model = { kind: 'kit', node: kit, groups: {}, meshes, extra: [] };
       } else {
-        const rig = look.t === 'rig' && typeof look.url === 'string' && STORE.test(look.url);
-        const c = await container(rig ? look.url : STARTER.base + STARTER.idle);
+        const rig = look.t === 'rig' && typeof look.url === 'string' && STORE.test(look.url), url = rig ? look.url : STARTER.base + STARTER.idle;
+        const c = await container(url);
         if (!peers.has(p.id)) return;
+        useFile(url, used);
         const inst = c.instantiateModelsToScene(n => prefix + n, false, { doNotInstantiate: true });
         const meshes = [], groups = {}, extra = [];
         for (const r of inst.rootNodes) { if (r instanceof B.AbstractMesh) meshes.push(r); meshes.push(...r.getChildMeshes(false)); }
@@ -206,20 +233,20 @@
           if (inst.animationGroups[0]) { groups.idle = inst.animationGroups[0]; noHipTravel(groups.idle); }
           await Promise.all(Object.entries(STARTER.clips).map(async ([name, file]) => {
             try {
-              const cc = await container(STARTER.base + file), src = cc.animationGroups[0]; if (!src || !peers.has(p.id)) return;
+              const src = await starterClip(file); if (!src || !peers.has(p.id)) return;
               const g = src.clone(prefix + name, t => nodes.get(t.name) || null);
               noHipTravel(g); g.stop(); groups[name] = g; extra.push(g);
             } catch (e) {}
           }));
         }
-        if (!peers.has(p.id)) { inst.dispose(); extra.forEach(g => g.dispose()); return; }
+        if (!peers.has(p.id)) { inst.dispose(); extra.forEach(g => g.dispose()); dropFiles(used); return; }
         p.holder.scaling.setAll(rig ? RIG_SCALE : STARTER_SCALE);
         const sh = H.shadows?.(); if (sh) meshes.forEach(m => { try { sh.addShadowCaster(m); } catch (e) {} });
-        p.model = { kind: rig ? 'rig' : 'starter', inst, groups, meshes, extra };
+        p.model = { kind: rig ? 'rig' : 'starter', inst, groups, meshes, extra, files: used };
       }
       placeTag(p);
       p.anim = ''; p.cur = null; log('model', p.id, p.model.kind);
-    } catch (e) { log('model failed', p.id, e?.message); p.look = { t: 'capsule' }; }
+    } catch (e) { log('model failed', p.id, e?.message); p.look = { t: 'capsule' }; if (!p.model) dropFiles(used); }
     finally { p.loading = false; }
   }
   // the name over the model's head (its bind pose; the starter ant's sits about 1.6 m under its feet, as the village's own)
@@ -245,6 +272,7 @@
     // their materials and geometry stay (the downloaded file's, shared with the other copies)
     if (m.inst) for (const x of m.meshes) { if (m.inst.rootNodes.includes(x)) continue; try { if (!x.isDisposed()) x.dispose(false, false); } catch (e) {} }
     try { if (m.inst) m.inst.dispose(); else m.node?.dispose(false, false); } catch (e) {}
+    if (m.files) dropFiles(m.files);
     p.holder.scaling.setAll(1); placeTag(p);
   }
   function groupFor(p, a) {
@@ -296,7 +324,8 @@
       // a player the camera stands inside is not drawn (no view from inside their Rebel)
       const inCam = !!(cam && p.pos && Math.hypot(cam.x - p.pos.x, cam.z - p.pos.z) < 1.3 && cam.y > p.pos.y - .5 && cam.y < p.pos.y + 4.2);
       p.holder.setEnabled(same && !hidden && !inCam);
-      if (!same || hidden) { p.once = null; p.d = same ? p.d : null; if (!same) continue; }
+      // in another place (a room) its model goes too: it is not drawn there, and kept it would add to the nearest few
+      if (!same || hidden) { p.once = null; p.d = same ? p.d : null; if (!same) { if (p.model) disposeModel(p); continue; } }
       const tx = p.s[0], ty = p.s[1], tz = p.s[2];
       if (Math.hypot(tx - p.pos.x, tz - p.pos.z) > 10 || Math.abs(ty - p.pos.y) > 6) p.pos.set(tx, ty, tz); // a teleport (a door, a gate jump)
       else { p.pos.x += (tx - p.pos.x) * k; p.pos.y += (ty - p.pos.y) * k; p.pos.z += (tz - p.pos.z) * k; }
@@ -327,6 +356,7 @@
       }
       p.once = null;
     });
+    if (now - lastSweep > 2000) { lastSweep = now; sweepFiles(now); }
   }
   const angle = a => Math.atan2(Math.sin(a), Math.cos(a));
   const round = v => Math.round(v * 100) / 100;
@@ -336,7 +366,7 @@
 
   function start(host) {
     if (H || !host || !window.BABYLON) return;
-    H = host; B = window.BABYLON; maxFull = H.lite ? 4 : 8;
+    H = host; B = window.BABYLON; maxFull = H.lite ? 4 : 8; keepIdle = H.lite ? 1 : 4; keepMs = H.lite ? 20000 : 60000;
     root = new B.TransformNode('mpPlayersRoot', H.scene); root.metadata = { keepInInteriors: true }; // rooms hide the village, not the players (each is shown in its own place)
     setInterval(() => send('{"t":"ping"}'), PING_MS); // (timers, not frames: a hidden tab draws nothing)
     document.addEventListener('visibilitychange', () => { const me = H.player(); if (document.hidden && me && H.canSend()) sendState(me, 1, performance.now()); });
@@ -351,5 +381,5 @@
     peers: () => [...peers.values()],
     peer: id => peers.get(+id) || null
   };
-  window.VillageMP = { start, tick, reconnect, emote, peers, chat, get state() { return { enabled, open: !!ws && ws.readyState === 1, you, room, peers: peers.size, closedFor }; }, stop() { enabled = false; const s = ws; ws = null; try { s?.close(1000); } catch (e) {} dropAll(); tell('closed'); } };
+  window.VillageMP = { start, tick, reconnect, emote, peers, chat, get state() { return { enabled, open: !!ws && ws.readyState === 1, you, room, peers: peers.size, closedFor, files: files.size }; }, stop() { enabled = false; const s = ws; ws = null; try { s?.close(1000); } catch (e) {} dropAll(); sweepFiles(Infinity); tell('closed'); } };
 })();
