@@ -6645,6 +6645,12 @@ const LITE_GRAPHICS = (() => {
   } catch (e) { return false; }
 })();
 window._liteGraphics = LITE_GRAPHICS;
+// phones: pictures larger than 1024 px come in at 1024 (Babylon scales them down as it loads them): a 2048 texture takes a
+// quarter of the memory, which an iPhone needs (it closed the page once the Hub, its Rebel and another player passed its
+// limit). ?texcap=<px> (0 = none) to compare.
+const TEX_CAP = (() => { const v = new URLSearchParams(location.search).get('texcap'); return v != null && /^\d+$/.test(v) ? +v : (LITE_GRAPHICS ? 1024 : 0); })();
+if (TEX_CAP >= 256) { const caps = engine.getCaps(); caps.maxTextureSize = Math.min(caps.maxTextureSize, TEX_CAP); }
+window._texCap = TEX_CAP;
 // Babylon keeps a JS Vector3 for every vertex of a mesh each time its bounds are refreshed (for picking a skinned mesh in
 // its current pose), and every instanced kit piece refreshes its template's: about 110 MB of the Hub's memory on a phone.
 // Universe never picks a mesh in a moved pose, so bounds are refreshed without that copy (a pick still builds one from
