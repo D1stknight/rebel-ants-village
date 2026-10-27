@@ -11,26 +11,44 @@
 // to the others, on the moment it comes in (no timers, so an idle room hibernates and costs nothing):
 //   client -> room  {t:'s', p:[x,y,z], r:yaw, a:'walk', i:interiorId|null, f:1 (a final state: stopped)}   state
 //                   {t:'e', e:'cheer'}                                                                        emote
+//                   {t:'c', ch:'n'|'v'|'w', x:text, to:id (a whisper)}   chat: nearby (CHAT_NEAR m, the same place),
+//                                                                         the village copy, or one player
+//                   {t:'rp', i:message id | id:player id, why:'spam'|'abuse'|'scam'|'other', note}            a report
 //                   {"t":"ping"}  answered with {"t":"pong"} without waking the room (auto response)
-//   room -> client  {t:'hi', you:id, room:{village, copy, max}, peers:[peer]}   on joining
+//   room -> client  {t:'hi', you:id, u, room:{village, copy, max}, peers:[peer], hist:[msg], cfg:{chat, slow}, mute}
 //                   {t:'j', ...peer}   someone came in      {t:'l', id}   someone left
 //                   {t:'u', id, s:[x,y,z,yaw,anim,interior]}   a state     {t:'e', id, e}   an emote
+//                   {t:'c', m:msg}   a chat message (the sender gets it back as it was shown)
+//                   {t:'cx', why, until|wait}   a message not sent: guest, off, muted, slow, same, empty, long, nopos, gone
+//                   {t:'cd', i}   a message deleted (admin)      {t:'cc'}   the chat cleared (admin)
+//                   {t:'cfg', chat, slow}   the chat switched on / off, slow mode      {t:'cm', until}   you are muted
+//                   {t:'rpok'} / {t:'cx', why:'report-…'}   a report taken / not
+//                   {t:'kick', why:'kick'|'banned', until}   then the socket closes (4003)
 //                   {t:'dup'}   the same account opened the room somewhere else (this one closes)
-//   peer = {id, n: name, k: 'discord'|'name'|'guest', av: avatar url, look, s: state|null}
+//   peer = {id, n: name, k: 'discord'|'name'|'guest', u: the account's own short code (blocks), av: avatar url, look,
+//           s: state|null}
+//   msg  = {i, ch, id, n, k, u, x: the text as shown, at, to + tn (a whisper: to whom)}
 // Near players (same interior, < NEAR m) get every state; further ones one every 0.5 s (< MID m) or 2 s; a final
 // state always goes through. Limits: 1 KB a message, 24 messages / 2 s a player, emotes 1 / 1.2 s.
+// Chat (signed-in players only; guests read): MAX_CHARS characters, one message every 2 s (or the slow mode's gap), the
+// word filter and links (chat.js), the last 200 kept per copy (the village ones replayed to newcomers). Every message
+// and report also goes to the control desk (control.js: settings, mutes and bans, the log, the reports), which the
+// Admin Hub reaches through Universe with signed commands (POST /v1/admin: ADMIN_KEYS, not TICKET_KEYS).
+import { MAX_CHARS, cleanText, charCount, filterText } from './chat.js';
+import { RoomControl, DEFAULT_CFG, normCfg, withTimeout } from './control.js';
+export { RoomControl };
 
 const PROTOCOL = 'rebel-universe.v1';
 const VILLAGES = new Set(['hub', 'ronin', 'samurai', 'shogun', 'bushi', 'buke', 'ashigaru', 'kenshi', 'yamabushi', 'sohei', 'wokou', 'warrior', 'cute-creepy', 'chumpz', 'saints-la']);
 const EMOTES = new Set(['cheer', 'wave', 'bow', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam', 'jump', 'kick']);
 const ANIM = /^[a-z0-9_]{1,20}$/, INTERIOR = /^[A-Za-z0-9_-]{1,64}$/;
-const NEAR = 40, MID = 120, COPIES = 24;
+const NEAR = 40, MID = 120, COPIES = 24, CHAT_NEAR = 30, HISTORY = 50, KEEP = 200;
 
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', ...headers } });
 const b64u = s => { const t = String(s).replace(/-/g, '+').replace(/_/g, '/'); const bin = atob(t + '==='.slice((t.length + 3) % 4)); return Uint8Array.from(bin, c => c.charCodeAt(0)); };
 const keyCache = new Map();
-async function publicKeys(env, site) {
-  let list = []; try { const k = JSON.parse(env.TICKET_KEYS || '{}')[site]; list = Array.isArray(k) ? k : k ? [k] : []; } catch (e) { list = []; }
+async function publicKeys(env, site, field = 'TICKET_KEYS') {
+  let list = []; try { const k = JSON.parse(env[field] || '{}')[site]; list = Array.isArray(k) ? k : k ? [k] : []; } catch (e) { list = []; }
   const out = [];
   for (const k of list) {
     if (!keyCache.has(k)) keyCache.set(k, crypto.subtle.importKey('raw', b64u(k), { name: 'Ed25519' }, false, ['verify']));
@@ -38,17 +56,31 @@ async function publicKeys(env, site) {
   }
   return out;
 }
+async function signedBy(keys, body, sig) { const data = new TextEncoder().encode(body), s = b64u(sig); for (const k of keys) if (await crypto.subtle.verify({ name: 'Ed25519' }, k, s, data)) return true; return false; }
 // a ticket this worker can trust: signed by one of its site's keys, for its site, not expired, not too long-lived
 export async function verifyTicket(raw, env, now = Date.now()) {
   const [body, sig] = String(raw || '').split('.');
   if (!body || !sig || body.length > 2400 || sig.length > 100) throw Object.assign(new Error('bad ticket'), { code: 'ticket' });
-  const site = env.SITE || 'dev', keys = await publicKeys(env, site), data = new TextEncoder().encode(body), s = b64u(sig);
-  let ok = false; for (const k of keys) if (await crypto.subtle.verify({ name: 'Ed25519' }, k, s, data)) { ok = true; break; }
-  if (!ok) throw Object.assign(new Error('ticket not signed by this site'), { code: 'ticket' });
+  const site = env.SITE || 'dev';
+  if (!(await signedBy(await publicKeys(env, site), body, sig))) throw Object.assign(new Error('ticket not signed by this site'), { code: 'ticket' });
   const t = JSON.parse(new TextDecoder().decode(b64u(body))), sec = now / 1000;
   if (t.v !== 1 || t.site !== site || !(t.exp > sec) || t.exp - sec > 600 || typeof t.sub !== 'string' || !/^[ug]:[A-Za-z0-9_-]{4,64}$/.test(t.sub)) throw Object.assign(new Error('ticket expired or not for this site'), { code: 'ticket' });
   return t;
 }
+// an Admin Hub command, signed by Universe with its admin key (another key than the tickets': a ticket is never a command)
+export async function verifyAdmin(raw, env, now = Date.now()) {
+  const [body, sig] = String(raw || '').trim().split('.');
+  if (!body || !sig || body.length > 24000 || sig.length > 100) throw new Error('bad command');
+  const site = env.SITE || 'dev';
+  if (!(await signedBy(await publicKeys(env, site, 'ADMIN_KEYS'), body, sig))) throw new Error('not signed by this site');
+  const a = JSON.parse(new TextDecoder().decode(b64u(body))), sec = now / 1000;
+  if (a.v !== 1 || a.typ !== 'mp-admin' || a.site !== site || !(a.exp > sec) || a.exp - sec > 120 || typeof a.cmd !== 'string' || !/^[a-z-]{2,20}$/.test(a.cmd) || typeof a.nonce !== 'string' || !/^[A-Za-z0-9_-]{16,64}$/.test(a.nonce)) throw new Error('expired or not for this site');
+  return a;
+}
+const controlOf = env => env.CONTROL.get(env.CONTROL.idFromName((env.SITE || 'dev') + ':control'));
+// the account's own short code, the same in every room: what a player's Block remembers (never the account id itself)
+async function uidOf(sub) { const d = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode('rebel-universe:uid:v1:' + sub))); return btoa(String.fromCharCode(...d)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '').slice(0, 16); }
+
 function originAllowed(env, origin) {
   if (!origin) return env.ALLOW_NO_ORIGIN === '1'; // tests / tools only
   const exact = String(env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
@@ -62,6 +94,12 @@ export default {
   async fetch(req, env) {
     const url = new URL(req.url);
     if (url.pathname === '/v1/health') return json({ ok: true, site: env.SITE || 'dev', protocol: PROTOCOL });
+    if (url.pathname === '/v1/admin') {
+      if (req.method !== 'POST') return json({ ok: false, error: 'POST only' }, 405);
+      const raw = await req.text();
+      let a; try { a = await verifyAdmin(raw, env); } catch (e) { return json({ ok: false, error: 'not allowed' }, 401); }
+      return controlOf(env).fetch('https://control/admin', { method: 'POST', body: JSON.stringify({ cmd: a.cmd, args: a.args || {}, nonce: a.nonce }) });
+    }
     if (url.pathname !== '/v1/room') return json({ ok: false, error: 'not found' }, 404);
     if (req.headers.get('upgrade')?.toLowerCase() !== 'websocket') return json({ ok: false, error: 'websocket only' }, 426);
     if (!originAllowed(env, req.headers.get('origin'))) return json({ ok: false, error: 'origin' }, 403);
@@ -72,7 +110,7 @@ export default {
     let t;
     try { t = await verifyTicket((protos.find(p => p.startsWith('t.')) || '').slice(2), env); } catch (e) { return json({ ok: false, error: e.code || 'ticket' }, 401); }
     if (t.village && t.village !== village) return json({ ok: false, error: 'ticket is for another village' }, 401);
-    const ident = { sub: t.sub, n: String(t.n || 'Rebel').slice(0, 40), k: ['discord', 'name', 'guest'].includes(t.k) ? t.k : 'guest', av: typeof t.av === 'string' && /^https:\/\/cdn\.discordapp\.com\//.test(t.av) ? t.av.slice(0, 160) : '', look: t.look && typeof t.look === 'object' ? t.look : { t: 'starter' } };
+    const ident = { sub: t.sub, u: await uidOf(t.sub), n: String(t.n || 'Rebel').slice(0, 40), k: ['discord', 'name', 'guest'].includes(t.k) ? t.k : 'guest', av: typeof t.av === 'string' && /^https:\/\/cdn\.discordapp\.com\//.test(t.av) ? t.av.slice(0, 160) : '', look: t.look && typeof t.look === 'object' ? t.look : { t: 'starter' } };
     const site = env.SITE || 'dev';
     for (let copy = want || 1; copy <= (want || COPIES); copy++) {
       const stub = env.ROOMS.get(env.ROOMS.idFromName(`${site}:${village}:${copy}`));
@@ -86,32 +124,72 @@ export default {
 
 export class RoomCopy {
   constructor(ctx, env) {
-    this.ctx = ctx; this.env = env; this.max = Math.max(2, Math.min(200, +env.ROOM_MAX || 50));
-    this.peers = new Map(); this.nextId = 1;
+    this.ctx = ctx; this.env = env; this.max = Math.max(2, Math.min(200, +env.ROOM_MAX || 50)); this.site = env.SITE || 'dev';
+    this.sql = ctx.storage.sql;
+    this.sql.exec('CREATE TABLE IF NOT EXISTS chat (i INTEGER PRIMARY KEY AUTOINCREMENT, at INTEGER, ch TEXT, pid INTEGER, sub TEXT, n TEXT, k TEXT, u TEXT, x TEXT, tid INTEGER, tn TEXT, tsub TEXT, del INTEGER DEFAULT 0)');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT)');
+    this.name = this.kv('name'); this.cfg = null;
+    try { const c = this.kv('cfg'); if (c) this.cfg = normCfg(JSON.parse(c)); } catch (e) {}
+    this.peers = new Map(); this.nextId = Math.max(1, +this.kv('next') || 1); // (ids never come back in a copy: old chat lines keep theirs)
     // waking from hibernation: who is here comes back from the sockets' attachments
     for (const ws of ctx.getWebSockets()) { const a = ws.deserializeAttachment(); if (a && a.id) { this.peers.set(ws, this.live(a)); this.nextId = Math.max(this.nextId, a.id + 1); } }
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('{"t":"ping"}', '{"t":"pong"}'));
   }
-  live(a) { return { ...a, last: new Map(), win: 0, cnt: 0, em: 0 }; }
-  slim(p) { return { id: p.id, sub: p.sub, n: p.n, k: p.k, av: p.av, look: p.look, s: p.s, village: p.village, copy: p.copy }; }
-  pub(p) { return { id: p.id, n: p.n, k: p.k, av: p.av, look: p.look, s: p.s }; }
+  kv(k) { const r = this.sql.exec('SELECT v FROM kv WHERE k = ?', k).toArray()[0]; return r ? r.v : null; }
+  kvSet(k, v) { this.sql.exec('INSERT INTO kv (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v', k, String(v)); }
+  live(a) { return { mute: 0, ...a, last: new Map(), win: 0, cnt: 0, em: 0, said: 0, lastX: '', rep: 0, reps: 0 }; }
+  slim(p) { return { id: p.id, sub: p.sub, u: p.u, n: p.n, k: p.k, av: p.av, look: p.look, s: p.s, village: p.village, copy: p.copy, mute: p.mute || 0, j: p.j }; }
+  pub(p) { return { id: p.id, n: p.n, k: p.k, u: p.u, av: p.av, look: p.look, s: p.s }; }
+  control() { return controlOf(this.env); }
+  toControl(path, body) { // (not waited on: the message is out already)
+    const p = this.control().fetch('https://control' + path, { method: 'POST', body: JSON.stringify(body) }).catch(() => {});
+    try { this.ctx.waitUntil(p); } catch (e) {}
+  }
+  setCfg(c) { const n = normCfg(c), was = JSON.stringify(this.cfg); this.cfg = n; if (JSON.stringify(n) !== was) this.kvSet('cfg', JSON.stringify(n)); return n; }
+  // the control desk: is this account banned or muted, and the settings (it also learns this copy is open). If the desk
+  // does not answer in time the player comes in all the same
+  async check(sub) {
+    try {
+      const r = await withTimeout(this.control().fetch('https://control/check', { method: 'POST', body: JSON.stringify({ room: this.name, sub }) }), 2500);
+      const d = await r.json();
+      if (d.cfg) this.setCfg(d.cfg);
+      return { ban: +d.ban || 0, mute: +d.mute || 0 };
+    } catch (e) { return { ban: 0, mute: 0 }; }
+  }
+  async config() { if (!this.cfg) await this.check(null); return this.cfg || normCfg(DEFAULT_CFG); }
+  history() {
+    return this.sql.exec("SELECT i, at, pid, n, k, u, x FROM chat WHERE ch = 'v' AND del = 0 ORDER BY i DESC LIMIT ?", HISTORY).toArray().reverse()
+      .map(r => ({ i: r.i, ch: 'v', id: r.pid, n: r.n, k: r.k, u: r.u, x: r.x, at: r.at }));
+  }
   async fetch(req) {
-    const url = new URL(req.url), ident = JSON.parse(req.headers.get('x-ru-ident') || 'null');
+    const url = new URL(req.url);
+    if (url.pathname === '/ctl') return this.ctl(await req.json().catch(() => ({})));
+    const ident = JSON.parse(req.headers.get('x-ru-ident') || 'null');
     if (!ident || req.headers.get('upgrade') !== 'websocket') return json({ ok: false }, 400);
     // one socket per account: an older one is told and closed (guests get a new id with every ticket)
-    for (const [w, p] of [...this.peers]) if (p.sub === ident.sub) { try { w.send('{"t":"dup"}'); w.close(4001, 'opened elsewhere'); } catch (e) {} this.drop(w); }
+    for (const [w, p] of [...this.peers]) if (p.sub === ident.sub) { this.part(w, '{"t":"dup"}', 4001, 'opened elsewhere'); }
     if (this.peers.size >= this.max) return json({ ok: false, full: true }, 409);
-    const village = url.searchParams.get('village'), copy = +url.searchParams.get('copy');
+    const village = url.searchParams.get('village'), copy = +url.searchParams.get('copy'), name = `${this.site}:${village}:${copy}`;
+    if (this.name !== name) { this.name = name; this.kvSet('name', name); }
+    const chk = await this.check(ident.sub), now = Date.now();
+    if (this.peers.size >= this.max) return json({ ok: false, full: true }, 409); // (others came in meanwhile)
     const [client, server] = Object.values(new WebSocketPair());
     this.ctx.acceptWebSocket(server);
-    const p = this.live({ id: this.nextId++, ...ident, s: null, village, copy });
+    if (chk.ban > now) { // banned: told why, then closed (the page stops knocking)
+      server.send(JSON.stringify({ t: 'kick', why: 'banned', until: chk.ban })); server.close(4003, 'banned');
+      return new Response(null, { status: 101, webSocket: client, headers: { 'sec-websocket-protocol': PROTOCOL } });
+    }
+    const p = this.live({ id: this.nextId++, ...ident, s: null, village, copy, mute: chk.mute > now ? chk.mute : 0, j: now });
+    this.kvSet('next', this.nextId);
     server.serializeAttachment(this.slim(p)); this.peers.set(server, p);
-    server.send(JSON.stringify({ t: 'hi', you: p.id, room: { village, copy, max: this.max }, peers: [...this.peers.values()].filter(q => q !== p).map(q => this.pub(q)) }));
+    const cfg = this.cfg || normCfg(DEFAULT_CFG);
+    server.send(JSON.stringify({ t: 'hi', you: p.id, u: p.u, room: { village, copy, max: this.max }, peers: [...this.peers.values()].filter(q => q !== p).map(q => this.pub(q)),
+      hist: this.history(), cfg: { chat: cfg.chat, slow: cfg.slow }, mute: p.mute }));
     const join = JSON.stringify({ t: 'j', ...this.pub(p) });
     for (const w of this.peers.keys()) if (w !== server) try { w.send(join); } catch (e) {}
     return new Response(null, { status: 101, webSocket: client, headers: { 'sec-websocket-protocol': PROTOCOL } });
   }
-  webSocketMessage(ws, data) {
+  async webSocketMessage(ws, data) {
     const p = this.peers.get(ws); if (!p) return;
     if (typeof data !== 'string' || data.length > 1024) return;
     const now = Date.now();
@@ -120,6 +198,8 @@ export class RoomCopy {
     let m; try { m = JSON.parse(data); } catch (e) { return; }
     if (m && m.t === 's') this.state(ws, p, m, now);
     else if (m && m.t === 'e') this.emote(ws, p, m, now);
+    else if (m && m.t === 'c') await this.chat(ws, p, m, now);
+    else if (m && m.t === 'rp') this.report(ws, p, m, now);
   }
   state(ws, p, m, now) {
     const num = v => typeof v === 'number' && Number.isFinite(v), q = Array.isArray(m.p) ? m.p : []; // numbers only (JSON turns NaN into null)
@@ -142,6 +222,76 @@ export class RoomCopy {
     if (!EMOTES.has(m.e) || now - p.em < 1200) return; p.em = now;
     const msg = JSON.stringify({ t: 'e', id: p.id, e: m.e });
     for (const [w, o] of this.peers) if (w !== ws && (!o.s || !p.s || o.s[5] === p.s[5])) try { w.send(msg); } catch (e) {}
+  }
+  // a chat message: checked, filtered, kept, sent to whoever it is for (the sender too, as it was shown), and logged
+  async chat(ws, p, m, now) {
+    const no = o => { try { ws.send(JSON.stringify({ t: 'cx', ...o })); } catch (e) {} };
+    if (p.k === 'guest') return no({ why: 'guest' });
+    const cfg = await this.config();
+    if (!this.peers.has(ws)) return;
+    if (!cfg.chat) return no({ why: 'off' });
+    if (p.mute > now) return no({ why: 'muted', until: p.mute });
+    const gap = cfg.slow * 1000;
+    if (now - p.said < gap) return no({ why: 'slow', wait: gap - (now - p.said) });
+    const raw = cleanText(m.x);
+    if (!raw) return no({ why: 'empty' });
+    if (charCount(raw) > MAX_CHARS) return no({ why: 'long', max: MAX_CHARS });
+    if (raw.toLowerCase() === p.lastX && now - p.said < 30000) return no({ why: 'same' });
+    const ch = m.ch === 'v' ? 'v' : m.ch === 'w' ? 'w' : 'n';
+    let to = null;
+    if (ch === 'w') { for (const o of this.peers.values()) if (o.id === m.to) to = o; if (!to || to === p) return no({ why: 'gone' }); }
+    if (ch === 'n' && !p.s) return no({ why: 'nopos' });
+    const { text } = filterText(raw, cfg);
+    p.said = now; p.lastX = raw.toLowerCase();
+    const row = this.sql.exec('INSERT INTO chat (at, ch, pid, sub, n, k, u, x, tid, tn, tsub) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING i',
+      now, ch, p.id, p.sub, p.n, p.k, p.u, text, to ? to.id : null, to ? to.n : null, to ? to.sub : null).one();
+    if (row.i % 20 === 0) this.sql.exec('DELETE FROM chat WHERE i <= ?', row.i - KEEP);
+    const msg = { i: row.i, ch, id: p.id, n: p.n, k: p.k, u: p.u, x: text, at: now, ...(to ? { to: to.id, tn: to.n } : {}) };
+    const out = JSON.stringify({ t: 'c', m: msg });
+    const near = o => o === p || (o.s && p.s && o.s[5] === p.s[5] && Math.hypot(o.s[0] - p.s[0], o.s[2] - p.s[2]) <= CHAT_NEAR);
+    for (const [w, o] of this.peers) if (ch === 'v' || (ch === 'w' ? o === p || o === to : near(o))) try { w.send(out); } catch (e) {}
+    this.toControl('/log', { room: this.name, m: msg, sub: p.sub, raw: raw !== text ? raw : null, tsub: to ? to.sub : null });
+  }
+  // a player's report: the message (kept here; a whisper only by someone it was between) or the player, with the
+  // chat around it, to the control desk
+  report(ws, p, m, now) {
+    const no = why => { try { ws.send(JSON.stringify({ t: 'cx', why })); } catch (e) {} };
+    if (now - p.rep < 15000 || p.reps >= 20) return no('report-slow');
+    let msg = null, target = null;
+    if (Number.isInteger(m.i)) {
+      const r = this.sql.exec('SELECT * FROM chat WHERE i = ?', m.i).toArray()[0];
+      if (r && (r.ch !== 'w' || r.sub === p.sub || r.tsub === p.sub)) { msg = { i: r.i, ch: r.ch, x: r.x, at: r.at, tn: r.tn }; target = { sub: r.sub, n: r.n, k: r.k, u: r.u }; }
+    } else if (Number.isInteger(m.id)) {
+      for (const o of this.peers.values()) if (o.id === m.id) target = { sub: o.sub, n: o.n, k: o.k, u: o.u };
+    }
+    if (!target || target.sub === p.sub) return no('report-none');
+    p.rep = now; p.reps++;
+    const why = ['spam', 'abuse', 'scam', 'other'].includes(m.why) ? m.why : 'other';
+    const context = this.sql.exec("SELECT i, at, ch, n, sub, x FROM chat WHERE ch != 'w' AND at > ? ORDER BY i DESC LIMIT 12", now - 3600000).toArray().reverse();
+    this.toControl('/report', { room: this.name, why, note: cleanText(m.note).slice(0, 200), by: { sub: p.sub, n: p.n, k: p.k }, target, msg, context, where: p.s });
+    try { ws.send('{"t":"rpok"}'); } catch (e) {}
+  }
+  // from the control desk (an admin's command; nothing else can reach a room's own address)
+  ctl(op) {
+    const all = o => { const s = JSON.stringify(o); for (const w of this.peers.keys()) try { w.send(s); } catch (e) {} };
+    let hit = 0;
+    if (op.op === 'who') {
+      const players = [...this.peers.values()].map(p => ({ id: p.id, sub: p.sub, u: p.u, n: p.n, k: p.k, look: p.look ? { t: p.look.t, col: p.look.col, tok: p.look.tok } : null, s: p.s, mute: p.mute > Date.now() ? p.mute : 0, j: p.j }));
+      return json({ ok: true, room: this.name, players, hit: players.length });
+    }
+    if (op.op === 'cfg') { const c = this.setCfg(op.cfg); all({ t: 'cfg', chat: c.chat, slow: c.slow }); hit = this.peers.size; }
+    if (op.op === 'mute') for (const [w, p] of this.peers) if (p.sub === op.sub) { p.mute = +op.until || 0; hit++; try { w.serializeAttachment(this.slim(p)); w.send(JSON.stringify({ t: 'cm', until: p.mute })); } catch (e) {} }
+    if (op.op === 'kick') for (const [w, p] of [...this.peers]) if (p.sub === op.sub) { hit++; this.part(w, JSON.stringify({ t: 'kick', why: op.why === 'banned' ? 'banned' : 'kick', until: +op.until || 0 }), 4003, 'kicked'); }
+    if (op.op === 'del' && +op.i > 0) { this.sql.exec('UPDATE chat SET del = 1 WHERE i = ?', +op.i); all({ t: 'cd', i: +op.i }); hit = 1; }
+    if (op.op === 'clear') { this.sql.exec('UPDATE chat SET del = 1'); all({ t: 'cc' }); hit = 1; }
+    return json({ ok: true, room: this.name, hit });
+  }
+  // a player sent away (another tab, a kick or a ban): told why, its socket marked gone (a room waking from hibernation
+  // must not take it back while the close is still under way) and closed
+  part(ws, msg, code, reason) {
+    try { ws.serializeAttachment({ gone: true }); } catch (e) {}
+    try { ws.send(msg); ws.close(code, reason); } catch (e) {}
+    this.drop(ws);
   }
   drop(ws) {
     const p = this.peers.get(ws); if (!p) return; this.peers.delete(ws);
