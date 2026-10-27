@@ -212,6 +212,10 @@
     const sh = H.shadows?.();
     try { if (sh) m.meshes.forEach(x => sh.removeShadowCaster(x)); } catch (e) {}
     try { m.extra.forEach(g => g.dispose()); } catch (e) {}
+    // the copy's meshes hang straight under the holder (loadModel), not under its root, so the copy's own dispose (root,
+    // skeleton, moves) left them behind with a dead skeleton: stretched triangles wherever that player was. They go first;
+    // their materials and geometry stay (the downloaded file's, shared with the other copies)
+    if (m.inst) for (const x of m.meshes) { if (m.inst.rootNodes.includes(x)) continue; try { if (!x.isDisposed()) x.dispose(false, false); } catch (e) {} }
     try { if (m.inst) m.inst.dispose(); else m.node?.dispose(false, false); } catch (e) {}
     p.holder.scaling.setAll(1); placeTag(p);
   }
