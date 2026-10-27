@@ -13,7 +13,7 @@ import { econSessionOf, isNameSession } from './_econ.mjs';
 import { walletOf, holderOf, redis } from './_wallet.mjs';
 
 const TTL = 120;
-const ROOM_SERVERS = { prod: '', dev: 'wss://rebel-universe-rooms-dev.miguel-a-concepcion.workers.dev' }; // the deployed realtime/ workers (MP_ROOMS_URL wins); prod once deployed
+const ROOM_SERVERS = { prod: 'wss://rebel-universe-rooms.miguel-a-concepcion.workers.dev', dev: 'wss://rebel-universe-rooms-dev.miguel-a-concepcion.workers.dev' }; // the deployed realtime/ workers (MP_ROOMS_URL wins)
 const VILLAGES = new Set(['hub', 'ronin', 'samurai', 'shogun', 'bushi', 'buke', 'ashigaru', 'kenshi', 'yamabushi', 'sohei', 'wokou', 'warrior', 'cute-creepy', 'chumpz', 'saints-la']);
 const FRIEND_KITS = { chumpz: 'chz_ape_racer' }; // an unforged friend NFT plays this kit character (village.html FRIEND_KIT_STANDIN)
 const STORE = /^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\/[A-Za-z0-9._~%\/-]{1,400}\.glb$/;
