@@ -30327,8 +30327,9 @@ function showSavedMinimap() {
 function buildVillageHudMap() {
   if (!window.VillageHud?.buildMap || buildVillageHudMap.done) return;
   buildVillageHudMap.done = true;
-  setTimeout(() => window.VillageHud.buildMap(320, 1536), 600);
-  setTimeout(() => window.VillageHud.buildMap(320, 1536), 30000);
+  const mapPx = LITE_GRAPHICS ? 768 : 1536; // (a phone shows it as a 124 px circle: 768 is still sharper than that, at a quarter of the memory)
+  setTimeout(() => window.VillageHud.buildMap(320, mapPx), 600);
+  setTimeout(() => window.VillageHud.buildMap(320, mapPx), 30000);
 }
 
 function markVillageStartupInteractive() {
