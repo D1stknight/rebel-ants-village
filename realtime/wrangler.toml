@@ -38,7 +38,7 @@ workers_dev = true
 [env.dev.vars]
 SITE = "dev"
 TICKET_KEYS = '{"dev":["vpY3tguDgnHCEIroe4rR9SQBXdyrB21i4nepUkDPtmg"]}'
-ADMIN_KEYS = '{}'
+ADMIN_KEYS = '{"dev":["x8vRx7LaFuUS3cAAwwjujf0d0rZk5OWrci2NFwsmseE"]}'
 ALLOWED_ORIGINS = "https://rebel-ants-village-git-dev-miguel-concepcions-projects.vercel.app"
 ALLOWED_ORIGIN_SUFFIX = "-miguel-concepcions-projects.vercel.app"
 ALLOW_LOCAL = "1"
