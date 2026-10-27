@@ -351,6 +351,8 @@ body.in-game #vcChat,body.in-game #vcBtn,body.in-game #vcPanel,body.in-game #vcM
   function room(kind, d) {
     if (!started) return;
     if (kind === 'hello') {
+      // a room server without the chat (step 2's: its hello has no settings) gets no chat window, nothing typed goes nowhere
+      if (!d.cfg) { live = false; if (open) close(); el.box.classList.remove('on'); el.btn.classList.remove('on'); return; }
       live = true; me = { id: d.you, u: d.u || '' }; cfg = { chat: d.cfg?.chat !== false, slow: d.cfg?.slow || 2 }; mutedUntil = d.mute || 0; kicked = false; banned = 0;
       el.box.classList.add('on'); el.btn.classList.add('on');
       if (!histShown) { histShown = true; for (const m of d.hist || []) if (!(m.u && (blocked[m.u] || muted[m.u]))) addLine(m, { earlier: true }); }
