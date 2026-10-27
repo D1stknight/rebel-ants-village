@@ -8430,6 +8430,18 @@ function getToroTemplate(key, make, material) {
   return t;
 }
 
+// The toro's glows are additive cards, and fog mixes every texel of a card toward the fog colour, the black ones too: in
+// fog, heat or rain each halo drew a fog-coloured square round the flame (Miguel, Oct 27). So these glows skip the scene
+// fog and dim with the distance instead, a little slower than the lantern itself: its light shines through the mist.
+function toroGlowFogFade(pos) {
+  const cam = scene.activeCamera;
+  if (!cam || !pos || scene.fogEnabled === false || scene.fogMode === BABYLON.Scene.FOGMODE_NONE) return 1;
+  const d = BABYLON.Vector3.Distance(cam.globalPosition, pos) * .7;
+  if (scene.fogMode === BABYLON.Scene.FOGMODE_EXP2) return Math.exp(-((d * scene.fogDensity) ** 2));
+  if (scene.fogMode === BABYLON.Scene.FOGMODE_EXP) return Math.exp(-d * scene.fogDensity);
+  return Math.max(0, Math.min(1, (scene.fogEnd - d) / Math.max(1e-3, scene.fogEnd - scene.fogStart)));
+}
+
 function buildToro(root, glowColor) {
   glowColor = glowColor || '#ffdd88';
 
@@ -8750,6 +8762,7 @@ function buildToro(root, glowColor) {
       mesh.material?.emissiveColor ? mesh.material.emissiveColor.clone() : null;
     mesh.metadata._toroPulseSeed = root.metadata._toroFlickerSeed + i * 0.73;
     mesh.isPickable = false;
+    if (mesh.material?.alphaMode === BABYLON.Engine.ALPHA_ADD) { mesh.material.fogEnabled = false; mesh.metadata._toroFogFade = true; } // see toroGlowFogFade
   });
 
   root.metadata._toroFlickerObserver = scene.onBeforeRenderObservable.add(() => {
@@ -8762,6 +8775,7 @@ function buildToro(root, glowColor) {
     root.metadata._lastToroFarGlowUpdateAt = now;
     const t = now * 0.001;
     const fakeFactor = farFromPlayer ? 0.06 : getFakeLightStateFactor();
+    const fogFade = toroGlowFogFade(pos);
 
     root.metadata._toroGlowMeshes.forEach((mesh, i) => {
       if (!mesh || mesh.isDisposed()) return;
@@ -8816,7 +8830,7 @@ function buildToro(root, glowColor) {
 
       if (mat && typeof mat.alpha === 'number') {
         const baseAlpha = mesh.metadata?._toroBaseAlpha ?? mat.alpha;
-        mat.alpha = Math.max(0.02, baseAlpha * Math.max(.06, fakeFactor) * (0.96 + (pulse - 1) * 0.8));
+        mat.alpha = Math.max(0.02, baseAlpha * Math.max(.06, fakeFactor) * (0.96 + (pulse - 1) * 0.8)) * (mesh.metadata._toroFogFade ? fogFade : 1);
       }
 
       if (mat && mat.emissiveColor && mesh.metadata?._toroBaseEmissive) {
