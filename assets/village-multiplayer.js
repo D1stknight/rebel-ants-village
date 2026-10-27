@@ -343,10 +343,22 @@
       }
     }
     list.sort((a, b) => a.d - b.d);
+    // the nearest few as their own model, at most maxFull: one drawn stays while it is within two places or 4 m of the
+    // nearest few (and 8 m past the range), until someone clearly nearer (3 m) needs its place, so players at about the same
+    // distance don't swap back and forth (each swap made a new copy, and loaded the file again once it had gone)
+    const able = p => p.look?.t !== 'capsule', edge = list.length ? list[Math.min(list.length, maxFull) - 1].d : 0;
+    let free = maxFull;
+    list.forEach((p, i) => { if (!p.model && !p.loading) return; if (able(p) && p.d < FULL_R + 8 && (i < maxFull + 2 || p.d < edge + 4)) free--; else if (p.model) disposeModel(p); });
     list.forEach((p, i) => {
-      const full = i < maxFull && p.d < FULL_R && p.look?.t !== 'capsule';
-      if (full && !p.model && !p.loading) loadModel(p);
-      if (!full && p.model) disposeModel(p);
+      if (i >= maxFull || p.d >= FULL_R || p.model || p.loading || !able(p)) return;
+      if (free <= 0) {
+        let far = null; for (const q of list) if (q.model && q !== p) far = q; // (the farthest drawn)
+        if (!far || far.d < p.d + 3) return;
+        disposeModel(far); free++;
+      }
+      free--; loadModel(p);
+    });
+    list.forEach(p => {
       if (!p.model) capsuleOf(p).setEnabled(true); else if (p.capsule) p.capsule.setEnabled(false);
       if (p.model) {
         if (p.once) playOnce(p, p.once, true);
