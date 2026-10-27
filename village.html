@@ -6645,6 +6645,19 @@ const LITE_GRAPHICS = (() => {
   } catch (e) { return false; }
 })();
 window._liteGraphics = LITE_GRAPHICS;
+// Babylon keeps a JS Vector3 for every vertex of a mesh each time its bounds are refreshed (for picking a skinned mesh in
+// its current pose), and every instanced kit piece refreshes its template's: about 110 MB of the Hub's memory on a phone.
+// Universe never picks a mesh in a moved pose, so bounds are refreshed without that copy (a pick still builds one from
+// the geometry, only for the meshes it tests). The bounds themselves are the same.
+for (const C of [BABYLON.AbstractMesh, BABYLON.Mesh, BABYLON.InstancedMesh]) {
+  const proto = C && C.prototype;
+  if (!proto || !Object.prototype.hasOwnProperty.call(proto, 'refreshBoundingInfo') || proto.refreshBoundingInfo._noPositions) continue;
+  const orig = proto.refreshBoundingInfo;
+  proto.refreshBoundingInfo = function (a = false, m = false) {
+    return orig.call(this, a && typeof a === 'object' ? { updatePositionsArray: false, ...a } : { applySkeleton: a, applyMorph: m, updatePositionsArray: false });
+  };
+  proto.refreshBoundingInfo._noPositions = true;
+}
 if (LITE_GRAPHICS) {
   for (const k of ['shrine_2', 'dojo_7', 'dojo_5']) if (ASSETS[k]?.path) ASSETS[k].path = ASSETS[k].path.replace('/assets/buildings/', '/assets/buildings/lite/');
   if ((window.devicePixelRatio || 1) > 2) engine.setHardwareScalingLevel(1 / 2);   // twice the CSS pixels, not 3x
