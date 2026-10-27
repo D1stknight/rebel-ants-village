@@ -2644,7 +2644,7 @@ const RR = { job: false, poll: null, tick: null, err: null, wearing: false, step
 // Saint's rig job (local job log, 325 s: bind 31 s, moves 93, cleanup 183, export 265, qa 306), so the bar moves at the
 // job's pace and jumps ahead when a step ends early; between polls it creeps on the clock, never past the next step
 const RR_AT = { starting: 0, download: .01, armor: .02, head: .02, normalize: .02, landmarks: .03, skeleton: .04, weights: .05, bind: .11, hands: .19, cloth: .2,
-  animate: .22, moves: .29, weapons: .34, games: .35, cleanup: .56, export: .81, headcloth: .87, movespack: .88, gamespack: .88, qa: .94, thumb: .98, done: .99, saving: .99 };
+  animate: .22, moves: .29, weapons: .34, games: .35, cleanup: .56, export: .81, headcloth: .87, jaw: .875, movespack: .88, gamespack: .88, qa: .94, thumb: .98, done: .99, saving: .99 };
 const RR_EST = 340;   // seconds: Saint #1998's re-rig took 341 s
 const rrStage = (a) => a < .05 ? 'Reading the sculpt' : a < .2 ? 'Setting it on its bones' : a < .56 ? 'Teaching every move' : a < .81 ? 'Cleaning up the moves' : a < .94 ? 'Packing the rig' : 'Checking and saving';
 function rrPct() {
@@ -2662,7 +2662,7 @@ function rrProgressUI() {
   if (e) e.textContent = RR.wearing ? 'done in a moment' : `${(left => left < 60 ? 'under a minute' : `about ${fmtMin(left)}`)(Math.max(15, RR_EST * (1 - p / 100)))} left · you can close this page`;
 }
 function rrBoxHTML() {
-  if (!(FRIEND || (isM1() && state.assets?.master?.buildId === state.assets?.buildId)) || !state.own?.admin || !state.assets?.buildId || !state.assets?.glb) return '';
+  if (!(FRIEND || isM1()) || !state.own?.admin || !state.assets?.buildId || !state.assets?.glb) return '';
   return `<div class="gbox" id="rrBox"><div class="sep"></div><div class="eyebrow">ADMIN · RIGGER</div><div id="rrIn"></div></div>`;
 }
 // Oct 26 (rigger 2.40): Rebel #001 on the Forge Rigger. #001 plays the starter ant; an admin rigs its own body from the
@@ -2670,19 +2670,26 @@ function rrBoxHTML() {
 // forge, no points), then Awakens it and makes it #001's character as for any forged Rebel. The same box re-rigs it.
 const isM1 = () => glMaster() && !REF && !!state.own?.admin;
 const m1Rigged = () => !!state.assets?.master?.output?.forgeRigGlbUrl;
+// Oct 26 (rigger 2.41): #001 forged from Miguel's drawing (a build of its own, not the master body above) gets a jaw on the
+// awakened card: a re-rig of that sculpt with a mixamorig_Jaw joint (/api/forge-rig-start { buildId, force, jaw }); the
+// cloth over its mouth opens when a voice app turns it, every move stays as it is. Later re-rigs keep it.
+const rrJawMode = () => isM1() && state.step === 4 && !!state.assets?.buildId && state.assets?.master?.buildId !== state.assets?.buildId;
+const rrHasJaw = () => !!(state.assets?.builds || []).find((b) => b.buildId === state.assets?.buildId)?.forgeRig?.options?.jaw;
 function m1BoxHTML() { return isM1() ? `<div class="gbox" id="rrBox"><div class="sep"></div><div class="eyebrow">ADMIN · #001 ON THE FORGE RIGGER</div><div id="rrIn"></div></div>` : ''; }
 // a rig of #001 started earlier (another tab, before a reload) is picked up on the summon card
 function m1PickUp() { const fr = state.assets?.master?.forgeRig; if (!RR.job && fr?.status === 'running') { RR.buildId = state.assets.master.buildId; RR.first = !m1Rigged(); rrGo(fr.progress, Date.parse(fr.startedAt) || Date.now()); rrPoll(); } }
 function rrBox() {
   const el = $('#rrIn'); if (!el) return;
-  const m1 = isM1(), first = m1 && !m1Rigged(), was1 = m1 && RR.first;   // (was1: the job shown is #001's first rig)
-  el.innerHTML = RR.job || RR.wearing ? `<div class="rr-run"><div class="rr-row"><div class="note live" style="margin-top:0"><b>${was1 ? 'Rigging #001' : 'Re-rigging'}</b> · <span id="rrStage"></span></div><span class="rr-pct" id="rrPct">0%</span></div>
+  const jm = rrJawMode(), jaw = jm && rrHasJaw(), m1 = isM1() && !jm, first = m1 && !m1Rigged(), was1 = m1 && RR.first;   // (was1: the job shown is #001's first rig)
+  el.innerHTML = RR.job || RR.wearing ? `<div class="rr-run"><div class="rr-row"><div class="note live" style="margin-top:0"><b>${was1 ? 'Rigging #001' : jm && RR.jaw ? 'Adding the jaw' : 'Re-rigging'}</b> · <span id="rrStage"></span></div><span class="rr-pct" id="rrPct">0%</span></div>
        <div class="bar"><i id="rrBar" style="width:${Math.floor(RR.pct || 0)}%"></i></div><div class="rr-eta" id="rrEta"></div></div>`
     : `<div class="note" style="margin-top:0">${RR.err ? `<b>The ${was1 ? 'rig' : 're-rig'} stopped</b> · ${esc(RR.err)}. ` : RR.done ? `<b>${was1 ? 'Rigged' : 'Re-rigged'}</b> · ${esc(RR.done)} ✓ ` : ''}${first
         ? `Rig #001's own body (the starter ant) on its own skeleton with the Forge Rigger: the same look, a full set of moves, no forge or points used. When it is done, Awaken it and MAKE THIS MY REBEL: #001 plays it in the lobby and the village.`
         : m1 ? `Re-rig #001 with the latest rigger: the same body and joints, no forge or points used. Its saved character follows the new rig.`
+        : jm && !jaw ? `Give #001 a jaw: the cloth over his mouth opens when a voice turns it (the mixamorig_Jaw joint), every move stays as it is. A re-rig of this sculpt, no forge or points used; his saved character follows the new rig.`
+        : jm ? `#001 has his jaw (mixamorig_Jaw: turn it about its X axis to open, up to about 18°). Re-rig with the latest rigger: the same sculpt, the jaw kept.`
         : `Re-rig this ${NOUN} with the latest rigger: the same sculpt, no forge or points used. The saved character follows the new rig.`}</div>
-       <div class="cta" style="margin-top:10px"><button class="btn wide" id="rrBtn">${first ? 'RIG #001 ON THE FORGE RIGGER' : m1 ? 'RE-RIG #001 WITH THE LATEST RIGGER' : 'RE-RIG WITH THE LATEST RIGGER'}</button></div>`;
+       <div class="cta" style="margin-top:10px"><button class="btn wide" id="rrBtn">${first ? 'RIG #001 ON THE FORGE RIGGER' : m1 ? 'RE-RIG #001 WITH THE LATEST RIGGER' : jm && !jaw ? 'ADD THE JAW TO #001' : jm ? 'RE-RIG #001 · KEEPS THE JAW' : 'RE-RIG WITH THE LATEST RIGGER'}</button></div>`;
   const b = $('#rrBtn'); if (b) b.onclick = rrStart;
   rrProgressUI();
   clearInterval(RR.tick); if (RR.job) RR.tick = setInterval(rrProgressUI, 1000);
@@ -2694,12 +2701,12 @@ function rrPickUp(fr) {
   rrGo(fr.progress, Date.parse(fr.startedAt) || Date.now()); rrPoll();
 }
 async function rrStart() {
-  const m1 = isM1(), id = state.assets?.buildId; if ((!id && !m1) || RR.job) return;
-  RR.first = m1 && !m1Rigged(); rrGo('starting');
+  const jm = rrJawMode(), m1 = isM1() && !jm, id = state.assets?.buildId; if ((!id && !m1) || RR.job) return;
+  RR.first = m1 && !m1Rigged(); RR.jaw = jm && !rrHasJaw(); rrGo('starting');
   try {
-    const d = await api('/api/forge-rig-start', m1 ? { rebel001: true, force: m1Rigged() } : { buildId: id, force: true });
+    const d = await api('/api/forge-rig-start', m1 ? { rebel001: true, force: m1Rigged() } : { buildId: id, force: true, ...(RR.jaw ? { jaw: true } : {}) });
     if (m1) RR.buildId = d.buildId;
-    toast(RR.first ? 'Rigging #001 · about 6 minutes' : 'Re-rig started · about 6 minutes'); rrPoll();
+    toast(RR.first ? 'Rigging #001 · about 6 minutes' : RR.jaw ? 'Adding the jaw · about 6 minutes' : 'Re-rig started · about 6 minutes'); rrPoll();
   }
   catch (e) { RR.job = false; clearInterval(RR.tick); RR.err = e.message || 'could not start'; rrBox(); }
 }
@@ -2713,6 +2720,7 @@ async function rrPoll() {
   const url = d.forgeRigGlbUrl || fr.forgeRigGlbUrl;
   if (fr.status !== 'succeeded' || !url) { RR.err = fr.error || 'the rig did not finish'; rrBox(); return; }
   const secs = Math.round((Date.now() - RR.t0) / 1000);
+  const b = (state.assets?.builds || []).find((x) => x.buildId === id); if (b) b.forgeRig = fr;   // (rrHasJaw reads its options)
   // #001 from the summon card: the new rig is its forged Rebel (AWAKEN MY FORGED REBEL); on the awakened card, as below
   if (isM1() && state.step !== 4) {
     RR.done = secs >= 60 ? `${Math.floor(secs / 60)} min ${secs % 60} s` : `${secs} s`;
@@ -2722,7 +2730,7 @@ async function rrPoll() {
   }
   GL.buildId = id; RR.wearing = true; rrBox();
   try { await glWear(url, fr); } finally { RR.wearing = false; }
-  RR.done = secs >= 60 ? `${Math.floor(secs / 60)} min ${secs % 60} s` : `${secs} s`; toast(`${NOUN} re-rigged`); rrBox();
+  RR.done = secs >= 60 ? `${Math.floor(secs / 60)} min ${secs % 60} s` : `${secs} s`; toast(RR.jaw ? '#001 has his jaw' : `${NOUN} re-rigged`); RR.jaw = false; rrBox();
 }
 // the camera on the hands: both from the front, or one hand from its outer side
 function glCam(side, d = 1.2) {
