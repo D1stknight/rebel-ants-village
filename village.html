@@ -14826,7 +14826,7 @@ function updateGroundWeather(dt) {
   const wetTo = Math.min(1, rain * 1.6); // light rain leaves the ground half wet, heavy rain soaks it
   W.wetness = (W.wetness || 0) < wetTo ? Math.min(wetTo, (W.wetness || 0) + dt * rain / 20) : Math.max(wetTo, (W.wetness || 0) - dt / 180);
   const frost = W.mode === 'cold' ? .28 : 0; // a cold day frosts the ground (the snow cover, thin)
-  W.snowCover = snow > .05 ? Math.min(1, (W.snowCover || 0) + dt * snow / 60)
+  W.snowCover = snow > .05 ? Math.min(1, (W.snowCover || 0) + dt * snow / 24) // a white ground within half a minute (was over a minute)
     : (W.snowCover || 0) < frost ? Math.min(frost, (W.snowCover || 0) + dt / 90) : Math.max(frost, (W.snowCover || 0) - dt / (W.mode === 'cold' ? 900 : 240));
   // the ground shows it (assets/village-terrain.js setWeather): darker and glossy when wet, puddles with rain rings, snow
   const T = window._newTerrain; if (!T?.setWeather) return;

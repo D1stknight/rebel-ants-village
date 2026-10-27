@@ -1386,7 +1386,10 @@ function makeWetGroundMaterial(scene, name, WX, paveK = 1) {
       // the stone's colour is over 1 (lit stone clamps at its texture), so the water darkens the texture itself
       baseColor.rgb *= mix(1.0, 0.6, wetK);
       baseColor.rgb = mix(baseColor.rgb, baseColor.rgb * vec3(0.42, 0.46, 0.5), gPud);
-      float sn = clamp(uWx.y * (0.7 + 0.3 * tvn(vPositionW.xz * 0.8)) * (1.0 - 0.6 * pk) * 1.3, 0.0, 1.0);
+      // snow: the thin even dusting (and a cold day's frost), then drifts that grow and join as it piles up (see the terrain)
+      float mic = tvn(vPositionW.xz * 0.8), sp = tfbm(vPositionW.xz * 0.09 + vec2(3.7, 9.1)) * 0.8 + mic * 0.2;
+      float sn = max(clamp(uWx.y * (0.7 + 0.3 * mic) * (1.0 - 0.6 * pk) * 1.3, 0.0, 1.0),
+        smoothstep(sp - 0.12, sp + 0.05, (uWx.y * (1.0 - 0.15 * pk) - 0.3) * 1.9));
       diffuseColor = mix(diffuseColor, vec3(1.0), sn);
       baseColor.rgb = mix(baseColor.rgb, vec3(0.9, 0.93, 0.97), sn);
     }
@@ -1505,7 +1508,12 @@ function makeTerrainMaterial(scene, maskTex, P, V, SEA, MESA, CITY) {
       gWet = wetK;
       diffuseColor *= mix(1.0, 0.6, wetK * (1.0 - 0.4 * smoothstep(0.3, 0.6, gSlope)));
       diffuseColor = mix(diffuseColor, diffuseColor * vec3(0.42, 0.46, 0.5), gPud);
-      gSnow = clamp(uWx.y * smoothstep(0.5, 0.8, nw.y) * (0.7 + 0.3 * gMicro) * (1.0 - 0.6 * max(gRoad, gPave)) * 1.3, 0.0, 1.0);
+      // snow: first a thin even dusting (also a cold day's frost), then drifts that grow and join as it piles up, until
+      // the paths and yards are white too (Oct 27: on paving it stayed a pale wash: "i dont really see the snow on the floor")
+      float pv = max(gRoad, gPave), sp = tfbm(vPositionW.xz * 0.09 + vec2(3.7, 9.1)) * 0.8 + gMicro * 0.2;
+      float dust = clamp(uWx.y * (0.7 + 0.3 * gMicro) * (1.0 - 0.6 * pv) * 1.3, 0.0, 1.0);
+      float drift = smoothstep(sp - 0.12, sp + 0.05, (uWx.y * (1.0 - 0.15 * pv) - 0.3) * 1.9);
+      gSnow = max(dust, drift) * smoothstep(0.5, 0.8, nw.y);
       diffuseColor = mix(diffuseColor, vec3(0.9, 0.93, 0.97) * (0.92 + 0.08 * gMicro), gSnow);
     }
   `);
