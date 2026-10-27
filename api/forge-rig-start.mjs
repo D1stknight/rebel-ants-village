@@ -11,6 +11,8 @@
 // Oct 20 (rigger 2.36): a build of a friend collection (Chumpz, Saints: assets/friend-collections.json) is rigged as a
 // player with its species' body fixes (job.sh FORGE_FRIEND), never with the Rebels' head sizing.
 // Oct 26 (rigger 2.40): POST {rebel001: true, force?} (admin) rigs Rebel #001's own body on its own joints (see below).
+// Oct 26 (rigger 2.41): POST {buildId, force: true, jaw: true} (admin) re-rigs a build of Rebel #001 with a jaw joint (the cloth
+// over its mouth opens when a voice app turns it; job.sh FORGE_JAW). Later re-rigs of that build keep it; no other Rebel gets one.
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -227,7 +229,7 @@ async function startRebel001(req, res, { force, rec }) {
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
-  const { buildId, force, sourceUrl, skirtfix, headUp, headUrl, armorUrl, anchorsUrl, cutBridges, headScale, npc, handFit, species, gloves, rebel001 } = body(req);
+  const { buildId, force, sourceUrl, skirtfix, headUp, headUrl, armorUrl, anchorsUrl, cutBridges, headScale, npc, handFit, species, gloves, rebel001, jaw } = body(req);
   if (rebel001 === true) {
     try { return await startRebel001(req, res, { force: !!force }); } catch (err) { return res.status(500).json({ ok: false, error: err?.message || String(err) }); }
   }
@@ -238,6 +240,9 @@ export default async function handler(req, res) {
     if (gloves !== undefined) return await startGloves(req, res, rec, buildId, admin, gloves);
     if (rec.master001) return await startRebel001(req, res, { force: !!force, rec });   // a re-rig of #001's build: its own joints again
     if ((sourceUrl || skirtfix || headUp || headUrl || armorUrl || anchorsUrl || cutBridges || headScale || npc || handFit) && !admin) return res.status(401).json({ ok: false, error: 'sourceUrl / skirtfix / headUp / headUrl / armorUrl / anchorsUrl / cutBridges / headScale / npc / handFit require admin' });
+    if (jaw !== undefined && !admin) return res.status(401).json({ ok: false, error: 'jaw requires admin' });
+    if (jaw !== undefined && jaw !== true && jaw !== false) return res.status(400).json({ ok: false, error: 'jaw must be true or false' });
+    if (jaw === true && (npc || !isMaster(rec))) return res.status(400).json({ ok: false, error: 'Only Rebel #001 has a jaw', code: 'jaw_001_only' });
     const hs = headScale == null || headScale === '' ? null : Number(headScale); if (hs !== null && (!Number.isFinite(hs) || hs < 0.8 || hs > 1.1)) return res.status(400).json({ ok: false, error: 'headScale must be 0.8..1.1' });
     const up = Number(headUp || 0); if (!Number.isFinite(up) || up < -20 || up > 25) return res.status(400).json({ ok: false, error: 'headUp must be -20..25 degrees' });
     if (sourceUrl && !SOURCE_OK.test(String(sourceUrl))) return res.status(400).json({ ok: false, error: 'sourceUrl must be a GLB in this repo or our Blob store' });
@@ -249,6 +254,8 @@ export default async function handler(req, res) {
     const cur = rec.forgeRig || {};
     // v2.18 the NPC Forge's hand fit; a Rebel's re-rig keeps the gloves its holder forged (Rebel Forge gloves)
     const hf = npc ? cleanHandFit(handFit) : cleanHandFit(handFit !== undefined ? handFit : cur.options?.handFit);
+    // v2.41 #001's jaw: asked for, or kept from the rig it replaces
+    const withJaw = !npc && isMaster(rec) && (jaw !== undefined ? jaw : !!cur.options?.jaw);
     if (cur.status === 'running' && !(force && admin)) return res.status(200).json({ ok: true, forgeRig: cur, alreadyRunning: true });
     if (cur.status === 'succeeded' && !(force && admin)) return res.status(200).json({ ok: true, forgeRig: cur, alreadyDone: true });
     if (force && !admin) return res.status(401).json({ ok: false, error: 'Re-rigging requires admin' });
@@ -273,7 +280,7 @@ export default async function handler(req, res) {
     // v2.23 NPC species (the NPC Forge's collection): Chumpz are apes, Saints are humans, from the page or the NPC's key
     // (chumpz_ / saints_). Only those get FORGE_NPC_SPECIES; Rebel villagers (ants) run exactly as before.
     const npcSpecies = !npc ? '' : ['ape', 'human'].includes(String(species)) ? String(species) : String(species) === 'ant' ? '' : /^chumpz_/.test(rec.tokenId || '') ? 'ape' : /^saints_/.test(rec.tokenId || '') ? 'human' : '';
-    const { sandbox, cmd } = await runJob(worker, buildId, src, name, optionEnv({ skirtfix, up, headUrl, armorUrl, anchorsUrl, cutBridges, hs, headAuto, npc, npcSpecies, friend, hf }));
+    const { sandbox, cmd } = await runJob(worker, buildId, src, name, { ...optionEnv({ skirtfix, up, headUrl, armorUrl, anchorsUrl, cutBridges, hs, headAuto, npc, npcSpecies, friend, hf }), ...(withJaw ? { FORGE_JAW: '1' } : {}) });
     const next = await updateRigging(buildId, {
       engine: 'forge-rigger',
       status: 'running',
@@ -282,7 +289,9 @@ export default async function handler(req, res) {
       cmdId: cmd.cmdId,
       workerCommit: worker.commit || null,
       sourceGlbUrl: src,
-      options: { skirtfix: !!skirtfix, headUp: up || 0, headUrl: headUrl || null, armorUrl: armorUrl || null, anchorsUrl: anchorsUrl || null, cutBridges: !!cutBridges, headScale: hs, headAuto, npc: !!npc, handFit: hf, species: npcSpecies || null, friend: friend || null },
+      options: { skirtfix: !!skirtfix, headUp: up || 0, headUrl: headUrl || null, armorUrl: armorUrl || null, anchorsUrl: anchorsUrl || null, cutBridges: !!cutBridges, headScale: hs, headAuto, npc: !!npc, handFit: hf, species: npcSpecies || null, friend: friend || null, ...(withJaw ? { jaw: true } : {}) },
+      // #001: the rig a re-rig replaces leads to the new one (forge-rig-status links rigHistory), so its saved character follows it
+      ...(isMaster(rec) && BLOB.test(rec.output?.forgeRigGlbUrl || '') ? { rigHistory: [...new Set([...(cur.rigHistory || []), rec.output.forgeRigGlbUrl])].filter((u) => BLOB.test(u || '')).slice(-20) } : {}),
       startedAt: new Date().toISOString(),
       finishedAt: null,
       error: null
