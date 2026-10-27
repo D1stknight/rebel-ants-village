@@ -15272,6 +15272,13 @@ function updateWeatherRain() {
     snow: cfg.snow || 0, snowFall: (cfg.snowSpeed || .34) * 3.4,
     wind: (cfg.wind || 0) * 6.5, fogDensity: scene.fogMode === BABYLON.Scene.FOGMODE_EXP2 ? scene.fogDensity : 0, light,
     flash: WeatherManager._flashOn ? 1 : 0, ring: .35 + .4 * (WeatherManager.wetness || 0), rooms: !!ActiveInterior });
+  // snow on the roofs and buildings while it lies on the ground (Oct 27)
+  W.snowCaps?.({ cover: WeatherManager.snowCover || 0, rooms: !!ActiveInterior, focus: walkMode && charMesh ? charMesh.position : scene.activeCamera?.target || null, models: snowCapModels });
+}
+// model buildings that take snow on top (VillageWeather.snowCaps: one cap per placed copy; kit pieces come from the kit)
+const SNOW_CAP_MODELS = new Set(['dojo_9', 'dojo_5', 'dojo_6', 'dojo_7', 'shrine_2', 'fence_1', 'rock_1', 'wooden_sign', 'small_bridge', 'lantern_1']);
+function snowCapModels() {
+  return scene.transformNodes.filter(n => !n.parent && SNOW_CAP_MODELS.has(n.metadata?.type) && (n.metadata.isClone === true || n.name?.includes('RootClone_')) && n.isEnabled());
 }
 
 function applyWeatherLighting() {

@@ -534,6 +534,191 @@ void main() {
     ps.manualEmitCount = 10;
   };
 
+  // ── snow on roofs and buildings (Oct 27): a cap over every surface of a piece that faces up with nothing of the piece
+  // over it (a height grid of the piece seen from above), 4 cm off it, in one snow material whose patches grow with the
+  // snow cover like the ground's drifts; spots the roof map shows sheltered (under another roof, a tree) stay clear.
+  // Kit pieces: one cap per kit type, an instance under each placed piece (window.SamuraiKit.placed()); model buildings
+  // and stairs: one cap per copy. Made the first time snow lies, a few milliseconds of work a frame. ──
+  const CAPS = { made: false, mat: null, U: null, occP: null, park: null, type: new Map(), seen: new Set(), list: [], queue: [], job: null, shown: false, scanAt: 0, budget: 0, ms: 0 };
+  const CAP_LIFT = .04, CAP_UP = .42; // metres off the surface; |normal y| it takes (about 65 degrees from flat)
+  const CAP_SKIP = /glow|flame|fire|water|sea|pool|banner|noren|sail|flag|cloth|rope|net|leaf|leaves|blossom|petal|grass|flower|glass|window|shoji|paper|neon|light|lamp|candle|ember|orb|ghost|smoke|mist/i;
+  const capSkipMat = mt => !mt || mt.metadata?.kitGlow || mt.disableLighting || (mt.alpha ?? 1) < .99 || mt.alphaMode === BABYLON.Engine.ALPHA_ADD || mt.needAlphaBlending?.() || CAP_SKIP.test(mt.name || '');
+  // the cap of one piece from its triangles (parts: [{ p positions, n normals or null, i indices }] in one space, y up)
+  function* capGeometry(parts, out) {
+    let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
+    for (const P of parts) for (let k = 0; k < P.p.length; k += 3) { const x = P.p[k], z = P.p[k + 2]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (z < z0) z0 = z; if (z > z1) z1 = z; }
+    if (!(x1 > x0) || !(z1 > z0)) return;
+    const cell = Math.min(.35, Math.max(.05, Math.max(x1 - x0, z1 - z0) / 220));
+    const GW = Math.ceil((x1 - x0) / cell) + 1, GD = Math.ceil((z1 - z0) / cell) + 1, top = new Float32Array(GW * GD).fill(-1e9);
+    let work = 0;
+    // 1: the highest point of the piece over each cell (cell centres inside each triangle seen from above)
+    for (const P of parts) {
+      const p = P.p, I = P.i;
+      for (let k = 0; k < I.length; k += 3) {
+        const a = I[k] * 3, b = I[k + 1] * 3, c = I[k + 2] * 3;
+        const ax = p[a], ay = p[a + 1], az = p[a + 2], bx = p[b], by = p[b + 1], bz = p[b + 2], cx = p[c], cy = p[c + 1], cz = p[c + 2];
+        const den = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz);
+        if (Math.abs(den) < 1e-10) continue; // edge-on from above (a wall)
+        const i0 = Math.max(0, Math.ceil((Math.min(ax, bx, cx) - x0) / cell - .5)), i1 = Math.min(GW - 1, Math.floor((Math.max(ax, bx, cx) - x0) / cell - .5));
+        const j0 = Math.max(0, Math.ceil((Math.min(az, bz, cz) - z0) / cell - .5)), j1 = Math.min(GD - 1, Math.floor((Math.max(az, bz, cz) - z0) / cell - .5));
+        for (let j = j0; j <= j1; j++) {
+          const z = z0 + (j + .5) * cell;
+          for (let i = i0; i <= i1; i++) {
+            const x = x0 + (i + .5) * cell;
+            const u = ((bz - cz) * (x - cx) + (cx - bx) * (z - cz)) / den, v = ((cz - az) * (x - cx) + (ax - cx) * (z - cz)) / den, w = 1 - u - v;
+            if (u < -1e-4 || v < -1e-4 || w < -1e-4) continue;
+            const y = u * ay + v * by + w * cy, q = j * GW + i;
+            if (y > top[q]) top[q] = y;
+          }
+        }
+        if (++work % 3000 === 0) yield;
+      }
+    }
+    // 2: the surfaces that face up (either winding) and are the top of the piece at their points
+    const hAt = (x, z) => { const i = Math.floor((x - x0) / cell), j = Math.floor((z - z0) / cell); return i < 0 || j < 0 || i >= GW || j >= GD ? -1e9 : top[j * GW + i]; };
+    for (const P of parts) {
+      const p = P.p, N = P.n, I = P.i;
+      for (let k = 0; k < I.length; k += 3) {
+        if (++work % 3000 === 0) yield;
+        let ia = I[k], ib = I[k + 1], ic = I[k + 2];
+        const a = ia * 3, b = ib * 3, c = ic * 3;
+        const ux = p[b] - p[a], uy = p[b + 1] - p[a + 1], uz = p[b + 2] - p[a + 2], vx = p[c] - p[a], vy = p[c + 1] - p[a + 1], vz = p[c + 2] - p[a + 2];
+        let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+        const nl = Math.hypot(nx, ny, nz);
+        if (nl < 1e-12 || Math.abs(ny) / nl < CAP_UP) continue;
+        const s = ny < 0 ? -1 : 1; nx *= s / nl; ny *= s / nl; nz *= s / nl;
+        // the plane's height over a point; four points of the triangle checked against the grid
+        const ph = (x, z) => p[a + 1] - (nx * (x - p[a]) + nz * (z - p[a + 2])) / ny;
+        const gx = (p[a] + p[b] + p[c]) / 3, gz = (p[a + 2] + p[b + 2] + p[c + 2]) / 3;
+        let ok = 0;
+        for (const [x, z] of [[gx, gz], [gx * .7 + p[a] * .3, gz * .7 + p[a + 2] * .3], [gx * .7 + p[b] * .3, gz * .7 + p[b + 2] * .3], [gx * .7 + p[c] * .3, gz * .7 + p[c + 2] * .3]]) {
+          const cx = x0 + (Math.floor((x - x0) / cell) + .5) * cell, cz = z0 + (Math.floor((z - z0) / cell) + .5) * cell; // (compared at the cell's centre, where the grid was measured)
+          if (ph(cx, cz) >= hAt(x, z) - .08) ok++;
+        }
+        if (ok < 2) continue;
+        const base = out.p.length / 3;
+        for (const v of [a, b, c]) {
+          let mx = nx, my = ny, mz = nz;
+          if (N) { const qx = N[v], qy = N[v + 1], qz = N[v + 2], d = qx * nx + qy * ny + qz * nz, l = Math.hypot(qx, qy, qz) || 1; if (Math.abs(d) / l > .5) { const f = (d < 0 ? -1 : 1) / l; mx = qx * f; my = qy * f; mz = qz * f; } } // the smooth normal, turned up with the face
+          my += 1; const ml = Math.hypot(mx, my, mz); // (bent toward the sky: snow fills the roof's strips in, so it lights evenly)
+          out.p.push(p[v] + nx * CAP_LIFT, p[v + 1] + ny * CAP_LIFT, p[v + 2] + nz * CAP_LIFT); out.n.push(mx / ml, my / ml, mz / ml);
+        }
+        out.i.push(base, base + 1, base + 2);
+      }
+    }
+  }
+  function* capJob(item, out) {
+    const VB = BABYLON.VertexBuffer, parts = [];
+    if (item.kind === 'kit') {
+      for (const m of window.SamuraiKit?.templateMeshes?.(scene, item.type) || []) {
+        if (capSkipMat(m.material)) continue;
+        const p = m.getVerticesData(VB.PositionKind), n = m.getVerticesData(VB.NormalKind), i = m.getIndices();
+        if (p && i) parts.push({ p, n, i });
+      }
+    } else { // a model copy or a staircase: its meshes in world space
+      for (const m of item.root.getChildMeshes(false)) {
+        if (!m.getTotalVertices?.() || m.metadata?.snowCap || m.skeleton || capSkipMat(m.material) || !m.isEnabled()) continue;
+        const p = m.getVerticesData(VB.PositionKind), n = m.getVerticesData(VB.NormalKind), i = m.getIndices();
+        if (!p || !i) continue;
+        const W = m.computeWorldMatrix(true), wp = new Float32Array(p.length), wn = n ? new Float32Array(n.length) : null, t = new BABYLON.Vector3();
+        for (let k = 0; k < p.length; k += 3) { BABYLON.Vector3.TransformCoordinatesFromFloatsToRef(p[k], p[k + 1], p[k + 2], W, t); wp[k] = t.x; wp[k + 1] = t.y; wp[k + 2] = t.z; }
+        if (n) for (let k = 0; k < n.length; k += 3) { BABYLON.Vector3.TransformNormalFromFloatsToRef(n[k], n[k + 1], n[k + 2], W, t); wn[k] = t.x; wn[k + 1] = t.y; wn[k + 2] = t.z; }
+        parts.push({ p: wp, n: wn, i });
+        yield;
+      }
+    }
+    yield* capGeometry(parts, out);
+  }
+  function makeCaps() {
+    CAPS.made = true;
+    if (!BABYLON.CustomMaterial) return;
+    if (!OCC.map) makeOcc();
+    CAPS.U = new BABYLON.Vector4(0, 0, 0, 0); CAPS.occP = new BABYLON.Vector4(0, 0, 0, 0);
+    const m = CAPS.mat = new BABYLON.CustomMaterial('snowCapMat', scene);
+    m.metadata = { perfKeepLive: true };
+    m.diffuseColor = new BABYLON.Color3(.86, .88, .91); m.specularColor = new BABYLON.Color3(.03, .03, .035); m.specularPower = 8;
+    m.emissiveColor = new BABYLON.Color3(.12, .125, .14); // (snow is bright in shade too: less blue there)
+    m.backFaceCulling = false; m.zOffset = -2; m.maxSimultaneousLights = 4; // (a cap's triangles keep their piece's winding: either side up)
+    m.AddUniform('uSnowC', 'vec4', CAPS.U); m.AddUniform('uSnowOccP', 'vec4', CAPS.occP);
+    const occ = !!OCC.map;
+    if (occ) m.AddUniform('uSnowOcc', 'sampler2D', OCC.map.rtt);
+    m.Fragment_Definitions(`
+      float sc_h(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
+      float sc_n(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(sc_h(i),sc_h(i+vec2(1.,0.)),f.x), mix(sc_h(i+vec2(0.,1.)),sc_h(i+vec2(1.,1.)),f.x), f.y); }
+      float sc_f(vec2 p){ float a=.5, s=0.; for(int i=0;i<4;i++){ s+=a*sc_n(p); p*=2.03; a*=.5; } return s; }
+    `);
+    m.Fragment_Before_Lights(`
+      {
+        // more on what lies flat; patches that grow and join as the cover builds (the ground's drifts, finer)
+        float upK = smoothstep(${CAP_UP.toFixed(2)}, 0.8, normalW.y);
+        float pat = sc_f(vPositionW.xz * 0.55 + vec2(5.3, 1.7)) * 0.78 + sc_n(vPositionW.xz * 3.7) * 0.22;
+        if (pat > (uSnowC.x * (0.55 + 0.45 * upK) - 0.18) * 1.6) discard;
+        diffuseColor *= 0.93 + 0.07 * sc_n(vPositionW.xz * 1.3 + vec2(2.1, 8.4)); // a little grain
+        ${occ ? `if (uSnowC.y > 0.5) { // under another roof or a tree (the roof map round the player): no snow
+          vec2 ouv = (vPositionW.xz - uSnowOccP.xy) * uSnowOccP.z;
+          if (ouv.x > 0.0 && ouv.x < 1.0 && ouv.y > 0.0 && ouv.y < 1.0 && vPositionW.y < uSnowOccP.w - texture2D(uSnowOcc, ouv).r - 0.45) discard;
+        }` : ''}
+      }
+    `);
+    CAPS.park = new BABYLON.TransformNode('snowCapTemplates', scene); CAPS.park.position.set(0, -10000, 0);
+  }
+  function addCapInstance(t, node) {
+    const ci = t.createInstance(node.name + '_snowCap');
+    ci.parent = node; ci.isPickable = false; ci.metadata = { snowCap: true, weatherFx: true, camSkip: true };
+    ci.setEnabled(CAPS.shown); CAPS.list.push(ci);
+  }
+  function finishCap(item, out) {
+    if (!out.p.length) { if (item.kind === 'kit') CAPS.type.set(item.type, null); return; }
+    const m = new BABYLON.Mesh(item.kind === 'kit' ? 'snowCap_' + item.type : 'snowCap_' + item.root.name, scene), vd = new BABYLON.VertexData();
+    if (item.kind !== 'kit') { // world space -> the copy's own
+      const inv = item.root.computeWorldMatrix(true).clone().invert(), t = new BABYLON.Vector3();
+      for (let k = 0; k < out.p.length; k += 3) {
+        BABYLON.Vector3.TransformCoordinatesFromFloatsToRef(out.p[k], out.p[k + 1], out.p[k + 2], inv, t); out.p[k] = t.x; out.p[k + 1] = t.y; out.p[k + 2] = t.z;
+        BABYLON.Vector3.TransformNormalFromFloatsToRef(out.n[k], out.n[k + 1], out.n[k + 2], inv, t); const l = t.length() || 1; out.n[k] = t.x / l; out.n[k + 1] = t.y / l; out.n[k + 2] = t.z / l;
+      }
+    }
+    vd.positions = out.p; vd.normals = out.n; vd.indices = out.i; vd.applyToMesh(m);
+    m.material = CAPS.mat; m.isPickable = false; m.receiveShadows = true; m.metadata = { snowCap: true, weatherFx: true, camSkip: true };
+    m.freezeNormals();
+    if (item.kind === 'kit') { m.parent = CAPS.park; CAPS.type.set(item.type, m); CAPS.scanAt = 0; } // (its pieces get their instances on the next scan)
+    else { m.parent = item.root; m.setEnabled(CAPS.shown); CAPS.list.push(m); }
+  }
+  function scanCaps(models) {
+    const K = window.SamuraiKit;
+    for (const e of K?.placed?.() || []) {
+      const node = e.root;
+      if (!node || node.isDisposed() || CAPS.seen.has(node.uniqueId)) continue;
+      if (e.stairs) { CAPS.seen.add(node.uniqueId); CAPS.queue.push({ kind: 'model', root: node }); continue; }
+      const t = CAPS.type.get(e.type);
+      if (t === undefined) { CAPS.type.set(e.type, 'pending'); CAPS.queue.push({ kind: 'kit', type: e.type }); continue; }
+      if (t === 'pending') continue;
+      CAPS.seen.add(node.uniqueId);
+      if (t && !t.isDisposed()) addCapInstance(t, node);
+    }
+    for (const r of models?.() || []) if (r && !r.isDisposed() && !CAPS.seen.has(r.uniqueId) && r.getChildMeshes(false).some(m => m.getTotalVertices?.() > 0)) { CAPS.seen.add(r.uniqueId); CAPS.queue.push({ kind: 'model', root: r }); }
+  }
+  VW.snowCaps = function (o) { // every frame: { cover 0..1, rooms, focus (Vector3), models () => [roots of model buildings] }
+    if (!scene) return;
+    const cover = Math.max(0, Math.min(1, o.cover || 0)), want = cover > .02 && !o.rooms;
+    if (!CAPS.made) { if (!want) return; makeCaps(); }
+    if (!CAPS.mat) return;
+    CAPS.U.x = cover;
+    if (want !== CAPS.shown) { CAPS.shown = want; for (const m of CAPS.list) if (!m.isDisposed()) m.setEnabled(want); }
+    if (!want) return;
+    const now = performance.now(), f = o.focus;
+    // the roof map round the player stays fresh while snow lies (falling snow redraws it every 1.5 s too)
+    if (OCC.map && f && (now - OCC.at > 4000 || Math.hypot(f.x - OCC.cx, f.z - OCC.cz) > 18)) renderOcc(f.x, f.y, f.z);
+    if (OCC.on) { CAPS.U.y = 1; CAPS.occP.copyFrom(occParams()); }
+    if (now - CAPS.scanAt > 2000) { CAPS.scanAt = now; scanCaps(o.models); }
+    const end = now + (CAPS.budget || (lite ? 2 : 3)); // (milliseconds of cap making a frame)
+    while (performance.now() < end && (CAPS.job || CAPS.queue.length)) {
+      if (!CAPS.job) { const item = CAPS.queue.shift(); if (item.kind === 'model' && item.root.isDisposed()) continue; const out = { p: [], n: [], i: [] }; CAPS.job = { item, out, it: capJob(item, out) }; }
+      if (CAPS.job.it.next().done) { const { item, out } = CAPS.job; CAPS.job = null; finishCap(item, out); }
+    }
+    CAPS.ms += Math.max(0, performance.now() - now);
+  };
+  VW._caps = CAPS; // (tests)
+
   function hideRain() { for (const R of [...(FX.rain || []), ...(FX.snow || [])]) R.mesh.setEnabled(false); FX.splash?.mesh.setEnabled(false); }
   VW.hide = function () {
     hideRain();
