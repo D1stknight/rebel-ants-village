@@ -10,12 +10,18 @@
 // and no forge used (3 a day per Rebel). The Rebel's holder or an admin; never #001. A re-rig keeps the fit.
 // Oct 20 (rigger 2.36): a build of a friend collection (Chumpz, Saints: assets/friend-collections.json) is rigged as a
 // player with its species' body fixes (job.sh FORGE_FRIEND), never with the Rebels' head sizing.
+// Oct 26 (rigger 2.40): POST {rebel001: true, force?} (admin) rigs Rebel #001's own body on its own joints (see below).
+// Oct 26 (rigger 2.41): POST {buildId, force: true, jaw: true} (admin) re-rigs a build of Rebel #001 with a jaw joint (the cloth
+// over its mouth opens when a voice app turns it; job.sh FORGE_JAW). Later re-rigs of that build keep it; no other Rebel gets one.
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { isAdminRequest } from './_admin-auth.mjs';
 import { getToken } from './_nft.mjs';
 import { getCollection } from './_collections.mjs';
 import { requireForgeStep, walletOf, holderOf } from './_wallet.mjs';
 import { enforceRateLimit } from './_guard.mjs';
-import { Sandbox, creds, WORKER_KEY, FW, JOB_DIR, JOB_TIMEOUT_MS, redis, getJson, loadBuild, updateRigging, sourceGlbUrl, sanitize, body } from './_forge-rig.mjs';
+import { Sandbox, creds, REPO, WORKER_KEY, FW, JOB_DIR, JOB_TIMEOUT_MS, redis, getJson, buildKey, loadBuild, updateRigging, sourceGlbUrl, sanitize, body, jointsEnv } from './_forge-rig.mjs';
 
 const SOURCE_OK = /^https:\/\/(raw\.githubusercontent\.com\/D1stknight\/rebel-ants-village\/[\w.-]+\/assets\/forge\/sources\/[\w.-]+\.glb|[a-z0-9]+\.public\.blob\.vercel-storage\.com\/[\w./-]+\.glb)$/;
 const ANCHORS_OK = /^https:\/\/raw\.githubusercontent\.com\/D1stknight\/rebel-ants-village\/[\w.-]+\/assets\/forge\/sources\/[\w.-]+\.json$/;
@@ -152,15 +158,91 @@ async function startGloves(req, res, rec, buildId, admin, gloves) {
   }
 }
 
+// ---- Rebel #001 on the Forge Rigger (Oct 26, rigger 2.40) ----
+// #001 (the master) was never forged from its NFT art: it plays the starter ant. An admin rigs its own body: the starter
+// mesh in the Forge A-pose (assets/forge/sources/rebel001_apose.glb, tools/make-rebel001-source.mjs) on its own
+// skeleton's joints (rebel001_apose.joints.json -> FORGE_JOINTS: the silhouette landmarks put its right shoulder 9-10 cm
+// back toward the quiver and the arm tore the side), its own glove colour and a Rebel's triangle count (its mesh has 553k
+// triangles: FORGE_DECIMATE 0.14 gives ~82k). One build (master001), made on the first press, re-rigged in place after;
+// its rig options keep the joints, so re-rigs and the moves / games packs (forge-rig-moves) make the same skeleton.
+// The source is read at the deploy's own commit. Its gloves are never refitted (startGloves).
+const M1 = { col: 'battle_for_colony', tok: '1', file: 'assets/forge/sources/rebel001_apose', glove: '#3b2a5c', decimate: 0.14 };
+const M1_LIST = `forge:3d-builds:v1:${M1.col}:${M1.tok}`;
+async function rebel001Joints() {
+  const f = M1.file + '.joints.json';   // vercel.json includeFiles
+  for (const p of [path.join(process.cwd(), f), fileURLToPath(new URL('../' + f, import.meta.url))]) {
+    try { const j = JSON.parse(await fs.readFile(p, 'utf8')); if (j && Object.keys(j).length === 29) return j; } catch (e) {}
+  }
+  return null;
+}
+async function rebel001Build() {
+  const [l] = await redis([['LRANGE', M1_LIST, 0, 24]]);
+  const ids = Array.isArray(l?.result) ? l.result : [];
+  const rows = ids.length ? await redis(ids.map((id) => ['GET', buildKey(id)])) : [];
+  for (const r of rows) { try { const b = r?.result ? JSON.parse(r.result) : null; if (b?.master001) return b; } catch (e) {} }
+  return null;
+}
+async function startRebel001(req, res, { force, rec }) {
+  if (!isAdminRequest(req)) return res.status(401).json({ ok: false, error: 'Rigging Rebel #001 is admin only' });
+  rec = rec || await rebel001Build();
+  const cur = rec?.forgeRig || {};
+  if (cur.status === 'running' && !force) return res.status(200).json({ ok: true, buildId: rec.buildId, forgeRig: cur, alreadyRunning: true });
+  if (cur.status === 'succeeded' && !force) return res.status(200).json({ ok: true, buildId: rec.buildId, forgeRig: cur, alreadyDone: true });
+  // a re-rig keeps the joints of its source (both from the commit the build was made at); the first rig reads this deploy's
+  const joints = cur.options?.joints || await rebel001Joints();
+  if (!joints) return res.status(500).json({ ok: false, error: 'This deploy has no #001 joints file' });
+  const sha = String(process.env.VERCEL_GIT_COMMIT_SHA || '');
+  if (!rec && !/^[0-9a-f]{40}$/.test(sha)) return res.status(500).json({ ok: false, error: "This deploy has no commit to read #001's source from" });
+  const lockKey = 'forge:rig:start-lock:rebel001';
+  const [lock] = await redis([['SET', lockKey, '1', 'NX', 'EX', 60]]);
+  if (lock?.result !== 'OK') return res.status(409).json({ ok: false, error: '#001 is already being started', code: 'starting' });
+  try {
+    const worker = await getJson(WORKER_KEY);
+    if (!worker?.snapshotId) throw Object.assign(new Error('Rig worker is not built yet'), { status: 503 });
+    if (!rec) {
+      const src = `https://raw.githubusercontent.com/${REPO}/${sha}/${M1.file}.glb`, now = new Date().toISOString();
+      rec = { buildId: `build_${Date.now()}`, buildVersion: 'rebel001_master_v1', status: 'completed_stored_in_rebel_blob', createdAt: now, updatedAt: now,
+        sourceConceptId: 'rebel001_master', sourceConceptType: 'rebel001_master', rebelId: 'rebel_1', tokenId: M1.tok, collectionKey: M1.col, bodyType: 'universal_ant_v1',
+        master001: true, sourceImage: { imageStorage: 'site', imageUrl: null, imageBlobPath: null, backImageUrl: null },
+        output: { glbUrl: src, rebelGlbUrl: src, source: 'rebel001_master' },
+        note: "Rebel #001's own body (the starter ant, assets/character/ant_idle_c.glb) in the Forge A-pose, rigged on its own skeleton's joints" };
+      await redis([['SET', buildKey(rec.buildId), JSON.stringify(rec)], ['LPUSH', M1_LIST, rec.buildId], ['LTRIM', M1_LIST, 0, 24]]);
+    }
+    const buildId = rec.buildId, src = cur.sourceGlbUrl || sourceGlbUrl(rec);
+    const hf = cleanHandFit({ glove: M1.glove, cuff: M1.glove });
+    const o = { skirtfix: false, headUp: 0, headUrl: null, armorUrl: null, anchorsUrl: null, cutBridges: false, headScale: null, headAuto: false, npc: false, handFit: hf, species: null, friend: null,
+      master001: true, joints, decimate: M1.decimate };
+    const { sandbox, cmd } = await runJob(worker, buildId, src, 'rebel1', { ...optionEnv({ up: 0, hs: null, hf }), ...jointsEnv(o) });
+    // a re-rig: the rig it replaces leads to the new one (forge-rig-status links rigHistory), so a saved #001 follows it
+    const rigHistory = [...new Set([...(cur.rigHistory || []), rec.output?.forgeRigGlbUrl])].filter((u) => BLOB.test(u || '')).slice(-20);
+    const next = await updateRigging(buildId, {
+      engine: 'forge-rigger', status: 'running', progress: 'starting', sandboxName: sandbox.name, cmdId: cmd.cmdId, workerCommit: worker.commit || null, sourceGlbUrl: src,
+      options: o, ...(rigHistory.length ? { rigHistory } : {}), startedAt: new Date().toISOString(), finishedAt: null, error: null
+    });
+    try { await redis([['SADD', 'forge:pending:v1', String(buildId)]]); } catch (e) {}
+    return res.status(200).json({ ok: true, buildId, forgeRig: next.forgeRig });
+  } catch (err) {
+    try { await redis([['DEL', lockKey]]); } catch (e) {}
+    return res.status(err.status || 500).json({ ok: false, error: err?.message || String(err) });
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
-  const { buildId, force, sourceUrl, skirtfix, headUp, headUrl, armorUrl, anchorsUrl, cutBridges, headScale, npc, handFit, species, gloves } = body(req);
+  const { buildId, force, sourceUrl, skirtfix, headUp, headUrl, armorUrl, anchorsUrl, cutBridges, headScale, npc, handFit, species, gloves, rebel001, jaw } = body(req);
+  if (rebel001 === true) {
+    try { return await startRebel001(req, res, { force: !!force }); } catch (err) { return res.status(500).json({ ok: false, error: err?.message || String(err) }); }
+  }
   if (!buildId) return res.status(400).json({ ok: false, error: 'Missing buildId' });
   try {
     const rec = await loadBuild(buildId);
     const admin = isAdminRequest(req);
     if (gloves !== undefined) return await startGloves(req, res, rec, buildId, admin, gloves);
+    if (rec.master001) return await startRebel001(req, res, { force: !!force, rec });   // a re-rig of #001's build: its own joints again
     if ((sourceUrl || skirtfix || headUp || headUrl || armorUrl || anchorsUrl || cutBridges || headScale || npc || handFit) && !admin) return res.status(401).json({ ok: false, error: 'sourceUrl / skirtfix / headUp / headUrl / armorUrl / anchorsUrl / cutBridges / headScale / npc / handFit require admin' });
+    if (jaw !== undefined && !admin) return res.status(401).json({ ok: false, error: 'jaw requires admin' });
+    if (jaw !== undefined && jaw !== true && jaw !== false) return res.status(400).json({ ok: false, error: 'jaw must be true or false' });
+    if (jaw === true && (npc || !isMaster(rec))) return res.status(400).json({ ok: false, error: 'Only Rebel #001 has a jaw', code: 'jaw_001_only' });
     const hs = headScale == null || headScale === '' ? null : Number(headScale); if (hs !== null && (!Number.isFinite(hs) || hs < 0.8 || hs > 1.1)) return res.status(400).json({ ok: false, error: 'headScale must be 0.8..1.1' });
     const up = Number(headUp || 0); if (!Number.isFinite(up) || up < -20 || up > 25) return res.status(400).json({ ok: false, error: 'headUp must be -20..25 degrees' });
     if (sourceUrl && !SOURCE_OK.test(String(sourceUrl))) return res.status(400).json({ ok: false, error: 'sourceUrl must be a GLB in this repo or our Blob store' });
@@ -172,6 +254,8 @@ export default async function handler(req, res) {
     const cur = rec.forgeRig || {};
     // v2.18 the NPC Forge's hand fit; a Rebel's re-rig keeps the gloves its holder forged (Rebel Forge gloves)
     const hf = npc ? cleanHandFit(handFit) : cleanHandFit(handFit !== undefined ? handFit : cur.options?.handFit);
+    // v2.41 #001's jaw: asked for, or kept from the rig it replaces
+    const withJaw = !npc && isMaster(rec) && (jaw !== undefined ? jaw : !!cur.options?.jaw);
     if (cur.status === 'running' && !(force && admin)) return res.status(200).json({ ok: true, forgeRig: cur, alreadyRunning: true });
     if (cur.status === 'succeeded' && !(force && admin)) return res.status(200).json({ ok: true, forgeRig: cur, alreadyDone: true });
     if (force && !admin) return res.status(401).json({ ok: false, error: 'Re-rigging requires admin' });
@@ -196,7 +280,7 @@ export default async function handler(req, res) {
     // v2.23 NPC species (the NPC Forge's collection): Chumpz are apes, Saints are humans, from the page or the NPC's key
     // (chumpz_ / saints_). Only those get FORGE_NPC_SPECIES; Rebel villagers (ants) run exactly as before.
     const npcSpecies = !npc ? '' : ['ape', 'human'].includes(String(species)) ? String(species) : String(species) === 'ant' ? '' : /^chumpz_/.test(rec.tokenId || '') ? 'ape' : /^saints_/.test(rec.tokenId || '') ? 'human' : '';
-    const { sandbox, cmd } = await runJob(worker, buildId, src, name, optionEnv({ skirtfix, up, headUrl, armorUrl, anchorsUrl, cutBridges, hs, headAuto, npc, npcSpecies, friend, hf }));
+    const { sandbox, cmd } = await runJob(worker, buildId, src, name, { ...optionEnv({ skirtfix, up, headUrl, armorUrl, anchorsUrl, cutBridges, hs, headAuto, npc, npcSpecies, friend, hf }), ...(withJaw ? { FORGE_JAW: '1' } : {}) });
     const next = await updateRigging(buildId, {
       engine: 'forge-rigger',
       status: 'running',
@@ -205,7 +289,9 @@ export default async function handler(req, res) {
       cmdId: cmd.cmdId,
       workerCommit: worker.commit || null,
       sourceGlbUrl: src,
-      options: { skirtfix: !!skirtfix, headUp: up || 0, headUrl: headUrl || null, armorUrl: armorUrl || null, anchorsUrl: anchorsUrl || null, cutBridges: !!cutBridges, headScale: hs, headAuto, npc: !!npc, handFit: hf, species: npcSpecies || null, friend: friend || null },
+      options: { skirtfix: !!skirtfix, headUp: up || 0, headUrl: headUrl || null, armorUrl: armorUrl || null, anchorsUrl: anchorsUrl || null, cutBridges: !!cutBridges, headScale: hs, headAuto, npc: !!npc, handFit: hf, species: npcSpecies || null, friend: friend || null, ...(withJaw ? { jaw: true } : {}) },
+      // #001: the rig a re-rig replaces leads to the new one (forge-rig-status links rigHistory), so its saved character follows it
+      ...(isMaster(rec) && BLOB.test(rec.output?.forgeRigGlbUrl || '') ? { rigHistory: [...new Set([...(cur.rigHistory || []), rec.output.forgeRigGlbUrl])].filter((u) => BLOB.test(u || '')).slice(-20) } : {}),
       startedAt: new Date().toISOString(),
       finishedAt: null,
       error: null

@@ -5,7 +5,8 @@
 /* global BABYLON */
 (function () {
   const TILE = { roof: [1.6, 1.4], roof_brown: [1.6, 1.4], plaster_old: [3, 3], slate: [2.4, 2.4], wood: [1.6, 1.6], darkwood: [1.6, 1.6], plaster: [3, 3], stone: [2.4, 2.4], thatch: [2, 1.6], bark: [1.4, 1.6], earth: [4, 4], shoji: [1.2, 1.5],
-    facade_apt: [6, 4.6], facade_stucco: [5, 4.6], facade_brick: [6, 4.6], facade_office: [6, 4.2], facade_glass: [4, 4], facade_shop: [8, 5.2], rollup: [3, 3], sl_brick: [2.4, 2.4], stucco: [3, 3], deco: [3, 3], seigaiha: [2.4, 2.4], sand_ring: [4, 4], checker_cc: [3.2, 3.2], bamboo_wall: [2.4, 2.4] };
+    facade_apt: [6, 4.6], facade_stucco: [5, 4.6], facade_brick: [6, 4.6], facade_office: [6, 4.2], facade_glass: [4, 4], facade_shop: [8, 5.2], rollup: [3, 3], sl_brick: [2.4, 2.4], stucco: [3, 3], deco: [3, 3], seigaiha: [2.4, 2.4], sand_ring: [4, 4], checker_cc: [3.2, 3.2], bamboo_wall: [2.4, 2.4],
+    club_brick: [2.4, 2.4], club_wall: [3, 3], club_wall_ext: [3, 3], club_floor: [1.6, 1.6] };
   const tileOf = m => TILE[m] || [1, 1];
 
   // ── textures (drawn once on small canvases) ─────────────────────────────
@@ -408,7 +409,7 @@
     T.sign_prizes = cv('sign_prizes', 512, 128, (c, W, H) => { c.clearRect(0, 0, W, H); neonText(c, 'PRIZES', W / 2, H / 2 + 4, 76, '#ffd43b'); });
     T.sign_claw = cv('sign_claw', 512, 128, (c, W, H) => { c.fillStyle = '#120a24'; c.fillRect(0, 0, W, H); neonText(c, 'ANT CLAW', W / 2, H / 2 + 4, 64, '#3bd5ff'); });
     T.war_map = pixelTex(scene, 'war_map', S, (x, y, i) => { const e = Math.min(x, 1 - x, y, 1 - y); if (e < .03) return [92, 64, 36]; const v = mp[i]; if (Math.abs(y - .5 - .18 * Math.sin(x * 7)) < .015) return [70, 110, 120]; return v > .62 ? [96, 112, 70] : v > .45 ? [150, 150, 96] : [196, 178, 128]; });
-    T._cv = cv; // for ROOM_TEX
+    T._cv = cv; T._neon = neonText; // for ROOM_TEX
     return T;
   }
   // ── room-only textures: drawn the first time a room material asks for one (cv: makeTextures' canvas helper) ──
@@ -417,7 +418,168 @@
     for (let y = 0; y < H; y += 32) for (let x = 0; x < W; x += 32) { const f = .9 + .18 * r(); c.fillStyle = `rgb(${base[0] * f | 0},${base[1] * f | 0},${base[2] * f | 0})`; c.fillRect(x, y, 32, 32); }
     c.fillStyle = 'rgba(110,70,20,.18)'; for (let y = 0; y < H; y += 32) c.fillRect(0, y, W, 1); for (let x = 0; x < W; x += 32) c.fillRect(x, 0, 1, H);
   };
+  // the After Dark crest (the ant on its sign, head up): head, thorax, abdomen, antennae, mandibles and six legs in neon strokes
+  // (size s from the antenna tips to the abdomen); glow = the shadow blur (0 = a flat print)
+  const adCrest = (c, x, y, s, col, glow = 18) => {
+    c.save(); c.strokeStyle = col; c.shadowColor = col; c.shadowBlur = glow; c.lineWidth = Math.max(2, s * .045); c.lineCap = 'round'; c.lineJoin = 'round';
+    const P = (dx, dy) => [x + dx * s, y + dy * s], L = pts => { c.beginPath(); pts.forEach((p, i) => { const [a, b] = P(...p); if (i) c.lineTo(a, b); else c.moveTo(a, b); }); c.stroke(); };
+    for (const [cy, rx, ry] of [[-.3, .1, .09], [-.12, .075, .09], [.16, .13, .19]]) { c.beginPath(); c.ellipse(...P(0, cy), rx * s, ry * s, 0, 0, Math.PI * 2); c.stroke(); }
+    for (const sd of [-1, 1]) {
+      L([[sd * .05, -.37], [sd * .16, -.5], [sd * .27, -.47]]); L([[sd * .03, -.39], [sd * .08, -.44], [sd * .03, -.47]]);
+      L([[sd * .06, -.16], [sd * .24, -.26], [sd * .36, -.16]]); L([[sd * .07, -.11], [sd * .28, -.08], [sd * .4, .04]]); L([[sd * .06, -.05], [sd * .22, .08], [sd * .3, .3]]);
+    }
+    c.restore();
+  };
   const ROOM_TEX = {
+    // Antthony's Comedy Club (Hub, Oct 25): the ANTTHONY neon ring over the stage (after Miguel's picture), the club's name on
+    // the rooftop sign and over the door, the snack bar and the wall of fame signs, the Roast Champion plaque, the purple noren
+    // with the mic crest (drawn once across its four panels)
+    neon_antthony: (cv, T) => cv('neon_antthony', 1024, 576, (c, W, H) => {
+      c.clearRect(0, 0, W, H);
+      const line = (col, lw, blur, f) => { c.save(); c.strokeStyle = col; c.lineWidth = lw; c.shadowColor = col; c.shadowBlur = blur; c.lineCap = 'round'; c.lineJoin = 'round'; c.beginPath(); f(); c.stroke(); c.restore(); };
+      const ring = () => c.ellipse(W / 2, H / 2, W * .46, H * .44, 0, 0, Math.PI * 2);
+      line('#ff6418', 24, 40, ring); line('#ffe2a8', 7, 8, ring);
+      T._neon(c, 'ANTTHONY', W / 2, H * .4, 220, '#ff7a22', W * .86);
+      const mx = W / 2, my = H * .74, k = 1.45, mic = () => { c.moveTo(mx - 22 * k, my - 40 * k); c.arc(mx, my - 40 * k, 22 * k, Math.PI, 0); c.lineTo(mx + 22 * k, my - 6 * k); c.arc(mx, my - 6 * k, 22 * k, 0, Math.PI); c.closePath(); c.moveTo(mx, my + 16 * k); c.lineTo(mx, my + 46 * k); c.moveTo(mx - 24 * k, my + 46 * k); c.lineTo(mx + 24 * k, my + 46 * k); };
+      line('#ff6418', 16, 28, mic); line('#ffe2a8', 5, 6, mic);
+      for (const sd of [-1, 1]) for (const a of [-.55, 0, .55]) line('#ff8a2a', 10, 18, () => { const x0 = mx + sd * 52 * k, y0 = my - 22 * k; c.moveTo(x0 + sd * 10 * k * Math.cos(a), y0 + 10 * k * Math.sin(a)); c.lineTo(x0 + sd * 40 * k * Math.cos(a), y0 + 40 * k * Math.sin(a)); });
+    }),
+    club_marquee: (cv, T) => cv('club_marquee', 1024, 256, (c, W, H) => {
+      const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#22102e'); g.addColorStop(1, '#0e0716'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      c.strokeStyle = '#c9a452'; c.lineWidth = 6; c.strokeRect(8, 8, W - 16, H - 16);
+      T._neon(c, "ANTTHONY'S", W / 2, 76, 78, '#ffb02e', W - 120);
+      T._neon(c, 'COMEDY CLUB', W / 2, 178, 96, '#b25aff', W - 70);
+    }),
+    sign_snacks: (cv, T) => cv('sign_snacks', 512, 128, (c, W, H) => { c.clearRect(0, 0, W, H); T._neon(c, 'SNACKS', W / 2, H / 2 + 4, 76, '#ff3b8d', W - 30); }),
+    sign_fame: (cv, T) => cv('sign_fame', 1024, 128, (c, W, H) => { c.clearRect(0, 0, W, H); T._neon(c, 'WALL OF FAME', W / 2, H / 2 + 4, 80, '#ffd43b', W - 40); }),
+    plaque_champion: cv => cv('plaque_champion', 512, 128, (c, W, H) => {
+      const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#f0cf7a'); g.addColorStop(.5, '#c9a040'); g.addColorStop(1, '#8a6a22'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      c.strokeStyle = '#5a4210'; c.lineWidth = 6; c.strokeRect(10, 10, W - 20, H - 20);
+      c.fillStyle = '#2a1e08'; c.font = '900 46px Georgia, serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('ROAST CHAMPION', W / 2, H / 2 + 3, W - 70);
+    }),
+    noren_comedy: cv => cv('noren_comedy', 1024, 256, (c, W, H) => {
+      c.fillStyle = '#3a1652'; c.fillRect(0, 0, W, H); c.fillStyle = '#28103a'; c.fillRect(0, 0, W, 16); c.fillRect(0, H - 24, W, 24);
+      const cx = W / 2, cy = H * .48; c.strokeStyle = '#e8c56a'; c.lineWidth = 10; c.beginPath(); c.arc(cx, cy, 86, 0, Math.PI * 2); c.stroke();
+      c.fillStyle = '#e8c56a'; c.beginPath(); c.arc(cx, cy - 26, 24, Math.PI, 0); c.lineTo(cx + 24, cy + 6); c.arc(cx, cy + 6, 24, 0, Math.PI); c.closePath(); c.fill();
+      c.fillRect(cx - 5, cy + 30, 10, 24); c.fillRect(cx - 24, cy + 52, 48, 8);
+      c.lineWidth = 7; c.beginPath(); c.arc(cx, cy + 4, 36, .25, Math.PI - .25); c.stroke();
+    }),
+    // Rebel Ants After Dark (the Hub's south-east courtyard dojo, Oct 26; after afterdark.rebelants.io): the neon sign with the
+    // ant crest over the back wall, the colony's motto over the door, the Hold Em felt with the crest, the community cards and
+    // the card backs, the Colony Clash bracket, the game signs, the Spinner reels, the Drop board, the wheel's hub, the points
+    // sign, the community sign, the moon window's night, the After Dark code plaque
+    ad_sign: (cv, T) => cv('ad_sign', 1024, 512, (c, W, H) => {
+      c.clearRect(0, 0, W, H);
+      adCrest(c, W / 2, 92, 150, '#ff5a1e');
+      T._neon(c, 'REBEL ANTS', W / 2, 262, 150, '#ff2a2a', W - 40);
+      T._neon(c, 'A F T E R   D A R K', W / 2, 398, 84, '#a64dff', W - 150);
+      c.save(); c.strokeStyle = '#ffcf5a'; c.shadowColor = '#ffcf5a'; c.shadowBlur = 14; c.lineWidth = 5; c.lineCap = 'round';
+      for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(W / 2 + sd * 330, 398); c.lineTo(W / 2 + sd * 470, 398); c.stroke(); c.beginPath(); c.arc(W / 2 + sd * 480, 398, 8, 0, Math.PI * 2); c.stroke(); }
+      c.restore();
+      T._neon(c, '♠  ♥  ♦  ♣', W / 2, 474, 44, '#ffcf5a', 320);
+    }),
+    ad_never: (cv, T) => cv('ad_never', 1024, 128, (c, W, H) => { c.clearRect(0, 0, W, H); T._neon(c, 'THE COLONY NEVER SLEEPS', W / 2, H / 2 + 4, 70, '#ffcf5a', W - 40); }),
+    ad_felt: cv => cv('ad_felt', 1024, 1024, (c, W, H) => {
+      c.fillStyle = '#1a0f1c'; c.fillRect(0, 0, W, H); const r = rng(401);
+      for (let k = 0; k < 9000; k++) { const v = 22 + r() * 18 | 0; c.fillStyle = `rgba(${v + 8},${v - 6},${v + 10},.35)`; c.fillRect(r() * W, r() * H, 2, 2); }
+      c.strokeStyle = 'rgba(201,164,82,.55)'; c.lineWidth = 6; c.beginPath(); c.arc(W / 2, H / 2, 470, 0, Math.PI * 2); c.stroke();
+      c.lineWidth = 2; c.beginPath(); c.arc(W / 2, H / 2, 448, 0, Math.PI * 2); c.stroke();
+      c.globalAlpha = .62; adCrest(c, W / 2, H / 2 - 40, 300, '#c98a3a', 8); c.globalAlpha = 1;
+      c.fillStyle = 'rgba(214,176,96,.8)'; c.font = '900 64px Georgia, serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('REBEL HOLD EM', W / 2, H / 2 + 230);
+      c.font = '700 30px Georgia, serif'; c.fillStyle = 'rgba(214,176,96,.55)'; c.fillText('POINTS ONLY  ·  BRAGGING RIGHTS', W / 2, H / 2 + 290);
+    }),
+    ad_cards: cv => cv('ad_cards', 640, 192, (c, W, H) => {
+      c.clearRect(0, 0, W, H);
+      const cards = [['10', '♣'], ['J', '♦'], ['Q', '♥'], ['7', '♣'], ['2', '♠']];
+      cards.forEach(([rk, su], k) => {
+        const x = 8 + k * 126, y = 12, w = 116, h = 168, red = su === '♦' || su === '♥';
+        c.fillStyle = '#f4efe2'; c.beginPath(); c.roundRect(x, y, w, h, 12); c.fill(); c.strokeStyle = '#8a7a5a'; c.lineWidth = 2; c.stroke();
+        c.fillStyle = red ? '#c4161c' : '#16121a'; c.textAlign = 'left'; c.textBaseline = 'top'; c.font = '900 34px Georgia, serif'; c.fillText(rk, x + 9, y + 8); c.font = '30px serif'; c.fillText(su, x + 10, y + 44);
+        c.textAlign = 'center'; c.textBaseline = 'middle';
+        if (rk === 'J' || rk === 'Q') { c.strokeStyle = '#c9a452'; c.lineWidth = 4; c.strokeRect(x + 30, y + 38, w - 44, h - 62); c.font = '900 56px Georgia, serif'; c.fillText(rk, x + w / 2 + 6, y + h / 2 + 8); }
+        else { c.font = '76px serif'; c.fillText(su, x + w / 2 + 6, y + h / 2 + 10); }
+      });
+    }),
+    ad_back: cv => cv('ad_back', 128, 176, (c, W, H) => {
+      c.fillStyle = '#f4efe2'; c.fillRect(0, 0, W, H); c.fillStyle = '#7a1018'; c.fillRect(8, 8, W - 16, H - 16);
+      c.strokeStyle = '#c9a452'; c.lineWidth = 3; c.strokeRect(16, 16, W - 32, H - 32);
+      c.strokeStyle = 'rgba(201,164,82,.45)'; c.lineWidth = 2; for (let k = -H; k < W + H; k += 14) { c.beginPath(); c.moveTo(k, 16); c.lineTo(k + H, H - 16); c.stroke(); }
+      adCrest(c, W / 2, H / 2, 70, '#ffcf5a', 0);
+    }),
+    ad_bracket: (cv, T) => cv('ad_bracket', 1024, 576, (c, W, H) => {
+      const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#120a22'); g.addColorStop(1, '#07040e'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      c.strokeStyle = '#c9a452'; c.lineWidth = 6; c.strokeRect(6, 6, W - 12, H - 12);
+      const top = 46, bot = H - 88, rounds = 5, colW = 92;
+      for (const sd of [-1, 1]) for (let r = 0; r < rounds; r++) {
+        const n = 16 >> r, xs = sd < 0 ? 30 + r * colW : W - 30 - r * colW, xe = xs - sd * (colW - 24), step = (bot - top) / n;
+        for (let i = 0; i < n; i++) {
+          const y = top + (i + .5) * step, lit = r < 2 ? (i * 7 + r * 3) % 3 : 1;
+          c.save(); c.strokeStyle = r === rounds - 1 ? '#ffcf5a' : sd < 0 ? '#a64dff' : '#ff3a5a'; c.shadowColor = c.strokeStyle; c.shadowBlur = 8; c.globalAlpha = lit ? 1 : .45; c.lineWidth = 3;
+          c.beginPath(); c.moveTo(xs, y); c.lineTo(xe, y); c.stroke();
+          if (i % 2 === 0 && r < rounds - 1) { const y2 = top + (i + 1.5) * step; c.beginPath(); c.moveTo(xe, y); c.lineTo(xe, y2); c.stroke(); }
+          c.restore();
+          if (r === 0) { c.fillStyle = '#2a1840'; c.fillRect(Math.min(xs, xe) - 2, y - 7, colW - 20, 14); c.fillStyle = 'rgba(255,255,255,.55)'; c.fillRect(Math.min(xs, xe) + 6, y - 2, 30 + (i * 13) % 26, 4); }
+        }
+      }
+      c.save(); c.translate(W / 2, (top + bot) / 2 - 6); c.strokeStyle = '#ffcf5a'; c.shadowColor = '#ffcf5a'; c.shadowBlur = 16; c.lineWidth = 6; c.lineJoin = 'round';
+      c.beginPath(); c.moveTo(-60, -60); c.lineTo(60, -60); c.lineTo(48, 0); c.quadraticCurveTo(0, 40, -48, 0); c.closePath(); c.stroke();
+      for (const sd of [-1, 1]) { c.beginPath(); c.arc(sd * 66, -34, 20, sd < 0 ? Math.PI * .5 : Math.PI * 1.5, sd < 0 ? Math.PI * 1.5 : Math.PI * .5); c.stroke(); }
+      c.beginPath(); c.moveTo(0, 26); c.lineTo(0, 62); c.moveTo(-34, 72); c.lineTo(34, 72); c.stroke(); c.restore();
+      T._neon(c, 'UP TO 128 ANTS', W / 2, H - 46, 46, '#ffcf5a', W - 260);
+    }),
+    ad_clash: (cv, T) => cv('ad_clash', 1024, 160, (c, W, H) => { c.clearRect(0, 0, W, H); T._neon(c, 'COLONY CLASH', W / 2, H / 2 + 4, 104, '#ff8a2a', W - 40); }),
+    ad_21: (cv, T) => cv('ad_21', 512, 192, (c, W, H) => { c.clearRect(0, 0, W, H); T._neon(c, 'REBEL 21', W / 2, H / 2 + 6, 110, '#ff4fd8', W - 30); }),
+    ad_spinner: (cv, T) => cv('ad_spinner', 1024, 160, (c, W, H) => { c.clearRect(0, 0, W, H); T._neon(c, 'REBEL SPINNER', W / 2, H / 2 + 4, 104, '#a64dff', W - 40); }),
+    ad_wheel_sign: (cv, T) => cv('ad_wheel_sign', 512, 128, (c, W, H) => { c.clearRect(0, 0, W, H); T._neon(c, 'REBEL WHEEL', W / 2, H / 2 + 4, 74, '#a64dff', W - 24); }),
+    ad_drop_sign: (cv, T) => cv('ad_drop_sign', 512, 128, (c, W, H) => { c.clearRect(0, 0, W, H); T._neon(c, 'REBEL DROP', W / 2, H / 2 + 4, 74, '#ff3a3a', W - 24); }),
+    ad_reels: cv => cv('ad_reels', 384, 160, (c, W, H) => {
+      c.fillStyle = '#0c0712'; c.fillRect(0, 0, W, H); c.strokeStyle = '#c9a452'; c.lineWidth = 6; c.strokeRect(3, 3, W - 6, H - 6);
+      for (let k = 0; k < 3; k++) {
+        const x = 16 + k * 120, cx = x + 52, cy = H / 2;
+        const g = c.createLinearGradient(0, 14, 0, H - 14); g.addColorStop(0, '#9a8f86'); g.addColorStop(.5, '#f6f1e6'); g.addColorStop(1, '#9a8f86'); c.fillStyle = g; c.fillRect(x, 14, 104, H - 28);
+        if (k === 0) adCrest(c, cx, cy, 92, '#e2401a', 0);
+        else if (k === 1) { c.fillStyle = '#d8a520'; c.beginPath(); c.moveTo(cx - 34, cy + 26); c.lineTo(cx - 38, cy - 22); c.lineTo(cx - 17, cy); c.lineTo(cx, cy - 32); c.lineTo(cx + 17, cy); c.lineTo(cx + 38, cy - 22); c.lineTo(cx + 34, cy + 26); c.closePath(); c.fill(); c.fillStyle = '#c4161c'; c.beginPath(); c.arc(cx, cy + 10, 7, 0, Math.PI * 2); c.fill(); }
+        else { c.fillStyle = '#5a1fa0'; c.font = '96px serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('♠', cx, cy + 6); }
+      }
+      c.fillStyle = 'rgba(255,40,40,.75)'; c.fillRect(8, H / 2 - 2, W - 16, 4);
+    }),
+    ad_drop: cv => cv('ad_drop', 512, 704, (c, W, H) => {
+      const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#160c26'); g.addColorStop(1, '#0a0614'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      c.strokeStyle = '#c9a452'; c.lineWidth = 8; c.strokeRect(4, 4, W - 8, H - 8);
+      const rows = 11, top = 70, gap = 50;
+      for (let r = 0; r < rows; r++) { const n = 3 + r, y = top + r * gap; for (let i = 0; i < n; i++) { const x = W / 2 + (i - (n - 1) / 2) * 42; c.save(); c.fillStyle = '#f3e9ff'; c.shadowColor = '#c07bff'; c.shadowBlur = 10; c.beginPath(); c.arc(x, y, 6, 0, Math.PI * 2); c.fill(); c.restore(); } }
+      const slots = 13, sw = (W - 40) / slots, cols = ['#ff2a2a', '#ff6a1e', '#ffb02e', '#ffd84a', '#7ad0ff', '#3b8dff', '#6a4dff', '#3b8dff', '#7ad0ff', '#ffd84a', '#ffb02e', '#ff6a1e', '#ff2a2a'];
+      for (let k = 0; k < slots; k++) { const x = 20 + k * sw; c.save(); c.fillStyle = cols[k]; c.shadowColor = cols[k]; c.shadowBlur = 12; c.fillRect(x + 3, H - 96, sw - 6, 64); c.restore(); c.fillStyle = 'rgba(0,0,0,.35)'; c.fillRect(x + 3, H - 64, sw - 6, 32); }
+      c.strokeStyle = 'rgba(255,255,255,.18)'; c.lineWidth = 2; for (let k = 0; k <= slots; k++) { const x = 20 + k * sw; c.beginPath(); c.moveTo(x, H - 110); c.lineTo(x, H - 30); c.stroke(); }
+    }),
+    ad_hub: cv => cv('ad_hub', 256, 256, (c, W, H) => { c.fillStyle = '#08050c'; c.fillRect(0, 0, W, H); adCrest(c, W / 2, H / 2 + 6, 170, '#ff5a1e'); }),
+    ad_points: (cv, T) => cv('ad_points', 1024, 192, (c, W, H) => { c.clearRect(0, 0, W, H); T._neon(c, '$REBEL POINTS', W / 2, H / 2 + 6, 112, '#ffcf5a', W - 40); }),
+    ad_community: (cv, T) => cv('ad_community', 1024, 256, (c, W, H) => {
+      c.clearRect(0, 0, W, H);
+      c.save(); c.strokeStyle = '#8f7bff'; c.shadowColor = '#8f7bff'; c.shadowBlur = 18; c.lineWidth = 9; c.lineJoin = 'round';
+      c.beginPath(); c.roundRect(60, 46, 150, 104, 26); c.stroke(); c.beginPath(); c.moveTo(96, 150); c.lineTo(86, 194); c.lineTo(128, 150); c.stroke();
+      for (const x of [102, 135, 168]) { c.beginPath(); c.arc(x, 98, 7, 0, Math.PI * 2); c.stroke(); } c.restore();
+      T._neon(c, 'COMMUNITY STRONG', 612, 96, 82, '#a64dff', 740);
+      T._neon(c, 'JOIN THE COLONY', 612, 190, 56, '#3bd5ff', 600);
+    }),
+    ad_moon: cv => cv('ad_moon', 512, 512, (c, W, H) => {
+      const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#0b0620'); g.addColorStop(.6, '#2a0f3a'); g.addColorStop(1, '#3d1430'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      const r = rng(77); for (let k = 0; k < 140; k++) { c.fillStyle = `rgba(255,255,255,${.25 + r() * .6})`; c.fillRect(r() * W, r() * H * .6, 2, 2); }
+      c.save(); c.fillStyle = '#d42a2a'; c.shadowColor = '#ff3a2a'; c.shadowBlur = 60; c.beginPath(); c.arc(W * .66, H * .34, 84, 0, Math.PI * 2); c.fill(); c.restore();
+      c.fillStyle = 'rgba(120,20,20,.35)'; for (const [x, y, rr] of [[.62, .3, 14], [.7, .38, 9], [.66, .26, 7]]) { c.beginPath(); c.arc(W * x, H * y, rr, 0, Math.PI * 2); c.fill(); }
+      c.fillStyle = '#05030a';
+      const pagoda = (x, base, w, tiers) => { let y = base; for (let t = 0; t < tiers; t++) { const ww = w * (1 - t * .16); c.beginPath(); c.moveTo(x - ww / 2 - 14, y - 6); c.quadraticCurveTo(x, y - 26, x + ww / 2 + 14, y - 6); c.lineTo(x + ww / 2, y - 22); c.lineTo(x - ww / 2, y - 22); c.closePath(); c.fill(); c.fillRect(x - ww / 2 + 8, y - 44, ww - 16, 24); y -= 44; } c.fillRect(x - 2, y - 26, 4, 26); return y; };
+      c.fillRect(0, H * .82, W, H); pagoda(140, H * .84, 110, 4); pagoda(330, H * .86, 80, 3); pagoda(450, H * .85, 60, 2);
+      c.fillStyle = '#ffb04a'; for (const [x, y] of [[120, .74], [160, .74], [136, .65], [320, .78], [345, .78], [450, .8]]) c.fillRect(x - 4, H * y - 4, 8, 7);
+      c.strokeStyle = 'rgba(255,90,60,.65)'; c.lineWidth = 2; c.beginPath(); c.moveTo(0, H * .6); c.quadraticCurveTo(W / 2, H * .7, W, H * .58); c.stroke();
+      for (let k = 1; k < 9; k++) { const x = k * W / 9, y = H * .6 + Math.sin(k / 9 * Math.PI) * H * .06 + 4; c.fillStyle = k % 2 ? '#ff4a3a' : '#ffb04a'; c.beginPath(); c.ellipse(x, y + 8, 6, 9, 0, 0, Math.PI * 2); c.fill(); }
+    }),
+    ad_code: cv => cv('ad_code', 512, 192, (c, W, H) => {
+      const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#f0cf7a'); g.addColorStop(.5, '#c9a040'); g.addColorStop(1, '#8a6a22'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      c.strokeStyle = '#5a4210'; c.lineWidth = 6; c.strokeRect(10, 10, W - 20, H - 20);
+      c.fillStyle = '#2a1e08'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = '900 40px Georgia, serif'; c.fillText('POINTS ONLY', W / 2, 66, W - 60);
+      c.font = '700 26px Georgia, serif'; c.fillText('BRAGGING RIGHTS  ·  COMMUNITY PLAY', W / 2, 124, W - 50);
+    }),
     // Shogun Throne Room: cranes and clouds on gold (the side walls); the great pine on gold leaf (the screen behind the throne)
     fusuma_cranes: cv => cv('fusuma_cranes', 512, 384, (c, W, H) => {
       goldLeaf(c, W, H, 61, [226, 196, 128]); const r = rng(62);
@@ -846,6 +1008,19 @@
     face_fm: { tex: 'face_fm' }, face_nr: { tex: 'face_nr', em: [.08, .14, .3] }, face_os: { tex: 'face_os', em: [.06, .1, .1] }, face_mamoru: { tex: 'face_mamoru' }, face_mochi: { tex: 'face_mochi' },
     coat_mamoru: { tex: 'coat_mamoru' }, coat_mochi: { tex: 'coat_mochi' }, kimono_fm: { tex: 'kimono_fm' }, kimono_nr: { tex: 'kimono_nr' }, kimono_os: { tex: 'kimono_os' },
     witch_moth_front: { img: 'assets/npcs/lunar-witch-moth-front.jpg', em: [.07, .05, .09] }, witch_moth_back: { img: 'assets/npcs/lunar-witch-moth-back.jpg', em: [.07, .05, .09] },
+    witch_ophira_front: { img: 'assets/npcs/lunar-witch-ophira-front.jpg', em: [.07, .05, .09] }, witch_ophira_back: { img: 'assets/npcs/lunar-witch-ophira-back.jpg', em: [.07, .05, .09] },
+    witch_elyndra_front: { img: 'assets/npcs/lunar-witch-elyndra-front.jpg', em: [.07, .05, .09] }, witch_elyndra_back: { img: 'assets/npcs/lunar-witch-elyndra-back.jpg', em: [.07, .05, .09] },
+    witch_lunara_front: { img: 'assets/npcs/lunar-witch-lunara-front.jpg', em: [.07, .05, .09] }, witch_lunara_back: { img: 'assets/npcs/lunar-witch-lunara-back.jpg', em: [.07, .05, .09] },
+    witch_seer_front: { img: 'assets/npcs/lunar-witch-seer-front.jpg', em: [.07, .05, .09] }, witch_seer_back: { img: 'assets/npcs/lunar-witch-seer-back.jpg', em: [.07, .05, .09] },
+    // their magic: the gold halo, Ophira's star, Elyndra's lightning, the Seer's beams, Lunara's lotus and its light
+    halo_gold: { col: [.6, .43, .14], em: [.08, .055, .015], spec: [.3, .25, .15], power: 20 }, star_core: { col: [.86, 1, 1], em: [.8, 1, 1] }, star_haze: { col: [.3, .9, .95], em: [.25, .85, .92], alpha: .3 }, glow_cyan: { glow: [.15, .7, .75] },
+    bolt_core: { col: [.95, .97, 1], em: [.92, .95, 1] }, glow_white: { glow: [.55, .6, .75] }, beam_white: { shaft: [.9, .95, 1], alpha: .62 },
+    lotus_ray: { shaft: [.6, .95, .85], alpha: .3 }, glow_mint: { glow: [.25, .8, .62] }, glow_violet: { glow: [.4, .3, .9] },
+    // Avelor, the Owl of Summoning: his card in moonlight, his feathered back, his wings; the covens' circle and constellation
+    owl_front: { img: 'assets/npcs/owl-avelor-front.jpg', em: [.08, .08, .12] }, owl_back: { img: 'assets/npcs/owl-avelor-back.jpg', em: [.08, .08, .12] }, owl_wing: { img: 'assets/npcs/owl-avelor-wing.png', em: [.07, .07, .11] },
+    owl_talon: { col: [.74, .74, .86], em: [.05, .05, .08] }, owl_claw: { col: [.22, .23, .28], spec: [.5, .5, .6], power: 40 }, glow_moon: { glow: [.35, .45, .85] },
+    star_dim: { col: [.3, .36, .42], em: [.03, .06, .08] }, star_line: { col: [.75, .85, 1], em: [.55, .65, .9], alpha: .5 }, glow_star: { glow: [.45, .55, .9] }, glow_cyan_soft: { glow: [.05, .26, .3] },
+    moss_hang: { col: [.17, .22, .15] }, fungus_glow: { col: [.3, .85, .8], em: [.22, .7, .66] }, root_vein: { col: [.22, .52, .42], em: [.26, .92, .7] },
     skin_w: { col: [.95, .92, .9] }, skin_blue: { col: [.72, .82, .93] }, hair_black: { col: [.06, .06, .07], spec: [.3, .3, .35], power: 30 }, hair_blue: { col: [.06, .12, .3], spec: [.3, .4, .6], power: 30 },
     obi_red: { col: [.62, .07, .1] }, obi_silver: { col: [.78, .82, .88], spec: [.6, .6, .7], power: 40 }, obi_black: { col: [.06, .07, .08] }, horn: { col: [.88, .9, .95] }, ear_os: { col: [.1, .14, .18] },
     flower_pink: { col: [.95, .55, .66] }, flower_teal: { col: [.3, .75, .7], em: [.05, .2, .18] }, flower_orange: { col: [.95, .5, .12] }, ear_pink: { col: [.95, .62, .7] },
@@ -921,6 +1096,24 @@
     la_skyline: { tex: 'la_skyline', self: true }, deco_dome: { tex: 'deco_dome', em: [.2, .18, .14] }, mural_la: { tex: 'mural_la', em: [.14, .1, .08] },
     neon_open: { tex: 'neon_open', self: true, alphaTex: true }, neon_block: { tex: 'neon_block', self: true, alphaTex: true }, scoreboard: { tex: 'scoreboard', self: true }, court_maple: { tex: 'court_maple', spec: [.4, .35, .3], power: 40 },
     glass_green: { col: [.2, .7, .3], em: [.3, .8, .35] }, slot_reels: { tex: 'slot_reels', self: true }, jungle_wall: { tex: 'plaster', tint: [.34, .52, .34] }, velvet: { col: [.3, .08, .26] }, records: { col: [.03, .03, .04], spec: [.7, .7, .7], power: 80 }, white: { col: [.94, .94, .92] },
+    // Antthony's Comedy Club (Hub, Oct 25): the room's plum walls, the brick behind the stage, the dark boards, the plum walls
+    // outside; velvet; the neon signs; the marquee bulbs; popcorn; the candle glass on the tables; the spotlight beams; two of
+    // Miguel's Antthony pictures as the posters by the door
+    club_wall: { tex: 'plaster', tint: [.44, .3, .5] }, club_wall_ext: { tex: 'plaster', tint: [.66, .54, .72] }, club_brick: { tex: 'brick', tint: [.8, .62, .62] }, club_floor: { tex: 'darkwood', tint: [1.05, .92, 1.02] },
+    velvet_red: { col: [.42, .035, .06], spec: [.3, .12, .12], power: 10 }, neon_antthony: { tex: 'neon_antthony', self: true, alphaTex: true }, club_marquee: { tex: 'club_marquee', self: true },
+    sign_snacks: { tex: 'sign_snacks', self: true, alphaTex: true }, sign_fame: { tex: 'sign_fame', self: true, alphaTex: true }, plaque_champion: { tex: 'plaque_champion', em: [.22, .17, .06] }, noren_comedy: { tex: 'noren_comedy' },
+    bulb: { col: [1, .9, .62], em: [1, .8, .45] }, popcorn: { col: [.98, .86, .48], em: [.16, .12, .04] }, candle_glass: { col: [.86, .26, .2], em: [.72, .2, .12], alpha: .8 }, shaft_spot: { shaft: [1, .84, .58], alpha: .1 },
+    poster_neon: { img: 'assets/interiors/antthony/neon-sign.webp', em: [.3, .3, .3] }, poster_micdrop: { img: 'assets/interiors/antthony/mic-drop.webp', em: [.3, .3, .3] },
+    // Rebel Ants After Dark (the Hub's south-east dojo)
+    ad_wall: { tex: 'plaster', tint: [.26, .14, .22] }, ad_floor: { tex: 'darkwood', tint: [.8, .64, .72] }, neon_red: { col: [1, .16, .12], em: [1, .12, .08] }, ad_felt21: { col: [.2, .07, .26] },
+    ad_sign: { tex: 'ad_sign', self: true, alphaTex: true }, ad_never: { tex: 'ad_never', self: true, alphaTex: true }, ad_felt: { tex: 'ad_felt' }, ad_cards: { tex: 'ad_cards', alphaTex: true, em: [.22, .21, .19] },
+    ad_back: { tex: 'ad_back', em: [.12, .06, .06] }, ad_bracket: { tex: 'ad_bracket', self: true }, ad_clash: { tex: 'ad_clash', self: true, alphaTex: true }, ad_21: { tex: 'ad_21', self: true, alphaTex: true },
+    ad_spinner: { tex: 'ad_spinner', self: true, alphaTex: true }, ad_wheel_sign: { tex: 'ad_wheel_sign', self: true, alphaTex: true }, ad_drop_sign: { tex: 'ad_drop_sign', self: true, alphaTex: true },
+    ad_reels: { tex: 'ad_reels', self: true }, ad_drop: { tex: 'ad_drop', self: true }, ad_hub: { tex: 'ad_hub', self: true }, ad_points: { tex: 'ad_points', self: true, alphaTex: true },
+    ad_community: { tex: 'ad_community', self: true, alphaTex: true }, ad_moon: { tex: 'ad_moon', self: true }, ad_code: { tex: 'ad_code', em: [.22, .17, .06] },
+    ad_poster: { img: 'assets/interiors/afterdark/after-dark.webp', em: [.35, .35, .35] }, ad_poster_icon: { img: 'assets/interiors/afterdark/after-dark-icon.webp', em: [.35, .35, .35] },
+    ad_chip_red: { col: [.72, .1, .12], spec: [.3, .3, .3], power: 30 }, ad_chip_purple: { col: [.36, .16, .6], spec: [.3, .3, .3], power: 30 },
+    ad_seg_purple: { col: [.34, .12, .52], em: [.14, .04, .22] }, ad_seg_red: { col: [.56, .06, .08], em: [.22, .02, .03] },
     glow: { glow: [.95, .5, .16] } // soft pool of lantern light on the ground (night only)
   };
   let TEX = null; const MATS = {};
@@ -945,7 +1138,7 @@
     TEX = TEX || makeTextures(scene);
     const room = name.startsWith('rm_'), d = MAT[room ? name.slice(3) : name]; // rm_<name>: a room's copy (see ROOMS)
     if (d.faction && !TEX[d.tex]) TEX[d.tex] = bannerTex(scene, d.faction, ...FACTION_BANNERS[d.faction], 'logo:' + d.faction); // made on first use
-    if (d.tex && !TEX[d.tex] && ROOM_TEX[d.tex]) TEX[d.tex] = ROOM_TEX[d.tex](TEX._cv); // room textures too
+    if (d.tex && !TEX[d.tex] && ROOM_TEX[d.tex]) TEX[d.tex] = ROOM_TEX[d.tex](TEX._cv, TEX); // room textures too
     if (d.shaft) { // a sheet of light falling from a window or a slit: additive, bright at the top, gone at the floor (rooms)
       const m = new BABYLON.StandardMaterial('samKit_' + name, scene), tx = shaftTex(scene);
       m.diffuseColor = BABYLON.Color3.Black(); m.specularColor = BABYLON.Color3.Black(); m.disableLighting = true;
@@ -1399,6 +1592,156 @@
     prof: [[.27, 0], [.3, .025], [.318, .073], [.326, .11], [.397, .293], [.426, .33], [.472, .404], [.507, .477], [.534, .55], [.559, .66], [.573, .77], [.573, .88], [.555, 1.064], [.52, 1.21], [.488, 1.321], [.477, 1.394], [.479, 1.651], [.456, 1.761], [.426, 1.834], [.408, 1.871], [.353, 1.944], [.316, 1.981], [.268, 2.018], [.202, 2.054], [.087, 2.091], [0, 2.1]],
     uv: [-.6041, 1.2105, -.0321, 2.1642],
   };
+  // Vicky's four other Lunar Witches, the same doll template as the moth witch, each read off her own card the same way
+  // (assets/npcs/lunar-witch-<name>-front.jpg; Oct 25): the outline in metres (2.1 m tall) and where her picture sits round her
+  const WITCH_DOLLS = {
+    ophira: { prof: [[.093, .000], [.224, .042], [.298, .084], [.335, .126], [.350, .169], [.365, .211], [.381, .253], [.396, .295], [.430, .337], [.457, .379], [.480, .421], [.501, .463], [.516, .505], [.531, .548], [.543, .590], [.552, .632], [.560, .674], [.567, .716], [.569, .758], [.573, .800], [.573, .843], [.571, .885], [.569, .927], [.565, .969], [.560, 1.011], [.554, 1.053], [.545, 1.095], [.537, 1.137], [.527, 1.179], [.514, 1.222], [.501, 1.264], [.487, 1.306], [.480, 1.348], [.476, 1.390], [.474, 1.432], [.474, 1.474], [.476, 1.516], [.478, 1.559], [.479, 1.601], [.479, 1.643], [.478, 1.685], [.473, 1.727], [.463, 1.769], [.448, 1.811], [.428, 1.854], [.402, 1.896], [.368, 1.938], [.326, 1.980], [.268, 2.022], [.231, 2.043], [.194, 2.060], [.160, 2.073], [.123, 2.083], [.081, 2.092], [.000, 2.100]], uv: [-0.6014, 1.2048, -0.0295, 2.159] },
+    elyndra: { prof: [[.082, .000], [.230, .046], [.306, .092], [.338, .138], [.354, .184], [.372, .230], [.389, .276], [.418, .322], [.449, .368], [.476, .414], [.499, .460], [.517, .505], [.533, .551], [.544, .597], [.554, .643], [.562, .689], [.568, .735], [.571, .781], [.572, .827], [.572, .873], [.570, .919], [.565, .965], [.561, 1.011], [.554, 1.057], [.544, 1.103], [.534, 1.149], [.522, 1.195], [.508, 1.241], [.493, 1.287], [.482, 1.333], [.476, 1.379], [.473, 1.425], [.476, 1.470], [.482, 1.516], [.478, 1.562], [.478, 1.608], [.474, 1.654], [.468, 1.700], [.457, 1.746], [.441, 1.792], [.422, 1.838], [.398, 1.884], [.365, 1.930], [.319, 1.976], [.262, 2.022], [.234, 2.038], [.198, 2.056], [.163, 2.070], [.124, 2.082], [.083, 2.091], [.000, 2.100]], uv: [-0.6031, 1.2085, -0.0322, 2.1643] },
+    lunara: { prof: [[.082, .000], [.230, .046], [.306, .092], [.338, .138], [.354, .184], [.372, .230], [.389, .276], [.418, .322], [.449, .368], [.476, .414], [.499, .460], [.517, .505], [.533, .551], [.544, .597], [.554, .643], [.562, .689], [.568, .735], [.571, .781], [.572, .827], [.572, .873], [.570, .919], [.565, .965], [.561, 1.011], [.554, 1.057], [.544, 1.103], [.534, 1.149], [.522, 1.195], [.508, 1.241], [.493, 1.287], [.482, 1.333], [.476, 1.379], [.473, 1.425], [.476, 1.470], [.482, 1.516], [.478, 1.562], [.478, 1.608], [.474, 1.654], [.468, 1.700], [.457, 1.746], [.441, 1.792], [.422, 1.838], [.398, 1.884], [.365, 1.930], [.319, 1.976], [.262, 2.022], [.234, 2.038], [.198, 2.056], [.163, 2.070], [.124, 2.082], [.083, 2.091], [.000, 2.100]], uv: [-0.6031, 1.2085, -0.0322, 2.1643] },
+    seer: { prof: [[.093, .000], [.224, .042], [.298, .084], [.335, .126], [.350, .169], [.365, .211], [.381, .253], [.396, .295], [.430, .337], [.457, .379], [.480, .421], [.501, .463], [.516, .505], [.531, .548], [.543, .590], [.552, .632], [.560, .674], [.567, .716], [.569, .758], [.573, .800], [.573, .843], [.571, .885], [.569, .927], [.565, .969], [.560, 1.011], [.554, 1.053], [.545, 1.095], [.537, 1.137], [.527, 1.179], [.514, 1.222], [.501, 1.264], [.487, 1.306], [.480, 1.348], [.476, 1.390], [.474, 1.432], [.474, 1.474], [.476, 1.516], [.478, 1.559], [.479, 1.601], [.479, 1.643], [.478, 1.685], [.473, 1.727], [.463, 1.769], [.448, 1.811], [.428, 1.854], [.402, 1.896], [.368, 1.938], [.326, 1.980], [.268, 2.022], [.231, 2.043], [.194, 2.060], [.160, 2.073], [.123, 2.083], [.081, 2.092], [.000, 2.100]], uv: [-0.6014, 1.2048, -0.0295, 2.159] },
+  };
+  // a flat stroke in her picture's plane (x across, z up) at depth y: magic drawn on the air in front of / behind her
+  function airStroke(M, m, a, b, w, y) {
+    const L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, nx = -(b[1] - a[1]) / L * w / 2, nz = (b[0] - a[0]) / L * w / 2;
+    M.poly(m, [[a[0] + nx, y, a[1] + nz], [b[0] + nx, y, b[1] + nz], [b[0] - nx, y, b[1] - nz], [a[0] - nx, y, a[1] - nz]]);
+  }
+  // the gold halo behind Elyndra's and Lunara's heads (centre z, radius R): the disc, its dark rim, a ring of sunburst
+  // ticks; a little behind her middle, so from the front only what stands out round her head shows, as on the card
+  function witchHalo(M, z, R) {
+    const n = 48, y = .03, P = (r, a, d = 0) => [Math.cos(a) * r, y + d, z + Math.sin(a) * r];
+    for (let k = 0; k < n; k++) {
+      const a0 = k / n * 2 * Math.PI, a1 = (k + 1) / n * 2 * Math.PI;
+      M.poly('halo_gold', [[0, y, z], P(R, a0), P(R, a1)]);
+      M.poly('dark', [P(R - .004, a0, -.002), P(R + .016, a0, -.002), P(R + .016, a1, -.002), P(R - .004, a1, -.002)]);
+    }
+    for (let k = 0; k < 64; k++) { const a = (k + .5) / 64 * 2 * Math.PI, w = .011, ca = Math.cos(a), sa = Math.sin(a); M.poly('dark', [[ca * (R + .03) - sa * w, y, z + sa * (R + .03) + ca * w], [ca * (R + .075) - sa * w, y, z + sa * (R + .075) + ca * w], [ca * (R + .075) + sa * w, y, z + sa * (R + .075) - ca * w], [ca * (R + .03) + sa * w, y, z + sa * (R + .03) - ca * w]]); }
+  }
+  // Avelor, the Owl of Summoning (Moon Tales 21-24): Vicky's owl card ("use it and just change colours to suit") turned
+  // from sunset to moonlight (assets/npcs/owl-avelor-front.jpg). His egg-shaped body is a lathe of the card's outline in
+  // metres, z 0 at his perch (the branch top under his feet on the card); the picture paints his front above the art's
+  // branch (zCut), the feathers of his back the rest; ear tufts and tail are flat pieces painted from the same picture
+  const OWL = {
+    prof: [[.000, -.081], [.086, -.072], [.154, -.051], [.193, -.030], [.220, -.009], [.238, .013], [.249, .034], [.255, .055], [.256, .068], [.275, .093], [.291, .119], [.301, .144], [.319, .170], [.329, .196], [.337, .221], [.343, .246], [.347, .272], [.349, .297], [.351, .323], [.351, .348], [.350, .374], [.348, .400], [.343, .425], [.337, .451], [.330, .476], [.320, .501], [.310, .527], [.298, .552], [.283, .578], [.262, .604], [.236, .629], [.240, .654], [.246, .680], [.246, .706], [.244, .714], [.240, .729], [.235, .745], [.228, .760], [.218, .775], [.207, .790], [.194, .806], [.178, .821], [.159, .836], [.135, .852], [.104, .867], [.052, .883], [.030, .886], [.000, .888]],
+    uv: [-.361, .722, -.240, 1.198], zCut: .068,
+    tuft: [[.229, .947], [.216, .918], [.201, .875], [.184, .842], [.165, .820], [.137, .799], [.124, .769], [.193, .765], [.218, .786], [.239, .812], [.254, .842], [.250, .863], [.259, .874], [.252, .892], [.240, .926]],
+    tail: [[-.165, -.078], [.166, -.078], [.175, -.111], [.165, -.144], [.139, -.178], [.097, -.208], [.045, -.225], [.000, -.230], [-.045, -.225], [-.096, -.208], [-.138, -.178], [-.164, -.144], [-.174, -.111]],
+    eyes: [[-.109, .678], [.109, .678]], shoulder: [.275, .552], feet: [-.090, .090], back: .04,
+  };
+  // his body: the card's front within arc degrees of his front and above zCut, the feathers of his back round the rest
+  function owlBody(M) {
+    const prof = OWL.prof, z0 = prof[0][1], H = prof[prof.length - 1][1] - z0, segs = 32, arc = 80 * Math.PI / 180, b = OWL.back, uv = OWL.uv;
+    const P = (r, z, a) => [r * Math.cos(a), b + r * Math.sin(a), z];
+    for (let i = 0; i < prof.length - 1; i++) for (let j = 0; j < segs; j++) {
+      const a0 = j / segs * Math.PI * 2, a1 = (j + 1) / segs * Math.PI * 2, [r0, za] = prof[i], [r1, zb] = prof[i + 1];
+      const q = [[r0, za, a0, j], [r0, za, a1, j + 1], [r1, zb, a1, j + 1], [r1, zb, a0, j]].filter((e, k, A) => k === 0 || !(e[0] < 1e-6 && A[k - 1][0] < 1e-6));
+      const pts = q.map(e => P(e[0], e[1], e[2])), front = Math.abs((a0 + a1) / 2 - 1.5 * Math.PI) < arc && (za + zb) / 2 > OWL.zCut;
+      if (front) M.poly('owl_front', pts, pts.map(p => [(p[0] - uv[0]) / uv[1], (p[2] - uv[2]) / uv[3]]));
+      else M.poly('owl_back', pts, q.map(e => [e[3] / segs, (e[1] - z0) / H]));
+    }
+    const UVp = p => [(p[0] - uv[0]) / uv[1], (p[2] - uv[2]) / uv[3]];
+    for (const sd of [-1, 1]) { // the ear tufts: horns painted from his card, a little thickness, dark edges
+      const T = OWL.tuft.map(([x, z]) => [x * sd, z]), A = T.slice(0, 7), Bq = [T[0]].concat(T.slice(7).reverse());
+      const rs = (L, n) => { const d = [0]; for (let k = 1; k < L.length; k++) d.push(d[k - 1] + Math.hypot(L[k][0] - L[k - 1][0], L[k][1] - L[k - 1][1])); const out = []; for (let k = 0; k < n; k++) { const t = d[d.length - 1] * k / (n - 1); let m = 1; while (m < d.length - 1 && d[m] < t) m++; const f = (t - d[m - 1]) / ((d[m] - d[m - 1]) || 1); out.push([L[m - 1][0] + (L[m][0] - L[m - 1][0]) * f, L[m - 1][1] + (L[m][1] - L[m - 1][1]) * f]); } return out; };
+      const a = rs(A, 7), c = rs(Bq, 7), yF = -.1, yB = -.065;
+      for (let k = 0; k < 6; k++) {
+        const f = [[a[k][0], yF, a[k][1]], [c[k][0], yF, c[k][1]], [c[k + 1][0], yF, c[k + 1][1]], [a[k + 1][0], yF, a[k + 1][1]]];
+        M.poly('owl_front', f, f.map(UVp)); M.poly('owl_back', f.map(q => [q[0], yB, q[2]]), [[.1, .9], [.12, .9], [.12, .95], [.1, .95]]);
+        for (const L of [a, c]) M.poly('dark', [[L[k][0], yF, L[k][1]], [L[k + 1][0], yF, L[k + 1][1]], [L[k + 1][0], yB, L[k + 1][1]], [L[k][0], yB, L[k][1]]]);
+      }
+    }
+    { // the tail: hanging behind his perch, painted from the card, tipped back as it falls
+      const zt = OWL.tail[0][1], pts = OWL.tail.map(([x, z]) => [x, b + .1 + (zt - z) * .55, z]);
+      M.poly('owl_front', pts, pts.map(UVp));
+    }
+    for (const fx of OWL.feet) { // talons gripping his branch: three toes over its front, one behind, dark claws
+      M.sphere('owl_talon', [fx, -.03, .045], .05, .75, 8, 4);
+      for (const dx of [-.032, 0, .032]) {
+        const path = curveTube(M, 'owl_talon', [[fx + dx * .5, -.03, .03], [fx + dx, -.075, .02], [fx + dx * 1.1, -.105, -.02], [fx + dx * 1.1, -.1, -.065]], [.02, .018, .015, .011], { segs: 6, n: 3, ridge: 0, bump: 0, cap: false });
+        const e = path[path.length - 1]; M.tube('owl_claw', e, [e[0], e[1] + .025, e[2] - .045], .011, .001, 5);
+      }
+      const bk = curveTube(M, 'owl_talon', [[fx, 0, .03], [fx, .065, -.01], [fx, .085, -.06]], [.018, .014, .01], { segs: 6, n: 3, ridge: 0, bump: 0, cap: false });
+      const e = bk[bk.length - 1]; M.tube('owl_claw', e, [e[0], e[1] - .02, e[2] - .04], .01, .001, 5);
+    }
+    for (const [ex, ez] of OWL.eyes) { const y = b - Math.sqrt(Math.max(0, .246 * .246 - ex * ex)) - .008; M.quad('glow_moon', [[ex - .05, y, ez - .05], [ex + .05, y, ez - .05], [ex + .05, y, ez + .05], [ex - .05, y, ez + .05]]); } // eyes holding a thousand moons
+  }
+  // a spread wing (the right one; the left is its mirror): root at his shoulder, 1.45 m out, the leading edge forward,
+  // a little camber; the feathers are in its picture (alpha cut)
+  function owlWing(M) {
+    const S = 1.45, Cf = -.16, Cb = .56, I = 7, J = 3;
+    const pt = (i, j) => { const x = i / I * S, y = Cf + (Cb - Cf) * j / J, t = (y - Cf) / (Cb - Cf); return [x, y, .05 * Math.sin(Math.PI * t) * (1 - .6 * x / S) + .04 * (x / S) ** 2]; };
+    for (let i = 0; i < I; i++) for (let j = 0; j < J; j++) M.poly('owl_wing', [pt(i, j), pt(i + 1, j), pt(i + 1, j + 1), pt(i, j + 1)], [[i / I, 1 - j / J], [(i + 1) / I, 1 - j / J], [(i + 1) / I, 1 - (j + 1) / J], [i / I, 1 - (j + 1) / J]]);
+  }
+  // the ancient tree of Ophira's glade: a huge gnarled trunk on spreading roots, crooked limbs, hanging moss, glowing
+  // fungi, and one long low branch reaching out along +x: the Owl of Summoning's perch (OWL_PERCH, the top of the branch)
+  const OWL_PERCH = [2.5, 0, 2.71];
+  function ancientTree(M) {
+    blob(M, 'moss', [0, 0, .02], 2.4, 2.2, .42, { flat: .5, amp: .3, seed: 8, segs: 14, rings: 6 });
+    curveTube(M, 'bark_old', [[0, 0, -.3], [.12, .1, 1.2], [-.08, .16, 2.5], [.18, 0, 3.9], [-.05, -.1, 5.2], [.1, 0, 6.2]], [1.05, .78, .62, .5, .36, .2], { segs: 16, n: 5, ridge: .24, bump: .16, seed: 31, k: 7 });
+    for (let k = 0; k < 7; k++) { const a = k * .9 + .3, c = Math.cos(a), sn = Math.sin(a); curveTube(M, 'bark_old', [[c * .5, sn * .5, .9], [c * 1.5, sn * 1.5, .35], [c * 2.5, sn * 2.5, .05], [c * 3.2, sn * 3.2, -.12]], [.5, .3, .16, .06], { segs: 8, n: 3, seed: 40 + k }); }
+    curveTube(M, 'bark_old', [[.25, 0, 2.25], [1.2, -.05, 2.45], [2.2, 0, 2.56], [3.05, .05, 2.6], [3.85, 0, 2.74]], [.36, .22, .14, .11, .05], { segs: 10, n: 5, ridge: .05, bump: .03, seed: 33 }); // the perch
+    curveTube(M, 'bark_old', [[3.1, .04, 2.62], [3.4, .25, 2.95], [3.55, .3, 3.3]], [.05, .02], { segs: 5, n: 3, seed: 34 });
+    curveTube(M, 'bark_old', [[1.6, -.05, 2.5], [1.8, -.35, 2.85], [1.75, -.5, 3.2]], [.06, .02], { segs: 5, n: 3, seed: 35 });
+    const limbs = [[2.3, 4.2, 3.4, 6.4], [3.6, 4.8, 3.8, 7.2], [5.0, 4.4, 3.2, 6.8], [.8, 5.4, 2.8, 7.6], [4.2, 5.8, 2.4, 7.9]];
+    limbs.forEach(([a, z0, L, z1], k) => { const c = Math.cos(a), sn = Math.sin(a); curveTube(M, 'bark_old', [[c * .2, sn * .2, z0], [c * L * .4, sn * L * .4, z0 + .9], [c * L * .75 - sn * .5, sn * L * .75 + c * .5, z1 - .4], [c * L, sn * L, z1]], [.3, .18, .09, .03], { segs: 8, n: 3, seed: 50 + k }); });
+    for (const [x, y, z, L] of [[.9, -.1, 2.4, 1], [1.7, .06, 2.48, .8], [2.9, -.05, 2.54, 1.2], [3.5, .02, 2.64, .7], [-.9, .6, 4.5, 1.1], [1.1, -1.2, 5, .9], [-1.4, -.8, 5.3, 1.3]]) // hanging moss
+      for (let q = 0; q < 3; q++) { const dx = (q - 1) * .09, L2 = L * (.7 + .3 * ((q * 7) % 3) / 2); M.poly('moss_hang', [[x + dx - .035, y, z], [x + dx + .035, y, z], [x + dx + .01, y, z - L2], [x + dx - .01, y, z - L2]]); }
+    for (let k = 0; k < 9; k++) { const a = k * 2.3 + .4, r = 1.1 + .7 * ((k * 5) % 4) / 3; M.sphere('fungus_glow', [Math.cos(a) * r, Math.sin(a) * r, .12 + .04 * (k % 2)], .07 + .03 * (k % 3), .45, 7, 3); }
+    M.quad('glow_cyan_soft', [[-2.6, -2.6, .06], [2.6, -2.6, .06], [2.6, 2.6, .06], [-2.6, 2.6, .06]]);
+  }
+  // Ophira's star laid on the ground in a ring of runes, where the covens gather (Moon Tales 24): dim until it is woken
+  function groundStroke(M, m, a, b, w, z) {
+    const L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, nx = -(b[1] - a[1]) / L * w / 2, ny = (b[0] - a[0]) / L * w / 2;
+    M.poly(m, [[a[0] + nx, a[1] + ny, z], [b[0] + nx, b[1] + ny, z], [b[0] - nx, b[1] - ny, z], [a[0] - nx, a[1] - ny, z]]);
+  }
+  function sacredCircle(M, lit) {
+    const R = 4.6, m = lit ? 'star_core' : 'star_dim', z = .045, n = 64;
+    for (const [r, w] of [[R, .08], [R - .42, .05]]) for (let k = 0; k < n; k++) { const a0 = k / n * 2 * Math.PI, a1 = (k + 1) / n * 2 * Math.PI; groundStroke(M, m, [Math.cos(a0) * r, Math.sin(a0) * r], [Math.cos(a1) * r, Math.sin(a1) * r], w, z); }
+    const pt = k => { const a = Math.PI / 2 + k * 2 * Math.PI / 5; return [Math.cos(a) * (R - .42), Math.sin(a) * (R - .42)]; };
+    for (let k = 0; k < 5; k++) groundStroke(M, m, pt(k), pt(k + 2), .07, z + .002);
+    for (let k = 0; k < 30; k++) { const a = (k + .5) / 30 * 2 * Math.PI, r0 = R - .33, r1 = R - .09, tw = .12 * Math.sin(k * 2.7); groundStroke(M, m, [Math.cos(a + tw * .02) * r0, Math.sin(a + tw * .02) * r0], [Math.cos(a - tw * .02) * r1, Math.sin(a - tw * .02) * r1], .03, z); }
+    for (let k = 0; k < 5; k++) { const [x, y] = pt(k); M.cyl(m, [x, y, 0], .16, .06, 10); if (lit) M.quad('glow_cyan', [[x - .8, y - .8, .07], [x + .8, y - .8, .07], [x + .8, y + .8, .07], [x - .8, y + .8, .07]]); }
+    if (lit) M.quad('glow_cyan_soft', [[-R - .8, -R - .8, .065], [R + .8, -R - .8, .065], [R + .8, R + .8, .065], [-R - .8, R + .8, .065]]);
+  }
+  // the constellation the covens weave above the forest (Moon Tales 24): an owl with spread wings in stars, ~26 m across,
+  // high over the glade and leaning down to face it (centre C, plane axes X / Y); it stays in the sky after
+  const OWL_STARS = { tl: [-2.2, 7], tr: [2.2, 7], cr: [0, 5.6], el: [-1.2, 4.2], er: [1.2, 4.2], bk: [0, 2.9], ch: [0, .4], bl: [0, -3.6], ta: [0, -6.6], tbl: [-1.6, -8.4], tbr: [1.6, -8.4],
+    sl: [-2.4, 1.8], sr: [2.4, 1.8], ml: [-7, 3.8], mr: [7, 3.8], wl: [-13, 1.8], wr: [13, 1.8], fl: [-10, -1.4], fr: [10, -1.4], il: [-5, -2.1], ir: [5, -2.1] };
+  const OWL_LINES = [['tl', 'cr'], ['cr', 'tr'], ['tl', 'el'], ['tr', 'er'], ['el', 'bk'], ['er', 'bk'], ['bk', 'ch'], ['ch', 'bl'], ['bl', 'ta'], ['ta', 'tbl'], ['ta', 'tbr'],
+    ['ch', 'sl'], ['ch', 'sr'], ['sl', 'ml'], ['ml', 'wl'], ['wl', 'fl'], ['fl', 'il'], ['il', 'bl'], ['sr', 'mr'], ['mr', 'wr'], ['wr', 'fr'], ['fr', 'ir'], ['ir', 'bl']];
+  const OWL_SKY = { C: [0, 26, 36], X: [1, 0, 0], Y: [0, -.772, .636] };
+  function owlConstellation(M) {
+    const { C, X, Y } = OWL_SKY, at = (u, v) => [C[0] + u * X[0] + v * Y[0], C[1] + u * X[1] + v * Y[1], C[2] + u * X[2] + v * Y[2]];
+    const N = [0, -.636, -.772]; // the plane's normal, toward the glade: quads lie in the plane
+    for (const [a, b] of OWL_LINES) {
+      const [u0, v0] = OWL_STARS[a], [u1, v1] = OWL_STARS[b], L = Math.hypot(u1 - u0, v1 - v0) || 1, nu = -(v1 - v0) / L * .09, nv = (u1 - u0) / L * .09;
+      M.poly('star_line', [at(u0 + nu, v0 + nv), at(u1 + nu, v1 + nv), at(u1 - nu, v1 - nv), at(u0 - nu, v0 - nv)]);
+    }
+    for (const [k, [u, v]] of Object.entries(OWL_STARS)) {
+      const big = /^(el|er|cr|wl|wr|ta)$/.test(k), r = big ? .42 : .28, g = big ? 2.4 : 1.5, c = at(u, v);
+      M.sphere('star_core', c, r, 1, 8, 5);
+      M.poly('glow_star', [at(u - g, v - g), at(u + g, v - g), at(u + g, v + g), at(u - g, v + g)].map(q => [q[0] + N[0] * .05, q[1] + N[1] * .05, q[2] + N[2] * .05]));
+    }
+  }
+  // the ancient roots Lunara's footsteps wake (Moon Tales 23): gnarled roots spreading out from where she stands, a mint
+  // light running along their tops, a soft glow under them
+  function wildRoots(M) {
+    for (let k = 0; k < 9; k++) {
+      const a = k * .698 + .2 + .15 * Math.sin(k * 3.1), L = 2.4 + .45 * ((k * 7) % 3), c = Math.cos(a), sn = Math.sin(a), w = .25 * Math.sin(k * 1.9);
+      const pts = [[c * .3, sn * .3, .12], [c * L * .35 - sn * w, sn * L * .35 + c * w, .16], [c * L * .7 + sn * w, sn * L * .7 - c * w, .07], [c * L, sn * L, -.04]];
+      curveTube(M, 'bark_old', pts, [.2, .14, .08, .03], { segs: 8, n: 3, seed: 60 + k });
+      curveTube(M, 'root_vein', pts.map(([x, y, z], i) => [x, y, z + [.18, .13, .08, .025][i]]), [.035, .03, .022, .01], { segs: 8, n: 3, seed: 70 + k });
+    }
+    M.quad('glow_mint', [[-3.2, -3.2, .05], [3.2, -3.2, .05], [3.2, 3.2, .05], [-3.2, 3.2, .05]]);
+  }
+  // the light pouring down from Lunara's lotus (painted on her, as on her card) onto the ground in front of her, fanning
+  // out, and a soft mint glow where it lands (c = the lotus's centre)
+  function lotusLight(M, c) {
+    for (let k = 0; k < 5; k++) {
+      const x0 = c[0] + (k - 2) * .14, x1 = c[0] + (k - 2) * .42, y0 = c[1] - .06, y1 = c[1] - .42 - .1 * Math.abs(k - 2);
+      M.poly('lotus_ray', [[x0 - .07, y0, c[2]], [x0 + .07, y0, c[2]], [x1 + .2, y1, .01], [x1 - .2, y1, .01]], [[0, 1], [1, 1], [1, 0], [0, 0]]);
+    }
+    M.quad('glow_mint', [[c[0] - 1.1, c[1] - 1.5, .04], [c[0] + 1.1, c[1] - 1.5, .04], [c[0] + 1.1, c[1] + .5, .04], [c[0] - 1.1, c[1] + .5, .04]]);
+  }
   function ccPetal(M, x, y, z, s, a, tilt) {
     const c = Math.cos(a), si = Math.sin(a), ct = Math.cos(tilt), st = Math.sin(tilt), P = (u, v) => [x + (u * c - v * si * ct), y + (u * si + v * c * ct), z + v * st];
     M.poly('petal_pink', [P(-s, 0), P(-s * .3, -s * .45), P(s, 0), P(s * .3, s * .45)]);
@@ -2067,6 +2410,59 @@
       for (const [x, y] of [[-W / 4, -.23], [-W / 4 + O, -.11]]) for (let k = 1; k < 4; k++) M.block('darkwood', x - W / 4 + k * W / 8, y, .12, .03, .02, H - .1);
       M.block('darkwood', 0, -.16, H + .42, 1.3, .1, 1.3); M.quad('emblem_rebel', [[-.55, -.22, H + .47], [.55, -.22, H + .47], [.55, -.22, H + 1.57], [-.55, -.22, H + 1.57]]);
       for (const sd of [-1, 1]) { const x = sd * (W / 2 + .14); M.rod('darkwood', [x, -.37, 3.3], [x, -.64, 3.3], .03, 3); lantern(M, x, -.64, 2.7, .2); }
+    },
+    // Antthony's Comedy Club (Hub, Oct 25: Miguel, "a dojo ... just for antthony and call it Antthonys comedy club ... in the
+    // forest but not too far from the village"): a dojo made over as a comedy club. A stone base, steps with a red carpet up
+    // between velvet ropes, plum walls with glowing shoji, a big hip roof with the club's name in neon on a sign over the front
+    // eave (bulbs round it), a marquee canopy over the doors, a purple noren with the mic crest, two of Miguel's Antthony
+    // pictures as posters, purple lanterns under the eaves, stone lanterns by the steps; front faces -y (the room's door is a
+    // layout door in front of the recess)
+    hub_comedy_club(M) {
+      const W = 20, D = 14, Z = .9, WH = 5.4, wy = .6, yF = wy - (D - 3) / 2, yB = -(D + 1.6) / 2; // yF: the front wall, yB: the base's front edge
+      M.block('stone', 0, 0, 0, W + 1.6, D + 1.6, Z);
+      steps(M, 0, yB, Z, 7.4, 3);
+      M.remap = { plaster: 'club_wall_ext', wood: 'darkwood' };
+      walls(M, 0, wy, Z, W - 3, D - 3, WH, { door: [4.4, 3.9], windows: [['left', -2.4, Z + 1.7, 2.6, 1.8], ['left', 2.4, Z + 1.7, 2.6, 1.8], ['right', -2.4, Z + 1.7, 2.6, 1.8], ['right', 2.4, Z + 1.7, 2.6, 1.8], ['back', -4.2, Z + 1.7, 3, 1.8], ['back', 4.2, Z + 1.7, 3, 1.8]] });
+      M.remap = null;
+      M.roof(0, wy, Z + WH + .25, W + 1.4, D + 1.4, 3.6, { lift: .9 });
+      // the red carpet up the steps and across the porch, velvet ropes either side of it
+      for (let i = 0; i < 3; i++) {
+        const top = Z - i * Z / 3, y0 = yB - i * .45, y1 = y0 - .45;
+        M.quad('runner', [[-1.6, y1, top + .012], [1.6, y1, top + .012], [1.6, y0, top + .012], [-1.6, y0, top + .012]], [[0, 0], [1, 0], [1, .07], [0, .07]]);
+        M.quad('runner', [[-1.6, y1 - .012, top - Z / 3], [1.6, y1 - .012, top - Z / 3], [1.6, y1 - .012, top], [-1.6, y1 - .012, top]], [[0, 0], [1, 0], [1, .05], [0, .05]]);
+      }
+      M.quad('runner', [[-1.6, yB, Z + .012], [1.6, yB, Z + .012], [1.6, yF - .15, Z + .012], [-1.6, yF - .15, Z + .012]], [[0, 0], [1, 0], [1, (yF - .15 - yB) / 6.4], [0, (yF - .15 - yB) / 6.4]]);
+      for (const sd of [-1, 1]) {
+        const x = sd * 2.5, ys = [yB + .35, yB + 1.55, yB + 2.75];
+        for (const y of ys) { M.cyl('brass', [x, y, Z], .16, .06, 10); M.cyl('brass', [x, y, Z + .06], .05, 1.15, 8); M.sphere('brass', [x, y, Z + 1.26], .09, 1, 8, 4); }
+        for (let k = 0; k < 2; k++) { const a = ys[k], b = ys[k + 1], m = (a + b) / 2; M.rod('velvet_red', [x, a, Z + 1.12], [x, m, Z + .86], .045, 6); M.rod('velvet_red', [x, m, Z + .86], [x, b, Z + 1.12], .045, 6); }
+      }
+      // the doors: the noren with the mic crest, the marquee canopy with bulbs along its edge and under it
+      noren(M, 0, yF - .2, Z + 3.85, 4.2, 1, 'noren_comedy');
+      const cz = Z + 4.15, cy0 = yF - .15, cy1 = yF - 1.9;
+      M.block('lacquer_black', 0, (cy0 + cy1) / 2, cz, 6.4, cy0 - cy1, .42); M.block('gold', 0, cy1 - .03, cz + .14, 6.5, .06, .14);
+      for (let k = 0; k <= 12; k++) { const x = -3 + k * .5; M.sphere('bulb', [x, cy1 - .08, cz + .3], .07, 1, 6, 3); M.sphere('bulb', [x, cy1 + .35, cz - .02], .06, 1, 6, 3); }
+      for (const sd of [-1, 1]) M.rod('lacquer_black', [sd * 3, cy1 + .2, cz + .4], [sd * 3, cy0, cz + 1.9], .04, 4);
+      // the posters either side of the doors (two of Miguel's pictures), gold frames, a lamp over each
+      for (const [sd, mat] of [[-1, 'poster_neon'], [1, 'poster_micdrop']]) {
+        const x = sd * 3.82, yp = yF - .19, zb = Z + .9, s2 = 1.9;
+        M.block('gold', x, yp + .02, zb - .08, s2 + .16, .06, s2 + .16); M.quad(mat, [[x - s2 / 2, yp - .02, zb], [x + s2 / 2, yp - .02, zb], [x + s2 / 2, yp - .02, zb + s2], [x - s2 / 2, yp - .02, zb + s2]]);
+        M.rod('brass', [x - .5, yp - .35, zb + s2 + .25], [x + .5, yp - .35, zb + s2 + .25], .04, 6); M.rod('brass', [x, yp, zb + s2 + .35], [x, yp - .35, zb + s2 + .27], .02, 4);
+      }
+      // the club's name on a sign over the front eave, bulbs round it, struts down to the roof behind it
+      const sy2 = wy - (D + 1.4) / 2 + .7, sz0 = Z + WH + .45, sh = 3, sw = 12;
+      M.block('lacquer_black', 0, sy2, sz0, sw + .4, .3, sh + .4); M.quad('club_marquee', [[-sw / 2, sy2 - .16, sz0 + .2], [sw / 2, sy2 - .16, sz0 + .2], [sw / 2, sy2 - .16, sz0 + .2 + sh], [-sw / 2, sy2 - .16, sz0 + .2 + sh]]);
+      for (let k = 0; k <= 24; k++) { const x = -sw / 2 + k * sw / 24; for (const z of [sz0 + .08, sz0 + sh + .32]) M.sphere('bulb', [x, sy2 - .2, z], .08, 1, 6, 3); }
+      for (let k = 1; k < 6; k++) for (const sd of [-1, 1]) M.sphere('bulb', [sd * (sw / 2 + .12), sy2 - .2, sz0 + .08 + k * (sh + .24) / 6], .08, 1, 6, 3);
+      for (const sd of [-1, 1]) M.rod('darkwood', [sd * 4.5, sy2 + .15, sz0 + 1.5], [sd * 4.5, sy2 + 2.6, sz0 + .3], .1, 6);
+      // purple lanterns under the front eave and the corners, stone lanterns by the steps
+      M.remap = { lantern: 'lantern_violet' }; for (const x of [-9.6, -6.4, 6.4, 9.6]) lantern(M, x, yB + .9, Z + 5.2, .3); M.remap = null;
+      for (const sd of [-1, 1]) {
+        const x = sd * 5, y = yB - .9;
+        M.block('stone', x, y, 0, .8, .8, .35); M.block('stone', x, y, .35, .32, .32, 1); M.block('stone', x, y, 1.35, .7, .7, .14);
+        M.block('window_glow', x, y, 1.49, .44, .44, .42); for (const t of [-1, 1]) { M.block('stone', x + t * .25, y, 1.49, .08, .6, .42); M.block('stone', x, y + t * .25, 1.49, .6, .08, .42); }
+        M.block('stone', x, y, 1.91, .9, .9, .16); M.cyl('stone', [x, y, 2.07], .14, .18, 6, .03);
+      }
     },
     // the game hall's back-room door (the Game Hall's): a purple arched door with a pumpkin lamp either side; front faces -y
     cc_hall_door(M) {
@@ -3089,9 +3485,48 @@
       M.rod('cat_white', [-.3, -.28, .74], [-.36, -.48, .7], .1, 6); M.sphere('cat_white', [-.36, -.5, .7], .12, 1, 6, 4);
       for (const [x, y, z, r] of [[.5, -.3, .1, .13], [.62, 0, .25, .11], [-.62, .1, .2, .12], [.55, -.2, .45, .1]]) ccFlower(M, 'flower_pink', x, y, z, r);
     },
-    // the Lunar Witch of Mochi's tale (Moon Tales 05-08): Vicky's moth witch, a matryoshka doll in purple with a gold band
+    // Ghostwing (Lunar Witch 374, Beacon to Wandering Souls), the witch of Mochi's tale (Moon Tales 05-08): Vicky's moth witch, a matryoshka doll in purple with a gold band
     // across her eyes, a dark moon in a lavender crescent and a death's-head moth; outline and front straight from her art
     cc_lunar_witch(M) { matryoshka(M, 'witch_moth_front', 'witch_moth_back', WITCH_MOTH.prof, WITCH_MOTH.uv); },
+    // ── Vicky's Lunar Witches of the Owl of Summoning (Moon Tales 21-24) ──
+    cc_witch_ophira(M) { matryoshka(M, 'witch_ophira_front', 'witch_ophira_back', WITCH_DOLLS.ophira.prof, WITCH_DOLLS.ophira.uv); }, // Lunar Witch 617, Keeper of Ancient Wisdom; her star is the subpart cc_ophira_star
+    cc_ophira_star(M) { // her glowing pentagram as on her card, in her middle plane: only what stands out round her shows, and it meets the lines painted across her at her outline
+      const P = { T: [0, 2.344], UL: [-.905, 1.681], UR: [.907, 1.681], LL: [-.81, .385], LR: [.791, .385] };
+      for (const [a, b] of [['T', 'LL'], ['T', 'LR'], ['UL', 'UR'], ['UL', 'LR'], ['UR', 'LL']]) { airStroke(M, 'star_core', P[a], P[b], .02, 0); airStroke(M, 'star_haze', P[a], P[b], .075, .004); }
+      for (const q of Object.values(P)) M.quad('glow_cyan', [[q[0] - .22, -.02, q[1] - .22], [q[0] + .22, -.02, q[1] - .22], [q[0] + .22, -.02, q[1] + .22], [q[0] - .22, -.02, q[1] + .22]]);
+    },
+    cc_witch_elyndra(M) { matryoshka(M, 'witch_elyndra_front', 'witch_elyndra_back', WITCH_DOLLS.elyndra.prof, WITCH_DOLLS.elyndra.uv); witchHalo(M, 1.776, .529); }, // Lunar Witch 501, Born of Starlight & Moonfire; her lightning is the subpart cc_elyndra_bolts
+    cc_elyndra_bolts(M) { // the white lightning out of her eyes, up through her hood and out past her halo, as on her card; it crackles
+      const jag = (a, b, n, amp, seed) => { const out = [a]; for (let i = 1; i < n; i++) { const t = i / n, L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, j = amp * Math.sin(seed + i * 2.7) * (i % 2 ? 1 : -.7); out.push([a[0] + (b[0] - a[0]) * t - (b[1] - a[1]) / L * j, a[1] + (b[1] - a[1]) * t + (b[0] - a[0]) / L * j]); } out.push(b); return out; };
+      for (const sd of [-1, 1]) {
+        const key = [[.146, 1.551], [.19, 1.72], [.29, 1.95], [.43, 2.08], [.7, 2.18], [.92, 2.2], [.99, 2.29]];
+        let pts = []; for (let i = 0; i < key.length - 1; i++) pts = pts.concat(jag(key[i], key[i + 1], 3, .028, i * 1.3 + (sd > 0 ? .9 : 0)).slice(i ? 1 : 0));
+        pts = pts.map(q => [q[0] * sd, q[1]]);
+        for (let i = 0; i < pts.length - 1; i++) { const w = .024 - .0007 * i; airStroke(M, 'bolt_core', pts[i], pts[i + 1], Math.max(.01, w), -.5); }
+        const f = pts[Math.floor(pts.length * .6)]; airStroke(M, 'bolt_core', f, [f[0] + .1 * sd, f[1] + .14], .011, -.5); // a fork; then a soft glow along it
+        for (let k = 0; k < pts.length; k += 2) { const q = pts[k], r = k ? .085 : .1; M.quad('glow_white', [[q[0] - r, -.52, q[1] - r], [q[0] + r, -.52, q[1] - r], [q[0] + r, -.52, q[1] + r], [q[0] - r, -.52, q[1] + r]]); }
+      }
+    },
+    cc_witch_lunara(M) { matryoshka(M, 'witch_lunara_front', 'witch_lunara_back', WITCH_DOLLS.lunara.prof, WITCH_DOLLS.lunara.uv); witchHalo(M, 1.778, .529); lotusLight(M, [0, -.5, .3]); }, // Lunar Witch 583, Keeper of Moonlit Blooms
+    // ── Avelor, the Owl of Summoning (an actor: buildOwl), his ancient tree, the covens' circle and their constellation ──
+    cc_owl_avelor(M) { owlBody(M); },
+    cc_owl_wing(M) { owlWing(M); },
+    cc_ancient_tree(M) { ancientTree(M); },
+    cc_sacred_circle(M) { sacredCircle(M, false); },
+    cc_sacred_circle_lit(M) { sacredCircle(M, true); },
+    cc_owl_constellation(M) { owlConstellation(M); },
+    cc_wild_roots(M) { wildRoots(M); }, // where Lunara arrives (a spot's donePiece once the covens answer)
+    cc_witch_seer(M) { // Lunar Witch 492, Ophira the Seer: her crystal ball glows; the beams out of her closed eyes are the subpart cc_seer_beams
+      matryoshka(M, 'witch_seer_front', 'witch_seer_back', WITCH_DOLLS.seer.prof, WITCH_DOLLS.seer.uv);
+      M.quad('glow_violet', [[-.32, -.62, .2], [.32, -.62, .2], [.32, -.62, .84], [-.32, -.62, .84]]);
+    },
+    cc_seer_beams(M) { // the beams of light out of her closed eyes, up and out past her hood, as on her card
+      for (const sd of [-1, 1]) {
+        const e = [sd * .146, 1.539], d = [sd * Math.cos(.49), Math.sin(.49)], n = [-d[1], d[0]], L = 1.6, w0 = .06, w1 = .36, f = [e[0] + d[0] * L, e[1] + d[1] * L];
+        M.poly('beam_white', [[e[0] - n[0] * w0, -.5, e[1] - n[1] * w0], [e[0] + n[0] * w0, -.5, e[1] + n[1] * w0], [f[0] + n[0] * w1, -.5, f[1] + n[1] * w1], [f[0] - n[0] * w1, -.5, f[1] - n[1] * w1]], [[0, 1], [1, 1], [1, 0], [0, 0]]);
+        M.quad('glow_white', [[e[0] - .14, -.52, e[1] - .12], [e[0] + .14, -.52, e[1] - .12], [e[0] + .14, -.52, e[1] + .14], [e[0] - .14, -.52, e[1] + .14]]);
+      }
+    },
     cc_petal_drift(M) { // a swirl of cherry petals drifting a metre up: Mochi's trail to the Blossom Clearing (Moon Tales 06); hovers
       for (let k = 0; k < 22; k++) ccPetal(M, Math.cos(k * 2.4) * (.14 + .035 * k), Math.sin(k * 2.4) * (.14 + .035 * k), .8 + .05 * k, .1, k * 1.3, .6 + .2 * (k % 3));
       M.quad('glow_pink', [[-.9, -.9, .05], [.9, -.9, .05], [.9, .9, .05], [-.9, .9, .05]]);
@@ -3101,7 +3536,7 @@
       for (let k = 0; k < 260; k++) { const a = r() * 6.283, d = 8.5 * Math.sqrt(r()); ccPetal(M, Math.cos(a) * d, Math.sin(a) * d, .03, .06 + .05 * r(), r() * 6.283, 0); }
       M.quad('glow_pink', [[-4, -4, .05], [4, -4, .05], [4, 4, .05], [-4, 4, .05]]);
     },
-    cc_rose_pendant(M) { // the Rose Quartz pendant Mochi carried, now in the Lunar Witch's palm (Moon Tales 07): glows like a heartbeat; hovers
+    cc_rose_pendant(M) { // the Rose Quartz pendant Mochi carried, now in Ghostwing's palm (Moon Tales 07): glows like a heartbeat; hovers
       // before her chest (the hover lifts it .04-.4 m): higher, it hung over her face
       M.sphere('rose_quartz', [0, 0, .78], .085, 1.6, 6, 3); M.sphere('chrome', [0, 0, .94], .022, 1, 5, 3);
       for (const dx of [-.06, .06]) M.rod('chrome', [dx, 0, 1.1], [0, 0, .95], .008, 3);
@@ -3692,13 +4127,14 @@
   // floating pieces (ghosts): their instances bob and sway under the placed root, so saved positions never move
   const FLOAT = new Set(['cc_ghost']), floaters = [];
   // characters: the body rocks (kokeshi) or breathes (cats); subparts under their own pivots wave, flicker, pulse
-  const CHAR = { cc_storm_stone_lit: 'still', cc_storm_orb: 'still', chz_torch_lit: 'still', chz_bonfire_lit: 'still', chz_crab: 'rock', chz_crab_shades: 'rock', cc_flower_moon: 'rock', cc_nariko: 'rock', cc_ostara: 'rock', cc_lunar_witch: 'rock', cc_petal_drift: 'hover', cc_rose_pendant: 'hover', cc_mamoru: 'bob', cc_mochi: 'bob', cc_trickster: 'hover', cc_chime_light: 'hover', cc_shadow: 'hover' };
-  const SUBPARTS = { cc_storm_stone_lit: [['cc_storm_spark', [.14, -.02, 3.12], 'pulse']], cc_storm_orb: [['cc_storm_orb_core', [0, 0, 3.7], 'pulse']], chz_torch_lit: [['chz_torch_flame', [0, 0, 2.5], 'flicker']], chz_bonfire_lit: [['chz_bonfire_flame', [0, 0, .05], 'flicker']], cc_mamoru: [['cc_paw_black', [.36, -.25, .92], 'wave'], ['cc_candle_flame', [0, 0, 2.17], 'flicker']], cc_mochi: [['cc_paw_white', [.36, -.25, .92], 'wave']], cc_nariko: [['cc_orb', [0, -.56, .74], 'pulse']] };
+  const CHAR = { cc_storm_stone_lit: 'still', cc_storm_orb: 'still', chz_torch_lit: 'still', chz_bonfire_lit: 'still', chz_crab: 'rock', chz_crab_shades: 'rock', cc_flower_moon: 'rock', cc_nariko: 'rock', cc_ostara: 'rock', cc_lunar_witch: 'rock', cc_witch_ophira: 'rock', cc_witch_elyndra: 'rock', cc_witch_lunara: 'rock', cc_witch_seer: 'rock', cc_petal_drift: 'hover', cc_rose_pendant: 'hover', cc_mamoru: 'bob', cc_mochi: 'bob', cc_trickster: 'hover', cc_chime_light: 'hover', cc_shadow: 'hover' };
+  const SUBPARTS = { cc_storm_stone_lit: [['cc_storm_spark', [.14, -.02, 3.12], 'pulse']], cc_storm_orb: [['cc_storm_orb_core', [0, 0, 3.7], 'pulse']], chz_torch_lit: [['chz_torch_flame', [0, 0, 2.5], 'flicker']], chz_bonfire_lit: [['chz_bonfire_flame', [0, 0, .05], 'flicker']], cc_mamoru: [['cc_paw_black', [.36, -.25, .92], 'wave'], ['cc_candle_flame', [0, 0, 2.17], 'flicker']], cc_mochi: [['cc_paw_white', [.36, -.25, .92], 'wave']], cc_nariko: [['cc_orb', [0, -.56, .74], 'pulse']], cc_witch_ophira: [['cc_ophira_star', [0, 0, 0], 'shimmer']], cc_witch_elyndra: [['cc_elyndra_bolts', [0, 0, 0], 'crackle']], cc_witch_seer: [['cc_seer_beams', [0, 0, 0], 'shimmer']] };
   const actors = [];
   function animateActors(t) {
     for (let i = actors.length - 1; i >= 0; i--) {
       const a = actors[i]; if (a.body.isDisposed?.()) { actors.splice(i, 1); continue; }
       if (a.kind === 'ape') { animateApe(a, t); continue; }
+      if (a.kind === 'owl') { animateOwl(a, t); continue; }
       if (a.kind === 'still') { /* only the subparts move */ }
       else if (a.kind === 'rock') { a.body.rotation.z = .07 * Math.sin(t * 1.5 + a.ph); a.body.rotation.x = .035 * Math.sin(t * 1.1 + a.ph * 2); }
       else if (a.kind === 'hover') { a.body.position.y = .22 + .18 * Math.sin(t * 2.2 + a.ph); a.body.rotation.z = .12 * Math.sin(t * 1.4 + a.ph); a.body.rotation.y = .35 * Math.sin(t * .7 + a.ph); }
@@ -3706,6 +4142,8 @@
       for (const s of a.subs) {
         if (s.kind === 'wave') s.node.rotation.x = .25 - .55 * Math.max(0, Math.sin(t * 3 + a.ph));
         else if (s.kind === 'flicker') { const f = 1 + .22 * Math.sin(t * 13 + a.ph) + .12 * Math.sin(t * 31); s.node.scaling.set(1 - .1 * (f - 1), f, 1 - .1 * (f - 1)); }
+        else if (s.kind === 'shimmer') s.node.scaling.setAll(1 + .02 * Math.sin(t * 2.1 + a.ph) + .008 * Math.sin(t * 7.3)); // breathing light that never turns
+        else if (s.kind === 'crackle') { s.node.setEnabled(Math.sin(t * 23 + a.ph) + Math.sin(t * 37 + 2 * a.ph) > -1.25); s.node.scaling.set(1 + .03 * Math.sin(t * 41), 1, 1 + .025 * Math.sin(t * 53)); } // lightning: flickers out now and then
         else { const p = 1 + .1 * Math.sin(t * 5 + a.ph) + .05 * Math.sin(t * 17); s.node.scaling.setAll(p); s.node.rotation.y = t * 1.3; }
       }
     }
@@ -3765,6 +4203,35 @@
     const reach = (th, k) => APE_L1 * Math.cos(th) + APE_L2 * Math.cos(th + k);
     a.body.position.y = Math.max(reach(thL, knL), reach(thR, knR)) - APE_L1 - APE_L2 + lift;
   }
+  // the Owl of Summoning: his wings are pivots at his shoulders, folded away on the branch and spread in flight; like the
+  // apes he reads his motion from how fast the root moves (or root.metadata.owlAir: true holds him in the air, false on a perch)
+  function buildOwl(root, type, scene, shadows, skipShadows) {
+    const body = new BABYLON.TransformNode(root.name + '_body', scene); body.parent = root;
+    buildInto(body, type, scene, root, shadows, skipShadows);
+    const wing = sd => { const n = new BABYLON.TransformNode(root.name + '_wing' + (sd > 0 ? 'R' : 'L'), scene); n.parent = body; n.position.set(sd * OWL.shoulder[0], OWL.shoulder[1], OWL.back); buildInto(n, 'cc_owl_wing', scene, root, shadows, skipShadows); n.scaling.set(sd * .001, .001, .001); n.setEnabled(false); return n; };
+    actors.push({ kind: 'owl', root, body, wR: wing(1), wL: wing(-1), subs: [], ph: 0, ph0: Math.random() * 6.28, open: 0, v: 0, vy: 0, tl: null, last: null });
+    ensureAnim(scene);
+  }
+  function animateOwl(a, t) {
+    const dt = a.tl == null ? 0 : Math.min(.1, Math.max(0, t - a.tl)); a.tl = t;
+    const p = a.root.getAbsolutePosition(); let sp = 0, vy = 0;
+    if (a.last && dt > 0) { const d = Math.hypot(p.x - a.last.x, p.z - a.last.z); if (d < 6) { sp = d / dt; vy = (p.y - a.last.y) / dt; } }
+    a.last = { x: p.x, y: p.y, z: p.z };
+    const k = Math.min(1, dt * 5); a.v += (sp - a.v) * k; a.vy += (vy - a.vy) * k;
+    const md = a.root.metadata || {}, air = md.owlAir != null ? !!md.owlAir : a.v > .6 || Math.abs(a.vy) > .4;
+    a.open += ((air ? 1 : 0) - a.open) * Math.min(1, dt * (air ? 5 : 2.5)); const o = a.open;
+    const rate = air ? (a.v < 1.2 ? 3.4 : 2.1) + Math.max(0, a.vy) * .45 : 1.2;            // a hover flutters, a climb beats harder
+    a.ph += dt * rate * 2 * Math.PI;
+    const glide = air && a.v > 3 && a.vy < -.25 ? .35 : 1, flap = o * (.14 + .6 * glide * Math.sin(a.ph));
+    a.wR.rotation.z = flap; a.wL.rotation.z = -flap;
+    const sc = Math.max(.001, o); a.wR.scaling.set(sc, sc, sc); a.wL.scaling.set(-sc, sc, sc);
+    const on = o > .03; if (a.wR.isEnabled() !== on) { a.wR.setEnabled(on); a.wL.setEnabled(on); }
+    a.body.rotation.x = -.42 * o * Math.min(1, .35 + a.v / 4);                              // leaning into the flight
+    a.body.position.y = o * .05 * Math.sin(a.ph + 1.2);
+    const br = Math.sin(t * 1.6 + a.ph0) * (1 - o), cock = Math.max(0, Math.min(1, (Math.sin(t * .23 + a.ph0) - .45) / .25)) * (1 - o);
+    a.body.scaling.set(1 + .015 * br, 1 - .01 * br, 1 + .015 * br);
+    a.body.rotation.z = .2 * cock * Math.sin(t * .9 + a.ph0);                                  // on the branch he breathes and cocks his head
+  }
   function actorAction(root, kind, dur) { const a = actors.find(x => x.root === root); if (a) a.act = { kind, t0: null, dur: dur || (kind === 'jump' ? .9 : kind === 'dance' ? 1.92 : 1.1) }; return !!a; }
   const actorBusy = root => !!actors.find(x => x.root === root)?.act; // a one-shot still playing
   function ensureAnim(scene) { if (!scene._kitFloat) scene._kitFloat = scene.onBeforeRenderObservable.add(() => animate(performance.now() / 1000)); }
@@ -3784,6 +4251,7 @@
   function build(root, type, scene, shadows, skipShadows) {
     if (!B[type]) return false;
     if (APE_LOOK[type.slice(8)] && type.startsWith('chz_ape_')) { buildApe(root, type, scene, shadows, skipShadows); return true; }
+    if (type === 'cc_owl_avelor') { buildOwl(root, type, scene, shadows, skipShadows); return true; }
     if (CHAR[type]) { // a body node to rock, subparts on pivots inside it
       const body = new BABYLON.TransformNode(root.name + '_body', scene); body.parent = root;
       const subs = (SUBPARTS[type] || []).map(([st, [x, y, z], kind]) => { const n = new BABYLON.TransformNode(root.name + '_' + st, scene); n.parent = body; n.position.set(x, z, y); buildInto(n, st, scene, root, shadows, skipShadows); return { node: n, kind }; });
@@ -3838,6 +4306,19 @@
     TIER: { y0: -2, d: 2.3, r: .4, n: 6 }, BACK: 2.4, SCR: { w: 14.2, h: 8, z0: 1.7 } };
   // Hub Gathering Hall: the stage (ST), the raised hearth (HE: centre y, half size, height), the canopy ropes (ROPES)
   const GH = { HX: 24, HY: 20, H: 13, DW: 7, DH: 6, ST: { x0: -9, x1: 9, y0: -20, y1: -14.5, h: 1.2 }, HE: { cy: -1, s: 3.5, h: .45 }, ROPES: [-12, -8, -4, 0, 4, 8, 12, 16], COLS: [[-14, -8], [14, -8], [-14, 6], [14, 6]] };
+  // Hub Antthony's Comedy Club: the stage across the back (ST: x0..x1, y0..y1, height h; its stairs from the floor at sx0..sx1,
+  // y1..sy), the mic and the stool on it, the cocktail tables (TX x TY), the snack bar in the front right corner (SNACK: x0, y0),
+  // the trophy case in the front left (TROPHY), the wall of fame (PY along each side wall, pictures PS square, centred at PZ)
+  const AC = { HX: 15, HY: 13, H: 9, DW: 3.6, DH: 4.6, ST: { x0: -9, x1: 9, y0: -13, y1: -6.2, h: 1.1, sx0: 2.6, sx1: 4.8, sy: -4 },
+    MIC: [0, -8.4], STOOL: [2.3, -9.3], TX: [-10.5, -6, 6, 10.5], TY: [-1.6, 3, 7.6], SNACK: [6.4, 9.8], TROPHY: [-8, 11.4],
+    PY: [-5.2, -2.9, -.6, 1.7, 4, 6.3, 8.6], PS: 1.9, PZ: 4 };
+  // Hub Rebel Ants After Dark (the south-east courtyard dojo, Oct 26; afterdark.rebelants.io in the colony): the Hold Em table in
+  // the middle (TAB: centre x, y, top radius, height), Rebel 21's half-moon table against the left wall (T21: centre, radius), the
+  // Colony Clash bracket on the left wall (CL: centre y, width), the Spinner machines on the right wall (SP: their ys), the Wheel
+  // and the Drop board on the back wall (WH: x, centre height, radius; DR: x, centre height, width, height), the points counter in
+  // the front right (PT: x0, y0, y1), the community sign over its bench on the left wall (CM: y), the moon window (MW: y, z, r)
+  const AD = { HX: 17, HY: 15, H: 9.5, DW: 4, DH: 4.8, TAB: [0, -2.5, 3, 1.45], T21: [-13.4, 6.4, 2.3], CL: [-4, 8], SP: [-8.4, -5.8, -3.2, -.6],
+    WH: [-9.6, 4.4, 2.6], DR: [9.6, 4.3, 4.4, 5.6], PT: [9.4, 11.2, 12.7], CM: 11.4, MW: [7, 4.8, 1.9] };
   // Shogun rooms (rebel scale: a Rebel stands 3.4 m, so chairs sit at .85 and tables at 1.45)
   // TS Throne Room: the long table (y0..y1, half width, height), the seats, the chairs' x, the banner poles' x, the dais and its
   // stairs, the throne's y, the canopy posts [x, yBack, yFront], the colonnade (x, ys)
@@ -4041,6 +4522,28 @@
         { box: [-2.5, GH.ST.y1, 2.5, GH.ST.y1 + 2.4], y0: 0, y1: GH.ST.h, axis: 'z', steps: 4, flip: true }],
       blockers: [{ box: [-1.6, GH.HE.cy - 1.6, 1.6, GH.HE.cy + 1.6] }, { box: [-10, -9, -8.4, 7] }, { box: [8.4, -9, 10, 7] }, ...GH.COLS.map(([x, z]) => ({ circle: [x, z, .62] })),
         { circle: [-5.5, -17.6, 1.35], minY: 1 }, { circle: [5.5, -17.6, 1.35], minY: 1 }, { box: [-8.6, GH.ST.y0, 8.6, -19] }]
+    },
+    room_hub_comedy: {
+      bounds: [-AC.HX, AC.HX, -AC.HY, AC.HY + .2], spawn: [0, AC.HY - 4.6, Math.PI], exit: [0, AC.HY + .3], ceil: AC.H,
+      hemi: { i: .36, c: [.8, .66, .96], g: [.14, .09, .14] },
+      lights: [{ p: [0, 7.2, -8.6], c: [1, .9, .74], i: 1.25, r: 11 }, { p: [-6, 6.2, -9.4], c: [.62, .34, 1], i: .8, r: 9 }, { p: [6, 6.2, -9.4], c: [1, .34, .46], i: .7, r: 9 },
+        { p: [0, 4.2, 2.4], c: [1, .68, .42], i: .6, r: 15, flicker: .12 }, { p: [10.6, 4.6, 10.4], c: [1, .8, .52], i: .6, r: 8 }, { p: [-8, 5, 8.6], c: [.86, .78, 1], i: .4, r: 10 }],
+      decks: [{ box: [AC.ST.x0, AC.ST.y0, AC.ST.x1, AC.ST.y1], y: AC.ST.h }, { box: [AC.ST.sx0, AC.ST.y1, AC.ST.sx1, AC.ST.sy], y0: 0, y1: AC.ST.h, axis: 'z', steps: 4, flip: true }],
+      blockers: [{ box: [-9.1, -6.98, -6.75, -6.4], minY: .5 }, { box: [6.75, -6.98, 9.1, -6.4], minY: .5 }, { box: [-12.45, -11.9, -10.75, -10.5] }, { box: [10.75, -11.9, 12.45, -10.5] },
+        { circle: [...AC.MIC, .42], minY: .5 }, { circle: [...AC.STOOL, .5], minY: .5 }, ...AC.TX.flatMap(x => AC.TY.map(y => ({ circle: [x, y + .45, 1.3] }))),
+        { box: [AC.SNACK[0], AC.SNACK[1], AC.HX, AC.HY] }, { box: [AC.TROPHY[0] - 1.45, AC.TROPHY[1] - 1.05, AC.TROPHY[0] + 1.45, AC.TROPHY[1] + 1.05] }]
+    },
+    room_hub_afterdark: {
+      bounds: [-AD.HX, AD.HX, -AD.HY, AD.HY + .2], spawn: [0, AD.HY - 4.6, Math.PI], exit: [0, AD.HY + .3], ceil: AD.H,
+      hemi: { i: .32, c: [.74, .56, .9], g: [.12, .07, .12] },
+      lights: [{ p: [0, 6.4, -2.5], c: [1, .82, .6], i: 1.15, r: 10 }, { p: [0, 6.8, -12.5], c: [1, .28, .22], i: .85, r: 14 }, { p: [-12, 5.5, -1], c: [.62, .32, 1], i: .7, r: 15 },
+        { p: [12, 5.5, -3], c: [.85, .3, 1], i: .6, r: 14 }, { p: [0, 4.6, 10.5], c: [1, .8, .56], i: .55, r: 12 }, { p: [13, 4.2, 9], c: [1, .45, .32], i: .45, r: 9 }],
+      parts: [{ type: 'room_ad_wheel', p: [AD.WH[0], AD.WH[1], -AD.HY + .55], anim: { spinZ: .3 } }],
+      blockers: [{ circle: [AD.TAB[0], AD.TAB[1], AD.TAB[2] + .2] }, ...[1, 2, 3, 4, 5, 6, 7].map(k => { const a = -Math.PI / 2 + k * Math.PI / 4; return { circle: [AD.TAB[0] + Math.cos(a) * (AD.TAB[2] + .85), AD.TAB[1] + Math.sin(a) * (AD.TAB[2] + .85), .5] }; }),
+        { box: [AD.T21[0] - .1, AD.T21[1] - AD.T21[2] - .15, AD.T21[0] + AD.T21[2] + .15, AD.T21[1] + AD.T21[2] + .15] }, ...[-1.05, -.35, .35, 1.05].map(a => ({ circle: [AD.T21[0] + Math.cos(a) * (AD.T21[2] + .75), AD.T21[1] + Math.sin(a) * (AD.T21[2] + .75), .45] })),
+        { box: [-AD.HX, AD.CL[0] - AD.CL[1] / 2 + .15, -AD.HX + 1.05, AD.CL[0] + AD.CL[1] / 2 - .15] }, { box: [AD.HX - 1.55, AD.SP[0] - .85, AD.HX, AD.SP[AD.SP.length - 1] + .85] },
+        { box: [AD.WH[0] - 2.5, -AD.HY, AD.WH[0] + 2.5, -AD.HY + 1.55] }, { box: [AD.DR[0] - 2.5, -AD.HY, AD.DR[0] + 2.5, -AD.HY + 1.55] },
+        { box: [AD.PT[0] - .05, AD.PT[1] - .05, AD.HX, AD.HY] }, { box: [-4.55, AD.HY - 1.65, -3.45, AD.HY - .75] }, { box: [-AD.HX, AD.CM - 1.85, -AD.HX + .95, AD.CM + 1.85] }]
     },
     room_sam_dojo: {
       bounds: [-SD.HX, SD.HX, -SD.HY, SD.HY + .2], spawn: [0, 11.6, Math.PI], exit: [0, SD.HY + .3],
@@ -5201,6 +5704,235 @@
       M.block('darkwood', -10, HY - .3, 4.15, 4.6, .3, .18);
       // lamps along the walls
       for (const sd of [-1, 1]) for (const y of [-12, 0, 12]) andon(M, sd * (HX - 1.2), y, 0, 1.2);
+    },
+    // the Hub's Antthony's Comedy Club (Oct 25, Miguel: "a dojo ... just for antthony", his pictures on the walls): the stage
+    // across the back under purple and red washes, the ANTTHONY neon ring on the brick behind the mic and the stool, red velvet
+    // legs and a valance, three spotlights on a truss with their beams, footlights, speaker stacks either side; cocktail tables
+    // with candles, a red runner from the door to the stage stairs; the wall of fame down both side walls (the pictures are the
+    // room config's frames: here their black mats, gold liners and picture lights); the snack bar with the popcorn machine, the
+    // Roast Champion trophy in its case; the club's name over the door; purple lanterns
+    room_hub_comedy(M) {
+      M.room = true;
+      const { HX, HY, H, DW, DH, ST, MIC, STOOL, TX, TY, SNACK, TROPHY, PY, PS, PZ } = AC;
+      hall(M, { HX, HY, H, DW, DH, floor: 'club_floor', wall: 'club_wall', wain: 'lacquer_black', wainH: 1.6, rail: 'gold', post: 'lacquer_black', posts: [-HY, -6.9, 10.1, HY], beam: 'lacquer_black', ceil: 'lacquer_black', ceilBeam: 'darkwood', ceilEvery: 3.25 });
+      for (const s2 of [-1, 1]) M.block('neon_purple', s2 * (HX - .2), 0, H - .55, .06, 2 * HY, .07);
+      // the stage: its front with a gold nosing, the stairs up at the front right, a purple rug under the mic, footlights
+      const sy = (ST.y0 + ST.y1) / 2, sw = ST.x1 - ST.x0, sd = ST.y1 - ST.y0, z0 = ST.h;
+      M.block('darkwood', 0, sy, 0, sw, sd, z0 - .05); M.block('wood', 0, sy, z0 - .05, sw, sd, .05);
+      M.block('lacquer_black', 0, ST.y1 + .02, .04, sw, .05, z0 - .12); M.block('gold', 0, ST.y1 + .05, z0 - .1, sw + .06, .06, .06);
+      stairsK(M, 'darkwood', ST.sx0, ST.sx1, ST.y1, ST.sy, 0, z0, 4, -1, 'gold');
+      M.quad('cloth_purple', [[-3.4, -10.8, z0 + .01], [3.4, -10.8, z0 + .01], [3.4, -7, z0 + .01], [-3.4, -7, z0 + .01]]);
+      for (let k = 0; k < 11; k++) { const x = -7.5 + k * 1.5; if (x > ST.sx0 - .5 && x < ST.sx1 + .5) continue; M.block('lacquer_black', x, ST.y1 - .24, z0, .5, .3, .12); M.block('bulb', x, ST.y1 - .26, z0 + .12, .36, .2, .07); }
+      // the brick behind it, the ANTTHONY neon in its glow
+      wallArt(M, 'back', 0, 0, 2 * HX, H, 'club_brick', HX, HY, .26, [[0, 0], [2 * HX / 2.4, 0], [2 * HX / 2.4, H / 2.4], [0, H / 2.4]]);
+      wallArt(M, 'back', 0, 3, 10.6, 6, 'glow', HX, HY, .3);
+      wallArt(M, 'back', 0, 3.6, 8.4, 4.72, 'neon_antthony', HX, HY, .33);
+      // red velvet legs either side (tied back), a drape down each side, the valance across the top with a gold fringe
+      for (const s2 of [-1, 1]) {
+        for (let k = 0; k < 7; k++) M.box('velvet_red', [s2 * (6.95 + k * .32), ST.y1 - .5 - (k % 2) * .16, (z0 + H) / 2], [.34, .18, H - z0]);
+        M.rod('gold', [s2 * 6.8, ST.y1 - .3, 3.5], [s2 * 9.1, ST.y1 - .3, 3.9], .05, 6);
+        M.block('velvet_red', s2 * (ST.x1 - .1), sy - .4, z0, .14, sd - .8, H - z0);
+      }
+      for (let k = 0; k < 36; k++) { const x = -9.4 + (k + .5) * 18.8 / 36; M.box('velvet_red', [x, ST.y1 - .2 - (k % 2) * .1, H - .75 + (k % 3) * .06], [18.8 / 36 + .02, .16, 1.5 - (k % 3) * .12]); }
+      M.rod('gold', [-9.5, ST.y1 - .05, H - 1.52], [9.5, ST.y1 - .05, H - 1.52], .05, 6);
+      // the mic on its stand (its grille toward the house, the cable coiled at its foot), the stool with a glass of water
+      const [mx, my] = MIC, [tx, ty] = STOOL;
+      M.cyl('iron', [mx, my, z0], .36, .05, 16); M.rod('steel', [mx, my, z0], [mx, my, z0 + 2.55], .035, 8);
+      M.rod('lacquer_black', [mx, my, z0 + 2.5], [mx, my + .12, z0 + 2.78], .06, 8); M.sphere('chrome', [mx, my + .16, z0 + 2.86], .11, 1.15, 12, 6);
+      for (let k = 0; k < 7; k++) { const a = k * .9; M.rod('lacquer_black', [mx + .45 + .3 * Math.cos(a), my + .3 * Math.sin(a), z0 + .02], [mx + .45 + .3 * Math.cos(a + .9), my + .3 * Math.sin(a + .9), z0 + .02], .02, 4); }
+      M.cyl('darkwood', [tx, ty, z0 + 1.42], .44, .1, 16); M.cyl('steel', [tx, ty, z0 + .7], .36, .03, 16);
+      for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + .6; M.rod('steel', [tx + .38 * Math.cos(a), ty + .38 * Math.sin(a), z0], [tx + .2 * Math.cos(a), ty + .2 * Math.sin(a), z0 + 1.42], .035, 6); }
+      M.cyl('glass', [tx + .12, ty, z0 + 1.52], .09, .26, 10); M.cyl('water', [tx + .12, ty, z0 + 1.53], .075, .17, 10);
+      // speaker stacks on the floor either side of the stage
+      for (const s2 of [-1, 1]) { const x = s2 * 11.6; M.block('lacquer_black', x, -11.2, 0, 1.6, 1.3, 2.6); M.block('lacquer_black', x, -11.2, 2.6, 1.4, 1.2, 1.4);
+        for (const [z, r] of [[.9, .42], [1.95, .3], [3.3, .36]]) M.tube('iron', [x, -10.56, z], [x, -10.5, z], r, r, 16); }
+      // the truss with three spotlights, their beams and the pools they throw on the stage
+      M.rod('lacquer_black', [-8, -4.8, H - .7], [8, -4.8, H - .7], .08, 8); for (const x of [-6, 6]) M.rod('lacquer_black', [x, -4.8, H - .7], [x, -4.8, H], .04, 4);
+      for (const x of [-4.5, 0, 4.5]) {
+        M.tube('lacquer_black', [x, -4.9, H - .85], [x, -5.35, H - 1.5], .26, .3, 12); M.tube('bulb', [x, -5.33, H - 1.47], [x, -5.37, H - 1.53], .27, .27, 12);
+        M.quad('shaft_spot', [[x - 1.5, -8.6, z0 + .03], [x + 1.5, -8.6, z0 + .03], [x + .3, -5.4, H - 1.55], [x - .3, -5.4, H - 1.55]]);
+        M.quad('shaft_spot', [[x, -9.8, z0 + .03], [x, -7.4, z0 + .03], [x, -5.2, H - 1.55], [x, -5.6, H - 1.55]]);
+        M.quad('glow', [[x - 1.5, -10.1, z0 + .02], [x + 1.5, -10.1, z0 + .02], [x + 1.5, -7.1, z0 + .02], [x - 1.5, -7.1, z0 + .02]]);
+      }
+      // the house: cocktail tables with a candle each and two chairs facing the stage, the runner up the aisle
+      for (const x of TX) for (const y of TY) {
+        M.cyl('lacquer_black', [x, y, 0], .5, .06, 14); M.cyl('lacquer_black', [x, y, .06], .1, 1.34, 8); M.cyl('darkwood', [x, y, 1.4], .78, .07, 20); M.cyl('gold', [x, y, 1.4], .8, .02, 20);
+        M.cyl('candle_glass', [x, y - .1, 1.47], .1, .22, 10); M.sphere('fire', [x, y - .1, 1.74], .04, 1.6, 5, 3);
+        for (const t of [-1, 1]) { const cx = x + t * .62, cy = y + 1.05; M.block('cushion', cx, cy, .82, .72, .72, .12); for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) M.block('lacquer_black', cx + a * .3, cy + b * .3, 0, .07, .07, .82); M.block('lacquer_black', cx, cy + .34, .94, .72, .08, 1.1); }
+      }
+      M.quad('runner', [[-1.5, ST.sy - 2, .012], [1.5, ST.sy - 2, .012], [1.5, HY, .012], [-1.5, HY, .012]], [[0, 0], [1, 0], [1, (HY - ST.sy + 2) / 6.4], [0, (HY - ST.sy + 2) / 6.4]]);
+      // the wall of fame: a black mat with a gold liner and a picture light over each of the frames, the sign over them
+      for (const s2 of [-1, 1]) {
+        const side = s2 < 0 ? 'left' : 'right', x = s2 * (HX - .32);
+        for (const y of PY) {
+          wallArt(M, side, y, PZ - PS / 2 - .3, PS + .6, PS + .6, 'lacquer_black', HX, HY, .04);
+          wallArt(M, side, y, PZ - PS / 2 - .12, PS + .24, PS + .24, 'gold', HX, HY, .06);
+          wallArt(M, side, y, PZ + PS / 2 - .5, PS + 1, 1.4, 'glow', HX, HY, .08);
+          M.rod('brass', [x, y - .55, PZ + PS / 2 + .55], [x, y + .55, PZ + PS / 2 + .55], .05, 8);
+          for (const t of [-1, 1]) M.rod('brass', [s2 * (HX - .04), y + t * .4, PZ + PS / 2 + .7], [x, y + t * .4, PZ + PS / 2 + .58], .02, 4);
+        }
+        wallArt(M, side, (PY[0] + PY[PY.length - 1]) / 2, PZ + PS / 2 + 1.05, 7.2, .9, 'sign_fame', HX, HY, .08);
+      }
+      // the snack bar: the counter, the popcorn machine full of popcorn, buckets by it, shelves of buckets and bottles behind
+      const [bx0, by0] = SNACK, bx1 = HX - .1, bw = bx1 - bx0, bcx = (bx0 + bx1) / 2, bcy = by0 + .6;
+      M.block('lacquer_red', bcx, bcy, 0, bw, 1.2, 1.55); M.block('darkwood', bcx, bcy, 1.55, bw + .1, 1.35, .1); M.block('gold', bcx, by0 - .02, 1.25, bw, .04, .06);
+      const px = bx0 + 2.2, pz = 1.65;
+      M.block('lacquer_red', px, bcy, pz, 1.3, 1, .3); M.box('glass', [px, bcy, pz + .95], [1.24, .94, 1.3]);
+      for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) M.block('lacquer_red', px + a * .6, bcy + b * .45, pz + .3, .08, .08, 1.3);
+      M.block('lacquer_red', px, bcy, pz + 1.6, 1.36, 1.06, .22); M.block('gold', px, bcy - .54, pz + 1.66, 1.2, .03, .1);
+      for (let k = 0; k < 40; k++) M.sphere('popcorn', [px - .5 + (k % 8) * .14, bcy - .3 + ((k / 8) | 0) * .14, pz + .36 + (k % 3) * .06], .07, 1, 5, 3);
+      for (const [dx, dz] of [[1.35, 0], [1.8, 0], [1.58, .55]]) { M.cyl('lacquer_red', [px + dx, bcy, pz + dz], .2, .5, 12, .25); M.cyl('white', [px + dx, bcy, pz + dz + .3], .23, .08, 12, .24); M.sphere('popcorn', [px + dx, bcy, pz + dz + .5], .22, .5, 8, 4); }
+      for (const z of [2.2, 3.4]) M.block('darkwood', bcx, HY - .35, z, bw, .6, .08);
+      for (let k = 0; k < 10; k++) { const x = bx0 + .6 + k * (bw - 1.2) / 9; M.cyl('lacquer_red', [x, HY - .35, 2.28], .17, .42, 10, .21); M.cyl('white', [x, HY - .35, 2.5], .2, .07, 10, .2); M.cyl(k % 2 ? 'bottle_green' : 'bottle_brown', [x, HY - .35, 3.48], .1, .5, 8); }
+      wallArt(M, 'front', bcx, 4.4, 4.8, 1.2, 'sign_snacks', HX, HY, .1);
+      // the trophy case: a gold cup with a gold mic on top on a black foot, the glass, the Roast Champion plaque on its front
+      const [qx, qy] = TROPHY;
+      M.block('darkwood', qx, qy, 0, 2.8, 2, 1.4); M.block('gold', qx, qy, 1.4, 2.9, 2.1, .06); M.box('glass', [qx, qy, 2.51], [2.6, 1.8, 2.1]);
+      for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) M.block('gold', qx + a * 1.28, qy + b * .88, 1.46, .05, .05, 2.1);
+      M.block('darkwood', qx, qy, 3.56, 2.8, 2, .1);
+      M.block('lacquer_black', qx, qy, 1.46, .7, .7, .3);
+      atK(M, qx, qy, 1.76, 0, () => lathe(M, 'gold', [[.001, 0], [.24, 0], [.08, .1], [.06, .42], [.3, .62], [.36, .96], [.001, .96]], 16));
+      M.rod('gold', [qx, qy, 2.7], [qx, qy, 3.02], .05, 8); M.sphere('gold', [qx, qy, 3.12], .13, 1.15, 12, 6);
+      M.quad('plaque_champion', [[qx - .9, qy - 1.01, .6], [qx + .9, qy - 1.01, .6], [qx + .9, qy - 1.01, 1.05], [qx - .9, qy - 1.01, 1.05]]);
+      // the club's name over the door, purple lanterns over the house
+      wallArt(M, 'front', 0, DH + .5, 5.6, 1.4, 'club_marquee', HX, HY, .1);
+      M.remap = { lantern: 'lantern_violet' }; for (const [x, y] of [[-8.25, .7], [8.25, .7], [-8.25, 5.3], [8.25, 5.3]]) chochin(M, x, y, H - .4, 1.7, .45, 1); M.remap = null;
+    },
+    // Rebel Ants After Dark (the Hub's south-east courtyard dojo): the colony's points-only game lounge after the After Dark site.
+    // The Hold Em table under its red neon ring, Rebel 21 by the left wall, the Colony Clash bracket, the Spinner machines, the
+    // Wheel and the Drop board under the REBEL ANTS AFTER DARK neon, the points counter, the community corner, the moon window
+    room_hub_afterdark(M) {
+      M.room = true;
+      const { HX, HY, H, DW, DH, TAB, T21, CL, SP, WH, DR, PT, CM, MW } = AD;
+      hall(M, { HX, HY, H, DW, DH, floor: 'ad_floor', wall: 'ad_wall', wain: 'lacquer_black', wainH: 1.4, rail: 'gold', post: 'lacquer_black', posts: [-HY, -10.2, 2.6, HY], beam: 'lacquer_black', ceil: 'lacquer_black', ceilBeam: 'darkwood', ceilEvery: 3 });
+      for (const s2 of [-1, 1]) M.block(s2 < 0 ? 'neon_purple' : 'neon_red', s2 * (HX - .2), 0, H - .55, .06, 2 * HY, .07);
+      M.block('neon_red', 0, -HY + .2, H - .55, 2 * HX, .06, .07);
+      // the floor: a round rug under the Hold Em table, the red runner from the door to it
+      const [tx, ty, tr, th] = TAB;
+      discK(M, 'cloth_purple', [tx, ty, .012], [1, 0, 0], [0, 1, 0], tr + 2.4, 40);
+      M.quad('runner', [[-1.4, ty + tr + 2.2, .014], [1.4, ty + tr + 2.2, .014], [1.4, HY, .014], [-1.4, HY, .014]], [[0, 0], [1, 0], [1, (HY - ty - tr - 2.2) / 6.4], [0, (HY - ty - tr - 2.2) / 6.4]]);
+      // REBEL ANTS AFTER DARK in neon on the back wall, its glow; the colony's motto over the door
+      wallArt(M, 'back', 0, 3.9, 13, 5.2, 'glow', HX, HY, .3);
+      wallArt(M, 'back', 0, 4.1, 9.6, 4.8, 'ad_sign', HX, HY, .33);
+      wallArt(M, 'front', 0, DH + .45, 8.4, 1.05, 'ad_never', HX, HY, .1);
+      // the Hold Em table: a black drum, the walnut slab, the felt with the crest, a padded rail, the red neon band round its edge;
+      // chips at each of the seven seats, two cards face down at each, the five community cards, the dealer button
+      M.cyl('lacquer_black', [tx, ty, 0], tr - .25, th - .14, 40);
+      M.cyl('darkwood', [tx, ty, th - .14], tr + .15, .14, 48);
+      discK(M, 'ad_felt', [tx, ty, th + .004], [-1, 0, 0], [0, -1, 0], tr - .25, 48);
+      M.tube('velvet', [tx, ty, th], [tx, ty, th + .1], tr + .15, tr + .1, 48, false); M.tube('velvet', [tx, ty, th + .1], [tx, ty, th + .02], tr - .1, tr - .24, 48, false);
+      for (let k = 0; k < 48; k++) { const a0 = k / 48 * Math.PI * 2, a1 = (k + 1) / 48 * Math.PI * 2, P = (r, a) => [tx + Math.cos(a) * r, ty + Math.sin(a) * r, th + .1]; M.quad('velvet', [P(tr - .1, a0), P(tr + .1, a0), P(tr + .1, a1), P(tr - .1, a1)]); }
+      M.tube('neon_red', [tx, ty, th - .2], [tx, ty, th - .15], tr + .17, tr + .17, 48, false);
+      const seats = Array.from({ length: 8 }, (_, k) => -Math.PI / 2 + k * Math.PI / 4).filter((a, k) => k !== 0); // seat 0 (toward the back) is the dealer's
+      const chips = ['ad_chip_red', 'ad_chip_purple', 'gold', 'white'];
+      seats.forEach((a, s) => {
+        const cx = tx + Math.cos(a) * (tr - 1.1), cy = ty + Math.sin(a) * (tr - 1.1);
+        for (let q = 0; q < 3; q++) { const qa = a + (q - 1) * .2, qx = tx + Math.cos(qa) * (tr - .62), qy = ty + Math.sin(qa) * (tr - .62); for (let z = 0; z < 2 + (s + q * 2) % 5; z++) M.cyl(chips[(s + q) % 4], [qx, qy, th + .006 + z * .035], .13, .03, 12); }
+        atK(M, cx, cy, th + .008, a + Math.PI / 2, () => { M.quad('ad_back', [[-.2, -.14, 0], [.06, -.14, 0], [.06, .22, 0], [-.2, .22, 0]]); M.quad('ad_back', [[-.02, -.16, .002], [.24, -.16, .002], [.24, .2, .002], [-.02, .2, .002]]); });
+      });
+      M.quad('ad_cards', [[tx + 1.1, ty - .59, th + .01], [tx - 1.1, ty - .59, th + .01], [tx - 1.1, ty - 1.25, th + .01], [tx + 1.1, ty - 1.25, th + .01]]);
+      M.cyl('white', [tx + 1.6, ty - 1.4, th + .006], .16, .04, 14);
+      // the chairs, backs to the room
+      for (const a of seats) atK(M, tx + Math.cos(a) * (tr + .85), ty + Math.sin(a) * (tr + .85), 0, a - Math.PI / 2, () => {
+        M.block('velvet', 0, 0, .74, .82, .78, .12); for (const [p, q] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) M.block('lacquer_black', p * .34, q * .32, 0, .07, .07, .74);
+        M.block('lacquer_black', 0, .38, .86, .82, .08, 1.15); M.block('gold', 0, .38, 2.0, .86, .1, .05);
+      });
+      // over the table: a ring of red neon on three rods, the light falling from it
+      M.tube('neon_red', [tx, ty, H - 1.7], [tx, ty, H - 1.62], 2.4, 2.4, 40, false); for (let k = 0; k < 3; k++) { const a = k / 3 * Math.PI * 2 + .3; M.rod('lacquer_black', [tx + Math.cos(a) * 2.4, ty + Math.sin(a) * 2.4, H - 1.62], [tx, ty, H], .025, 4); }
+      for (const a of [0, Math.PI / 2]) { const c2 = Math.cos(a), s3 = Math.sin(a); M.quad('shaft_spot', [[tx - 2.6 * c2, ty - 2.6 * s3, th + .05], [tx + 2.6 * c2, ty + 2.6 * s3, th + .05], [tx + 2.2 * c2, ty + 2.2 * s3, H - 1.7], [tx - 2.2 * c2, ty - 2.2 * s3, H - 1.7]]); }
+      // Rebel 21: the half-moon table against the left wall (the dealer's straight side to the wall), its felt, the card shoe,
+      // chips and cards at four seats, its neon on the wall above
+      const [ux, uy, ur] = T21, arc = (r, a) => [ux + Math.cos(a) * r, uy + Math.sin(a) * r], A = k => -Math.PI / 2 + k / 24 * Math.PI;
+      const fan = (mat, r, z) => { for (let k = 0; k < 24; k++) M.poly(mat, [[ux, uy, z], [...arc(r, A(k)), z], [...arc(r, A(k + 1)), z]]); };
+      const band = (mat, r, z0, z1) => { for (let k = 0; k < 24; k++) M.quad(mat, [[...arc(r, A(k)), z0], [...arc(r, A(k + 1)), z0], [...arc(r, A(k + 1)), z1], [...arc(r, A(k)), z1]]); };
+      band('lacquer_black', ur - .2, 0, th - .12); M.block('lacquer_black', ux - .05, uy, 0, .1, 2 * (ur - .2), th - .12);
+      fan('darkwood', ur + .12, th - .12); fan('darkwood', ur + .12, th); band('darkwood', ur + .12, th - .12, th); M.block('darkwood', ux - .05, uy, th - .12, .1, 2 * (ur + .12), .12);
+      fan('ad_felt21', ur - .1, th + .004); band('neon_red', ur + .13, th - .1, th - .05);
+      M.block('lacquer_black', ux + .45, uy - .9, th, .5, .34, .22); M.block('ad_chip_red', ux + .45, uy - .9, th + .22, .5, .34, .02);
+      const seats21 = [-1.05, -.35, .35, 1.05];
+      seats21.forEach((a, s) => {
+        const cx = ux + Math.cos(a) * (ur - .55), cy = uy + Math.sin(a) * (ur - .55);
+        atK(M, cx, cy, th + .008, a + Math.PI / 2, () => { M.quad('ad_cards', [[-.22, -.15, 0], [.12, -.15, 0], [.12, .3, 0], [-.22, .3, 0]], [[.6 - s * .2, 0], [.79 - s * .2, 0], [.79 - s * .2, 1], [.6 - s * .2, 1]]); });
+        for (let z = 0; z < 3 + s % 3; z++) M.cyl(chips[(s + 1) % 4], [ux + Math.cos(a) * (ur - .32), uy + Math.sin(a) * (ur - .32), th + .006 + z * .035], .12, .03, 12);
+        atK(M, ux + Math.cos(a) * (ur + .75), uy + Math.sin(a) * (ur + .75), 0, a - Math.PI / 2, () => {
+          M.block('velvet', 0, 0, .74, .78, .74, .12); M.cyl('gold', [0, 0, 0], .34, .05, 12); M.cyl('lacquer_black', [0, 0, .05], .06, .69, 8);
+          M.block('lacquer_black', 0, .36, .86, .78, .08, .9);
+        });
+      });
+      wallArt(M, 'left', uy, 4.3, 4.4, 1.65, 'ad_21', HX, HY, .1);
+      // the lamp over it: a black shade on its rod, the light falling onto the felt
+      const lx = ux + .9; M.rod('lacquer_black', [lx, uy, H], [lx, uy, 4.1], .03, 4); M.tube('lacquer_black', [lx, uy, 3.55], [lx, uy, 4.1], .9, .22, 20); M.sphere('bulb', [lx, uy, 3.62], .16, 1, 10, 5);
+      M.quad('shaft_spot', [[lx - 1.5, uy - 1.7, th + .02], [lx - 1.5, uy + 1.7, th + .02], [lx - .5, uy + .7, 3.56], [lx - .5, uy - .7, 3.56]]); M.quad('shaft_spot', [[lx + .9, uy - 1.7, th + .02], [lx + .9, uy + 1.7, th + .02], [lx + .4, uy + .7, 3.56], [lx + .4, uy - .7, 3.56]]);
+      M.quad('glow', [[ux, uy - 1.9, th + .012], [ux + 2.2, uy - 1.9, th + .012], [ux + 2.2, uy + 1.9, th + .012], [ux, uy + 1.9, th + .012]]);
+      // Colony Clash: the lit bracket on the left wall, its neon over it, the long sideboard under it with the colony's trophies
+      wallArt(M, 'left', CL[0], 2.5, CL[1], CL[1] * .5625, 'ad_bracket', HX, HY, .05);
+      M.block('gold', -HX + .06, CL[0], 2.38, .1, CL[1] + .24, .12); M.block('gold', -HX + .06, CL[0], 2.5 + CL[1] * .5625, .1, CL[1] + .24, .12);
+      wallArt(M, 'left', CL[0], 7.1, 7.4, 1.16, 'ad_clash', HX, HY, .08);
+      M.block('lacquer_black', -HX + .5, CL[0], 0, 1, CL[1] - .4, 1.1); M.block('gold', -HX + .5, CL[0], 1.1, 1.04, CL[1] - .36, .05);
+      for (const [dy, h] of [[-2.4, .6], [0, .85], [2.4, .6]]) { const y = CL[0] + dy; M.cyl('lacquer_black', [-HX + .5, y, 1.15], .2, .1, 12); atK(M, -HX + .5, y, 1.25, 0, () => lathe(M, 'gold', [[.001, 0], [.18, 0], [.06, .08], [.05, .3 * h], [.24, .46 * h], [.28, .75 * h], [.001, .75 * h]], 14)); }
+      // the Spinner machines along the right wall (reels, a lever, the topper), their neon over them
+      for (const y of SP) {
+        const x = HX - .75;
+        M.block('lacquer_black', x, y, 0, 1.5, 1.6, .3); M.block('ad_chip_purple', x, y, .3, 1.4, 1.5, 2.5); M.block('lacquer_black', x, y, 2.8, 1.5, 1.6, .5);
+        M.quad('ad_reels', [[x - .76, y + .62, 1.75], [x - .76, y - .62, 1.75], [x - .76, y - .62, 2.38], [x - .76, y + .62, 2.38]]);
+        M.quad('glow_violet', [[x - .78, y + .9, 1.4], [x - .78, y - .9, 1.4], [x - .78, y - .9, 2.75], [x - .78, y + .9, 2.75]]);
+        M.box('lacquer_black', [x - .9, y, 1.3], [.4, 1.4, .12], 0, 0, -.3); for (let k = 0; k < 3; k++) M.cyl(['neon_red', 'neon_gold', 'neon_purple'][k], [x - .96, y - .36 + k * .36, 1.36], .07, .05, 10);
+        M.rod('chrome', [x - .3, y - .86, 1.6], [x - .3, y - .9, 2.3], .035, 6); M.sphere('neon_red', [x - .3, y - .9, 2.38], .1, 1, 8, 4);
+        for (const t of [-1, 1]) M.box('neon_purple', [x - .76, y + t * .78, 1.55], [.05, .05, 2.5]);
+        M.quad('neon_gold', [[x - .76, y + .7, 2.95], [x - .76, y - .7, 2.95], [x - .76, y - .7, 3.1], [x - .76, y + .7, 3.1]]);
+      }
+      wallArt(M, 'right', (SP[0] + SP[SP.length - 1]) / 2, 4.5, 8.6, 1.34, 'ad_spinner', HX, HY, .08);
+      // the Rebel Wheel on the back wall (the wheel itself turns: a part), its frame, bulbs and pointer, the plinth under it
+      const [wx, wz, wr] = WH, wy = -HY + .3;
+      M.tube('lacquer_black', [wx, wy - .2, wz], [wx, wy + .25, wz], wr + .32, wr + .32, 48, false); discK(M, 'lacquer_black', [wx, wy - .2, wz], [1, 0, 0], [0, 0, 1], wr + .32, 48);
+      M.tube('gold', [wx, wy + .2, wz], [wx, wy + .27, wz], wr + .34, wr + .34, 48, false);
+      for (let k = 0; k < 24; k++) { const a = k / 24 * Math.PI * 2; M.sphere('bulb', [wx + Math.cos(a) * (wr + .2), wy + .3, wz + Math.sin(a) * (wr + .2)], .07, 1, 5, 3); }
+      M.poly('neon_red', [[wx, wy + .75, wz + wr - .3], [wx - .32, wy + .75, wz + wr + .5], [wx + .32, wy + .75, wz + wr + .5]]);
+      M.block('lacquer_black', wx, -HY + .75, 0, 5, 1.5, 1.3); M.block('gold', wx, -HY + 1.47, 1.2, 5, .06, .06);
+      wallArt(M, 'back', wx, wz + wr + .75, 4.6, 1.15, 'ad_wheel_sign', HX, HY, .1);
+      // the Rebel Drop board on the back wall: its face, pegs standing out of it, a puck on its way down, the plinth under it
+      const [dx, dz, dw, dh] = DR, dy0 = -HY + .26;
+      M.block('lacquer_black', dx, -HY + .14, dz - dh / 2 - .2, dw + .4, .3, dh + .4);
+      M.quad('ad_drop', [[dx + dw / 2, dy0 + .04, dz - dh / 2], [dx - dw / 2, dy0 + .04, dz - dh / 2], [dx - dw / 2, dy0 + .04, dz + dh / 2], [dx + dw / 2, dy0 + .04, dz + dh / 2]]);
+      for (let r = 0; r < 11; r++) { const n = 3 + r, zz = dz + dh / 2 - (70 + r * 50) / 704 * dh; for (let i = 0; i < n; i++) M.rod('chrome', [dx - (i - (n - 1) / 2) * 42 / 512 * dw, dy0 + .04, zz], [dx - (i - (n - 1) / 2) * 42 / 512 * dw, dy0 + .2, zz], .035, 5); }
+      discK(M, 'neon_red', [dx + .35, dy0 + .24, dz + .2], [1, 0, 0], [0, 0, 1], .16, 16);
+      M.block('glass', dx, dy0 + .3, dz - dh / 2, dw, .04, dh);
+      M.block('lacquer_black', dx, -HY + .75, 0, 5, 1.5, 1.3); M.block('gold', dx, -HY + 1.47, 1.2, 5, .06, .06);
+      wallArt(M, 'back', dx, dz + dh / 2 + .55, 4.4, 1.1, 'ad_drop_sign', HX, HY, .1);
+      // the points counter in the front right: the counter, the shelves of chip trays behind it, $REBEL POINTS over it
+      const [px0, py0, py1] = PT, pw = HX - .1 - px0, pcx = (px0 + HX - .1) / 2, pcy = (py0 + py1) / 2;
+      M.block('lacquer_black', pcx, pcy, 0, pw, py1 - py0, 1.5); M.block('darkwood', pcx, pcy, 1.5, pw + .12, py1 - py0 + .2, .1); M.block('neon_red', pcx, py0 - .02, 1.3, pw, .05, .05);
+      M.block('gold', pcx, py0 - .02, .25, pw, .04, .06);
+      for (let k = 0; k < 6; k++) { const x = px0 + .6 + k * (pw - 1.2) / 5; for (let z = 0; z < 4; z++) M.cyl(chips[(k + z) % 4], [x, pcy, 1.6 + z * .035], .13, .03, 12); }
+      for (const z of [2.1, 3.1]) { M.block('darkwood', pcx, HY - .32, z, pw, .55, .08); for (let k = 0; k < 7; k++) { const x = px0 + .5 + k * (pw - 1) / 6; M.block('lacquer_black', x, HY - .32, z + .08, .7, .45, .1); for (let q = 0; q < 3; q++) M.cyl(chips[(k + q) % 4], [x - .2 + q * .2, HY - .32, z + .18], .09, .14, 10); } }
+      wallArt(M, 'front', pcx, 4.2, 6.2, 1.16, 'ad_points', HX, HY, .1);
+      // the community corner on the left wall: its neon, the bench under it; the After Dark posters (the front wall and the
+      // right wall by the counter), the moon window on the right wall, the code plaque on its pedestal by the door
+      wallArt(M, 'left', CM, 3.7, 5.6, 1.4, 'ad_community', HX, HY, .08);
+      M.block('lacquer_black', -HX + .45, CM, 0, .9, 3.6, .55); M.block('velvet', -HX + .45, CM, .55, .86, 3.5, .2); M.block('lacquer_black', -HX + .12, CM, .75, .24, 3.6, .7);
+      for (const [wall, u, z, w, h, mat] of [['front', -9.6, 3.3, 7.2, 4.05, 'ad_poster'], ['right', 12.9, 4.4, 2.7, 2.7, 'ad_poster_icon']]) {
+        wallArt(M, wall, u, z - .2, w + .4, h + .4, 'lacquer_black', HX, HY, .04); wallArt(M, wall, u, z - .08, w + .16, h + .16, 'gold', HX, HY, .06);
+        wallArt(M, wall, u, z, w, h, mat, HX, HY, .08);
+      }
+      const [my, mz, mr] = MW;
+      discK(M, 'ad_moon', [HX - .14, my, mz], [0, -1, 0], [0, 0, 1], mr, 40); M.tube('darkwood', [HX - .08, my, mz], [HX - .3, my, mz], mr + .22, mr + .22, 40, false); M.tube('gold', [HX - .3, my, mz], [HX - .34, my, mz], mr + .24, mr + .24, 40, false);
+      M.box('darkwood', [HX - .2, my, mz], [.08, .1, 2 * mr]); M.box('darkwood', [HX - .2, my, mz], [.08, 2 * mr, .1]);
+      M.block('lacquer_black', -4, HY - 1.2, 0, 1, .8, 1.2); M.block('gold', -4, HY - 1.2, 1.2, 1.04, .84, .05);
+      wallArt(M, 'front', -4, 1.55, 2.2, .82, 'ad_code', HX, HY, .06);
+      // lanterns: red over the tables, violet over the sides
+      for (const [x, y] of [[-7, 1.5], [7, 1.5], [-4.4, -9], [4.4, -9]]) chochin(M, x, y, H - .4, 1.8, .5, 1.15);
+      M.remap = { lantern: 'lantern_violet' }; for (const [x, y] of [[-12.5, 1.6], [12.5, 2.4], [-12.5, 10], [0, 9.5]]) chochin(M, x, y, H - .4, 1.6, .45, 1); M.remap = null;
+    },
+    // the Rebel Wheel (a part turning about its axle out of the wall): sixteen point zones, gold spokes, bulbs, the crest hub
+    room_ad_wheel(M) {
+      M.room = true; const R = AD.WH[2], n = 16, cols = ['ad_seg_purple', 'ad_seg_red', 'lacquer_black', 'ad_seg_red'];
+      for (let k = 0; k < n; k++) {
+        const a0 = k / n * Math.PI * 2, a1 = (k + 1) / n * Math.PI * 2, am = (a0 + a1) / 2;
+        M.poly(cols[k % 4], [[0, .02, 0], [Math.cos(a0) * R, .02, Math.sin(a0) * R], [Math.cos(a1) * R, .02, Math.sin(a1) * R]]);
+        M.rod('gold', [0, .05, 0], [Math.cos(a0) * R, .05, Math.sin(a0) * R], .03, 3); M.sphere('bulb', [Math.cos(am) * (R - .25), .08, Math.sin(am) * (R - .25)], .07, 1, 5, 3);
+      }
+      M.tube('neon_purple', [0, -.02, 0], [0, .12, 0], R + .04, R + .04, 48, false);
+      discK(M, 'ad_hub', [0, .14, 0], [1, 0, 0], [0, 0, 1], R * .3, 28); M.tube('gold', [0, .06, 0], [0, .16, 0], R * .3 + .04, R * .3 + .04, 28, false);
     },
     room_sam_dojo(M) {
       M.room = true;
@@ -7104,8 +7836,8 @@
     kit_stairs_stone: stairs(3, 6.4, 4, 10, 'stone'), kit_stairs_wood: stairs(2.6, 6.4, 4, 12, 'wood'),
     kit_stairs_cliff: [{ x: 0, z: -10.6 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 0, y1: 6, steps: 15, surface: 'stone' }, { x: 0, z: 0, halfX: 1.45, halfZ: 1.05, y: 6, surface: 'stone' },
       { x: 0, z: 1 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 6, y1: 12, steps: 15, surface: 'stone' }, { x: 0, z: 10.6 + .6, halfX: 1.45, halfZ: .75, y: 12, surface: 'stone' }],
-    kit_stairs_fire: [{ x: 0, z: -10.6 + 4.8, halfX: 1.15, halfZ: 4.8, y0: 0, y1: 6, steps: 15, surface: 'wood' }, { x: 0, z: 0, halfX: 1.15, halfZ: 1.05, y: 6, surface: 'wood' },
-      { x: 0, z: 1 + 4.8, halfX: 1.15, halfZ: 4.8, y0: 6, y1: 12, steps: 15, surface: 'wood' }, { x: 0, z: 10.6 + .6, halfX: 1.15, halfZ: .75, y: 12, surface: 'wood' }], yam_bridge: [{ x: 0, z: 0, halfX: 1.45, halfZ: 16.2, y: 0 }], buke_footbridge: [{ x: 0, z: 0, halfX: 1.2, halfZ: 4.1, y: 0 }], ashi_bridge: [{ x: 0, z: 0, halfX: 1.55, halfZ: 10.3, y0: 0, y1: 2.4 }],
+    kit_stairs_fire: [{ x: 0, z: -10.6 + 4.8, halfX: 1.15, halfZ: 4.8, y0: 0, y1: 6, steps: 15, surface: 'metal' }, { x: 0, z: 0, halfX: 1.15, halfZ: 1.05, y: 6, surface: 'metal' },
+      { x: 0, z: 1 + 4.8, halfX: 1.15, halfZ: 4.8, y0: 6, y1: 12, steps: 15, surface: 'metal' }, { x: 0, z: 10.6 + .6, halfX: 1.15, halfZ: .75, y: 12, surface: 'metal' }], yam_bridge: [{ x: 0, z: 0, halfX: 1.45, halfZ: 16.2, y: 0 }], buke_footbridge: [{ x: 0, z: 0, halfX: 1.2, halfZ: 4.1, y: 0 }], ashi_bridge: [{ x: 0, z: 0, halfX: 1.55, halfZ: 10.3, y0: 0, y1: 2.4 }],
     war_great_dojo: [{ x: 0, z: (-12.4 + 10.5) / 2, halfX: 14.7, halfZ: (10.5 + 12.4) / 2, y: 1.5 }, { x: 0, z: -12.4 - .9, halfX: 3.9, halfZ: .9, y0: 0, y1: 1.4, steps: 4, surface: 'stone' }],
     shogun_great_dojo: [{ x: 0, z: (-12.4 + 10.5) / 2, halfX: 14.7, halfZ: (10.5 + 12.4) / 2, y: 1.5 }, { x: 0, z: -12.4 - .9, halfX: 3.9, halfZ: .9, y0: 0, y1: 1.4, steps: 4, surface: 'stone' }],
     chz_bar: [{ x: 0, z: -1.6, halfX: 13, halfZ: 8.6, y: .7 }, { x: 0, z: -7 - 3.2 - .45, halfX: 4, halfZ: .45, y0: 0, y1: .7, steps: 2, surface: 'wood' }],
@@ -7161,5 +7893,5 @@
     }
     return walkTriangles(parts);
   }
-  window.SamuraiKit = { build, setLightFactor, animate, actorAction, actorBusy, protoMeshes, decks, rooms: ROOMS, stairsSteps, refreshStairs, types: Object.keys(B), walkEligible, walkTriangles, walkTrianglesOf, walkRoomParts, _Kit: Kit, _B: B, _org: { blob, curveTube } };
+  window.SamuraiKit = { owlPerch: OWL_PERCH, owlSky: { ...OWL_SKY, stars: OWL_STARS, lines: OWL_LINES }, build, setLightFactor, animate, actorAction, actorBusy, protoMeshes, decks, rooms: ROOMS, stairsSteps, refreshStairs, types: Object.keys(B), walkEligible, walkTriangles, walkTrianglesOf, walkRoomParts, _Kit: Kit, _B: B, _org: { blob, curveTube } };
 })();

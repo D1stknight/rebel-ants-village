@@ -1,4 +1,4 @@
-# Rooms registry (61)
+# Rooms registry (63)
 
 Every room behind a village door, what it looks like, and its build state. Use this when building a room so that no two look
 alike. The visual tracker (thumbnails) is the claude.ai artifact "Rooms Tracker"; this file is the source of truth.
@@ -77,6 +77,8 @@ Rules
 | 59 | Saints | Garage (Custom Shop) | craft | sl_garage (-38,-26) | 26x20, 8 | lowrider up on a hydraulic lift, tool walls, tyre stacks, paint booth, neon OPEN sign | oil black, chrome, candy colours | built (room_sl_garage) |
 | 60 | Saints | Library | lore | sl_library (-38,3) | 26x26, 12 | Art Deco rotunda: painted dome over a round reading room, green banker's lamps, card catalogue, LA murals | cream, deco gold, green | built (room_sl_library) |
 | 61 | Saints | Game Hall (Block Party) | games | sl_game_hall (38,3) | 30x24, 8 | 4-lane bowling alley + pool tables + DJ booth with speakers (Block Party) | retro teal + orange, neon | built (room_sl_game) |
+| 62 | Hub | Antthony's Comedy Club | stage | hub_comedy_club in the forest off the west road, its porch door (-158,-40.5) | 30x26, 9 | the ANTTHONY neon ring over a stage with the mic and stool, the Wall of Fame of his 14 pictures, twelve cocktail tables | plum, black lacquer, red velvet, gold · spotlights, purple neon | built (room_hub_comedy) |
+| 63 | Hub | Rebel Ants After Dark | games (links to afterdark.rebelants.io) | south-east courtyard dojo_6, its two front doors (85,-79) (77,-84) | 34x30, 9.5 | the Hold Em table under a red neon ring before the REBEL ANTS AFTER DARK neon; Rebel 21, the Colony Clash bracket, Spinner machines, the Wheel turning and the Drop board | black lacquer, plum, gold · red + purple neon | built (room_hub_afterdark) |
 
 Shared room pieces (built, see CLAUDE.md "Rooms" notes)
 - Decks: raised floors, stairs and ramps (`decks`, the stair visuals from stairsK / flightK match the treads), walk zones

@@ -1,4 +1,4 @@
-// The Potion Shelf (Oct 15, Cute & Creepy): the storm knocked the Lunar Witch's shelf over and her potions ran
+// The Potion Shelf (Oct 15, Cute & Creepy): the storm knocked Ghostwing's shelf over and her potions ran
 // together. Pour them back until every vial holds one potion. Click a vial (or press its number), then the vial to
 // pour into: the top layer, with every layer of the same potion under it, flows across while there is room, and only
 // onto the same potion or into an empty vial. U undoes, H shows a good pour (no fewest-pours bonus then), R starts

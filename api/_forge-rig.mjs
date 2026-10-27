@@ -67,6 +67,12 @@ export function sourceGlbUrl(rec) {
   return rec?.output?.rebelGlbUrl || rec?.output?.glbUrl || null;
 }
 
+// v2.40 a build rigged on known joints (Rebel #001's own skeleton, forge-rig-start { rebel001 }): every job of that
+// build (re-rigs, the moves / games packs) gets the same joints and triangle count, so they all make the same skeleton
+export function jointsEnv(o) {
+  return { ...(o?.joints ? { FORGE_JOINTS: JSON.stringify(o.joints) } : {}), ...(o?.decimate ? { FORGE_DECIMATE: String(o.decimate) } : {}) };
+}
+
 // Credentials: Vercel OIDC inside the deployment (default). If OIDC is off for the project, set
 // FORGE_SANDBOX_TOKEN (a Vercel access token) and the team/project ids are filled in from the system env.
 export function creds() {

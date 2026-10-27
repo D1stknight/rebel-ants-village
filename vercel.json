@@ -37,7 +37,8 @@
       "maxDuration": 120
     },
     "api/forge-rig-start.mjs": {
-      "maxDuration": 120
+      "maxDuration": 120,
+      "includeFiles": "assets/forge/sources/rebel001_apose.joints.json"
     },
     "api/forge-rig-status.mjs": {
       "maxDuration": 120
@@ -71,6 +72,10 @@
     },
     "api/econ-award.mjs": {
       "maxDuration": 30
+    },
+    "api/story-save.mjs": {
+      "maxDuration": 30,
+      "includeFiles": "assets/story-save.js"
     },
     "api/econ-name-login.mjs": {
       "maxDuration": 30

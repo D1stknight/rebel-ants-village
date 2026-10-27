@@ -412,11 +412,14 @@ export default async function handler(req, res) {
         appearanceSource:{schema:'raap.r7.world-appearance.v1',kind:'OWNER_BUILD',collectionKey,tokenId,buildId}};
     }
     const expiry=Math.min(Math.floor(Date.now()/1000)+120,admission?config.validUntil:Number.MAX_SAFE_INTEGER);
+    // Oct 26: #001's public character (an admin's Make this my Rebel on its own body) is played by the lobby's own #001
+    // card; it never becomes the extra "last saved" card every guest's lobby shows
+    const pick=collectionKey==='battle_for_colony'&&!(wallet===null&&tokenId==='1');
     const [save]=await redisPipeline([['EVAL',SAVE_CHARACTER_LUA,'5',buildKey,recordKey,selectedKey,fenceKey,savedAdmissionKey,
       buildRaw,oldCharacter??'__R7_ABSENT__',oldSelected??'__R7_ABSENT__',oldFence??'__R7_ABSENT__',oldAdmission??'__R7_ABSENT__',
-      canonical(activeCharacter),admission?canonical(admission):'',admission?config.qualificationCommitment:'',String(expiry),collectionKey==='battle_for_colony'?'1':'0']]);
+      canonical(activeCharacter),admission?canonical(admission):'',admission?config.qualificationCommitment:'',String(expiry),pick?'1':'0']]);
     if(save.result?.[0]!=='SAVED')return res.status(409).json({ok:false,error:'The saved build or selection changed. Reload before choosing again.'});
-    const storageResult={saved:true,storage:'redis',recordKey,selectedKey:collectionKey==='battle_for_colony'?selectedKey:null,
+    const storageResult={saved:true,storage:'redis',recordKey,selectedKey:pick?selectedKey:null,
       worldAdmission:admission?'saved':'not_requested'};
 
     return res.status(200).json({

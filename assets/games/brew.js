@@ -1,4 +1,4 @@
-// The Witch's Brew (Oct 15, the Cute & Creepy witch's cottage): the Lunar Witch's recipe is a page of riddles, one line
+// The Witch's Brew (Oct 15, the Cute & Creepy witch's cottage): Ghostwing's recipe is a page of riddles, one line
 // per ingredient. Eight jars float on a shelf by the cauldron; pour them in the recipe's order (click a jar, or press its
 // number). A wrong jar makes the brew hiss and costs one of three tries; the third spoils it. Each brew is a new recipe
 // (five of the eight ingredients on the shelf, each with one of its riddles); the shelf holds eight of the witch's
@@ -31,7 +31,7 @@
   const G = {
     title: "The Witch's Brew",
     howTo: { lines: [
-      "Brew the Lunar Witch's recipe. Its page is a list of riddles, one line for each ingredient; the line to answer now shows on the page at the top.",
+      "Brew Ghostwing's recipe. Its page is a list of riddles, one line for each ingredient; the line to answer now shows on the page at the top.",
       'Eight jars stand on the shelf by the cauldron, each with a tag under it: its number and its name. Read the line, work out which ingredient it means and pour that jar: click it or press its number.',
       "Pour the lines in order: a poured line shows its ingredient's name on the page and the next line comes up. Five lines make the brew.",
       'A wrong jar hisses and costs one of your three tries (the stars on the page); the third wrong jar spoils the brew.',
@@ -86,7 +86,7 @@
       const st = { step: 0, tries: TRIES, mistakes: 0, phase: 'intro', wait: 1.2, busy: null, drops: [], puffs: [], sparks: [], t: 0 };
       function drawPage() { // the line to answer now, the ingredients poured so far, the tries left
         const cur = recipe[Math.min(st.step, STEPS - 1)];
-        page.innerHTML = `<div style="font:700 11.5px/1.2 Georgia,serif;letter-spacing:.14em;text-transform:uppercase;color:#6d2a6a">The Lunar Witch's Brew · ${st.step >= STEPS ? 'done' : `line ${st.step + 1} of ${STEPS}`}</div>`
+        page.innerHTML = `<div style="font:700 11.5px/1.2 Georgia,serif;letter-spacing:.14em;text-transform:uppercase;color:#6d2a6a">Ghostwing's Brew · ${st.step >= STEPS ? 'done' : `line ${st.step + 1} of ${STEPS}`}</div>`
           + `<div style="font:italic 17px/1.35 Georgia,serif;margin:4px 0 6px">${st.step >= STEPS ? 'The brew is ready.' : cur.line}</div>`
           + `<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;font:600 12px/1.3 Georgia,serif">${recipe.map((r, i) => `<span style="padding:1px 7px;border-radius:9px;border:1px solid rgba(80,50,30,.35);background:${i < st.step ? 'rgba(120,70,160,.18)' : i === st.step ? 'rgba(255,216,119,.7)' : 'transparent'}">${i < st.step ? ING[r.k].name : i + 1}</span>`).join('')}<span style="margin-left:6px;color:#6d2a6a">${'✦'.repeat(st.tries)}<span style="opacity:.3">${'✦'.repeat(TRIES - st.tries)}</span></span></div>`;
       }

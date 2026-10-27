@@ -1,5 +1,5 @@
 {
- "version": "2.39",
+ "version": "2.41",
  "files": [
   "anim/bvhfk.py",
   "anim/clips.json",
@@ -38,6 +38,7 @@
   "rigger/headfix.py",
   "rigger/headsize.py",
   "rigger/humanspine.py",
+  "rigger/jaw.py",
   "rigger/landmarks.py",
   "rigger/layerfix.py",
   "rigger/master.py",

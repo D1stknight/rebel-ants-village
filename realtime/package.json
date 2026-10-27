@@ -1,0 +1,14 @@
+{
+  "name": "rebel-universe-rooms",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --env dev",
+    "test": "node test/rooms.test.mjs",
+    "deploy:dev": "wrangler deploy --env dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.149.0"
+  }
+}

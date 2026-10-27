@@ -65,6 +65,28 @@ export function headGearLines(ts = {}, view = 'front') {
   return out;
 }
 
+// Oct 26: things carried or worn on the back that every drawing step leaves out, even where the source art shows them
+// (generationInput.leaveOut, an admin's choice in the Forge: Rebel #001's quiver and arrows). Only these words are
+// taken from the request; anything else in it is ignored.
+const LEAVE_OUT = {
+  quiver: 'the quiver', arrows: 'the arrows', bow: 'the bow', sword: 'the sword', katana: 'the katana', scabbard: 'the scabbard',
+  spear: 'the spear', staff: 'the staff', shield: 'the shield', cape: 'the cape', backpack: 'the backpack', weapons: 'every weapon'
+};
+export function leaveOutWords(gi = {}) {
+  const raw = Array.isArray(gi?.leaveOut) ? gi.leaveOut.slice(0, 12) : [];
+  return [...new Set(raw.map((w) => String(w || '').trim().toLowerCase()).filter((w) => Object.hasOwn(LEAVE_OUT, w)))];
+}
+function leaveOutLines(gi, view) {
+  const items = leaveOutWords(gi).map((w) => LEAVE_OUT[w]);
+  if (!items.length) return [];
+  const list = items.length > 1 ? `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}` : items[0];
+  const it = items.length > 1 ? 'them' : 'it', they = items.length > 1 ? 'they' : 'it';
+  return [
+    `LEAVE OUT (the owner's choice): ${list}. Do not draw ${it}, even though the source art shows ${it}: nothing sticks up behind the shoulders or the head, no strap, belt, case or holder for ${it} on the chest, the hips or the back, nothing in the hands. Where ${they} covered part of the character, draw what is behind (the hair, the garment, the armour). Everything else stays as in the source art.`,
+    ...(view === 'back' ? ['- From behind, the back is clean: only the garment, the armour and the hair or head gear.'] : [])
+  ];
+}
+
 // friend-collection characters forged from a finished reference render (generationInput.species, e.g. a Chumpz ape)
 function speciesRigRules(species, view) {
   const h = species === 'human';
@@ -80,7 +102,8 @@ function speciesRigRules(species, view) {
   ].join('\n');
 }
 export function buildRigFriendlyRules(generationInput = {}, { view = 'front' } = {}) {
-  if (generationInput?.species && generationInput.species !== 'ant') return speciesRigRules(generationInput.species, view);
+  const leave = leaveOutLines(generationInput, view);
+  if (generationInput?.species && generationInput.species !== 'ant') return [speciesRigRules(generationInput.species, view), ...leave].join('\n');
   const mask = pretty(generationInput?.traitSlots?.fullFaceMask);
   const lines = [
     'Rig-friendly details (this character will be rigged and animated):',
@@ -111,5 +134,6 @@ export function buildRigFriendlyRules(generationInput = {}, { view = 'front' } =
       lines.push(`- The "${mask}" is a rigid FACE MASK like a hockey goalie mask (the Jason-style mask): one smooth rounded shell that covers only the front of the face and follows the round curve of the head, flush with it (no protruding chin or jaw, no gap under it), with its own colour, pattern, cracks and holes; eye lenses sit flush in the shell. It has a visible edge and a thin strap. The top, sides and back of the head and the antennae are the ant's plain base skin colour, not the mask pattern. It must not look like the whole head is made of the mask.`);
     }
   }
+  lines.push(...leave);
   return lines.join('\n');
 }
