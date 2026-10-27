@@ -8,6 +8,9 @@
 // kit ape) for the nearest few in the same place, a plain stand-in for the rest and while a model downloads, a name tag
 // over each. Players in a room are seen only by players in that room. ?mp=0 turns it off; ?mp=ws://127.0.0.1:<port>
 // (tests) uses a local room server.
+// Step 3 (text chat): the chat window is assets/village-chat.js (window.VillageChat): this file hands it the room's news
+// (VillageChat.room(kind, data)) and gives it VillageMP.chat (send, report, the players here); it says who is hidden
+// (Block, 'Show other players') and whether name tags show. A kick or a ban ends the connection for this page.
 (function () {
   'use strict';
   const PROTOCOL = 'rebel-universe.v1', FULL_R = 80, TAG_R = 45, SEND_MS = 150, BEAT_MS = 12000, PING_MS = 25000;
@@ -17,6 +20,8 @@
   // moves that play once (the rest loop); a move the other's model lacks: a kick for these, else idle
   const ONCE = new Set(['jump', 'kick', 'flip_kick', 'front_kick', 'roundhouse_kick', 'side_kick', 'punch_combo', 'cartwheel', 'jump_run', 'backflip', 'front_flip', 'hurricane_kick', 'spin_flip_kick', 'crescent_kick', 'jab', 'cross_punch', 'hook_punch', 'elbow_punch', 'hit_reaction', 'knockdown', 'get_up']);
   let H = null, B = null, root = null, ws = null, connecting = false, you = 0, room = null, closedFor = null, retry = 0, retryAt = 0, maxFull = 8;
+  const VC = () => window.VillageChat;
+  const tell = (kind, d) => { try { VC()?.room?.(kind, d); } catch (e) { log('chat', e); } };
   const peers = new Map(), containers = new Map();
   let last = null, lastSent = 0, lastBeat = 0, moving = false, stillSince = 0, enabled = true, capsuleSrc = null;
   const log = (...a) => { if (window._mpDebug) console.log('[mp]', ...a); };
@@ -50,8 +55,9 @@
       s.onmessage = e => { if (ws === s) { try { onMessage(JSON.parse(e.data)); } catch (err) { log('bad message', err); } } };
       s.onclose = e => {
         if (ws !== s) return; // an older socket (a reconnect) going
-        ws = null; dropAll(); log('closed', e.code);
+        ws = null; dropAll(); log('closed', e.code); tell('closed');
         if (e.code === 4001) { closedFor = 'dup'; H.toast?.('Universe is open in another tab: other players show there.'); return; }
+        if (e.code === 4003) { closedFor = closedFor || 'kick'; return; }
         backoff();
       };
       s.onerror = () => {};
@@ -59,10 +65,24 @@
   }
   function backoff() { retry = Math.min(retry + 1, 6); retryAt = performance.now() + Math.min(30000, 1000 * 2 ** retry) * (.75 + Math.random() * .5); }
   const send = o => { if (ws && ws.readyState === 1) { ws.send(typeof o === 'string' ? o : JSON.stringify(o)); return true; } return false; };
+  // the room sent this page away (another tab of the same account, an admin's kick or ban): it says so and closes the
+  // socket itself (the room's own close can take a while to come through), and knocks no more
+  function sentAway(why, m) {
+    closedFor = why;
+    const s = ws; ws = null; dropAll();
+    try { s?.close(1000, why); } catch (e) {}
+    if (why === 'dup') H.toast?.('Universe is open in another tab: other players show there.');
+    else H.toast?.(why === 'banned' ? 'An admin has banned you from the rooms.' : 'An admin removed you from the room. Reload to come back.');
+    if (m) tell('msg', m);
+    tell('closed');
+  }
   function onMessage(m) {
-    if (m.t === 'hi') { you = m.you; room = m.room; retry = 0; for (const p of m.peers || []) addPeer(p); last = null; return; }
-    if (m.t === 'j') return addPeer(m);
-    if (m.t === 'l') return removePeer(m.id);
+    if (m.t === 'hi') { you = m.you; room = m.room; retry = 0; for (const p of m.peers || []) addPeer(p); last = null; tell('hello', m); return; }
+    if (m.t === 'j') { addPeer(m); tell('join', m); return; }
+    if (m.t === 'l') { tell('leave', m.id); return removePeer(m.id); }
+    if (m.t === 'kick') return sentAway(m.why === 'banned' ? 'banned' : 'kick', m);
+    if (m.t === 'dup') return sentAway('dup');
+    if (m.t === 'c' || m.t === 'cx' || m.t === 'cd' || m.t === 'cc' || m.t === 'cfg' || m.t === 'cm' || m.t === 'rpok') return tell('msg', m);
     if (m.t === 'u') { const p = peers.get(m.id); if (p) setState(p, m.s); return; }
     if (m.t === 'e') { const p = peers.get(m.id); if (p) playOnce(p, m.e === 'cheer' ? 'jump' : m.e); return; }
   }
@@ -77,7 +97,8 @@
     if (!d || d.id === you) return;
     removePeer(d.id);
     const holder = new B.TransformNode('mpPlayer_' + d.id, H.scene); holder.parent = root;
-    const p = { id: d.id, n: String(d.n || 'Rebel'), k: d.k, look: d.look || { t: 'starter' }, holder, pos: null, yaw: 0, s: null, model: null, loading: false, capsule: null, tag: null, anim: '', cur: null, hold: null, d: 0 };
+    const p = { id: d.id, n: String(d.n || 'Rebel'), k: d.k, u: typeof d.u === 'string' ? d.u : '', look: d.look || { t: 'starter' }, holder, pos: null, yaw: 0, s: null, model: null, loading: false, capsule: null, tag: null, anim: '', cur: null, hold: null, d: null };
+    p.label = label(p.look);
     peers.set(p.id, p);
     makeTag(p);
     if (d.s) setState(p, d.s);
@@ -255,7 +276,7 @@
   }
   function step(dt) {
     const now = performance.now(), me = H.player(), cam = H.scene.activeCamera?.globalPosition;
-    if (!ws && !connecting && closedFor !== 'dup' && now >= retryAt && me) { retryAt = now + 2000; connect(); }
+    if (!ws && !connecting && !closedFor && now >= retryAt && me) { retryAt = now + 2000; connect(); }
     if (ws && ws.readyState === 1 && me && H.canSend()) {
       const ch = !last || Math.hypot(me.x - last.x, me.z - last.z) > .05 || Math.abs(me.y - last.y) > .05 || Math.abs(angle(me.yaw - last.yaw)) > .05 || me.anim !== last.anim || me.interior !== last.interior;
       if (ch) { moving = true; stillSince = now; }
@@ -264,21 +285,22 @@
       else if (now - lastBeat > BEAT_MS) sendState(me, 0, now);
     }
     // the others: eased toward their last state; the nearest few in the same place as their own model
-    const k = 1 - Math.exp(-dt * 10), here = me ? me.interior || null : null, list = [];
+    const k = 1 - Math.exp(-dt * 10), here = me ? me.interior || null : null, list = [], chat = VC(), names = chat?.namesOn?.() !== false;
     for (const p of peers.values()) {
-      if (!p.s || !p.pos) { p.holder.setEnabled(false); p.once = null; continue; }
-      const same = (p.s[5] || null) === here;
-      p.holder.setEnabled(same);
-      if (!same) { p.once = null; continue; }
+      if (!p.s || !p.pos) { p.holder.setEnabled(false); p.once = null; p.d = null; continue; }
+      const same = (p.s[5] || null) === here, hidden = !!chat?.hidePeer?.(p); // (Block, or 'Show other players' off)
+      p.holder.setEnabled(same && !hidden);
+      if (!same || hidden) { p.once = null; p.d = same ? p.d : null; if (!same) continue; }
       const tx = p.s[0], ty = p.s[1], tz = p.s[2];
       if (Math.hypot(tx - p.pos.x, tz - p.pos.z) > 10 || Math.abs(ty - p.pos.y) > 6) p.pos.set(tx, ty, tz); // a teleport (a door, a gate jump)
       else { p.pos.x += (tx - p.pos.x) * k; p.pos.y += (ty - p.pos.y) * k; p.pos.z += (tz - p.pos.z) * k; }
       p.yaw += angle(p.s[3] - p.yaw) * k;
       p.holder.position.copyFrom(p.pos); p.holder.rotation.y = p.yaw;
       p.d = me ? Math.hypot(p.pos.x - me.x, p.pos.z - me.z) : 0;
+      if (hidden) { if (p.model) disposeModel(p); continue; }
       list.push(p);
       if (p.tag) {
-        p.tag.setEnabled(p.d < TAG_R); p.tag.visibility = p.d < TAG_R - 10 ? 1 : Math.max(0, (TAG_R - p.d) / 10);
+        p.tag.setEnabled(names && p.d < TAG_R); p.tag.visibility = p.d < TAG_R - 10 ? 1 : Math.max(0, (TAG_R - p.d) / 10);
         const dc = cam ? B.Vector3.Distance(cam, p.pos) : p.d; // the same size on screen past 14 m, so far names stay readable
         p.tag.scaling.setAll(Math.min(3, Math.max(1, dc / 14)) / p.holder.scaling.x);
       }
@@ -313,5 +335,13 @@
     log('start', H.village, localServer || '');
   }
   function emote(name) { return send({ t: 'e', e: String(name || '') }); }
-  window.VillageMP = { start, tick, reconnect, emote, peers, get state() { return { enabled, open: !!ws && ws.readyState === 1, you, room, peers: peers.size, closedFor }; }, stop() { enabled = false; const s = ws; ws = null; try { s?.close(1000); } catch (e) {} dropAll(); } };
+  // for the chat window (village-chat.js): the players here are the live records (n, k, u, label, d (null: another place),
+  // holder, tag)
+  const chat = {
+    send: (ch, x, to) => send({ t: 'c', ch, x: String(x || ''), ...(ch === 'w' ? { to: +to || 0 } : {}) }),
+    report: o => send({ t: 'rp', ...(o.i ? { i: +o.i } : { id: +o.id || 0 }), why: o.why || 'other', ...(o.note ? { note: String(o.note).slice(0, 200) } : {}) }),
+    peers: () => [...peers.values()],
+    peer: id => peers.get(+id) || null
+  };
+  window.VillageMP = { start, tick, reconnect, emote, peers, chat, get state() { return { enabled, open: !!ws && ws.readyState === 1, you, room, peers: peers.size, closedFor }; }, stop() { enabled = false; const s = ws; ws = null; try { s?.close(1000); } catch (e) {} dropAll(); tell('closed'); } };
 })();
