@@ -289,7 +289,9 @@
     for (const p of peers.values()) {
       if (!p.s || !p.pos) { p.holder.setEnabled(false); p.once = null; p.d = null; continue; }
       const same = (p.s[5] || null) === here, hidden = !!chat?.hidePeer?.(p); // (Block, or 'Show other players' off)
-      p.holder.setEnabled(same && !hidden);
+      // a player the camera stands inside is not drawn (no view from inside their Rebel)
+      const inCam = !!(cam && p.pos && Math.hypot(cam.x - p.pos.x, cam.z - p.pos.z) < 1.3 && cam.y > p.pos.y - .5 && cam.y < p.pos.y + 4.2);
+      p.holder.setEnabled(same && !hidden && !inCam);
       if (!same || hidden) { p.once = null; p.d = same ? p.d : null; if (!same) continue; }
       const tx = p.s[0], ty = p.s[1], tz = p.s[2];
       if (Math.hypot(tx - p.pos.x, tz - p.pos.z) > 10 || Math.abs(ty - p.pos.y) > 6) p.pos.set(tx, ty, tz); // a teleport (a door, a gate jump)
