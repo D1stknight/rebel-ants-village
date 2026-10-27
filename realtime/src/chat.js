@@ -28,7 +28,8 @@ export const charCount = s => [...s].length;
 
 // links: whole addresses, and bare names with a usual ending (discord.gg/abc, free-mint.xyz)
 const TLD = 'com|net|org|io|xyz|gg|app|me|co|ly|link|site|online|club|live|art|ai|dev|fun|top|pro|shop|store|info|biz|us|uk|ca|de|ru|cn|tk|ml|ga|cf|gq|eth|nft|sol|lol|vip|win|bet|cc|tv|to|sh|is|so|in|au|nl|fr|es|it|pl|ch|se|jp|kr|vn|ph|sg|nz|ie|claims?|gift|money|network|finance|exchange|wallet|zone|space|tech|world|today|click|page|icu|cyou|rest|bond';
-const LINK = new RegExp(String.raw`(?:https?:\/\/|www\.)[^\s]+|(?<![\p{L}\p{N}@.-])(?:[\p{L}\p{N}](?:[\p{L}\p{N}-]{0,61}[\p{L}\p{N}])?\.)+(?:${TLD})(?![\p{L}\p{N}-])(?::\d{1,5})?(?:[\/?#][^\s]*)?`, 'giu');
+const END = String.raw`[^\s.,!?;:)\]'"]`; // (a link never ends on the punctuation after it)
+const LINK = new RegExp(String.raw`(?:https?:\/\/|www\.)(?:[^\s]*${END})?|(?<![\p{L}\p{N}@.-])(?:[\p{L}\p{N}](?:[\p{L}\p{N}-]{0,61}[\p{L}\p{N}])?\.)+(?:${TLD})(?![\p{L}\p{N}-])(?::\d{1,5})?(?:[\/?#](?:[^\s]*${END})?)?`, 'giu');
 const OURS = /^(?:https?:\/\/)?(?:[a-z0-9-]+\.)*(?:rebelants\.io|rebeluniverse\.io)(?:[:\/?#]|$)/i;
 // spaced-out letters ("f u c k", "s.h.i.t"): the run read as one word
 const SPACED = /(?<![\p{L}\p{N}])(?:[\p{L}\p{N}][ ._*~-]){2,}[\p{L}\p{N}](?![\p{L}\p{N}])/gu;
