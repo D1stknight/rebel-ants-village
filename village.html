@@ -14416,7 +14416,11 @@ function getWeatherVisualConfig() {
   });
   cfg.speed = t < 1 ? (target.speed || from.speed || 0) : (target.speed || 0);
   cfg.snowSpeed = t < 1 ? (target.snowSpeed || from.snowSpeed || 0) : (target.snowSpeed || 0);
-  cfg.fogColor = lerpWeatherColor(from.fogColor || WeatherManager.baseFogColor, target.fogColor || WeatherManager.baseFogColor, t);
+  // at night a weather's fog darkens like the clear sky's (updateSky: night .04 .06 .16); it kept its daytime colour, so
+  // a foggy, hot or snowy night glowed grey, orange or white (Oct 27)
+  const bf = WeatherManager.baseFogColor, night = bf && bf.r < .2;
+  const nf = c => c && night ? BABYLON.Color3.Lerp(c.scale(.3), bf, .3) : c; // a dim haze of its own colour: fog still reads as fog
+  cfg.fogColor = lerpWeatherColor(nf(from.fogColor) || bf, nf(target.fogColor) || bf, t);
   cfg.fog = t < 1 && from.fog !== BABYLON.Scene.FOGMODE_NONE
     ? BABYLON.Scene.FOGMODE_EXP2
     : target.fog;
