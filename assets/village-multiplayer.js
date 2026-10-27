@@ -31,11 +31,18 @@
     try {
       const ch = H.character() || {};
       let t;
-      try {
-        const r = await fetch(`/api/mp-ticket?village=${encodeURIComponent(H.village)}&col=${encodeURIComponent(ch.col || '')}&tok=${encodeURIComponent(ch.tok || '')}`, { credentials: 'same-origin', cache: 'no-store' });
-        t = await r.json().catch(() => ({}));
-        if (!r.ok || !t.ok) { log('no ticket', r.status, t.error); if (r.status === 503 || r.status === 404) enabled = false; else backoff(); return; } // 503: the rooms are off
-      } catch (e) { backoff(); return; }
+      for (let tries = 0; ; tries++) {
+        const asked = performance.now();
+        try {
+          const r = await fetch(`/api/mp-ticket?village=${encodeURIComponent(H.village)}&col=${encodeURIComponent(ch.col || '')}&tok=${encodeURIComponent(ch.tok || '')}`, { credentials: 'same-origin', cache: 'no-store' });
+          t = await r.json().catch(() => ({}));
+          if (!r.ok || !t.ok) { log('no ticket', r.status, t.error); if (r.status === 503 || r.status === 404) enabled = false; else backoff(); return; } // 503: the rooms are off
+        } catch (e) { backoff(); return; }
+        // a ticket lasts 120 s from when the server made it (after `asked`): one this page took over 90 s to read (a long
+        // frozen frame) would be turned away at the door (401), so it asks again
+        if (performance.now() - asked < 90000 || tries >= 2) break;
+        log('ticket too old, again');
+      }
       if (!enabled) return;
       let s;
       try { s = new WebSocket((localServer || t.url) + '/v1/room?village=' + encodeURIComponent(H.village), [PROTOCOL, 't.' + t.ticket]); } catch (e) { backoff(); return; }
