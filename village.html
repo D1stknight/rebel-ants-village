@@ -12231,6 +12231,58 @@ function getPlayerBoneWorld(name) {
   if (!b) return null;
   return BABYLON.Vector3.TransformCoordinates(BABYLON.Vector3.Zero(), b.getFinalMatrix().multiply(sm.getWorldMatrix()));
 }
+// The mouth, for the breath in the cold (Oct 27, Miguel: it came out of the back of the head). Found once per rig from its
+// own skin: at the head joint's height (the lower face: a Rebel's mask, a Saint's lips, a Chumpz muzzle), the front-most
+// of what the head, jaw and neck carry near the middle line, kept in the head bone's space so it moves and turns with the
+// head; rigs differ a lot (a Rebel's visor stands far out, a Saint's face close in, hats and brims above). Kit apes: the
+// front of the head pivot's box. null = neither (the caller uses a point by the height).
+const PlayerMouth = { mesh: null, q: null, f: null };
+function getPlayerMouthWorld(fwd) {
+  let sm = null;
+  for (const m of charMesh?.getChildMeshes(false) || []) if (m.skeleton && (!sm || m.getTotalVertices() > sm.getTotalVertices())) sm = m;
+  const head = sm?.skeleton?.bones.find(x => /(^|[:_])Head$/.test(x.name));
+  if (head) {
+    const M = head.getFinalMatrix().multiply(sm.getWorldMatrix());
+    if (PlayerMouth.mesh !== sm) { PlayerMouth.mesh = sm; PlayerMouth.q = null; try { findPlayerMouth(sm, head, M, fwd); } catch (e) {} }
+    if (!PlayerMouth.q) return null;
+    const f = BABYLON.Vector3.TransformNormal(PlayerMouth.f, M); f.y = 0;
+    return { at: BABYLON.Vector3.TransformCoordinates(PlayerMouth.q, M), fwd: f.lengthSquared() > 1e-8 ? f.normalize() : fwd };
+  }
+  const neck = charMesh?.getChildTransformNodes(false).find(n => /_neck$/.test(n.name));
+  if (!neck) return null;
+  const b = neck.getHierarchyBoundingVectors(true), c = b.min.add(b.max).scale(.5), e = b.max.subtract(b.min).scale(.5);
+  const ext = Math.abs(fwd.x) * e.x + Math.abs(fwd.z) * e.z;
+  return { at: new BABYLON.Vector3(c.x, b.min.y + .38 * (b.max.y - b.min.y), c.z).add(fwd.scale(ext * .85 + .04)), fwd };
+}
+function findPlayerMouth(sm, head, M, fwd) {
+  const VB = BABYLON.VertexBuffer, P = sm.getVerticesData(VB.PositionKind), I = sm.getVerticesData(VB.MatricesIndicesKind), Wt = sm.getVerticesData(VB.MatricesWeightsKind);
+  if (!P || !I || !Wt || I.length < P.length / 3 * 4) return;
+  const W = sm.getWorldMatrix(), S = [], near = new Set(); // each bone's skinning in world space; the head, jaw and neck
+  for (const b of sm.skeleton.bones) { const k = b.getIndex(); S[k] = b.getAbsoluteInverseBindMatrix().multiply(b.getFinalMatrix()).multiply(W); if (/(^|[:_])(Head|Jaw|Neck)$/.test(b.name)) near.add(k); }
+  const hb = BABYLON.Vector3.TransformCoordinates(BABYLON.Vector3.Zero(), M), H = WeatherManager._bodyH || 3.4, band = .012 * H, mid = .035 * H;
+  const R = new BABYLON.Vector3(fwd.z, 0, -fwd.x), v = new BABYLON.Vector3(), w = new BABYLON.Vector3(), at = new BABYLON.Vector3(), face = [];
+  const n = P.length / 3, step = Math.max(1, Math.ceil(n / 120000)); // the starter ant has 322k vertices: every third does
+  for (let i = 0; i < n; i += step) {
+    let wn = 0, ws = 0;
+    for (let k = 0; k < 4; k++) if (near.has(I[i * 4 + k])) wn += Wt[i * 4 + k];
+    if (wn < .5) continue; // not the arms or a raised fist
+    v.set(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]); at.set(0, 0, 0);
+    for (let k = 0; k < 4; k++) { const x = Wt[i * 4 + k], m = S[I[i * 4 + k]]; if (x > 0 && m) { BABYLON.Vector3.TransformCoordinatesToRef(v, m, w); at.addInPlace(w.scaleInPlace(x)); ws += x; } }
+    if (!ws) continue;
+    at.scaleInPlace(1 / ws);
+    const dx = at.x - hb.x, dz = at.z - hb.z;
+    if (Math.abs(at.y - hb.y) > band || Math.abs(dx * R.x + dz * R.z) > mid) continue;
+    face.push({ a: dx * fwd.x + dz * fwd.z, x: at.x, y: at.y, z: at.z });
+  }
+  if (face.length < 3) return;
+  face.sort((p, q) => q.a - p.a);
+  const top = face.slice(0, Math.max(3, Math.round(face.length * .02))), m = new BABYLON.Vector3();
+  for (const p of top) m.addInPlace(new BABYLON.Vector3(p.x, p.y, p.z));
+  m.scaleInPlace(1 / top.length).addInPlace(fwd.scale(.012 * H)); // just in front of the face
+  const inv = M.clone().invert();
+  PlayerMouth.q = BABYLON.Vector3.TransformCoordinates(m, inv);
+  PlayerMouth.f = BABYLON.Vector3.TransformNormal(fwd, inv);
+}
 // Glove colours (Oct 16, Miguel's idea): the player picks their Rebel's glove and cuff colours in the Rebel panel (Gloves,
 // under Journal), saved per Rebel on this device (localStorage rebelAntsGloves:v1: { '<collection>:<token or id>':
 // { glove, cuff } }, each '#rrggbb', 'forged' or absent). Forge rigs carry the gloves as their own materials ('Glove',
@@ -15193,14 +15245,17 @@ function updateWeatherAir() {
   W.fogBanks({ focus, amount: k('fog'), color: fogC, rooms });
   W.heat({ cam: scene.activeCamera, amount: k('heat'), rooms });
   const cold = Math.max(k('cold'), k('snow'));
-  if (cold > .5 && walkMode && charMesh && !rooms) {
+  if (cold > .5 && walkMode && charMesh && !rooms && performance.now() >= (W._breath?.next || 0)) { // only when a puff is due
     const pr = charMesh, now = performance.now();
-    if (!WeatherManager._headAt || now - WeatherManager._headAt > 5000) { // the mouth's height: 80 % of the character's
+    if (!WeatherManager._headAt || now - WeatherManager._headAt > 5000) { // the character's height
       WeatherManager._headAt = now;
-      try { const b = pr.getHierarchyBoundingVectors(true); WeatherManager._headH = Math.max(1, Math.min(5, (b.max.y - b.min.y) * .8)); } catch (e) {}
+      try { const b = pr.getHierarchyBoundingVectors(true); WeatherManager._bodyH = Math.max(1.2, Math.min(6, b.max.y - b.min.y)); } catch (e) {}
     }
-    const yaw = pr.rotation.y, fwd = new BABYLON.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
-    const head = pr.position.add(new BABYLON.Vector3(0, WeatherManager._headH || 2.7, 0)).add(fwd.scale(.35));
+    // at the mouth, out the way the face looks (getPlayerMouthWorld; Oct 27, the puff came out of the back of the head:
+    // the character faces +z turned by its yaw, as the walk moves it), else in front of the head's height
+    const H = WeatherManager._bodyH || 3.4, yaw = pr.rotation.y, fwd0 = new BABYLON.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
+    const mouth = getPlayerMouthWorld(fwd0);
+    const head = mouth ? mouth.at : pr.position.add(new BABYLON.Vector3(0, H * .8, 0)).add(fwd0.scale(H * .1)), fwd = mouth ? mouth.fwd : fwd0;
     W.breath({ head, fwd, amount: Math.min(1, cold), light: new BABYLON.Color3(.92, .94, .97).scale(Math.max(.35, day)) });
   }
 }
