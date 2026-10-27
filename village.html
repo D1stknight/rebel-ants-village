@@ -6665,7 +6665,9 @@ for (const C of [BABYLON.AbstractMesh, BABYLON.Mesh, BABYLON.InstancedMesh]) {
   proto.refreshBoundingInfo._noPositions = true;
 }
 if (LITE_GRAPHICS) {
-  for (const k of ['shrine_2', 'dojo_7', 'dojo_5']) if (ASSETS[k]?.path) ASSETS[k].path = ASSETS[k].path.replace('/assets/buildings/', '/assets/buildings/lite/');
+  for (const k of ['shrine_2', 'dojo_7', 'dojo_5', 'pine_1', 'cherry_blossom']) if (ASSETS[k]?.path) ASSETS[k].path = ASSETS[k].path.replace('/assets/buildings/', '/assets/buildings/lite/');
+  // (pine and cherry pictures at 512, the two small pick-ups at 256: tools/lite-glb.py, the same meshes byte for byte)
+  for (const k of ['flame_shard', 'root_memory']) if (COLLECTIBLE_TYPES[k]?.modelUrl) COLLECTIBLE_TYPES[k].modelUrl = COLLECTIBLE_TYPES[k].modelUrl.replace('/assets/collectibles/', '/assets/collectibles/lite/');
   if ((window.devicePixelRatio || 1) > 2) engine.setHardwareScalingLevel(1 / 2);   // twice the CSS pixels, not 3x
 }
 
