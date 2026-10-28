@@ -30301,9 +30301,8 @@ function initVillageHud() {
     showSavedMinimap();
   } catch (e) { console.warn('Village HUD failed to start', e); }
 }
-// The minimap's live picture takes a while on the first frames (every material's top-down shader compiles first), so the
-// picture from the last visit (IndexedDB rebelAntsMinimap, one per village) shows at once; the live render replaces it as
-// soon as it is ready
+// The minimap's live picture waits for the village's meshes to be ready, so the picture from the last visit (IndexedDB
+// rebelAntsMinimap, one per village) shows at once; the live render replaces it as soon as it is ready
 function minimapCache(mode, fn) {
   return new Promise((res, rej) => {
     if (!window.indexedDB) return rej(new Error('no IndexedDB'));
