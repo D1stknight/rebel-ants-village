@@ -28,7 +28,7 @@
   const ONCE = new Set(['jump', 'kick', 'flip_kick', 'front_kick', 'roundhouse_kick', 'side_kick', 'punch_combo', 'cartwheel', 'jump_run', 'backflip', 'front_flip', 'hurricane_kick', 'spin_flip_kick', 'crescent_kick', 'jab', 'cross_punch', 'hook_punch', 'elbow_punch', 'hit_reaction', 'knockdown', 'get_up', 'game_cheer']);
   // the emotes' moves in a Rebel's games pack (the dances loop)
   const PACK_MOVES = new Set(['game_cheer', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam']);
-  let H = null, B = null, root = null, ws = null, connecting = false, you = 0, room = null, closedFor = null, retry = 0, retryAt = 0, maxFull = 8, maxLite = 24;
+  let H = null, B = null, root = null, ws = null, connecting = false, you = 0, room = null, closedFor = null, retry = 0, retryAt = 0, maxFull = 8, maxLite = 24, wantCopy = 0;
   const VC = () => window.VillageChat;
   const tell = (kind, d) => { try { VC()?.room?.(kind, d); } catch (e) { log('chat', e); } };
   const peers = new Map(), files = new Map(), clips = new Map();
@@ -40,45 +40,61 @@
   const localServer = override && /^ws:\/\/(127\.0\.0\.1|localhost):\d+$/.test(override) ? override : null;
 
   // ---- the connection ----
+  // a ticket for this page's player (api/mp-ticket.mjs), also for its group's socket (village-groups.js): { ticket, url }
+  // or null (the rooms off here: 503 / 404 switch this page's multiplayer off)
+  async function ticket() {
+    const ch = H.character() || {};
+    for (let tries = 0; ; tries++) {
+      const asked = performance.now();
+      let t;
+      try {
+        const r = await fetch(`/api/mp-ticket?village=${encodeURIComponent(H.village)}&col=${encodeURIComponent(ch.col || '')}&tok=${encodeURIComponent(ch.tok || '')}`, { credentials: 'same-origin', cache: 'no-store' });
+        t = await r.json().catch(() => ({}));
+        if (!r.ok || !t.ok) { log('no ticket', r.status, t.error); if (r.status === 503 || r.status === 404) enabled = false; return null; } // 503: the rooms are off
+      } catch (e) { return null; }
+      // a ticket lasts 120 s from when the server made it (after `asked`): one this page took over 90 s to read (a long
+      // frozen frame) would be turned away at the door (401), so it asks again
+      if (performance.now() - asked < 90000 || tries >= 2) return { ticket: t.ticket, url: localServer || t.url };
+      log('ticket too old, again');
+    }
+  }
   async function connect() {
     if (!enabled || ws || connecting) return;
     connecting = true;
     try {
-      const ch = H.character() || {};
-      let t;
-      for (let tries = 0; ; tries++) {
-        const asked = performance.now();
-        try {
-          const r = await fetch(`/api/mp-ticket?village=${encodeURIComponent(H.village)}&col=${encodeURIComponent(ch.col || '')}&tok=${encodeURIComponent(ch.tok || '')}`, { credentials: 'same-origin', cache: 'no-store' });
-          t = await r.json().catch(() => ({}));
-          if (!r.ok || !t.ok) { log('no ticket', r.status, t.error); if (r.status === 503 || r.status === 404) enabled = false; else backoff(); return; } // 503: the rooms are off
-        } catch (e) { backoff(); return; }
-        // a ticket lasts 120 s from when the server made it (after `asked`): one this page took over 90 s to read (a long
-        // frozen frame) would be turned away at the door (401), so it asks again
-        if (performance.now() - asked < 90000 || tries >= 2) break;
-        log('ticket too old, again');
-      }
+      const t = await ticket();
+      if (!t) { if (enabled) backoff(); return; }
       if (!enabled) return;
-      let s;
-      try { s = new WebSocket((localServer || t.url) + '/v1/room?village=' + encodeURIComponent(H.village), [PROTOCOL, 't.' + t.ticket]); } catch (e) { backoff(); return; }
+      let s, opened = false;
+      const copy = wantCopy; // (a copy asked for: to be with a group member; once)
+      try { s = new WebSocket(t.url + '/v1/room?village=' + encodeURIComponent(H.village) + (copy ? '&copy=' + copy : ''), [PROTOCOL, 't.' + t.ticket]); } catch (e) { backoff(); return; }
       ws = s; you = 0;
+      s.onopen = () => { opened = true; };
       s.onmessage = e => { if (ws === s) { try { onMessage(JSON.parse(e.data)); } catch (err) { log('bad message', err); } } };
       s.onclose = e => {
         if (ws !== s) return; // an older socket (a reconnect) going
         ws = null; dropAll(); log('closed', e.code); tell('closed');
-        if (e.code === 4001) { closedFor = 'dup'; H.toast?.('Universe is open in another tab: other players show there.'); return; }
-        if (e.code === 4003) { closedFor = closedFor || 'kick'; return; }
+        if (copy && !opened) wantCopy = 0; // (that copy is full: any copy next time)
+        if (e.code === 4001) { closedFor = 'dup'; H.toast?.('Universe is open in another tab: other players show there.'); stopGroup('dup'); return; }
+        if (e.code === 4003) { closedFor = closedFor || 'kick'; stopGroup(closedFor); return; }
         backoff();
       };
       s.onerror = () => {};
     } finally { connecting = false; }
+  }
+  const stopGroup = why => { try { window.VillageGroup?.stop?.(why); } catch (e) {} };
+  // into another copy of this village (a group member's): a new socket there; false when already in it
+  function joinCopy(c) {
+    c = Math.floor(+c || 0);
+    if (!c || !enabled || closedFor || (room && room.copy === c)) return false;
+    wantCopy = c; reconnect(); return true;
   }
   function backoff() { retry = Math.min(retry + 1, 6); retryAt = performance.now() + Math.min(30000, 1000 * 2 ** retry) * (.75 + Math.random() * .5); }
   const send = o => { if (ws && ws.readyState === 1) { ws.send(typeof o === 'string' ? o : JSON.stringify(o)); return true; } return false; };
   // the room sent this page away (another tab of the same account, an admin's kick or ban): it says so and closes the
   // socket itself (the room's own close can take a while to come through), and knocks no more
   function sentAway(why, m) {
-    closedFor = why;
+    closedFor = why; stopGroup(why);
     const s = ws; ws = null; dropAll();
     try { s?.close(1000, why); } catch (e) {}
     if (why === 'dup') H.toast?.('Universe is open in another tab: other players show there.');
@@ -95,6 +111,7 @@
     if (m.t === 'c' || m.t === 'cx' || m.t === 'cd' || m.t === 'cc' || m.t === 'cfg' || m.t === 'cm' || m.t === 'rpok') return tell('msg', m);
     if (m.t === 'u') { const p = peers.get(m.id); if (p) setState(p, m.s); return; }
     if (m.t === 'e') { const p = peers.get(m.id); if (p) playOnce(p, m.e === 'cheer' ? 'jump' : m.e); return; }
+    if (m.t === 'gi') { try { window.VillageGroup?.onRoomInvite?.(m); } catch (e) { log('group invite', e); } return; } // (a group invite)
   }
   function reconnect() {
     closedFor = null; retry = 0; retryAt = 0;
@@ -514,8 +531,9 @@
   const chat = {
     send: (ch, x, to) => send({ t: 'c', ch, x: String(x || ''), ...(ch === 'w' ? { to: +to || 0 } : {}) }),
     report: o => send({ t: 'rp', ...(o.i ? { i: +o.i } : { id: +o.id || 0 }), why: o.why || 'other', ...(o.note ? { note: String(o.note).slice(0, 200) } : {}) }),
+    groupInvite: (to, g) => send({ t: 'gi', to: +to || 0, g: String(g || '') }), // (the group noted it first: village-groups.js)
     peers: () => [...peers.values()],
     peer: id => peers.get(+id) || null
   };
-  window.VillageMP = { start, tick, reconnect, emote, peers, chat, get state() { const v = [...peers.values()]; return { enabled, open: !!ws && ws.readyState === 1, you, room, peers: peers.size, closedFor, files: files.size, full: v.filter(p => p.model).length, lite: v.filter(p => p.lite).length }; }, stop() { enabled = false; const s = ws; ws = null; try { s?.close(1000); } catch (e) {} dropAll(); sweepFiles(Infinity); tell('closed'); } };
+  window.VillageMP = { start, tick, reconnect, emote, peers, chat, ticket: () => (H && enabled ? ticket() : Promise.resolve(null)), joinCopy, get state() { const v = [...peers.values()]; return { enabled, open: !!ws && ws.readyState === 1, you, room, peers: peers.size, closedFor, files: files.size, full: v.filter(p => p.model).length, lite: v.filter(p => p.lite).length }; }, stop() { enabled = false; const s = ws; ws = null; try { s?.close(1000); } catch (e) {} dropAll(); sweepFiles(Infinity); tell('closed'); } };
 })();

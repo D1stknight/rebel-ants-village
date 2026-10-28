@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev --env dev",
-    "test": "node test/rooms.test.mjs",
+    "test": "node test/rooms.test.mjs && node test/groups.test.mjs",
     "deploy:dev": "wrangler deploy --env dev",
     "deploy": "wrangler deploy"
   },

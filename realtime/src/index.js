@@ -14,6 +14,7 @@
 //                   {t:'c', ch:'n'|'v'|'w', x:text, to:id (a whisper)}   chat: nearby (CHAT_NEAR m, the same place),
 //                                                                         the village copy, or one player
 //                   {t:'rp', i:message id | id:player id, why:'spam'|'abuse'|'scam'|'other', note}            a report
+//                   {t:'gi', to:player id, g:groupId}   hand a player of this copy an invite to my group (signed-in players)
 //                   {"t":"ping"}  answered with {"t":"pong"} without waking the room (auto response)
 //   room -> client  {t:'hi', you:id, u, room:{village, copy, max}, peers:[peer], hist:[msg], cfg:{chat, slow}, mute}
 //                   {t:'j', ...peer}   someone came in      {t:'l', id}   someone left
@@ -25,6 +26,7 @@
 //                   {t:'rpok'} / {t:'cx', why:'report-…'}   a report taken / not
 //                   {t:'kick', why:'kick'|'banned', until}   then the socket closes (4003)
 //                   {t:'dup'}   the same account opened the room somewhere else (this one closes)
+//                   {t:'gi', g:groupId, from:{id, u, n, k}}   a group invite from that player (see below)
 //   peer = {id, n: name, k: 'discord'|'name'|'guest', u: the account's own short code (blocks), av: avatar url, look,
 //           s: state|null}
 //   msg  = {i, ch, id, n, k, u, x: the text as shown, at, to + tn (a whisper: to whom)}
@@ -34,14 +36,18 @@
 // word filter and links (chat.js), the last 200 kept per copy (the village ones replayed to newcomers). Every message
 // and report also goes to the control desk (control.js: settings, mutes and bans, the log, the reports), which the
 // Admin Hub reaches through Universe with signed commands (POST /v1/admin: ADMIN_KEYS, not TICKET_KEYS).
+// Groups (group.js, one Durable Object per group, signed-in players only): /v1/group?id=<id>|new with the same tickets. A
+// member notes an invite with the group ({t:'gi', u}), then hands it over through the room ({t:'gi', to, g}); the invited
+// player's page opens the group, which lets in only its members and the players invited lately.
 import { MAX_CHARS, cleanText, charCount, filterText } from './chat.js';
 import { RoomControl, DEFAULT_CFG, normCfg, withTimeout } from './control.js';
-export { RoomControl };
+import { PartyGroup } from './group.js';
+import { VILLAGES } from './villages.js';
+export { RoomControl, PartyGroup };
 
 const PROTOCOL = 'rebel-universe.v1';
-const VILLAGES = new Set(['hub', 'ronin', 'samurai', 'shogun', 'bushi', 'buke', 'ashigaru', 'kenshi', 'yamabushi', 'sohei', 'wokou', 'warrior', 'cute-creepy', 'chumpz', 'saints-la']);
 const EMOTES = new Set(['cheer', 'wave', 'bow', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam', 'jump', 'kick']);
-const ANIM = /^[a-z0-9_]{1,20}$/, INTERIOR = /^[A-Za-z0-9_-]{1,64}$/;
+const ANIM = /^[a-z0-9_]{1,20}$/, INTERIOR = /^[A-Za-z0-9_-]{1,64}$/, GROUP_ID = /^[A-Za-z0-9_-]{12}$/;
 const NEAR = 40, MID = 120, COPIES = 24, CHAT_NEAR = 30, HISTORY = 50, KEEP = 200;
 
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', ...headers } });
@@ -81,6 +87,26 @@ const controlOf = env => env.CONTROL.get(env.CONTROL.idFromName((env.SITE || 'de
 // the account's own short code, the same in every room: what a player's Block remembers (never the account id itself)
 async function uidOf(sub) { const d = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode('rebel-universe:uid:v1:' + sub))); return btoa(String.fromCharCode(...d)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '').slice(0, 16); }
 
+// who a ticket says the player is, as the rooms and groups keep it
+const identOf = async t => ({ sub: t.sub, u: await uidOf(t.sub), n: String(t.n || 'Rebel').slice(0, 40), k: ['discord', 'name', 'guest'].includes(t.k) ? t.k : 'guest', av: typeof t.av === 'string' && /^https:\/\/cdn\.discordapp\.com\//.test(t.av) ? t.av.slice(0, 160) : '', look: t.look && typeof t.look === 'object' ? t.look : { t: 'starter' } });
+const protocolsOf = req => String(req.headers.get('sec-websocket-protocol') || '').split(',').map(s => s.trim());
+// a group's socket: signed-in players only; 'new' makes one (its id here: 9 random bytes)
+async function openGroup(req, env, url) {
+  if (req.headers.get('upgrade')?.toLowerCase() !== 'websocket') return json({ ok: false, error: 'websocket only' }, 426);
+  if (!originAllowed(env, req.headers.get('origin'))) return json({ ok: false, error: 'origin' }, 403);
+  const id = url.searchParams.get('id') || '';
+  if (id !== 'new' && !GROUP_ID.test(id)) return json({ ok: false, error: 'group' }, 400);
+  const protos = protocolsOf(req);
+  if (!protos.includes(PROTOCOL)) return json({ ok: false, error: 'protocol' }, 400);
+  let t;
+  try { t = await verifyTicket((protos.find(p => p.startsWith('t.')) || '').slice(2), env); } catch (e) { return json({ ok: false, error: e.code || 'ticket' }, 401); }
+  if (t.k === 'guest' || !t.sub.startsWith('u:')) return json({ ok: false, error: 'sign in to be in a group' }, 403);
+  if (!env.GROUPS) return json({ ok: false, error: 'groups are not on here' }, 503);
+  const gid = id === 'new' ? btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(9)))).replace(/\+/g, '-').replace(/\//g, '_') : id;
+  const stub = env.GROUPS.get(env.GROUPS.idFromName(`${env.SITE || 'dev'}:group:${gid}`));
+  return stub.fetch(new Request(`https://group/join?id=${gid}${id === 'new' ? '&new=1' : ''}`, { headers: { upgrade: 'websocket', 'x-ru-ident': JSON.stringify(await identOf(t)) } }));
+}
+
 function originAllowed(env, origin) {
   if (!origin) return env.ALLOW_NO_ORIGIN === '1'; // tests / tools only
   const exact = String(env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
@@ -100,17 +126,18 @@ export default {
       let a; try { a = await verifyAdmin(raw, env); } catch (e) { return json({ ok: false, error: 'not allowed' }, 401); }
       return controlOf(env).fetch('https://control/admin', { method: 'POST', body: JSON.stringify({ cmd: a.cmd, args: a.args || {}, nonce: a.nonce }) });
     }
+    if (url.pathname === '/v1/group') return openGroup(req, env, url);
     if (url.pathname !== '/v1/room') return json({ ok: false, error: 'not found' }, 404);
     if (req.headers.get('upgrade')?.toLowerCase() !== 'websocket') return json({ ok: false, error: 'websocket only' }, 426);
     if (!originAllowed(env, req.headers.get('origin'))) return json({ ok: false, error: 'origin' }, 403);
     const village = url.searchParams.get('village') || '', want = Math.floor(+url.searchParams.get('copy') || 0);
     if (!VILLAGES.has(village) || want < 0 || want > COPIES) return json({ ok: false, error: 'village' }, 400);
-    const protos = String(req.headers.get('sec-websocket-protocol') || '').split(',').map(s => s.trim());
+    const protos = protocolsOf(req);
     if (!protos.includes(PROTOCOL)) return json({ ok: false, error: 'protocol' }, 400);
     let t;
     try { t = await verifyTicket((protos.find(p => p.startsWith('t.')) || '').slice(2), env); } catch (e) { return json({ ok: false, error: e.code || 'ticket' }, 401); }
     if (t.village && t.village !== village) return json({ ok: false, error: 'ticket is for another village' }, 401);
-    const ident = { sub: t.sub, u: await uidOf(t.sub), n: String(t.n || 'Rebel').slice(0, 40), k: ['discord', 'name', 'guest'].includes(t.k) ? t.k : 'guest', av: typeof t.av === 'string' && /^https:\/\/cdn\.discordapp\.com\//.test(t.av) ? t.av.slice(0, 160) : '', look: t.look && typeof t.look === 'object' ? t.look : { t: 'starter' } };
+    const ident = await identOf(t);
     const site = env.SITE || 'dev';
     for (let copy = want || 1; copy <= (want || COPIES); copy++) {
       const stub = env.ROOMS.get(env.ROOMS.idFromName(`${site}:${village}:${copy}`));
@@ -137,7 +164,7 @@ export class RoomCopy {
   }
   kv(k) { const r = this.sql.exec('SELECT v FROM kv WHERE k = ?', k).toArray()[0]; return r ? r.v : null; }
   kvSet(k, v) { this.sql.exec('INSERT INTO kv (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v', k, String(v)); }
-  live(a) { return { mute: 0, ...a, last: new Map(), win: 0, cnt: 0, em: 0, said: 0, lastX: '', rep: 0, reps: 0 }; }
+  live(a) { return { mute: 0, ...a, last: new Map(), win: 0, cnt: 0, em: 0, said: 0, lastX: '', rep: 0, reps: 0, gi: 0 }; }
   slim(p) { return { id: p.id, sub: p.sub, u: p.u, n: p.n, k: p.k, av: p.av, look: p.look, s: p.s, village: p.village, copy: p.copy, mute: p.mute || 0, j: p.j }; }
   pub(p) { return { id: p.id, n: p.n, k: p.k, u: p.u, av: p.av, look: p.look, s: p.s }; }
   control() { return controlOf(this.env); }
@@ -200,6 +227,17 @@ export class RoomCopy {
     else if (m && m.t === 'e') this.emote(ws, p, m, now);
     else if (m && m.t === 'c') await this.chat(ws, p, m, now);
     else if (m && m.t === 'rp') this.report(ws, p, m, now);
+    else if (m && m.t === 'gi') this.groupInvite(p, m, now);
+  }
+  // a group invite handed to one signed-in player of this copy (one every 2 s); the group itself decides who comes in
+  groupInvite(p, m, now) {
+    if (p.k === 'guest' || now - p.gi < 2000 || !Number.isInteger(m.to) || typeof m.g !== 'string' || !GROUP_ID.test(m.g)) return;
+    for (const [w, o] of this.peers) if (o.id === m.to) {
+      if (o === p || o.k === 'guest') return;
+      p.gi = now;
+      try { w.send(JSON.stringify({ t: 'gi', g: m.g, from: { id: p.id, u: p.u, n: p.n, k: p.k } })); } catch (e) {}
+      return;
+    }
   }
   state(ws, p, m, now) {
     const num = v => typeof v === 'number' && Number.isFinite(v), q = Array.isArray(m.p) ? m.p : []; // numbers only (JSON turns NaN into null)

@@ -1,11 +1,12 @@
 // Village HUD: the Rebel panel folds into a round Rebel button (top left) with a one-line quest tracker beside it, and a
 // round minimap sits bottom right. The map turns with the camera (up = where the camera looks), the player's arrow sits
 // in the middle, the quest target shows as a gold diamond (held on the rim when it is off the map), village gates and
-// room doors as small marks, N on the rim. The map picture is one top-down render of the village, made once it is
+// room doors as small marks, the player's group members as green dots (the one being gone to ringed and held on the
+// rim), N on the rim. The map picture is one top-down render of the village, made once it is
 // loaded; each frame only draws that picture and the marks (2D canvas). village.html calls init / buildMap / update.
 (function () {
   const HUD = window.VillageHud = {};
-  const GOLD = '#e8c56a', TEAL = '#5ecfca';
+  const GOLD = '#e8c56a', TEAL = '#5ecfca', GREEN = '#7be38a';
   let scene = null, opts = {}, cv = null, ctx = null, map = null, zoomR = 60, frame = 0, dpr = 1, built = false, dot = false, lastQuest = '';
 
   const css = `
@@ -195,6 +196,19 @@ body.rebel-panel-open #questLine{display:none!important}
       if (d > rim) { x = c + dx / d * rim; y = c + dy / d * rim; }
       ctx.fillStyle = GOLD; ctx.strokeStyle = '#3c2800'; ctx.lineWidth = 1.5 * dpr; const k = 6 * dpr;
       ctx.beginPath(); ctx.moveTo(x, y - k * 1.3); ctx.lineTo(x + k, y); ctx.lineTo(x, y + k * 1.3); ctx.lineTo(x - k, y); ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
+    // the group (village-groups.js): its members here as green dots; past the rim only the one being gone to (and a small
+    // dot for the others, so their way shows); a member in a room: a square on its door
+    const fr = opts.friends?.();
+    if (fr && fr.length) for (const f of fr) {
+      let [x, y] = P(f.x, f.z); const dx = x - c, dy = y - c, d = Math.hypot(dx, dy), rim = c - 8 * dpr, out = d > rim;
+      if (out) { x = c + dx / d * rim; y = c + dy / d * rim; }
+      const r = (f.goal ? 5.5 : out ? 2.6 : 4) * dpr;
+      if (f.goal) { ctx.strokeStyle = 'rgba(123,227,138,.6)'; ctx.lineWidth = 2 * dpr; ctx.beginPath(); ctx.arc(x, y, r + (4 + Math.sin(performance.now() / 180) * 1.5) * dpr, 0, Math.PI * 2); ctx.stroke(); }
+      ctx.globalAlpha = out && !f.goal ? .75 : 1;
+      ctx.fillStyle = GREEN; ctx.strokeStyle = '#0b2e12'; ctx.lineWidth = 1.5 * dpr; ctx.beginPath();
+      if (f.door) ctx.rect(x - r, y - r, 2 * r, 2 * r); else ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill(); ctx.stroke(); ctx.globalAlpha = 1;
     }
     const a = pr.rotation.y, ax = Math.sin(a) * rx + Math.cos(a) * rz, ay = -(Math.sin(a) * fx + Math.cos(a) * fz), L = 9 * dpr;
     const nx = -ay, ny = ax; // across the arrow

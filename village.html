@@ -1831,6 +1831,7 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
 <script src="assets/rebel-games.js"></script>
 <script src="assets/village-multiplayer.js"></script>
 <script src="assets/village-chat.js"></script>
+<script src="assets/village-groups.js"></script>
 <script type="module">
 // The story save (Oct 25; assets/story-save.js, api/story-save.mjs): signed in, the story kept under the player's Rebel
 // Economy account joins this browser's before the game reads it, so another device starts where they left off and nothing
@@ -30413,13 +30414,27 @@ function startVillageMultiplayer() {
     playerNode: () => charMesh,
     toast: m => showToast(m, 6000)
   });
+  // step 4, groups (assets/village-groups.js): while in one, a second socket to the group (any village); its news goes
+  // to the chat window, its members to the minimap
+  window.VillageGroup?.start({
+    village: CURRENT_VILLAGE_ID, mp: window.VillageMP,
+    villageName: id => VILLAGE_REGISTRY[id]?.displayName || id,
+    player: () => charMesh && walkMode && !adminMode ? { x: charMesh.position.x, z: charMesh.position.z, interior: ActiveInterior ? String(ActiveInterior.targetInteriorId || ActiveInterior.interiorType || 'room') : null } : null,
+    signedIn: () => !!Econ.on,
+    ticket: () => window.VillageMP.ticket(),
+    travel: id => selectVillageGateDestination(id),
+    doorOf: id => { const d = scene.transformNodes.find(n => n.metadata?.type === 'interior_entrance' && n.metadata.targetInteriorId === id); return d ? { x: d.position.x, z: d.position.z } : null; },
+    isBlocked: u => !!window.VillageChat?.isBlocked?.(u),
+    toast: m => showToast(m, 5000)
+  });
+  window.VillageGroup?.on((kind, d) => window.VillageChat?.group?.(kind, d));
 }
 // signed in or out while here: the room hears the new name (a new ticket). The account seen last lives on the function:
 // the first refreshEcon can answer before the module has run this far (a let here was not set up yet and threw)
 function mpOnEcon() {
   if (!Econ.checked) return;
   const a = Econ.on ? Econ.kind + ':' + Econ.name : '';
-  if (mpOnEcon.account != null && a !== mpOnEcon.account) window.VillageMP?.reconnect?.();
+  if (mpOnEcon.account != null && a !== mpOnEcon.account) { window.VillageMP?.reconnect?.(); window.VillageGroup?.account?.(); } // (a group belongs to the account it was made with)
   mpOnEcon.account = a;
 }
 function initVillageHud() {
@@ -30427,6 +30442,7 @@ function initVillageHud() {
     window.VillageHud?.init(scene, {
       isWalking: () => walkMode && !adminMode,
       inInterior: () => !!ActiveInterior,
+      friends: () => { try { return window.VillageGroup?.dots?.() || null; } catch (e) { return null; } },
       questTarget: () => {
         // a roam game (a run, a chase): where it wants you next
         if (MiniGames.on && MiniGames.roam) { try { return MiniGames.inst?.target?.() || null; } catch (e) { return null; } }

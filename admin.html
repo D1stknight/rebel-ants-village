@@ -526,7 +526,7 @@ async function mpaCmd(cmd, args = {}) {
 }
 const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 const btn = (label, fn, cls = 'sm') => { const b = mk('button', cls, label); b.type = 'button'; b.onclick = async () => { b.disabled = true; try { await fn(); } catch (e) { mpaStatus(e.message, true); } b.disabled = false; }; return b; };
-const villageOf = room => { const v = String(room || '').split(':')[1] || ''; return VILLAGE_NAMES[v] || v; };
+const villageOf = room => { const v = String(room || '').split(':')[1] || ''; return v === 'group' ? 'a group' : VILLAGE_NAMES[v] || v; }; // ('<site>:group:<id>': a group's chat)
 // what an admin can do to an account (from anywhere on the card)
 function accountActs(sub, n, k) {
   const box = mk('span', 'acts');
@@ -595,7 +595,7 @@ async function mpaShow(tab) {
     if (!d.rows.length) out.push(mk('p', 'dim', 'No messages.'));
     for (const m of d.rows) {
       const row = mk('div', 'msg' + (m.del ? ' del' : ''));
-      const left = mk('div'); left.append(mk('div', 't', mpaWhen(m.at)), mk('div', 't', villageOf(m.room) + ' · ' + (m.ch === 'w' ? 'whisper' : m.ch === 'v' ? 'village' : 'nearby')));
+      const left = mk('div'); left.append(mk('div', 't', mpaWhen(m.at)), mk('div', 't', villageOf(m.room) + ' · ' + (m.ch === 'w' ? 'whisper' : m.ch === 'v' ? 'village' : m.ch === 'g' ? 'group chat' : 'nearby')));
       const mid = mk('div', 'x'); const nm = mk('b', 'k-' + m.k, m.n); mid.append(nm);
       if (m.ch === 'w') mid.append(mk('span', 'ch-w', ' → ' + (m.tn || '')));
       mid.append(document.createTextNode(': ' + m.x));
