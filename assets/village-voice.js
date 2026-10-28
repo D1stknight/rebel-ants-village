@@ -87,13 +87,13 @@
       talking = { where, at: performance.now(), ready: false };
       paintBadge();
       try { await publish(sc); }
-      catch (e) { const why = e?.why || (e?.name === 'NotAllowedError' ? 'mic' : 'mic-none'); talking = null; paintBadge(); H.toast?.(why === 'mic' ? 'Universe needs your microphone to talk: allow it in the browser (the icon by the address).' : why === 'mic-none' ? 'No microphone found.' : WHY[why] || WHY.sfu); return; }
+      catch (e) { const why = e?.why || (e?.name === 'NotAllowedError' ? 'mic' : 'mic-none'); talking = null; paintBadge(); report('talk-fail:' + why + (e?.name ? ':' + e.name : '')); H.toast?.(why === 'mic' ? 'Universe needs your microphone to talk: allow it in the browser (the icon by the address).' : why === 'mic-none' ? 'No microphone found.' : WHY[why] || WHY.sfu); return; }
       if (!talking || talking.where !== where) return; // (let go meanwhile)
-      sc.track.enabled = true; talking.ready = true; paintBadge();
+      sc.track.enabled = true; talking.ready = true; paintBadge(); report('talk-on');
     } else {
       if (!talking) return;
       const sc = S[talking.where]; if (sc.track) sc.track.enabled = false;
-      talking = null; paintBadge();
+      talking = null; paintBadge(); report('talk-off');
     }
   }
 
@@ -136,6 +136,7 @@
         if (g !== sc.gen) return;
         sendTo(sc, { t: 'va', sdp: sc.cons.localDescription.sdp });
         for (const tx of sc.cons.getTransceivers()) if (tx.receiver?.track && sc.byMid.get(tx.mid) && !sc.byMid.get(tx.mid).node) hear(sc, tx.mid, tx.receiver.track);
+        report('subs:' + sc.name);
       }
     } catch (e) { log('subs', sc.name, e); sc.failAt = performance.now(); }
   }
@@ -166,6 +167,7 @@
     if (!H) return;
     sync(S.room); sync(S.group); sync(S.stage); if (talking && (!H.canTalk() || talking.where === 'stage' && !H.stage?.canTalk?.())) talk(false); window.VillageTouch?.talkOn?.(available());
     const w = waitingTap(); if (w !== upkeep.waiting) { upkeep.waiting = w; paintBadge(); } // (voices come in while their audio waits on a tap)
+    if (ctx && ctx.state !== upkeep.ctxState) { upkeep.ctxState = ctx.state; report('ctx:' + ctx.state); } else report();
   }
   function frame() {
     if (!H) return;
@@ -187,6 +189,7 @@
         const n = sub.node; if (!n) continue;
         n.meter.getFloatTimeDomainData(n.buf); let e = 0; for (let i = 0; i < n.buf.length; i++) e += n.buf[i] * n.buf[i];
         const rms = Math.sqrt(e / n.buf.length); if (rms > .012) sub.speakAt = heardAt = now;
+        if (rms > (sub.peak || 0)) sub.peak = rms; // (the loudest since the last report)
         setSpeaking(sub, now - sub.speakAt < 350);
       }
     }
@@ -239,6 +242,48 @@ body.in-game #vvBadge{display:none!important}`;
     if (g.length) parts.push(`<span class="spk">🔊 ${g.map(n => n.replace(/[<>&"]/g, '')).join(', ')}</span>`);
     if (waitingTap()) parts.push('<span class="tap">🔇 Tap the screen to hear voices</span>');
     badge.innerHTML = parts.join('<span>·</span>'); badge.classList.toggle('on', parts.length > 0);
+  }
+
+  // ---- the dev preview's voice report (Oct 28): every 5 s while voice is on, and at each step (talk on / off / failed,
+  // new voices, the audio's state), the page's audio and voice state goes to /api/voice-diag (one line in the runtime
+  // logs; no names or account ids, a random id per page), so a test on real iPhones says what the phones did: the
+  // audio contexts and session, the microphone, the connections, packets and audio levels in and out (WebRTC stats) ----
+  const REPORT = /-git-/.test(location.hostname) || window._voiceDiag === true, PID = Math.random().toString(36).slice(2, 10);
+  let reportAt = -1e9, reportN = 0, lastWhy = '';
+  async function rtc(pc) {
+    if (!pc) return null;
+    const o = { st: pc.connectionState, ice: pc.iceConnectionState };
+    try {
+      (await pc.getStats()).forEach(s => {
+        if (s.kind !== 'audio') return;
+        if (s.type === 'outbound-rtp') { o.txB = s.bytesSent; o.txP = s.packetsSent; }
+        else if (s.type === 'media-source') o.micLvl = s.audioLevel == null ? null : +s.audioLevel.toFixed(3);
+        else if (s.type === 'inbound-rtp') (o.rx = o.rx || []).push([s.mid ?? '', s.bytesReceived, s.packetsReceived, s.packetsLost, s.audioLevel == null ? null : +s.audioLevel.toFixed(3)]);
+      });
+    } catch (e) { o.err = String(e?.name || e).slice(0, 40); }
+    return o;
+  }
+  async function report(why) {
+    if (!REPORT || !H) return;
+    const now = performance.now();
+    if (why) { if (now - reportAt < 400) return; lastWhy = why; }
+    else if (now - reportAt < 5000 || !available() && !talking && ![S.room, S.group, S.stage].some(sc => sc.subs.size)) return;
+    reportAt = now; reportN++;
+    try {
+      const W = window._weather?.manager, m = W?.musicTrack, D = window._voiceDuck;
+      const subs = sc => [...sc.subs.values()].map(s => { const r = [s.key, s.node ? 1 : 0, s.speaking ? 1 : 0, +(s.peak || 0).toFixed(3)]; s.peak = 0; return r; });
+      const d = {
+        v: 1, pid: PID, n: reportN, why: why || '', last: lastWhy, t: Date.now(), vis: document.visibilityState, ua: reportN === 1 ? navigator.userAgent.slice(0, 180) : undefined,
+        ctx: ctx ? [ctx.state, ctx.sampleRate, +ctx.currentTime.toFixed(1)] : null, all: window._audioUnlock?.contexts,
+        session: navigator.audioSession ? [navigator.audioSession.type, navigator.audioSession.state] : null,
+        el: window._elementAudio?.state, duck: D ? [+D.k.toFixed(2), D.on, D.phone] : null,
+        music: m ? [m.paused, m.muted, +(m._level || 0).toFixed(3), +(+m.volume || 0).toFixed(3)] : null,
+        avail: available(), talk: talking ? [talking.where, talking.ready] : null, mic: mic ? [mic.readyState, mic.enabled, mic.muted] : null, vol: settings.volume, hear: settings.hear,
+        room: { pub: S.room.pub, subs: subs(S.room), prod: await rtc(S.room.prod), cons: await rtc(S.room.cons) },
+        group: S.group.subs.size || S.group.prod ? { pub: S.group.pub, subs: subs(S.group), prod: await rtc(S.group.prod), cons: await rtc(S.group.cons) } : undefined
+      };
+      navigator.sendBeacon?.('/api/voice-diag', JSON.stringify(d));
+    } catch (e) { log('report', e); }
   }
 
   // voice can be used here now: signed in, and the room or the group has it switched on (the rooms' app is set up)
