@@ -31,7 +31,9 @@
 //           s: state|null}
 //   msg  = {i, ch, id, n, k, u, x: the text as shown, at, to + tn (a whisper: to whom)}
 // Near players (same interior, < NEAR m) get every state; further ones one every 0.5 s (< MID m) or 2 s; a final
-// state always goes through. Limits: 1 KB a message, 24 messages / 2 s a player, emotes 1 / 1.2 s.
+// state always goes through. Limits: 1 KB a message, 24 messages / 2 s a player, emotes 1 / 1.2 s. A socket that sends
+// nothing for STALE_S seconds (150; not even its ping every 25 s: a phone put away, a connection gone half-open, which
+// the room never hears close) is closed (4002) and its player leaves.
 // Chat (signed-in players only; guests read): MAX_CHARS characters, one message every 2 s (or the slow mode's gap), the
 // word filter and links (chat.js), the last 200 kept per copy (the village ones replayed to newcomers). Every message
 // and report also goes to the control desk (control.js: settings, mutes and bans, the log, the reports), which the
@@ -185,6 +187,7 @@ export class RoomCopy {
     this.name = this.kv('name'); this.cfg = null;
     try { const c = this.kv('cfg'); if (c) this.cfg = normCfg(JSON.parse(c)); } catch (e) {}
     this.peers = new Map(); this.nextId = Math.max(1, +this.kv('next') || 1); // (ids never come back in a copy: old chat lines keep theirs)
+    this.stale = Math.max(5, Math.min(3600, +env.STALE_S || 150)) * 1000; this.swept = 0;
     // waking from hibernation: who is here comes back from the sockets' attachments
     for (const ws of ctx.getWebSockets()) { const a = ws.deserializeAttachment(); if (a && a.id) { this.peers.set(ws, this.live(a)); this.nextId = Math.max(this.nextId, a.id + 1); } }
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('{"t":"ping"}', '{"t":"pong"}'));
@@ -203,7 +206,7 @@ export class RoomCopy {
   byId(id) { for (const p of this.peers.values()) if (p.id === id) return p; return null; }
   sockOf(k) { for (const [ws, p] of this.peers) if (p.id === +k) return { ws, p }; return null; }
   live(a) { return { mute: 0, ...a, last: new Map(), win: 0, cnt: 0, em: 0, said: 0, lastX: '', rep: 0, reps: 0, gi: 0 }; }
-  slim(p) { return { id: p.id, sub: p.sub, u: p.u, n: p.n, k: p.k, av: p.av, look: p.look, s: p.s, village: p.village, copy: p.copy, mute: p.mute || 0, j: p.j }; }
+  slim(p) { return { id: p.id, sub: p.sub, u: p.u, n: p.n, k: p.k, av: p.av, look: p.look, s: p.s, village: p.village, copy: p.copy, mute: p.mute || 0, j: p.j, seen: p.seen || 0 }; }
   pub(p) { return { id: p.id, n: p.n, k: p.k, u: p.u, av: p.av, look: p.look, s: p.s, ...(this.voice?.isOn(p.id) ? { vo: 1 } : {}) }; }
   voiceOn(cfg) { return !!((cfg || this.cfg || normCfg(DEFAULT_CFG)).voice !== false && this.voice.on); }
   control() { return controlOf(this.env); }
@@ -232,7 +235,9 @@ export class RoomCopy {
     if (url.pathname === '/ctl') return this.ctl(await req.json().catch(() => ({})));
     const ident = JSON.parse(req.headers.get('x-ru-ident') || 'null');
     if (!ident || req.headers.get('upgrade') !== 'websocket') return json({ ok: false }, 400);
-    // one socket per account: an older one is told and closed (guests get a new id with every ticket)
+    this.sweep(Date.now(), true); // (a newcomer never gets a player whose socket went quiet)
+    // one socket per account: an older one is told and closed (a guest is the same account while its tab keeps its guest
+    // key: api/mp-ticket.mjs), so a page coming back on a new ticket replaces its old socket instead of meeting it
     for (const [w, p] of [...this.peers]) if (p.sub === ident.sub) { this.part(w, '{"t":"dup"}', 4001, 'opened elsewhere'); }
     if (this.peers.size >= this.max) return json({ ok: false, full: true }, 409);
     const village = url.searchParams.get('village'), copy = +url.searchParams.get('copy'), name = `${this.site}:${village}:${copy}`;
@@ -259,6 +264,7 @@ export class RoomCopy {
     const p = this.peers.get(ws); if (!p) return;
     if (typeof data !== 'string' || (data.length > 1024 && !(data.length <= 13000 && BIG.test(data)))) return;
     const now = Date.now();
+    p.seen = now; this.sweep(now);
     if (now - p.win > 2000) { p.win = now; p.cnt = 0; }
     if (++p.cnt > 24) { if (p.cnt > 96) try { ws.close(4008, 'too many messages'); } catch (e) {} return; }
     let m; try { m = JSON.parse(data); } catch (e) { return; }
@@ -368,9 +374,24 @@ export class RoomCopy {
   // a player sent away (another tab, a kick or a ban): told why, its socket marked gone (a room waking from hibernation
   // must not take it back while the close is still under way) and closed
   part(ws, msg, code, reason) {
+    try { ws.send(msg); } catch (e) {}
+    this.shut(ws, code, reason);
+  }
+  shut(ws, code, reason) {
     try { ws.serializeAttachment({ gone: true }); } catch (e) {}
-    try { ws.send(msg); ws.close(code, reason); } catch (e) {}
+    try { ws.close(code, reason); } catch (e) {}
     this.drop(ws);
+  }
+  // players whose socket has sent nothing for this.stale, not even a ping (the auto response keeps its time), leave
+  // (looked at on a join and at most every 10 s on a message)
+  sweep(now, force) {
+    if (!force && now - this.swept < 10000) return;
+    this.swept = now;
+    for (const [w, p] of [...this.peers]) {
+      let last = Math.max(p.seen || 0, p.j || 0);
+      try { const t = this.ctx.getWebSocketAutoResponseTimestamp(w); if (t && +t > last) last = +t; } catch (e) {}
+      if (now - last > this.stale) this.shut(w, 4002, 'gone quiet');
+    }
   }
   drop(ws) {
     const p = this.peers.get(ws); if (!p) return; this.peers.delete(ws);
