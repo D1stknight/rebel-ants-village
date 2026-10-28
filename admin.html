@@ -651,9 +651,10 @@ async function mpaShow(tab) {
     const sr = mk('div', 'row'); sr.append(mk('span', '', 'Slow mode: one message every'), slow, mk('span', '', 'seconds (2 = normal)'));
     out.push(tg('chat', 'Chat on everywhere (off: nobody can write; everyone sees "Chat is switched off")', c.chat !== false), sr,
       tg('filter', 'Word filter (swear words and slurs starred out)', c.filter !== false), tg('links', 'Allow links (off: links are taken out, except rebelants.io and rebeluniverse.io)', c.links === true),
+      tg('voice', 'Voice on everywhere (push to talk for signed-in players; off: every voice stops at once)', c.voice !== false),
       mk('div', 'dim', 'Your own words to star out, besides the filter:'), words,
       btn('Save the settings', async () => {
-        const args = { chat: document.getElementById('mpa-cfg-chat').checked, slow: +document.getElementById('mpa-cfg-slow').value, filter: document.getElementById('mpa-cfg-filter').checked, links: document.getElementById('mpa-cfg-links').checked, words: document.getElementById('mpa-cfg-words').value.split('\n').map(w => w.trim()).filter(Boolean) };
+        const args = { chat: document.getElementById('mpa-cfg-chat').checked, slow: +document.getElementById('mpa-cfg-slow').value, filter: document.getElementById('mpa-cfg-filter').checked, links: document.getElementById('mpa-cfg-links').checked, voice: document.getElementById('mpa-cfg-voice').checked, words: document.getElementById('mpa-cfg-words').value.split('\n').map(w => w.trim()).filter(Boolean) };
         await mpaAct('cfg-set', args, 'Settings saved');
       }, 'primary'));
   }

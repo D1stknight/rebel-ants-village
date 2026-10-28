@@ -45,7 +45,7 @@
           if (hello) end(true);
         };
         s.onclose = e => {
-          if (ws === s) ws = null;
+          if (ws === s) { ws = null; voiceReset(); }
           log('closed', e.code, e.reason, hello);
           end(false);
           if (e.code === 4001) { stopped = 'dup'; return; } // (the group opened in another tab: that one has it)
@@ -65,13 +65,16 @@
   }
   function backoff() { retry = Math.min(retry + 1, 6); retryAt = performance.now() + Math.min(30000, 1000 * 2 ** retry) * (.75 + Math.random() * .5); }
   const send = o => { if (ws && ws.readyState === 1) { ws.send(JSON.stringify(o)); return true; } return false; };
-  function reset() { G.id = null; G.you = null; G.lead = null; G.members.clear(); G.hist = []; relay.clear(); store(); setGoal(null); }
-  function close(why) { const s = ws; ws = null; try { s?.close(1000, why || 'bye'); } catch (e) {} }
+  function reset() { G.id = null; G.you = null; G.lead = null; G.members.clear(); G.hist = []; relay.clear(); store(); setGoal(null); voiceReset(); }
+  function close(why) { const s = ws; ws = null; try { s?.close(1000, why || 'bye'); } catch (e) {} voiceReset(); }
+  function voice(m) { try { window.VillageVoice?.group?.(m); } catch (e) { log('voice', e); } }
+  function voiceReset() { try { window.VillageVoice?.reset?.('group'); } catch (e) {} } // (the group socket went: its voice sessions too)
 
   function onMessage(m) {
     if (m.t === 'ghi') {
       const first = G.id !== m.g;
       G.id = m.g; G.you = m.you; G.lead = m.lead; G.max = m.max || 8; G.cfg = m.cfg || G.cfg; G.mute = m.mute || 0; G.hist = m.hist || [];
+      voice({ t: 'vcfg', on: !!G.cfg?.voice });
       G.members.clear(); for (const x of m.members || []) G.members.set(x.u, x);
       retry = 0; fails = 0; store(); lastGpKey = ''; lastGp = 0;
       emit('hello', { first, ...m });
@@ -97,8 +100,11 @@
       return;
     }
     if (m.t === 'gcd' || m.t === 'gcc') { emit(m.t === 'gcd' ? 'deleted' : 'cleared', m); return; }
-    if (m.t === 'gcm') { G.mute = m.until || 0; return; }
-    if (m.t === 'gcfg') { G.cfg = { chat: m.chat !== false, slow: m.slow || 2 }; return; }
+    if (m.t === 'gcm') { G.mute = m.until || 0; return; } // (after the voice is told above)
+    if (m.t === 'gcfg') { G.cfg = { chat: m.chat !== false, slow: m.slow || 2, voice: !!m.voice }; voice({ t: 'vcfg', on: !!m.voice }); return; }
+    if (m.t === 'gcm') voice({ t: 'vmute', until: m.until });
+    if (m.t === 'vo') { const x = G.members.get(m.key); if (x) x.vo = !!m.on; return voice(m); } // (a member's voice on / off)
+    if (m.t === 'vp' || m.t === 'vs') return voice(m);
     if (m.t === 'kick') { stopped = m.why === 'banned' ? 'banned' : 'kick'; return; }
     if (m.t === 'rpok') { emit('reported', {}); return; }
   }
@@ -268,6 +274,7 @@ body.in-game #vgInvite{display:none}`;
     start, tick, invite, onRoomInvite, join, leave, kick, say, report, dots, goTo, whereOf, placeOf: x => (H ? placeOf(x) : null), stop, account,
     on: f => { listeners.add(f); return () => listeners.delete(f); },
     inGroup: () => !!G.id, isMember: u => G.members.has(u), member: u => G.members.get(u) || null, members: () => [...G.members.values()],
+    voice: { send: o => send(o), open: () => !!ws && ws.readyState === 1 && !!G.id && G.cfg?.voice === true, you: () => G.you },
     get state() { return { id: G.id, you: G.you, lead: G.lead, max: G.max, open: !!ws && ws.readyState === 1, members: [...G.members.values()], goal, cfg: G.cfg, mute: G.mute, stopped, stored: stored() }; }
   };
 })();

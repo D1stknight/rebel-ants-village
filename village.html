@@ -1832,6 +1832,7 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
 <script src="assets/village-multiplayer.js"></script>
 <script src="assets/village-chat.js"></script>
 <script src="assets/village-groups.js"></script>
+<script src="assets/village-voice.js"></script>
 <script type="module">
 // The story save (Oct 25; assets/story-save.js, api/story-save.mjs): signed in, the story kept under the player's Rebel
 // Economy account joins this browser's before the game reads it, so another device starts where they left off and nothing
@@ -30428,6 +30429,17 @@ function startVillageMultiplayer() {
     toast: m => showToast(m, 5000)
   });
   window.VillageGroup?.on((kind, d) => window.VillageChat?.group?.(kind, d));
+  // step 5, voice (assets/village-voice.js): hold X (the Talk button on phones) to talk to the players near you, or to your
+  // group with the chat's Group channel picked; signed-in players only, and only while the rooms have voice switched on.
+  // The listener is the Rebel's head, turned the way the camera looks (voices come from their side of the screen)
+  window.VillageVoice?.start({
+    scene, mp: window.VillageMP, group: window.VillageGroup,
+    signedIn: () => !!Econ.on,
+    canTalk: () => walkMode && !adminMode && !(MiniGames.on && !MiniGames.roam) && !DanceOff.on && !DanceOff.choosing && !isVillageGateMenuOpen(),
+    channel: () => window.VillageChat?.state?.channel || 'n',
+    listener: () => { const c = scene.activeCamera; if (!c) return null; const at = charMesh ? charMesh.position : c.globalPosition; return { pos: { x: at.x, y: at.y + 1.7, z: at.z }, fwd: c.getDirection(BABYLON.Axis.Z), up: c.getDirection(BABYLON.Axis.Y) }; },
+    toast: m => showToast(m, 5000)
+  });
 }
 // signed in or out while here: the room hears the new name (a new ticket). The account seen last lives on the function:
 // the first refreshEcon can answer before the module has run this far (a let here was not set up yet and threw)

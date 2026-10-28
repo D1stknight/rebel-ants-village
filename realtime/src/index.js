@@ -43,11 +43,13 @@ import { MAX_CHARS, cleanText, charCount, filterText } from './chat.js';
 import { RoomControl, DEFAULT_CFG, normCfg, withTimeout } from './control.js';
 import { PartyGroup } from './group.js';
 import { VILLAGES } from './villages.js';
+import { Voice, VOICE_R } from './voice.js';
 export { RoomControl, PartyGroup };
 
 const PROTOCOL = 'rebel-universe.v1';
 const EMOTES = new Set(['cheer', 'wave', 'bow', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam', 'jump', 'kick']);
 const ANIM = /^[a-z0-9_]{1,20}$/, INTERIOR = /^[A-Za-z0-9_-]{1,64}$/, GROUP_ID = /^[A-Za-z0-9_-]{12}$/;
+const VOICE_T = new Set(['vp', 'vs', 'va', 'vx']), BIG = /^\{"t":"v[pa]"/; // (voice offers and answers carry an SDP: up to 13 KB)
 const NEAR = 40, MID = 120, COPIES = 24, CHAT_NEAR = 30, HISTORY = 50, KEEP = 200;
 
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', ...headers } });
@@ -161,12 +163,24 @@ export class RoomCopy {
     // waking from hibernation: who is here comes back from the sockets' attachments
     for (const ws of ctx.getWebSockets()) { const a = ws.deserializeAttachment(); if (a && a.id) { this.peers.set(ws, this.live(a)); this.nextId = Math.max(this.nextId, a.id + 1); } }
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('{"t":"ping"}', '{"t":"pong"}'));
+    // voice (voice.js): nearby voices, the same place and within VOICE_R; signed-in players only
+    this.vchk = 0;
+    this.voice = new Voice(env, {
+      sql: this.sql, send: (ws, o) => { try { ws.send(JSON.stringify(o)); } catch (e) {} },
+      all: (o, except) => { const s = JSON.stringify(o); for (const w of this.peers.keys()) if (w !== except) try { w.send(s); } catch (e) {} },
+      may: (p, what) => p.k === 'guest' ? 'guest' : (this.cfg || normCfg(DEFAULT_CFG)).voice === false ? 'off' : what === 'talk' && p.mute > Date.now() ? 'muted' : null,
+      canHear: (p, k) => { const s = this.byId(+k); return !!(s && s !== p && s.s && p.s && s.s[5] === p.s[5] && !(s.mute > Date.now()) && Math.hypot(s.s[0] - p.s[0], s.s[2] - p.s[2]) <= VOICE_R); },
+      keyOf: p => String(p.id), keyOut: k => +k
+    });
   }
   kv(k) { const r = this.sql.exec('SELECT v FROM kv WHERE k = ?', k).toArray()[0]; return r ? r.v : null; }
   kvSet(k, v) { this.sql.exec('INSERT INTO kv (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v', k, String(v)); }
+  byId(id) { for (const p of this.peers.values()) if (p.id === id) return p; return null; }
+  sockOf(k) { for (const [ws, p] of this.peers) if (p.id === +k) return { ws, p }; return null; }
   live(a) { return { mute: 0, ...a, last: new Map(), win: 0, cnt: 0, em: 0, said: 0, lastX: '', rep: 0, reps: 0, gi: 0 }; }
   slim(p) { return { id: p.id, sub: p.sub, u: p.u, n: p.n, k: p.k, av: p.av, look: p.look, s: p.s, village: p.village, copy: p.copy, mute: p.mute || 0, j: p.j }; }
-  pub(p) { return { id: p.id, n: p.n, k: p.k, u: p.u, av: p.av, look: p.look, s: p.s }; }
+  pub(p) { return { id: p.id, n: p.n, k: p.k, u: p.u, av: p.av, look: p.look, s: p.s, ...(this.voice?.isOn(p.id) ? { vo: 1 } : {}) }; }
+  voiceOn(cfg) { return !!((cfg || this.cfg || normCfg(DEFAULT_CFG)).voice !== false && this.voice.on); }
   control() { return controlOf(this.env); }
   toControl(path, body) { // (not waited on: the message is out already)
     const p = this.control().fetch('https://control' + path, { method: 'POST', body: JSON.stringify(body) }).catch(() => {});
@@ -211,18 +225,19 @@ export class RoomCopy {
     server.serializeAttachment(this.slim(p)); this.peers.set(server, p);
     const cfg = this.cfg || normCfg(DEFAULT_CFG);
     server.send(JSON.stringify({ t: 'hi', you: p.id, u: p.u, room: { village, copy, max: this.max }, peers: [...this.peers.values()].filter(q => q !== p).map(q => this.pub(q)),
-      hist: this.history(), cfg: { chat: cfg.chat, slow: cfg.slow }, mute: p.mute }));
+      hist: this.history(), cfg: { chat: cfg.chat, slow: cfg.slow, voice: this.voiceOn(cfg) }, mute: p.mute }));
     const join = JSON.stringify({ t: 'j', ...this.pub(p) });
     for (const w of this.peers.keys()) if (w !== server) try { w.send(join); } catch (e) {}
     return new Response(null, { status: 101, webSocket: client, headers: { 'sec-websocket-protocol': PROTOCOL } });
   }
   async webSocketMessage(ws, data) {
     const p = this.peers.get(ws); if (!p) return;
-    if (typeof data !== 'string' || data.length > 1024) return;
+    if (typeof data !== 'string' || (data.length > 1024 && !(data.length <= 13000 && BIG.test(data)))) return;
     const now = Date.now();
     if (now - p.win > 2000) { p.win = now; p.cnt = 0; }
     if (++p.cnt > 24) { if (p.cnt > 96) try { ws.close(4008, 'too many messages'); } catch (e) {} return; }
     let m; try { m = JSON.parse(data); } catch (e) { return; }
+    if (m && VOICE_T.has(m.t)) return this.voice.message(ws, p, m);
     if (m && m.t === 's') this.state(ws, p, m, now);
     else if (m && m.t === 'e') this.emote(ws, p, m, now);
     else if (m && m.t === 'c') await this.chat(ws, p, m, now);
@@ -255,6 +270,7 @@ export class RoomCopy {
       o.last.set(p.id, now);
       try { w.send(msg); } catch (e) {}
     }
+    if (now - this.vchk > 2000) { this.vchk = now; this.voice.recheck(k => this.sockOf(k)); } // (who hears whom after the moves)
   }
   emote(ws, p, m, now) {
     if (!EMOTES.has(m.e) || now - p.em < 1200) return; p.em = now;
@@ -317,8 +333,8 @@ export class RoomCopy {
       const players = [...this.peers.values()].map(p => ({ id: p.id, sub: p.sub, u: p.u, n: p.n, k: p.k, look: p.look ? { t: p.look.t, col: p.look.col, tok: p.look.tok } : null, s: p.s, mute: p.mute > Date.now() ? p.mute : 0, j: p.j }));
       return json({ ok: true, room: this.name, players, hit: players.length });
     }
-    if (op.op === 'cfg') { const c = this.setCfg(op.cfg); all({ t: 'cfg', chat: c.chat, slow: c.slow }); hit = this.peers.size; }
-    if (op.op === 'mute') for (const [w, p] of this.peers) if (p.sub === op.sub) { p.mute = +op.until || 0; hit++; try { w.serializeAttachment(this.slim(p)); w.send(JSON.stringify({ t: 'cm', until: p.mute })); } catch (e) {} }
+    if (op.op === 'cfg') { const c = this.setCfg(op.cfg); if (c.voice === false) this.voice.muteAll(); all({ t: 'cfg', chat: c.chat, slow: c.slow, voice: this.voiceOn(c) }); hit = this.peers.size; }
+    if (op.op === 'mute') for (const [w, p] of this.peers) if (p.sub === op.sub) { p.mute = +op.until || 0; hit++; if (p.mute > Date.now()) this.voice.mute(p.id); try { w.serializeAttachment(this.slim(p)); w.send(JSON.stringify({ t: 'cm', until: p.mute })); } catch (e) {} }
     if (op.op === 'kick') for (const [w, p] of [...this.peers]) if (p.sub === op.sub) { hit++; this.part(w, JSON.stringify({ t: 'kick', why: op.why === 'banned' ? 'banned' : 'kick', until: +op.until || 0 }), 4003, 'kicked'); }
     if (op.op === 'del' && +op.i > 0) { this.sql.exec('UPDATE chat SET del = 1 WHERE i = ?', +op.i); all({ t: 'cd', i: +op.i }); hit = 1; }
     if (op.op === 'clear') { this.sql.exec('UPDATE chat SET del = 1'); all({ t: 'cc' }); hit = 1; }
@@ -335,6 +351,7 @@ export class RoomCopy {
     const p = this.peers.get(ws); if (!p) return; this.peers.delete(ws);
     const msg = JSON.stringify({ t: 'l', id: p.id });
     for (const w of this.peers.keys()) try { w.send(msg); } catch (e) {}
+    const v = this.voice.drop(p.id); try { this.ctx.waitUntil(v); } catch (e) {} // (its tracks closed at the SFU)
   }
   webSocketClose(ws, code) { this.drop(ws); try { ws.close(code === 1005 ? 1000 : code, 'bye'); } catch (e) {} }
   webSocketError(ws) { this.drop(ws); }

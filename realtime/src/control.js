@@ -6,11 +6,11 @@
 // many made today?) and send it every message and report. The Admin Hub
 // reaches it through Universe: api/mp-admin.mjs signs each command, the worker checks the signature (index.js /v1/admin),
 // this desk runs it once (each command's nonce is kept 10 minutes) and passes it on to the rooms that need it.
-export const DEFAULT_CFG = { chat: true, slow: 2, links: false, filter: true, words: [] };
+export const DEFAULT_CFG = { chat: true, slow: 2, links: false, filter: true, words: [], voice: true };
 export function normCfg(c) {
   c = c && typeof c === 'object' ? c : {};
   const words = (Array.isArray(c.words) ? c.words : []).map(w => String(w).replace(/\s+/g, ' ').trim().slice(0, 40)).filter(w => w.length >= 2);
-  return { chat: c.chat !== false, slow: Math.min(120, Math.max(2, Math.round(+c.slow || 2))), links: c.links === true, filter: c.filter !== false, words: [...new Set(words)].slice(0, 200) };
+  return { chat: c.chat !== false, slow: Math.min(120, Math.max(2, Math.round(+c.slow || 2))), links: c.links === true, filter: c.filter !== false, words: [...new Set(words)].slice(0, 200), voice: c.voice !== false };
 }
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 export const withTimeout = (p, ms) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(new Error('timeout')), ms))]);

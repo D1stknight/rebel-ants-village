@@ -1,8 +1,12 @@
-# Rebel Universe rooms and groups (see src/index.js, src/group.js). Two workers from this one file:
+# Rebel Universe rooms, groups and voice (see src/index.js, group.js, voice.js). Two workers from this one file:
 #   npx wrangler deploy --env dev   -> rebel-universe-rooms-dev  (the dev preview and local tests; SITE dev)
 #   npx wrangler deploy             -> rebel-universe-rooms      (rebeluniverse.io; SITE prod)
 # TICKET_KEYS = the public keys Universe signs tickets with, ADMIN_KEYS the ones it signs Admin Hub commands with (GET
 # /api/mp-ticket?key=1 on that site: key, admin): public keys, not secrets.
+# Voice (src/voice.js) goes through a Cloudflare Realtime SFU app: REALTIME_APP_ID (its App ID: not a secret, a var below
+# once there is one) and the app's secret as a Worker secret REALTIME_APP_SECRET (the Cloudflare dashboard: the Worker >
+# Settings > Variables and Secrets, type Secret; or npx wrangler secret put REALTIME_APP_SECRET [--env dev]; deploys keep it);
+# without both, voice stays off (the rooms' hello says so and the pages offer no Talk).
 name = "rebel-universe-rooms"
 main = "src/index.js"
 compatibility_date = "2026-10-01"

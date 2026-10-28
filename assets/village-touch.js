@@ -30,6 +30,10 @@
 .vtBtn.jump{grid-column:2;grid-row:1}.vtBtn.hit{grid-column:2;grid-row:2}
 .vtBtn.emote{grid-column:1;grid-row:2;align-self:end;justify-self:end;width:54px;height:54px;font-size:11px}
 .vtBtn.emote svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.vtBtn.talk{grid-column:1;grid-row:1;align-self:start;justify-self:end;width:54px;height:54px;font-size:11px;display:none}
+.vtBtn.talk svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.vtBtn.talk.down{background:rgba(224,90,107,.55);border-color:#ff9aa6;color:#fff}
+#vtouch.voice .vtBtn.talk{display:flex}
 .vtBtn.use.ready{border-color:#ffe08a;color:#fff3cf;animation:vtReady 1.6s ease-in-out infinite}
 @keyframes vtReady{0%,100%{box-shadow:0 0 0 2px rgba(232,197,106,.35),0 0 12px rgba(232,197,106,.45)}50%{box-shadow:0 0 0 5px rgba(232,197,106,.16),0 0 22px rgba(232,197,106,.75)}}
 body.game-hide-touch-btns #vtBtns{display:none}
@@ -41,12 +45,13 @@ html.vt-touch #ctrl{display:none}
     '<button type="button" class="vtBtn jump" data-key=" " aria-label="Jump"><b>⤴</b>Jump</button>' +
     '<button type="button" class="vtBtn use" data-key="o" aria-label="Use or talk"><b>✋</b><span>Use</span></button>' +
     '<button type="button" class="vtBtn hit" data-key="f" aria-label="Attack"><b>⚔</b>Hit</button>' +
-    '<button type="button" class="vtBtn emote" data-key="e" aria-label="Emotes"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="8.5" r="4.2"/><path d="M20 13.5v11M20 16.5 13 7.5M20 16.5l7-9M20 24.5l-5 9M20 24.5l5 9"/></svg>Emote</button></div>';
+    '<button type="button" class="vtBtn emote" data-key="e" aria-label="Emotes"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="8.5" r="4.2"/><path d="M20 13.5v11M20 16.5 13 7.5M20 16.5l7-9M20 24.5l-5 9M20 24.5l5 9"/></svg>Emote</button>' +
+    '<button type="button" class="vtBtn talk" data-key="x" aria-label="Hold to talk"><svg viewBox="0 0 40 40" aria-hidden="true"><rect x="14" y="5" width="12" height="20" rx="6"/><path d="M9 19a11 11 0 0 0 22 0M20 30v6"/></svg>Talk</button></div>';
   // the corner list of keys (W A S D, mouse, Esc) and the welcome card's controls are for keyboards: on a touch screen the
   // list goes and the card names the touch controls
   document.documentElement.classList.add('vt-touch');
   const TOUCH_HELP = [['Move', 'The stick, bottom left'], ['Run', 'Push the stick to its rim'], ['Look', 'Drag anywhere else'], ['Jump', 'Jump button'], ['Use / talk', 'Use button'], ['Journal', 'Journal button'],
-    ['Chat', 'Chat button, top right'], ['Emotes', 'Emote button'], ['Photo', 'Camera button']];
+    ['Chat', 'Chat button, top right'], ['Emotes', 'Emote button'], ['Talk', 'Hold the Talk button (signed in)'], ['Photo', 'Camera button']];
   const touchHelp = () => { const list = document.getElementById('playerStartupList'); if (list) list.innerHTML = TOUCH_HELP.map(([b, t]) => `<div class="startup-control"><b>${b}</b>${t}</div>`).join(''); };
   const mount = () => { document.body.appendChild(root); touchHelp(); };
   if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);
@@ -115,6 +120,8 @@ html.vt-touch #ctrl{display:none}
     try { localStorage.setItem(LEARNED_KEY, '1'); } catch (e) {}
   }, true);
 
+  // the Talk button shows while voice is on for this player (village-voice.js asks twice a second)
+  VT.talkOn = (on) => { on = !!on; if (on !== root.classList.contains('voice')) root.classList.toggle('voice', on); };
   let shown = false;
   VT.release = () => { if (stickId !== null) stickEnd(); else hold(new Set()); };
   VT.update = (s) => {

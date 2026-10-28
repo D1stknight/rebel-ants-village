@@ -13,6 +13,7 @@
   const SETTINGS_KEY = 'rebelAntsMpSettings:v1', BLOCK_KEY = 'rebelAntsMpBlocked:v1', MUTE_KEY = 'rebelAntsMpMuted:v1';
   const CH_LABEL = { n: 'Nearby', v: 'Village', w: 'Whisper', g: 'Group' };
   const GR = () => window.VillageGroup;
+  const voiceHere = () => !!(window.VillageMP?.voice?.on || window.VillageGroup?.voice?.open?.()); // (the rooms or the group have voice on: its controls show)
   const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v && typeof v === 'object' ? { ...d, ...v } : { ...d }; } catch (e) { return { ...d }; } };
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
   const settings = load(SETTINGS_KEY, { players: true, names: true, bubbles: true, chat: true });
@@ -252,6 +253,8 @@ body.in-game #vcChat,body.in-game #vcBtn,body.in-game #vcPanel,body.in-game #vcM
     } else if (gr && here && H.signedIn() && here.k !== 'guest') item('Invite to your group', () => { closeMenu(); gr.invite(here); });
     if (t.u) {
       item(muted[t.u] ? 'Unmute' : 'Mute (hide their messages)', () => { if (muted[t.u]) delete muted[t.u]; else muted[t.u] = { n: t.n, at: Date.now() }; save(MUTE_KEY, muted); refreshHidden(); closeMenu(); sys(muted[t.u] ? t.n + ' is muted for you.' : t.n + ' is unmuted.'); });
+      const VV = window.VillageVoice;
+      if (VV && voiceHere() && t.k !== 'guest') item(VV.isMuted(t.u) ? 'Unmute their voice' : 'Mute their voice', () => { const on = !VV.isMuted(t.u); VV.mute(t.u, t.n, on); closeMenu(); sys(on ? t.n + "'s voice is muted for you." : t.n + "'s voice is back on."); });
       item(blocked[t.u] ? 'Unblock' : 'Block (hide them)', () => { if (blocked[t.u]) delete blocked[t.u]; else blocked[t.u] = { n: t.n, at: Date.now() }; save(BLOCK_KEY, blocked); refreshHidden(); closeMenu(); sys(blocked[t.u] ? t.n + ' is blocked: you no longer see them or their messages.' : t.n + ' is unblocked.'); }, !blocked[t.u]);
     }
     if (here || t.i || t.gi) item('Report…', () => {
@@ -312,12 +315,24 @@ body.in-game #vcChat,body.in-game #vcBtn,body.in-game #vcPanel,body.in-game #vcM
     panelHead('Chat settings', 'settings');
     const tog = (key, label) => { const l = document.createElement('label'); const s = document.createElement('span'); s.textContent = label; const c = document.createElement('input'); c.type = 'checkbox'; c.checked = settings[key] !== false; c.onchange = () => { settings[key] = c.checked; save(SETTINGS_KEY, settings); refreshHidden(); }; l.append(s, c); el.panel.appendChild(l); };
     tog('players', 'Show other players'); tog('names', 'Name tags'); tog('bubbles', 'Chat bubbles over heads'); tog('chat', 'Chat on the screen');
+    const VV = window.VillageVoice;
+    if (VV && voiceHere()) { // voice (when it is on here): hear the others, how loud (village-voice.js keeps these)
+      const l = document.createElement('label'); const s = document.createElement('span'); s.textContent = 'Hear voices'; const c = document.createElement('input'); c.type = 'checkbox'; c.checked = VV.settings.hear !== false; c.onchange = () => VV.set('hear', c.checked); l.append(s, c); el.panel.appendChild(l);
+      const lv = document.createElement('label'); lv.className = 'range'; const sv = document.createElement('span'); sv.textContent = 'Voice volume'; const r = document.createElement('input'); r.type = 'range'; r.min = '0'; r.max = '1.5'; r.step = '0.05'; r.value = String(VV.settings.volume ?? 1); r.oninput = () => VV.set('volume', +r.value); lv.append(sv, r); el.panel.appendChild(lv);
+      const how = document.createElement('div'); how.className = 'sub'; how.textContent = H.signedIn() ? 'Hold X (the Talk button on phones) to talk: the players near you hear you, or your group with Group picked.' : 'Sign in to talk and hear voices.'; el.panel.appendChild(how);
+    }
     const lists = [['Blocked', blocked, BLOCK_KEY], ['Muted', muted, MUTE_KEY]];
     for (const [title, map, key] of lists) {
       const ks = Object.keys(map); if (!ks.length) continue;
       el.panel.appendChild(Object.assign(document.createElement('div'), { className: 'sep' }));
       const h = document.createElement('div'); h.className = 'sub'; h.textContent = title + ' (tap to undo)'; el.panel.appendChild(h);
       for (const u of ks) { const b = document.createElement('button'); b.type = 'button'; b.className = 'row'; b.textContent = map[u].n || 'Rebel'; b.onclick = e => { e.stopPropagation(); delete map[u]; save(key, map); refreshHidden(); showSettings(); }; el.panel.appendChild(b); }
+    }
+    const vm = window.VillageVoice?.muted?.() || {};
+    if (Object.keys(vm).length) {
+      el.panel.appendChild(Object.assign(document.createElement('div'), { className: 'sep' }));
+      const h = document.createElement('div'); h.className = 'sub'; h.textContent = 'Voices muted (tap to undo)'; el.panel.appendChild(h);
+      for (const u of Object.keys(vm)) { const b = document.createElement('button'); b.type = 'button'; b.className = 'row'; b.textContent = vm[u].n || 'Rebel'; b.onclick = e => { e.stopPropagation(); window.VillageVoice.mute(u, vm[u].n, false); showSettings(); }; el.panel.appendChild(b); }
     }
     el.panel.classList.add('on');
   }

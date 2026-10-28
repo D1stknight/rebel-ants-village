@@ -29,6 +29,7 @@
   // the emotes' moves in a Rebel's games pack (the dances loop)
   const PACK_MOVES = new Set(['game_cheer', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam']);
   let H = null, B = null, root = null, ws = null, connecting = false, you = 0, room = null, closedFor = null, retry = 0, retryAt = 0, maxFull = 8, maxLite = 24, wantCopy = 0;
+  let voiceOn = false, spkTex = null; // (the rooms say whether voice is on: village-voice.js)
   const VC = () => window.VillageChat;
   const tell = (kind, d) => { try { VC()?.room?.(kind, d); } catch (e) { log('chat', e); } };
   const peers = new Map(), files = new Map(), clips = new Map();
@@ -103,12 +104,16 @@
     tell('closed');
   }
   function onMessage(m) {
-    if (m.t === 'hi') { you = m.you; room = m.room; retry = 0; for (const p of m.peers || []) addPeer(p); last = null; tell('hello', m); return; }
+    if (m.t === 'hi') { you = m.you; room = m.room; retry = 0; voiceOn = !!m.cfg?.voice; for (const p of m.peers || []) addPeer(p); last = null; tell('hello', m); voice({ t: 'vcfg', on: voiceOn }); return; }
     if (m.t === 'j') { addPeer(m); tell('join', m); return; }
     if (m.t === 'l') { tell('leave', m.id); return removePeer(m.id); }
     if (m.t === 'kick') return sentAway(m.why === 'banned' ? 'banned' : 'kick', m);
     if (m.t === 'dup') return sentAway('dup');
+    if (m.t === 'cfg') { voiceOn = !!m.voice; voice({ t: 'vcfg', on: voiceOn }); }
+    if (m.t === 'cm') voice({ t: 'vmute', until: m.until });
     if (m.t === 'c' || m.t === 'cx' || m.t === 'cd' || m.t === 'cc' || m.t === 'cfg' || m.t === 'cm' || m.t === 'rpok') return tell('msg', m);
+    if (m.t === 'vo') { const p = peers.get(+m.key); if (p) p.vo = !!m.on; return voice(m); } // (a voice on / off)
+    if (m.t === 'vp' || m.t === 'vs') return voice(m);
     if (m.t === 'u') { const p = peers.get(m.id); if (p) setState(p, m.s); return; }
     if (m.t === 'e') { const p = peers.get(m.id); if (p) playOnce(p, m.e === 'cheer' ? 'jump' : m.e); return; }
     if (m.t === 'gi') { try { window.VillageGroup?.onRoomInvite?.(m); } catch (e) { log('group invite', e); } return; } // (a group invite)
@@ -124,7 +129,7 @@
     if (!d || d.id === you) return;
     removePeer(d.id);
     const holder = new B.TransformNode('mpPlayer_' + d.id, H.scene); holder.parent = root;
-    const p = { id: d.id, n: String(d.n || 'Rebel'), k: d.k, u: typeof d.u === 'string' ? d.u : '', look: d.look || { t: 'starter' }, holder, pos: null, yaw: 0, s: null, model: null, loading: false, capsule: null, tag: null, anim: '', cur: null, hold: null, d: null };
+    const p = { id: d.id, n: String(d.n || 'Rebel'), k: d.k, u: typeof d.u === 'string' ? d.u : '', look: d.look || { t: 'starter' }, holder, pos: null, yaw: 0, s: null, model: null, loading: false, capsule: null, tag: null, anim: '', cur: null, hold: null, d: null, vo: !!d.vo, spk: null };
     p.label = label(p.look);
     peers.set(p.id, p);
     makeTag(p);
@@ -134,10 +139,11 @@
   function removePeer(id) {
     const p = peers.get(id); if (!p) return;
     peers.delete(id); disposeModel(p); disposeLite(p);
-    try { p.tag?.material?.diffuseTexture?.dispose(); p.tag?.material?.dispose(); } catch (e) {}
+    try { p.tag?.material?.diffuseTexture?.dispose(); p.tag?.material?.dispose(); p.spk?.material?.dispose(); } catch (e) {}
     try { p.holder.dispose(false, false); } catch (e) {}
   }
-  function dropAll() { for (const id of [...peers.keys()]) removePeer(id); }
+  function dropAll() { for (const id of [...peers.keys()]) removePeer(id); try { window.VillageVoice?.reset?.('room'); } catch (e) {} } // (the socket went: its voice sessions too)
+  function voice(m) { try { window.VillageVoice?.room?.(m); } catch (e) { log('voice', e); } }
   function setState(p, s) {
     if (!Array.isArray(s) || s.length < 6) return;
     if (ONCE.has(s[4]) && s[4] !== p.s?.[4]) p.once = s[4]; // a jump / kick plays even when it is over before our next frame
@@ -167,6 +173,27 @@
     tag.material = m; tag.parent = p.holder; tag.position.y = TAG_Y; tag.billboardMode = B.Mesh.BILLBOARDMODE_ALL; tag.isPickable = false;
     tag.metadata = { camSkip: true, mpPeer: true }; tag.applyFog = false;
     p.tag = tag;
+  }
+  // the speaking mark: a green speaker with sound waves beside the name tag while their voice comes through (village-voice.js)
+  function speaking(id, on) {
+    const p = peers.get(+id); if (!p) return;
+    p.talk = !!on;
+    if (on && !p.spk && p.tag) {
+      if (!spkTex) {
+        spkTex = new B.DynamicTexture('mpSpeakTex', { width: 128, height: 128 }, H.scene, true); const c = spkTex.getContext();
+        c.clearRect(0, 0, 128, 128); c.fillStyle = 'rgba(8,6,16,.62)'; c.beginPath(); c.arc(64, 64, 60, 0, Math.PI * 2); c.fill();
+        c.fillStyle = '#7be38a'; c.beginPath(); c.moveTo(26, 50); c.lineTo(44, 50); c.lineTo(64, 32); c.lineTo(64, 96); c.lineTo(44, 78); c.lineTo(26, 78); c.closePath(); c.fill();
+        c.strokeStyle = '#7be38a'; c.lineWidth = 8; c.lineCap = 'round';
+        for (const r of [16, 30]) { c.beginPath(); c.arc(66, 64, r, -Math.PI / 4, Math.PI / 4); c.stroke(); }
+        spkTex.hasAlpha = true; spkTex.update();
+      }
+      const m = new B.StandardMaterial('mpSpeakMat_' + p.id, H.scene);
+      m.diffuseTexture = spkTex; m.emissiveTexture = spkTex; m.useAlphaFromDiffuseTexture = true; m.disableLighting = true; m.backFaceCulling = false; m.specularColor = B.Color3.Black();
+      const s = B.MeshBuilder.CreatePlane('mpPlayerSpeak_' + p.id, { size: .62 }, H.scene);
+      s.material = m; s.parent = p.tag; s.position.x = -1.72; s.isPickable = false; s.metadata = { camSkip: true, mpPeer: true }; s.applyFog = false;
+      p.spk = s;
+    }
+    if (p.spk) p.spk.setEnabled(!!on);
   }
   function roundRect(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
   // the stand-in while a model downloads and for players further off than the nearest few
@@ -535,5 +562,7 @@
     peers: () => [...peers.values()],
     peer: id => peers.get(+id) || null
   };
-  window.VillageMP = { start, tick, reconnect, emote, peers, chat, ticket: () => (H && enabled ? ticket() : Promise.resolve(null)), joinCopy, get state() { const v = [...peers.values()]; return { enabled, open: !!ws && ws.readyState === 1, you, room, peers: peers.size, closedFor, files: files.size, full: v.filter(p => p.model).length, lite: v.filter(p => p.lite).length }; }, stop() { enabled = false; const s = ws; ws = null; try { s?.close(1000); } catch (e) {} dropAll(); sweepFiles(Infinity); tell('closed'); } };
+  // for the voices (village-voice.js): the room socket carries their offers and answers
+  const voiceLink = { send: o => send(o), open: () => !!ws && ws.readyState === 1 && voiceOn, get on() { return voiceOn; }, you: () => you };
+  window.VillageMP = { start, tick, reconnect, emote, peers, chat, voice: voiceLink, speaking, ticket: () => (H && enabled ? ticket() : Promise.resolve(null)), joinCopy, get state() { const v = [...peers.values()]; return { enabled, open: !!ws && ws.readyState === 1, you, room, peers: peers.size, closedFor, files: files.size, full: v.filter(p => p.model).length, lite: v.filter(p => p.lite).length }; }, stop() { enabled = false; const s = ws; ws = null; try { s?.close(1000); } catch (e) {} dropAll(); sweepFiles(Infinity); tell('closed'); } };
 })();

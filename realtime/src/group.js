@@ -26,6 +26,8 @@
 import { MAX_CHARS, cleanText, charCount, filterText } from './chat.js';
 import { DEFAULT_CFG, normCfg, withTimeout } from './control.js';
 import { VILLAGES } from './villages.js';
+import { Voice } from './voice.js';
+const VOICE_T = new Set(['vp', 'vs', 'va', 'vx']), BIG = /^\{"t":"v[pa]"/;
 
 export const GROUP_MAX = 8, INVITE_MS = 10 * 60 * 1000, AWAY_MS = 30 * 60 * 1000;
 const PROTOCOL = 'rebel-universe.v1', HISTORY = 50, KEEP = 200;
@@ -40,7 +42,14 @@ export class PartyGroup {
     this.socks = new Map(); // ws -> live member state (u, sub, n, k, mute, rate limits)
     for (const ws of ctx.getWebSockets()) { const a = ws.deserializeAttachment(); if (a && a.u) this.socks.set(ws, this.live(a)); }
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('{"t":"ping"}', '{"t":"pong"}'));
+    // voice (voice.js): the group's voices, any village; keys = member codes
+    this.voice = new Voice(env, {
+      sql: this.sql, send: (ws, o) => { try { ws.send(JSON.stringify(o)); } catch (e) {} }, all: (o, except) => this.all(o, except),
+      may: (p, what) => (this.cfg || normCfg(DEFAULT_CFG)).voice === false ? 'off' : what === 'talk' && p.mute > Date.now() ? 'muted' : null,
+      canHear: (p, k) => k !== p.u && this.online(k), keyOf: p => p.u, keyOut: k => k
+    });
   }
+  voiceOn(cfg) { return !!((cfg || this.cfg || normCfg(DEFAULT_CFG)).voice !== false && this.voice?.on); }
   schema() {
     for (const q of [
       'CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT)',
@@ -48,6 +57,7 @@ export class PartyGroup {
       'CREATE TABLE IF NOT EXISTS invites (u TEXT PRIMARY KEY, by TEXT, at INTEGER)',
       'CREATE TABLE IF NOT EXISTS chat (i INTEGER PRIMARY KEY AUTOINCREMENT, at INTEGER, u TEXT, sub TEXT, n TEXT, k TEXT, x TEXT, del INTEGER DEFAULT 0)'
     ]) this.sql.exec(q);
+    this.voice?.schema(); // (after end()'s deleteAll: the voice table too)
   }
   kv(k) { const r = this.sql.exec('SELECT v FROM kv WHERE k = ?', k).toArray()[0]; return r ? r.v : null; }
   kvSet(k, v) { this.sql.exec('INSERT INTO kv (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v', k, String(v)); }
@@ -58,7 +68,7 @@ export class PartyGroup {
   online(u) { for (const p of this.socks.values()) if (p.u === u) return true; return false; }
   pub(r) {
     let look = null; try { look = JSON.parse(r.look || 'null'); } catch (e) {}
-    return { u: r.u, n: r.n, k: r.k, look, v: r.v || null, c: r.c || null, i: r.i || null, p: r.v ? [r.px, r.pz] : null, on: this.online(r.u), lead: this.kv('lead') === r.u };
+    return { u: r.u, n: r.n, k: r.k, look, v: r.v || null, c: r.c || null, i: r.i || null, p: r.v ? [r.px, r.pz] : null, on: this.online(r.u), lead: this.kv('lead') === r.u, ...(this.voice?.isOn(r.u) ? { vo: 1 } : {}) };
   }
   all(o, except) { const s = JSON.stringify(o); for (const w of this.socks.keys()) if (w !== except) try { w.send(s); } catch (e) {} }
   control() { return this.env.CONTROL.get(this.env.CONTROL.idFromName(this.site + ':control')); }
@@ -111,7 +121,7 @@ export class PartyGroup {
     const p = this.live({ u: ident.u, sub: ident.sub, n: ident.n, k: ident.k, mute: chk.mute > now ? chk.mute : 0 });
     server.serializeAttachment(this.slim(p)); this.socks.set(server, p);
     const cfg = this.cfg || normCfg(DEFAULT_CFG);
-    server.send(JSON.stringify({ t: 'ghi', g: id, you: ident.u, lead: this.kv('lead'), max: GROUP_MAX, members: this.members().map(r => this.pub(r)), hist: this.history(), cfg: { chat: cfg.chat, slow: cfg.slow }, mute: p.mute }));
+    server.send(JSON.stringify({ t: 'ghi', g: id, you: ident.u, lead: this.kv('lead'), max: GROUP_MAX, members: this.members().map(r => this.pub(r)), hist: this.history(), cfg: { chat: cfg.chat, slow: cfg.slow, voice: this.voiceOn(cfg) }, mute: p.mute }));
     const r = this.sql.exec('SELECT * FROM members WHERE u = ?', ident.u).toArray()[0];
     if (!again) this.all({ t: 'gj', m: this.pub(r) }, server); else this.all({ t: 'gon', u: ident.u, on: true }, server);
     await this.alarmSoon();
@@ -119,12 +129,13 @@ export class PartyGroup {
   }
   async webSocketMessage(ws, data) {
     const p = this.socks.get(ws); if (!p) return;
-    if (typeof data !== 'string' || data.length > 1024) return;
+    if (typeof data !== 'string' || (data.length > 1024 && !(data.length <= 13000 && BIG.test(data)))) return;
     const now = Date.now();
     if (now - p.win > 2000) { p.win = now; p.cnt = 0; }
     if (++p.cnt > 24) { if (p.cnt > 96) try { ws.close(4008, 'too many messages'); } catch (e) {} return; }
     let m; try { m = JSON.parse(data); } catch (e) { return; }
     if (!m || typeof m.t !== 'string') return;
+    if (VOICE_T.has(m.t)) { if (!this.cfg) await this.check(null, this.room()); if (!this.socks.has(ws)) return; return this.voice.message(ws, p, m); }
     if (m.t === 'gp') return this.where(ws, p, m, now);
     if (m.t === 'gc') return this.chat(ws, p, m, now);
     if (m.t === 'gi') return this.invite(ws, p, m, now);
@@ -184,6 +195,7 @@ export class PartyGroup {
     this.sql.exec('DELETE FROM invites WHERE u = ?', u);
     this.all({ t: 'gx', u, why });
     for (const [w, p] of [...this.socks]) if (p.u === u) { try { w.serializeAttachment({ gone: true }); w.close(4004, why); } catch (e) {} this.socks.delete(w); }
+    await this.voice.drop(u);
     const rest = this.members();
     if (!rest.length) return this.end();
     if (this.kv('lead') === u) { const next = rest.find(r => this.online(r.u)) || rest[0]; this.kvSet('lead', next.u); this.all({ t: 'glead', u: next.u }); }
@@ -213,12 +225,12 @@ export class PartyGroup {
   // from the control desk (an admin's command): the settings, a mute, a kick or ban, a message deleted, the chat cleared
   ctl(op) {
     let hit = 0;
-    if (op.op === 'cfg') { this.cfg = normCfg(op.cfg); this.all({ t: 'gcfg', chat: this.cfg.chat, slow: this.cfg.slow }); hit = this.socks.size; }
-    if (op.op === 'mute') for (const [w, p] of this.socks) if (p.sub === op.sub) { p.mute = +op.until || 0; hit++; try { w.serializeAttachment(this.slim(p)); w.send(JSON.stringify({ t: 'gcm', until: p.mute })); } catch (e) {} }
+    if (op.op === 'cfg') { this.cfg = normCfg(op.cfg); if (this.cfg.voice === false) this.voice.muteAll(); this.all({ t: 'gcfg', chat: this.cfg.chat, slow: this.cfg.slow, voice: this.voiceOn() }); hit = this.socks.size; }
+    if (op.op === 'mute') for (const [w, p] of this.socks) if (p.sub === op.sub) { p.mute = +op.until || 0; hit++; if (p.mute > Date.now()) this.voice.mute(p.u); try { w.serializeAttachment(this.slim(p)); w.send(JSON.stringify({ t: 'gcm', until: p.mute })); } catch (e) {} }
     if (op.op === 'kick') for (const [w, p] of [...this.socks]) if (p.sub === op.sub) {
       hit++; this.socks.delete(w);
       try { w.serializeAttachment({ gone: true }); w.send(JSON.stringify({ t: 'kick', why: op.why === 'banned' ? 'banned' : 'kick', until: +op.until || 0 })); w.close(4003, 'kicked'); } catch (e) {}
-      if (!this.online(p.u)) this.all({ t: 'gon', u: p.u, on: false });
+      if (!this.online(p.u)) { this.all({ t: 'gon', u: p.u, on: false }); this.voice.drop(p.u); }
     }
     if (op.op === 'del' && +op.i > 0) { this.sql.exec('UPDATE chat SET del = 1 WHERE i = ?', +op.i); this.all({ t: 'gcd', i: +op.i }); hit = 1; }
     if (op.op === 'clear') { this.sql.exec('UPDATE chat SET del = 1'); this.all({ t: 'gcc' }); hit = 1; }
@@ -234,7 +246,7 @@ export class PartyGroup {
     const p = this.socks.get(ws); if (!p) return; this.socks.delete(ws);
     if (!this.kv('id')) return;
     this.sql.exec('UPDATE members SET seen = ? WHERE u = ?', Date.now(), p.u);
-    if (!this.online(p.u)) this.all({ t: 'gon', u: p.u, on: false });
+    if (!this.online(p.u)) { this.all({ t: 'gon', u: p.u, on: false }); const v = this.voice.drop(p.u); try { this.ctx.waitUntil(v); } catch (e) {} }
   }
   webSocketClose(ws, code) { this.drop(ws); try { ws.close(code === 1005 ? 1000 : code, 'bye'); } catch (e) {} }
   webSocketError(ws) { this.drop(ws); }
