@@ -129,8 +129,9 @@
   background:rgba(6,4,12,.78);color:#fff;font:600 17px/1.35 -apple-system,'Segoe UI',Arial,sans-serif;border-left:3px solid #e8c56a;text-wrap:balance}
 #vsCap.on{display:block}
 #vsCap b{display:block;font:700 9px/1 'Cinzel Decorative',serif;letter-spacing:2px;color:#e8c56a;margin-bottom:5px;text-transform:uppercase}
-html.vt-touch #vsLive,html.vt-touch #vsBar{top:calc(max(12px,env(safe-area-inset-top,0px)) + 112px);font-size:12px}
-html.vt-touch #vsHost{top:calc(max(12px,env(safe-area-inset-top,0px)) + 160px)}
+html.vt-touch #vsLive,html.vt-touch #vsBar{top:calc(max(12px,env(safe-area-inset-top,0px)) + 194px);font-size:12px}
+html.vt-touch #vsHost{top:calc(max(12px,env(safe-area-inset-top,0px)) + 242px)}
+html.vt-touch body:has(#vsLive.on,#vsBar.on) #interactionPrompt{top:262px}
 html.vt-touch #vsCap{bottom:calc(max(18px,env(safe-area-inset-bottom,0px)) + 236px);font-size:15px}
 body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!important}
 @media (min-width:901px) and (max-width:1459px){html:not(.vt-touch) #vsLive,html:not(.vt-touch) #vsBar,html:not(.vt-touch) #vsHost{left:446px;transform:none}html:not(.vt-touch) #vsLive,html:not(.vt-touch) #vsBar{max-width:calc(100vw - 600px)}}

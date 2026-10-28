@@ -68,7 +68,7 @@ html.vt-touch #photoBtn{display:none!important}
   // list goes and the card names the touch controls
   document.documentElement.classList.add('vt-touch');
   const TOUCH_HELP = [['Move', 'The stick, bottom left'], ['Run', 'Push the stick to its rim'], ['Look', 'Drag anywhere else'], ['Use / talk', 'Use button'],
-    ['More', 'The ••• button: Jump, Hit, Emote, Photo'], ['Talk', 'Hold Talk, under ••• (signed in)'], ['Journal', 'Journal button'], ['Chat', 'Chat button, top right']];
+    ['More', 'The ••• button: Jump, Hit, Emote, Photo'], ['Talk', 'Hold Talk, under ••• (signed in)'], ['Mission', 'The gold ◆ under your Rebel'], ['Journal', 'Journal button'], ['Chat', 'Chat button, top right']];
   const touchHelp = () => { const list = document.getElementById('playerStartupList'); if (list) list.innerHTML = TOUCH_HELP.map(([b, t]) => `<div class="startup-control"><b>${b}</b>${t}</div>`).join(''); };
   const mount = () => { document.body.appendChild(root); touchHelp(); };
   if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);
