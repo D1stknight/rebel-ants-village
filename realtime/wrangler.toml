@@ -11,7 +11,7 @@ workers_dev = true
 [vars]
 SITE = "prod"
 TICKET_KEYS = '{"prod":["4mWrU7JB6FzdanweMWbDmPqBq4MqPZ1amgsFKCXbDSA"]}'
-ADMIN_KEYS = '{}'
+ADMIN_KEYS = '{"prod":["nPvDZppaVtEAKrvaBMIFF-HfhiKGA8v5YN35akMcnHk"]}'
 ALLOWED_ORIGINS = "https://rebeluniverse.io,https://www.rebeluniverse.io,https://rebel-ants-village.vercel.app"
 ROOM_MAX = "50"
 

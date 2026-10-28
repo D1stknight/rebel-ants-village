@@ -5933,8 +5933,26 @@ function testSelectedBadgePopup() {
   if (badge) showBadgeUnlockPopup(badge.name);
 }
 
+// Leaving Universe on a phone (another village, the lobby, a reload, the Discord sign-in): the engine is disposed and
+// its WebGL context let go first, so the textures and buffers go back before the next page loads (iOS Safari can hold
+// the old page's memory while the next one fills up). A page the back button brings back from the browser's cache
+// loads again (its 3D is gone).
+function leavePage(go) {
+  if (LITE_GRAPHICS && engine && !leavePage.done) {
+    leavePage.done = true;
+    document.getElementById('villageTravelFade')?.classList.add('on');
+    try {
+      const gl = engine._gl && typeof engine._gl.getExtension === 'function' ? engine._gl : null;
+      engine.stopRenderLoop();
+      engine.dispose();
+      gl?.getExtension('WEBGL_lose_context')?.loseContext();
+    } catch (e) { console.warn('Leaving: the 3D did not close cleanly', e); }
+  }
+  go();
+}
+window.addEventListener('pageshow', e => { if (e.persisted && leavePage.done) location.reload(); });
 function returnToHubVillage() {
-  window.location.href = VILLAGE_REGISTRY.hub.route;
+  leavePage(() => { window.location.href = VILLAGE_REGISTRY.hub.route; });
 }
 function updateVillageChrome() {
   const logoSub = document.querySelector('#logo span');
@@ -6646,10 +6664,35 @@ const LITE_GRAPHICS = (() => {
   } catch (e) { return false; }
 })();
 window._liteGraphics = LITE_GRAPHICS;
+// After a crash on a phone (iOS Safari closed Universe while it was on screen and loaded it again: no pagehide came),
+// Universe runs lighter on that phone for the next 3 days: pictures at 512 px, the 3D at 1.5x the CSS pixels, a smaller
+// shadow map and minimap, two other players with their own model; a second crash goes lighter still (256 px, 1x, one).
+// sessionStorage says 'on' while a Universe page is on screen in this tab, 'hidden' while it is in the background (a
+// phone may stop a background page for another app: not counted), 'off' once it was left. ?light=0 / 1 / 2 to compare.
+const CRASH_LIGHT = (() => {
+  const q = new URLSearchParams(location.search).get('light');
+  if (q === '0' || q === '1' || q === '2') return +q;
+  if (!LITE_GRAPHICS) return 0;
+  let n = 0;
+  try {
+    const K = 'rebelAntsPageState:v1', L = 'rebelAntsCrashLight:v1';
+    const kept = JSON.parse(localStorage.getItem(L) || 'null');
+    if (kept && Date.now() - kept.at < 3 * 864e5) n = Math.max(0, Math.min(2, kept.n | 0));
+    if (sessionStorage.getItem(K) === 'on') { n = Math.min(2, n + 1); localStorage.setItem(L, JSON.stringify({ n, at: Date.now() })); window._crashLightNew = true; }
+    let left = false;   // (a page being left turns hidden after its pagehide: that stays 'off')
+    const set = v => { try { sessionStorage.setItem(K, v); } catch (e) {} };
+    set(document.visibilityState === 'hidden' ? 'hidden' : 'on');
+    document.addEventListener('visibilitychange', () => { if (!left) set(document.visibilityState === 'hidden' ? 'hidden' : 'on'); });
+    addEventListener('pagehide', () => { left = true; set('off'); });
+    addEventListener('pageshow', e => { if (e.persisted) { left = false; set('on'); } });
+  } catch (e) {}
+  return n;
+})();
+window._crashLight = CRASH_LIGHT;
 // phones: pictures larger than 1024 px come in at 1024 (Babylon scales them down as it loads them): a 2048 texture takes a
 // quarter of the memory, which an iPhone needs (it closed the page once the Hub, its Rebel and another player passed its
 // limit). ?texcap=<px> (0 = none) to compare.
-const TEX_CAP = (() => { const v = new URLSearchParams(location.search).get('texcap'); return v != null && /^\d+$/.test(v) ? +v : (LITE_GRAPHICS ? 1024 : 0); })();
+const TEX_CAP = (() => { const v = new URLSearchParams(location.search).get('texcap'); return v != null && /^\d+$/.test(v) ? +v : (LITE_GRAPHICS ? [1024, 512, 256][CRASH_LIGHT] : 0); })();
 if (TEX_CAP >= 256) { const caps = engine.getCaps(); caps.maxTextureSize = Math.min(caps.maxTextureSize, TEX_CAP); }
 window._texCap = TEX_CAP;
 // Babylon keeps a JS Vector3 for every vertex of a mesh each time its bounds are refreshed (for picking a skinned mesh in
@@ -6669,7 +6712,8 @@ if (LITE_GRAPHICS) {
   for (const k of ['shrine_2', 'dojo_7', 'dojo_5', 'pine_1', 'cherry_blossom']) if (ASSETS[k]?.path) ASSETS[k].path = ASSETS[k].path.replace('/assets/buildings/', '/assets/buildings/lite/');
   // (pine and cherry pictures at 512, the two small pick-ups at 256: tools/lite-glb.py, the same meshes byte for byte)
   for (const k of ['flame_shard', 'root_memory']) if (COLLECTIBLE_TYPES[k]?.modelUrl) COLLECTIBLE_TYPES[k].modelUrl = COLLECTIBLE_TYPES[k].modelUrl.replace('/assets/collectibles/', '/assets/collectibles/lite/');
-  if ((window.devicePixelRatio || 1) > 2) engine.setHardwareScalingLevel(1 / 2);   // twice the CSS pixels, not 3x
+  const maxDpr = [2, 1.5, 1][CRASH_LIGHT];   // twice the CSS pixels, not 3x (after a crash 1.5x, then 1x)
+  if ((window.devicePixelRatio || 1) > maxDpr) engine.setHardwareScalingLevel(1 / maxDpr);
 }
 
 const CORE_ASSET_KEYS = new Set(Object.keys(ASSETS));
@@ -9346,7 +9390,7 @@ async function storyAttach() {
     Object.assign(StorySync, { account:d.account, pending:res.upload, savedAt:Date.now() });
     if (res.changed) {   // the account's story had more than this browser: the game reads it again
       let again = false; try { again = Date.now() - Number(sessionStorage.getItem('rebelAntsStoryReload') || 0) < 60000; sessionStorage.setItem('rebelAntsStoryReload', String(Date.now())); } catch (e) {}
-      if (!again) { showToast('Loading your story from your account…', 3000); setTimeout(() => location.reload(), 1400); return; }
+      if (!again) { showToast('Loading your story from your account…', 3000); setTimeout(() => leavePage(() => location.reload()), 1400); return; }
     }
     storySoon(1500);
   } catch (e) { console.warn('story sync', e); } finally { StorySync.attaching = false; }
@@ -9456,9 +9500,17 @@ function refreshEconWorld() {
 }
 function econSignIn() {
   const url = '/api/econ-discord-login?return=' + encodeURIComponent(location.pathname + location.search);
-  let w = null;
-  try { w = window.open(url + '&popup=1', 'rebelEconSignIn', 'width=520,height=760'); } catch (e) {}
-  if (!w) location.href = url;                              // popups blocked: sign in in this tab, it comes back here
+  if (!LITE_GRAPHICS) {   // a computer: Discord in a small window, the game stays where it is
+    let w = null;
+    try { w = window.open(url + '&popup=1', 'rebelEconSignIn', 'width=520,height=760'); } catch (e) {}
+    if (w) return;
+  }
+  // a phone (or popups blocked): this tab goes to Discord and comes back here. On a phone a popup is a second tab, and
+  // iOS Safari stops a Universe tab left behind it when Discord needs the memory: Universe loaded again on the way back,
+  // then again for the story. Marked as signed in, the story sync at the top of this script reads the account's story
+  // before the game reads its save, so the one load back brings it (a cancelled sign-in answers 401 and the mark goes).
+  storyLsSet(STORY_LS.signed, '1');
+  leavePage(() => { location.href = url; });
 }
 // name + PIN (players without Discord): the casino's colony name accounts, through the village's server
 const EconNameForm = { open:false, name:'', pin:'', msg:'', bad:false, busy:false };
@@ -13691,7 +13743,7 @@ function selectVillageGateDestination(villageId) {
   const fade = document.getElementById('villageTravelFade');
   if (fade) fade.classList.add('on');
   closeVillageGateMenu();
-  setTimeout(() => { window.location.href = village.route; }, 620);
+  setTimeout(() => leavePage(() => { window.location.href = village.route; }), 620);
 }
 
 function tryOpenNearbyVillageGate() {
@@ -14042,7 +14094,7 @@ const hemi=new BABYLON.HemisphericLight("h",new BABYLON.Vector3(0,1,0),scene);
 hemi.intensity=0.65; hemi.diffuse=new BABYLON.Color3(.52,.7,.98);
 hemi.groundColor=new BABYLON.Color3(.55,.58,.48); hemi.specular=new BABYLON.Color3(0,0,0);
 
-const shadows=new BABYLON.ShadowGenerator(LITE_GRAPHICS ? 1024 : 2048,sun);
+const shadows=new BABYLON.ShadowGenerator(LITE_GRAPHICS ? (CRASH_LIGHT ? 512 : 1024) : 2048,sun);
 shadows.useExponentialShadowMap=true; shadows.bias=0.005;
 shadows.darkness=0.85; // 0 = black shadows, 1 = none: 0.85 is only a faint 15% shade
 if (SHADOW_PREVIEW) { shadows.darkness=0.45; shadows.useExponentialShadowMap=false; shadows.usePercentageCloserFiltering=true; shadows.filteringQuality=BABYLON.ShadowGenerator.QUALITY_MEDIUM; shadows.bias=0.0015; shadows.normalBias=0.02; console.log('Village shadows on (?shadows=off to disable)'); }
@@ -24023,7 +24075,7 @@ function getOrCreateCharacterBlueprint(rebel, character) {
   return newBlueprint;
 }
 window.backToLobby = function backToLobby() {
-  window.location.href = 'index.html';
+  leavePage(() => { window.location.href = 'index.html'; });
 };
 
 const activeRebel = getSelectedRebel();
@@ -25613,7 +25665,7 @@ function rigFallbackToStarter(err) {
   console.warn('The Rebel\'s model did not download; starting with the starter ant instead.', err);
   setSt("Your Rebel's 3D model couldn't download here. Starting with the starter ant...");
   const u = new URL(location.href); u.searchParams.set('rig', 'master'); u.searchParams.set('rigFallback', '1');
-  setTimeout(() => location.replace(u.toString()), 1500);
+  setTimeout(() => leavePage(() => location.replace(u.toString())), 1500);
   return true;
 }
 (activeCharacter.procedural && window.SamuraiKit?.types?.includes(activeCharacter.kitModel)
@@ -27762,6 +27814,7 @@ document.addEventListener('keydown', async e => {
     updateAdminBadge();
 
     if (adminMode) {
+      scheduleProgressiveAssetSourceLoad(new Set(VillageStartupRuntime.requiredAssetKeys || []));   // the catalog's other models (placing pieces)
       // Keep orbit camera active in admin — unlock for free editing
       walk.detachControl();
       if (!configureInteriorEditCamera()) {
@@ -29800,7 +29853,7 @@ refreshQuestBuilderOptions();
   }
   if (look === 'high') setTimeout(addBloom, 3000);
   // lite graphics (phones) draw at no more than twice the CSS pixels (LITE_GRAPHICS)
-  const dpr = Math.max(1, LITE_GRAPHICS ? Math.min(2, window.devicePixelRatio || 1) : (window.devicePixelRatio || 1));
+  const dpr = Math.max(1, LITE_GRAPHICS ? Math.min([2, 1.5, 1][CRASH_LIGHT], window.devicePixelRatio || 1) : (window.devicePixelRatio || 1));
   const levels = [1 / dpr]; if (dpr >= 1.75) levels.push(1 / 1.5); if (dpr > 1.01) levels.push(1);
   let li = 0, low = 0, high = 0;
   const pinned = qs.get('res') === 'native';
@@ -30228,7 +30281,7 @@ function startVillageMultiplayer() {
   if (!window.VillageMP || startVillageMultiplayer.on) return;
   startVillageMultiplayer.on = true;
   window.VillageMP.start({
-    scene, village: CURRENT_VILLAGE_ID, lite: LITE_GRAPHICS,
+    scene, village: CURRENT_VILLAGE_ID, lite: LITE_GRAPHICS, maxFull: CRASH_LIGHT ? [4, 2, 1][CRASH_LIGHT] : undefined,
     shadows: () => shadows,
     player: () => charMesh ? { x: charMesh.position.x, y: charMesh.position.y, z: charMesh.position.z, yaw: charMesh.rotation.y, anim: mpAnimName(),
       interior: ActiveInterior ? String(ActiveInterior.targetInteriorId || ActiveInterior.interiorType || 'room') : null } : null,
@@ -30301,9 +30354,8 @@ function initVillageHud() {
     showSavedMinimap();
   } catch (e) { console.warn('Village HUD failed to start', e); }
 }
-// The minimap's live picture takes a while on the first frames (every material's top-down shader compiles first), so the
-// picture from the last visit (IndexedDB rebelAntsMinimap, one per village) shows at once; the live render replaces it as
-// soon as it is ready
+// The minimap's live picture waits for the village's meshes to be ready, so the picture from the last visit (IndexedDB
+// rebelAntsMinimap, one per village) shows at once; the live render replaces it as soon as it is ready
 function minimapCache(mode, fn) {
   return new Promise((res, rej) => {
     if (!window.indexedDB) return rej(new Error('no IndexedDB'));
@@ -30328,7 +30380,7 @@ function showSavedMinimap() {
 function buildVillageHudMap() {
   if (!window.VillageHud?.buildMap || buildVillageHudMap.done) return;
   buildVillageHudMap.done = true;
-  const mapPx = LITE_GRAPHICS ? 768 : 1536; // (a phone shows it as a 124 px circle: 768 is still sharper than that, at a quarter of the memory)
+  const mapPx = LITE_GRAPHICS ? (CRASH_LIGHT ? 512 : 768) : 1536; // (a phone shows it as a 124 px circle: 768 is still sharper than that, at a quarter of the memory)
   setTimeout(() => window.VillageHud.buildMap(320, mapPx), 600);
   setTimeout(() => window.VillageHud.buildMap(320, mapPx), 30000);
 }
@@ -30338,12 +30390,15 @@ function markVillageStartupInteractive() {
   VillageStartupRuntime.interactive = true;
   window._villageStartupInteractive = true;
   setSt('Finalizing: village ready.');
-  const excluded = new Set(VillageStartupRuntime.requiredAssetKeys || []);
-  scheduleProgressiveAssetSourceLoad(excluded);
+  // the catalog's other models (every building in ASSETS) load in the background only for an admin, once admin mode is on
+  // (placing pieces): a player's village has what its layout needs, and a piece asked for later still loads then
+  // (waitForAssetSourceReady). Before, every village loaded all of them as hidden sources (Samurai: dojo_5, 6, 7, 9,
+  // shrine_2, fence_1 ... on a phone too).
   schedulePostInteractiveStartupTask(loadForgeCollectionsConfig, 650);
   schedulePostInteractiveStartupTask(startVillagePetalEffects, 1200);
   schedulePostInteractiveStartupTask(initVillageHud, 300);
   schedulePostInteractiveStartupTask(startVillageMultiplayer, 1500); // the other players (VillageMP)
+  if (window._crashLightNew) schedulePostInteractiveStartupTask(() => showToast("Universe closed on this phone last time (it ran out of memory), so it's running lighter for a few days.", 9000), 2000);
   if (PlaytestNote) schedulePostInteractiveStartupTask(() => showToast(PlaytestNote, 9000), 2500); // a playtest jump says where it put you
   // loaded again with the starter ant because the Rebel's model didn't download (rigFallbackToStarter): say so, and take
   // the test parameters off the address so a reload tries the Rebel again

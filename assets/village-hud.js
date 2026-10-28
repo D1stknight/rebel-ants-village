@@ -90,15 +90,22 @@ body.rebel-panel-open #questLine{display:none!important}
     if (text && text !== lastQuest) { if (lastQuest && !document.body.classList.contains('rebel-panel-open')) { dot = true; b.classList.add('has-news'); } lastQuest = text; }
   }
 
-  // one top-down picture of the village (orthographic camera over the middle, fog off), read back into a canvas.
-  // The orthographic camera needs its own shader versions (CAMERA_ORTHOGRAPHIC); a real GPU compiles them in the
-  // background, so the picture is only taken once the render target reports every mesh ready (else it comes out as
-  // the bare sky colour). Fog is zeroed by its strength, not its mode, so no fog shader versions are needed on top.
+  // one top-down picture of the village (looking straight down from far above, fog off), read back into a canvas.
+  // The camera is a perspective one with a narrow view from 8 km up, not an orthographic one: every material keeps the
+  // shader versions it draws the game with (an orthographic camera needs its own version of each, CAMERA_ORTHOGRAPHIC:
+  // about 60 programs compiled at once as walking starts, the iPhone's crash on Enter Village). From that height
+  // something 10 m up lands half a metre off at the map's rim. Its projection is set here (square, the render target's
+  // shape: a camera works its aspect out from the canvas). The picture is taken once the render target reports every
+  // mesh ready (else it comes out as the bare sky colour). Fog is zeroed by its strength, not its mode, so no fog shader
+  // versions are needed on top.
   HUD.buildMap = function (R = 320, size = 1024, tries = 3) {
     if (!scene) return Promise.resolve(false);
-    const cam = new BABYLON.FreeCamera('miniMapCam', new BABYLON.Vector3(0, 600, 0), scene);
+    const H = 8000, e = scene.getEngine(), rev = !!e.useReverseDepthBuffer;
+    const cam = new BABYLON.FreeCamera('miniMapCam', new BABYLON.Vector3(0, H, 0), scene);
     cam.rotation = new BABYLON.Vector3(Math.PI / 2, 0, 0); // looking straight down, +z (north) up, +x right
-    cam.mode = BABYLON.Camera.ORTHOGRAPHIC_CAMERA; cam.orthoLeft = -R; cam.orthoRight = R; cam.orthoTop = R; cam.orthoBottom = -R; cam.minZ = 1; cam.maxZ = 1400;
+    cam.fov = 2 * Math.atan(R / H); cam.minZ = H - 800; cam.maxZ = H + 300; // the ground from 300 m down to 800 m up
+    const P = scene.useRightHandedSystem ? BABYLON.Matrix.PerspectiveFovRH : BABYLON.Matrix.PerspectiveFovLH;
+    cam.freezeProjectionMatrix(P(cam.fov, 1, rev ? cam.maxZ : cam.minZ, rev ? cam.minZ : cam.maxZ, e.isNDCHalfZRange, 0, rev));
     const rtt = new BABYLON.RenderTargetTexture('miniMapRTT', size, scene, false, true);
     rtt.activeCamera = cam;
     const skip = /sky|cloud|mist|fog|rain|snow|bird|player|npc|ghost|questTarget|glint|shadow|halo|beam|ray|saintsTraffic/i; // (moving cars would stay painted where they were)
