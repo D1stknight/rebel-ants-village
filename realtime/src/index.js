@@ -39,12 +39,16 @@
 // Groups (group.js, one Durable Object per group, signed-in players only): /v1/group?id=<id>|new with the same tickets. A
 // member notes an invite with the group ({t:'gi', u}), then hands it over through the room ({t:'gi', to, g}); the invited
 // player's page opens the group, which lets in only its members and the players invited lately.
+// Events (stage.js, events.js: the Colony Stage): the Admin Hub makes them on the control desk; GET /v1/events lists the
+// ones on now and next (public), /v1/stage?id=<event> opens an event's hall with the same tickets (guests too).
 import { MAX_CHARS, cleanText, charCount, filterText } from './chat.js';
 import { RoomControl, DEFAULT_CFG, normCfg, withTimeout } from './control.js';
 import { PartyGroup } from './group.js';
 import { VILLAGES } from './villages.js';
 import { Voice, VOICE_R } from './voice.js';
-export { RoomControl, PartyGroup };
+import { StageHall } from './stage.js';
+import { EVENT_ID } from './events.js';
+export { RoomControl, PartyGroup, StageHall };
 
 const PROTOCOL = 'rebel-universe.v1';
 const EMOTES = new Set(['cheer', 'wave', 'bow', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam', 'jump', 'kick']);
@@ -109,6 +113,21 @@ async function openGroup(req, env, url) {
   return stub.fetch(new Request(`https://group/join?id=${gid}${id === 'new' ? '&new=1' : ''}`, { headers: { upgrade: 'websocket', 'x-ru-ident': JSON.stringify(await identOf(t)) } }));
 }
 
+// an event's hall (stage.js): anyone with a ticket (guests watch, listen and read); the hall checks the event is on
+async function openStage(req, env, url) {
+  if (req.headers.get('upgrade')?.toLowerCase() !== 'websocket') return json({ ok: false, error: 'websocket only' }, 426);
+  if (!originAllowed(env, req.headers.get('origin'))) return json({ ok: false, error: 'origin' }, 403);
+  const id = url.searchParams.get('id') || '';
+  if (!EVENT_ID.test(id)) return json({ ok: false, error: 'event' }, 400);
+  const protos = protocolsOf(req);
+  if (!protos.includes(PROTOCOL)) return json({ ok: false, error: 'protocol' }, 400);
+  let t;
+  try { t = await verifyTicket((protos.find(p => p.startsWith('t.')) || '').slice(2), env); } catch (e) { return json({ ok: false, error: e.code || 'ticket' }, 401); }
+  if (!env.STAGES) return json({ ok: false, error: 'events are not on here' }, 503);
+  const stub = env.STAGES.get(env.STAGES.idFromName(`${env.SITE || 'dev'}:event:${id}`));
+  return stub.fetch(new Request(`https://stage/join?id=${id}`, { headers: { upgrade: 'websocket', 'x-ru-ident': JSON.stringify(await identOf(t)) } }));
+}
+
 function originAllowed(env, origin) {
   if (!origin) return env.ALLOW_NO_ORIGIN === '1'; // tests / tools only
   const exact = String(env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
@@ -129,6 +148,12 @@ export default {
       return controlOf(env).fetch('https://control/admin', { method: 'POST', body: JSON.stringify({ cmd: a.cmd, args: a.args || {}, nonce: a.nonce }) });
     }
     if (url.pathname === '/v1/group') return openGroup(req, env, url);
+    if (url.pathname === '/v1/stage') return openStage(req, env, url);
+    if (url.pathname === '/v1/events') { // the events on now and next (public: the lobby's LIVE NOW, the pages' banner)
+      const r = await controlOf(env).fetch('https://control/events');
+      const origin = req.headers.get('origin');
+      return new Response(await r.text(), { status: r.status, headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=15', ...(origin && originAllowed(env, origin) ? { 'access-control-allow-origin': origin, vary: 'origin' } : {}) } });
+    }
     if (url.pathname !== '/v1/room') return json({ ok: false, error: 'not found' }, 404);
     if (req.headers.get('upgrade')?.toLowerCase() !== 'websocket') return json({ ok: false, error: 'websocket only' }, 426);
     if (!originAllowed(env, req.headers.get('origin'))) return json({ ok: false, error: 'origin' }, 403);

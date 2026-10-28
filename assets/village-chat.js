@@ -11,9 +11,10 @@
   'use strict';
   const MAX = 280, KEEP = 200, SHOW_MS = 20000, BUBBLE_R = 45;
   const SETTINGS_KEY = 'rebelAntsMpSettings:v1', BLOCK_KEY = 'rebelAntsMpBlocked:v1', MUTE_KEY = 'rebelAntsMpMuted:v1';
-  const CH_LABEL = { n: 'Nearby', v: 'Village', w: 'Whisper', g: 'Group' };
+  const CH_LABEL = { n: 'Nearby', v: 'Village', w: 'Whisper', g: 'Group', e: 'Event' };
   const GR = () => window.VillageGroup;
-  const voiceHere = () => !!(window.VillageMP?.voice?.on || window.VillageGroup?.voice?.open?.()); // (the rooms or the group have voice on: its controls show)
+  const voiceHere = () => !!(window.VillageMP?.voice?.on || window.VillageGroup?.voice?.open?.() || window.VillageStage?.voice?.open?.()); // (the rooms, the group or the event have voice on: its controls show)
+  const SG = () => window.VillageStage;
   const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v && typeof v === 'object' ? { ...d, ...v } : { ...d }; } catch (e) { return { ...d }; } };
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
   const settings = load(SETTINGS_KEY, { players: true, names: true, bubbles: true, chat: true });
@@ -31,7 +32,7 @@
 #vcChat.open .vl{text-shadow:none}
 #vcChat:not(.open) .vl.old{display:none}
 .vl .vt{font:700 9px/1 'Cinzel Decorative',serif;letter-spacing:1.2px;text-transform:uppercase;margin-right:5px;opacity:.85;color:#cfd6e6}
-.vl.ch-v .vt{color:#5ecfca}.vl.ch-w .vt,.vl.ch-w .vx{color:#f4a6dc}.vl.ch-g .vt{color:#7be38a}.vl.ch-g .vx{color:#d9f9de}.vl.sys{color:#e8c56a}.vl.sys .vt{color:#e8c56a}.vl.earlier{opacity:.72}
+.vl.ch-v .vt{color:#5ecfca}.vl.ch-w .vt,.vl.ch-w .vx{color:#f4a6dc}.vl.ch-g .vt{color:#7be38a}.vl.ch-g .vx{color:#d9f9de}.vl.ch-e .vt{color:#ffcf5a}.vl.ch-e .vx{color:#fff1cc}.vl .host{color:#ffcf5a;font-size:10px;margin-right:4px}.vl.sys{color:#e8c56a}.vl.sys .vt{color:#e8c56a}.vl.earlier{opacity:.72}
 .vl .vn{font-weight:700;cursor:pointer;pointer-events:auto;margin-right:4px}.vl .vn:hover{text-decoration:underline}
 .vl .vn.k-discord{color:#a9bbff}.vl .vn.k-name{color:#ffd36a}.vl .vn.k-guest{color:#d6d1e2}.vl .vn.me{cursor:default;text-decoration:none}
 #vcBar{display:none;pointer-events:auto;background:rgba(5,10,28,.92);border:1px solid rgba(94,207,202,.4);padding:7px 8px 8px;backdrop-filter:blur(10px)}
@@ -41,6 +42,7 @@
 .vc-chip.on{background:rgba(94,207,202,.2);color:#e9fffd;border-color:#5ecfca}
 .vc-chip.w.on{background:rgba(244,166,220,.18);border-color:#f4a6dc;color:#ffe3f5}
 .vc-chip.g{border-color:rgba(123,227,138,.45);color:#a8ecb2}.vc-chip.g.on{background:rgba(123,227,138,.18);border-color:#7be38a;color:#e6ffe9}
+.vc-chip.e{border-color:rgba(255,207,90,.5);color:#ffe29a}.vc-chip.e.on{background:rgba(255,207,90,.2);border-color:#ffcf5a;color:#fff6dd}
 .vc-ico{margin-left:auto;font-family:-apple-system,'Segoe UI',Arial,sans-serif;font-size:12px;letter-spacing:0;text-transform:none;padding:4px 8px}
 .vc-ico+.vc-ico{margin-left:0}
 #vcIn{flex:1;min-width:0;margin-top:7px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.18);color:#fff;padding:8px 9px;font:14px -apple-system,'Segoe UI',Arial,sans-serif;outline:none}
@@ -108,7 +110,7 @@ body.in-game #vcChat,body.in-game #vcBtn,body.in-game #vcPanel,body.in-game #vcM
     });
     el.input.addEventListener('keyup', e => e.stopPropagation());
     el.input.addEventListener('input', paintCount);
-    el.log.addEventListener('click', e => { const n = e.target.closest('.vn'); if (n && !n.classList.contains('me')) { e.stopPropagation(); openMenu({ id: +n.dataset.id || 0, u: n.dataset.u || '', n: n.textContent, k: n.dataset.k, i: +n.dataset.i || 0, gi: +n.dataset.gi || 0 }, e); } });
+    el.log.addEventListener('click', e => { const n = e.target.closest('.vn'); if (n && !n.classList.contains('me')) { e.stopPropagation(); openMenu({ id: +n.dataset.id || 0, u: n.dataset.u || '', n: n.dataset.n || n.textContent, k: n.dataset.k, i: +n.dataset.i || 0, gi: +n.dataset.gi || 0, ei: +n.dataset.ei || 0 }, e); } });
     // Enter opens the line (when the game is not using the keys); a click elsewhere closes it, the menus too.
     // On the window, before anything else hears the key (village.html's own key handler on the document came first):
     // Esc with the chat, a name menu or a panel open only closes the chat, never leaves walking.
@@ -146,17 +148,19 @@ body.in-game #vcChat,body.in-game #vcBtn,body.in-game #vcPanel,body.in-game #vcM
     if (!el.chips) return;
     const peerHere = whisperTo && H.mp.chat.peer(whisperTo.id);
     el.chips.innerHTML = '';
-    const chip = (ch, label) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'vc-chip' + (ch === 'w' || ch === 'g' ? ' ' + ch : '') + (channel === ch ? ' on' : ''); b.textContent = label; b.onclick = e => { e.stopPropagation(); if (ch === 'w' && channel === 'w') { whisperTo = null; channel = 'n'; } else channel = ch; paintBar(); el.input.focus(); }; el.chips.appendChild(b); };
+    const chip = (ch, label) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'vc-chip' + (ch === 'w' || ch === 'g' || ch === 'e' ? ' ' + ch : '') + (channel === ch ? ' on' : ''); b.textContent = label; b.onclick = e => { e.stopPropagation(); if (ch === 'w' && channel === 'w') { whisperTo = null; channel = 'n'; } else channel = ch; paintBar(); el.input.focus(); }; el.chips.appendChild(b); };
     const inGroup = !!GR()?.inGroup(); if (channel === 'g' && !inGroup) channel = 'n';
+    const atEvent = !!SG()?.in(); if (channel === 'e' && !atEvent) channel = 'n';
     chip('n', 'Nearby'); chip('v', 'Village');
     if (inGroup) chip('g', 'Group');
+    if (atEvent) chip('e', 'Event');
     if (whisperTo) chip('w', (channel === 'w' ? '✕ ' : '') + 'To ' + whisperTo.n + (peerHere ? '' : ' (left)'));
     const ppl = document.createElement('button'); ppl.type = 'button'; ppl.className = 'vc-ico'; ppl.title = 'Players here'; ppl.textContent = '👥 ' + H.mp.chat.peers().length; ppl.onclick = e => { e.stopPropagation(); showPeople(); };
     const gear = document.createElement('button'); gear.type = 'button'; gear.className = 'vc-ico'; gear.title = 'Chat settings'; gear.textContent = '⚙'; gear.onclick = e => { e.stopPropagation(); showSettings(); };
     el.chips.append(ppl, gear);
     const write = canWrite();
     el.input.disabled = !write; el.input.style.display = write ? '' : 'none'; el.count.style.display = write ? '' : 'none';
-    el.input.placeholder = channel === 'w' && whisperTo ? 'Whisper to ' + whisperTo.n + '…' : channel === 'v' ? 'Say something to the village…' : channel === 'g' ? 'Say something to your group…' : 'Say something nearby…';
+    el.input.placeholder = channel === 'w' && whisperTo ? 'Whisper to ' + whisperTo.n + '…' : channel === 'v' ? 'Say something to the village…' : channel === 'g' ? 'Say something to your group…' : channel === 'e' ? 'Say something to everyone at the event…' : 'Say something nearby…';
     el.note.innerHTML = ''; el.note.classList.toggle('on', !write);
     if (!write) {
       const t = document.createElement('span');
@@ -185,6 +189,7 @@ body.in-game #vcChat,body.in-game #vcBtn,body.in-game #vcPanel,body.in-game #vcM
     row.dataset.at = String(o.earlier ? 0 : Date.now());
     if (m.i) row.dataset.i = String(m.i);
     if (m.gi) row.dataset.gi = String(m.gi); // (a group message: its own numbering)
+    if (m.ei) row.dataset.ei = String(m.ei); // (an event's message: the hall's numbering)
     if (m.u) row.dataset.u = m.u;
     row.title = m.at ? timeOf(m.at) : '';
     const tag = document.createElement('span'); tag.className = 'vt';
@@ -194,9 +199,9 @@ body.in-game #vcChat,body.in-game #vcBtn,body.in-game #vcPanel,body.in-game #vcM
       tag.textContent = m.ch === 'w' ? (mine ? 'To ' + (m.tn || '') : 'From') : CH_LABEL[m.ch] || '';
       const name = document.createElement('b'); name.className = 'vn k-' + (m.k || 'guest') + (mine ? ' me' : '');
       name.textContent = mine && m.ch !== 'w' ? (m.n || 'You') : m.ch === 'w' && mine ? '' : (m.n || 'Rebel');
-      name.dataset.id = String(m.id || 0); name.dataset.u = m.u || ''; name.dataset.k = m.k || ''; if (m.i) name.dataset.i = String(m.i); if (m.gi) name.dataset.gi = String(m.gi);
+      name.dataset.id = String(m.id || 0); name.dataset.u = m.u || ''; name.dataset.k = m.k || ''; name.dataset.n = m.n || ''; if (m.i) name.dataset.i = String(m.i); if (m.gi) name.dataset.gi = String(m.gi); if (m.ei) name.dataset.ei = String(m.ei);
       const text = document.createElement('span'); text.className = 'vx'; text.textContent = m.x;
-      row.append(tag); if (name.textContent) row.append(name); row.append(text);
+      row.append(tag); if (m.h) { const hb = document.createElement('span'); hb.className = 'host'; hb.textContent = '★ HOST'; row.append(hb); } if (name.textContent) row.append(name); row.append(text);
     }
     const stick = el.log.scrollHeight - el.log.scrollTop - el.log.clientHeight < 30;
     el.log.appendChild(row);
@@ -210,8 +215,8 @@ body.in-game #vcChat,body.in-game #vcBtn,body.in-game #vcPanel,body.in-game #vcM
     if (!x) return false;
     if (!canWrite()) { paintBar(); return false; }
     let ch = channel, to = channel === 'w' && whisperTo ? whisperTo.id : 0;
-    // /w name words · /v words · /n words · /g words
-    const cmd = /^\/(w|v|n|g)\s+(.*)$/i.exec(x);
+    // /w name words · /v words · /n words · /g words · /e words
+    const cmd = /^\/(w|v|n|g|e)\s+(.*)$/i.exec(x);
     if (cmd) {
       const c = cmd[1].toLowerCase();
       if (c === 'w') {
@@ -229,6 +234,9 @@ body.in-game #vcChat,body.in-game #vcBtn,body.in-game #vcPanel,body.in-game #vcM
     if (ch === 'g') {
       if (!GR()?.inGroup()) { sys("You're not in a group. Tap a player's name, then Invite to your group."); return false; }
       if (!GR().say(x)) { sys('Not connected to your group yet.'); return false; }
+    } else if (ch === 'e') {
+      if (!SG()?.in()) { sys("You're not at an event right now."); return false; }
+      if (!SG().say(x)) { sys('Not connected to the event yet.'); return false; }
     } else if (!H.mp.chat.send(ch, x, to)) { sys('Not connected to the room yet.'); return false; }
     lastSent = Date.now(); el.input.value = ''; paintCount();
     return true;
@@ -257,9 +265,9 @@ body.in-game #vcChat,body.in-game #vcBtn,body.in-game #vcPanel,body.in-game #vcM
       if (VV && voiceHere() && t.k !== 'guest') item(VV.isMuted(t.u) ? 'Unmute their voice' : 'Mute their voice', () => { const on = !VV.isMuted(t.u); VV.mute(t.u, t.n, on); closeMenu(); sys(on ? t.n + "'s voice is muted for you." : t.n + "'s voice is back on."); });
       item(blocked[t.u] ? 'Unblock' : 'Block (hide them)', () => { if (blocked[t.u]) delete blocked[t.u]; else blocked[t.u] = { n: t.n, at: Date.now() }; save(BLOCK_KEY, blocked); refreshHidden(); closeMenu(); sys(blocked[t.u] ? t.n + ' is blocked: you no longer see them or their messages.' : t.n + ' is unblocked.'); }, !blocked[t.u]);
     }
-    if (here || t.i || t.gi) item('Report…', () => {
-      m.innerHTML = ''; const h2 = document.createElement('div'); h2.className = 'mh'; h2.textContent = 'Report ' + (t.n || 'Rebel'); const s2 = document.createElement('small'); s2.textContent = t.i || t.gi ? 'for this message' : 'the player'; h2.appendChild(s2); m.appendChild(h2);
-      for (const [why, label] of [['spam', 'Spam'], ['abuse', 'Abuse or hate'], ['scam', 'Scam or fake links'], ['other', 'Something else']]) item(label, () => { (t.gi ? GR()?.report(t.gi, why) : H.mp.chat.report(t.i ? { i: t.i, why } : { id: t.id, why })) ? sys('Sending your report…') : sys(t.gi ? 'Not connected to your group.' : 'Not connected to the room.'); closeMenu(); });
+    if (here || t.i || t.gi || t.ei) item('Report…', () => {
+      m.innerHTML = ''; const h2 = document.createElement('div'); h2.className = 'mh'; h2.textContent = 'Report ' + (t.n || 'Rebel'); const s2 = document.createElement('small'); s2.textContent = t.i || t.gi || t.ei ? 'for this message' : 'the player'; h2.appendChild(s2); m.appendChild(h2);
+      for (const [why, label] of [['spam', 'Spam'], ['abuse', 'Abuse or hate'], ['scam', 'Scam or fake links'], ['other', 'Something else']]) item(label, () => { (t.ei ? SG()?.report(t.ei, why) : t.gi ? GR()?.report(t.gi, why) : H.mp.chat.report(t.i ? { i: t.i, why } : { id: t.id, why })) ? sys('Sending your report…') : sys(t.ei ? 'Not connected to the event.' : t.gi ? 'Not connected to your group.' : 'Not connected to the room.'); closeMenu(); });
     }, true);
     const r = ev && ev.clientX != null ? { x: ev.clientX, y: ev.clientY } : { x: 40, y: innerHeight / 2 };
     m.classList.add('on');
@@ -380,7 +388,7 @@ body.in-game #vcChat,body.in-game #vcBtn,body.in-game #vcPanel,body.in-game #vcM
     mesh.material = mat; mesh.billboardMode = B.Mesh.BILLBOARDMODE_ALL; mesh.isPickable = false; mesh.applyFog = false;
     mesh.metadata = { camSkip: true, mpPeer: true }; mesh.setEnabled(false);
     const now = performance.now();
-    bubbles.set(key, { mesh, mat, tex, u: m.u || '', i: m.gi ? 'g' + m.gi : m.i || 0, born: now, until: now + (window._vcBubbleMs || Math.min(10000, 4200 + [...m.x].length * 70)) }); // (_vcBubbleMs: tests on slow frames)
+    bubbles.set(key, { mesh, mat, tex, u: m.u || '', i: m.gi ? 'g' + m.gi : m.ei ? 'e' + m.ei : m.i || 0, born: now, until: now + (window._vcBubbleMs || Math.min(10000, 4200 + [...m.x].length * 70)) }); // (_vcBubbleMs: tests on slow frames)
   }
   function tickBubbles() {
     if (!bubbles.size) return;
@@ -499,6 +507,35 @@ body.in-game #vcChat,body.in-game #vcBtn,body.in-game #vcPanel,body.in-game #vcM
     if (kind === 'online' || kind === 'goto') { repaint(); return; }
   }
 
+  // ---- an event's hall (village-stage.js): its chat as the Event channel ----
+  let stageHist = null;
+  function stageEvent(kind, d) {
+    if (!started) return;
+    d = d || {};
+    if (kind === 'msg') {
+      const mine = !!(d.u && d.u === SG()?.state?.you);
+      if (d.u && !mine && (blocked[d.u] || muted[d.u])) return;
+      const peer = d.u ? H.mp.chat.peers().find(p => p.u === d.u) : null, m = { ch: 'e', ei: d.i, id: peer ? peer.id : 0, u: d.u, n: d.n, k: d.k, x: d.x, at: d.at, h: d.h };
+      addLine(m);
+      if (!mine && !open) { unread++; paintBtn(); }
+      if (mine) bubble('me', m); else if (peer) bubble(String(peer.id), m);
+      return;
+    }
+    if (kind === 'hello') {
+      if (stageHist !== d.ev?.id) {
+        stageHist = d.ev?.id;
+        for (const m of d.hist || []) if (!(m.u && (blocked[m.u] || muted[m.u]))) addLine({ ch: 'e', ei: m.i, u: m.u, n: m.n, k: m.k, x: m.x, at: m.at, h: m.h }, { earlier: true });
+        sys("You're at " + (d.ev?.title || 'the event') + (H.signedIn() ? ': pick Event to talk to everyone here.' : '. Sign in to chat and raise your hand.'));
+      }
+      paintBar(); return;
+    }
+    if (kind === 'scx') { const f = SAYS[d.why]; if (f) sys(f(d)); return; }
+    if (kind === 'scd') { el.log.querySelectorAll('.vl[data-ei="' + (+d.i) + '"]').forEach(l => l.remove()); for (const [k, b] of [...bubbles]) if (b.i === 'e' + (+d.i)) dropBubble(k); return; }
+    if (kind === 'scc') { el.log.querySelectorAll('.vl.ch-e').forEach(l => l.remove()); for (const [k, b] of [...bubbles]) if (String(b.i).startsWith('e')) dropBubble(k); sys('An admin cleared the event chat.'); return; }
+    if (kind === 'rpok') { sys('Thanks. An admin will look at your report.'); return; }
+    if (kind === 'left') { if (channel === 'e') channel = 'n'; stageHist = null; paintBar(); return; }
+  }
+
   function start(host) {
     if (started || !host) return;
     H = host; B = window.BABYLON; started = true;
@@ -506,7 +543,7 @@ body.in-game #vcChat,body.in-game #vcBtn,body.in-game #vcPanel,body.in-game #vcM
     H.scene.onBeforeRenderObservable.add(() => { try { tickBubbles(); } catch (e) {} });
   }
   window.VillageChat = {
-    start, room, group: groupEvent, isBlocked: u => !!(u && blocked[u]),
+    start, room, group: groupEvent, stage: stageEvent, isBlocked: u => !!(u && blocked[u]),
     hidePeer: p => settings.players === false || !!(p.u && blocked[p.u]),
     namesOn: () => settings.names !== false,
     get state() { return { live, open, me, cfg, mutedUntil, banned, kicked, channel, whisperTo, lines: el.log ? el.log.children.length : 0, bubbles: [...bubbles.keys()], settings, blocked: Object.keys(blocked), muted: Object.keys(muted) }; },

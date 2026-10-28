@@ -1,4 +1,4 @@
-# Rebel Universe rooms, groups and voice (see src/index.js, group.js, voice.js). Two workers from this one file:
+# Rebel Universe rooms, groups, voice and events (see src/index.js, group.js, voice.js, stage.js). Two workers from this one file:
 #   npx wrangler deploy --env dev   -> rebel-universe-rooms-dev  (the dev preview and local tests; SITE dev)
 #   npx wrangler deploy             -> rebel-universe-rooms      (rebeluniverse.io; SITE prod)
 # TICKET_KEYS = the public keys Universe signs tickets with, ADMIN_KEYS the ones it signs Admin Hub commands with (GET
@@ -31,6 +31,10 @@ class_name = "RoomControl"
 name = "GROUPS"
 class_name = "PartyGroup"
 
+[[durable_objects.bindings]]
+name = "STAGES"
+class_name = "StageHall"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["RoomCopy"]
@@ -42,6 +46,10 @@ new_sqlite_classes = ["RoomControl"]
 [[migrations]]
 tag = "v3"
 new_sqlite_classes = ["PartyGroup"]
+
+[[migrations]]
+tag = "v4"
+new_sqlite_classes = ["StageHall"]
 
 [env.dev]
 name = "rebel-universe-rooms-dev"
@@ -68,6 +76,10 @@ class_name = "RoomControl"
 name = "GROUPS"
 class_name = "PartyGroup"
 
+[[env.dev.durable_objects.bindings]]
+name = "STAGES"
+class_name = "StageHall"
+
 [[env.dev.migrations]]
 tag = "v1"
 new_sqlite_classes = ["RoomCopy"]
@@ -79,3 +91,7 @@ new_sqlite_classes = ["RoomControl"]
 [[env.dev.migrations]]
 tag = "v3"
 new_sqlite_classes = ["PartyGroup"]
+
+[[env.dev.migrations]]
+tag = "v4"
+new_sqlite_classes = ["StageHall"]

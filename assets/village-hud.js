@@ -198,15 +198,16 @@ body.rebel-panel-open #questLine{display:none!important}
       ctx.beginPath(); ctx.moveTo(x, y - k * 1.3); ctx.lineTo(x + k, y); ctx.lineTo(x, y + k * 1.3); ctx.lineTo(x - k, y); ctx.closePath(); ctx.fill(); ctx.stroke();
     }
     // the group (village-groups.js): its members here as green dots; past the rim only the one being gone to (and a small
-    // dot for the others, so their way shows); a member in a room: a square on its door
+    // dot for the others, so their way shows); a member in a room: a square on its door. An event being gone to
+    // (village-stage.js): a gold square on its room's door (f.color)
     const fr = opts.friends?.();
     if (fr && fr.length) for (const f of fr) {
       let [x, y] = P(f.x, f.z); const dx = x - c, dy = y - c, d = Math.hypot(dx, dy), rim = c - 8 * dpr, out = d > rim;
       if (out) { x = c + dx / d * rim; y = c + dy / d * rim; }
       const r = (f.goal ? 5.5 : out ? 2.6 : 4) * dpr;
-      if (f.goal) { ctx.strokeStyle = 'rgba(123,227,138,.6)'; ctx.lineWidth = 2 * dpr; ctx.beginPath(); ctx.arc(x, y, r + (4 + Math.sin(performance.now() / 180) * 1.5) * dpr, 0, Math.PI * 2); ctx.stroke(); }
+      if (f.goal) { ctx.strokeStyle = f.color ? 'rgba(232,197,106,.7)' : 'rgba(123,227,138,.6)'; ctx.lineWidth = 2 * dpr; ctx.beginPath(); ctx.arc(x, y, r + (4 + Math.sin(performance.now() / 180) * 1.5) * dpr, 0, Math.PI * 2); ctx.stroke(); }
       ctx.globalAlpha = out && !f.goal ? .75 : 1;
-      ctx.fillStyle = GREEN; ctx.strokeStyle = '#0b2e12'; ctx.lineWidth = 1.5 * dpr; ctx.beginPath();
+      ctx.fillStyle = f.color || GREEN; ctx.strokeStyle = f.color ? '#3c2800' : '#0b2e12'; ctx.lineWidth = 1.5 * dpr; ctx.beginPath();
       if (f.door) ctx.rect(x - r, y - r, 2 * r, 2 * r); else ctx.arc(x, y, r, 0, Math.PI * 2);
       ctx.fill(); ctx.stroke(); ctx.globalAlpha = 1;
     }

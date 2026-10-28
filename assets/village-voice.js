@@ -4,8 +4,9 @@
 // answers go through the room (nearby) or the group socket (realtime/src/voice.js), which decide whom it may hear.
 // Per scope (the room, the group) one producer connection (the microphone, published once, silent unless the talk key is
 // held: Opus DTX keeps the silence to a trickle) and one consumer connection (the voices heard), as Cloudflare's own
-// video-room example does. You talk where you type: the chat's Group channel picked = the group hears you, else the
-// players near you. window.VillageVoice.start(host) from village.html, host = { scene, mp, group, signedIn(), canTalk(),
+// video-room example does. You talk where you type: the chat's Group channel picked = the group hears you; a host or a
+// speaker at an event (village-stage.js) talks to everyone at it; else the players near you hear you.
+// window.VillageVoice.start(host) from village.html, host = { scene, mp, group, stage, signedIn(), canTalk(),
 // channel() -> chat channel, listener() -> { pos, fwd, up } (the camera), place() -> my interior | null, toast(msg) }.
 (function () {
   'use strict';
@@ -19,8 +20,8 @@
 
   // ---- a scope: 'room' (nearby, positional) or 'group' (the group, plain) ----
   function scope(name) { return { name, prod: null, cons: null, track: null, pub: false, pubWait: null, subs: new Map(), byMid: new Map(), want: '', syncing: false, syncAt: 0, failAt: -1e9, chain: Promise.resolve(), gen: 0 }; }
-  const S = { room: scope('room'), group: scope('group') };
-  const link = sc => sc.name === 'room' ? H.mp?.voice : H.group?.voice; // { send(o), open() }
+  const S = { room: scope('room'), group: scope('group'), stage: scope('stage') };
+  const link = sc => sc.name === 'room' ? H.mp?.voice : sc.name === 'group' ? H.group?.voice : H.stage?.voice; // { send(o), open() }
   const sendTo = (sc, o) => !!link(sc)?.send(o);
 
   function audio() {
@@ -64,7 +65,7 @@
     return sc.pubWait;
   }
   // the reply to one of this page's own requests (the room / group answers in order)
-  const waits = { room: [], group: [] };
+  const waits = { room: [], group: [], stage: [] };
   function ask(sc, o, t) { return new Promise(res => { const w = { t, res }; waits[sc.name].push(w); if (!sendTo(sc, o)) { waits[sc.name].splice(waits[sc.name].indexOf(w), 1); res(null); return; } setTimeout(() => { const i = waits[sc.name].indexOf(w); if (i >= 0) { waits[sc.name].splice(i, 1); res(null); } }, 15000); }); }
   const WHY = { guest: 'Sign in to talk (Discord, or a name and PIN).', muted: 'An admin muted you.', off: 'Voice is off right now.', sfu: "Voice couldn't connect. Try again in a moment.", timeout: "Voice couldn't connect. Try again in a moment.", bad: "Voice couldn't connect." };
   async function talk(on) {
@@ -74,7 +75,7 @@
       if (!H.canTalk()) return;
       audio();
       if (!available()) { if (!hint) { hint = true; H.toast?.('Voice is off right now.'); } return; } // (once a visit: X pressed by accident)
-      const where = H.channel?.() === 'g' && H.group?.voice?.open?.() ? 'group' : 'room', sc = S[where];
+      const where = H.channel?.() === 'g' && H.group?.voice?.open?.() ? 'group' : H.stage?.canTalk?.() && H.stage?.voice?.open?.() ? 'stage' : 'room', sc = S[where];
       if (!link(sc)?.open()) { H.toast?.(where === 'group' ? 'Not connected to your group yet.' : 'Voice is only for your group here: pick Group in the chat.'); return; }
       talking = { where, at: performance.now(), ready: false };
       paintBadge();
@@ -92,11 +93,12 @@
   // ---- hearing ----
   // who this page wants to hear in a scope: nearby speakers (the same place, nearest first), or the group's
   function wanted(sc) {
-    if (!settings.hear || !H.signedIn()) return [];
+    if (!settings.hear || sc.name !== 'stage' && !H.signedIn()) return [];
     if (sc.name === 'room') {
       return (H.mp?.chat?.peers?.() || []).filter(p => p.vo && p.d != null && p.d < NEAR_R && !vmuted[p.u] && !window.VillageChat?.isBlocked?.(p.u))
         .sort((a, b) => a.d - b.d).slice(0, NEAR_MAX).map(p => String(p.id));
     }
+    if (sc.name === 'stage') return (H.stage?.speakers?.() || []).filter(u => !vmuted[u] && !window.VillageChat?.isBlocked?.(u)).slice(0, NEAR_MAX); // (the hosts and speakers: everyone at the event hears them, guests too)
     const st = H.group?.state; if (!st?.id) return [];
     return st.members.filter(x => x.u !== st.you && x.on && x.vo && !vmuted[x.u] && !window.VillageChat?.isBlocked?.(x.u)).map(x => x.u);
   }
@@ -155,7 +157,7 @@
   // when talking is no longer allowed here, the Talk button
   function upkeep() {
     if (!H) return;
-    sync(S.room); sync(S.group); if (talking && !H.canTalk()) talk(false); window.VillageTouch?.talkOn?.(available());
+    sync(S.room); sync(S.group); sync(S.stage); if (talking && (!H.canTalk() || talking.where === 'stage' && !H.stage?.canTalk?.())) talk(false); window.VillageTouch?.talkOn?.(available());
   }
   function frame() {
     if (!H) return;
@@ -173,7 +175,7 @@
         const q = p.holder.position;
         if (sub.pan.positionX) { sub.pan.positionX.value = q.x; sub.pan.positionY.value = q.y + 1.7; sub.pan.positionZ.value = -q.z; } else sub.pan.setPosition(q.x, q.y + 1.7, -q.z);
       }
-      for (const sc of [S.room, S.group]) for (const sub of sc.subs.values()) {
+      for (const sc of [S.room, S.group, S.stage]) for (const sub of sc.subs.values()) {
         const n = sub.node; if (!n) continue;
         n.meter.getFloatTimeDomainData(n.buf); let e = 0; for (let i = 0; i < n.buf.length; i++) e += n.buf[i] * n.buf[i];
         const rms = Math.sqrt(e / n.buf.length); if (rms > .012) sub.speakAt = now;
@@ -183,7 +185,7 @@
   }
 
   // ---- the room's and the group's news ----
-  const myKey = name => String(name === 'room' ? H.mp?.voice?.you?.() || '' : H.group?.voice?.you?.() || '');
+  const myKey = name => String((name === 'room' ? H.mp : name === 'group' ? H.group : H.stage)?.voice?.you?.() || '');
   function onScope(name, m) {
     const sc = S[name];
     if (m.t === 'vs') { // (applied in order; the sync waiting for an answer goes on once it is: m.push = not an answer)
@@ -223,14 +225,14 @@ body.in-game #vvBadge{display:none!important}`;
   function paintBadge() {
     if (!badge) return;
     const parts = [];
-    if (talking) parts.push(`<span class="mic${talking.ready ? '' : ' wait'}"></span><span>${talking.ready ? 'Talking' : 'Connecting voice…'} · ${talking.where === 'group' ? 'Group' : 'Nearby'}</span>`);
-    const g = [...S.group.subs.values()].filter(s => s.speaking).map(s => H.group?.member?.(s.key)?.n).filter(Boolean);
+    if (talking) parts.push(`<span class="mic${talking.ready ? '' : ' wait'}"></span><span>${talking.ready ? 'Talking' : 'Connecting voice…'} · ${talking.where === 'group' ? 'Group' : talking.where === 'stage' ? 'Stage' : 'Nearby'}</span>`);
+    const g = [...[...S.group.subs.values()].filter(s => s.speaking).map(s => H.group?.member?.(s.key)?.n), ...[...S.stage.subs.values()].filter(s => s.speaking).map(s => H.stage?.nameOf?.(s.key))].filter(Boolean);
     if (g.length) parts.push(`<span class="spk">🔊 ${g.map(n => n.replace(/[<>&"]/g, '')).join(', ')}</span>`);
     badge.innerHTML = parts.join('<span>·</span>'); badge.classList.toggle('on', parts.length > 0);
   }
 
   // voice can be used here now: signed in, and the room or the group has it switched on (the rooms' app is set up)
-  const available = () => !!(H && H.signedIn() && (H.mp?.voice?.open?.() || H.group?.voice?.open?.()));
+  const available = () => !!(H && H.signedIn() && (H.mp?.voice?.open?.() || H.group?.voice?.open?.() || (H.stage?.canTalk?.() && H.stage?.voice?.open?.())));
   function start(host) {
     if (H || !host || !window.RTCPeerConnection) return;
     H = host; B = window.BABYLON;
@@ -249,12 +251,12 @@ body.in-game #vvBadge{display:none!important}`;
     setInterval(() => { try { upkeep(); if (document.hidden) frame(); } catch (e) { log('upkeep', e); } }, 500); // (a hidden tab draws no frames: still answer the room)
   }
   window.VillageVoice = {
-    start, talk, room: m => onScope('room', m), group: m => onScope('group', m), reset, available: () => available(),
+    start, talk, room: m => onScope('room', m), group: m => onScope('group', m), stage: m => onScope('stage', m), reset, available: () => available(),
     isMuted: u => !!(u && vmuted[u]),
     mute: (u, n, on) => { if (!u) return; if (on) vmuted[u] = { n: n || 'Rebel', at: Date.now() }; else delete vmuted[u]; save(MUTED, vmuted); S.room.syncAt = S.group.syncAt = 0; },
     muted: () => ({ ...vmuted }),
     get settings() { return settings; },
     set: (k, v) => { settings[k] = v; save(SETTINGS, settings); if (k === 'volume' && master) master.gain.value = v; if (k === 'hear') { S.room.syncAt = S.group.syncAt = 0; } },
-    get state() { const sub = sc => [...sc.subs.values()].map(s => ({ key: s.key, mid: s.mid, on: !!s.node, speaking: !!s.speaking })); return { talking: talking ? { ...talking } : null, ctx: ctx?.state || null, mic: !!mic, room: { pub: S.room.pub, subs: sub(S.room), prod: S.room.prod?.connectionState || null, cons: S.room.cons?.connectionState || null }, group: { pub: S.group.pub, subs: sub(S.group), prod: S.group.prod?.connectionState || null, cons: S.group.cons?.connectionState || null } }; }
+    get state() { const sub = sc => [...sc.subs.values()].map(s => ({ key: s.key, mid: s.mid, on: !!s.node, speaking: !!s.speaking })); return { talking: talking ? { ...talking } : null, ctx: ctx?.state || null, mic: !!mic, room: { pub: S.room.pub, subs: sub(S.room), prod: S.room.prod?.connectionState || null, cons: S.room.cons?.connectionState || null }, group: { pub: S.group.pub, subs: sub(S.group), prod: S.group.prod?.connectionState || null, cons: S.group.cons?.connectionState || null }, stage: { pub: S.stage.pub, subs: sub(S.stage), prod: S.stage.prod?.connectionState || null, cons: S.stage.cons?.connectionState || null } }; }
   };
 })();

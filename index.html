@@ -346,6 +346,20 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
   .wallet-option-grid{grid-template-columns:1fr;}
 }
 
+/* ── LIVE NOW: the Colony Stage's event on now (or the next one), top centre (Oct 28) ── */
+#liveNow{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:12;display:none;align-items:center;gap:10px;max-width:min(560px,calc(100vw - 150px));
+  padding:7px 8px 7px 12px;background:rgba(14,6,22,.86);border:1px solid rgba(232,197,106,.55);box-shadow:0 8px 26px rgba(0,0,0,.5);color:#f6ecd2;
+  font:600 12.5px/1.25 -apple-system,'Segoe UI',Arial,sans-serif;backdrop-filter:blur(8px)}
+#liveNow.on{display:flex}
+#liveNow .dot{flex:none;width:9px;height:9px;border-radius:50%;background:#ff4d5e;animation:lnp 1.4s infinite}
+#liveNow.next .dot{background:#e8c56a;animation:none}
+@keyframes lnp{0%{box-shadow:0 0 0 0 rgba(255,77,94,.7)}70%{box-shadow:0 0 0 8px rgba(255,77,94,0)}100%{box-shadow:0 0 0 0 rgba(255,77,94,0)}}
+#liveNow .tx{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#liveNow b{color:#ffe29a;letter-spacing:.4px}
+#liveNow small{color:#cbbfa5;font-weight:600}
+#liveNow button{flex:none;font:800 10px/1 'Cinzel Decorative',serif;letter-spacing:1.4px;padding:9px 12px;min-height:34px;background:rgba(232,197,106,.18);border:1px solid rgba(232,197,106,.75);color:#fff3cf;cursor:pointer;text-transform:uppercase}
+@media (max-width:640px){#liveNow{top:72px;max-width:calc(100vw - 32px);font-size:12px}}
+
 /* ── NEWS TICKER ── */
 #ticker{
   position:fixed;bottom:0;left:0;right:0;z-index:11;
@@ -610,6 +624,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 
 <button class="btn" id="btn-landing-audio" onclick="toggleLandingAudio()" aria-label="Toggle landing audio">🎵</button>
 <button id="econChip" type="button" onclick="lobbyEconChip()"></button>
+<div id="liveNow" role="status" aria-live="polite"></div>
 <div id="econMenu" role="dialog" aria-label="Your Discord account"></div>
 
 <div id="wallet-modal-backdrop" onclick="closeWalletModalFromBackdrop(event)">
@@ -1743,7 +1758,7 @@ function enterForge() {
 }
 
 // ── ENTER VILLAGE ──
-function enterVillage() {
+function enterVillage(url) {
   const blackout = document.getElementById('blackout');
   blackout.classList.add('active');
   // Stop music gracefully
@@ -1751,9 +1766,35 @@ function enterVillage() {
     window._music.volume = 0;
   }
   setTimeout(() => {
-    window.location.href = 'village.html';
+    window.location.href = typeof url === 'string' ? url : 'village.html';
   }, 900);
 }
+
+// ── LIVE NOW: the Colony Stage (Oct 28). An event on now: its title, where, Join (Universe at that village, which walks
+// you to it); else the next one within a week. Asked at once and every minute (/api/mp-events: the rooms' list)
+(function liveNow() {
+  const el = document.getElementById('liveNow'); if (!el) return;
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const VN = { hub: 'Hub', ronin: 'Ronin', samurai: 'Samurai', shogun: 'Shogun', bushi: 'Bushi', buke: 'Buke', ashigaru: 'Ashigaru', kenshi: 'Kenshi', yamabushi: 'Yamabushi', sohei: 'Sohei', wokou: 'Wokou', warrior: 'Warrior', 'cute-creepy': 'Cute & Creepy', chumpz: 'Chumpz', 'saints-la': 'Saints of LA' };
+  const where = ev => esc(ev.place?.label || '') + (ev.place?.room && ev.place.label ? ', ' + (VN[ev.place.village] || ev.place.village) : '');
+  async function look() {
+    try {
+      const d = await (await fetch('/api/mp-events', { cache: 'no-store' })).json(); if (!d?.ok) return;
+      const live = (d.live || [])[0], next = (d.next || []).find(e => e.starts - Date.now() < 7 * 86400000);
+      el.classList.toggle('on', !!(live || next)); el.classList.toggle('next', !live && !!next);
+      if (live) {
+        el.innerHTML = `<span class="dot"></span><span class="tx"><b>LIVE NOW</b> · ${esc(live.title)} <small>· ${where(live)}${live.hosts?.length ? ' · with ' + esc(live.hosts.join(', ')) : ''}</small></span>`;
+        const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Join';
+        b.onclick = () => enterVillage('village.html?village=' + encodeURIComponent(live.place.village) + '&event=' + encodeURIComponent(live.id));
+        el.appendChild(b);
+      } else if (next) {
+        const when = new Date(next.starts).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+        el.innerHTML = `<span class="dot"></span><span class="tx"><b>NEXT EVENT</b> · ${esc(next.title)} <small>· ${esc(when)} · ${where(next)}</small></span>`;
+      }
+    } catch (e) {}
+  }
+  look(); setInterval(look, 60000);
+})();
 
 // ── SECRET ADMIN ENTRANCE ──
 function openAdminModal() {
