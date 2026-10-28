@@ -27814,6 +27814,7 @@ document.addEventListener('keydown', async e => {
     updateAdminBadge();
 
     if (adminMode) {
+      scheduleProgressiveAssetSourceLoad(new Set(VillageStartupRuntime.requiredAssetKeys || []));   // the catalog's other models (placing pieces)
       // Keep orbit camera active in admin — unlock for free editing
       walk.detachControl();
       if (!configureInteriorEditCamera()) {
@@ -30389,8 +30390,10 @@ function markVillageStartupInteractive() {
   VillageStartupRuntime.interactive = true;
   window._villageStartupInteractive = true;
   setSt('Finalizing: village ready.');
-  const excluded = new Set(VillageStartupRuntime.requiredAssetKeys || []);
-  scheduleProgressiveAssetSourceLoad(excluded);
+  // the catalog's other models (every building in ASSETS) load in the background only for an admin, once admin mode is on
+  // (placing pieces): a player's village has what its layout needs, and a piece asked for later still loads then
+  // (waitForAssetSourceReady). Before, every village loaded all of them as hidden sources (Samurai: dojo_5, 6, 7, 9,
+  // shrine_2, fence_1 ... on a phone too).
   schedulePostInteractiveStartupTask(loadForgeCollectionsConfig, 650);
   schedulePostInteractiveStartupTask(startVillagePetalEffects, 1200);
   schedulePostInteractiveStartupTask(initVillageHud, 300);
