@@ -358,7 +358,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 #liveNow b{color:#ffe29a;letter-spacing:.4px}
 #liveNow small{color:#cbbfa5;font-weight:600}
 #liveNow button{flex:none;font:800 10px/1 'Cinzel Decorative',serif;letter-spacing:1.4px;padding:9px 12px;min-height:34px;background:rgba(232,197,106,.18);border:1px solid rgba(232,197,106,.75);color:#fff3cf;cursor:pointer;text-transform:uppercase}
-@media (max-width:640px){#liveNow{top:72px;max-width:calc(100vw - 32px);font-size:12px}}
+@media (max-width:640px){#liveNow{top:16px;left:72px;right:74px;transform:none;max-width:none;min-height:48px;padding:5px 6px 5px 10px;gap:8px;font-size:11.5px}
+  #liveNow .tx{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3}#liveNow small{display:none}#liveNow button{padding:8px 9px;min-height:32px}} /* phones: two lines between the account circle and the music button */
 
 /* ── NEWS TICKER ── */
 #ticker{
@@ -1791,8 +1792,41 @@ function enterVillage(url) {
         const when = new Date(next.starts).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
         el.innerHTML = `<span class="dot"></span><span class="tx"><b>NEXT EVENT</b> · ${esc(next.title)} <small>· ${esc(when)} · ${where(next)}</small></span>`;
       }
+      place();
     } catch (e) {}
   }
+  // between the account chip (top left) and the music button (top right): centred when it clears both, else in the gap
+  // between them, else under them (a wide signed-in chip on a narrow window); the lobby's column (the logo first) starts
+  // under it, never behind it
+  function place() {
+    const ui = document.getElementById('ui'), wrap = document.getElementById('logo-wrap'), logo = document.getElementById('logo');
+    Object.assign(el.style, { left: '', right: '', top: '', transform: '', maxWidth: '' }); if (ui) ui.style.paddingTop = ''; if (logo) logo.style.maxWidth = '';
+    if (!el.classList.contains('on')) return;
+    if (innerWidth > 640) { // (phones: the CSS puts it between the two circles)
+      const box = id => { const e = document.getElementById(id); if (!e || getComputedStyle(e).display === 'none') return null; const r = e.getBoundingClientRect(); return r.width ? r : null; };
+      const chip = box('econChip'), mus = box('btn-landing-audio'), L = chip ? chip.right + 12 : 16, R = innerWidth - (mus ? mus.left - 12 : innerWidth - 16), r = el.getBoundingClientRect();
+      if (r.left < L || r.right > innerWidth - R) {
+        const room = innerWidth - L - R;
+        if (room >= 300) { Object.assign(el.style, { transform: 'none', maxWidth: room + 'px', left: L + 'px' }); el.style.left = (L + (room - el.getBoundingClientRect().width) / 2) + 'px'; }
+        else el.style.top = (Math.max(chip ? chip.bottom + 16 : 0, mus ? mus.bottom : 0) + 10) + 'px';
+      }
+    }
+    if (!ui || !wrap) return;
+    // Enter Village above the news ticker before: kept there (a smaller logo pays for the move)
+    const enter = document.getElementById('btn-enter'), tick = document.getElementById('ticker');
+    const over = () => enter && tick ? enter.getBoundingClientRect().bottom + ui.scrollTop - (tick.getBoundingClientRect().top - 4) : -1;
+    const keep = over() <= 0;
+    for (let k = 0; k < 4; k++) { // (the column is centred when it fits: a few tries settle it)
+      const need = el.getBoundingClientRect().bottom + 8 - (wrap.getBoundingClientRect().top + ui.scrollTop);
+      if (need > .5) ui.style.paddingTop = (parseFloat(getComputedStyle(ui).paddingTop) + need) + 'px';
+      const o = keep ? over() : 0;
+      if (o > .5 && logo) { const w = logo.getBoundingClientRect().width; logo.style.maxWidth = Math.max(w * .6, w - o) + 'px'; }
+      if (need <= .5 && o <= .5) break;
+    }
+  }
+  let placing = 0; const soon = () => { if (!placing) placing = requestAnimationFrame(() => { placing = 0; place(); }); };
+  try { const ro = new ResizeObserver(soon); for (const c of document.getElementById('ui')?.children || []) ro.observe(c); } catch (e) {} // (the logo loading, the cards filling in)
+  window.addEventListener('resize', soon); window._liveNowPlace = soon;
   look(); setInterval(look, 60000);
 })();
 
@@ -2102,6 +2136,7 @@ function renderLobbyEcon() {
         + `<button type="button" onclick="lobbyEconSignOut()">Sign out</button>`;
     }
   }
+  window._liveNowPlace?.(); // (the chip's width changed: the LIVE NOW banner keeps clear of it)
 }
 function lobbyEconChip() {
   const m = document.getElementById('econMenu'); if (!m) return;
