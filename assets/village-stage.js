@@ -132,7 +132,9 @@
 html.vt-touch #vsLive,html.vt-touch #vsBar{top:calc(max(12px,env(safe-area-inset-top,0px)) + 112px);font-size:12px}
 html.vt-touch #vsHost{top:calc(max(12px,env(safe-area-inset-top,0px)) + 160px)}
 html.vt-touch #vsCap{bottom:calc(max(18px,env(safe-area-inset-bottom,0px)) + 236px);font-size:15px}
-body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!important}`;
+body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!important}
+@media (min-width:901px) and (max-width:1459px){html:not(.vt-touch) #vsLive,html:not(.vt-touch) #vsBar,html:not(.vt-touch) #vsHost{left:446px;transform:none}html:not(.vt-touch) #vsLive,html:not(.vt-touch) #vsBar{max-width:calc(100vw - 600px)}}
+@media (max-width:900px){html:not(.vt-touch) #vsLive,html:not(.vt-touch) #vsBar{top:152px}html:not(.vt-touch) #vsHost{top:200px}}`; // (desktop: clear of Exit Walk (left 340, top 82) and the quest line)
   function build() {
     const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
     const mk = (id) => { const d = document.createElement('div'); d.id = id; document.body.appendChild(d); for (const t of ['pointerdown', 'keydown']) d.addEventListener(t, e => e.stopPropagation()); return d; };
