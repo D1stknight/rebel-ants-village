@@ -5933,8 +5933,26 @@ function testSelectedBadgePopup() {
   if (badge) showBadgeUnlockPopup(badge.name);
 }
 
+// Leaving Universe on a phone (another village, the lobby, a reload, the Discord sign-in): the engine is disposed and
+// its WebGL context let go first, so the textures and buffers go back before the next page loads (iOS Safari can hold
+// the old page's memory while the next one fills up). A page the back button brings back from the browser's cache
+// loads again (its 3D is gone).
+function leavePage(go) {
+  if (LITE_GRAPHICS && engine && !leavePage.done) {
+    leavePage.done = true;
+    document.getElementById('villageTravelFade')?.classList.add('on');
+    try {
+      const gl = engine._gl && typeof engine._gl.getExtension === 'function' ? engine._gl : null;
+      engine.stopRenderLoop();
+      engine.dispose();
+      gl?.getExtension('WEBGL_lose_context')?.loseContext();
+    } catch (e) { console.warn('Leaving: the 3D did not close cleanly', e); }
+  }
+  go();
+}
+window.addEventListener('pageshow', e => { if (e.persisted && leavePage.done) location.reload(); });
 function returnToHubVillage() {
-  window.location.href = VILLAGE_REGISTRY.hub.route;
+  leavePage(() => { window.location.href = VILLAGE_REGISTRY.hub.route; });
 }
 function updateVillageChrome() {
   const logoSub = document.querySelector('#logo span');
@@ -9346,7 +9364,7 @@ async function storyAttach() {
     Object.assign(StorySync, { account:d.account, pending:res.upload, savedAt:Date.now() });
     if (res.changed) {   // the account's story had more than this browser: the game reads it again
       let again = false; try { again = Date.now() - Number(sessionStorage.getItem('rebelAntsStoryReload') || 0) < 60000; sessionStorage.setItem('rebelAntsStoryReload', String(Date.now())); } catch (e) {}
-      if (!again) { showToast('Loading your story from your account…', 3000); setTimeout(() => location.reload(), 1400); return; }
+      if (!again) { showToast('Loading your story from your account…', 3000); setTimeout(() => leavePage(() => location.reload()), 1400); return; }
     }
     storySoon(1500);
   } catch (e) { console.warn('story sync', e); } finally { StorySync.attaching = false; }
@@ -13691,7 +13709,7 @@ function selectVillageGateDestination(villageId) {
   const fade = document.getElementById('villageTravelFade');
   if (fade) fade.classList.add('on');
   closeVillageGateMenu();
-  setTimeout(() => { window.location.href = village.route; }, 620);
+  setTimeout(() => leavePage(() => { window.location.href = village.route; }), 620);
 }
 
 function tryOpenNearbyVillageGate() {
@@ -24023,7 +24041,7 @@ function getOrCreateCharacterBlueprint(rebel, character) {
   return newBlueprint;
 }
 window.backToLobby = function backToLobby() {
-  window.location.href = 'index.html';
+  leavePage(() => { window.location.href = 'index.html'; });
 };
 
 const activeRebel = getSelectedRebel();
@@ -25613,7 +25631,7 @@ function rigFallbackToStarter(err) {
   console.warn('The Rebel\'s model did not download; starting with the starter ant instead.', err);
   setSt("Your Rebel's 3D model couldn't download here. Starting with the starter ant...");
   const u = new URL(location.href); u.searchParams.set('rig', 'master'); u.searchParams.set('rigFallback', '1');
-  setTimeout(() => location.replace(u.toString()), 1500);
+  setTimeout(() => leavePage(() => location.replace(u.toString())), 1500);
   return true;
 }
 (activeCharacter.procedural && window.SamuraiKit?.types?.includes(activeCharacter.kitModel)
