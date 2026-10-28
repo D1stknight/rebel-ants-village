@@ -357,16 +357,20 @@
     } catch (e) { log('model failed', p.id, e?.message); p.look = { t: 'capsule' }; if (!p.model) dropFiles(used); }
     finally { p.loading = false; }
   }
-  // the name over the model's head (its bind pose; the starter ant's sits about 1.6 m under its feet, as the village's own)
+  // the name over the model's head: a rig's bind pose stands as it is drawn, so over its top. The starter ant's skin is drawn
+  // through an armature far from its bind pose (that box sits under its feet), so over its antenna tips in the idle: 3.25 m
+  // over the player's root (its head joint 2.36, the top of its head 3.07; the same on the copy and the light copy)
+  const STARTER_TOP = 3.25;
   const view = p => p.model || p.lite; // (what is drawn: the full model, else the light copy)
   function placeTag(p) {
     const k = p.holder.scaling.x, v = view(p);
     let top = TAG_Y - .45;
-    if (v) {
+    if (v && (v.kind === 'starter' || v.starter)) top = STARTER_TOP;
+    else if (v) {
       p.holder.computeWorldMatrix(true);
       let max = -Infinity;
       for (const m of v.meshes) { if (!m.getTotalVertices?.()) continue; m.computeWorldMatrix(true); m.refreshBoundingInfo(); max = Math.max(max, m.getBoundingInfo().boundingBox.maximumWorld.y); }
-      if (Number.isFinite(max)) top = max - p.holder.position.y + (v.kind === 'starter' || v.starter ? 1.65 : 0);
+      if (Number.isFinite(max)) top = max - p.holder.position.y;
     }
     if (p.tag) { p.tag.scaling.setAll(1 / k); p.tag.position.y = Math.min(6, Math.max(1.6, top + .45)) / k; }
     if (p.capsule) { p.capsule.scaling.setAll(1 / k); p.capsule.position.y = 1.6 / k; }
