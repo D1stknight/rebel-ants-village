@@ -98,12 +98,15 @@ export async function makeLight(rigBytes, { pack = null, more = [], rename = {},
   for (const j of joints) skin.removeJoint(j);
   for (const j of kept) skin.addJoint(j);
   // the moves seen from afar: the kept joints' turns (and the hips' travel), a key every 1/fps s
+  // (in place: the hips' travel goes, their height stays: they rest where the idle starts, as the village's own starter ant
+  // stands; their rest place in the file is 1.7 m lower)
   const want = new Set([...LIGHT_CLIPS, ...LIGHT_PACK_CLIPS]);
   for (const a of root.listAnimations()) {
     if (!want.has(a.getName())) { dropAnimation(a); continue; }
     for (const ch of a.listChannels()) {
       const node = ch.getTargetNode(), path = ch.getTargetPath(), s = ch.getSampler();
       const hips = node?.getName() === 'mixamorig_Hips';
+      if (inPlace && hips && path === 'translation' && a.getName() === 'idle') { const v = s.getOutput().getArray(); if (v?.length >= 3) node.setTranslation([v[0], v[1], v[2]]); }
       if (!keep.has(node) || path === 'scale' || path === 'weights' || (path === 'translation' && (!hips || inPlace))) { ch.dispose(); s.dispose(); continue; }
       const inp = s.getInput(), out = s.getOutput(), ti = inp.getArray(), to = out.getArray(), w = out.getElementSize();
       if (s.getInterpolation() === 'CUBICSPLINE') continue; // (none in Forge rigs; left as they are)

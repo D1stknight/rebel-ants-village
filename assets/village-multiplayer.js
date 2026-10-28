@@ -330,10 +330,14 @@
         useFile(url, used);
         const { inst, meshes, groups, joints } = copyOf(p, c, prefix, rig), extra = [];
         if (!rig) {
-          // the starter ant: idle in its file without the hips' travel, the other moves from their own files
+          // the starter ant: idle in its file without the hips' travel, the other moves from their own files. The hips keep the
+          // idle's height: the village's own ant does (its loader starts the idle before the track goes), and a copy whose hips
+          // sat at their rest place stood 1.7 m lower than the player sees themselves
           const nodes = joints;
-          const noHipTravel = g => { for (let j = g.targetedAnimations.length - 1; j >= 0; j--) { const ta = g.targetedAnimations[j]; if (!ta.target || (ta.animation.targetProperty === 'position' && /mixamorig_Hips$/.test(ta.target.name || ''))) g.targetedAnimations.splice(j, 1); } };
-          if (inst.animationGroups[0]) { groups.idle = inst.animationGroups[0]; noHipTravel(groups.idle); }
+          const noHipTravel = (g, keep) => { for (let j = g.targetedAnimations.length - 1; j >= 0; j--) { const ta = g.targetedAnimations[j]; if (!ta.target || (ta.animation.targetProperty === 'position' && /mixamorig_Hips$/.test(ta.target.name || ''))) {
+            const k = keep && ta.target ? ta.animation.getKeys()[0]?.value : null; if (k && ta.target.position) ta.target.position.copyFrom(k);
+            g.targetedAnimations.splice(j, 1); } } };
+          if (inst.animationGroups[0]) { groups.idle = inst.animationGroups[0]; noHipTravel(groups.idle, true); }
           await Promise.all(Object.entries(STARTER.clips).map(async ([name, file]) => {
             try {
               const src = await starterClip(file); if (!src || !peers.has(p.id)) return;
