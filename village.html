@@ -14655,6 +14655,20 @@ const ElementAudio = (() => {
 })();
 window._elementAudio = ElementAudio; // tests
 
+// Voices over the music (Oct 28, the same test: "the music is so loud when we press the button to talk that I cant hear
+// her well"): while a voice you hear is speaking, or you hold Talk (your own music then stays out of your microphone),
+// the music goes down to a quarter and the ambience, the weather and the water to under half: down in about a tenth
+// of a second, back up over about a second once the voices have been quiet for a second (no pumping between words).
+// VillageVoice.busy() says when.
+const VoiceDuck = { k: 0, at: 0, music: .25, amb: .45 };
+function updateVoiceDuck() {
+  const now = performance.now(), dt = Math.min(.25, Math.max(0, (now - (VoiceDuck.at || now)) / 1000)), on = !!window.VillageVoice?.busy?.();
+  VoiceDuck.at = now;
+  VoiceDuck.k += ((on ? 1 : 0) - VoiceDuck.k) * (1 - Math.exp(-dt / (on ? .1 : .8)));
+}
+const voiceDuck = floor => 1 - (1 - floor) * VoiceDuck.k;
+window._voiceDuck = VoiceDuck; // tests
+
 function getWeatherCenter() {
   if (walkMode && charMesh) return charMesh.position;
   const cam = scene.activeCamera || orbit;
@@ -14924,7 +14938,7 @@ function updateWeatherAudio() {
     if (!audio || audio._unavailable) return;
     audio._targetVolume = targets[id] || 0;
     audio._level = (audio._level ?? 0) + (audio._targetVolume - (audio._level ?? 0)) * .045; // (the fade keeps its own level: unrouted, an iPhone's volume always reads 1)
-    audio.volume = Math.min(1, audio._level);
+    audio.volume = Math.min(1, audio._level * voiceDuck(id === WeatherManager.interiorAudioId ? VoiceDuck.music : VoiceDuck.amb));
     if (audio._targetVolume > .01 && audio.paused) {
       if (!WeatherManager.browserAudioUnlocked) {
         if (id === WeatherManager.interiorAudioId) promptInteriorAudioUnlock();
@@ -14984,7 +14998,7 @@ function updateVillageMusic() {
   if (!audio || audio._unavailable) return;
   audio._targetVolume = getVillageMusicTargetVolume();
   audio._level = (audio._level ?? 0) + (audio._targetVolume - (audio._level ?? 0)) * .035;
-  audio.volume = Math.min(1, audio._level);
+  audio.volume = Math.min(1, audio._level * voiceDuck(VoiceDuck.music));
   if (audio._targetVolume > .01 && audio.paused) {
     if (!WeatherManager.browserAudioUnlocked) return;
     audio.play().catch(error => { markAudioPlayFailure(audio, error); });
@@ -15680,6 +15694,7 @@ function setWeatherCycleSpeed(speed) {
 }
 
 function updateWeatherManager() {
+  updateVoiceDuck();
   if (ActiveInterior) {
     window.VillageWeather?.hide?.();
     setInteriorWeatherOverlaysVisible(false);
@@ -27178,7 +27193,7 @@ function startNewTerrainWaterSound(NT) {
   setInterval(() => {
     if (!gain || !charMesh) return;
     const level = NT.waterSoundAt(charMesh.position.x, charMesh.position.z);
-    const vol = level * .5 * (WeatherManager.masterVolume ?? .8) * (WeatherManager.ambienceVolume ?? .55) * (document.hidden ? 0 : 1);
+    const vol = level * .5 * (WeatherManager.masterVolume ?? .8) * (WeatherManager.ambienceVolume ?? .55) * (document.hidden ? 0 : 1) * voiceDuck(VoiceDuck.amb);
     gain.gain.setTargetAtTime(vol, ctx.currentTime, .4);
   }, 250);
 }
@@ -27248,7 +27263,7 @@ function startNewTerrainSurfSound(NT) {
     while (nextWave < now + 1) nextWave = wave(Math.max(nextWave, now + .05));
     const on = WeatherManager.masterAudioEnabled && !ActiveInterior && !document.hidden;
     const near = on ? NT.surfSoundAt(charMesh.position.x, charMesh.position.z) : 0, level = calm ? 1.6 * near ** 2.4 : near; // the lake is heard close to its shore
-    out.gain.setTargetAtTime(level * 1.1 * (WeatherManager.masterVolume ?? .8) * (WeatherManager.ambienceVolume ?? .55), now, .5);
+    out.gain.setTargetAtTime(level * 1.1 * (WeatherManager.masterVolume ?? .8) * (WeatherManager.ambienceVolume ?? .55) * voiceDuck(VoiceDuck.amb), now, .5);
   }, 250);
 }
 function newTerrainLayoutToSaved(data) {

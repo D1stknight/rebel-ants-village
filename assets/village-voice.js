@@ -16,7 +16,7 @@
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
   const settings = load(SETTINGS, { hear: true, volume: 1 }), vmuted = load(MUTED, {});
   const log = (...a) => { if (window._mpDebug) console.log('[voice]', ...a); };
-  let H = null, B = null, ctx = null, master = null, mic = null, micAsk = null, talking = null, hint = false, badge = null;
+  let H = null, B = null, ctx = null, master = null, mic = null, micAsk = null, talking = null, hint = false, badge = null, heardAt = -1e9, frameAt = 0, frameGap = 0;
 
   // ---- a scope: 'room' (nearby, positional) or 'group' (the group, plain) ----
   function scope(name) { return { name, prod: null, cons: null, track: null, pub: false, pubWait: null, subs: new Map(), byMid: new Map(), want: '', syncing: false, syncAt: 0, failAt: -1e9, chain: Promise.resolve(), gen: 0 }; }
@@ -161,7 +161,7 @@
   }
   function frame() {
     if (!H) return;
-    const now = performance.now();
+    const now = performance.now(); frameGap = frameAt ? now - frameAt : 0; frameAt = now;
     if (ctx && master) {
       // (Babylon is left-handed, Web Audio right-handed: every z flips)
       const L = H.listener?.(), al = ctx.listener;
@@ -178,7 +178,7 @@
       for (const sc of [S.room, S.group, S.stage]) for (const sub of sc.subs.values()) {
         const n = sub.node; if (!n) continue;
         n.meter.getFloatTimeDomainData(n.buf); let e = 0; for (let i = 0; i < n.buf.length; i++) e += n.buf[i] * n.buf[i];
-        const rms = Math.sqrt(e / n.buf.length); if (rms > .012) sub.speakAt = now;
+        const rms = Math.sqrt(e / n.buf.length); if (rms > .012) sub.speakAt = heardAt = now;
         setSpeaking(sub, now - sub.speakAt < 350);
       }
     }
@@ -252,6 +252,7 @@ body.in-game #vvBadge{display:none!important}`;
   }
   window.VillageVoice = {
     start, talk, room: m => onScope('room', m), group: m => onScope('group', m), stage: m => onScope('stage', m), reset, available: () => available(),
+    busy: () => !!talking || (settings.volume > 0 && performance.now() - heardAt < Math.max(1200, 2.5 * frameGap)), // (you hold Talk, or a voice you hear spoke in the last 1.2 s (or two frames): village.html lowers the music)
     isMuted: u => !!(u && vmuted[u]),
     mute: (u, n, on) => { if (!u) return; if (on) vmuted[u] = { n: n || 'Rebel', at: Date.now() }; else delete vmuted[u]; save(MUTED, vmuted); S.room.syncAt = S.group.syncAt = 0; },
     muted: () => ({ ...vmuted }),
