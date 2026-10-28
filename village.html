@@ -14661,13 +14661,21 @@ window._elementAudio = ElementAudio; // tests
 // the music goes down to a quarter and the ambience, the weather and the water to under half: down in about a tenth
 // of a second, back up over about a second once the voices have been quiet for a second (no pumping between words).
 // VillageVoice.busy() says when.
-const VoiceDuck = { k: 0, at: 0, music: .25, amb: .45 };
+// Phones go all the way (the next test, Miguel: "when i pressed on speak the music actually got louder"): an iPhone
+// keeps an <audio>'s volume to itself, and opening the microphone moves the phone's sound to its call output and volume,
+// so there the music, the ambience, the weather and the water are silent while voices are on (muted outright, whatever
+// path the phone plays them on) and stay so for a few seconds between sentences.
+const VoiceDuck = { k: 0, at: 0, until: 0, on: false, music: .25, amb: .45, hold: 0, phone: !!window.VillageTouch?.on || ElementAudio.readOnly() };
+if (VoiceDuck.phone) Object.assign(VoiceDuck, { music: 0, amb: 0, hold: 3500 });
 function updateVoiceDuck() {
-  const now = performance.now(), dt = Math.min(.25, Math.max(0, (now - (VoiceDuck.at || now)) / 1000)), on = !!window.VillageVoice?.busy?.();
-  VoiceDuck.at = now;
+  const now = performance.now(), dt = Math.min(.25, Math.max(0, (now - (VoiceDuck.at || now)) / 1000)), busy = !!window.VillageVoice?.busy?.();
+  if (busy) VoiceDuck.until = now + VoiceDuck.hold;
+  const on = busy || now < VoiceDuck.until;
+  VoiceDuck.at = now; VoiceDuck.on = on;
   VoiceDuck.k += ((on ? 1 : 0) - VoiceDuck.k) * (1 - Math.exp(-dt / (on ? .1 : .8)));
 }
 const voiceDuck = floor => 1 - (1 - floor) * VoiceDuck.k;
+const voiceMuted = () => VoiceDuck.phone && VoiceDuck.on;
 window._voiceDuck = VoiceDuck; // tests
 
 function getWeatherCenter() {
@@ -14940,6 +14948,7 @@ function updateWeatherAudio() {
     audio._targetVolume = targets[id] || 0;
     audio._level = (audio._level ?? 0) + (audio._targetVolume - (audio._level ?? 0)) * .045; // (the fade keeps its own level: unrouted, an iPhone's volume always reads 1)
     audio.volume = Math.min(1, audio._level * voiceDuck(id === WeatherManager.interiorAudioId ? VoiceDuck.music : VoiceDuck.amb));
+    if (audio.muted !== voiceMuted()) audio.muted = voiceMuted();
     if (audio._targetVolume > .01 && audio.paused) {
       if (!WeatherManager.browserAudioUnlocked) {
         if (id === WeatherManager.interiorAudioId) promptInteriorAudioUnlock();
@@ -15000,6 +15009,7 @@ function updateVillageMusic() {
   audio._targetVolume = getVillageMusicTargetVolume();
   audio._level = (audio._level ?? 0) + (audio._targetVolume - (audio._level ?? 0)) * .035;
   audio.volume = Math.min(1, audio._level * voiceDuck(VoiceDuck.music));
+  if (audio.muted !== voiceMuted()) audio.muted = voiceMuted();
   if (audio._targetVolume > .01 && audio.paused) {
     if (!WeatherManager.browserAudioUnlocked) return;
     audio.play().catch(error => { markAudioPlayFailure(audio, error); });
@@ -15245,6 +15255,7 @@ function updateEnvironmentalOneShotAudio() {
   if (!WeatherManager.masterAudioEnabled) return;
   const now = performance.now();
   if (now < WeatherManager.nextEnvironmentalAudioAt) return;
+  if (voiceMuted()) { WeatherManager.nextEnvironmentalAudioAt = now + 8000; return; } // (phones: no birds or bells over voices)
   const profile = VILLAGE_AMBIENCE_PROFILES[CURRENT_VILLAGE_ID] || DEFAULT_VILLAGE_AMBIENCE;
   const events = [...(profile.events || [])];
   if (WeatherManager.mode === 'storm') events.push('distantThunder', 'windGust');
