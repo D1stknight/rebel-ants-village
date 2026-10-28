@@ -11,6 +11,9 @@
 // Step 3 (text chat): the chat window is assets/village-chat.js (window.VillageChat): this file hands it the room's news
 // (VillageChat.room(kind, data)) and gives it VillageMP.chat (send, report, the players here); it says who is hidden
 // (Block, 'Show other players') and whether name tags show. A kick or a ban ends the connection for this page.
+// Emotes (the cheer and four dances, village.html Emote): the player's move in its state is the emote's name; a Forge rig
+// here plays it from that Rebel's own games pack (games.glb beside its rig), fetched the first time it emotes and kept
+// while their copy is (only those five moves of it). A kit ape hops, the starter ant jumps for a cheer.
 (function () {
   'use strict';
   const PROTOCOL = 'rebel-universe.v1', FULL_R = 80, TAG_R = 45, SEND_MS = 150, BEAT_MS = 12000, PING_MS = 25000;
@@ -18,7 +21,9 @@
   const STARTER = { base: '/assets/character/', idle: 'ant_idle_c.glb', clips: { walk: 'ant_walk_c.glb', run: 'ant_run_c.glb', kick: 'ant_flip_kick_c.glb', jump: 'ant_jumping_c.glb' } };
   const STORE = /^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\//;
   // moves that play once (the rest loop); a move the other's model lacks: a kick for these, else idle
-  const ONCE = new Set(['jump', 'kick', 'flip_kick', 'front_kick', 'roundhouse_kick', 'side_kick', 'punch_combo', 'cartwheel', 'jump_run', 'backflip', 'front_flip', 'hurricane_kick', 'spin_flip_kick', 'crescent_kick', 'jab', 'cross_punch', 'hook_punch', 'elbow_punch', 'hit_reaction', 'knockdown', 'get_up']);
+  const ONCE = new Set(['jump', 'kick', 'flip_kick', 'front_kick', 'roundhouse_kick', 'side_kick', 'punch_combo', 'cartwheel', 'jump_run', 'backflip', 'front_flip', 'hurricane_kick', 'spin_flip_kick', 'crescent_kick', 'jab', 'cross_punch', 'hook_punch', 'elbow_punch', 'hit_reaction', 'knockdown', 'get_up', 'game_cheer']);
+  // the emotes' moves in a Rebel's games pack (the dances loop)
+  const PACK_MOVES = new Set(['game_cheer', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam']);
   let H = null, B = null, root = null, ws = null, connecting = false, you = 0, room = null, closedFor = null, retry = 0, retryAt = 0, maxFull = 8;
   const VC = () => window.VillageChat;
   const tell = (kind, d) => { try { VC()?.room?.(kind, d); } catch (e) { log('chat', e); } };
@@ -186,6 +191,48 @@
     }, e => { clips.delete(file); throw e; }));
     return clips.get(file);
   }
+  // a Rebel's games pack (its rig's games.glb) for the emotes: the file's other moves (the games') go as it loads; kept
+  // like a model file while a copy here plays from it
+  const packs = new Map(); // rig url -> games pack url (null: none)
+  function packUrl(rig) {
+    if (!packs.has(rig)) packs.set(rig, Promise.resolve(window.RebelWeapon?.gamesFor?.(rig)).then(u => (typeof u === 'string' && STORE.test(u) ? u : null), () => null));
+    return packs.get(rig);
+  }
+  function packFile(url) {
+    let f = files.get(url);
+    if (!f) {
+      f = { url, users: 0, idle: 0, c: null };
+      f.p = B.SceneLoader.LoadAssetContainerAsync('', H.viaSite(url), H.scene).then(c => {
+        // (a copy of the list first: a group's dispose takes itself out of its container's list, under a filter's feet)
+        const all = [...c.animationGroups]; c.animationGroups = all.filter(g => PACK_MOVES.has(g.name));
+        for (const g of all) if (!PACK_MOVES.has(g.name)) { try { g.dispose(); } catch (e) {} }
+        f.c = c; f.idle = performance.now(); return c;
+      }, e => { if (files.get(url) === f) files.delete(url); throw e; });
+      files.set(url, f);
+    }
+    return f.p;
+  }
+  async function loadPack(p) {
+    const m = p.model; if (!m || m.kind !== 'rig' || m.pack) return;
+    m.pack = 'loading';
+    try {
+      const url = await packUrl(p.look.url);
+      if (!url) { m.pack = 'none'; return; }
+      const c = await packFile(url);
+      if (p.model !== m) return; // (their model went meanwhile)
+      useFile(url, m.files);
+      const prefix = 'mpPlayer_' + p.id + '_';
+      for (const src of c.animationGroups) {
+        if (m.groups[src.name]) continue;
+        const g = src.clone(prefix + src.name, t => m.joints.get(t?.name) || null);
+        for (let j = g.targetedAnimations.length - 1; j >= 0; j--) if (!g.targetedAnimations[j].target) g.targetedAnimations.splice(j, 1);
+        g.stop(); g.enableBlending = true; g.blendingSpeed = .12;
+        m.groups[src.name] = g; m.extra.push(g);
+      }
+      m.pack = 'ready'; log('pack', p.id, Object.keys(m.groups).filter(k => PACK_MOVES.has(k)).join(','));
+      if (p.anim && PACK_MOVES.has(p.anim)) p.anim = ''; // (what plays now comes from the pack)
+    } catch (e) { m.pack = 'none'; log('pack failed', p.id, e?.message); }
+  }
   // as the village does for its own player: the rig's PBR materials take at most 4 lights (the village's 16 overflow the
   // skinned shader: the model went invisible), no emissive, both faces
   function fixMaterial(mat) {
@@ -224,6 +271,8 @@
         // blending for the rigs only, as the village's own player: the starter ant's joints have no rotationQuaternion to
         // blend from (Babylon's animate() throws on it every frame, which stops the whole page)
         inst.animationGroups.forEach(g => { g.stop(); if (rig) { g.enableBlending = true; g.blendingSpeed = .12; } groups[g.name.startsWith(prefix) ? g.name.slice(prefix.length) : g.name] = g; });
+        let joints = null; // a rig's nodes by their own names (the emotes' moves are put on them)
+        if (rig) { joints = new Map(); for (const r of inst.rootNodes) for (const n of [r, ...r.getDescendants(false)]) if (!(n instanceof B.AbstractMesh)) { const k = n.name.startsWith(prefix) ? n.name.slice(prefix.length) : n.name; if (!joints.has(k)) joints.set(k, n); } }
         if (!rig) {
           // the starter ant: its joints lose their rest turn as the village's own do, idle in its file without the hips'
           // travel, the other moves from their own files
@@ -242,7 +291,7 @@
         if (!peers.has(p.id)) { inst.dispose(); extra.forEach(g => g.dispose()); dropFiles(used); return; }
         p.holder.scaling.setAll(rig ? RIG_SCALE : STARTER_SCALE);
         const sh = H.shadows?.(); if (sh) meshes.forEach(m => { try { sh.addShadowCaster(m); } catch (e) {} });
-        p.model = { kind: rig ? 'rig' : 'starter', inst, groups, meshes, extra, files: used };
+        p.model = { kind: rig ? 'rig' : 'starter', inst, groups, meshes, extra, files: used, joints, pack: null };
       }
       placeTag(p);
       p.anim = ''; p.cur = null; log('model', p.id, p.model.kind);
@@ -278,13 +327,16 @@
   function groupFor(p, a) {
     const g = p.model?.groups || {};
     if (a === 'swim') a = 'walk';
+    if (PACK_MOVES.has(a)) return g[a] || (a === 'game_cheer' ? g.jump || g.idle : g.idle) || null; // (until their pack is here)
     return g[a] || (a === 'kick' ? g.flip_kick : a === 'flip_kick' ? g.kick : null)
       || (ONCE.has(a) ? g.flip_kick || g.kick : a === 'run' ? g.walk : a === 'fight_idle' ? g.idle : null) || g.idle || null;
   }
   function playAnim(p, a) {
     if (!p.model) return;
     if (p.model.kind === 'kit') { // a kit ape walks / runs by itself from how fast it moves: only its jump and kick are played
-      if (a !== p.anim && ONCE.has(a)) window.SamuraiKit?.actorAction?.(p.model.node, a === 'jump' ? 'jump' : 'kick', 1);
+      const K = window.SamuraiKit;
+      if (/^dance_/.test(a)) { if (!K?.actorBusy?.(p.model.node)) K?.actorAction?.(p.model.node, 'dance'); } // (its own hop, again and again)
+      else if (a !== p.anim && ONCE.has(a)) K?.actorAction?.(p.model.node, a === 'jump' || a === 'game_cheer' ? 'jump' : 'kick', 1);
       p.anim = a; return;
     }
     const g = groupFor(p, a), again = a !== p.anim;
@@ -361,6 +413,7 @@
     list.forEach(p => {
       if (!p.model) capsuleOf(p).setEnabled(true); else if (p.capsule) p.capsule.setEnabled(false);
       if (p.model) {
+        if (p.model.kind === 'rig' && !p.model.pack && (PACK_MOVES.has(p.s[4]) || PACK_MOVES.has(p.once))) loadPack(p); // they emote: their moves
         if (p.once) playOnce(p, p.once, true);
         const a = p.s[4] || 'idle', held = p.hold && now < p.hold.until && (a === 'idle' || (p.hold.over && !ONCE.has(a)));
         playAnim(p, held ? p.hold.a : a);

@@ -1,5 +1,6 @@
 // assets/village-touch.js — touch controls for phones and tablets (Oct 23).
-// A stick walks (pushed to its rim it runs) and three buttons press O (use / talk / open), Space (jump) and F (attack).
+// A stick walks (pushed to its rim it runs) and four buttons press O (use / talk / open), Space (jump), F (attack) and E
+// (the emotes: a row of five opens, tapped to play).
 // They press the same keys the keyboard does (KeyboardEvents on document), so every rule of the walk still applies:
 // walking is camera-relative, prompts, doors, chests. Dragging a finger anywhere else turns the camera, as before.
 // Shown on touch screens only (?touch=1 / ?touch=0 force it), while walking. The village calls
@@ -20,12 +21,15 @@
   background:radial-gradient(circle,rgba(10,16,32,.28) 0 55%,rgba(10,16,32,.42) 56%);border:2px solid rgba(232,197,106,.45);pointer-events:auto;touch-action:none}
 #vtKnob{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:rgba(232,197,106,.55);border:2px solid rgba(255,240,200,.8);box-shadow:0 2px 10px rgba(0,0,0,.4)}
 #vtStick.run #vtKnob{background:rgba(255,140,60,.75)}
-#vtBtns{position:absolute;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(max(18px,env(safe-area-inset-bottom,0px)) + 196px);display:grid;grid-template-columns:repeat(2,64px);gap:12px;pointer-events:none}
+#vtBtns{position:absolute;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(max(18px,env(safe-area-inset-bottom,0px)) + 196px);display:grid;grid-template-columns:repeat(3,64px);gap:12px;pointer-events:none}
 .vtBtn{pointer-events:auto;touch-action:none;width:64px;height:64px;border-radius:50%;border:2px solid rgba(232,197,106,.6);background:rgba(10,16,32,.55);color:#f3e3b5;
   font:800 13px/1.1 system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;box-shadow:0 2px 10px rgba(0,0,0,.35)}
 .vtBtn b{font-size:20px;line-height:1}
 .vtBtn.down{background:rgba(232,197,106,.45);color:#1a1206}
-.vtBtn.use{grid-column:2;grid-row:1 / span 2;align-self:center;width:72px;height:72px}
+.vtBtn.use{grid-column:3;grid-row:1 / span 2;align-self:center;width:72px;height:72px}
+.vtBtn.jump{grid-column:2;grid-row:1}.vtBtn.hit{grid-column:2;grid-row:2}
+.vtBtn.emote{grid-column:1;grid-row:2;align-self:end;justify-self:end;width:54px;height:54px;font-size:11px}
+.vtBtn.emote svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 .vtBtn.use.ready{border-color:#ffe08a;color:#fff3cf;animation:vtReady 1.6s ease-in-out infinite}
 @keyframes vtReady{0%,100%{box-shadow:0 0 0 2px rgba(232,197,106,.35),0 0 12px rgba(232,197,106,.45)}50%{box-shadow:0 0 0 5px rgba(232,197,106,.16),0 0 22px rgba(232,197,106,.75)}}
 body.game-hide-touch-btns #vtBtns{display:none}
@@ -34,13 +38,15 @@ html.vt-touch #ctrl{display:none}
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
   const root = document.createElement('div'); root.id = 'vtouch';
   root.innerHTML = '<div id="vtStick"><div id="vtKnob"></div></div><div id="vtBtns">' +
-    '<button type="button" class="vtBtn" data-key=" " aria-label="Jump"><b>⤴</b>Jump</button>' +
+    '<button type="button" class="vtBtn jump" data-key=" " aria-label="Jump"><b>⤴</b>Jump</button>' +
     '<button type="button" class="vtBtn use" data-key="o" aria-label="Use or talk"><b>✋</b><span>Use</span></button>' +
-    '<button type="button" class="vtBtn" data-key="f" aria-label="Attack"><b>⚔</b>Hit</button></div>';
+    '<button type="button" class="vtBtn hit" data-key="f" aria-label="Attack"><b>⚔</b>Hit</button>' +
+    '<button type="button" class="vtBtn emote" data-key="e" aria-label="Emotes"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="8.5" r="4.2"/><path d="M20 13.5v11M20 16.5 13 7.5M20 16.5l7-9M20 24.5l-5 9M20 24.5l5 9"/></svg>Emote</button></div>';
   // the corner list of keys (W A S D, mouse, Esc) and the welcome card's controls are for keyboards: on a touch screen the
   // list goes and the card names the touch controls
   document.documentElement.classList.add('vt-touch');
-  const TOUCH_HELP = [['Move', 'The stick, bottom left'], ['Run', 'Push the stick to its rim'], ['Look', 'Drag anywhere else'], ['Jump', 'Jump button'], ['Use / talk', 'Use button'], ['Journal', 'Journal button']];
+  const TOUCH_HELP = [['Move', 'The stick, bottom left'], ['Run', 'Push the stick to its rim'], ['Look', 'Drag anywhere else'], ['Jump', 'Jump button'], ['Use / talk', 'Use button'], ['Journal', 'Journal button'],
+    ['Chat', 'Chat button, top right'], ['Emotes', 'Emote button'], ['Photo', 'Camera button']];
   const touchHelp = () => { const list = document.getElementById('playerStartupList'); if (list) list.innerHTML = TOUCH_HELP.map(([b, t]) => `<div class="startup-control"><b>${b}</b>${t}</div>`).join(''); };
   const mount = () => { document.body.appendChild(root); touchHelp(); };
   if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);

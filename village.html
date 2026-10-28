@@ -1750,9 +1750,12 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
       <div class="startup-control"><b>Move</b>WASD or arrows</div>
       <div class="startup-control"><b>Look</b>Mouse</div>
       <div class="startup-control"><b>Run</b>R</div>
-      <div class="startup-control"><b>Jump</b>F</div>
+      <div class="startup-control"><b>Jump</b>Space</div>
       <div class="startup-control"><b>Interact</b>O</div>
       <div class="startup-control"><b>Journal</b>Journal button</div>
+      <div class="startup-control"><b>Chat</b>Enter</div>
+      <div class="startup-control"><b>Emotes</b>E</div>
+      <div class="startup-control"><b>Photo</b>P</div>
     </div>
     <button id="playerStartupEnter" type="button" onclick="enterHubVillageFromStartup()">Begin Hub Journey</button>
   </div>
@@ -1764,7 +1767,7 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
 <div id="saveBadge">SAVED ✓</div>
 <div id="hud">
   <div id="logo"><h1>REBEL ANTS</h1><span>The Hidden Village</span></div>
-  <div id="ctrl"><kbd>W A S D</kbd> Walk<br><kbd>Mouse</kbd> Look<br><kbd>Click</kbd> Enter<br><kbd>ESC</kbd> Orbit</div>
+  <div id="ctrl"><kbd>W A S D</kbd> Walk<br><kbd>Mouse</kbd> Look<br><kbd>E</kbd> Emotes<br><kbd>Click</kbd> Enter<br><kbd>ESC</kbd> Orbit</div>
 </div>
 
 <div id="selectedRebelPanel">
@@ -12438,6 +12441,101 @@ function loadGamesPack() {
   })().catch(e => { console.warn('games pack', e); return null; });
 }
 window._gamesPack = GamesPack; // tests
+// ── Emotes (multiplayer step 1): E (or the Emote button on a touch screen) opens a row of five: Cheer and four dances,
+// the games pack's game_cheer and dance_wave / tut / house / gangnam; 1-5 or a click plays one. A dance loops until the
+// Rebel moves, a cheer plays once. Other players see it: the move's name goes in the room state (mpAnimName) and their
+// copy of this Rebel plays it from the same games pack. A kit ape hops (its own dance), the starter ant only cheers (a jump).
+var Emote = { on:null, slot:null, kit:false, once:false, until:0, open:false, el:null };
+const EMOTES = [
+  { id:'game_cheer', name:'Cheer', once:true, svg:'<circle cx="20" cy="8.5" r="4.2"/><path d="M20 13.5v11M20 16.5 13 7.5M20 16.5l7-9M20 24.5l-5 9M20 24.5l5 9M7 5l2 3M33 5l-2 3M5.5 12h3M34.5 12h-3"/>' },
+  { id:'dance_wave', name:'Wave', svg:'<circle cx="20" cy="9" r="4.2"/><path d="M20 14v11M4 19q4-6 8-1t8 0 8 0 8-1M20 25l-6 8.5M20 25l6 8.5"/>' },
+  { id:'dance_tut', name:'Tut', svg:'<circle cx="20" cy="8.5" r="4.2"/><path d="M20 13.5v11M20 16.5h-7.5v-7M20 16.5h7.5v7.5M20 24.5l-5 9M20 24.5l5 9"/>' },
+  { id:'dance_house', name:'House', svg:'<circle cx="18.5" cy="8.5" r="4.2"/><path d="M18.5 13.5l1 11M19 16.5l-6.5 3.5 2.5 4.5M19 16.5l6.5 2.5 3-4M19.5 24.5l-6 9M19.5 24.5l8.5 4.5"/><path d="M31 27.5h4M32 31.5h4"/>' },
+  { id:'dance_gangnam', name:'Gallop', svg:'<circle cx="20" cy="8.5" r="4.2"/><path d="M20 13.5v11M20 16.5l6.5 3.5-5.5 2.5M20 16.5l-4.5 4.5 6.5 1M20 24.5l-4.5 9M20 24.5l6.5 3-1 6.5"/>' }
+];
+// what this character can do: Forge rigs and kit apes all five, the starter ant the cheer (its jump)
+const emoteKind = () => window.forgeRigBundleInfo ? 'rig' : window.kitPlayerModel ? 'kit' : 'starter';
+function emoteBlocked() {
+  try { return !walkMode || adminMode || MiniGames.on || DanceOff.on || DanceOff.choosing || SkillBar.on || SWIM.on || !!activeNPCDialogue || isVillageGateMenuOpen() || !charMesh; } catch (e) { return true; }
+}
+function buildEmoteBar() {
+  if (Emote.el) return Emote.el;
+  const css = document.createElement('style');
+  css.textContent = `#emoteBar{position:fixed;left:50%;bottom:26px;transform:translate(-50%,10px);z-index:65;display:flex;gap:10px;padding:26px 14px 12px;border-radius:18px;background:rgba(6,10,24,.84);border:1px solid rgba(232,197,106,.5);box-shadow:0 12px 34px rgba(0,0,0,.5);backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .14s,transform .14s;-webkit-user-select:none;user-select:none}
+#emoteBar.on{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
+#emoteBar .eh{position:absolute;left:0;right:0;top:9px;text-align:center;font:400 9px/1 'Cinzel Decorative',serif;letter-spacing:3px;color:#e8c56a;text-transform:uppercase}
+#emoteBar .em{position:relative;width:68px;height:80px;padding:0;border-radius:14px;border:1px solid rgba(232,197,106,.32);background:rgba(255,255,255,.035);color:#f3e3b5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font:800 10px/1 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;touch-action:manipulation}
+#emoteBar .em svg{width:40px;height:40px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+#emoteBar .em:hover,#emoteBar .em.on{background:rgba(232,197,106,.17);border-color:#e8c56a;color:#fff6d8}
+#emoteBar .em.on{box-shadow:0 0 0 2px rgba(232,197,106,.25),0 0 18px rgba(232,197,106,.35)}
+#emoteBar .em i{position:absolute;top:6px;left:8px;font:700 10px/1 system-ui,sans-serif;font-style:normal;color:rgba(232,197,106,.75)}
+#emoteBar .em.off{opacity:.32;cursor:default}
+html.vt-touch #emoteBar{bottom:auto;top:50%;transform:translate(-50%,-46%)}
+html.vt-touch #emoteBar.on{transform:translate(-50%,-50%)}
+html.vt-touch #emoteBar .em i{display:none}
+@media (max-width:420px){#emoteBar{gap:6px;padding:24px 10px 10px}#emoteBar .em{width:60px;height:74px}#emoteBar .em svg{width:36px;height:36px}}`;
+  document.head.appendChild(css);
+  const el = document.createElement('div'); el.id = 'emoteBar'; el.setAttribute('role', 'menu'); el.setAttribute('aria-label', 'Emotes');
+  el.innerHTML = '<div class="eh">Emotes</div>' + EMOTES.map((m, i) => `<button type="button" tabindex="-1" class="em" data-id="${m.id}" role="menuitem" aria-label="${m.name}"><i>${i + 1}</i><svg viewBox="0 0 40 40" aria-hidden="true">${m.svg}</svg>${m.name}</button>`).join('');
+  el.addEventListener('mousedown', e => e.preventDefault()); // (no focus: Space would press it again)
+  el.addEventListener('click', e => { const b = e.target.closest('.em'); if (b && !b.classList.contains('off')) playEmote(b.dataset.id); });
+  document.body.appendChild(el);
+  // a press anywhere else closes it (the Emote button itself toggles it)
+  document.addEventListener('pointerdown', e => { if (Emote.open && !el.contains(e.target) && !e.target.closest?.('.vtBtn.emote')) closeEmoteBar(); }, true);
+  return Emote.el = el;
+}
+function openEmoteBar() {
+  if (emoteBlocked()) return false;
+  const el = buildEmoteBar(), kind = emoteKind();
+  el.querySelectorAll('.em').forEach(b => {
+    const m = EMOTES.find(x => x.id === b.dataset.id), off = kind === 'starter' && !m.once;
+    b.classList.toggle('off', off); b.title = off ? 'Dances come with a forged Rebel' : '';
+    b.classList.toggle('on', Emote.on === m.id);
+  });
+  el.classList.add('on'); Emote.open = true;
+  if (kind === 'rig' && !GamesPack.ready) loadGamesPack(); // (the moves on their way while they choose)
+  return true;
+}
+function closeEmoteBar() { Emote.open = false; Emote.el?.classList.remove('on'); }
+async function playEmote(id) {
+  const m = EMOTES.find(x => x.id === id); closeEmoteBar();
+  if (!m || emoteBlocked()) return false;
+  stopEmote();
+  const kind = emoteKind();
+  if (kind === 'kit') { // a Chumpz kit ape: a jump for the cheer, its own dance (again and again) for the dances
+    SamuraiKit.actorAction(window.kitPlayerModel, m.once ? 'jump' : 'dance');
+    Object.assign(Emote, { on:id, slot:null, kit:true, once:!!m.once, until:m.once ? performance.now() + 900 : Infinity });
+    return true;
+  }
+  const jump = () => playForgeRigAction(runKey && animGroups[10] ? 10 : 4) || (switchAnim(4, false), setTimeout(() => { if (animState === 4) switchAnim(0, true); }, 1000), true);
+  if (kind === 'starter') { if (!m.once) return false; switchAnim(4, false); setTimeout(() => { if (animState === 4) switchAnim(0, true); }, 1000); return true; }
+  let slot = GamesPack.slots?.[id];
+  if (slot == null) {
+    const t = loadGamesPack(), slow = setTimeout(() => showToast('Getting the moves…', 2600), 700);
+    await Promise.race([t, new Promise(r => setTimeout(r, 9000))]); clearTimeout(slow);
+    slot = GamesPack.slots?.[id];
+    if (emoteBlocked() || moveForward || moveBackward || turnLeft || turnRight) return false; // they walked off meanwhile
+    if (slot == null || !animGroups[slot]) { if (m.once) return jump(); showToast('This Rebel has no dance moves yet.', 3200); return false; }
+  }
+  const g = animGroups[slot];
+  if (g._gameSpeed0 != null) g.speedRatio = g._gameSpeed0; // (a game's speed for it is not the emote's)
+  Object.assign(Emote, { on:id, slot, kit:false, once:!!m.once, until:Infinity });
+  if (m.once) playForgeRigAction(slot, null, true);
+  else { if (animState === slot) { if (g.isPlaying) g.stop(); animState = -1; } switchAnim(slot, true); }
+  return true;
+}
+// a dance stops when the Rebel moves (or swims, or a game starts); a move that takes over (a jump, a kick) ends it too
+function stopEmote() {
+  const was = Emote.on, slot = Emote.slot; Emote.on = null; Emote.slot = null; Emote.kit = false;
+  if (was && slot != null && animState === slot) { const g = animGroups[slot]; if (g?.isPlaying) g.stop(); animState = -1; switchAnim(0, true); }
+}
+function emoteFrame() {
+  if (!Emote.on) return;
+  if (emoteBlocked() || moveForward || moveBackward || turnLeft || turnRight) { stopEmote(); return; }
+  if (Emote.kit) { if (performance.now() > Emote.until) { Emote.on = null; return; } if (!Emote.once && !SamuraiKit.actorBusy(window.kitPlayerModel)) SamuraiKit.actorAction(window.kitPlayerModel, 'dance'); return; }
+  if (animState !== Emote.slot) { Emote.on = null; Emote.slot = null; } // the cheer ended, or a jump / kick took over
+}
+window._emote = { state:Emote, play:playEmote, open:openEmoteBar, close:closeEmoteBar, stop:stopEmote }; // tests
 function miniGameClipSlot(name) { return MiniGames.weapon?.slots?.[name] ?? GamesPack.slots?.[name] ?? (window._forgeClipSlots || {})[name]; }
 // a move a game held on one pose (ctx.player.pose: paused) stops before the next move plays; stopping keeps the pose, so
 // the next move blends from it
@@ -27760,6 +27858,7 @@ function toggleWalk() {
     buildVillageHudMap();
     if (PendingRoomRestore) enterPendingRoomRestore();
   } else {
+    stopEmote(); closeEmoteBar();
     if (!configureInteriorEditCamera()) {
       scene.activeCamera = orbit; orbit.attachControl(canvas, true); walk.detachControl();
     }
@@ -27788,6 +27887,14 @@ document.addEventListener('keydown', async e => {
     e.preventDefault();
     return;
   }
+
+  // the emote bar: 1-5 plays one, E / Esc closes it; any other key closes it and goes on as usual. E opens it
+  if (Emote.open) {
+    const n = '12345'.indexOf(key);
+    if (n >= 0 && key) { e.preventDefault(); if (!Emote.el?.querySelectorAll('.em')[n]?.classList.contains('off')) playEmote(EMOTES[n].id); return; }
+    if (key === 'e' || key === 'escape') { e.preventDefault(); closeEmoteBar(); return; }
+    closeEmoteBar();
+  } else if (key === 'e' && !adminMode && walkMode && !e.repeat) { e.preventDefault(); openEmoteBar(); return; }
 
   if (key === 'escape' && pendingAdminPlacement) {
     clearAdminPlacement();
@@ -27927,6 +28034,8 @@ document.addEventListener('keydown', async e => {
   if (key === 'a' || e.key === 'ArrowLeft') turnLeft = true;
   if (key === 'd' || e.key === 'ArrowRight') turnRight = true;
   if (!walkMode) return;
+  // a move key ends an emote first (a looping dance never "finishes", so the moves below would wait on it for ever)
+  if (Emote.on && !adminMode && (key === 'r' || (key.length === 1 && ' fgcbvhkqt'.includes(key)))) stopEmote();
   if (key === 'r' && !adminMode) { runKey=true; switchAnim(2, true); }
   if (key === 'q' && !adminMode && window._villageWeapon) { toggleVillageWeapon(); return; }
     if (key === 'f' && !adminMode) {
@@ -29958,6 +30067,7 @@ engine.runRenderLoop(()=>{
       groundPlayableVisualToTerrain(_terrainY);
       // Slope tilt removed — character stays upright
     }
+    emoteFrame(); // (a dance stops as the Rebel moves, so the walk below takes over)
     // a roam game's own walk (ctx.player.walkAs: the sneak walk) takes the walk's place; running stays the run
     const _ws = MiniGames.on ? MiniGames.walkSlot : null;
     if (SWIM.on && SWIM.slot != null && !MiniGames.on) playPlayerSwimClip(moveForward||moveBackward||turnLeft||turnRight||runKey);
@@ -30269,6 +30379,7 @@ setInterval(() => window.VillageTouch?.update({ walking: !!walkMode && !adminMod
 // Step 3: the text chat (assets/village-chat.js), through the same room.
 const MP_ANIMS = ['idle', 'walk', 'run', 'kick', 'jump'];
 function mpAnimName() {
+  if (Emote.on) return Emote.on; // (an emote: their copy of this Rebel plays it)
   if (animState < 0) return 'idle';
   if (animState === 0 && window._forgeFightStance) return 'fight_idle';
   if (animState < 5) return MP_ANIMS[animState];
