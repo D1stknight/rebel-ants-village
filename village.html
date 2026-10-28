@@ -6664,10 +6664,35 @@ const LITE_GRAPHICS = (() => {
   } catch (e) { return false; }
 })();
 window._liteGraphics = LITE_GRAPHICS;
+// After a crash on a phone (iOS Safari closed Universe while it was on screen and loaded it again: no pagehide came),
+// Universe runs lighter on that phone for the next 3 days: pictures at 512 px, the 3D at 1.5x the CSS pixels, a smaller
+// shadow map and minimap, two other players with their own model; a second crash goes lighter still (256 px, 1x, one).
+// sessionStorage says 'on' while a Universe page is on screen in this tab, 'hidden' while it is in the background (a
+// phone may stop a background page for another app: not counted), 'off' once it was left. ?light=0 / 1 / 2 to compare.
+const CRASH_LIGHT = (() => {
+  const q = new URLSearchParams(location.search).get('light');
+  if (q === '0' || q === '1' || q === '2') return +q;
+  if (!LITE_GRAPHICS) return 0;
+  let n = 0;
+  try {
+    const K = 'rebelAntsPageState:v1', L = 'rebelAntsCrashLight:v1';
+    const kept = JSON.parse(localStorage.getItem(L) || 'null');
+    if (kept && Date.now() - kept.at < 3 * 864e5) n = Math.max(0, Math.min(2, kept.n | 0));
+    if (sessionStorage.getItem(K) === 'on') { n = Math.min(2, n + 1); localStorage.setItem(L, JSON.stringify({ n, at: Date.now() })); window._crashLightNew = true; }
+    let left = false;   // (a page being left turns hidden after its pagehide: that stays 'off')
+    const set = v => { try { sessionStorage.setItem(K, v); } catch (e) {} };
+    set(document.visibilityState === 'hidden' ? 'hidden' : 'on');
+    document.addEventListener('visibilitychange', () => { if (!left) set(document.visibilityState === 'hidden' ? 'hidden' : 'on'); });
+    addEventListener('pagehide', () => { left = true; set('off'); });
+    addEventListener('pageshow', e => { if (e.persisted) { left = false; set('on'); } });
+  } catch (e) {}
+  return n;
+})();
+window._crashLight = CRASH_LIGHT;
 // phones: pictures larger than 1024 px come in at 1024 (Babylon scales them down as it loads them): a 2048 texture takes a
 // quarter of the memory, which an iPhone needs (it closed the page once the Hub, its Rebel and another player passed its
 // limit). ?texcap=<px> (0 = none) to compare.
-const TEX_CAP = (() => { const v = new URLSearchParams(location.search).get('texcap'); return v != null && /^\d+$/.test(v) ? +v : (LITE_GRAPHICS ? 1024 : 0); })();
+const TEX_CAP = (() => { const v = new URLSearchParams(location.search).get('texcap'); return v != null && /^\d+$/.test(v) ? +v : (LITE_GRAPHICS ? [1024, 512, 256][CRASH_LIGHT] : 0); })();
 if (TEX_CAP >= 256) { const caps = engine.getCaps(); caps.maxTextureSize = Math.min(caps.maxTextureSize, TEX_CAP); }
 window._texCap = TEX_CAP;
 // Babylon keeps a JS Vector3 for every vertex of a mesh each time its bounds are refreshed (for picking a skinned mesh in
@@ -6687,7 +6712,8 @@ if (LITE_GRAPHICS) {
   for (const k of ['shrine_2', 'dojo_7', 'dojo_5', 'pine_1', 'cherry_blossom']) if (ASSETS[k]?.path) ASSETS[k].path = ASSETS[k].path.replace('/assets/buildings/', '/assets/buildings/lite/');
   // (pine and cherry pictures at 512, the two small pick-ups at 256: tools/lite-glb.py, the same meshes byte for byte)
   for (const k of ['flame_shard', 'root_memory']) if (COLLECTIBLE_TYPES[k]?.modelUrl) COLLECTIBLE_TYPES[k].modelUrl = COLLECTIBLE_TYPES[k].modelUrl.replace('/assets/collectibles/', '/assets/collectibles/lite/');
-  if ((window.devicePixelRatio || 1) > 2) engine.setHardwareScalingLevel(1 / 2);   // twice the CSS pixels, not 3x
+  const maxDpr = [2, 1.5, 1][CRASH_LIGHT];   // twice the CSS pixels, not 3x (after a crash 1.5x, then 1x)
+  if ((window.devicePixelRatio || 1) > maxDpr) engine.setHardwareScalingLevel(1 / maxDpr);
 }
 
 const CORE_ASSET_KEYS = new Set(Object.keys(ASSETS));
@@ -14068,7 +14094,7 @@ const hemi=new BABYLON.HemisphericLight("h",new BABYLON.Vector3(0,1,0),scene);
 hemi.intensity=0.65; hemi.diffuse=new BABYLON.Color3(.52,.7,.98);
 hemi.groundColor=new BABYLON.Color3(.55,.58,.48); hemi.specular=new BABYLON.Color3(0,0,0);
 
-const shadows=new BABYLON.ShadowGenerator(LITE_GRAPHICS ? 1024 : 2048,sun);
+const shadows=new BABYLON.ShadowGenerator(LITE_GRAPHICS ? (CRASH_LIGHT ? 512 : 1024) : 2048,sun);
 shadows.useExponentialShadowMap=true; shadows.bias=0.005;
 shadows.darkness=0.85; // 0 = black shadows, 1 = none: 0.85 is only a faint 15% shade
 if (SHADOW_PREVIEW) { shadows.darkness=0.45; shadows.useExponentialShadowMap=false; shadows.usePercentageCloserFiltering=true; shadows.filteringQuality=BABYLON.ShadowGenerator.QUALITY_MEDIUM; shadows.bias=0.0015; shadows.normalBias=0.02; console.log('Village shadows on (?shadows=off to disable)'); }
@@ -29826,7 +29852,7 @@ refreshQuestBuilderOptions();
   }
   if (look === 'high') setTimeout(addBloom, 3000);
   // lite graphics (phones) draw at no more than twice the CSS pixels (LITE_GRAPHICS)
-  const dpr = Math.max(1, LITE_GRAPHICS ? Math.min(2, window.devicePixelRatio || 1) : (window.devicePixelRatio || 1));
+  const dpr = Math.max(1, LITE_GRAPHICS ? Math.min([2, 1.5, 1][CRASH_LIGHT], window.devicePixelRatio || 1) : (window.devicePixelRatio || 1));
   const levels = [1 / dpr]; if (dpr >= 1.75) levels.push(1 / 1.5); if (dpr > 1.01) levels.push(1);
   let li = 0, low = 0, high = 0;
   const pinned = qs.get('res') === 'native';
@@ -30254,7 +30280,7 @@ function startVillageMultiplayer() {
   if (!window.VillageMP || startVillageMultiplayer.on) return;
   startVillageMultiplayer.on = true;
   window.VillageMP.start({
-    scene, village: CURRENT_VILLAGE_ID, lite: LITE_GRAPHICS,
+    scene, village: CURRENT_VILLAGE_ID, lite: LITE_GRAPHICS, maxFull: CRASH_LIGHT ? [4, 2, 1][CRASH_LIGHT] : undefined,
     shadows: () => shadows,
     player: () => charMesh ? { x: charMesh.position.x, y: charMesh.position.y, z: charMesh.position.z, yaw: charMesh.rotation.y, anim: mpAnimName(),
       interior: ActiveInterior ? String(ActiveInterior.targetInteriorId || ActiveInterior.interiorType || 'room') : null } : null,
@@ -30353,7 +30379,7 @@ function showSavedMinimap() {
 function buildVillageHudMap() {
   if (!window.VillageHud?.buildMap || buildVillageHudMap.done) return;
   buildVillageHudMap.done = true;
-  const mapPx = LITE_GRAPHICS ? 768 : 1536; // (a phone shows it as a 124 px circle: 768 is still sharper than that, at a quarter of the memory)
+  const mapPx = LITE_GRAPHICS ? (CRASH_LIGHT ? 512 : 768) : 1536; // (a phone shows it as a 124 px circle: 768 is still sharper than that, at a quarter of the memory)
   setTimeout(() => window.VillageHud.buildMap(320, mapPx), 600);
   setTimeout(() => window.VillageHud.buildMap(320, mapPx), 30000);
 }
@@ -30369,6 +30395,7 @@ function markVillageStartupInteractive() {
   schedulePostInteractiveStartupTask(startVillagePetalEffects, 1200);
   schedulePostInteractiveStartupTask(initVillageHud, 300);
   schedulePostInteractiveStartupTask(startVillageMultiplayer, 1500); // the other players (VillageMP)
+  if (window._crashLightNew) schedulePostInteractiveStartupTask(() => showToast("Universe closed on this phone last time (it ran out of memory), so it's running lighter for a few days.", 9000), 2000);
   if (PlaytestNote) schedulePostInteractiveStartupTask(() => showToast(PlaytestNote, 9000), 2500); // a playtest jump says where it put you
   // loaded again with the starter ant because the Rebel's model didn't download (rigFallbackToStarter): say so, and take
   // the test parameters off the address so a reload tries the Rebel again

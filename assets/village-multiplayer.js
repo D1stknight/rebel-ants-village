@@ -378,7 +378,7 @@
 
   function start(host) {
     if (H || !host || !window.BABYLON) return;
-    H = host; B = window.BABYLON; maxFull = H.lite ? 4 : 8; keepIdle = H.lite ? 1 : 4; keepMs = H.lite ? 20000 : 60000;
+    H = host; B = window.BABYLON; maxFull = H.maxFull > 0 ? H.maxFull : H.lite ? 4 : 8; keepIdle = H.lite ? 1 : 4; keepMs = H.lite ? 20000 : 60000;
     root = new B.TransformNode('mpPlayersRoot', H.scene); root.metadata = { keepInInteriors: true }; // rooms hide the village, not the players (each is shown in its own place)
     setInterval(() => send('{"t":"ping"}'), PING_MS); // (timers, not frames: a hidden tab draws nothing)
     document.addEventListener('visibilitychange', () => { const me = H.player(); if (document.hidden && me && H.canSend()) sendState(me, 1, performance.now()); });
