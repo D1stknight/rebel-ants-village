@@ -75,7 +75,11 @@ export class StageHall {
   toControl(path, body) { const p = this.control().fetch('https://control' + path, { method: 'POST', body: JSON.stringify(body) }).catch(() => {}); try { this.ctx.waitUntil(p); } catch (e) {} }
   async ask(path, body) { const r = await withTimeout(this.control().fetch('https://control' + path, { method: 'POST', body: JSON.stringify(body) }), 2500); return r.json(); }
   history() { return this.sql.exec('SELECT i, at, u, n, k, h, x FROM chat WHERE del = 0 ORDER BY i DESC LIMIT ?', HISTORY).toArray().reverse(); }
-  count(force) { const now = Date.now(); if (!force && now - this.nAt < 3000) return; this.nAt = now; this.all({ t: 'sn', n: this.socks.size }); }
+  count(force) { // (at most one a 3 s; one held back is sent when the 3 s are up, so the last number always arrives)
+    const now = Date.now();
+    if (!force && now - this.nAt < 3000) { if (!this.nTimer) this.nTimer = setTimeout(() => { this.nTimer = null; this.count(true); }, 3000 - (now - this.nAt)); return; }
+    this.nAt = now; this.all({ t: 'sn', n: this.socks.size });
+  }
   // the event as the desk has it (asked once, then kept; the desk pushes changes), and an alarm at its end
   async load(id) {
     if (this.kv('id') === id && this.ev()) return this.ev();
