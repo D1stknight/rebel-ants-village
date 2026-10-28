@@ -30392,7 +30392,7 @@ function startVillageMultiplayer() {
   if (!window.VillageMP || startVillageMultiplayer.on) return;
   startVillageMultiplayer.on = true;
   window.VillageMP.start({
-    scene, village: CURRENT_VILLAGE_ID, lite: LITE_GRAPHICS, maxFull: CRASH_LIGHT ? [4, 2, 1][CRASH_LIGHT] : undefined,
+    scene, village: CURRENT_VILLAGE_ID, lite: LITE_GRAPHICS, maxFull: CRASH_LIGHT ? [4, 2, 1][CRASH_LIGHT] : undefined, maxLite: CRASH_LIGHT ? [10, 4, 0][CRASH_LIGHT] : undefined,
     shadows: () => shadows,
     player: () => charMesh ? { x: charMesh.position.x, y: charMesh.position.y, z: charMesh.position.z, yaw: charMesh.rotation.y, anim: mpAnimName(),
       interior: ActiveInterior ? String(ActiveInterior.targetInteriorId || ActiveInterior.interiorType || 'room') : null } : null,

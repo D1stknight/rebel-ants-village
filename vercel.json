@@ -89,6 +89,9 @@
     "api/terrain-base.mjs": {
       "includeFiles": "assets/village-terrain.js",
       "maxDuration": 30
+    },
+    "api/forge-light.mjs": {
+      "maxDuration": 60
     }
   },
   "crons": [

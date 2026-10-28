@@ -14,17 +14,21 @@
 // Emotes (the cheer and four dances, village.html Emote): the player's move in its state is the emote's name; a Forge rig
 // here plays it from that Rebel's own games pack (games.glb beside its rig), fetched the first time it emotes and kept
 // while their copy is (only those five moves of it). A kit ape hops, the starter ant jumps for a cheer.
+// Crowds: beyond the nearest few, the next ones (up to maxLite within LITE_R) are drawn as their light copy (a fifteenth
+// of the triangles, a 256 px picture, 22 joints, the moves seen from afar and the emotes: api/forge-light.mjs makes one
+// per rig the first time anyone asks; the starter ant's is assets/character/lite/ant_light.glb), so a busy village shows
+// everyone as their own character instead of grey stand-ins. Kit apes beyond the nearest few stay stand-ins.
 (function () {
   'use strict';
   const PROTOCOL = 'rebel-universe.v1', FULL_R = 80, TAG_R = 45, SEND_MS = 150, BEAT_MS = 12000, PING_MS = 25000;
-  const RIG_SCALE = 1.9, STARTER_SCALE = .018, TAG_Y = 3.95;
+  const RIG_SCALE = 1.9, STARTER_SCALE = .018, TAG_Y = 3.95, LITE_R = 120, STARTER_LITE = '/assets/character/lite/ant_light.glb';
   const STARTER = { base: '/assets/character/', idle: 'ant_idle_c.glb', clips: { walk: 'ant_walk_c.glb', run: 'ant_run_c.glb', kick: 'ant_flip_kick_c.glb', jump: 'ant_jumping_c.glb' } };
   const STORE = /^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\//;
   // moves that play once (the rest loop); a move the other's model lacks: a kick for these, else idle
   const ONCE = new Set(['jump', 'kick', 'flip_kick', 'front_kick', 'roundhouse_kick', 'side_kick', 'punch_combo', 'cartwheel', 'jump_run', 'backflip', 'front_flip', 'hurricane_kick', 'spin_flip_kick', 'crescent_kick', 'jab', 'cross_punch', 'hook_punch', 'elbow_punch', 'hit_reaction', 'knockdown', 'get_up', 'game_cheer']);
   // the emotes' moves in a Rebel's games pack (the dances loop)
   const PACK_MOVES = new Set(['game_cheer', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam']);
-  let H = null, B = null, root = null, ws = null, connecting = false, you = 0, room = null, closedFor = null, retry = 0, retryAt = 0, maxFull = 8;
+  let H = null, B = null, root = null, ws = null, connecting = false, you = 0, room = null, closedFor = null, retry = 0, retryAt = 0, maxFull = 8, maxLite = 24;
   const VC = () => window.VillageChat;
   const tell = (kind, d) => { try { VC()?.room?.(kind, d); } catch (e) { log('chat', e); } };
   const peers = new Map(), files = new Map(), clips = new Map();
@@ -112,7 +116,7 @@
   }
   function removePeer(id) {
     const p = peers.get(id); if (!p) return;
-    peers.delete(id); disposeModel(p);
+    peers.delete(id); disposeModel(p); disposeLite(p);
     try { p.tag?.material?.diffuseTexture?.dispose(); p.tag?.material?.dispose(); } catch (e) {}
     try { p.holder.dispose(false, false); } catch (e) {}
   }
@@ -246,6 +250,24 @@
     if (mat.getClassName?.() === 'PBRMaterial') { mat.emissiveColor = new B.Color3(0, 0, 0); mat.emissiveIntensity = 0; }
   }
   const markPeer = m => { m.isPickable = false; m.metadata = { ...(m.metadata || {}), camSkip: true, mpPeer: true }; };
+  // a copy of a downloaded model under this player's holder, set up as the village's own player: the meshes straight under
+  // the holder, their rotation dropped. rig: a Forge rig (its moves blend); else the starter ant (its joints lose their rest
+  // turn as the village's own do, no blending: its joints have no rotationQuaternion to blend from, and Babylon's animate()
+  // throws on it every frame, which stops the whole page). joints: its nodes by their own names
+  function copyOf(p, c, prefix, rig) {
+    const inst = c.instantiateModelsToScene(n => prefix + n, false, { doNotInstantiate: true });
+    const meshes = [], groups = {}, joints = new Map();
+    for (const r of inst.rootNodes) { if (r instanceof B.AbstractMesh) meshes.push(r); meshes.push(...r.getChildMeshes(false)); }
+    meshes.forEach(m => { m.parent = p.holder; if (m.rotationQuaternion) m.rotationQuaternion = null; if (!rig) m.position.y -= 8; markPeer(m); fixMaterial(m.material); });
+    for (const r of inst.rootNodes) if (!(r instanceof B.AbstractMesh) && !r.parent) r.parent = p.holder;
+    inst.animationGroups.forEach(g => { g.stop(); if (rig) { g.enableBlending = true; g.blendingSpeed = .12; } groups[g.name.startsWith(prefix) ? g.name.slice(prefix.length) : g.name] = g; });
+    for (const r of inst.rootNodes) for (const n of [r, ...r.getDescendants(false)]) {
+      if (n instanceof B.AbstractMesh) continue;
+      if (!rig && n !== r && n.rotationQuaternion) n.rotationQuaternion = null;
+      const k = n.name.startsWith(prefix) ? n.name.slice(prefix.length) : n.name; if (!joints.has(k)) joints.set(k, n);
+    }
+    return { inst, meshes, groups, joints };
+  }
   async function loadModel(p) {
     if (p.loading || p.model) return;
     p.loading = true;
@@ -262,22 +284,10 @@
         const c = await container(url);
         if (!peers.has(p.id)) return;
         useFile(url, used);
-        const inst = c.instantiateModelsToScene(n => prefix + n, false, { doNotInstantiate: true });
-        const meshes = [], groups = {}, extra = [];
-        for (const r of inst.rootNodes) { if (r instanceof B.AbstractMesh) meshes.push(r); meshes.push(...r.getChildMeshes(false)); }
-        // the same set-up as the village's own player: the meshes straight under the root, their rotation dropped
-        meshes.forEach(m => { m.parent = p.holder; if (m.rotationQuaternion) m.rotationQuaternion = null; if (!rig) m.position.y -= 8; markPeer(m); fixMaterial(m.material); });
-        for (const r of inst.rootNodes) if (!(r instanceof B.AbstractMesh) && !r.parent) r.parent = p.holder;
-        // blending for the rigs only, as the village's own player: the starter ant's joints have no rotationQuaternion to
-        // blend from (Babylon's animate() throws on it every frame, which stops the whole page)
-        inst.animationGroups.forEach(g => { g.stop(); if (rig) { g.enableBlending = true; g.blendingSpeed = .12; } groups[g.name.startsWith(prefix) ? g.name.slice(prefix.length) : g.name] = g; });
-        let joints = null; // a rig's nodes by their own names (the emotes' moves are put on them)
-        if (rig) { joints = new Map(); for (const r of inst.rootNodes) for (const n of [r, ...r.getDescendants(false)]) if (!(n instanceof B.AbstractMesh)) { const k = n.name.startsWith(prefix) ? n.name.slice(prefix.length) : n.name; if (!joints.has(k)) joints.set(k, n); } }
+        const { inst, meshes, groups, joints } = copyOf(p, c, prefix, rig), extra = [];
         if (!rig) {
-          // the starter ant: its joints lose their rest turn as the village's own do, idle in its file without the hips'
-          // travel, the other moves from their own files
-          const nodes = new Map();
-          for (const r of inst.rootNodes) for (const n of r.getDescendants(false)) if (!(n instanceof B.AbstractMesh)) { if (n.rotationQuaternion) n.rotationQuaternion = null; nodes.set(n.name.startsWith(prefix) ? n.name.slice(prefix.length) : n.name, n); }
+          // the starter ant: idle in its file without the hips' travel, the other moves from their own files
+          const nodes = joints;
           const noHipTravel = g => { for (let j = g.targetedAnimations.length - 1; j >= 0; j--) { const ta = g.targetedAnimations[j]; if (!ta.target || (ta.animation.targetProperty === 'position' && /mixamorig_Hips$/.test(ta.target.name || ''))) g.targetedAnimations.splice(j, 1); } };
           if (inst.animationGroups[0]) { groups.idle = inst.animationGroups[0]; noHipTravel(groups.idle); }
           await Promise.all(Object.entries(STARTER.clips).map(async ([name, file]) => {
@@ -291,28 +301,40 @@
         if (!peers.has(p.id)) { inst.dispose(); extra.forEach(g => g.dispose()); dropFiles(used); return; }
         p.holder.scaling.setAll(rig ? RIG_SCALE : STARTER_SCALE);
         const sh = H.shadows?.(); if (sh) meshes.forEach(m => { try { sh.addShadowCaster(m); } catch (e) {} });
-        p.model = { kind: rig ? 'rig' : 'starter', inst, groups, meshes, extra, files: used, joints, pack: null };
+        p.model = { kind: rig ? 'rig' : 'starter', inst, groups, meshes, extra, files: used, joints: rig ? joints : null, pack: null };
       }
+      disposeLite(p); // (the light copy that stood in meanwhile)
       placeTag(p);
       p.anim = ''; p.cur = null; log('model', p.id, p.model.kind);
     } catch (e) { log('model failed', p.id, e?.message); p.look = { t: 'capsule' }; if (!p.model) dropFiles(used); }
     finally { p.loading = false; }
   }
   // the name over the model's head (its bind pose; the starter ant's sits about 1.6 m under its feet, as the village's own)
+  const view = p => p.model || p.lite; // (what is drawn: the full model, else the light copy)
   function placeTag(p) {
-    const k = p.holder.scaling.x;
+    const k = p.holder.scaling.x, v = view(p);
     let top = TAG_Y - .45;
-    if (p.model) {
+    if (v) {
       p.holder.computeWorldMatrix(true);
       let max = -Infinity;
-      for (const m of p.model.meshes) { if (!m.getTotalVertices?.()) continue; m.computeWorldMatrix(true); m.refreshBoundingInfo(); max = Math.max(max, m.getBoundingInfo().boundingBox.maximumWorld.y); }
-      if (Number.isFinite(max)) top = max - p.holder.position.y + (p.model.kind === 'starter' ? 1.65 : 0);
+      for (const m of v.meshes) { if (!m.getTotalVertices?.()) continue; m.computeWorldMatrix(true); m.refreshBoundingInfo(); max = Math.max(max, m.getBoundingInfo().boundingBox.maximumWorld.y); }
+      if (Number.isFinite(max)) top = max - p.holder.position.y + (v.kind === 'starter' || v.starter ? 1.65 : 0);
     }
     if (p.tag) { p.tag.scaling.setAll(1 / k); p.tag.position.y = Math.min(6, Math.max(1.6, top + .45)) / k; }
     if (p.capsule) { p.capsule.scaling.setAll(1 / k); p.capsule.position.y = 1.6 / k; }
   }
   function disposeModel(p) {
     const m = p.model; if (!m) return; p.model = null; p.cur = null; p.anim = '';
+    disposeCopy(m);
+    if (!p.lite) p.holder.scaling.setAll(1);
+    placeTag(p);
+  }
+  function disposeLite(p) {
+    const m = p.lite; if (!m) return; p.lite = null;
+    if (!p.model) { p.cur = null; p.anim = ''; p.holder.scaling.setAll(1); }
+    disposeCopy(m); placeTag(p);
+  }
+  function disposeCopy(m) {
     const sh = H.shadows?.();
     try { if (sh) m.meshes.forEach(x => sh.removeShadowCaster(x)); } catch (e) {}
     try { m.extra.forEach(g => g.dispose()); } catch (e) {}
@@ -322,18 +344,49 @@
     if (m.inst) for (const x of m.meshes) { if (m.inst.rootNodes.includes(x)) continue; try { if (!x.isDisposed()) x.dispose(false, false); } catch (e) {} }
     try { if (m.inst) m.inst.dispose(); else m.node?.dispose(false, false); } catch (e) {}
     if (m.files) dropFiles(m.files);
-    p.holder.scaling.setAll(1); placeTag(p);
+  }
+  // ---- light copies (crowds) ----
+  const lites = new Map(); // rig url -> its light copy's url (null: none)
+  function liteUrl(rig) {
+    if (!lites.has(rig)) lites.set(rig, (async () => {
+      for (let i = 0; i < 6; i++) { // (202: another page asked first and it is being made)
+        let r; try { r = await fetch('/api/forge-light?rig=' + encodeURIComponent(rig), { credentials: 'same-origin' }); } catch (e) { return null; }
+        if (r.status === 202) { await new Promise(res => setTimeout(res, 3000 + i * 2000)); continue; }
+        const j = await r.json().catch(() => null);
+        return r.ok && j?.ok && typeof j.url === 'string' && STORE.test(j.url) ? j.url : null;
+      }
+      return null;
+    })());
+    return lites.get(rig);
+  }
+  const liteAble = p => !p.liteFailed && (p.look?.t === 'starter' || (p.look?.t === 'rig' && typeof p.look.url === 'string' && STORE.test(p.look.url)));
+  async function loadLite(p) {
+    if (p.liteLoading || p.lite || p.model) return;
+    p.liteLoading = true;
+    const rig = p.look?.t === 'rig', used = [];
+    try {
+      const url = rig ? await liteUrl(p.look.url) : STARTER_LITE;
+      if (!url) { p.liteFailed = true; return; }
+      const c = await container(url);
+      if (!peers.has(p.id) || p.model || !p.wantLite) return; // (not wanted any more: their full model came, or they went)
+      useFile(url, used);
+      const { inst, meshes, groups } = copyOf(p, c, 'mpPlayer_' + p.id + '_l_', rig);
+      p.holder.scaling.setAll(rig ? RIG_SCALE : STARTER_SCALE);
+      p.lite = { kind: 'lite', starter: !rig, inst, groups, meshes, extra: [], files: used };
+      p.anim = ''; p.cur = null; placeTag(p); log('lite', p.id);
+    } catch (e) { p.liteFailed = true; dropFiles(used); log('lite failed', p.id, e?.message); }
+    finally { p.liteLoading = false; }
   }
   function groupFor(p, a) {
-    const g = p.model?.groups || {};
+    const g = view(p)?.groups || {};
     if (a === 'swim') a = 'walk';
     if (PACK_MOVES.has(a)) return g[a] || (a === 'game_cheer' ? g.jump || g.idle : g.idle) || null; // (until their pack is here)
     return g[a] || (a === 'kick' ? g.flip_kick : a === 'flip_kick' ? g.kick : null)
       || (ONCE.has(a) ? g.flip_kick || g.kick : a === 'run' ? g.walk : a === 'fight_idle' ? g.idle : null) || g.idle || null;
   }
   function playAnim(p, a) {
-    if (!p.model) return;
-    if (p.model.kind === 'kit') { // a kit ape walks / runs by itself from how fast it moves: only its jump and kick are played
+    if (!view(p)) return;
+    if (p.model?.kind === 'kit') { // a kit ape walks / runs by itself from how fast it moves: only its jump and kick are played
       const K = window.SamuraiKit;
       if (/^dance_/.test(a)) { if (!K?.actorBusy?.(p.model.node)) K?.actorAction?.(p.model.node, 'dance'); } // (its own hop, again and again)
       else if (a !== p.anim && ONCE.has(a)) K?.actorAction?.(p.model.node, a === 'jump' || a === 'game_cheer' ? 'jump' : 'kick', 1);
@@ -346,7 +399,7 @@
     p.cur = g; g.start(!ONCE.has(a), 1, g.from, g.to);
   }
   function playOnce(p, a, over) { // over: it plays to its end even if they walk on meanwhile (an emote stops when they move)
-    if (!p.model) return;
+    if (!view(p)) return;
     const g = groupFor(p, a);
     p.hold = { a, over: !!over, until: performance.now() + (g ? Math.max(.4, (g.to - g.from) / 60) * 1000 : 900) }; p.anim = '';
     playAnim(p, a);
@@ -377,14 +430,14 @@
       const inCam = !!(cam && p.pos && Math.hypot(cam.x - p.pos.x, cam.z - p.pos.z) < 1.3 && cam.y > p.pos.y - .5 && cam.y < p.pos.y + 4.2);
       p.holder.setEnabled(same && !hidden && !inCam);
       // in another place (a room) its model goes too: it is not drawn there, and kept it would add to the nearest few
-      if (!same || hidden) { p.once = null; p.d = same ? p.d : null; if (!same) { if (p.model) disposeModel(p); continue; } }
+      if (!same || hidden) { p.once = null; p.d = same ? p.d : null; if (!same) { disposeModel(p); disposeLite(p); continue; } }
       const tx = p.s[0], ty = p.s[1], tz = p.s[2];
       if (Math.hypot(tx - p.pos.x, tz - p.pos.z) > 10 || Math.abs(ty - p.pos.y) > 6) p.pos.set(tx, ty, tz); // a teleport (a door, a gate jump)
       else { p.pos.x += (tx - p.pos.x) * k; p.pos.y += (ty - p.pos.y) * k; p.pos.z += (tz - p.pos.z) * k; }
       p.yaw += angle(p.s[3] - p.yaw) * k;
       p.holder.position.copyFrom(p.pos); p.holder.rotation.y = p.yaw;
       p.d = me ? Math.hypot(p.pos.x - me.x, p.pos.z - me.z) : 0;
-      if (hidden) { if (p.model) disposeModel(p); continue; }
+      if (hidden) { disposeModel(p); disposeLite(p); continue; }
       list.push(p);
       if (p.tag) {
         p.tag.setEnabled(names && p.d < TAG_R); p.tag.visibility = p.d < TAG_R - 10 ? 1 : Math.max(0, (TAG_R - p.d) / 10);
@@ -410,10 +463,27 @@
       }
       free--; loadModel(p);
     });
+    // the next ones (up to maxLite within LITE_R) as their light copy; one drawn keeps its place until someone 10 m nearer
+    // needs it. A player whose full model is on its way shows its light copy meanwhile
+    let liteFree = maxLite;
+    for (const p of list) {
+      p.wantLite = false; if (!p.lite && !p.liteLoading) continue;
+      if (!p.model && liteAble(p) && p.d < LITE_R + 8 && liteFree > 0) { liteFree--; p.wantLite = true; } else disposeLite(p);
+    }
+    for (const p of list) {
+      if (p.model || p.lite || p.liteLoading || !liteAble(p) || p.d >= LITE_R) continue;
+      if (liteFree <= 0) {
+        let far = null; for (const q of list) if (q.wantLite) far = q; // (the farthest one with a light copy)
+        if (!far || far.d < p.d + 10) break;
+        far.wantLite = false; disposeLite(far); liteFree++;
+      }
+      liteFree--; p.wantLite = true; loadLite(p);
+    }
     list.forEach(p => {
-      if (!p.model) capsuleOf(p).setEnabled(true); else if (p.capsule) p.capsule.setEnabled(false);
-      if (p.model) {
-        if (p.model.kind === 'rig' && !p.model.pack && (PACK_MOVES.has(p.s[4]) || PACK_MOVES.has(p.once))) loadPack(p); // they emote: their moves
+      const v = view(p);
+      if (!v) capsuleOf(p).setEnabled(true); else if (p.capsule) p.capsule.setEnabled(false);
+      if (v) {
+        if (p.model?.kind === 'rig' && !p.model.pack && (PACK_MOVES.has(p.s[4]) || PACK_MOVES.has(p.once))) loadPack(p); // they emote: their moves
         if (p.once) playOnce(p, p.once, true);
         const a = p.s[4] || 'idle', held = p.hold && now < p.hold.until && (a === 'idle' || (p.hold.over && !ONCE.has(a)));
         playAnim(p, held ? p.hold.a : a);
@@ -431,7 +501,8 @@
 
   function start(host) {
     if (H || !host || !window.BABYLON) return;
-    H = host; B = window.BABYLON; maxFull = H.maxFull > 0 ? H.maxFull : H.lite ? 4 : 8; keepIdle = H.lite ? 1 : 4; keepMs = H.lite ? 20000 : 60000;
+    H = host; B = window.BABYLON; maxFull = H.maxFull > 0 ? H.maxFull : H.lite ? 4 : 8; maxLite = H.maxLite >= 0 ? H.maxLite : H.lite ? 10 : 24;
+    keepIdle = H.lite ? 1 : 4; keepMs = H.lite ? 20000 : 60000;
     root = new B.TransformNode('mpPlayersRoot', H.scene); root.metadata = { keepInInteriors: true }; // rooms hide the village, not the players (each is shown in its own place)
     setInterval(() => send('{"t":"ping"}'), PING_MS); // (timers, not frames: a hidden tab draws nothing)
     document.addEventListener('visibilitychange', () => { const me = H.player(); if (document.hidden && me && H.canSend()) sendState(me, 1, performance.now()); });
@@ -446,5 +517,5 @@
     peers: () => [...peers.values()],
     peer: id => peers.get(+id) || null
   };
-  window.VillageMP = { start, tick, reconnect, emote, peers, chat, get state() { return { enabled, open: !!ws && ws.readyState === 1, you, room, peers: peers.size, closedFor, files: files.size }; }, stop() { enabled = false; const s = ws; ws = null; try { s?.close(1000); } catch (e) {} dropAll(); sweepFiles(Infinity); tell('closed'); } };
+  window.VillageMP = { start, tick, reconnect, emote, peers, chat, get state() { const v = [...peers.values()]; return { enabled, open: !!ws && ws.readyState === 1, you, room, peers: peers.size, closedFor, files: files.size, full: v.filter(p => p.model).length, lite: v.filter(p => p.lite).length }; }, stop() { enabled = false; const s = ws; ws = null; try { s?.close(1000); } catch (e) {} dropAll(); sweepFiles(Infinity); tell('closed'); } };
 })();
