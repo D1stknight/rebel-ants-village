@@ -14594,6 +14594,67 @@ function recoverAutoplayBlockedAudio() {
   });
 }
 
+// iPhones and iPads keep an <audio> element's volume at 1 (WebKit: the side buttons are the only volume there), so the
+// music, ambience, weather loops and one-shots played at full volume whatever their sliders said, and a faded track never
+// paused (its volume never read below the pause level). Oct 28, Miguel on two iPhones: "the music is so loud when we press
+// the button to talk that I cant hear her well". On such a device each of those elements plays through a Web Audio gain
+// of its own and its volume property is that gain, so every caller stays as it is. Should no sound come through those
+// gains (a WebKit that can't take an element's sound into Web Audio), the elements are made again without them.
+const ElementAudio = (() => {
+  let fixed = null, ctx = null, broken = false, works = false, timer = 0;
+  const els = new Set(), buf = new Float32Array(256);
+  function readOnly() {
+    if (fixed === null) { try { const a = document.createElement('audio'); a.volume = .5; fixed = Math.abs(a.volume - .5) > .01; } catch (e) { fixed = false; } }
+    return fixed;
+  }
+  function context() {
+    if (ctx) return ctx;
+    try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ctx = null; return null; }
+    const wake = () => { if (ctx.state !== 'running' && !document.hidden) ctx.resume().catch(() => {}); }; // (iOS: only from a tap or a key; again after a call or the background)
+    ['touchend', 'pointerup', 'mousedown', 'keydown', 'click'].forEach(t => window.addEventListener(t, wake, { capture: true, passive: true }));
+    document.addEventListener('visibilitychange', wake);
+    return ctx;
+  }
+  function route(audio) {
+    if (!audio || audio._gain || broken || !readOnly()) return audio;
+    try { if (new URL(audio.src, location.href).origin !== location.origin) return audio; } catch (e) { return audio; } // (another site's file would come through silent)
+    const c = context(); if (!c) return audio;
+    try {
+      const src = c.createMediaElementSource(audio), g = c.createGain(), meter = c.createAnalyser();
+      meter.fftSize = buf.length; g.gain.value = 0; src.connect(g); g.connect(c.destination); src.connect(meter);
+      Object.defineProperty(audio, 'volume', { configurable: true, get: () => g.gain.value, set: v => { g.gain.value = Math.max(0, Math.min(1, Number(v) || 0)); } });
+      audio._gain = g; audio._meter = meter; els.add(audio);
+      if (!timer) timer = setInterval(check, 2000);
+    } catch (e) {}
+    return audio;
+  }
+  // every 2 s until one of them is heard: an element playing at a level you'd hear with nothing coming through, three
+  // times running, means the gains give silence here: those elements go, and the code that keeps them makes them again
+  function check() {
+    if (works || broken) { clearInterval(timer); return; }
+    if (!ctx || ctx.state !== 'running') return;
+    for (const a of els) {
+      const t = a.currentTime, moved = t !== a._lastT; a._lastT = t;
+      if (a.paused || a.ended || a.readyState < 3 || !moved || a._gain.gain.value < .02) continue;
+      a._meter.getFloatTimeDomainData(buf); let peak = 0; for (let i = 0; i < buf.length; i++) peak = Math.max(peak, Math.abs(buf[i]));
+      if (peak > 1e-5) { works = true; clearInterval(timer); return; }
+      if ((a._quiet = (a._quiet || 0) + 1) >= 3) { unroute(); return; }
+    }
+  }
+  function unroute() {
+    broken = true; clearInterval(timer);
+    for (const a of els) { try { a.pause(); a.removeAttribute('src'); a.load?.(); } catch (e) {} }
+    els.clear();
+    const W = WeatherManager;
+    for (const map of [W.audioTracks, W.oneShotTracks]) for (const [id, a] of Object.entries(map)) if (a?._gain) delete map[id];
+    if (W.musicTrack?._gain) W.musicTrack = null;
+    if (W.interiorAudioTrack?._gain) W.interiorAudioTrack = null;
+    console.warn('Music and ambience: no sound came through Web Audio here, so they play without it (at full volume on iPhone)');
+  }
+  return { route, readOnly, get state() { return { readOnly: readOnly(), routed: els.size, works, broken, ctx: ctx?.state || null }; } };
+})();
+window._elementAudio = ElementAudio; // tests
+
 function getWeatherCenter() {
   if (walkMode && charMesh) return charMesh.position;
   const cam = scene.activeCamera || orbit;
@@ -14675,10 +14736,11 @@ function getWeatherAmbienceMultiplier() {
 
 function getWeatherAudioTrack(id, path) {
   if (!WeatherManager.audioTracks[id]) {
-    const audio = new Audio(path);
+    const audio = ElementAudio.route(new Audio(path));
     audio.loop = true;
     audio.preload = 'none';
     audio.volume = 0;
+    audio._level = 0;
     audio._targetVolume = 0;
     audio._unavailable = false;
     audio.onerror = () => { audio._unavailable = true; audio._targetVolume = 0; };
@@ -14743,10 +14805,11 @@ function ensureInteriorAudioTrack(path = getActiveInteriorAudioPath(), options =
       if (WeatherManager.interiorAudioTrack === audio) WeatherManager.interiorAudioTrack = null;
       delete WeatherManager.audioTracks[id];
     }
-    audio = new Audio(safePath);
+    audio = ElementAudio.route(new Audio(safePath));
     audio.loop = true;
     audio.preload = 'none';
     audio.volume = 0;
+    audio._level = 0;
     audio._targetVolume = 0;
     audio._srcPath = safePath;
     audio._unavailable = false;
@@ -14795,6 +14858,7 @@ function stopInteriorAudio(immediate = false) {
     if (immediate) {
       try { audio.pause(); audio.currentTime = 0; } catch(e) {}
       audio.volume = 0;
+      audio._level = 0;
     }
   }
   updateInteriorAudioStatus(immediate ? 'stopped' : 'fading');
@@ -14859,7 +14923,8 @@ function updateWeatherAudio() {
   Object.entries(WeatherManager.audioTracks).forEach(([id, audio]) => {
     if (!audio || audio._unavailable) return;
     audio._targetVolume = targets[id] || 0;
-    audio.volume += (audio._targetVolume - audio.volume) * .045;
+    audio._level = (audio._level ?? 0) + (audio._targetVolume - (audio._level ?? 0)) * .045; // (the fade keeps its own level: unrouted, an iPhone's volume always reads 1)
+    audio.volume = Math.min(1, audio._level);
     if (audio._targetVolume > .01 && audio.paused) {
       if (!WeatherManager.browserAudioUnlocked) {
         if (id === WeatherManager.interiorAudioId) promptInteriorAudioUnlock();
@@ -14876,7 +14941,7 @@ function updateWeatherAudio() {
           updateInteriorAudioStatus();
         }
       });
-    } else if (audio._targetVolume <= .01 && audio.volume < .015 && !audio.paused) {
+    } else if (audio._targetVolume <= .01 && audio._level < .015 && !audio.paused) {
       audio.pause();
     }
   });
@@ -14895,10 +14960,11 @@ function ensureVillageMusicTrack() {
   if (WeatherManager.musicTrack && !WeatherManager.musicTrack.paused) {
     WeatherManager.musicTrack.pause();
   }
-  const audio = new Audio(path);
+  const audio = ElementAudio.route(new Audio(path));
   audio.loop = true;
   audio.preload = 'none';
   audio.volume = 0;
+  audio._level = 0;
   audio._targetVolume = 0;
   audio._unavailable = false;
   audio.onerror = () => { audio._unavailable = true; audio._targetVolume = 0; };
@@ -14917,11 +14983,12 @@ function updateVillageMusic() {
   const audio = ensureVillageMusicTrack();
   if (!audio || audio._unavailable) return;
   audio._targetVolume = getVillageMusicTargetVolume();
-  audio.volume += (audio._targetVolume - audio.volume) * .035;
+  audio._level = (audio._level ?? 0) + (audio._targetVolume - (audio._level ?? 0)) * .035;
+  audio.volume = Math.min(1, audio._level);
   if (audio._targetVolume > .01 && audio.paused) {
     if (!WeatherManager.browserAudioUnlocked) return;
     audio.play().catch(error => { markAudioPlayFailure(audio, error); });
-  } else if (audio._targetVolume <= .01 && audio.volume < .012 && !audio.paused) {
+  } else if (audio._targetVolume <= .01 && audio._level < .012 && !audio.paused) {
     audio.pause();
   }
 }
@@ -14968,7 +15035,7 @@ function playWeatherThunderAudio(strikeId, dist = 300, loud = true) {
 
 function getInteractionAudioTrack(id, path) {
   if (!WeatherManager.oneShotTracks[id]) {
-    const audio = new Audio(path);
+    const audio = ElementAudio.route(new Audio(path));
     audio.preload = 'none';
     audio.volume = 0;
     audio._unavailable = false;
