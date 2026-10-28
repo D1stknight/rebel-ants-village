@@ -9474,9 +9474,17 @@ function refreshEconWorld() {
 }
 function econSignIn() {
   const url = '/api/econ-discord-login?return=' + encodeURIComponent(location.pathname + location.search);
-  let w = null;
-  try { w = window.open(url + '&popup=1', 'rebelEconSignIn', 'width=520,height=760'); } catch (e) {}
-  if (!w) location.href = url;                              // popups blocked: sign in in this tab, it comes back here
+  if (!LITE_GRAPHICS) {   // a computer: Discord in a small window, the game stays where it is
+    let w = null;
+    try { w = window.open(url + '&popup=1', 'rebelEconSignIn', 'width=520,height=760'); } catch (e) {}
+    if (w) return;
+  }
+  // a phone (or popups blocked): this tab goes to Discord and comes back here. On a phone a popup is a second tab, and
+  // iOS Safari stops a Universe tab left behind it when Discord needs the memory: Universe loaded again on the way back,
+  // then again for the story. Marked as signed in, the story sync at the top of this script reads the account's story
+  // before the game reads its save, so the one load back brings it (a cancelled sign-in answers 401 and the mark goes).
+  storyLsSet(STORY_LS.signed, '1');
+  leavePage(() => { location.href = url; });
 }
 // name + PIN (players without Discord): the casino's colony name accounts, through the village's server
 const EconNameForm = { open:false, name:'', pin:'', msg:'', bad:false, busy:false };
