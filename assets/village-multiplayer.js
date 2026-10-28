@@ -41,6 +41,21 @@
   const localServer = override && /^ws:\/\/(127\.0\.0\.1|localhost):\d+$/.test(override) ? override : null;
 
   // ---- the connection ----
+  // this tab's guest key: a guest's room id is worked out from it (api/mp-ticket.mjs), so the next ticket (a reconnect, a
+  // reload) is the same player and the room lets go of the old socket; without it a phone whose connection went half-open
+  // came back as a new guest and saw its old self standing where it lost the connection
+  const GUEST_KEY = 'rebelAntsMpGuest:v1';
+  let guestKey = '';
+  function guestKeyOf() {
+    if (guestKey) return guestKey;
+    try { guestKey = sessionStorage.getItem(GUEST_KEY) || ''; } catch (e) {}
+    if (!/^[A-Za-z0-9_-]{22,43}$/.test(guestKey)) {
+      const b = new Uint8Array(16); crypto.getRandomValues(b);
+      guestKey = btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      try { sessionStorage.setItem(GUEST_KEY, guestKey); } catch (e) {}
+    }
+    return guestKey;
+  }
   // a ticket for this page's player (api/mp-ticket.mjs), also for its group's socket (village-groups.js): { ticket, url }
   // or null (the rooms off here: 503 / 404 switch this page's multiplayer off)
   async function ticket() {
@@ -49,7 +64,7 @@
       const asked = performance.now();
       let t;
       try {
-        const r = await fetch(`/api/mp-ticket?village=${encodeURIComponent(H.village)}&col=${encodeURIComponent(ch.col || '')}&tok=${encodeURIComponent(ch.tok || '')}`, { credentials: 'same-origin', cache: 'no-store' });
+        const r = await fetch(`/api/mp-ticket?village=${encodeURIComponent(H.village)}&col=${encodeURIComponent(ch.col || '')}&tok=${encodeURIComponent(ch.tok || '')}&gk=${guestKeyOf()}`, { credentials: 'same-origin', cache: 'no-store' });
         t = await r.json().catch(() => ({}));
         if (!r.ok || !t.ok) { log('no ticket', r.status, t.error); if (r.status === 503 || r.status === 404) enabled = false; return null; } // 503: the rooms are off
       } catch (e) { return null; }
