@@ -63,6 +63,8 @@ ALLOWED_ORIGINS = "https://rebel-ants-village-git-dev-miguel-concepcions-project
 ALLOWED_ORIGIN_SUFFIX = "-miguel-concepcions-projects.vercel.app"
 ALLOW_LOCAL = "1"
 ROOM_MAX = "50"
+# Realtime SFU app rebel-universe-voice; its API token is the Worker secret REALTIME_APP_SECRET (set in the dashboard)
+REALTIME_APP_ID = "0934f925a7967d143d9dcacf39c525d0"
 
 [[env.dev.durable_objects.bindings]]
 name = "ROOMS"
