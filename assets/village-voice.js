@@ -25,11 +25,18 @@
   const sendTo = (sc, o) => !!link(sc)?.send(o);
 
   function audio() {
-    if (ctx) { if (ctx.state === 'suspended') ctx.resume().catch(() => {}); return ctx; }
+    if (ctx) { if (ctx.state !== 'running' && ctx.state !== 'closed') ctx.resume().catch(() => {}); return ctx; } // ('suspended', or Safari's 'interrupted')
     const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
     ctx = new AC(); master = ctx.createGain(); master.gain.value = settings.volume; master.connect(ctx.destination);
     return ctx;
   }
+  // iPhones start a page's audio only inside a finger lifting (touchend, pointerup), a click or a key: never on a finger
+  // going down (Safari: a touchstart can be the start of a scroll). The Talk button presses on the way down, so on an
+  // iPhone the voices' audio made there stayed suspended and nothing was heard (Oct 28, Miguel and a friend on two
+  // iPhones). It starts, or starts again, on every such event once voice is on here; the badge asks for a tap meanwhile
+  const ACTIVATE = ['pointerup', 'touchend', 'click', 'keydown', 'mousedown', 'pointerdown'];
+  function wake() { if (ctx) audio(); else if (H && (available() || S.stage.subs.size)) audio(); }
+  const waitingTap = () => !!ctx && ctx.state !== 'running' && [S.room, S.group, S.stage].some(sc => [...sc.subs.values()].some(s => s.node));
   // the microphone once (asks the first time); each scope talks through its own copy of the track
   async function micTrack() {
     if (mic) return mic;
@@ -158,6 +165,7 @@
   function upkeep() {
     if (!H) return;
     sync(S.room); sync(S.group); sync(S.stage); if (talking && (!H.canTalk() || talking.where === 'stage' && !H.stage?.canTalk?.())) talk(false); window.VillageTouch?.talkOn?.(available());
+    const w = waitingTap(); if (w !== upkeep.waiting) { upkeep.waiting = w; paintBadge(); } // (voices come in while their audio waits on a tap)
   }
   function frame() {
     if (!H) return;
@@ -219,6 +227,7 @@
 #vvBadge .mic{width:10px;height:10px;border-radius:50%;background:#e05a6b;box-shadow:0 0 0 0 rgba(224,90,107,.7);animation:vvp 1s infinite}
 #vvBadge .wait{background:#e8c56a;animation:none}
 #vvBadge .spk{color:#7be38a}
+#vvBadge .tap{color:#ffe08a}
 @keyframes vvp{0%{box-shadow:0 0 0 0 rgba(224,90,107,.7)}70%{box-shadow:0 0 0 9px rgba(224,90,107,0)}100%{box-shadow:0 0 0 0 rgba(224,90,107,0)}}
 html.vt-touch #vvBadge{top:calc(max(12px,env(safe-area-inset-top,0px)) + 64px)}
 body.in-game #vvBadge{display:none!important}`;
@@ -228,6 +237,7 @@ body.in-game #vvBadge{display:none!important}`;
     if (talking) parts.push(`<span class="mic${talking.ready ? '' : ' wait'}"></span><span>${talking.ready ? 'Talking' : 'Connecting voice…'} · ${talking.where === 'group' ? 'Group' : talking.where === 'stage' ? 'Stage' : 'Nearby'}</span>`);
     const g = [...[...S.group.subs.values()].filter(s => s.speaking).map(s => H.group?.member?.(s.key)?.n), ...[...S.stage.subs.values()].filter(s => s.speaking).map(s => H.stage?.nameOf?.(s.key))].filter(Boolean);
     if (g.length) parts.push(`<span class="spk">🔊 ${g.map(n => n.replace(/[<>&"]/g, '')).join(', ')}</span>`);
+    if (waitingTap()) parts.push('<span class="tap">🔇 Tap the screen to hear voices</span>');
     badge.innerHTML = parts.join('<span>·</span>'); badge.classList.toggle('on', parts.length > 0);
   }
 
@@ -238,7 +248,7 @@ body.in-game #vvBadge{display:none!important}`;
     H = host; B = window.BABYLON;
     const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
     badge = document.createElement('div'); badge.id = 'vvBadge'; document.body.appendChild(badge);
-    // hold X to talk (not while typing); a press anywhere wakes the audio
+    // hold X to talk (not while typing); a tap, a click or a key anywhere wakes the audio
     window.addEventListener('keydown', e => {
       const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
       if ((e.key === 'x' || e.key === 'X') && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey) talk(true);
@@ -246,7 +256,7 @@ body.in-game #vvBadge{display:none!important}`;
     window.addEventListener('keyup', e => { if (e.key === 'x' || e.key === 'X') talk(false); }, true);
     window.addEventListener('blur', () => talk(false));
     document.addEventListener('visibilitychange', () => { if (document.hidden) talk(false); });
-    document.addEventListener('pointerdown', () => { if (ctx) audio(); }, true);
+    ACTIVATE.forEach(t => window.addEventListener(t, wake, { capture: true, passive: true }));
     H.scene.onBeforeRenderObservable.add(() => { try { frame(); } catch (e) { log('frame', e); } });
     setInterval(() => { try { upkeep(); if (document.hidden) frame(); } catch (e) { log('upkeep', e); } }, 500); // (a hidden tab draws no frames: still answer the room)
   }
