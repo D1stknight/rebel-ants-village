@@ -12073,6 +12073,7 @@ async function startMiniGame(def, src) {
   const roam = !!(impl.roam || def.roam);
   Object.assign(MiniGames, { on:true, busy:false, impl, def, src, objs:[], escAt:0, roam, holdWalk:false, walkLight:null, vfov:walk.fov, fitK:1, fitWant:1, fitAt:.2 });
   document.body.classList.toggle('game-roam', roam);
+  if (roam) window.VillageTouch?.roam?.(true); // phones: Jump / Hit come out of ••• for the game (Treasure Dig digs with Jump)
   window._newTerrain?.birds?.setVisible(false);
   document.getElementById('interactionPrompt')?.classList.remove('on');
   window.VillageTouch?.useHint?.(null); // the Use button goes back to "Use" (roam games keep the buttons)
@@ -12733,6 +12734,7 @@ function endMiniGame() {
   MiniGames.on = false; MiniGames.ctx = null; MiniGames.roam = false; MiniGames.holdWalk = false; MiniGames.floatY = null; MiniGames.walkSlot = null;
   animGroups.forEach(g => { if (g && g._gameSpeed0 != null) { g.speedRatio = g._gameSpeed0; g._gameSpeed0 = null; } });
   document.body.classList.remove('game-roam');
+  window.VillageTouch?.roam?.(false);
   window._newTerrain?.birds?.setVisible(birdsShownFor(getFakeLightStateFactor()));
   moveForward = moveBackward = turnLeft = turnRight = runKey = false;
   if (charMesh) {
