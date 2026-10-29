@@ -4,7 +4,7 @@
 // with this site's own app key: a ticket made for another app never opens Universe), then the browser gets the same
 // admin session the password sign-in gives (ra_admin_session, 12 hours) and the Admin Hub opens.
 //   POST ticket=rat_...  -> a page that opens /admin.html signed in, or says why not
-import { createAdminSessionToken, buildAdminSessionCookie } from './_admin-auth.mjs';
+import { createAdminSessionToken, buildAdminSessionCookie, rebelConsoleUrl } from './_admin-auth.mjs';
 import { econCall } from './_econ.mjs';
 import { rateLimit } from './_guard.mjs';
 
@@ -12,10 +12,7 @@ const TICKET = /^rat_[A-Za-z0-9_-]{20,96}$/;
 const SCOPE = 'universe.admin';
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-function consoleUrl() {
-  const b = String(process.env.REBEL_ECONOMY_URL || '').trim().replace(/\/+$/, '');
-  return /^https:\/\/[A-Za-z0-9.-]+$/.test(b) ? `${b}/admin` : 'https://economy.rebelants.io/admin';
-}
+const consoleUrl = () => rebelConsoleUrl('/admin');
 function ticketOf(req) {
   const b = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : req.body;
   if (b && typeof b === 'object') return String(b.ticket || '');

@@ -2,13 +2,26 @@ import { rateLimit } from './_guard.mjs';
 import {
   isValidAdminPassword,
   createAdminSessionToken,
-  buildAdminSessionCookie
+  buildAdminSessionCookie,
+  passwordSignInAllowed,
+  rebelConsoleUrl
 } from './_admin-auth.mjs';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
+  }
+
+  // Oct 29: on production the Admin Hub opens from the Rebel Console; the password is not even looked at.
+  if (!passwordSignInAllowed()) {
+    return res.status(403).json({
+      ok: false,
+      authenticated: false,
+      error: 'console_only',
+      message: 'The Admin Hub opens from the Rebel Console: Apps → Rebel Universe.',
+      consoleUrl: rebelConsoleUrl('/admin/open/universe')
+    });
   }
 
   // Phase 0: throttle password guessing (8 tries per 15 minutes per IP).

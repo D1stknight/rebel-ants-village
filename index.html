@@ -420,6 +420,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
   transform:translateY(-2px) scale(1.08);
   filter:drop-shadow(0 0 10px rgba(200,146,42,.45));
 }
+#admin-ant[hidden]{
+  display:none!important;
+}
 
 #admin-modal-backdrop{
   position:fixed;
@@ -492,6 +495,31 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
   color:#fff;
 }
 #admin-login-btn:hover{
+  transform:translateY(-1px);
+  box-shadow:0 5px 18px rgba(200,146,42,.35);
+}
+#admin-modal [hidden]{
+  display:none!important;
+}
+#admin-console-note{
+  color:#cdbb92;
+  font-size:12px;
+  line-height:1.7;
+  letter-spacing:.5px;
+  text-align:center;
+}
+#admin-console-note b{
+  color:#c8922a;
+  font-weight:600;
+  letter-spacing:1.5px;
+}
+#admin-console-btn{
+  background:linear-gradient(135deg,#c8922a,#8a5e1a);
+  color:#fff;
+  text-align:center;
+  text-decoration:none;
+}
+#admin-console-btn:hover{
   transform:translateY(-1px);
   box-shadow:0 5px 18px rgba(200,146,42,.35);
 }
@@ -673,16 +701,18 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 
 <div id="version">v0.1 DEV</div>
 
-<button id="admin-ant" type="button" onclick="openAdminModal()" aria-label="Admin access">🐜</button>
+<button id="admin-ant" type="button" onclick="openAdminModal()" aria-label="Admin access" hidden>🐜</button>
 
 <div id="admin-modal-backdrop" onclick="closeAdminModalFromBackdrop(event)">
   <div id="admin-modal">
     <div id="admin-modal-title">ADMIN ACCESS</div>
     <div id="admin-modal-sub">Rebel Ants Command Gate</div>
-    <input id="admin-password" type="password" placeholder="Enter password" autocomplete="current-password">
+    <div id="admin-console-note" hidden>The Admin Hub opens from the Rebel Console:<br><b>Apps → Rebel Universe</b></div>
+    <input id="admin-password" type="password" placeholder="Enter password" autocomplete="current-password" hidden>
     <div id="admin-modal-actions">
       <button class="admin-modal-btn" id="admin-cancel-btn" type="button" onclick="closeAdminModal()">Cancel</button>
-      <button class="admin-modal-btn" id="admin-login-btn" type="button" onclick="submitAdminLogin()">Enter</button>
+      <button class="admin-modal-btn" id="admin-login-btn" type="button" onclick="submitAdminLogin()" hidden>Enter</button>
+      <a class="admin-modal-btn" id="admin-console-btn" href="https://economy.rebelants.io/admin/open/universe" hidden>Rebel Console</a>
     </div>
     <div id="admin-login-status"></div>
   </div>
@@ -1831,6 +1861,26 @@ function enterVillage(url) {
 })();
 
 // ── SECRET ADMIN ENTRANCE ──
+// Oct 29: the gate asks the site first (/api/admin-session): an admin already signed in goes straight to the
+// Admin Hub, and where the password is off (rebeluniverse.io: the Admin Hub opens from the Rebel Console) it points
+// to the console instead of asking for one. No answer = the password field, as before.
+let adminModalSeq = 0;
+function setAdminModalView(view, url) {
+  const input = document.getElementById('admin-password');
+  const loginBtn = document.getElementById('admin-login-btn');
+  const note = document.getElementById('admin-console-note');
+  const link = document.getElementById('admin-console-btn');
+
+  if (input) input.hidden = view !== 'password';
+  if (loginBtn) loginBtn.hidden = view !== 'password';
+  if (note) note.hidden = view !== 'console';
+  if (link) {
+    link.hidden = view !== 'console';
+    if (typeof url === 'string' && /^https:\/\//.test(url)) link.href = url;
+  }
+  if (view === 'password' && input) setTimeout(() => input.focus(), 0);
+}
+
 function openAdminModal() {
   const backdrop = document.getElementById('admin-modal-backdrop');
   const input = document.getElementById('admin-password');
@@ -1849,9 +1899,20 @@ function openAdminModal() {
     backdrop.classList.add('open');
   }
 
-  setTimeout(() => {
-    if (input) input.focus();
-  }, 0);
+  const seq = ++adminModalSeq;
+  const live = () => seq === adminModalSeq && backdrop && backdrop.classList.contains('open');
+  setAdminModalView('wait');
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), 4000);
+  fetch('/api/admin-session', { cache: 'no-store', signal: ac.signal })
+    .then(r => r.json())
+    .then(d => {
+      if (!live()) return;
+      if (d && d.authenticated) { window.location.href = 'admin.html'; return; }
+      setAdminModalView(d && d.passwordSignIn === false ? 'console' : 'password', d && d.consoleUrl);
+    })
+    .catch(() => { if (live()) setAdminModalView('password'); })
+    .finally(() => clearTimeout(timer));
 }
 
 function closeAdminModal() {
@@ -1859,6 +1920,7 @@ function closeAdminModal() {
   const input = document.getElementById('admin-password');
   const status = document.getElementById('admin-login-status');
 
+  if (location.hash === '#admin') history.replaceState(null, '', location.pathname + location.search);
   if (backdrop) backdrop.classList.remove('open');
   if (input) input.value = '';
   if (status) {
@@ -1872,6 +1934,18 @@ function closeAdminModalFromBackdrop(event) {
     closeAdminModal();
   }
 }
+
+// Oct 29 (Miguel: "remove the ant so no one clicks it that's not supposed to"): no 🐜 on the live site, where the
+// Admin Hub opens from the Rebel Console. Previews and local runs (only the team can open a preview) keep it.
+// <address>/#admin still opens the gate: the way in for the emergency switch (api/_admin-auth.mjs).
+(function () {
+  const ant = document.getElementById('admin-ant');
+  const liveSite = /^(www\.)?rebeluniverse\.io$|^rebel-ants-village\.vercel\.app$/i.test(location.hostname);
+  if (ant && !liveSite) ant.hidden = false;
+  const fromHash = () => { if (location.hash === '#admin') openAdminModal(); };
+  window.addEventListener('hashchange', fromHash);
+  fromHash();
+})();
 
 async function submitAdminLogin() {
   const input = document.getElementById('admin-password');
@@ -1897,6 +1971,15 @@ async function submitAdminLogin() {
     });
 
     const data = await response.json();
+
+    if (response.status === 403 && data && data.error === 'console_only') {
+      setAdminModalView('console', data.consoleUrl);
+      if (status) {
+        status.textContent = '';
+        status.className = '';
+      }
+      return;
+    }
 
     if (!response.ok || !data.authenticated) {
       if (status) {
