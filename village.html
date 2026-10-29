@@ -569,6 +569,8 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
 .econ-av{width:38px;height:38px;border-radius:50%;border:1px solid rgba(214,175,92,.5)}
 .econ-btn{font-family:inherit;font-size:11px;font-weight:600;line-height:1;letter-spacing:1.5px;text-transform:uppercase;padding:9px 13px;border-radius:5px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.06);color:#eee;cursor:pointer}
 .econ-btn:hover{background:rgba(255,255,255,.12)}
+a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
+.econ-row > span{flex:1 1 220px;min-width:0}
 .econ-btn.econ-discord{background:#5865f2;border-color:#5865f2;color:#fff}
 .econ-btn.econ-discord:hover{background:#4752c4}
 .econ-meta{margin-top:8px;font-size:11px;color:rgba(255,255,255,.6);line-height:1.4}
@@ -5295,9 +5297,16 @@ function renderBadgeCard(badge) {
   </div>`;
 }
 
+// the Rebel Ants Badge Wall (the economy's: every app's badges on one page; Universe's go there with each story save)
+function badgeWallCard() {
+  if (!Econ.configured) return '';
+  if (Econ.on && Econ.badgeWall) return `<div class="journal-card full econ-card"><strong>The Badge Wall</strong><div class="econ-row"><span>Your badges from every Rebel Ants app on one page, to show off. Universe's go there each time your story saves.</span>`
+    + `<a class="econ-btn" href="${escapeHTML(Econ.badgeWall)}" target="_blank" rel="noopener">Open the Badge Wall ↗</a></div></div>`;
+  return Econ.on ? '' : `<div class="journal-card full econ-card"><strong>The Badge Wall</strong><span>Signed in, your badges also go to the Rebel Ants Badge Wall, with every other Rebel Ants app's (sign in on the Overview tab).</span></div>`;
+}
 function renderBadgeGallery() {
   const definitions = getBadgeDefinitions();
-  return Object.keys(PROGRESSION_BADGE_CATEGORIES).map(category => {
+  return badgeWallCard() + Object.keys(PROGRESSION_BADGE_CATEGORIES).map(category => {
     const badges = definitions.filter(badge => badge.category === category);
     if (!badges.length) return '';
     const open = category === 'explorer' ? ' open' : '';
@@ -9361,7 +9370,7 @@ function setInteractionPrompt(text, visible) {
 // most 2,000 a day; more is held and paid on a later day). A guest's points are practice points, kept on this device
 // (ProgressionState.rebelPoints) and never carried over. While signed in, which chests are looted and which riddles are
 // solved follows the account, so a chest first opened as a guest still pays the account once.
-const Econ = { checked:false, configured:false, on:false, kind:'', name:'', avatar:null, balance:null, today:0, cap:2000, owed:0, claimed:new Set(), hinted:false };
+const Econ = { checked:false, configured:false, on:false, kind:'', name:'', avatar:null, balance:null, today:0, cap:2000, owed:0, claimed:new Set(), hinted:false, badgeWall:null };
 // ── the story save (the early sync at the top of this script; assets/story-save.js) ──
 // Signed in, the story goes to the account: a few seconds after something is saved, every 30 s while it changes, and when
 // the page is left. A sign-in on the lobby or in the journal joins the account's story to this browser's (a reload when
@@ -9459,7 +9468,8 @@ async function refreshEcon(force) {
   if (!d?.ok) return;
   const was = Econ.on, wasClaimed = [...Econ.claimed].sort().join('|');
   Object.assign(Econ, { checked:true, configured:!!d.configured, on:!!d.signedIn, kind:d.signedIn ? (d.kind || 'discord') : '', name:d.name || '', avatar:d.avatar || null,
-    balance:d.signedIn ? (d.balance ?? Econ.balance) : null, today:d.today || 0, cap:d.cap || 2000, owed:d.owed || 0, claimed:new Set(d.claimed || []) });
+    balance:d.signedIn ? (d.balance ?? Econ.balance) : null, today:d.today || 0, cap:d.cap || 2000, owed:d.owed || 0, claimed:new Set(d.claimed || []),
+    badgeWall:d.signedIn && /^https:\/\//.test(d.badgeWall || '') ? d.badgeWall : null });
   renderEconBadge();
   if (d.paidNow) showToast(`+${Number(d.paidNow).toLocaleString('en-US')} Rebel points held from an earlier day went to your account.`, 6000);
   if (was !== Econ.on || wasClaimed !== [...Econ.claimed].sort().join('|')) refreshEconWorld();
@@ -9555,7 +9565,7 @@ async function econNameSubmit(action) {
 }
 async function econSignOut() {
   try { await fetch('/api/econ-me', { method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ action:'logout' }) }); } catch (e) {}
-  Object.assign(Econ, { on:false, kind:'', name:'', avatar:null, balance:null, today:0, owed:0, claimed:new Set() });
+  Object.assign(Econ, { on:false, kind:'', name:'', avatar:null, balance:null, today:0, owed:0, claimed:new Set(), badgeWall:null });
   storySyncOnEcon();
   mpOnEcon();
   refreshEconWorld(); renderJournalIfOpen(); renderEconBadge();
