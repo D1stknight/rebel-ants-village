@@ -32,6 +32,19 @@ export function isValidAdminPassword(password) {
   return safeEqual(password, expected);
 }
 
+// Oct 29: on production (rebeluniverse.io) the Admin Hub opens from the Rebel Console (api/admin-sso.mjs) and typing
+// the password is off. ALLOW_TYPED_ADMIN_PASSWORD=true in Vercel (Production, then a redeploy) turns it back on for
+// emergencies. Previews and local runs keep the password: the console only opens production.
+export function passwordSignInAllowed() {
+  return process.env.VERCEL_ENV !== 'production' || process.env.ALLOW_TYPED_ADMIN_PASSWORD === 'true';
+}
+
+// The Rebel Console (the economy's admin); '/admin/open/universe' there opens this Admin Hub signed in.
+export function rebelConsoleUrl(path = '/admin') {
+  const b = String(process.env.REBEL_ECONOMY_URL || '').trim().replace(/\/+$/, '');
+  return (/^https:\/\/[A-Za-z0-9.-]+$/.test(b) ? b : 'https://economy.rebelants.io') + path;
+}
+
 export function createAdminSessionToken() {
   const now = Math.floor(Date.now() / 1000);
   const payload = {
