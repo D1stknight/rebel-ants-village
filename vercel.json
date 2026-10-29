@@ -92,6 +92,9 @@
     },
     "api/forge-light.mjs": {
       "maxDuration": 60
+    },
+    "api/badges-backfill.mjs": {
+      "maxDuration": 90
     }
   },
   "crons": [

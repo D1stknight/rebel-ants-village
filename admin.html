@@ -191,6 +191,15 @@ body{
   color:#8a7a5a;font-size:10px;letter-spacing:3px;font-family:'Cinzel',serif;
 }
 @keyframes annTicker{0%{transform:translateX(100%);}100%{transform:translateX(-100%);}}
+#bdg{border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);padding:22px;display:flex;flex-direction:column;gap:12px}
+#bdg h2{font-family:'Cinzel Decorative',serif;color:#c8922a;font-size:16px;letter-spacing:2px}
+#bdg p{color:#b7a98b;font-size:12px;line-height:1.7}
+#bdg .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+#bdg button,#bdg a.btn{padding:10px 16px;background:transparent;border:1px solid rgba(200,146,42,.45);color:#c8922a;font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;text-decoration:none}
+#bdg button.primary{background:rgba(200,146,42,.16);border-color:rgba(200,146,42,.8);color:#f3e6bf}
+#bdg button:disabled{opacity:.45;cursor:default}
+#bdg-status{color:#5ecfca;font-size:11px;letter-spacing:1px;min-width:0;overflow-wrap:anywhere}
+#bdg-status.err{color:#e07a6a}
 #bjs{border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);padding:22px;display:flex;flex-direction:column;gap:12px}
 #bjs h2{font-family:'Cinzel Decorative',serif;color:#c8922a;font-size:16px;letter-spacing:2px}
 #bjs p{color:#b7a98b;font-size:12px;line-height:1.7}
@@ -337,6 +346,16 @@ body{
     </div>
   </section>
 
+  <section id="bdg">
+    <h2>🏅 Badges on the Badge Wall</h2>
+    <p>Universe's badges show on the Rebel Economy's Badge Wall with every other app's, and on the Rebel Console's Badges page. A signed-in player's badges go there when their story saves. Send everyone's sends the badges already in every saved story now, for players who haven't played since (each badge goes once). Chest and game badges wait until Universe's own points record has those chests and first clears.</p>
+    <div class="row">
+      <button id="bdg-send" class="primary" type="button" onclick="bdgSendAll()">Send everyone's badges now</button>
+      <a class="btn" target="_blank" rel="noopener" href="https://economy.rebelants.io/admin/badges">The Console's Badges page ↗</a>
+      <span id="bdg-status"></span>
+    </div>
+  </section>
+
   <section id="bjs">
     <h2>🧊 Babylon (the 3D engine)</h2>
     <p>The site keeps its own copy of Babylon, so it never changes by itself. Babylon puts out a new version most weeks and you don't need each one. Every Tuesday (five days after Babylon's weekly release, so its quick fixes are in) a robot tests the newest on all 15 villages, the Rebel Forge, the NPC Forge and the terrain lab, and says here whether it is safe.</p>
@@ -413,6 +432,31 @@ async function logoutAdmin() {
   window.location.href = 'index.html';
 }
 
+// Badges (Oct 29): every saved story's badges to the Rebel Economy's Badge Wall at once (/api/badges-backfill, a page of
+// accounts a call, the cursor until done; this site's stories only)
+async function bdgSendAll() {
+  const btn = document.getElementById('bdg-send'), st = document.getElementById('bdg-status');
+  const say = (t, err) => { st.textContent = t; st.className = err ? 'err' : ''; };
+  btn.disabled = true;
+  const sum = { accounts: 0, sent: 0, waiting: 0, stopped: {} };
+  let cursor = '0', site = '';
+  try {
+    for (let i = 0; i < 200; i++) {
+      const r = await fetch('/api/badges-backfill', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cursor }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.ok) throw new Error(d.error || ('Error ' + r.status));
+      site = d.site; sum.accounts += d.accounts; sum.sent += d.sent; sum.waiting += d.waiting;
+      for (const [k, n] of Object.entries(d.stopped || {})) sum.stopped[k] = (sum.stopped[k] || 0) + n;
+      say(`${sum.accounts} players · ${sum.sent} badges sent…`);
+      cursor = d.cursor;
+      if (d.done) break;
+    }
+    const WHY = { not_ready: "the economy's badges are switched off", retry_later: 'waiting after an error', busy: 'being sent by a save right now', unknown_user: 'no Rebel Economy account', budget: 'out of time' };
+    const stopped = Object.entries(sum.stopped).map(([k, n]) => `${n} stopped (${WHY[k] || k})`).join(', ');
+    say(`Done${site === 'prod' ? '' : ' (this preview\'s stories)'}: ${sum.accounts} players, ${sum.sent} badges sent${sum.waiting ? `, ${sum.waiting} waiting on chests or first clears` : ''}${stopped ? ', ' + stopped + ': press again in 5 minutes' : ''}.`);
+  } catch (e) { say(e.message || 'The badges did not go', true); }
+  btn.disabled = false;
+}
 // Announcements (Oct 18): the landing page ticker's lines (/api/site-ticker; production and previews keep their own)
 const ANN_DEFAULT = ['REBEL ANTS — THE HIDDEN VILLAGE', 'Season 1 Now Live', 'New dojos coming soon', 'The Foundry — AI character generation coming', 'Hold your ant. Enter the village.'];
 const annLines = () => document.getElementById('ann-lines').value.split('\n').map(t => t.replace(/^\s*✦\s*/, '').trim()).filter(Boolean).slice(0, 12);
