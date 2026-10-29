@@ -526,7 +526,7 @@ body.walk-photo #photoBtn{display:block}
 #returnHubBtn{position:fixed;top:78px;left:50%;transform:translateX(-50%);z-index:20;display:none;background:rgba(5,10,28,.92);border:1px solid rgba(232,197,106,.5);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:8px 14px;cursor:pointer;backdrop-filter:blur(12px)}
 #returnHubBtn.on{display:block}
 @media (max-width:520px){#returnHubBtn{top:146px}}
-html.vt-touch #interactionPrompt{bottom:auto;top:184px;max-width:92vw;white-space:normal;text-align:center}
+html.vt-touch #interactionPrompt{bottom:auto;top:206px;max-width:92vw;white-space:normal;text-align:center} /* (under the mission circle) */
 body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPrompt{display:none}
 #returnHubBtn:hover{background:rgba(232,197,106,.16)}
 #villageGateOverlay{position:fixed;inset:0;background:rgba(2,8,18,.62);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:70;opacity:0;pointer-events:none;transition:opacity .22s}
@@ -569,6 +569,8 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
 .econ-av{width:38px;height:38px;border-radius:50%;border:1px solid rgba(214,175,92,.5)}
 .econ-btn{font-family:inherit;font-size:11px;font-weight:600;line-height:1;letter-spacing:1.5px;text-transform:uppercase;padding:9px 13px;border-radius:5px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.06);color:#eee;cursor:pointer}
 .econ-btn:hover{background:rgba(255,255,255,.12)}
+a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
+.econ-row > span{flex:1 1 220px;min-width:0}
 .econ-btn.econ-discord{background:#5865f2;border-color:#5865f2;color:#fff}
 .econ-btn.econ-discord:hover{background:#4752c4}
 .econ-meta{margin-top:8px;font-size:11px;color:rgba(255,255,255,.6);line-height:1.4}
@@ -1750,9 +1752,12 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
       <div class="startup-control"><b>Move</b>WASD or arrows</div>
       <div class="startup-control"><b>Look</b>Mouse</div>
       <div class="startup-control"><b>Run</b>R</div>
-      <div class="startup-control"><b>Jump</b>F</div>
+      <div class="startup-control"><b>Jump</b>Space</div>
       <div class="startup-control"><b>Interact</b>O</div>
       <div class="startup-control"><b>Journal</b>Journal button</div>
+      <div class="startup-control"><b>Chat</b>Enter</div>
+      <div class="startup-control"><b>Emotes</b>E</div>
+      <div class="startup-control"><b>Photo</b>P</div>
     </div>
     <button id="playerStartupEnter" type="button" onclick="enterHubVillageFromStartup()">Begin Hub Journey</button>
   </div>
@@ -1764,7 +1769,7 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
 <div id="saveBadge">SAVED ✓</div>
 <div id="hud">
   <div id="logo"><h1>REBEL ANTS</h1><span>The Hidden Village</span></div>
-  <div id="ctrl"><kbd>W A S D</kbd> Walk<br><kbd>Mouse</kbd> Look<br><kbd>Click</kbd> Enter<br><kbd>ESC</kbd> Orbit</div>
+  <div id="ctrl"><kbd>W A S D</kbd> Walk<br><kbd>Mouse</kbd> Look<br><kbd>E</kbd> Emotes<br><kbd>Click</kbd> Enter<br><kbd>ESC</kbd> Orbit</div>
 </div>
 
 <div id="selectedRebelPanel">
@@ -1811,6 +1816,7 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
   <div class="pread">O or Esc to close</div>
 </div>
 
+<script src="assets/audio-unlock.js"></script>
 <script src="assets/vendor/babylon/9.31.3/babylon.js"></script>
 <script src="assets/vendor/babylon/9.31.3/babylonjs.loaders.min.js"></script>
 <script src="assets/vendor/babylon/9.31.3/babylonjs.materials.min.js"></script>
@@ -1828,6 +1834,9 @@ body:has(#skillBar.on) #interactionPrompt,body:has(#danceOff.on) #interactionPro
 <script src="assets/rebel-games.js"></script>
 <script src="assets/village-multiplayer.js"></script>
 <script src="assets/village-chat.js"></script>
+<script src="assets/village-groups.js"></script>
+<script src="assets/village-voice.js"></script>
+<script src="assets/village-stage.js"></script>
 <script type="module">
 // The story save (Oct 25; assets/story-save.js, api/story-save.mjs): signed in, the story kept under the player's Rebel
 // Economy account joins this browser's before the game reads it, so another device starts where they left off and nothing
@@ -4291,6 +4300,14 @@ const MoonTaleSounds = (() => {
       glide(110, 46, t0 + .36, .28, .42); noise(t0 + .36, .05, .25, 'lowpass', 300); noise(t0 + .5, 1.6, .2, 'highpass', 5200); noise(t0 + .5, .5, .14, 'bandpass', 8500, 1.5); } },
     applause: { fx:t0 => { for (let k = 0; k < 220; k++) { const u = Math.random(), env = Math.sin(Math.PI * u); noise(t0 + u * 3.2, .018 + Math.random() * .02, (.05 + Math.random() * .09) * (.3 + .7 * env), 'bandpass', 900 + Math.random() * 2400, 1.4); }
       glide(1900, 2700, t0 + .9, .35, .05); glide(2700, 2100, t0 + 1.3, .3, .05); } },
+    // the Colony Stage's shows (village-stage.js cues): the crowd laughing (forty "ha"s, each a voiced vowel burst), a snare
+    // roll that swells to a crash, the crowd cheering (claps and rising "woo"s)
+    laugh: { fx:t0 => { for (let v = 0; v < 40; v++) { const st = t0 + Math.random() * .5, n = 3 + (Math.random() * 4 | 0), rate = .15 + Math.random() * .06, f = 160 + Math.random() * 190, fm = 650 + Math.random() * 650, g = .016 + Math.random() * .02;
+      for (let k = 0; k < n; k++) { const t = st + k * rate, fall = 1 - k / (n + 1); glide(f * (1 + .12 * fall), f, t, .09, g * fall); noise(t, .08, g * 1.4 * fall, 'bandpass', fm, 3); } } } },
+    drumroll: { fx:t0 => { for (let k = 0; k < 64; k++) { const t = t0 + k * .028, u = k / 64; noise(t, .03, .03 + .12 * u * u, 'bandpass', 1900, 1.1); }
+      noise(t0 + 1.82, .07, .3, 'bandpass', 1700, 1); glide(120, 50, t0 + 1.82, .25, .4); noise(t0 + 1.84, 1.9, .18, 'highpass', 5000); } },
+    cheer: { fx:t0 => { for (let k = 0; k < 160; k++) { const u = Math.random(), env = Math.sin(Math.PI * u); noise(t0 + u * 2.8, .02, (.04 + Math.random() * .07) * (.3 + .7 * env), 'bandpass', 900 + Math.random() * 2400, 1.4); }
+      for (let v = 0; v < 9; v++) { const t = t0 + .1 + Math.random() * 1.2, f = 260 + Math.random() * 260; glide(f, f * 1.7, t, .55, .035); glide(f * 1.7, f * 1.4, t + .55, .4, .03); } } },
     clang: { fx:t0 => { tone(540, t0, .5, .14, [[1, 1, 1], [2.76, .5, .5], [5.4, .25, .3]]); noise(t0, .05, .2, 'bandpass', 2200, 2); } },
     // a hammer on hot steel on the anvil: the strike's crack, the anvil's bright ring (its partials out of tune, as a
     // block of iron rings), a thud of the stump; each blow a little higher or lower
@@ -4677,7 +4694,8 @@ const COLLECTIBLE_TOTAL = 97;
   add({ badgeId:'chest-first-coin', name:'First Coin', category:'collector', rarity:'Common', requirementType:'chestCount', requirementValue:1, requirementText:'Open your first chest', description:'The first Rebel points of many.' });
   add({ badgeId:'chest-hunter', name:'Chest Hunter', category:'collector', rarity:'Rare', requirementType:'chestCount', requirementValue:25, requirementText:'Open 25 chests', description:'You know where chests like to hide.' });
   add({ badgeId:'chest-master', name:'Hoard of the Colony', category:'collector', rarity:'Mythic', requirementType:'chestCount', requirementValue:100, requirementText:'Open 100 chests', description:'One hundred chests, opened.' });
-  ['hub','ronin','shogun','yamabushi','wokou'].forEach(v => add({ badgeId:`legend-chest-${v}`, name:`Legend of ${short(v)}`, category:'collector', rarity:'Legendary', emblem:FACTION_ART.has(v) ? v : null, requirementType:'chestId', requirementValue:`${v}-chest-legend-1`, requirementText:`Open the legend chest in ${short(v)}`, description:'A thousand Rebel points, and a story to go with it.' }));
+  // [village, the prefix of its legend chest's id as placed: Shogun, Yamabushi and Wokou use short ones]
+  [['hub','hub'],['ronin','ronin'],['shogun','sho'],['yamabushi','yam'],['wokou','wok']].forEach(([v, p]) => add({ badgeId:`legend-chest-${v}`, name:`Legend of ${short(v)}`, category:'collector', rarity:'Legendary', emblem:FACTION_ART.has(v) ? v : null, requirementType:'chestId', requirementValue:`${p}-chest-legend-1`, requirementText:`Open the legend chest in ${short(v)}`, description:'A thousand Rebel points, and a story to go with it.' }));
   // Miguel (Oct 15): a badge for clearing all of a village's games, and one for clearing every game
   villages.forEach(v => add({ badgeId:`games-${v}`, name:`${short(v)} Champion`, category:'arcade', rarity:'Epic', emblem:FACTION_ART.has(v) ? v : null, requirementType:'villageGames', requirementValue:v, requirementText:`Clear every game in ${short(v)}`, description:`Every game, puzzle and riddle in ${short(v)}, cleared.` }));
   add({ badgeId:'games-all', name:'Master of Games', category:'arcade', rarity:'Mythic', requirementType:'allGames', requirementValue:'all', requirementText:'Clear every game in the colony', description:'Every game in all fifteen villages, cleared.' });
@@ -5279,9 +5297,16 @@ function renderBadgeCard(badge) {
   </div>`;
 }
 
+// the Rebel Ants Badge Wall (the economy's: every app's badges on one page; Universe's go there with each story save)
+function badgeWallCard() {
+  if (!Econ.configured) return '';
+  if (Econ.on && Econ.badgeWall) return `<div class="journal-card full econ-card"><strong>The Badge Wall</strong><div class="econ-row"><span>Your badges from every Rebel Ants app on one page, to show off. Universe's go there each time your story saves.</span>`
+    + `<a class="econ-btn" href="${escapeHTML(Econ.badgeWall)}" target="_blank" rel="noopener">Open the Badge Wall ↗</a></div></div>`;
+  return Econ.on ? '' : `<div class="journal-card full econ-card"><strong>The Badge Wall</strong><span>Signed in, your badges also go to the Rebel Ants Badge Wall, with every other Rebel Ants app's (sign in on the Overview tab).</span></div>`;
+}
 function renderBadgeGallery() {
   const definitions = getBadgeDefinitions();
-  return Object.keys(PROGRESSION_BADGE_CATEGORIES).map(category => {
+  return badgeWallCard() + Object.keys(PROGRESSION_BADGE_CATEGORIES).map(category => {
     const badges = definitions.filter(badge => badge.category === category);
     if (!badges.length) return '';
     const open = category === 'explorer' ? ' open' : '';
@@ -9345,7 +9370,7 @@ function setInteractionPrompt(text, visible) {
 // most 2,000 a day; more is held and paid on a later day). A guest's points are practice points, kept on this device
 // (ProgressionState.rebelPoints) and never carried over. While signed in, which chests are looted and which riddles are
 // solved follows the account, so a chest first opened as a guest still pays the account once.
-const Econ = { checked:false, configured:false, on:false, kind:'', name:'', avatar:null, balance:null, today:0, cap:2000, owed:0, claimed:new Set(), hinted:false };
+const Econ = { checked:false, configured:false, on:false, kind:'', name:'', avatar:null, balance:null, today:0, cap:2000, owed:0, claimed:new Set(), hinted:false, badgeWall:null };
 // ── the story save (the early sync at the top of this script; assets/story-save.js) ──
 // Signed in, the story goes to the account: a few seconds after something is saved, every 30 s while it changes, and when
 // the page is left. A sign-in on the lobby or in the journal joins the account's story to this browser's (a reload when
@@ -9443,7 +9468,8 @@ async function refreshEcon(force) {
   if (!d?.ok) return;
   const was = Econ.on, wasClaimed = [...Econ.claimed].sort().join('|');
   Object.assign(Econ, { checked:true, configured:!!d.configured, on:!!d.signedIn, kind:d.signedIn ? (d.kind || 'discord') : '', name:d.name || '', avatar:d.avatar || null,
-    balance:d.signedIn ? (d.balance ?? Econ.balance) : null, today:d.today || 0, cap:d.cap || 2000, owed:d.owed || 0, claimed:new Set(d.claimed || []) });
+    balance:d.signedIn ? (d.balance ?? Econ.balance) : null, today:d.today || 0, cap:d.cap || 2000, owed:d.owed || 0, claimed:new Set(d.claimed || []),
+    badgeWall:d.signedIn && /^https:\/\//.test(d.badgeWall || '') ? d.badgeWall : null });
   renderEconBadge();
   if (d.paidNow) showToast(`+${Number(d.paidNow).toLocaleString('en-US')} Rebel points held from an earlier day went to your account.`, 6000);
   if (was !== Econ.on || wasClaimed !== [...Econ.claimed].sort().join('|')) refreshEconWorld();
@@ -9539,7 +9565,7 @@ async function econNameSubmit(action) {
 }
 async function econSignOut() {
   try { await fetch('/api/econ-me', { method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ action:'logout' }) }); } catch (e) {}
-  Object.assign(Econ, { on:false, kind:'', name:'', avatar:null, balance:null, today:0, owed:0, claimed:new Set() });
+  Object.assign(Econ, { on:false, kind:'', name:'', avatar:null, balance:null, today:0, owed:0, claimed:new Set(), badgeWall:null });
   storySyncOnEcon();
   mpOnEcon();
   refreshEconWorld(); renderJournalIfOpen(); renderEconBadge();
@@ -12058,6 +12084,7 @@ async function startMiniGame(def, src) {
   const roam = !!(impl.roam || def.roam);
   Object.assign(MiniGames, { on:true, busy:false, impl, def, src, objs:[], escAt:0, roam, holdWalk:false, walkLight:null, vfov:walk.fov, fitK:1, fitWant:1, fitAt:.2 });
   document.body.classList.toggle('game-roam', roam);
+  if (roam) window.VillageTouch?.roam?.(true); // phones: Jump / Hit come out of ••• for the game (Treasure Dig digs with Jump)
   window._newTerrain?.birds?.setVisible(false);
   document.getElementById('interactionPrompt')?.classList.remove('on');
   window.VillageTouch?.useHint?.(null); // the Use button goes back to "Use" (roam games keep the buttons)
@@ -12438,6 +12465,101 @@ function loadGamesPack() {
   })().catch(e => { console.warn('games pack', e); return null; });
 }
 window._gamesPack = GamesPack; // tests
+// ── Emotes (multiplayer step 1): E (or the Emote button on a touch screen) opens a row of five: Cheer and four dances,
+// the games pack's game_cheer and dance_wave / tut / house / gangnam; 1-5 or a click plays one. A dance loops until the
+// Rebel moves, a cheer plays once. Other players see it: the move's name goes in the room state (mpAnimName) and their
+// copy of this Rebel plays it from the same games pack. A kit ape hops (its own dance), the starter ant only cheers (a jump).
+var Emote = { on:null, slot:null, kit:false, once:false, until:0, open:false, el:null };
+const EMOTES = [
+  { id:'game_cheer', name:'Cheer', once:true, svg:'<circle cx="20" cy="8.5" r="4.2"/><path d="M20 13.5v11M20 16.5 13 7.5M20 16.5l7-9M20 24.5l-5 9M20 24.5l5 9M7 5l2 3M33 5l-2 3M5.5 12h3M34.5 12h-3"/>' },
+  { id:'dance_wave', name:'Wave', svg:'<circle cx="20" cy="9" r="4.2"/><path d="M20 14v11M4 19q4-6 8-1t8 0 8 0 8-1M20 25l-6 8.5M20 25l6 8.5"/>' },
+  { id:'dance_tut', name:'Tut', svg:'<circle cx="20" cy="8.5" r="4.2"/><path d="M20 13.5v11M20 16.5h-7.5v-7M20 16.5h7.5v7.5M20 24.5l-5 9M20 24.5l5 9"/>' },
+  { id:'dance_house', name:'House', svg:'<circle cx="18.5" cy="8.5" r="4.2"/><path d="M18.5 13.5l1 11M19 16.5l-6.5 3.5 2.5 4.5M19 16.5l6.5 2.5 3-4M19.5 24.5l-6 9M19.5 24.5l8.5 4.5"/><path d="M31 27.5h4M32 31.5h4"/>' },
+  { id:'dance_gangnam', name:'Gallop', svg:'<circle cx="20" cy="8.5" r="4.2"/><path d="M20 13.5v11M20 16.5l6.5 3.5-5.5 2.5M20 16.5l-4.5 4.5 6.5 1M20 24.5l-4.5 9M20 24.5l6.5 3-1 6.5"/>' }
+];
+// what this character can do: Forge rigs and kit apes all five, the starter ant the cheer (its jump)
+const emoteKind = () => window.forgeRigBundleInfo ? 'rig' : window.kitPlayerModel ? 'kit' : 'starter';
+function emoteBlocked() {
+  try { return !walkMode || adminMode || MiniGames.on || DanceOff.on || DanceOff.choosing || SkillBar.on || SWIM.on || !!activeNPCDialogue || isVillageGateMenuOpen() || !charMesh; } catch (e) { return true; }
+}
+function buildEmoteBar() {
+  if (Emote.el) return Emote.el;
+  const css = document.createElement('style');
+  css.textContent = `#emoteBar{position:fixed;left:50%;bottom:26px;transform:translate(-50%,10px);z-index:65;display:flex;gap:10px;padding:26px 14px 12px;border-radius:18px;background:rgba(6,10,24,.84);border:1px solid rgba(232,197,106,.5);box-shadow:0 12px 34px rgba(0,0,0,.5);backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .14s,transform .14s;-webkit-user-select:none;user-select:none}
+#emoteBar.on{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
+#emoteBar .eh{position:absolute;left:0;right:0;top:9px;text-align:center;font:400 9px/1 'Cinzel Decorative',serif;letter-spacing:3px;color:#e8c56a;text-transform:uppercase}
+#emoteBar .em{position:relative;width:68px;height:80px;padding:0;border-radius:14px;border:1px solid rgba(232,197,106,.32);background:rgba(255,255,255,.035);color:#f3e3b5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font:800 10px/1 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;touch-action:manipulation}
+#emoteBar .em svg{width:40px;height:40px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+#emoteBar .em:hover,#emoteBar .em.on{background:rgba(232,197,106,.17);border-color:#e8c56a;color:#fff6d8}
+#emoteBar .em.on{box-shadow:0 0 0 2px rgba(232,197,106,.25),0 0 18px rgba(232,197,106,.35)}
+#emoteBar .em i{position:absolute;top:6px;left:8px;font:700 10px/1 system-ui,sans-serif;font-style:normal;color:rgba(232,197,106,.75)}
+#emoteBar .em.off{opacity:.32;cursor:default}
+html.vt-touch #emoteBar{bottom:auto;top:50%;transform:translate(-50%,-46%)}
+html.vt-touch #emoteBar.on{transform:translate(-50%,-50%)}
+html.vt-touch #emoteBar .em i{display:none}
+@media (max-width:420px){#emoteBar{gap:6px;padding:24px 10px 10px}#emoteBar .em{width:60px;height:74px}#emoteBar .em svg{width:36px;height:36px}}`;
+  document.head.appendChild(css);
+  const el = document.createElement('div'); el.id = 'emoteBar'; el.setAttribute('role', 'menu'); el.setAttribute('aria-label', 'Emotes');
+  el.innerHTML = '<div class="eh">Emotes</div>' + EMOTES.map((m, i) => `<button type="button" tabindex="-1" class="em" data-id="${m.id}" role="menuitem" aria-label="${m.name}"><i>${i + 1}</i><svg viewBox="0 0 40 40" aria-hidden="true">${m.svg}</svg>${m.name}</button>`).join('');
+  el.addEventListener('mousedown', e => e.preventDefault()); // (no focus: Space would press it again)
+  el.addEventListener('click', e => { const b = e.target.closest('.em'); if (b && !b.classList.contains('off')) playEmote(b.dataset.id); });
+  document.body.appendChild(el);
+  // a press anywhere else closes it (the Emote button itself toggles it)
+  document.addEventListener('pointerdown', e => { if (Emote.open && !el.contains(e.target) && !e.target.closest?.('.vtBtn.emote')) closeEmoteBar(); }, true);
+  return Emote.el = el;
+}
+function openEmoteBar() {
+  if (emoteBlocked()) return false;
+  const el = buildEmoteBar(), kind = emoteKind();
+  el.querySelectorAll('.em').forEach(b => {
+    const m = EMOTES.find(x => x.id === b.dataset.id), off = kind === 'starter' && !m.once;
+    b.classList.toggle('off', off); b.title = off ? 'Dances come with a forged Rebel' : '';
+    b.classList.toggle('on', Emote.on === m.id);
+  });
+  el.classList.add('on'); Emote.open = true;
+  if (kind === 'rig' && !GamesPack.ready) loadGamesPack(); // (the moves on their way while they choose)
+  return true;
+}
+function closeEmoteBar() { Emote.open = false; Emote.el?.classList.remove('on'); }
+async function playEmote(id) {
+  const m = EMOTES.find(x => x.id === id); closeEmoteBar();
+  if (!m || emoteBlocked()) return false;
+  stopEmote();
+  const kind = emoteKind();
+  if (kind === 'kit') { // a Chumpz kit ape: a jump for the cheer, its own dance (again and again) for the dances
+    SamuraiKit.actorAction(window.kitPlayerModel, m.once ? 'jump' : 'dance');
+    Object.assign(Emote, { on:id, slot:null, kit:true, once:!!m.once, until:m.once ? performance.now() + 900 : Infinity });
+    return true;
+  }
+  const jump = () => playForgeRigAction(runKey && animGroups[10] ? 10 : 4) || (switchAnim(4, false), setTimeout(() => { if (animState === 4) switchAnim(0, true); }, 1000), true);
+  if (kind === 'starter') { if (!m.once) return false; switchAnim(4, false); setTimeout(() => { if (animState === 4) switchAnim(0, true); }, 1000); return true; }
+  let slot = GamesPack.slots?.[id];
+  if (slot == null) {
+    const t = loadGamesPack(), slow = setTimeout(() => showToast('Getting the moves…', 2600), 700);
+    await Promise.race([t, new Promise(r => setTimeout(r, 9000))]); clearTimeout(slow);
+    slot = GamesPack.slots?.[id];
+    if (emoteBlocked() || moveForward || moveBackward || turnLeft || turnRight) return false; // they walked off meanwhile
+    if (slot == null || !animGroups[slot]) { if (m.once) return jump(); showToast('This Rebel has no dance moves yet.', 3200); return false; }
+  }
+  const g = animGroups[slot];
+  if (g._gameSpeed0 != null) g.speedRatio = g._gameSpeed0; // (a game's speed for it is not the emote's)
+  Object.assign(Emote, { on:id, slot, kit:false, once:!!m.once, until:Infinity });
+  if (m.once) playForgeRigAction(slot, null, true);
+  else { if (animState === slot) { if (g.isPlaying) g.stop(); animState = -1; } switchAnim(slot, true); }
+  return true;
+}
+// a dance stops when the Rebel moves (or swims, or a game starts); a move that takes over (a jump, a kick) ends it too
+function stopEmote() {
+  const was = Emote.on, slot = Emote.slot; Emote.on = null; Emote.slot = null; Emote.kit = false;
+  if (was && slot != null && animState === slot) { const g = animGroups[slot]; if (g?.isPlaying) g.stop(); animState = -1; switchAnim(0, true); }
+}
+function emoteFrame() {
+  if (!Emote.on) return;
+  if (emoteBlocked() || moveForward || moveBackward || turnLeft || turnRight) { stopEmote(); return; }
+  if (Emote.kit) { if (performance.now() > Emote.until) { Emote.on = null; return; } if (!Emote.once && !SamuraiKit.actorBusy(window.kitPlayerModel)) SamuraiKit.actorAction(window.kitPlayerModel, 'dance'); return; }
+  if (animState !== Emote.slot) { Emote.on = null; Emote.slot = null; } // the cheer ended, or a jump / kick took over
+}
+window._emote = { state:Emote, play:playEmote, open:openEmoteBar, close:closeEmoteBar, stop:stopEmote }; // tests
 function miniGameClipSlot(name) { return MiniGames.weapon?.slots?.[name] ?? GamesPack.slots?.[name] ?? (window._forgeClipSlots || {})[name]; }
 // a move a game held on one pose (ctx.player.pose: paused) stops before the next move plays; stopping keeps the pose, so
 // the next move blends from it
@@ -12623,6 +12745,7 @@ function endMiniGame() {
   MiniGames.on = false; MiniGames.ctx = null; MiniGames.roam = false; MiniGames.holdWalk = false; MiniGames.floatY = null; MiniGames.walkSlot = null;
   animGroups.forEach(g => { if (g && g._gameSpeed0 != null) { g.speedRatio = g._gameSpeed0; g._gameSpeed0 = null; } });
   document.body.classList.remove('game-roam');
+  window.VillageTouch?.roam?.(false);
   window._newTerrain?.birds?.setVisible(birdsShownFor(getFakeLightStateFactor()));
   moveForward = moveBackward = turnLeft = turnRight = runKey = false;
   if (charMesh) {
@@ -14485,6 +14608,89 @@ function recoverAutoplayBlockedAudio() {
   });
 }
 
+// iPhones and iPads keep an <audio> element's volume at 1 (WebKit: the side buttons are the only volume there), so the
+// music, ambience, weather loops and one-shots played at full volume whatever their sliders said, and a faded track never
+// paused (its volume never read below the pause level). Oct 28, Miguel on two iPhones: "the music is so loud when we press
+// the button to talk that I cant hear her well". On such a device each of those elements plays through a Web Audio gain
+// of its own and its volume property is that gain, so every caller stays as it is. Should no sound come through those
+// gains (a WebKit that can't take an element's sound into Web Audio), the elements are made again without them.
+const ElementAudio = (() => {
+  let fixed = null, ctx = null, broken = false, works = false, timer = 0;
+  const els = new Set(), buf = new Float32Array(256);
+  function readOnly() {
+    if (fixed === null) { try { const a = document.createElement('audio'); a.volume = .5; fixed = Math.abs(a.volume - .5) > .01; } catch (e) { fixed = false; } }
+    return fixed;
+  }
+  function context() {
+    if (ctx) return ctx;
+    try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ctx = null; return null; }
+    const wake = () => { if (ctx.state !== 'running' && !document.hidden) ctx.resume().catch(() => {}); }; // (iOS: only from a tap or a key; again after a call or the background)
+    ['touchend', 'pointerup', 'mousedown', 'keydown', 'click'].forEach(t => window.addEventListener(t, wake, { capture: true, passive: true }));
+    document.addEventListener('visibilitychange', wake);
+    return ctx;
+  }
+  function route(audio) {
+    if (!audio || audio._gain || broken || !readOnly()) return audio;
+    try { if (new URL(audio.src, location.href).origin !== location.origin) return audio; } catch (e) { return audio; } // (another site's file would come through silent)
+    const c = context(); if (!c) return audio;
+    try {
+      const src = c.createMediaElementSource(audio), g = c.createGain(), meter = c.createAnalyser();
+      meter.fftSize = buf.length; g.gain.value = 0; src.connect(g); g.connect(c.destination); src.connect(meter);
+      Object.defineProperty(audio, 'volume', { configurable: true, get: () => g.gain.value, set: v => { g.gain.value = Math.max(0, Math.min(1, Number(v) || 0)); } });
+      audio._gain = g; audio._meter = meter; els.add(audio);
+      if (!timer) timer = setInterval(check, 2000);
+    } catch (e) {}
+    return audio;
+  }
+  // every 2 s until one of them is heard: an element playing at a level you'd hear with nothing coming through, three
+  // times running, means the gains give silence here: those elements go, and the code that keeps them makes them again
+  function check() {
+    if (works || broken) { clearInterval(timer); return; }
+    if (!ctx || ctx.state !== 'running') return;
+    for (const a of els) {
+      const t = a.currentTime, moved = t !== a._lastT; a._lastT = t;
+      if (a.paused || a.ended || a.readyState < 3 || !moved || a._gain.gain.value < .02) continue;
+      a._meter.getFloatTimeDomainData(buf); let peak = 0; for (let i = 0; i < buf.length; i++) peak = Math.max(peak, Math.abs(buf[i]));
+      if (peak > 1e-5) { works = true; clearInterval(timer); return; }
+      if ((a._quiet = (a._quiet || 0) + 1) >= 3) { unroute(); return; }
+    }
+  }
+  function unroute() {
+    broken = true; clearInterval(timer);
+    for (const a of els) { try { a.pause(); a.removeAttribute('src'); a.load?.(); } catch (e) {} }
+    els.clear();
+    const W = WeatherManager;
+    for (const map of [W.audioTracks, W.oneShotTracks]) for (const [id, a] of Object.entries(map)) if (a?._gain) delete map[id];
+    if (W.musicTrack?._gain) W.musicTrack = null;
+    if (W.interiorAudioTrack?._gain) W.interiorAudioTrack = null;
+    console.warn('Music and ambience: no sound came through Web Audio here, so they play without it (at full volume on iPhone)');
+  }
+  return { route, readOnly, get state() { return { readOnly: readOnly(), routed: els.size, works, broken, ctx: ctx?.state || null }; } };
+})();
+window._elementAudio = ElementAudio; // tests
+
+// Voices over the music (Oct 28, the same test: "the music is so loud when we press the button to talk that I cant hear
+// her well"): while a voice you hear is speaking, or you hold Talk (your own music then stays out of your microphone),
+// the music goes down to a quarter and the ambience, the weather and the water to under half: down in about a tenth
+// of a second, back up over about a second once the voices have been quiet for a second (no pumping between words).
+// VillageVoice.busy() says when.
+// Phones go all the way (the next test, Miguel: "when i pressed on speak the music actually got louder"): an iPhone
+// keeps an <audio>'s volume to itself, and opening the microphone moves the phone's sound to its call output and volume,
+// so there the music, the ambience, the weather and the water are silent while voices are on (muted outright, whatever
+// path the phone plays them on) and stay so for a few seconds between sentences.
+const VoiceDuck = { k: 0, at: 0, until: 0, on: false, music: .25, amb: .45, hold: 0, phone: !!window.VillageTouch?.on || ElementAudio.readOnly() };
+if (VoiceDuck.phone) Object.assign(VoiceDuck, { music: 0, amb: 0, hold: 3500 });
+function updateVoiceDuck() {
+  const now = performance.now(), dt = Math.min(.25, Math.max(0, (now - (VoiceDuck.at || now)) / 1000)), busy = !!window.VillageVoice?.busy?.();
+  if (busy) VoiceDuck.until = now + VoiceDuck.hold;
+  const on = busy || now < VoiceDuck.until;
+  VoiceDuck.at = now; VoiceDuck.on = on;
+  VoiceDuck.k += ((on ? 1 : 0) - VoiceDuck.k) * (1 - Math.exp(-dt / (on ? .1 : .8)));
+}
+const voiceDuck = floor => 1 - (1 - floor) * VoiceDuck.k;
+const voiceMuted = () => VoiceDuck.phone && VoiceDuck.on;
+window._voiceDuck = VoiceDuck; // tests
+
 function getWeatherCenter() {
   if (walkMode && charMesh) return charMesh.position;
   const cam = scene.activeCamera || orbit;
@@ -14566,10 +14772,11 @@ function getWeatherAmbienceMultiplier() {
 
 function getWeatherAudioTrack(id, path) {
   if (!WeatherManager.audioTracks[id]) {
-    const audio = new Audio(path);
+    const audio = ElementAudio.route(new Audio(path));
     audio.loop = true;
     audio.preload = 'none';
     audio.volume = 0;
+    audio._level = 0;
     audio._targetVolume = 0;
     audio._unavailable = false;
     audio.onerror = () => { audio._unavailable = true; audio._targetVolume = 0; };
@@ -14634,10 +14841,11 @@ function ensureInteriorAudioTrack(path = getActiveInteriorAudioPath(), options =
       if (WeatherManager.interiorAudioTrack === audio) WeatherManager.interiorAudioTrack = null;
       delete WeatherManager.audioTracks[id];
     }
-    audio = new Audio(safePath);
+    audio = ElementAudio.route(new Audio(safePath));
     audio.loop = true;
     audio.preload = 'none';
     audio.volume = 0;
+    audio._level = 0;
     audio._targetVolume = 0;
     audio._srcPath = safePath;
     audio._unavailable = false;
@@ -14686,6 +14894,7 @@ function stopInteriorAudio(immediate = false) {
     if (immediate) {
       try { audio.pause(); audio.currentTime = 0; } catch(e) {}
       audio.volume = 0;
+      audio._level = 0;
     }
   }
   updateInteriorAudioStatus(immediate ? 'stopped' : 'fading');
@@ -14750,7 +14959,9 @@ function updateWeatherAudio() {
   Object.entries(WeatherManager.audioTracks).forEach(([id, audio]) => {
     if (!audio || audio._unavailable) return;
     audio._targetVolume = targets[id] || 0;
-    audio.volume += (audio._targetVolume - audio.volume) * .045;
+    audio._level = (audio._level ?? 0) + (audio._targetVolume - (audio._level ?? 0)) * .045; // (the fade keeps its own level: unrouted, an iPhone's volume always reads 1)
+    audio.volume = Math.min(1, audio._level * voiceDuck(id === WeatherManager.interiorAudioId ? VoiceDuck.music : VoiceDuck.amb));
+    if (audio.muted !== voiceMuted()) audio.muted = voiceMuted();
     if (audio._targetVolume > .01 && audio.paused) {
       if (!WeatherManager.browserAudioUnlocked) {
         if (id === WeatherManager.interiorAudioId) promptInteriorAudioUnlock();
@@ -14767,7 +14978,7 @@ function updateWeatherAudio() {
           updateInteriorAudioStatus();
         }
       });
-    } else if (audio._targetVolume <= .01 && audio.volume < .015 && !audio.paused) {
+    } else if (audio._targetVolume <= .01 && audio._level < .015 && !audio.paused) {
       audio.pause();
     }
   });
@@ -14786,10 +14997,11 @@ function ensureVillageMusicTrack() {
   if (WeatherManager.musicTrack && !WeatherManager.musicTrack.paused) {
     WeatherManager.musicTrack.pause();
   }
-  const audio = new Audio(path);
+  const audio = ElementAudio.route(new Audio(path));
   audio.loop = true;
   audio.preload = 'none';
   audio.volume = 0;
+  audio._level = 0;
   audio._targetVolume = 0;
   audio._unavailable = false;
   audio.onerror = () => { audio._unavailable = true; audio._targetVolume = 0; };
@@ -14808,11 +15020,13 @@ function updateVillageMusic() {
   const audio = ensureVillageMusicTrack();
   if (!audio || audio._unavailable) return;
   audio._targetVolume = getVillageMusicTargetVolume();
-  audio.volume += (audio._targetVolume - audio.volume) * .035;
+  audio._level = (audio._level ?? 0) + (audio._targetVolume - (audio._level ?? 0)) * .035;
+  audio.volume = Math.min(1, audio._level * voiceDuck(VoiceDuck.music));
+  if (audio.muted !== voiceMuted()) audio.muted = voiceMuted();
   if (audio._targetVolume > .01 && audio.paused) {
     if (!WeatherManager.browserAudioUnlocked) return;
     audio.play().catch(error => { markAudioPlayFailure(audio, error); });
-  } else if (audio._targetVolume <= .01 && audio.volume < .012 && !audio.paused) {
+  } else if (audio._targetVolume <= .01 && audio._level < .012 && !audio.paused) {
     audio.pause();
   }
 }
@@ -14859,7 +15073,7 @@ function playWeatherThunderAudio(strikeId, dist = 300, loud = true) {
 
 function getInteractionAudioTrack(id, path) {
   if (!WeatherManager.oneShotTracks[id]) {
-    const audio = new Audio(path);
+    const audio = ElementAudio.route(new Audio(path));
     audio.preload = 'none';
     audio.volume = 0;
     audio._unavailable = false;
@@ -15054,6 +15268,7 @@ function updateEnvironmentalOneShotAudio() {
   if (!WeatherManager.masterAudioEnabled) return;
   const now = performance.now();
   if (now < WeatherManager.nextEnvironmentalAudioAt) return;
+  if (voiceMuted()) { WeatherManager.nextEnvironmentalAudioAt = now + 8000; return; } // (phones: no birds or bells over voices)
   const profile = VILLAGE_AMBIENCE_PROFILES[CURRENT_VILLAGE_ID] || DEFAULT_VILLAGE_AMBIENCE;
   const events = [...(profile.events || [])];
   if (WeatherManager.mode === 'storm') events.push('distantThunder', 'windGust');
@@ -15504,6 +15719,7 @@ function setWeatherCycleSpeed(speed) {
 }
 
 function updateWeatherManager() {
+  updateVoiceDuck();
   if (ActiveInterior) {
     window.VillageWeather?.hide?.();
     setInteriorWeatherOverlaysVisible(false);
@@ -27002,7 +27218,7 @@ function startNewTerrainWaterSound(NT) {
   setInterval(() => {
     if (!gain || !charMesh) return;
     const level = NT.waterSoundAt(charMesh.position.x, charMesh.position.z);
-    const vol = level * .5 * (WeatherManager.masterVolume ?? .8) * (WeatherManager.ambienceVolume ?? .55) * (document.hidden ? 0 : 1);
+    const vol = level * .5 * (WeatherManager.masterVolume ?? .8) * (WeatherManager.ambienceVolume ?? .55) * (document.hidden ? 0 : 1) * voiceDuck(VoiceDuck.amb);
     gain.gain.setTargetAtTime(vol, ctx.currentTime, .4);
   }, 250);
 }
@@ -27072,7 +27288,7 @@ function startNewTerrainSurfSound(NT) {
     while (nextWave < now + 1) nextWave = wave(Math.max(nextWave, now + .05));
     const on = WeatherManager.masterAudioEnabled && !ActiveInterior && !document.hidden;
     const near = on ? NT.surfSoundAt(charMesh.position.x, charMesh.position.z) : 0, level = calm ? 1.6 * near ** 2.4 : near; // the lake is heard close to its shore
-    out.gain.setTargetAtTime(level * 1.1 * (WeatherManager.masterVolume ?? .8) * (WeatherManager.ambienceVolume ?? .55), now, .5);
+    out.gain.setTargetAtTime(level * 1.1 * (WeatherManager.masterVolume ?? .8) * (WeatherManager.ambienceVolume ?? .55) * voiceDuck(VoiceDuck.amb), now, .5);
   }, 250);
 }
 function newTerrainLayoutToSaved(data) {
@@ -27760,6 +27976,7 @@ function toggleWalk() {
     buildVillageHudMap();
     if (PendingRoomRestore) enterPendingRoomRestore();
   } else {
+    stopEmote(); closeEmoteBar();
     if (!configureInteriorEditCamera()) {
       scene.activeCamera = orbit; orbit.attachControl(canvas, true); walk.detachControl();
     }
@@ -27788,6 +28005,14 @@ document.addEventListener('keydown', async e => {
     e.preventDefault();
     return;
   }
+
+  // the emote bar: 1-5 plays one, E / Esc closes it; any other key closes it and goes on as usual. E opens it
+  if (Emote.open) {
+    const n = '12345'.indexOf(key);
+    if (n >= 0 && key) { e.preventDefault(); if (!Emote.el?.querySelectorAll('.em')[n]?.classList.contains('off')) playEmote(EMOTES[n].id); return; }
+    if (key === 'e' || key === 'escape') { e.preventDefault(); closeEmoteBar(); return; }
+    closeEmoteBar();
+  } else if (key === 'e' && !adminMode && walkMode && !e.repeat) { e.preventDefault(); openEmoteBar(); return; }
 
   if (key === 'escape' && pendingAdminPlacement) {
     clearAdminPlacement();
@@ -27927,6 +28152,8 @@ document.addEventListener('keydown', async e => {
   if (key === 'a' || e.key === 'ArrowLeft') turnLeft = true;
   if (key === 'd' || e.key === 'ArrowRight') turnRight = true;
   if (!walkMode) return;
+  // a move key ends an emote first (a looping dance never "finishes", so the moves below would wait on it for ever)
+  if (Emote.on && !adminMode && (key === 'r' || (key.length === 1 && ' fgcbvhkqt'.includes(key)))) stopEmote();
   if (key === 'r' && !adminMode) { runKey=true; switchAnim(2, true); }
   if (key === 'q' && !adminMode && window._villageWeapon) { toggleVillageWeapon(); return; }
     if (key === 'f' && !adminMode) {
@@ -29958,6 +30185,7 @@ engine.runRenderLoop(()=>{
       groundPlayableVisualToTerrain(_terrainY);
       // Slope tilt removed — character stays upright
     }
+    emoteFrame(); // (a dance stops as the Rebel moves, so the walk below takes over)
     // a roam game's own walk (ctx.player.walkAs: the sneak walk) takes the walk's place; running stays the run
     const _ws = MiniGames.on ? MiniGames.walkSlot : null;
     if (SWIM.on && SWIM.slot != null && !MiniGames.on) playPlayerSwimClip(moveForward||moveBackward||turnLeft||turnRight||runKey);
@@ -30269,6 +30497,7 @@ setInterval(() => window.VillageTouch?.update({ walking: !!walkMode && !adminMod
 // Step 3: the text chat (assets/village-chat.js), through the same room.
 const MP_ANIMS = ['idle', 'walk', 'run', 'kick', 'jump'];
 function mpAnimName() {
+  if (Emote.on) return Emote.on; // (an emote: their copy of this Rebel plays it)
   if (animState < 0) return 'idle';
   if (animState === 0 && window._forgeFightStance) return 'fight_idle';
   if (animState < 5) return MP_ANIMS[animState];
@@ -30281,7 +30510,7 @@ function startVillageMultiplayer() {
   if (!window.VillageMP || startVillageMultiplayer.on) return;
   startVillageMultiplayer.on = true;
   window.VillageMP.start({
-    scene, village: CURRENT_VILLAGE_ID, lite: LITE_GRAPHICS, maxFull: CRASH_LIGHT ? [4, 2, 1][CRASH_LIGHT] : undefined,
+    scene, village: CURRENT_VILLAGE_ID, lite: LITE_GRAPHICS, maxFull: CRASH_LIGHT ? [4, 2, 1][CRASH_LIGHT] : undefined, maxLite: CRASH_LIGHT ? [10, 4, 0][CRASH_LIGHT] : undefined,
     shadows: () => shadows,
     player: () => charMesh ? { x: charMesh.position.x, y: charMesh.position.y, z: charMesh.position.z, yaw: charMesh.rotation.y, anim: mpAnimName(),
       interior: ActiveInterior ? String(ActiveInterior.targetInteriorId || ActiveInterior.interiorType || 'room') : null } : null,
@@ -30302,13 +30531,56 @@ function startVillageMultiplayer() {
     playerNode: () => charMesh,
     toast: m => showToast(m, 6000)
   });
+  // step 4, groups (assets/village-groups.js): while in one, a second socket to the group (any village); its news goes
+  // to the chat window, its members to the minimap
+  window.VillageGroup?.start({
+    village: CURRENT_VILLAGE_ID, mp: window.VillageMP,
+    villageName: id => VILLAGE_REGISTRY[id]?.displayName || id,
+    player: () => charMesh && walkMode && !adminMode ? { x: charMesh.position.x, z: charMesh.position.z, interior: ActiveInterior ? String(ActiveInterior.targetInteriorId || ActiveInterior.interiorType || 'room') : null } : null,
+    signedIn: () => !!Econ.on,
+    ticket: () => window.VillageMP.ticket(),
+    travel: id => selectVillageGateDestination(id),
+    doorOf: id => { const d = scene.transformNodes.find(n => n.metadata?.type === 'interior_entrance' && n.metadata.targetInteriorId === id); return d ? { x: d.position.x, z: d.position.z } : null; },
+    isBlocked: u => !!window.VillageChat?.isBlocked?.(u),
+    toast: m => showToast(m, 5000)
+  });
+  window.VillageGroup?.on((kind, d) => window.VillageChat?.group?.(kind, d));
+  // step 5, voice (assets/village-voice.js): hold X (the Talk button on phones) to talk to the players near you, or to your
+  // group with the chat's Group channel picked; signed-in players only, and only while the rooms have voice switched on.
+  // The listener is the Rebel's head, turned the way the camera looks (voices come from their side of the screen)
+  window.VillageVoice?.start({
+    scene, mp: window.VillageMP, group: window.VillageGroup, stage: window.VillageStage,
+    signedIn: () => !!Econ.on,
+    canTalk: () => walkMode && !adminMode && !(MiniGames.on && !MiniGames.roam) && !DanceOff.on && !DanceOff.choosing && !isVillageGateMenuOpen(),
+    channel: () => window.VillageChat?.state?.channel || 'n',
+    listener: () => { const c = scene.activeCamera; if (!c) return null; const at = charMesh ? charMesh.position : c.globalPosition; return { pos: { x: at.x, y: at.y + 1.7, z: at.z }, fwd: c.getDirection(BABYLON.Axis.Z), up: c.getDirection(BABYLON.Axis.Y) }; },
+    toast: m => showToast(m, 5000)
+  });
+  // step 6, the Colony Stage (assets/village-stage.js): an event on now shows a LIVE banner; at its place the page joins the
+  // event's hall (the stage bar, the Event channel, the hosts' voices, the show; Antthony at the Comedy Club's mic)
+  window.VillageStage?.start({
+    scene, village: CURRENT_VILLAGE_ID,
+    villageName: id => VILLAGE_REGISTRY[id]?.displayName || id,
+    player: () => charMesh && walkMode && !adminMode ? { x: charMesh.position.x, z: charMesh.position.z, interior: ActiveInterior ? String(ActiveInterior.targetInteriorId || ActiveInterior.interiorType || 'room') : null } : null,
+    signedIn: () => !!Econ.on,
+    ticket: () => window.VillageMP.ticket(),
+    travel: id => selectVillageGateDestination(id),
+    doorOf: id => { const d = scene.transformNodes.find(n => n.metadata?.type === 'interior_entrance' && n.metadata.targetInteriorId === id); return d ? { x: d.position.x, z: d.position.z } : null; },
+    roomHolder: () => ActiveInterior ? scene.transformNodes.find(n => n.metadata?.kitRoom && n.parent?.name === 'activeInteriorRoot') || null : null,
+    enterRoom: id => { const d = !ActiveInterior && scene.transformNodes.find(n => n.metadata?.type === 'interior_entrance' && n.metadata.targetInteriorId === id); return d ? enterInterior(d) !== false : false; },
+    sound: name => MoonTaleSounds.fx(name),
+    viaSite: u => (window.viaSite ? window.viaSite(u) : u),
+    canAct: () => walkMode && !adminMode && !MiniGames.on,
+    toast: m => showToast(m, 5000)
+  });
+  window.VillageStage?.on((kind, d) => window.VillageChat?.stage?.(kind, d));
 }
 // signed in or out while here: the room hears the new name (a new ticket). The account seen last lives on the function:
 // the first refreshEcon can answer before the module has run this far (a let here was not set up yet and threw)
 function mpOnEcon() {
   if (!Econ.checked) return;
   const a = Econ.on ? Econ.kind + ':' + Econ.name : '';
-  if (mpOnEcon.account != null && a !== mpOnEcon.account) window.VillageMP?.reconnect?.();
+  if (mpOnEcon.account != null && a !== mpOnEcon.account) { window.VillageMP?.reconnect?.(); window.VillageGroup?.account?.(); } // (a group belongs to the account it was made with)
   mpOnEcon.account = a;
 }
 function initVillageHud() {
@@ -30316,6 +30588,7 @@ function initVillageHud() {
     window.VillageHud?.init(scene, {
       isWalking: () => walkMode && !adminMode,
       inInterior: () => !!ActiveInterior,
+      friends: () => { try { const a = window.VillageGroup?.dots?.() || [], b = window.VillageStage?.dots?.() || []; return a.length || b.length ? a.concat(b) : null; } catch (e) { return null; } },
       questTarget: () => {
         // a roam game (a run, a chase): where it wants you next
         if (MiniGames.on && MiniGames.roam) { try { return MiniGames.inst?.target?.() || null; } catch (e) { return null; } }

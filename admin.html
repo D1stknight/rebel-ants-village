@@ -191,6 +191,15 @@ body{
   color:#8a7a5a;font-size:10px;letter-spacing:3px;font-family:'Cinzel',serif;
 }
 @keyframes annTicker{0%{transform:translateX(100%);}100%{transform:translateX(-100%);}}
+#bdg{border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);padding:22px;display:flex;flex-direction:column;gap:12px}
+#bdg h2{font-family:'Cinzel Decorative',serif;color:#c8922a;font-size:16px;letter-spacing:2px}
+#bdg p{color:#b7a98b;font-size:12px;line-height:1.7}
+#bdg .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+#bdg button,#bdg a.btn{padding:10px 16px;background:transparent;border:1px solid rgba(200,146,42,.45);color:#c8922a;font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;text-decoration:none}
+#bdg button.primary{background:rgba(200,146,42,.16);border-color:rgba(200,146,42,.8);color:#f3e6bf}
+#bdg button:disabled{opacity:.45;cursor:default}
+#bdg-status{color:#5ecfca;font-size:11px;letter-spacing:1px;min-width:0;overflow-wrap:anywhere}
+#bdg-status.err{color:#e07a6a}
 #bjs{border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);padding:22px;display:flex;flex-direction:column;gap:12px}
 #bjs h2{font-family:'Cinzel Decorative',serif;color:#c8922a;font-size:16px;letter-spacing:2px}
 #bjs p{color:#b7a98b;font-size:12px;line-height:1.7}
@@ -248,6 +257,14 @@ body{
 #mpa-body .rep .ctx{margin-top:6px;color:#b7a98b;font-size:12px;line-height:1.55}
 #mpa-body input[type=text],#mpa-body input[type=number],#mpa-body select,#mpa-body textarea{background:rgba(0,0,0,.35);border:1px solid rgba(200,146,42,.3);color:#f3e6bf;padding:8px 9px;font:13px -apple-system,'Segoe UI',Arial,sans-serif}
 #mpa-body textarea{width:100%;min-height:90px;resize:vertical}
+#mpa-body .ev{border:1px solid rgba(200,146,42,.22);background:rgba(0,0,0,.25);padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+#mpa-body .ev.live{border-color:#ff6b6b;box-shadow:inset 3px 0 0 #ff4d5e}
+#mpa-body .ev h3{font:600 13px 'Cinzel',serif;letter-spacing:1.5px;color:#f3e6bf}
+#mpa-body .ev .live-tag{color:#ff6b6b;font-weight:800;letter-spacing:2px;font-size:10px;margin-right:6px}
+#mpa-body .evf{display:grid;grid-template-columns:minmax(110px,auto) 1fr;gap:8px 10px;align-items:center;border:1px solid rgba(94,207,202,.3);background:rgba(0,0,0,.3);padding:12px}
+#mpa-body .evf label{color:#b7a98b;font-size:12px}
+#mpa-body .evf textarea{min-height:220px;font:12.5px/1.45 ui-monospace,Menlo,Consolas,monospace}
+@media (max-width:560px){#mpa-body .evf{grid-template-columns:1fr}}
 #mpa-body label.tg{display:flex;gap:10px;align-items:center;cursor:pointer}
 #mpa-body label.tg input{width:18px;height:18px;accent-color:#5ecfca}
 #mpa-status{color:#5ecfca;font-size:11px;letter-spacing:1px}
@@ -329,6 +346,16 @@ body{
     </div>
   </section>
 
+  <section id="bdg">
+    <h2>🏅 Badges on the Badge Wall</h2>
+    <p>Universe's badges show on the Rebel Economy's Badge Wall with every other app's, and on the Rebel Console's Badges page. A signed-in player's badges go there when their story saves. Send everyone's sends the badges already in every saved story now, for players who haven't played since (each badge goes once). Chest and game badges wait until Universe's own points record has those chests and first clears.</p>
+    <div class="row">
+      <button id="bdg-send" class="primary" type="button" onclick="bdgSendAll()">Send everyone's badges now</button>
+      <a class="btn" target="_blank" rel="noopener" href="https://economy.rebelants.io/admin/badges">The Console's Badges page ↗</a>
+      <span id="bdg-status"></span>
+    </div>
+  </section>
+
   <section id="bjs">
     <h2>🧊 Babylon (the 3D engine)</h2>
     <p>The site keeps its own copy of Babylon, so it never changes by itself. Babylon puts out a new version most weeks and you don't need each one. Every Tuesday (five days after Babylon's weekly release, so its quick fixes are in) a robot tests the newest on all 15 villages, the Rebel Forge, the NPC Forge and the terrain lab, and says here whether it is safe.</p>
@@ -350,7 +377,7 @@ body{
 
   <section id="mpa">
     <h2>🗣 Multiplayer: players and chat</h2>
-    <p>Who is in Universe right now, the chat (every message, with the words as typed beside the ones the filter starred), the players' reports, and the tools: mute, kick or ban an account, delete a message, clear a village's chat, and the chat settings. Signed-in players write; guests read. These are this site's rooms only (the dev preview has its own).</p>
+    <p>Who is in Universe right now, the chat (every message, with the words as typed beside the ones the filter starred), the players' reports, and the tools: mute, kick or ban an account, delete a message, clear a village's chat, the chat and voice settings, and the Colony Stage's events (a LIVE NOW in the lobby, hosts heard by everyone there, a show at the Comedy Club's mic). Signed-in players write; guests read. These are this site's rooms only (the dev preview has its own).</p>
     <div class="ver">
       <div><span>Online now</span><b id="mpa-online">…</b><small id="mpa-online-at"></small></div>
       <div><span>Open reports</span><b id="mpa-reports">…</b><small>from players</small></div>
@@ -362,6 +389,7 @@ body{
       <button type="button" data-t="reports">Reports</button>
       <button type="button" data-t="mods">Muted &amp; banned</button>
       <button type="button" data-t="cfg">Settings</button>
+      <button type="button" data-t="events">Events</button>
       <button type="button" onclick="mpaLoad(true)">↻</button>
     </div>
     <div id="mpa-body"></div>
@@ -404,6 +432,31 @@ async function logoutAdmin() {
   window.location.href = 'index.html';
 }
 
+// Badges (Oct 29): every saved story's badges to the Rebel Economy's Badge Wall at once (/api/badges-backfill, a page of
+// accounts a call, the cursor until done; this site's stories only)
+async function bdgSendAll() {
+  const btn = document.getElementById('bdg-send'), st = document.getElementById('bdg-status');
+  const say = (t, err) => { st.textContent = t; st.className = err ? 'err' : ''; };
+  btn.disabled = true;
+  const sum = { accounts: 0, sent: 0, waiting: 0, stopped: {} };
+  let cursor = '0', site = '';
+  try {
+    for (let i = 0; i < 200; i++) {
+      const r = await fetch('/api/badges-backfill', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cursor }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.ok) throw new Error(d.error || ('Error ' + r.status));
+      site = d.site; sum.accounts += d.accounts; sum.sent += d.sent; sum.waiting += d.waiting;
+      for (const [k, n] of Object.entries(d.stopped || {})) sum.stopped[k] = (sum.stopped[k] || 0) + n;
+      say(`${sum.accounts} players · ${sum.sent} badges sent…`);
+      cursor = d.cursor;
+      if (d.done) break;
+    }
+    const WHY = { not_ready: "the economy's badges are switched off", retry_later: 'waiting after an error', busy: 'being sent by a save right now', unknown_user: 'no Rebel Economy account', budget: 'out of time' };
+    const stopped = Object.entries(sum.stopped).map(([k, n]) => `${n} stopped (${WHY[k] || k})`).join(', ');
+    say(`Done${site === 'prod' ? '' : ' (this preview\'s stories)'}: ${sum.accounts} players, ${sum.sent} badges sent${sum.waiting ? `, ${sum.waiting} waiting on chests or first clears` : ''}${stopped ? ', ' + stopped + ': press again in 5 minutes' : ''}.`);
+  } catch (e) { say(e.message || 'The badges did not go', true); }
+  btn.disabled = false;
+}
 // Announcements (Oct 18): the landing page ticker's lines (/api/site-ticker; production and previews keep their own)
 const ANN_DEFAULT = ['REBEL ANTS — THE HIDDEN VILLAGE', 'Season 1 Now Live', 'New dojos coming soon', 'The Foundry — AI character generation coming', 'Hold your ant. Enter the village.'];
 const annLines = () => document.getElementById('ann-lines').value.split('\n').map(t => t.replace(/^\s*✦\s*/, '').trim()).filter(Boolean).slice(0, 12);
@@ -513,7 +566,58 @@ async function bjsRun() {
 
 // Multiplayer card (Oct 27): /api/mp-admin signs each command for the rooms (realtime/: the control desk keeps the
 // settings, mutes and bans, the chat log and the reports). Everything players wrote goes in by textContent.
-const mpa = { tab: 'online', online: null, log: null, reports: null, mods: null, cfg: null, filter: { village: '', q: '', sub: '' }, allReports: false };
+const mpa = { tab: 'online', online: null, log: null, reports: null, mods: null, cfg: null, events: null, edit: null, filter: { village: '', q: '', sub: '' }, allReports: false };
+// the Colony Stage: where an event can be (a room's door id, or a village outside) and the demo set for the Comedy Club
+const EVENT_PLACES = [
+  { key: 'hub:hub_comedy_club', village: 'hub', room: 'hub_comedy_club', label: "Antthony's Comedy Club" },
+  { key: 'hub:hub_after_dark', village: 'hub', room: 'hub_after_dark', label: 'Rebel Ants After Dark' },
+  { key: 'hub:', village: 'hub', room: null, label: 'The Hub courtyard' },
+  ...['samurai', 'shogun', 'ronin', 'bushi', 'buke', 'ashigaru', 'kenshi', 'yamabushi', 'sohei', 'wokou', 'warrior', 'cute-creepy', 'chumpz', 'saints-la'].map(v => ({ key: v + ':', village: v, room: null, label: null }))
+];
+const DEMO_SET = `0:02 [drumroll]
+0:05 Good evening, Colony! Give it up for yourselves! [applause]
+0:11 I'm Antthony. That's ant, then thony. My mom had one job. [rimshot]
+0:20 I just flew in from the Hub. And boy, are my arms tired. All six of them. [laugh]
+0:29 People ask me: Antthony, how do you carry fifty times your own weight?
+0:35 I skip leg day. I have six of them. I skip them in shifts. <front_kick> [laugh]
+0:43 The Ronin say they work alone. Silent. In the shadows.
+0:49 That's not a lifestyle. That's my cousin avoiding the group chat. [rimshot]
+0:56 The Samurai are so disciplined, they fold their tunnels. [laugh]
+1:03 The Wokou told me they're explorers. I said, you got lost at sea. They said, with style. [laugh]
+1:13 The Shogun has a crown. I asked what it's for. He said wisdom. I said, it's on sideways. [rimshot]
+1:21 Now the Chumpz. I love the Chumpz. They invited me to a beach party.
+1:28 I asked what to bring. They said bananas. I asked how many. They said yes. [laugh]
+1:36 The Saints of LA took me cruising. The car hopped so high I got a passport stamp. [rimshot]
+1:44 Cute and Creepy is lovely, but the moon there never sets. I tried to sleep. The moon tried harder. [laugh]
+1:54 My Rebel Points? I'm saving up for a forge. Twenty thousand points.
+2:00 At this rate my grandkids are going to look fantastic. [rimshot]
+2:07 You know what they say. Behind every great colony...
+2:12 ...is an ant who said: I'll do it tomorrow. [laugh]
+2:19 That ant is me. I am the colony's tomorrow. [applause]
+2:26 You've been wonderful. I've been Antthony. Don't forget to tip your aphids!
+2:33 <cartwheel> [cheer]
+2:37 [applause]`;
+// a show's script, one line each: an optional time (m:ss), the words, [sounds] (rimshot, applause, laugh, drumroll, cheer)
+// after the words, <a move> of the performer's rig (cartwheel, flip_kick, front_kick, jump, punch_combo, jab, fight_idle);
+// lines without a time follow the one before
+function parseShow(text) {
+  const cues = []; let t = 0;
+  for (const raw of String(text || '').split('\n')) {
+    let line = raw.trim(); if (!line) continue;
+    const m = /^(\d+):(\d{1,2}(?:\.\d)?)\s*/.exec(line);
+    if (m) { t = +m[1] * 60 + +m[2]; line = line.slice(m[0].length); }
+    const sfx = [...line.matchAll(/\[(rimshot|applause|laugh|drumroll|cheer)\]/gi)].map(x => x[1].toLowerCase());
+    const clip = (/<([a-z0-9_]{1,24})>/i.exec(line) || [])[1];
+    const say = line.replace(/\[[^\]]*\]|<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+    const after = say ? Math.min(12, 1.2 + say.length * .07) : 0;
+    if (say) cues.push({ t: Math.round(t * 10) / 10, say });
+    if (clip) cues.push({ t: Math.round(t * 10) / 10, clip: clip.toLowerCase() });
+    for (const x of sfx) cues.push({ t: Math.round((t + after) * 10) / 10, sfx: x });
+    t += say ? after + .5 : 1.5;
+  }
+  const len = Math.ceil(Math.max(5, ...cues.map(c => c.t)) + 6);
+  return { cues, len };
+}
 const VILLAGE_NAMES = { hub: 'Hub', ronin: 'Ronin', samurai: 'Samurai', shogun: 'Shogun', bushi: 'Bushi', buke: 'Buke', ashigaru: 'Ashigaru', kenshi: 'Kenshi', yamabushi: 'Yamabushi', sohei: 'Sohei', wokou: 'Wokou', warrior: 'Warrior', 'cute-creepy': 'Cute & Creepy', chumpz: 'Chumpz', 'saints-la': 'Saints of LA' };
 const mpaWhen = ms => (ms ? new Date(ms).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '');
 const mpaUntil = ms => (ms > Date.now() + 300 * 86400000 ? 'no end' : mpaWhen(ms));
@@ -526,7 +630,7 @@ async function mpaCmd(cmd, args = {}) {
 }
 const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 const btn = (label, fn, cls = 'sm') => { const b = mk('button', cls, label); b.type = 'button'; b.onclick = async () => { b.disabled = true; try { await fn(); } catch (e) { mpaStatus(e.message, true); } b.disabled = false; }; return b; };
-const villageOf = room => { const v = String(room || '').split(':')[1] || ''; return VILLAGE_NAMES[v] || v; };
+const villageOf = room => { const v = String(room || '').split(':')[1] || ''; return v === 'group' ? 'a group' : v === 'event' ? 'an event' : VILLAGE_NAMES[v] || v; }; // ('<site>:group:<id>': a group's chat, '<site>:event:<id>': an event's)
 // what an admin can do to an account (from anywhere on the card)
 function accountActs(sub, n, k) {
   const box = mk('span', 'acts');
@@ -542,14 +646,13 @@ function accountActs(sub, n, k) {
   return box;
 }
 async function mpaAct(cmd, args, done) {
-  const d = await mpaCmd(cmd, args);
-  mpaStatus(done + (d.reached ? ` (reached ${d.reached} ${d.reached === 1 ? 'socket' : 'sockets'})` : ''));
-  await mpaLoad(true);
+  const d = await mpaCmd(cmd, args), msg = done + (d.reached ? ` (reached ${d.reached} ${d.reached === 1 ? 'socket' : 'sockets'})` : '');
+  if (await mpaLoad() !== false) mpaStatus(msg); // (the card read again first: what was done stays on the status line)
 }
 async function mpaLoad(fresh) {
   try {
-    const [on, rp, cfg] = await Promise.all([mpaCmd('online'), mpaCmd('reports', { all: mpa.allReports }), mpaCmd('cfg-get')]);
-    mpa.online = on; mpa.reports = rp; mpa.cfg = cfg.cfg;
+    const [on, rp, cfg, evs] = await Promise.all([mpaCmd('online'), mpaCmd('reports', { all: mpa.allReports }), mpaCmd('cfg-get'), mpaCmd('events').catch(() => ({ events: [] }))]);
+    mpa.online = on; mpa.reports = rp; mpa.cfg = cfg.cfg; mpa.events = evs.events || [];
     document.getElementById('mpa-online').textContent = on.total;
     document.getElementById('mpa-online-at').textContent = on.rooms.length ? `in ${on.rooms.length} village ${on.rooms.length === 1 ? 'copy' : 'copies'}` : 'nobody right now';
     document.getElementById('mpa-reports').textContent = rp.open;
@@ -561,6 +664,7 @@ async function mpaLoad(fresh) {
     ['mpa-online', 'mpa-reports', 'mpa-chat'].forEach(id => (document.getElementById(id).textContent = '–'));
     mpaStatus(e.message, true);
     document.getElementById('mpa-body').replaceChildren(mk('p', 'dim', 'The rooms are not reachable from this site right now. ' + e.message));
+    return false;
   }
 }
 async function mpaShow(tab) {
@@ -579,6 +683,12 @@ async function mpaShow(tab) {
         row.append(mk('span', 'n k-' + p.k, p.n), mk('span', 'dim', [lab, p.k === 'guest' ? 'guest' : p.k === 'name' ? 'name account' : 'Discord', p.s ? (p.s[5] ? 'in ' + p.s[5] : `at ${Math.round(p.s[0])}, ${Math.round(p.s[2])}`) : 'not walking', 'since ' + mpaWhen(p.j)].filter(Boolean).join(' · ')));
         if (p.mute) row.append(mk('span', 'tag', 'muted until ' + mpaWhen(p.mute)));
         row.append(accountActs(p.sub, p.n, p.k));
+        const evs = (mpa.events || []).filter(ev => !ev.ended && ev.ends > Date.now());
+        if (p.k !== 'guest' && evs.length) { // make this player a host of an event (they are signed in: their account)
+          const sel = mk('select'); sel.append(new Option('Host of…', '')); for (const ev of evs) sel.append(new Option(ev.title + ((ev.hosts || []).some(h => h.sub === p.sub) ? ' ✓' : ''), ev.id));
+          sel.onchange = async () => { const id = sel.value; if (!id) return; try { await mpaAct('event-host', { id, sub: p.sub, u: p.u, n: p.n, on: true }, `${p.n} hosts ${evs.find(e => e.id === id)?.title}`); } catch (e) { mpaStatus(e.message, true); } };
+          row.append(sel);
+        }
         box.append(row);
       }
       out.push(box);
@@ -595,7 +705,7 @@ async function mpaShow(tab) {
     if (!d.rows.length) out.push(mk('p', 'dim', 'No messages.'));
     for (const m of d.rows) {
       const row = mk('div', 'msg' + (m.del ? ' del' : ''));
-      const left = mk('div'); left.append(mk('div', 't', mpaWhen(m.at)), mk('div', 't', villageOf(m.room) + ' · ' + (m.ch === 'w' ? 'whisper' : m.ch === 'v' ? 'village' : 'nearby')));
+      const left = mk('div'); left.append(mk('div', 't', mpaWhen(m.at)), mk('div', 't', villageOf(m.room) + ' · ' + (m.ch === 'w' ? 'whisper' : m.ch === 'v' ? 'village' : m.ch === 'g' ? 'group chat' : m.ch === 'e' ? 'event chat' : 'nearby')));
       const mid = mk('div', 'x'); const nm = mk('b', 'k-' + m.k, m.n); mid.append(nm);
       if (m.ch === 'w') mid.append(mk('span', 'ch-w', ' → ' + (m.tn || '')));
       mid.append(document.createTextNode(': ' + m.x));
@@ -632,6 +742,34 @@ async function mpaShow(tab) {
       box.append(acts); out.push(box);
     }
   }
+  if (tab === 'events') {
+    const d = await mpaCmd('events'); mpa.events = d.events || [];
+    const now = Date.now();
+    out.push(btn('+ New event', async () => { mpa.edit = { title: '', place: EVENT_PLACES[0], starts: now + 3600000, mins: 60, show: null, script: '' }; await mpaShow('events'); }, 'primary'));
+    if (mpa.edit) out.push(eventForm(mpa.edit));
+    if (!mpa.events.length) out.push(mk('p', 'dim', 'No events yet. Make one, pick its hosts in Online now (Host of…), and Go live: the lobby shows LIVE NOW and everyone at the place hears the hosts.'));
+    for (const ev of mpa.events) {
+      const box = mk('div', 'ev' + (ev.live ? ' live' : '')), h = mk('h3');
+      if (ev.live) h.append(mk('span', 'live-tag', '● LIVE'));
+      h.append(document.createTextNode(ev.title));
+      box.append(h, mk('div', 'dim', `${ev.place.label} · ${mpaWhen(ev.starts)} – ${new Date(ev.ends).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}${ev.ended ? ' · ended' : ev.ends < now ? ' · over' : ''}`));
+      const hosts = mk('div', 'row'); hosts.append(mk('span', 'dim', 'Hosts:'));
+      if (!(ev.hosts || []).length) hosts.append(mk('span', 'dim', 'none yet (Online now → Host of…)'));
+      for (const x of ev.hosts || []) hosts.append(mk('span', 'tag', x.n), btn('✕', () => mpaAct('event-host', { id: ev.id, sub: x.sub, on: false }, `${x.n} is no longer a host`)));
+      box.append(hosts);
+      if (ev.show) box.append(mk('div', 'dim', `Show: ${ev.show.title} · ${Math.floor(ev.show.len / 60)}:${String(ev.show.len % 60).padStart(2, '0')} · ${ev.show.cues.length} cues${ev.show.audio ? ' · with audio' : ' · babble voice + captions'}${ev.showAt && ev.showAt + ev.show.len * 1000 > now ? ' · PLAYING' : ''}`));
+      const acts = mk('div', 'row');
+      if (!ev.ended && ev.ends > now) {
+        if (!ev.live) acts.append(btn('Go live now', () => mpaAct('event-live', { id: ev.id }, `${ev.title} is live`), 'sm primary'));
+        else acts.append(btn('End now', () => confirm(`End ${ev.title} now? Everyone at it is told.`) && mpaAct('event-end', { id: ev.id }, `${ev.title} ended`), 'sm bad'));
+        if (ev.live && ev.show) acts.append(ev.showAt && ev.showAt + ev.show.len * 1000 > now ? btn('Stop the show', () => mpaAct('event-show', { id: ev.id, go: false }, 'Show stopped')) : btn('Start the show', () => mpaAct('event-show', { id: ev.id, go: true }, 'The show starts in 3 seconds')));
+      }
+      acts.append(btn('Edit', async () => { const p = EVENT_PLACES.find(x => x.village === ev.place.village && (x.room || null) === (ev.place.room || null)) || { ...ev.place, key: ev.place.village + ':' + (ev.place.room || '') };
+        mpa.edit = { id: ev.id, title: ev.title, place: p, starts: ev.starts, mins: Math.round((ev.ends - ev.starts) / 60000), show: ev.show, script: ev.show?.script || '' }; await mpaShow('events'); }));
+      acts.append(btn('Delete', () => confirm(`Delete ${ev.title}?`) && mpaAct('event-delete', { id: ev.id }, 'Event deleted'), 'sm bad'));
+      box.append(acts); out.push(box);
+    }
+  }
   if (tab === 'mods') {
     const d = await mpaCmd('mods');
     if (!d.rows.length) out.push(mk('p', 'dim', 'Nobody is muted or banned.'));
@@ -651,13 +789,45 @@ async function mpaShow(tab) {
     const sr = mk('div', 'row'); sr.append(mk('span', '', 'Slow mode: one message every'), slow, mk('span', '', 'seconds (2 = normal)'));
     out.push(tg('chat', 'Chat on everywhere (off: nobody can write; everyone sees "Chat is switched off")', c.chat !== false), sr,
       tg('filter', 'Word filter (swear words and slurs starred out)', c.filter !== false), tg('links', 'Allow links (off: links are taken out, except rebelants.io and rebeluniverse.io)', c.links === true),
+      tg('voice', 'Voice on everywhere (push to talk for signed-in players; off: every voice stops at once)', c.voice !== false),
       mk('div', 'dim', 'Your own words to star out, besides the filter:'), words,
       btn('Save the settings', async () => {
-        const args = { chat: document.getElementById('mpa-cfg-chat').checked, slow: +document.getElementById('mpa-cfg-slow').value, filter: document.getElementById('mpa-cfg-filter').checked, links: document.getElementById('mpa-cfg-links').checked, words: document.getElementById('mpa-cfg-words').value.split('\n').map(w => w.trim()).filter(Boolean) };
+        const args = { chat: document.getElementById('mpa-cfg-chat').checked, slow: +document.getElementById('mpa-cfg-slow').value, filter: document.getElementById('mpa-cfg-filter').checked, links: document.getElementById('mpa-cfg-links').checked, voice: document.getElementById('mpa-cfg-voice').checked, words: document.getElementById('mpa-cfg-words').value.split('\n').map(w => w.trim()).filter(Boolean) };
         await mpaAct('cfg-set', args, 'Settings saved');
       }, 'primary'));
   }
   body.replaceChildren(...out);
+}
+// an event made or changed: what, where, when, how long, and its show (a script; an audio file is optional)
+function eventForm(e) {
+  const f = mk('div', 'evf'), row = (label, el) => { f.append(mk('label', '', label), el); return el; };
+  const title = row('Title', mk('input')); title.type = 'text'; title.maxLength = 80; title.value = e.title; title.placeholder = "Antthony's Opening Night";
+  const place = row('Where', mk('select')); for (const p of EVENT_PLACES) place.append(new Option(p.label || (VILLAGE_NAMES[p.village] + ' (outside)'), p.key)); place.value = e.place.key || 'hub:hub_comedy_club';
+  const pad = n => String(n).padStart(2, '0'), d0 = new Date(e.starts);
+  const when = row('Starts', mk('input')); when.type = 'datetime-local'; when.value = `${d0.getFullYear()}-${pad(d0.getMonth() + 1)}-${pad(d0.getDate())}T${pad(d0.getHours())}:${pad(d0.getMinutes())}`;
+  const mins = row('Minutes', mk('input')); mins.type = 'number'; mins.min = 10; mins.max = 720; mins.value = e.mins || 60;
+  const stitle = row('Show', mk('input')); stitle.type = 'text'; stitle.maxLength = 80; stitle.value = e.show?.title || ''; stitle.placeholder = 'No show (a live event: the hosts talk)';
+  const audio = mk('input'); audio.type = 'text'; audio.placeholder = 'Audio (optional): upload a file, or a link to one in the site store'; audio.value = e.show?.audio || '';
+  const file = mk('input'); file.type = 'file'; file.accept = 'audio/*';
+  file.onchange = async () => { const fl = file.files[0]; if (!fl) return; if (fl.size > 3 * 1024 * 1024) return mpaStatus(fl.name + ' is ' + (fl.size / 1048576).toFixed(1) + ' MB: 3 MB at most (try 64 kbps mono).', true); mpaStatus('Uploading ' + fl.name + '…');
+    try { const data = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = rej; r.readAsDataURL(fl); });
+      const r = await fetch('/api/mp-show-upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: fl.name, type: fl.type, data }) }); const o = await r.json();
+      if (!r.ok || !o.ok) throw new Error(o.error || 'Upload failed'); audio.value = o.url; mpaStatus('Uploaded: the show plays this file (its words below are the captions).'); } catch (err) { mpaStatus(err.message, true); } };
+  const ab = mk('div', 'row'); ab.append(audio, file); row('Audio', ab);
+  const script = row('Script', mk('textarea')); script.value = e.script || ''; script.placeholder = 'One line each: 0:05 Good evening, Colony! [applause]\n[rimshot] [laugh] [applause] [drumroll] [cheer] = sounds after the line, <cartwheel> = a move';
+  const tools = mk('div', 'row'); tools.append(btn('Use the demo set (Antthony)', async () => { script.value = DEMO_SET; if (!stitle.value) stitle.value = "Antthony: Opening Night"; }), mk('span', 'dim', 'Without audio each line gets a babbling voice and a caption; the performer at the Comedy Club\'s mic is Rebel #001.'));
+  f.append(mk('span'), tools);
+  const save = mk('div', 'row');
+  save.append(btn(e.id ? 'Save the changes' : 'Make the event', async () => {
+    const p = EVENT_PLACES.find(x => x.key === place.value) || EVENT_PLACES[0], starts = new Date(when.value).getTime(), len = Math.max(10, +mins.value || 60) * 60000;
+    let show = null;
+    if (stitle.value.trim() || script.value.trim()) { const sh = parseShow(script.value); show = { title: stitle.value.trim() || 'The show', len: sh.len, audio: audio.value.trim() || null, cues: sh.cues, script: script.value }; }
+    const args = { ...(e.id ? { id: e.id } : {}), title: title.value, place: { village: p.village, room: p.room, label: p.label || VILLAGE_NAMES[p.village] }, starts, ends: starts + len, show };
+    const d = await mpaCmd('event-save', args);
+    mpa.edit = null; mpaStatus((e.id ? 'Saved: ' : 'Made: ') + d.ev.title); await mpaShow('events');
+  }, 'primary'), btn('Cancel', async () => { mpa.edit = null; await mpaShow('events'); }));
+  f.append(mk('span'), save);
+  return f;
 }
 document.querySelectorAll('#mpa-tabs button[data-t]').forEach(b => (b.onclick = () => mpaShow(b.dataset.t).catch(e => mpaStatus(e.message, true))));
 

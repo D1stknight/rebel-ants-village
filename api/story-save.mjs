@@ -6,9 +6,11 @@
 // player started over on purpose (replace: an admin reset). One story per account and site: production saves on
 // rebeluniverse.io, previews under their own key (a test on the dev preview never changes the live story). Guests (no
 // ra_econ session) get 401: their story stays in their browser.
+// After a save, the story's badges the Rebel Economy hasn't had yet go to its Badge Wall (api/_universe-badge-send.mjs).
 import { enforceRateLimit } from './_guard.mjs';
 import { econSessionOf, redis } from './_econ.mjs';
 import { mergeStory, cleanStory, storySize, canonical } from '../assets/story-save.js';
+import { sendStoryBadges } from './_universe-badge-send.mjs';
 
 const SITE = process.env.VERCEL_ENV === 'production' ? 'prod' : 'dev';
 const KEY = (u) => `story:v1:${SITE}:${u}`, VER = (u) => `story:v1:${SITE}:${u}:ver`;
@@ -21,6 +23,10 @@ async function readStory(u) {
   const [data, ver] = await redis([['GET', KEY(u)], ['GET', VER(u)]]);
   let doc = null; try { doc = data?.result ? JSON.parse(data.result) : null; } catch (e) { doc = null; }
   return { story: doc?.keys ? { keys: doc.keys, t: doc.t || {} } : null, at: doc?.at || null, ver: Number(ver?.result || 0) };
+}
+// the badges go to the economy before the answer (a save is a background request); a badge never fails a save
+async function badges(u, story) {
+  try { await sendStoryBadges(u, story, { site: SITE }); } catch (e) { console.warn('[story-save] badges', e.message); }
 }
 const same = (a, b) => !!a && !!b && Object.keys({ ...a.keys, ...b.keys }).every((k) => {
   const x = a.keys[k] ?? null, y = b.keys[k] ?? null; if (x === y) return true;
@@ -44,10 +50,16 @@ export default async function handler(req, res) {
     for (let tries = 0; tries < 4; tries++) {
       const cur = await readStory(s.u);
       const next = body.replace === true || !cur.story ? incoming : mergeStory(cur.story, incoming);
-      if (cur.story && same(cur.story, next)) return res.status(200).json({ ok: true, account: s.u, story: cur.story, ver: cur.ver, at: cur.at, changed: false });
+      if (cur.story && same(cur.story, next)) {
+        await badges(s.u, cur.story);
+        return res.status(200).json({ ok: true, account: s.u, story: cur.story, ver: cur.ver, at: cur.at, changed: false });
+      }
       const at = Date.now(), doc = JSON.stringify({ keys: next.keys, t: next.t, at });
       const [w] = await redis([['EVAL', CAS, 2, KEY(s.u), VER(s.u), cur.ver, doc, KEEP]]);
-      if (Number(w?.result) === 1) return res.status(200).json({ ok: true, account: s.u, story: next, ver: cur.ver + 1, at, changed: true, size: storySize(next) });
+      if (Number(w?.result) === 1) {
+        await badges(s.u, next);
+        return res.status(200).json({ ok: true, account: s.u, story: next, ver: cur.ver + 1, at, changed: true, size: storySize(next) });
+      }
     }
     return res.status(409).json({ ok: false, error: 'The story changed on another device: try again', retry: true });
   } catch (e) {

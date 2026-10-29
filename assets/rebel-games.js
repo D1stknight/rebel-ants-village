@@ -133,7 +133,7 @@ body.in-game #questLine,body.in-game:not(.game-roam) #miniMap,body.in-game #phot
   // stretch of their own row between what sits left and right of them, else move over it (low on the screen) or under
   // it (high). On a screen where nothing overlaps nothing moves.
   let clearTimer = 0;
-  const SOLID_IDS = '#vtStick, #vtBtns, #miniMap';
+  const SOLID_IDS = '#vtStick, #vtBtns .vtBtn, #miniMap'; // (each touch button: they sit in a fan round the minimap)
   function keepClear() {
     if (!els || !els.hud.classList.contains('on')) return;
     const q = els.q, W = innerWidth, H = innerHeight, rect = el => el.getBoundingClientRect();

@@ -2,6 +2,7 @@
 //   GET                     -> { ok, configured, signedIn, name, avatar, balance, today, cap, owed, claimed, recent }
 //   POST { action:'logout' } -> clears the session
 // shopUrl = api/econ-shop (add ?return=<this page's path>): the economy's points shop, signed in to this account.
+// badgeWall = this account's Badge Wall on the economy (every Rebel Ants app's badges; Universe's arrive with story saves).
 // Signed in = the ra_econ cookie (api/econ-discord-callback). The balance is the economy's (every game's points);
 // today / cap / owed / claimed are the village's own ledger (api/_econ-ledger.mjs). Points held past an earlier day's
 // cap are paid here, once there is room today.
@@ -15,6 +16,8 @@ const avatarUrl = (s) => (isNameSession(s) ? null : s.a && /^[A-Za-z0-9_]+$/.tes
   : `https://cdn.discordapp.com/embed/avatars/${Number((BigInt(s.d) >> 22n) % 6n)}.png`);
 
 const SHOP = '/api/econ-shop';
+const badgeWall = (u) => { const b = String(process.env.REBEL_ECONOMY_URL || '').trim().replace(/\/+$/, '');
+  return /^https:\/\/[A-Za-z0-9.-]+$/.test(b) ? `${b}/badges/${encodeURIComponent(u)}?from=universe` : null; };
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -38,7 +41,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       ok: true, configured, signedIn: true, kind: named ? 'name' : 'discord', name: s.n || s.un, avatar: avatarUrl(s),
       balance: acct.error ? null : acct.balance, balanceError: acct.error || null,
-      today: t.today, cap: t.cap, owed: t.owed, paidNow, claimed: c, recent: r, shopUrl: SHOP
+      today: t.today, cap: t.cap, owed: t.owed, paidNow, claimed: c, recent: r, shopUrl: SHOP, badgeWall: badgeWall(s.u)
     });
   } catch (e) {
     return res.status(e.status || 500).json({ ok: false, error: e.message || 'Account check failed' });

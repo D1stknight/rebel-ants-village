@@ -1,12 +1,19 @@
 // Village HUD: the Rebel panel folds into a round Rebel button (top left) with a one-line quest tracker beside it, and a
 // round minimap sits bottom right. The map turns with the camera (up = where the camera looks), the player's arrow sits
 // in the middle, the quest target shows as a gold diamond (held on the rim when it is off the map), village gates and
-// room doors as small marks, N on the rim. The map picture is one top-down render of the village, made once it is
+// room doors as small marks, the player's group members as green dots (the one being gone to ringed and held on the
+// rim), N on the rim. The map picture is one top-down render of the village, made once it is
 // loaded; each frame only draws that picture and the marks (2D canvas). village.html calls init / buildMap / update.
 (function () {
   const HUD = window.VillageHud = {};
-  const GOLD = '#e8c56a', TEAL = '#5ecfca';
+  const GOLD = '#e8c56a', TEAL = '#5ecfca', GREEN = '#7be38a';
   let scene = null, opts = {}, cv = null, ctx = null, map = null, zoomR = 60, frame = 0, dpr = 1, built = false, dot = false, lastQuest = '';
+  // phones (Oct 28, Miguel: "make the mission pop up something that you can click open ... another small circle under
+  // your icon on the top", then "make it pop open when the mission changes"): the quest line folds into a gold circle
+  // under the Rebel button. A tap opens or folds it. A new mission (or progress on one, and the mission shown first in a
+  // visit: sessionStorage) pops it open for a few seconds, waiting while a talk box, a card or a game is up; a red dot
+  // on the circle until it has been seen.
+  const MIS = { on: false, open: false, popUntil: 0, pending: false, news: false, shown: false, timer: 0 }, POP_MS = 5000, POP_KEY = 'rebelAntsQuestPopped:v1';
 
   const css = `
 #rebelHudBtn{position:fixed;top:82px;left:28px;width:60px;height:60px;border-radius:50%;padding:0;border:none;cursor:pointer;z-index:13;
@@ -30,6 +37,15 @@ body.rebel-panel-open #questLine{display:none!important}
 #miniMap{position:fixed;right:22px;bottom:22px;width:170px;height:170px;border-radius:50%;z-index:12;cursor:pointer;display:none;
   box-shadow:0 0 0 3px rgba(232,197,106,.85),0 0 18px rgba(0,0,0,.55);background:rgba(5,10,28,.6)}
 @media (max-width:480px){#miniMap{width:124px;height:124px;right:14px;bottom:62px}}
+#questBtn{position:fixed;top:152px;left:36px;width:44px;height:44px;box-sizing:border-box;border-radius:50%;padding:0;z-index:13;cursor:pointer;display:none;
+  border:2px solid rgba(232,197,106,.65);background:rgba(10,16,32,.62);color:${GOLD};box-shadow:0 2px 10px rgba(0,0,0,.35);-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+#questBtn svg{position:absolute;left:11px;top:11px;width:18px;height:18px;fill:currentColor}
+#questBtn.open{background:rgba(232,197,106,.3);border-color:#ffe08a}
+#questBtn .dot{position:absolute;right:-1px;top:-1px;width:13px;height:13px;box-sizing:border-box;border-radius:50%;background:#f0503c;border:2px solid #0a0d16;display:none}
+#questBtn.has-news .dot{display:block}
+html.vt-touch #questLine{top:146px;left:90px;transform-origin:0 50%;transform:translateX(-46px) scale(.3);opacity:0;transition:transform .22s cubic-bezier(.2,.9,.3,1.2),opacity .16s ease}
+html.vt-touch #questLine.open{transform:none;opacity:1;pointer-events:auto;cursor:pointer}
+body.rebel-panel-open #questBtn,body.in-game #questBtn,body.vc-open #questBtn,html.vt-touch body.vc-open #questLine{display:none!important}
 `;
 
   HUD.init = function (s, o = {}) {
@@ -52,6 +68,14 @@ body.rebel-panel-open #questLine{display:none!important}
       const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
       e.preventDefault(); HUD.togglePanel();
     });
+    if (window.VillageTouch?.on) {
+      MIS.on = true;
+      const m = document.createElement('button'); m.id = 'questBtn'; m.type = 'button'; m.title = 'Your mission'; m.setAttribute('aria-label', 'Mission'); m.setAttribute('aria-expanded', 'false');
+      m.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 21.5 12 12 21.5 2.5 12z"/></svg><span class="dot"></span>';
+      document.body.appendChild(m);
+      m.addEventListener('click', e => { e.stopPropagation(); HUD.mission(!missionOpen()); m.blur(); });
+      q.addEventListener('click', e => { e.stopPropagation(); HUD.mission(false); });
+    }
     cv = document.createElement('canvas'); cv.id = 'miniMap'; cv.title = 'Map (click to zoom)'; document.body.appendChild(cv);
     cv.addEventListener('click', e => { e.stopPropagation(); zoomR = zoomR === 60 ? 140 : 60; });
     ctx = cv.getContext('2d');
@@ -64,6 +88,37 @@ body.rebel-panel-open #questLine{display:none!important}
     try { localStorage.setItem('rebelAntsHudPanelOpen', open ? '1' : '0'); } catch (e) {}
     if (open) { dot = false; document.getElementById('rebelHudBtn')?.classList.remove('has-news'); }
   };
+
+  // the mission card on phones: open (a tap) or popped (a few seconds); HUD.mission(true | false) is a tap
+  const missionOpen = () => MIS.open || performance.now() < MIS.popUntil;
+  HUD.mission = function (on) {
+    MIS.open = !!on; MIS.popUntil = 0; if (on) { MIS.pending = MIS.news = false; seen(); }
+    paintMission();
+  };
+  function seen() { try { sessionStorage.setItem(POP_KEY, lastQuest); } catch (e) {} }
+  function paintMission() {
+    const m = document.getElementById('questBtn'), q = document.getElementById('questLine'); if (!m || !q) return;
+    const open = MIS.shown && missionOpen();
+    m.style.display = MIS.shown ? 'block' : 'none';
+    m.classList.toggle('open', open); m.setAttribute('aria-expanded', String(open)); m.classList.toggle('has-news', MIS.news && !open);
+    q.classList.toggle('open', open);
+  }
+  // nothing in front of the card's corner and the player is walking: the stick and buttons show (village.html hides them
+  // for talk boxes, reading cards, the Rebel panel, the chat, board games, dance-offs), and no quest or badge card is up
+  const clearView = () => !!document.getElementById('vtouch')?.classList.contains('on')
+    && !['questCelebration', 'badgeUnlockPopup'].some(id => document.getElementById(id)?.classList.contains('on'));
+  function missionTick(shown, text, changed, first) {
+    if (changed) {
+      if (missionOpen()) seen(); // (open: the new words show there)
+      else { let was = ''; try { was = sessionStorage.getItem(POP_KEY) || ''; } catch (e) {} if (!first || was !== text) MIS.pending = MIS.news = true; }
+    }
+    MIS.shown = !!shown;
+    if (MIS.pending && MIS.shown && !missionOpen() && clearView()) {
+      MIS.pending = MIS.news = false; MIS.popUntil = performance.now() + POP_MS; seen();
+      clearTimeout(MIS.timer); MIS.timer = setTimeout(paintMission, POP_MS + 30);
+    }
+    paintMission();
+  }
 
   // keep the button and the quest line in step with the panel (portrait, badge progress, active quest)
   function syncButton() {
@@ -87,7 +142,9 @@ body.rebel-panel-open #questLine{display:none!important}
       q.style.display = shown ? 'block' : 'none';
       if (shown) { const i = text.indexOf(':'); q.querySelector('b').textContent = '◆ ' + (i > 0 ? text.slice(0, i) : 'Quest'); q.querySelector('span').textContent = i > 0 ? text.slice(i + 1).trim() : text; }
     }
-    if (text && text !== lastQuest) { if (lastQuest && !document.body.classList.contains('rebel-panel-open')) { dot = true; b.classList.add('has-news'); } lastQuest = text; }
+    const changed = !!text && text !== lastQuest, first = changed && !lastQuest;
+    if (changed) { if (!MIS.on && lastQuest && !document.body.classList.contains('rebel-panel-open')) { dot = true; b.classList.add('has-news'); } lastQuest = text; }
+    if (MIS.on) missionTick(shown, text, changed, first); // (phones: the red dot goes on the mission circle)
   }
 
   // one top-down picture of the village (looking straight down from far above, fog off), read back into a canvas.
@@ -195,6 +252,20 @@ body.rebel-panel-open #questLine{display:none!important}
       if (d > rim) { x = c + dx / d * rim; y = c + dy / d * rim; }
       ctx.fillStyle = GOLD; ctx.strokeStyle = '#3c2800'; ctx.lineWidth = 1.5 * dpr; const k = 6 * dpr;
       ctx.beginPath(); ctx.moveTo(x, y - k * 1.3); ctx.lineTo(x + k, y); ctx.lineTo(x, y + k * 1.3); ctx.lineTo(x - k, y); ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
+    // the group (village-groups.js): its members here as green dots; past the rim only the one being gone to (and a small
+    // dot for the others, so their way shows); a member in a room: a square on its door. An event being gone to
+    // (village-stage.js): a gold square on its room's door (f.color)
+    const fr = opts.friends?.();
+    if (fr && fr.length) for (const f of fr) {
+      let [x, y] = P(f.x, f.z); const dx = x - c, dy = y - c, d = Math.hypot(dx, dy), rim = c - 8 * dpr, out = d > rim;
+      if (out) { x = c + dx / d * rim; y = c + dy / d * rim; }
+      const r = (f.goal ? 5.5 : out ? 2.6 : 4) * dpr;
+      if (f.goal) { ctx.strokeStyle = f.color ? 'rgba(232,197,106,.7)' : 'rgba(123,227,138,.6)'; ctx.lineWidth = 2 * dpr; ctx.beginPath(); ctx.arc(x, y, r + (4 + Math.sin(performance.now() / 180) * 1.5) * dpr, 0, Math.PI * 2); ctx.stroke(); }
+      ctx.globalAlpha = out && !f.goal ? .75 : 1;
+      ctx.fillStyle = f.color || GREEN; ctx.strokeStyle = f.color ? '#3c2800' : '#0b2e12'; ctx.lineWidth = 1.5 * dpr; ctx.beginPath();
+      if (f.door) ctx.rect(x - r, y - r, 2 * r, 2 * r); else ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill(); ctx.stroke(); ctx.globalAlpha = 1;
     }
     const a = pr.rotation.y, ax = Math.sin(a) * rx + Math.cos(a) * rz, ay = -(Math.sin(a) * fx + Math.cos(a) * fz), L = 9 * dpr;
     const nx = -ay, ny = ax; // across the arrow

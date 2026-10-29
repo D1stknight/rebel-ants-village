@@ -1,8 +1,12 @@
-# Rebel Universe rooms (see src/index.js). Two workers from this one file:
+# Rebel Universe rooms, groups, voice and events (see src/index.js, group.js, voice.js, stage.js). Two workers from this one file:
 #   npx wrangler deploy --env dev   -> rebel-universe-rooms-dev  (the dev preview and local tests; SITE dev)
 #   npx wrangler deploy             -> rebel-universe-rooms      (rebeluniverse.io; SITE prod)
 # TICKET_KEYS = the public keys Universe signs tickets with, ADMIN_KEYS the ones it signs Admin Hub commands with (GET
 # /api/mp-ticket?key=1 on that site: key, admin): public keys, not secrets.
+# Voice (src/voice.js) goes through a Cloudflare Realtime SFU app: REALTIME_APP_ID (its App ID: not a secret, a var below
+# once there is one) and the app's secret as a Worker secret REALTIME_APP_SECRET (the Cloudflare dashboard: the Worker >
+# Settings > Variables and Secrets, type Secret; or npx wrangler secret put REALTIME_APP_SECRET [--env dev]; deploys keep it);
+# without both, voice stays off (the rooms' hello says so and the pages offer no Talk).
 name = "rebel-universe-rooms"
 main = "src/index.js"
 compatibility_date = "2026-10-01"
@@ -14,6 +18,8 @@ TICKET_KEYS = '{"prod":["4mWrU7JB6FzdanweMWbDmPqBq4MqPZ1amgsFKCXbDSA"]}'
 ADMIN_KEYS = '{"prod":["nPvDZppaVtEAKrvaBMIFF-HfhiKGA8v5YN35akMcnHk"]}'
 ALLOWED_ORIGINS = "https://rebeluniverse.io,https://www.rebeluniverse.io,https://rebel-ants-village.vercel.app"
 ROOM_MAX = "50"
+# the same Realtime SFU app as the dev rooms (rebel-universe-voice); its API token goes on this Worker as REALTIME_APP_SECRET
+REALTIME_APP_ID = "0934f925a7967d143d9dcacf39c525d0"
 
 [[durable_objects.bindings]]
 name = "ROOMS"
@@ -23,6 +29,14 @@ class_name = "RoomCopy"
 name = "CONTROL"
 class_name = "RoomControl"
 
+[[durable_objects.bindings]]
+name = "GROUPS"
+class_name = "PartyGroup"
+
+[[durable_objects.bindings]]
+name = "STAGES"
+class_name = "StageHall"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["RoomCopy"]
@@ -30,6 +44,14 @@ new_sqlite_classes = ["RoomCopy"]
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["RoomControl"]
+
+[[migrations]]
+tag = "v3"
+new_sqlite_classes = ["PartyGroup"]
+
+[[migrations]]
+tag = "v4"
+new_sqlite_classes = ["StageHall"]
 
 [env.dev]
 name = "rebel-universe-rooms-dev"
@@ -43,6 +65,8 @@ ALLOWED_ORIGINS = "https://rebel-ants-village-git-dev-miguel-concepcions-project
 ALLOWED_ORIGIN_SUFFIX = "-miguel-concepcions-projects.vercel.app"
 ALLOW_LOCAL = "1"
 ROOM_MAX = "50"
+# Realtime SFU app rebel-universe-voice; its API token is the Worker secret REALTIME_APP_SECRET (set in the dashboard)
+REALTIME_APP_ID = "0934f925a7967d143d9dcacf39c525d0"
 
 [[env.dev.durable_objects.bindings]]
 name = "ROOMS"
@@ -52,6 +76,14 @@ class_name = "RoomCopy"
 name = "CONTROL"
 class_name = "RoomControl"
 
+[[env.dev.durable_objects.bindings]]
+name = "GROUPS"
+class_name = "PartyGroup"
+
+[[env.dev.durable_objects.bindings]]
+name = "STAGES"
+class_name = "StageHall"
+
 [[env.dev.migrations]]
 tag = "v1"
 new_sqlite_classes = ["RoomCopy"]
@@ -59,3 +91,11 @@ new_sqlite_classes = ["RoomCopy"]
 [[env.dev.migrations]]
 tag = "v2"
 new_sqlite_classes = ["RoomControl"]
+
+[[env.dev.migrations]]
+tag = "v3"
+new_sqlite_classes = ["PartyGroup"]
+
+[[env.dev.migrations]]
+tag = "v4"
+new_sqlite_classes = ["StageHall"]

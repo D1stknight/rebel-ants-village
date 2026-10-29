@@ -139,12 +139,13 @@ export async function redis(commands) {
 }
 
 // ---- the economy ----
-export async function econCall(path, body, method = 'POST') {
+// ms: how long to wait for the answer (a badge sent during a story save waits less than a credit)
+export async function econCall(path, body, method = 'POST', ms = 9000) {
   const base = env('REBEL_ECONOMY_URL').replace(/\/+$/, ''), key = env('REBEL_ECONOMY_SERVICE_KEY');
   if (!base || !key) throw Object.assign(new Error('The Rebel Economy link is not set up yet'), { status: 503 });
   let r;
   try {
-    r = await timed(`${base}${path}`, { method, headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }, body: method === 'GET' ? undefined : JSON.stringify(body || {}) });
+    r = await timed(`${base}${path}`, { method, headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }, body: method === 'GET' ? undefined : JSON.stringify(body || {}) }, ms);
   } catch (e) { throw Object.assign(new Error('The Rebel Economy did not answer'), { status: 504 }); }
   const data = await r.json().catch(() => ({}));
   return { ok: r.ok, status: r.status, data };
