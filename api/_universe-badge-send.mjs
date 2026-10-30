@@ -13,6 +13,7 @@
 import { BADGE_IDS, LEDGER_CHECKS } from './_universe-badges.mjs';
 import { econCall, redis } from './_econ.mjs';
 import { KEYS } from './_econ-ledger.mjs';
+import { bump } from './_site-stats.mjs';
 
 const PROG = 'rebelAntsProgression:v1';
 export const PER_CALL = 40;
@@ -67,7 +68,7 @@ export async function sendStoryBadges(u, story, { budgetMs = 2500, site = '' } =
         break;
       }
       await redis([['SADD', K.sent(u), ...chunk], ['EXPIRE', K.sent(u), String(KEEP)]]);
-      out.sent.push(...chunk);
+      out.sent.push(...chunk); await bump({ badges: chunk.length }); // (the dashboard)
     }
   } catch (e) { out.error = e.message; }
   finally {

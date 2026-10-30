@@ -12,6 +12,7 @@ import { enforceRateLimit } from './_guard.mjs';
 import { walletOf, ownerOf, holderOf, forgeStatus, openForge, resetForges, FORGE_LIMIT } from './_wallet.mjs';
 import { econReady, econSessionOf } from './_econ.mjs';
 import { FORGE_PRICE, newQuote, lastCharge, startPaidForge, settleDue } from './_forge-charge.mjs';
+import { bump } from './_site-stats.mjs';
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -42,7 +43,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, used: 0, limit: FORGE_LIMIT, left: FORGE_LIMIT });
     }
     if (!(await enforceRateLimit(req, res, 'forge-start', 10, 86400, 'forge starts today'))) return;
-    if (admin) return res.status(200).json({ ok: true, admin: true, used: 0, limit: FORGE_LIMIT, left: FORGE_LIMIT });   // admin forges never use a Rebel's allowance
+    if (admin) { await bump({ 'forges:admin': 1 }); return res.status(200).json({ ok: true, admin: true, used: 0, limit: FORGE_LIMIT, left: FORGE_LIMIT }); }   // admin forges never use a Rebel's allowance
     if (!wallet) return res.status(401).json({ ok: false, error: 'Sign in with your wallet to forge', code: 'wallet_required' });
     const s = FORGE_PRICE > 0 ? econSessionOf(req) : null;
     if (FORGE_PRICE > 0 && !econReady()) return res.status(503).json({ ok: false, error: 'Forging opens once the Rebel Economy link is set up', code: 'econ_unavailable', price: FORGE_PRICE });
@@ -52,6 +53,7 @@ export default async function handler(req, res) {
     if (!h.holder) return res.status(403).json({ ok: false, error: 'Only the wallet that holds this Rebel (or its delegate.xyz delegate) can forge it', code: 'not_owner' });
     if (FORGE_PRICE > 0) {
       const p = await startPaidForge({ chargeId: body.chargeId, wallet, owner, u: s.u, col, tok: tokenId });
+      if (p.status === 200 && p.body?.ok && !p.body.already && p.body.charged > 0) await bump({ forges: 1, 'forge:pts': p.body.charged }); // (the dashboard)
       return res.status(p.status).json(p.body);
     }
     const r = await openForge(col, tokenId, wallet, owner);
@@ -61,6 +63,7 @@ export default async function handler(req, res) {
         : `You have used all ${r.limit} of your forges for this Rebel`;
       return res.status(429).json({ ok: false, error, code: r.reason === 'daily' ? 'wallet_daily' : 'no_forges_left', used: r.used, limit: r.limit, left: r.left });
     }
+    await bump({ forges: 1 });
     return res.status(200).json({ ok: true, used: r.used, limit: r.limit, left: r.left });
   } catch (e) {
     return res.status(500).json({ ok: false, error: e.message || 'Forge start failed' });
