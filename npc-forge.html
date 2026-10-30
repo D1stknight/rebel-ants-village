@@ -1080,6 +1080,7 @@ async function loadGamesPacks() {
   catch (e) { freeErr = e.message; const b = $('#gamesBox'); if (b) b.innerHTML = `<div class="err">${esc(e.message)}</div>`; paintFree(); return; }
   try { gamesMoves = (await (await fetch('/forge-worker/anim/clips_games.json', { cache: 'no-store' })).json()).map((c) => c.name); } catch (e) { gamesMoves = null; }
   paintGames();
+  if (location.hash === '#free' && !loadGamesPacks.shown) { loadGamesPacks.shown = true; showFreeBox(); } // (the Admin Hub's Free to play link)
   // jobs still running (started on this or another computer): watch them, so they finish and none is started twice
   const running = gamesList.filter((r) => packTodo(r) && r.job?.status === 'running');
   if (running.length && !gamesRun.on) runGamesJobs(running);
