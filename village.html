@@ -1816,6 +1816,7 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
   <div class="pread">O or Esc to close</div>
 </div>
 
+<script src="assets/site-report.js"></script>
 <script src="assets/audio-unlock.js"></script>
 <script src="assets/vendor/babylon/9.31.3/babylon.js"></script>
 <script src="assets/vendor/babylon/9.31.3/babylonjs.loaders.min.js"></script>
@@ -1870,6 +1871,10 @@ const STORY_EARLY = await Promise.race([storyEarlyRun, new Promise(r => setTimeo
 storyEarly.late = true;
 const canvas=document.getElementById('c');
 const setSt=t=>{const el=document.getElementById('ldst'); if(el) el.textContent=t;};
+// the dashboard (assets/site-report.js): a start still going after 90 s on screen says where it stopped
+{ let shown=0, last=performance.now(); const t=setInterval(()=>{ const now=performance.now(); if(!document.hidden) shown+=now-last; last=now;
+  if(window._villageStartupInteractive || window._startupProblem) return clearInterval(t);
+  if(shown>90000){ clearInterval(t); window.SiteReport?.problem('slow-start', document.getElementById('ldst')?.textContent || ''); } }, 5000); }
 // A start the browser can't finish (no WebGL): the loading screen says what is wrong and what to try, instead of a status
 // line that never moves.
 const showStartupProblem=(title,intro,steps)=>{
@@ -6074,7 +6079,7 @@ function makeWebGLFallbackEngine(reason = '') {
   } catch (err) {
     // no WebGL: graphics acceleration off, a policy that blocks it, or no GPU
     console.error('WebGL could not start', err);
-    window._startupProblem = 'webgl';
+    window._startupProblem = 'webgl'; window.SiteReport?.problem('webgl', err && err.message);
     showStartupProblem('Universe needs 3D graphics (WebGL)',
       'This browser has WebGL switched off or blocked, so Universe can\'t draw its villages.',
       ['Chrome or Edge: Settings → System → turn on "Use graphics acceleration when available", then restart the browser.',
@@ -6151,6 +6156,7 @@ window.retryWebGPU = function retryWebGPU() {
 window.clearRendererPreference = clearRendererPreference;
 
 engine = await createPreferredEngine();
+engine.onContextLostObservable?.add(() => { if (!leavePage.done) window.SiteReport?.problem('gl-lost', LITE_GRAPHICS ? 'phone mode' : ''); });
 
 function updateGPUBadge() {
   const badge = document.getElementById('gpuBadge');
@@ -25879,6 +25885,7 @@ function rigFallbackToStarter(err) {
   const q = new URLSearchParams(location.search);
   if (!_forgeSingleGlb || q.get('rigFallback') === '1' || q.get('rig') === 'master') return false;
   console.warn('The Rebel\'s model did not download; starting with the starter ant instead.', err);
+  window.SiteReport?.problem('rig', err && err.message);
   setSt("Your Rebel's 3D model couldn't download here. Starting with the starter ant...");
   const u = new URL(location.href); u.searchParams.set('rig', 'master'); u.searchParams.set('rigFallback', '1');
   setTimeout(() => leavePage(() => location.replace(u.toString())), 1500);
@@ -30664,6 +30671,7 @@ function markVillageStartupInteractive() {
   if (VillageStartupRuntime.interactive) return;
   VillageStartupRuntime.interactive = true;
   window._villageStartupInteractive = true;
+  window.SiteReport?.ready(performance.now()); // (the dashboard: how long this village took, from the address being opened)
   setSt('Finalizing: village ready.');
   // the catalog's other models (every building in ASSETS) load in the background only for an admin, once admin mode is on
   // (placing pieces): a player's village has what its layout needs, and a piece asked for later still loads then
