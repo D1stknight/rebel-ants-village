@@ -11,6 +11,7 @@ import { enforceRateLimit } from './_guard.mjs';
 import { econSessionOf, redis } from './_econ.mjs';
 import { mergeStory, cleanStory, storySize, canonical } from '../assets/story-save.js';
 import { sendStoryBadges } from './_universe-badge-send.mjs';
+import { bump } from './_site-stats.mjs';
 
 const SITE = process.env.VERCEL_ENV === 'production' ? 'prod' : 'dev';
 const KEY = (u) => `story:v1:${SITE}:${u}`, VER = (u) => `story:v1:${SITE}:${u}:ver`;
@@ -47,6 +48,7 @@ export default async function handler(req, res) {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
     const incoming = cleanStory(body.story);
     if (!incoming) return res.status(400).json({ ok: false, error: 'That story save is not readable or too big' });
+    await bump({ saves: 1 }, { savers: 'u:' + s.u }); // (the dashboard)
     for (let tries = 0; tries < 4; tries++) {
       const cur = await readStory(s.u);
       const next = body.replace === true || !cur.story ? incoming : mergeStory(cur.story, incoming);

@@ -5,6 +5,7 @@
 import { enforceRateLimit } from './_guard.mjs';
 import { econSessionOf } from './_econ.mjs';
 import { award, payOwed, ID, lookup } from './_econ-ledger.mjs';
+import { bump } from './_site-stats.mjs';
 
 const KINDS = new Set(['chest', 'game', 'riddle', 'find']);
 
@@ -38,6 +39,7 @@ export default async function handler(req, res) {
     const consent = process.env.RAAP_UNIVERSE_DEV_CONNECTION ? await consentBefore(s.u) : null;
     const info = {};
     const r = await award(s.u, kind, id, info);
+    if (r.paid || r.held) await bump(r.paid ? { ['pts:' + kind]: r.paid, ['awards:' + kind]: 1 } : { ['held:' + kind]: r.held }); // (the dashboard)
     if (info.settled && consent) await shareExperience(s.u, kind, id, r, info, consent);
     return res.status(200).json({ ok: true, signedIn: true, kind, id, ...r });
   } catch (e) {

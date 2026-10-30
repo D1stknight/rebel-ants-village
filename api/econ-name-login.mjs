@@ -6,6 +6,7 @@
 // The player's address goes to the economy for its rate limits (every village player reaches it from this server).
 import { enforceRateLimit, clientIp } from './_guard.mjs';
 import { econReady, econSessionCookie, econNameAuth, NAME_ID } from './_econ.mjs';
+import { bump } from './_site-stats.mjs';
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -36,5 +37,6 @@ export default async function handler(req, res) {
   }
   const name = String(id.displayName || id.username || '').slice(0, 64);
   res.setHeader('Set-Cookie', econSessionCookie({ u: d.userId, d: id.id, un: id.username, n: name, a: null }));
+  await bump({ 'signin:name': 1, ...(d.created ? { 'new:name': 1 } : {}) }); // (the dashboard)
   return res.status(200).json({ ok: true, name, message: String(d.message || ''), created: !!d.created });
 }

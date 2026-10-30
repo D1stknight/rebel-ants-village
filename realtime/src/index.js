@@ -15,6 +15,9 @@
 //                                                                         the village copy, or one player
 //                   {t:'rp', i:message id | id:player id, why:'spam'|'abuse'|'scam'|'other', note}            a report
 //                   {t:'gi', to:player id, g:groupId}   hand a player of this copy an invite to my group (signed-in players)
+//                   {t:'pf', f, ft, sl, fr, s, rtt, rc, d, o, b, l, m, n, g}   how the page ran over the last minute (fps,
+//                                                 its slow frames, ping...): kept here and sent to the control desk once a
+//                                                 minute with who is here and how sockets closed (the Admin Hub's dashboard)
 //                   {"t":"ping"}  answered with {"t":"pong"} without waking the room (auto response)
 //   room -> client  {t:'hi', you:id, u, room:{village, copy, max}, peers:[peer], hist:[msg], cfg:{chat, slow}, mute}
 //                   {t:'j', ...peer}   someone came in      {t:'l', id}   someone left
@@ -188,6 +191,10 @@ export class RoomCopy {
     try { const c = this.kv('cfg'); if (c) this.cfg = normCfg(JSON.parse(c)); } catch (e) {}
     this.peers = new Map(); this.nextId = Math.max(1, +this.kv('next') || 1); // (ids never come back in a copy: old chat lines keep theirs)
     this.stale = Math.max(5, Math.min(3600, +env.STALE_S || 150)) * 1000; this.swept = 0;
+    // how the pages run (the dashboard): their minute reports, the joins and the closes by code since the last send to the
+    // control desk (kept in memory only: a room sent to sleep loses at most a minute of them)
+    this.pfBuf = []; this.pfSent = 0; this.joins = 0; this.closes = {};
+    this.pfEvery = Math.max(1, +env.PERF_FLUSH_S || 60) * 1000; this.pfMin = Math.max(0, env.PERF_MIN_S != null ? +env.PERF_MIN_S : 30) * 1000;
     // waking from hibernation: who is here comes back from the sockets' attachments
     for (const ws of ctx.getWebSockets()) { const a = ws.deserializeAttachment(); if (a && a.id) { this.peers.set(ws, this.live(a)); this.nextId = Math.max(this.nextId, a.id + 1); } }
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('{"t":"ping"}', '{"t":"pong"}'));
@@ -252,7 +259,7 @@ export class RoomCopy {
     }
     const p = this.live({ id: this.nextId++, ...ident, s: null, village, copy, mute: chk.mute > now ? chk.mute : 0, j: now });
     this.kvSet('next', this.nextId);
-    server.serializeAttachment(this.slim(p)); this.peers.set(server, p);
+    server.serializeAttachment(this.slim(p)); this.peers.set(server, p); this.joins++;
     const cfg = this.cfg || normCfg(DEFAULT_CFG);
     server.send(JSON.stringify({ t: 'hi', you: p.id, u: p.u, room: { village, copy, max: this.max }, peers: [...this.peers.values()].filter(q => q !== p).map(q => this.pub(q)),
       hist: this.history(), cfg: { chat: cfg.chat, slow: cfg.slow, voice: this.voiceOn(cfg) }, mute: p.mute }));
@@ -274,7 +281,28 @@ export class RoomCopy {
     else if (m && m.t === 'c') await this.chat(ws, p, m, now);
     else if (m && m.t === 'rp') this.report(ws, p, m, now);
     else if (m && m.t === 'gi') this.groupInvite(p, m, now);
+    else if (m && m.t === 'pf') this.perf(p, m, now);
   }
+  // a page's minute report (village-multiplayer.js): numbers only, clamped; one every pfMin a player. Sent on to the
+  // control desk with the others once a minute (on the next report after that: no timers, the room still sleeps)
+  perf(p, m, now) {
+    if (now - (p.pf || 0) < this.pfMin) return; p.pf = now;
+    const n = (v, lo, hi, d = null) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d);
+    const one = (v, set, d) => (set.includes(v) ? v : d);
+    const f = n(m.f, 0, 240), s = n(m.s, 0, 600, 0);
+    if (f == null || s < 5) return; // (a page that was hardly on screen)
+    this.pfBuf.push({ v: p.village, i: p.s && p.s[5] ? 1 : 0, k: p.k === 'guest' ? 'g' : 's', d: one(m.d, ['p', 'd'], 'd'),
+      o: one(m.o, ['ios', 'android', 'mac', 'win', 'linux', 'cros', 'other'], 'other'), b: one(m.b, ['safari', 'chrome', 'firefox', 'edge', 'opera', 'other'], 'other'),
+      l: Math.round(n(m.l, 0, 2, 0)), f: Math.round(f * 10) / 10, ft: Math.round(n(m.ft, 0, 5000, 0)), sl: Math.round(n(m.sl, 0, 100000, 0)), fr: Math.round(n(m.fr, 0, 1000, 0)), s: Math.round(s),
+      rtt: m.rtt == null ? null : Math.round(n(m.rtt, 0, 60000, 0)), rc: Math.round(n(m.rc, 0, 1000, 0)), m: m.m == null ? null : Math.round(n(m.m, 0, 100000, 0)), n: Math.round(n(m.n, 0, 500, 0)), g: m.g ? 1 : 0 });
+    if (this.pfBuf.length >= 200 || now - this.pfSent >= this.pfEvery) this.flushPerf(now);
+  }
+  flushPerf(now) {
+    const body = { room: this.name, at: now, peers: this.peers.size, joins: this.joins, closes: this.closes, reports: this.pfBuf };
+    this.pfBuf = []; this.joins = 0; this.closes = {}; this.pfSent = now;
+    this.toControl('/perf', body);
+  }
+  closed(code) { const c = String(+code || 0); this.closes[c] = (this.closes[c] || 0) + 1; }
   // a group invite handed to one signed-in player of this copy (one every 2 s); the group itself decides who comes in
   groupInvite(p, m, now) {
     if (p.k === 'guest' || now - p.gi < 2000 || !Number.isInteger(m.to) || typeof m.g !== 'string' || !GROUP_ID.test(m.g)) return;
@@ -378,6 +406,7 @@ export class RoomCopy {
     this.shut(ws, code, reason);
   }
   shut(ws, code, reason) {
+    if (this.peers.has(ws)) this.closed(code);
     try { ws.serializeAttachment({ gone: true }); } catch (e) {}
     try { ws.close(code, reason); } catch (e) {}
     this.drop(ws);
@@ -398,7 +427,8 @@ export class RoomCopy {
     const msg = JSON.stringify({ t: 'l', id: p.id });
     for (const w of this.peers.keys()) try { w.send(msg); } catch (e) {}
     const v = this.voice.drop(p.id); try { this.ctx.waitUntil(v); } catch (e) {} // (its tracks closed at the SFU)
+    if (!this.peers.size && (this.pfBuf.length || this.joins || Object.keys(this.closes).length)) this.flushPerf(Date.now()); // (the last one out: the desk sees it empty)
   }
-  webSocketClose(ws, code) { this.drop(ws); try { ws.close(code === 1005 ? 1000 : code, 'bye'); } catch (e) {} }
-  webSocketError(ws) { this.drop(ws); }
+  webSocketClose(ws, code) { if (this.peers.has(ws)) this.closed(code); this.drop(ws); try { ws.close(code === 1005 ? 1000 : code, 'bye'); } catch (e) {} }
+  webSocketError(ws) { if (this.peers.has(ws)) this.closed(1006); this.drop(ws); }
 }

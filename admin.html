@@ -3,405 +3,444 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rebel Ants — Admin Hub</title>
+<title>Rebel Universe — Admin</title>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/assets/brand/icon-192.png">
 <link rel="apple-touch-icon" href="/assets/brand/apple-touch-icon.png">
-<meta name="theme-color" content="#0a0a14">
+<meta name="theme-color" content="#050608">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+/* The Admin Hub (Oct 30): Universe's dashboard in the Rebel Console's look (Miguel's yes to the mockup
+   claude.ai/artifact/7FieacDnGG2kQ56XtoPXm6, plus "fps and if anything is wrong with the universe, lagging, issues").
+   One dark look on purpose (the console's). Data marks use the chart palette's dark steps (validated on #111318:
+   blue, orange, aqua, yellow); status chips keep the mockup's amber / red with an icon and words. */
+:root{
+  --bg:#050608; --side:#0c0d11; --card:#111318; --card2:#15171d; --line:#1f2128; --line2:#2a2d36;
+  --fg:#e8e8ea; --muted:#9a9da8; --dim:#7d808b; --gold:#d4a017; --gold2:#f0b820; --teal:#5ecfca;
+  --amber:#f5b46a; --amber-bg:#1d1608; --amber-line:#5c4410; --red:#ef8b7d; --red-bg:#1f0d0b; --red-line:#5a2620;
+  --ok:#0ca30c; --ok-text:#7fd67f;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+  --grid:#1c1e25; --axis:#2a2d36;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace; --sans:Inter,-apple-system,'Segoe UI',Roboto,Arial,sans-serif; --display:'Bebas Neue',Impact,'Arial Narrow',sans-serif;
+  color-scheme:dark;
+}
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{
-  width:100%;
-  min-height:100%;
-  background:#050812;
-  color:#f3e6bf;
-  font-family:'Cinzel',serif;
-}
-body{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:28px;
-  background:
-    radial-gradient(circle at top center, rgba(200,146,42,.13), transparent 42%),
-    radial-gradient(circle at bottom right, rgba(94,207,202,.08), transparent 38%),
-    #050812;
-}
-#auth-loading{
-  color:#8a7a5a;
-  font-size:11px;
-  letter-spacing:4px;
-  text-transform:uppercase;
-}
-#admin-hub{
-  width:min(920px,100%);
-  display:none;
-  flex-direction:column;
-  gap:28px;
-}
-#hub-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:20px;
-  border-bottom:1px solid rgba(200,146,42,.18);
-  padding-bottom:22px;
-}
-#hub-title h1{
-  font-family:'Cinzel Decorative',serif;
-  font-size:28px;
-  letter-spacing:4px;
-  color:#c8922a;
-  text-shadow:0 0 28px rgba(200,146,42,.25);
-}
-#hub-title p{
-  margin-top:8px;
-  color:#8a7a5a;
-  font-size:11px;
-  letter-spacing:4px;
-  text-transform:uppercase;
-}
-#hub-actions{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap}
-/* back to the lobby (Oct 18, Miguel: "we need a return to lobby from admin"): same look as Log Out */
-#lobby-btn,#logout-btn{
-  padding:11px 16px;
-  background:transparent;
-  border:1px solid rgba(200,146,42,.35);
-  color:#c8922a;
-  font-family:'Cinzel',serif;
-  font-size:10px;
-  letter-spacing:3px;
-  text-transform:uppercase;
-  cursor:pointer;
-  transition:all .2s ease;
-}
-#lobby-btn{text-decoration:none;display:inline-flex;align-items:center}
-#lobby-btn:hover,#lobby-btn:focus-visible,#logout-btn:hover{
-  background:rgba(200,146,42,.12);
-  border-color:rgba(200,146,42,.7);
-}
-#hub-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:16px;
-}
-.hub-card{
-  min-height:180px;
-  padding:22px;
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
-  gap:18px;
-  background:rgba(255,255,255,.025);
-  border:1px solid rgba(255,255,255,.08);
-  text-decoration:none;
-  color:inherit;
-  transition:all .2s ease;
-}
-.hub-card:hover{
-  transform:translateY(-3px);
-  border-color:rgba(200,146,42,.45);
-  background:rgba(200,146,42,.06);
-  box-shadow:0 14px 35px rgba(0,0,0,.3);
-}
-.hub-card.locked{
-  opacity:.7;
-  cursor:default;
-}
-.hub-card.locked:hover{
-  transform:none;
-  border-color:rgba(255,255,255,.08);
-  background:rgba(255,255,255,.025);
-  box-shadow:none;
-}
-.card-icon{
-  font-size:28px;
-}
-.card-title{
-  font-family:'Cinzel Decorative',serif;
-  color:#c8922a;
-  font-size:16px;
-  letter-spacing:2px;
-}
-.card-desc{
-  margin-top:10px;
-  color:#b7a98b;
-  font-size:12px;
-  line-height:1.8;
-}
-.card-status{
-  color:#5ecfca;
-  font-size:10px;
-  letter-spacing:3px;
-  text-transform:uppercase;
-}
-.card-status.soon{
-  color:#8a7a5a;
-}
-#ann{
-  border:1px solid rgba(255,255,255,.08);
-  background:rgba(255,255,255,.025);
-  padding:22px;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
-#ann h2{
-  font-family:'Cinzel Decorative',serif;
-  color:#c8922a;
-  font-size:16px;
-  letter-spacing:2px;
-}
-#ann p, #ann label{color:#b7a98b;font-size:12px;line-height:1.7}
-#ann textarea{
-  width:100%;
-  min-height:150px;
-  resize:vertical;
-  background:rgba(0,0,0,.35);
-  border:1px solid rgba(200,146,42,.3);
-  color:#f3e6bf;
-  font:13px/1.7 Georgia,serif;
-  padding:10px 12px;
-}
-#ann .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-#ann input[type=range]{flex:1;min-width:140px;accent-color:#c8922a}
-#ann button{
-  padding:10px 16px;
-  background:transparent;
-  border:1px solid rgba(200,146,42,.45);
-  color:#c8922a;
-  font-family:'Cinzel',serif;
-  font-size:10px;
-  letter-spacing:3px;
-  text-transform:uppercase;
-  cursor:pointer;
-}
-#ann button.primary{background:rgba(200,146,42,.16);border-color:rgba(200,146,42,.8);color:#f3e6bf}
-#ann button:disabled{opacity:.45;cursor:default}
-#ann-status{color:#5ecfca;font-size:11px;letter-spacing:1px}
-#ann-status.err{color:#e07a6a}
-#ann-preview{position:relative;overflow:hidden;background:rgba(0,0,0,.8);border-top:1px solid rgba(200,146,42,.2);padding:10px 0}
-#ann-preview span{
-  display:inline-block;white-space:nowrap;
-  animation:annTicker 30s linear infinite;
-  color:#8a7a5a;font-size:10px;letter-spacing:3px;font-family:'Cinzel',serif;
-}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:14px/1.5 var(--sans)}
+a{color:var(--gold)}a:hover{color:var(--gold2)}
+button,input,select,textarea{font:inherit;color:inherit}
+#auth-loading{min-height:100vh;display:flex;align-items:center;justify-content:center;color:var(--muted);font:500 12px var(--mono);letter-spacing:.14em;text-transform:uppercase}
+#admin-hub{display:none;min-height:100vh;align-items:stretch}
+
+/* ---- the sidebar ---- */
+#side{flex:0 0 240px;background:var(--side);border-right:1px solid var(--line);padding:22px 14px;display:flex;flex-direction:column;gap:16px;position:sticky;top:0;height:100vh;overflow-y:auto}
+#side .brand{display:flex;align-items:center;gap:10px;padding:0 6px}
+#side .mark{width:34px;height:34px;border-radius:8px;background:var(--gold);color:var(--bg);font:20px var(--display);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+#side .brand b{display:block;font:400 22px/1 var(--display);letter-spacing:.04em}
+#side .brand span{font:11px var(--mono);color:var(--muted);letter-spacing:.08em}
+#side .back{font-size:13px;text-decoration:none;display:flex;align-items:center;gap:6px;min-height:32px;padding:0 6px}
+#side .grp{display:flex;flex-direction:column;gap:2px}
+#side .lbl{font:500 11px var(--mono);color:var(--muted);letter-spacing:.14em;padding:0 10px 6px}
+#side nav a,#side .grp a{display:flex;align-items:center;gap:10px;min-height:36px;padding:0 10px;border-radius:8px;color:var(--fg);text-decoration:none}
+#side .grp a:hover{background:#15171d}
+#side .grp a[aria-current="page"]{background:#1a1c22;color:var(--gold2);font-weight:600}
+#side .grp a svg{flex:0 0 auto}
+#side .grp a .t{flex:1}
+#side .nb{font:12px var(--mono);color:var(--muted)}
+#side .nb.warn{color:var(--bg);background:var(--amber);border-radius:10px;padding:0 7px}
+#side .nb.bad{color:#fff;background:#c0392b;border-radius:10px;padding:0 7px}
+#side .nb.live{color:var(--red);font-size:11px}
+#side .ext{color:var(--muted)}
+#side .foot{margin-top:auto;display:flex;gap:8px;align-items:center;padding:8px 10px 0;border-top:1px solid var(--line);font-size:13px}
+#side .foot a{color:var(--muted);text-decoration:none}#side .foot a:hover{color:var(--fg)}
+#side .foot button{background:none;border:0;color:var(--muted);cursor:pointer;padding:6px 0}#side .foot button:hover{color:var(--fg)}
+#menu-btn{display:none}
+
+/* ---- pages ---- */
+#content{flex:1 1 auto;min-width:0;padding:26px clamp(16px,3vw,36px) 48px;display:flex;flex-direction:column;gap:22px}
+.page{display:none;flex-direction:column;gap:22px}
+.page.on{display:flex}
+.phead{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px}
+.phead .k{font:500 11px var(--mono);letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.phead h1{font:400 46px/1 var(--display);letter-spacing:.02em;margin-top:4px}
+.ctrls{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.seg{display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+.seg button{min-height:36px;padding:0 14px;border:0;background:var(--card);color:var(--fg);font:500 13px var(--sans);cursor:pointer}
+.seg button+button{border-left:1px solid var(--line2)}
+.seg button[aria-pressed="true"]{background:var(--gold);color:var(--bg);font-weight:600}
+.ibtn{min-height:36px;min-width:36px;padding:0 12px;border:1px solid var(--line2);border-radius:8px;background:var(--card);color:var(--fg);cursor:pointer;font:500 13px var(--sans)}
+.ibtn:hover{border-color:#3a3e4a}
+.sec-h{font:500 11px var(--mono);letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.grid.g5{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.row2{display:flex;flex-wrap:wrap;gap:12px}
+.row2>*{flex:1 1 420px;min-width:0}
+.row2>.narrow{flex:1 1 280px}
+
+/* tiles */
+.tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0;color:var(--fg);text-decoration:none}
+a.tile:hover{border-color:#343846;color:var(--fg)}
+.tile .l{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.tile .v{font:400 52px/.9 var(--display);letter-spacing:.01em}
+.tile .v.md{font-size:44px}
+.tile .v small{font:500 16px var(--sans);color:var(--muted);letter-spacing:0;margin-left:6px}
+.tile .s{font-size:13px;color:var(--muted)}
+.tile .s b{color:var(--fg);font-weight:600}
+.tile .vr{display:flex;align-items:flex-end;justify-content:space-between;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.good{color:var(--ok-text)}.warn{color:var(--amber)}.bad{color:var(--red)}
+
+/* alerts */
+#alerts{display:flex;flex-wrap:wrap;gap:10px}
+.al{flex:1 1 320px;display:flex;align-items:flex-start;gap:12px;min-height:48px;padding:11px 14px;border-radius:10px;text-decoration:none;font-size:14px;line-height:1.45}
+.al svg{flex:0 0 auto;margin-top:2px}
+.al.amber{background:var(--amber-bg);border:1px solid var(--amber-line);color:#f5d48a}
+.al.amber strong{color:var(--amber)}
+.al.red{background:var(--red-bg);border:1px solid var(--red-line);color:#ffc9bf}
+.al.red strong{color:var(--red)}
+.al.ok{background:#0b1a0e;border:1px solid #1d4d24;color:#a8e0a8}
+.al.ok strong{color:var(--ok-text)}
+
+/* chart cards */
+.cc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0;position:relative}
+.cc .ch{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:10px}
+.cc h2{font-size:16px;font-weight:600}
+.cc .sub{font-size:12px;color:var(--muted)}
+.cc .lg{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted)}
+.cc .lg span{display:flex;align-items:center;gap:6px}
+.cc .lg i{display:inline-block;width:14px;height:3px;border-radius:2px}
+.cc .lg i.sq{width:10px;height:10px;border-radius:2px}
+.cc .tb{font:500 11px var(--mono);letter-spacing:.06em;border:1px solid var(--line2);background:transparent;color:var(--muted);border-radius:6px;padding:3px 8px;cursor:pointer}
+.cc .tb:hover{color:var(--fg)}
+.chart{position:relative;outline:none}
+.chart:focus-visible{box-shadow:0 0 0 2px var(--gold);border-radius:6px}
+.chart svg{display:block;width:100%;overflow:visible}
+.chart .empty{height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;border:1px dashed var(--line2);border-radius:8px}
+.ttip{position:absolute;pointer-events:none;background:#1b1d24;border:1px solid #333744;border-radius:8px;padding:8px 10px;font-size:12px;color:var(--fg);box-shadow:0 8px 24px rgba(0,0,0,.45);z-index:5;min-width:120px;white-space:nowrap}
+.ttip .tt{color:var(--muted);font:11px var(--mono);margin-bottom:4px}
+.ttip .tr{display:flex;align-items:center;gap:8px}
+.ttip .tr i{width:12px;height:2px;border-radius:1px;display:inline-block}
+.ttip .tr b{font-weight:600}
+.ttip .tr span{color:var(--muted)}
+.loading .chart svg,.loading .tile .v{opacity:.55;transition:opacity .2s}
+.tview{overflow-x:auto;max-height:260px;overflow-y:auto;border:1px solid var(--line);border-radius:8px}
+.tview table{border-collapse:collapse;width:100%;font-size:12px}
+.tview th,.tview td{padding:5px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.tview th:first-child,.tview td:first-child{text-align:left}
+.tview th{color:var(--muted);font-weight:500;position:sticky;top:0;background:var(--card)}
+
+/* horizontal bars (villages) */
+.hb{display:flex;flex-direction:column;gap:9px;font-size:13px}
+.hb .r{display:grid;grid-template-columns:110px minmax(0,1fr) 34px;align-items:center;gap:10px}
+.hb .r span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hb .bar{height:8px;border-radius:4px;background:var(--line)}
+.hb .bar i{display:block;height:8px;border-radius:0 4px 4px 0;background:var(--s1);min-width:2px}
+.hb .n{text-align:right;font:13px var(--mono)}
+
+/* data tables */
+.dt{overflow-x:auto}
+.dt table{border-collapse:collapse;width:100%;font-size:13px}
+.dt th,.dt td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.dt th{color:var(--muted);font-weight:500;font-size:12px}
+.dt th.l,.dt td.l{text-align:left}
+.dt td.wrap{white-space:normal;min-width:240px;text-align:left;overflow-wrap:anywhere}
+.dt td .mono{font:12px var(--mono);color:var(--muted)}
+.chip{display:inline-flex;align-items:center;gap:5px;font:500 11px var(--mono);letter-spacing:.04em;border:1px solid var(--line2);border-radius:999px;padding:1px 8px;color:var(--muted)}
+.chip.ok{color:var(--ok-text);border-color:#1d4d24}.chip.warn{color:var(--amber);border-color:var(--amber-line)}.chip.bad{color:var(--red);border-color:var(--red-line)}
+.svc{display:flex;flex-direction:column;gap:8px}
+.svc .r{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:10px}
+.svc .r .nm{font-weight:600;flex:1}
+.svc .r .ms{font:12px var(--mono);color:var(--muted)}
+.note{font-size:13px;color:var(--muted);line-height:1.6}
+.note b{color:var(--fg);font-weight:600}
+
+/* ---- the tool cards (Players and chat, Announcements, Badges, Babylon) in the console look ---- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card h2{font-size:18px;font-weight:600;letter-spacing:0}
+.card p{color:var(--muted);font-size:13px;line-height:1.65}
+.card .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.card button,.card a.btn{min-height:34px;padding:0 14px;background:var(--card2);border:1px solid var(--line2);border-radius:8px;color:var(--fg);font:500 13px var(--sans);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.card button:hover,.card a.btn:hover{border-color:#3a3e4a}
+.card button.primary{background:var(--gold);border-color:var(--gold);color:var(--bg);font-weight:600}
+.card button.primary:hover{background:var(--gold2);border-color:var(--gold2)}
+.card button.bad{border-color:var(--red-line);color:var(--red)}
+.card button.sm{min-height:28px;padding:0 9px;font-size:12px;border-radius:6px}
+.card button:disabled{opacity:.45;cursor:default}
+.card .ver{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.card .ver div{border:1px solid var(--line);background:var(--card2);border-radius:10px;padding:12px 14px}
+.card .ver span{display:block;color:var(--muted);font-size:12px}
+.card .ver b{display:block;color:var(--fg);font:400 34px/1 var(--display);margin:6px 0 4px;letter-spacing:.01em}
+.card .ver small{color:var(--muted);font-size:12px}
+.card textarea,.card input[type=text],.card input[type=number],.card select{background:#0b0c10;border:1px solid var(--line2);border-radius:8px;color:var(--fg);padding:8px 10px;font:13px var(--sans)}
+.card textarea{width:100%}
+#ann textarea{min-height:150px;resize:vertical;line-height:1.7}
+#ann input[type=range]{flex:1;min-width:140px;accent-color:var(--gold)}
+#ann-preview{position:relative;overflow:hidden;background:#000;border-radius:8px;padding:10px 0}
+#ann-preview span{display:inline-block;white-space:nowrap;animation:annTicker 30s linear infinite;color:#b9a77d;font:12px var(--mono);letter-spacing:.2em}
 @keyframes annTicker{0%{transform:translateX(100%);}100%{transform:translateX(-100%);}}
-#bdg{border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);padding:22px;display:flex;flex-direction:column;gap:12px}
-#bdg h2{font-family:'Cinzel Decorative',serif;color:#c8922a;font-size:16px;letter-spacing:2px}
-#bdg p{color:#b7a98b;font-size:12px;line-height:1.7}
-#bdg .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-#bdg button,#bdg a.btn{padding:10px 16px;background:transparent;border:1px solid rgba(200,146,42,.45);color:#c8922a;font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;text-decoration:none}
-#bdg button.primary{background:rgba(200,146,42,.16);border-color:rgba(200,146,42,.8);color:#f3e6bf}
-#bdg button:disabled{opacity:.45;cursor:default}
-#bdg-status{color:#5ecfca;font-size:11px;letter-spacing:1px;min-width:0;overflow-wrap:anywhere}
-#bdg-status.err{color:#e07a6a}
-#bjs{border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);padding:22px;display:flex;flex-direction:column;gap:12px}
-#bjs h2{font-family:'Cinzel Decorative',serif;color:#c8922a;font-size:16px;letter-spacing:2px}
-#bjs p{color:#b7a98b;font-size:12px;line-height:1.7}
-#bjs .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-#bjs button,#bjs a.btn{padding:10px 16px;background:transparent;border:1px solid rgba(200,146,42,.45);color:#c8922a;font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;text-decoration:none}
-#bjs button.primary{background:rgba(200,146,42,.16);border-color:rgba(200,146,42,.8);color:#f3e6bf}
-#bjs button:disabled{opacity:.45;cursor:default}
-#bjs .ver{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-#bjs .ver div{border:1px solid rgba(200,146,42,.18);background:rgba(0,0,0,.25);padding:10px 12px}
-#bjs .ver span{display:block;color:#8a7a5a;font-size:10px;letter-spacing:2px;text-transform:uppercase}
-#bjs .ver b{display:block;color:#f3e6bf;font:600 20px Georgia,serif;margin:4px 0 2px}
-#bjs .ver small{color:#8a7a5a;font-size:11px}
-#bjs-verdict{border-left:3px solid #8a7a5a;background:rgba(0,0,0,.25);padding:10px 14px;color:#e7dcc0;font-size:13px;line-height:1.6}
-#bjs-verdict.pass{border-color:#5ecfca}
-#bjs-verdict.review{border-color:#e8c56a}
-#bjs-verdict.fail{border-color:#e07a6a}
-#bjs-verdict ul{margin:6px 0 0 18px;color:#b7a98b;font-size:12px}
-#bjs-verdict a{color:#5ecfca}
-#bjs-status{color:#5ecfca;font-size:11px;letter-spacing:1px}
-#bjs-status.err{color:#e07a6a}
-#mpa{border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);padding:22px;display:flex;flex-direction:column;gap:12px}
-#mpa h2{font-family:'Cinzel Decorative',serif;color:#c8922a;font-size:16px;letter-spacing:2px}
-#mpa p{color:#b7a98b;font-size:12px;line-height:1.7}
-#mpa .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-#mpa button{padding:9px 14px;background:transparent;border:1px solid rgba(200,146,42,.45);color:#c8922a;font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer}
-#mpa button.primary{background:rgba(200,146,42,.16);border-color:rgba(200,146,42,.8);color:#f3e6bf}
-#mpa button.bad{border-color:rgba(224,122,106,.6);color:#f0a093}
-#mpa button.sm{padding:5px 9px;font-size:9px;letter-spacing:1px}
-#mpa button:disabled{opacity:.45;cursor:default}
-#mpa .ver{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-#mpa .ver div{border:1px solid rgba(200,146,42,.18);background:rgba(0,0,0,.25);padding:10px 12px}
-#mpa .ver span{display:block;color:#8a7a5a;font-size:10px;letter-spacing:2px;text-transform:uppercase}
-#mpa .ver b{display:block;color:#f3e6bf;font:600 20px Georgia,serif;margin:4px 0 2px}
-#mpa .ver small{color:#8a7a5a;font-size:11px}
-#mpa-tabs{display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid rgba(200,146,42,.18);padding-bottom:10px}
-#mpa-tabs button.on{background:rgba(94,207,202,.14);border-color:#5ecfca;color:#d9fffc}
-#mpa-body{display:flex;flex-direction:column;gap:8px;font-family:-apple-system,'Segoe UI',Arial,sans-serif;font-size:13px;color:#e7dcc0}
-#mpa-body .room{border:1px solid rgba(200,146,42,.18);background:rgba(0,0,0,.22);padding:10px 12px}
-#mpa-body .room h3{font:600 12px 'Cinzel',serif;letter-spacing:2px;color:#c8922a;margin-bottom:6px}
-#mpa-body .who{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:6px 0;border-top:1px solid rgba(255,255,255,.05)}
+#ann-status,#bdg-status,#bjs-status,#mpa-status{color:var(--teal);font-size:12px;min-width:0;overflow-wrap:anywhere}
+#ann-status.err,#bdg-status.err,#bjs-status.err,#mpa-status.err{color:var(--red)}
+#bjs-verdict{border-left:3px solid var(--line2);background:var(--card2);border-radius:0 8px 8px 0;padding:10px 14px;color:var(--fg);font-size:13px;line-height:1.6}
+#bjs-verdict.pass{border-color:var(--teal)}#bjs-verdict.review{border-color:var(--amber)}#bjs-verdict.fail{border-color:var(--red)}
+#bjs-verdict ul{margin:6px 0 0 18px;color:var(--muted);font-size:12px}
+#bjs-verdict a{color:var(--teal)}
+#mpa-tabs{display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--line);padding-bottom:10px}
+#mpa-tabs button.on{background:#13262a;border-color:var(--teal);color:#d9fffc}
+#mpa-body{display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--fg)}
+#mpa-body .room{border:1px solid var(--line);background:var(--card2);border-radius:10px;padding:10px 12px}
+#mpa-body .room h3{font:600 13px var(--sans);color:var(--gold);margin-bottom:6px}
+#mpa-body .who{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
 #mpa-body .who:first-of-type{border-top:0}
 #mpa-body .who .n{font-weight:700;min-width:120px}
 #mpa-body .k-discord{color:#a9bbff}#mpa-body .k-name{color:#ffd36a}#mpa-body .k-guest{color:#d6d1e2}
-#mpa-body .dim{color:#8a7a5a;font-size:12px}
-#mpa-body .tag{font-size:10px;letter-spacing:1px;text-transform:uppercase;border:1px solid rgba(255,255,255,.2);padding:2px 6px;color:#e8c56a}
+#mpa-body .dim{color:var(--muted);font-size:12px}
+#mpa-body .tag{font:500 11px var(--mono);border:1px solid var(--line2);border-radius:999px;padding:1px 8px;color:var(--amber)}
 #mpa-body .acts{margin-left:auto;display:flex;flex-wrap:wrap;gap:6px}
-#mpa-body .msg{display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;padding:7px 0;border-top:1px solid rgba(255,255,255,.05);align-items:start}
-#mpa-body .msg .t{color:#8a7a5a;font-size:11px;white-space:nowrap}
+#mpa-body .msg{display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;padding:7px 0;border-top:1px solid var(--line);align-items:start}
+#mpa-body .msg .t{color:var(--muted);font-size:11px;white-space:nowrap}
 #mpa-body .msg .x{overflow-wrap:anywhere}
 #mpa-body .msg .raw{color:#e8a87a;font-size:12px}
 #mpa-body .msg.del .x{text-decoration:line-through;opacity:.55}
-#mpa-body .ch-w{color:#f4a6dc}#mpa-body .ch-v{color:#5ecfca}
-#mpa-body .rep{border-left:3px solid #e8c56a;background:rgba(0,0,0,.25);padding:10px 12px}
-#mpa-body .rep.done{border-color:#5ecfca;opacity:.7}
-#mpa-body .rep .ctx{margin-top:6px;color:#b7a98b;font-size:12px;line-height:1.55}
-#mpa-body input[type=text],#mpa-body input[type=number],#mpa-body select,#mpa-body textarea{background:rgba(0,0,0,.35);border:1px solid rgba(200,146,42,.3);color:#f3e6bf;padding:8px 9px;font:13px -apple-system,'Segoe UI',Arial,sans-serif}
-#mpa-body textarea{width:100%;min-height:90px;resize:vertical}
-#mpa-body .ev{border:1px solid rgba(200,146,42,.22);background:rgba(0,0,0,.25);padding:10px 12px;display:flex;flex-direction:column;gap:6px}
-#mpa-body .ev.live{border-color:#ff6b6b;box-shadow:inset 3px 0 0 #ff4d5e}
-#mpa-body .ev h3{font:600 13px 'Cinzel',serif;letter-spacing:1.5px;color:#f3e6bf}
-#mpa-body .ev .live-tag{color:#ff6b6b;font-weight:800;letter-spacing:2px;font-size:10px;margin-right:6px}
-#mpa-body .evf{display:grid;grid-template-columns:minmax(110px,auto) 1fr;gap:8px 10px;align-items:center;border:1px solid rgba(94,207,202,.3);background:rgba(0,0,0,.3);padding:12px}
-#mpa-body .evf label{color:#b7a98b;font-size:12px}
-#mpa-body .evf textarea{min-height:220px;font:12.5px/1.45 ui-monospace,Menlo,Consolas,monospace}
-@media (max-width:560px){#mpa-body .evf{grid-template-columns:1fr}}
+#mpa-body .ch-w{color:#f4a6dc}#mpa-body .ch-v{color:var(--teal)}
+#mpa-body .rep{border-left:3px solid var(--amber);background:var(--card2);border-radius:0 8px 8px 0;padding:10px 12px}
+#mpa-body .rep.done{border-color:var(--teal);opacity:.7}
+#mpa-body .rep .ctx{margin-top:6px;color:var(--muted);font-size:12px;line-height:1.55}
+#mpa-body textarea{min-height:90px;resize:vertical}
+#mpa-body .ev{border:1px solid var(--line);background:var(--card2);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+#mpa-body .ev.live{border-color:#7a2c2c;box-shadow:inset 3px 0 0 #ff4d5e}
+#mpa-body .ev h3{font:600 14px var(--sans)}
+#mpa-body .ev .live-tag{color:#ff6b6b;font-weight:800;letter-spacing:.1em;font-size:11px;margin-right:6px}
+#mpa-body .evf{display:grid;grid-template-columns:minmax(110px,auto) 1fr;gap:8px 10px;align-items:center;border:1px solid #1d4a4a;background:#0b0c10;border-radius:10px;padding:12px}
+#mpa-body .evf label{color:var(--muted);font-size:12px}
+#mpa-body .evf textarea{min-height:220px;font:12.5px/1.45 var(--mono)}
 #mpa-body label.tg{display:flex;gap:10px;align-items:center;cursor:pointer}
-#mpa-body label.tg input{width:18px;height:18px;accent-color:#5ecfca}
-#mpa-status{color:#5ecfca;font-size:11px;letter-spacing:1px}
-#mpa-status.err{color:#e07a6a}
-#hub-note{
-  color:#8a7a5a;
-  font-size:11px;
-  line-height:1.9;
-  border-top:1px solid rgba(255,255,255,.06);
-  padding-top:18px;
+#mpa-body label.tg input{width:18px;height:18px;accent-color:var(--teal)}
+
+@media (max-width:900px){
+  #admin-hub{flex-direction:column}
+  #side{position:sticky;top:0;z-index:20;height:auto;flex:none;flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 16px;border-right:0;border-bottom:1px solid var(--line);overflow:visible}
+  #side .brand b{font-size:18px}
+  #side .back,#side .grp,#side .foot{display:none}
+  #menu-btn{display:inline-flex;margin-left:auto}
+  #side.open{flex-direction:column;flex-wrap:nowrap;align-items:stretch;max-height:100vh;overflow-y:auto}
+  #side.open .back,#side.open .grp,#side.open .foot{display:flex}
+  #side.open #menu-btn{position:absolute;right:16px;top:10px}
+  .phead h1{font-size:38px}
 }
-@media (max-width:600px){
-  body{padding:18px}
-  #hub-header{
-    flex-direction:column;
-    align-items:flex-start;
-  }
-  #hub-title h1{
-    font-size:22px;
-  }
-}
+@media (max-width:560px){#mpa-body .evf{grid-template-columns:1fr}.tile .v{font-size:44px}}
 </style>
 </head>
 <body>
 
-<div id="auth-loading">Checking admin access...</div>
+<div id="auth-loading">Checking admin access…</div>
 
-<main id="admin-hub">
-  <header id="hub-header">
-    <div id="hub-title">
-      <h1>ADMIN HUB</h1>
-      <p>Rebel Ants Command Center</p>
+<div id="admin-hub">
+  <aside id="side" aria-label="Universe admin">
+    <div class="brand"><div class="mark" aria-hidden="true">RU</div><div><b>Rebel Universe</b><span>ADMIN</span></div></div>
+    <button id="menu-btn" class="ibtn" type="button" aria-expanded="false" aria-controls="side" onclick="toggleMenu()">Menu</button>
+    <a class="back" id="console-link" href="https://economy.rebelants.io/admin"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>Back to the Rebel Console</a>
+    <div class="grp"><span class="lbl">OVERVIEW</span>
+      <a href="#overview" data-go="overview"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span class="t">Dashboard</span><span class="nb" id="nb-alerts"></span></a>
     </div>
-    <div id="hub-actions">
-      <a id="lobby-btn" href="index.html">&larr; Lobby</a>
-      <button id="logout-btn" type="button" onclick="logoutAdmin()">Log Out</button>
+    <div class="grp"><span class="lbl">HEALTH</span>
+      <a href="#performance" data-go="performance"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><span class="t">Performance</span><span class="nb" id="nb-perf"></span></a>
+      <a href="#issues" data-go="issues"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/></svg><span class="t">Issues</span><span class="nb" id="nb-issues"></span></a>
+      <a href="#services" data-go="services"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span class="t">Services</span><span class="nb" id="nb-svc"></span></a>
     </div>
-  </header>
+    <div class="grp"><span class="lbl">LIVE</span>
+      <a href="#players" data-go="players"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17 14.6c2.4.3 4 1.9 4.5 4.9"/></svg><span class="t">Players online</span><span class="nb" id="nb-online"></span></a>
+      <a href="#chat" data-go="chat"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg><span class="t">Chat and reports</span><span class="nb" id="nb-reports"></span></a>
+      <a href="#events" data-go="events"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5"/></svg><span class="t">Colony Stage</span><span class="nb" id="nb-stage"></span></a>
+    </div>
+    <div class="grp"><span class="lbl">CONTENT</span>
+      <a href="#announcements" data-go="announcements"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 10v4h4l7 5V5L7 10z"/><path d="M17.5 9a4 4 0 0 1 0 6"/></svg><span class="t">Announcements</span></a>
+      <a href="#badges" data-go="badges"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><circle cx="12" cy="9" r="6"/><path d="M8.5 14l-2 7 5.5-3 5.5 3-2-7"/></svg><span class="t">Badges</span></a>
+      <a href="npc-forge.html#free"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12.5l2.5 2.5 4.5-5.5"/></svg><span class="t">Free to play</span><span class="ext" aria-hidden="true">↗</span></a>
+    </div>
+    <div class="grp"><span class="lbl">FORGE AND WORLD</span>
+      <a href="npc-forge.html"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="7" r="3.5"/><path d="M5 21c.9-4.4 3.6-7 7-7s6.1 2.6 7 7"/></svg><span class="t">NPC Forge</span><span class="ext" aria-hidden="true">↗</span></a>
+      <a href="village.html"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 11l9-7 9 7M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg><span class="t">Village Builder</span><span class="ext" aria-hidden="true">↗</span></a>
+      <a href="forge-collections.html"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v11h14V9M10 13h4"/></svg><span class="t">Collections</span><span class="ext" aria-hidden="true">↗</span></a>
+    </div>
+    <div class="grp"><span class="lbl">SYSTEM</span>
+      <a href="#babylon" data-go="babylon"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg><span class="t">Babylon updates</span><span class="nb" id="nb-bjs"></span></a>
+    </div>
+    <div class="foot"><a href="index.html">Lobby</a><span aria-hidden="true" style="color:var(--line2)">·</span><button type="button" onclick="logoutAdmin()">Log out</button></div>
+  </aside>
 
-    <section id="hub-grid">
-    <a class="hub-card" href="village.html">
-      <div>
-        <div class="card-icon">🏯</div>
-        <div class="card-title">Village Builder</div>
-        <div class="card-desc">Enter the village to build, place assets, control lighting, and shape the world.</div>
+  <main id="content">
+    <!-- ===== Dashboard ===== -->
+    <section class="page" id="pg-overview" aria-labelledby="h-overview">
+      <header class="phead">
+        <div><span class="k" id="site-line">Loading…</span><h1 id="h-overview">Dashboard</h1></div>
+        <div class="ctrls">
+          <div class="seg" role="group" aria-label="Time range">
+            <button type="button" data-h="24" aria-pressed="true">24 hours</button>
+            <button type="button" data-h="168" aria-pressed="false">7 days</button>
+            <button type="button" data-h="336" aria-pressed="false">14 days</button>
+          </div>
+          <button class="ibtn" type="button" onclick="dashLoad(true)" title="Refresh now (it refreshes every 30 s by itself)" aria-label="Refresh now">↻</button>
+        </div>
+      </header>
+      <section id="alerts" aria-label="Needs you"></section>
+
+      <h2 class="sec-h">Live now</h2>
+      <div class="grid" id="live-tiles">
+        <a class="tile" href="#players"><span class="l">Players online</span><div class="vr"><span class="v" id="t-online">–</span><span id="t-online-spark"></span></div><span class="s" id="t-online-s">&nbsp;</span></a>
+        <a class="tile" href="#performance"><span class="l">Frame rate now</span><span class="v" id="t-fps">–</span><span class="s" id="t-fps-s">&nbsp;</span></a>
+        <a class="tile" href="#performance"><span class="l">Connection</span><span class="v" id="t-ping">–</span><span class="s" id="t-ping-s">&nbsp;</span></a>
+        <a class="tile" href="#issues"><span class="l">Issues</span><span class="v" id="t-issues">–</span><span class="s" id="t-issues-s">&nbsp;</span></a>
       </div>
-      <div class="card-status">Available</div>
-    </a>
 
-    <a class="hub-card" href="npc-forge.html">
-      <div>
-        <div class="card-icon">🐜</div>
-        <div class="card-title">NPC Forge</div>
-        <div class="card-desc">Forge NPCs from your renders like a Rebel (Rebel Forge sculpt + Forge Rigger with the NPC animations), test every clip, approve them into the village.</div>
+      <div class="row2">
+        <section class="cc" aria-labelledby="c-online-h"><div class="ch"><div><h2 id="c-online-h">Players online</h2><span class="sub" id="c-online-sub"></span></div><button class="tb" type="button" data-table="c-online">Table</button></div><div class="chart" id="c-online" tabindex="0"></div></section>
+        <section class="cc narrow" aria-labelledby="c-villages-h"><div class="ch"><h2 id="c-villages-h">Villages right now</h2></div><div id="c-villages" class="hb"></div><span class="sub" id="c-villages-sub"></span></section>
       </div>
-      <div class="card-status">Available</div>
-    </a>
-
-    <a class="hub-card" href="forge-collections.html">
-      <div>
-        <div class="card-icon">⚒️</div>
-        <div class="card-title">Forge Collection Manager</div>
-        <div class="card-desc">Add NFT collections, fetch traits, and map them into the Character Forge without touching code.</div>
+      <div class="row2">
+        <section class="cc" aria-labelledby="c-fps-h"><div class="ch"><div><h2 id="c-fps-h">Frame rate</h2><span class="sub">frames a second while playing, averaged over players</span></div><div class="lg"><span><i style="background:var(--s1)"></i>Computers</span><span><i style="background:var(--s2)"></i>Phones</span><button class="tb" type="button" data-table="c-fps">Table</button></div></div><div class="chart" id="c-fps" tabindex="0"></div></section>
+        <section class="cc" aria-labelledby="c-ping-h"><div class="ch"><div><h2 id="c-ping-h">Ping to the rooms</h2><span class="sub">average round trip, milliseconds</span></div><button class="tb" type="button" data-table="c-ping">Table</button></div><div class="chart" id="c-ping" tabindex="0"></div></section>
       </div>
-      <div class="card-status">Available</div>
-    </a>
-  </section>
 
-  <section id="ann">
-    <h2>📣 Announcements</h2>
-    <p>The line scrolling along the bottom of the landing page (where players connect their wallet). One announcement per line, up to 12; each shows after a ✦. Saved here, it shows to everyone within a minute.</p>
-    <textarea id="ann-lines" spellcheck="true" placeholder="Season 1 Now Live&#10;New dojos coming soon"></textarea>
-    <div class="row"><label for="ann-speed">Speed: one loop in <b id="ann-sec">30</b> s</label><input id="ann-speed" type="range" min="12" max="120" step="1" value="30"></div>
-    <div id="ann-preview"><span id="ann-preview-text"></span></div>
-    <div class="row">
-      <button id="ann-save" class="primary" type="button" onclick="saveAnnouncements()">Save</button>
-      <button id="ann-reset" type="button" onclick="resetAnnouncements()">Use the page's own lines</button>
-      <span id="ann-status"></span>
-    </div>
-  </section>
+      <h2 class="sec-h">Today <span style="text-transform:none;letter-spacing:0">(UTC day)</span></h2>
+      <div class="grid g5">
+        <div class="tile"><span class="l">Players today</span><span class="v md" id="d-players">–</span><span class="s" id="d-players-s">&nbsp;</span></div>
+        <div class="tile"><span class="l">Sign-ins</span><span class="v md" id="d-signins">–</span><span class="s" id="d-signins-s">&nbsp;</span></div>
+        <div class="tile"><span class="l">Rebel Points paid</span><span class="v md" id="d-points">–</span><span class="s" id="d-points-s">&nbsp;</span></div>
+        <div class="tile"><span class="l">Forges</span><span class="v md" id="d-forges">–</span><span class="s" id="d-forges-s">&nbsp;</span></div>
+        <div class="tile"><span class="l">Badges to the Badge Wall</span><span class="v md" id="d-badges">–</span><span class="s" id="d-badges-s">&nbsp;</span></div>
+      </div>
+      <div class="row2">
+        <section class="cc" aria-labelledby="c-days-h"><div class="ch"><div><h2 id="c-days-h">Players a day</h2><span class="sub">last 14 days, each player once a day</span></div><div class="lg"><span><i class="sq" style="background:var(--s1)"></i>Signed in</span><span><i class="sq" style="background:var(--s2)"></i>Guests</span><button class="tb" type="button" data-table="c-days">Table</button></div></div><div class="chart" id="c-days" tabindex="0"></div></section>
+        <section class="cc" aria-labelledby="c-pts-h"><div class="ch"><div><h2 id="c-pts-h">Rebel Points paid</h2><span class="sub">last 14 days, by what paid them</span></div><div class="lg"><span><i class="sq" style="background:var(--s1)"></i>Chests</span><span><i class="sq" style="background:var(--s2)"></i>First clears</span><span><i class="sq" style="background:var(--s3)"></i>Riddles</span><span><i class="sq" style="background:var(--s4)"></i>Finds</span><button class="tb" type="button" data-table="c-pts">Table</button></div></div><div class="chart" id="c-pts" tabindex="0"></div></section>
+      </div>
+    </section>
 
-  <section id="bdg">
-    <h2>🏅 Badges on the Badge Wall</h2>
-    <p>Universe's badges show on the Rebel Economy's Badge Wall with every other app's, and on the Rebel Console's Badges page. A signed-in player's badges go there when their story saves. Send everyone's sends the badges already in every saved story now, for players who haven't played since (each badge goes once). Chest and game badges wait until Universe's own points record has those chests and first clears.</p>
-    <div class="row">
-      <button id="bdg-send" class="primary" type="button" onclick="bdgSendAll()">Send everyone's badges now</button>
-      <a class="btn" target="_blank" rel="noopener" href="https://economy.rebelants.io/admin/badges">The Console's Badges page ↗</a>
-      <span id="bdg-status"></span>
-    </div>
-  </section>
+    <!-- ===== Performance ===== -->
+    <section class="page" id="pg-performance" aria-labelledby="h-perf">
+      <header class="phead"><div><span class="k">How the game runs on players' screens</span><h1 id="h-perf">Performance</h1></div><div class="ctrls"><div class="seg" role="group" aria-label="Time range"><button type="button" data-h="24" aria-pressed="true">24 hours</button><button type="button" data-h="168" aria-pressed="false">7 days</button><button type="button" data-h="336" aria-pressed="false">14 days</button></div><button class="ibtn" type="button" onclick="dashLoad(true)" aria-label="Refresh now">↻</button></div></header>
+      <p class="note">Every Universe page that is in the rooms sends a short report once a minute while it is played: its frames a second, its slow frames (over 50 ms) and freezes (over a second), its ping to the rooms and dropped connections. Numbers only, no names. Under <b>30 fps</b> feels choppy; a ping of <b>200 ms</b> or more feels laggy.</p>
+      <div class="grid">
+        <div class="tile"><span class="l">Computers</span><span class="v" id="p-fpsd">–</span><span class="s" id="p-fpsd-s">&nbsp;</span></div>
+        <div class="tile"><span class="l">Phones</span><span class="v" id="p-fpsp">–</span><span class="s" id="p-fpsp-s">&nbsp;</span></div>
+        <div class="tile"><span class="l">Under 30 fps</span><span class="v" id="p-slow">–</span><span class="s">of player-minutes in the last 5 minutes</span></div>
+        <div class="tile"><span class="l">Laggy (200 ms+)</span><span class="v" id="p-lag">–</span><span class="s" id="p-lag-s">&nbsp;</span></div>
+      </div>
+      <div class="row2">
+        <section class="cc" aria-labelledby="p-fps-h"><div class="ch"><div><h2 id="p-fps-h">Frame rate</h2><span class="sub">average frames a second</span></div><div class="lg"><span><i style="background:var(--s1)"></i>Computers</span><span><i style="background:var(--s2)"></i>Phones</span><button class="tb" type="button" data-table="p-fps">Table</button></div></div><div class="chart" id="p-fps" tabindex="0"></div></section>
+        <section class="cc" aria-labelledby="p-slow-h"><div class="ch"><div><h2 id="p-slow-h">Choppy play</h2><span class="sub">share of player-minutes under 30 fps, %</span></div><button class="tb" type="button" data-table="p-slow">Table</button></div><div class="chart" id="p-slow-c" tabindex="0"></div></section>
+      </div>
+      <div class="row2">
+        <section class="cc" aria-labelledby="p-ping-h"><div class="ch"><div><h2 id="p-ping-h">Ping</h2><span class="sub">average round trip to the rooms, ms</span></div><button class="tb" type="button" data-table="p-ping">Table</button></div><div class="chart" id="p-ping" tabindex="0"></div></section>
+        <section class="cc" aria-labelledby="p-drops-h"><div class="ch"><div><h2 id="p-drops-h">Dropped connections</h2><span class="sub">sockets that broke off (the page joins again by itself)</span></div><button class="tb" type="button" data-table="p-drops">Table</button></div><div class="chart" id="p-drops" tabindex="0"></div></section>
+      </div>
+      <section class="cc" aria-labelledby="p-vil-h"><div class="ch"><div><h2 id="p-vil-h">By village</h2><span class="sub" id="p-vil-sub"></span></div></div><div class="dt" id="p-villages"></div></section>
+      <section class="cc" aria-labelledby="p-dev-h"><div class="ch"><div><h2 id="p-dev-h">By device</h2><span class="sub">which phones and browsers struggle</span></div></div><div class="dt" id="p-devices"></div></section>
+    </section>
 
-  <section id="bjs">
-    <h2>🧊 Babylon (the 3D engine)</h2>
-    <p>The site keeps its own copy of Babylon, so it never changes by itself. Babylon puts out a new version most weeks and you don't need each one. Every Tuesday (five days after Babylon's weekly release, so its quick fixes are in) a robot tests the newest on all 15 villages, the Rebel Forge, the NPC Forge and the terrain lab, and says here whether it is safe.</p>
-    <div class="ver">
-      <div><span>This site runs</span><b id="bjs-pinned">…</b><small id="bjs-pinned-at"></small></div>
-      <div><span>Dev runs</span><b id="bjs-dev">…</b><small id="bjs-dev-at"></small></div>
-      <div><span>Newest Babylon</span><b id="bjs-latest">…</b><small id="bjs-latest-at"></small></div>
-    </div>
-    <div id="bjs-verdict">Checking…</div>
-    <div class="row">
-      <button id="bjs-apply" class="primary" type="button" onclick="bjsApply()" disabled>Put it on dev</button>
-      <a id="bjs-preview" class="btn" target="_blank" rel="noopener" href="#" hidden>Try it first ↗</a>
-      <button id="bjs-run" type="button" onclick="bjsRun()">Run the robot now</button>
-      <button id="bjs-check" type="button" onclick="bjsLoad(true)">Check for updates</button>
-      <span id="bjs-status"></span>
-    </div>
-    <p>Put it on dev = the dev preview runs it right away (try it there); the live site gets it with the next dev → main, like any other change. Staying on the version you have is always safe: updating every month or two is plenty.</p>
-  </section>
+    <!-- ===== Issues ===== -->
+    <section class="page" id="pg-issues" aria-labelledby="h-issues">
+      <header class="phead"><div><span class="k">What went wrong on players' screens</span><h1 id="h-issues">Issues</h1></div><div class="ctrls"><div class="seg" role="group" aria-label="Time range"><button type="button" data-h="24" aria-pressed="true">24 hours</button><button type="button" data-h="168" aria-pressed="false">7 days</button><button type="button" data-h="336" aria-pressed="false">14 days</button></div><button class="ibtn" type="button" onclick="dashLoad(true)" aria-label="Refresh now">↻</button></div></header>
+      <p class="note">Universe, the lobby and the Forge send what goes wrong: script errors (each kind once a page, with how often), startup problems, and how long each village took to be ready. Messages only (addresses' queries, wallets and ids taken out). Use these lines when you ask Claude to fix something.</p>
+      <div class="grid">
+        <div class="tile"><span class="l">Script errors</span><span class="v" id="i-err">–</span><span class="s" id="i-err-s">&nbsp;</span></div>
+        <div class="tile"><span class="l">Crashes</span><span class="v" id="i-crash">–</span><span class="s">pages that closed on screen (on phones: most likely memory)</span></div>
+        <div class="tile"><span class="l">3D lost</span><span class="v" id="i-gl">–</span><span class="s">the graphics reset under the page (phones: memory)</span></div>
+        <div class="tile"><span class="l">Village ready in</span><span class="v" id="i-ready">–</span><span class="s" id="i-ready-s">&nbsp;</span></div>
+      </div>
+      <section class="cc" aria-labelledby="i-top-h"><div class="ch"><div><h2 id="i-top-h">Most common errors</h2><span class="sub" id="i-top-sub"></span></div></div><div class="dt" id="i-errors"></div></section>
+      <div class="row2">
+        <section class="cc" aria-labelledby="i-prob-h"><div class="ch"><h2 id="i-prob-h">Startup problems</h2></div><div class="dt" id="i-problems"></div></section>
+        <section class="cc" aria-labelledby="i-err-h"><div class="ch"><div><h2 id="i-err-h">Errors and problems per hour</h2><span class="sub">every page's reports added up</span></div><div class="lg"><span><i class="sq" style="background:var(--s2)"></i>Script errors</span><span><i class="sq" style="background:var(--s1)"></i>Startup problems</span><button class="tb" type="button" data-table="i-hourly">Table</button></div></div><div class="chart" id="i-hourly" tabindex="0"></div></section>
+      </div>
+      <section class="cc" aria-labelledby="i-ready-h"><div class="ch"><div><h2 id="i-ready-h">How long villages take to be ready</h2><span class="sub">from the address being opened to the village on screen</span></div></div><div class="dt" id="i-readyt"></div></section>
+      <section class="cc" aria-labelledby="i-recent-h"><div class="ch"><h2 id="i-recent-h">Latest reports</h2></div><div class="dt" id="i-recent"></div></section>
+    </section>
 
-  <section id="mpa">
-    <h2>🗣 Multiplayer: players and chat</h2>
-    <p>Who is in Universe right now, the chat (every message, with the words as typed beside the ones the filter starred), the players' reports, and the tools: mute, kick or ban an account, delete a message, clear a village's chat, the chat and voice settings, and the Colony Stage's events (a LIVE NOW in the lobby, hosts heard by everyone there, a show at the Comedy Club's mic). Signed-in players write; guests read. These are this site's rooms only (the dev preview has its own).</p>
-    <div class="ver">
-      <div><span>Online now</span><b id="mpa-online">…</b><small id="mpa-online-at"></small></div>
-      <div><span>Open reports</span><b id="mpa-reports">…</b><small>from players</small></div>
-      <div><span>Chat</span><b id="mpa-chat">…</b><small id="mpa-chat-sub"></small></div>
-    </div>
-    <div id="mpa-tabs">
-      <button type="button" data-t="online">Online now</button>
-      <button type="button" data-t="log">Chat log</button>
-      <button type="button" data-t="reports">Reports</button>
-      <button type="button" data-t="mods">Muted &amp; banned</button>
-      <button type="button" data-t="cfg">Settings</button>
-      <button type="button" data-t="events">Events</button>
-      <button type="button" onclick="mpaLoad(true)">↻</button>
-    </div>
-    <div id="mpa-body"></div>
-    <div class="row"><span id="mpa-status"></span></div>
-  </section>
+    <!-- ===== Services ===== -->
+    <section class="page" id="pg-services" aria-labelledby="h-svc">
+      <header class="phead"><div><span class="k">What Universe needs to run, checked each time this page reads</span><h1 id="h-svc">Services</h1></div><div class="ctrls"><button class="ibtn" type="button" onclick="dashLoad(true)" aria-label="Check again">↻ Check again</button></div></header>
+      <div class="svc" id="s-list"></div>
+      <section class="cc"><div class="ch"><h2>This site</h2></div><div class="dt" id="s-site"></div>
+        <p class="note">The multiplayer rooms run on Cloudflare (one set for the live site, one for the dev preview); the database is Upstash Redis; Rebel Points, accounts and the Badge Wall are the Rebel Economy. A red line here is also a red alert on the Dashboard.</p></section>
+    </section>
 
-  <div id="hub-note">
-    This hub will become the private entrance for all Rebel Ants Universe admin tools:
-    Village Builder, Forge Collection Manager, Character Parts Manager, generated characters,
-    economy controls, and future systems.
-  </div>
-</main>
+    <!-- ===== Players and chat (the Multiplayer tools) ===== -->
+    <section class="page" id="pg-players" aria-labelledby="h-players">
+      <header class="phead"><div><span class="k">The rooms: who is in, the chat, reports, events</span><h1 id="h-players">Players and chat</h1></div></header>
+      <section id="mpa" class="card">
+        <p>Who is in Universe right now, the chat (every message, with the words as typed beside the ones the filter starred), the players' reports, and the tools: mute, kick or ban an account, delete a message, clear a village's chat, the chat and voice settings, and the Colony Stage's events (a LIVE NOW in the lobby, hosts heard by everyone there, a show at the Comedy Club's mic). Signed-in players write; guests read. These are this site's rooms only (the dev preview has its own).</p>
+        <div class="ver">
+          <div><span>Online now</span><b id="mpa-online">…</b><small id="mpa-online-at"></small></div>
+          <div><span>Open reports</span><b id="mpa-reports">…</b><small>from players</small></div>
+          <div><span>Chat</span><b id="mpa-chat">…</b><small id="mpa-chat-sub"></small></div>
+        </div>
+        <div id="mpa-tabs">
+          <button type="button" data-t="online">Online now</button>
+          <button type="button" data-t="log">Chat log</button>
+          <button type="button" data-t="reports">Reports</button>
+          <button type="button" data-t="mods">Muted &amp; banned</button>
+          <button type="button" data-t="cfg">Settings</button>
+          <button type="button" data-t="events">Events</button>
+          <button type="button" onclick="mpaLoad(true)" aria-label="Refresh">↻</button>
+        </div>
+        <div id="mpa-body"></div>
+        <div class="row"><span id="mpa-status"></span></div>
+      </section>
+    </section>
+
+    <!-- ===== Content: announcements, badges ===== -->
+    <section class="page" id="pg-content" aria-labelledby="h-content">
+      <header class="phead"><div><span class="k">What players see on the landing page and the Badge Wall</span><h1 id="h-content">Content</h1></div></header>
+      <section id="ann" class="card">
+        <h2>Announcements</h2>
+        <p>The line scrolling along the bottom of the landing page (where players connect their wallet). One announcement per line, up to 12; each shows after a ✦. Saved here, it shows to everyone within a minute.</p>
+        <textarea id="ann-lines" spellcheck="true" placeholder="Season 1 Now Live&#10;New dojos coming soon"></textarea>
+        <div class="row"><label for="ann-speed">Speed: one loop in <b id="ann-sec">30</b> s</label><input id="ann-speed" type="range" min="12" max="120" step="1" value="30"></div>
+        <div id="ann-preview"><span id="ann-preview-text"></span></div>
+        <div class="row">
+          <button id="ann-save" class="primary" type="button" onclick="saveAnnouncements()">Save</button>
+          <button id="ann-reset" type="button" onclick="resetAnnouncements()">Use the page's own lines</button>
+          <span id="ann-status"></span>
+        </div>
+      </section>
+      <section id="bdg" class="card">
+        <h2>Badges on the Badge Wall</h2>
+        <p>Universe's badges show on the Rebel Economy's Badge Wall with every other app's, and on the Rebel Console's Badges page. A signed-in player's badges go there when their story saves. Send everyone's sends the badges already in every saved story now, for players who haven't played since (each badge goes once). Chest and game badges wait until Universe's own points record has those chests and first clears.</p>
+        <div class="row">
+          <button id="bdg-send" class="primary" type="button" onclick="bdgSendAll()">Send everyone's badges now</button>
+          <a class="btn" target="_blank" rel="noopener" href="https://economy.rebelants.io/admin/badges">The Console's Badges page ↗</a>
+          <span id="bdg-status"></span>
+        </div>
+      </section>
+    </section>
+
+    <!-- ===== Babylon ===== -->
+    <section class="page" id="pg-babylon" aria-labelledby="h-bjs">
+      <header class="phead"><div><span class="k">The 3D engine and its weekly robot</span><h1 id="h-bjs">Babylon updates</h1></div></header>
+      <section id="bjs" class="card">
+        <p>The site keeps its own copy of Babylon, so it never changes by itself. Babylon puts out a new version most weeks and you don't need each one. Every Tuesday (five days after Babylon's weekly release, so its quick fixes are in) a robot tests the newest on all 15 villages, the Rebel Forge, the NPC Forge and the terrain lab, and says here whether it is safe.</p>
+        <div class="ver">
+          <div><span>This site runs</span><b id="bjs-pinned">…</b><small id="bjs-pinned-at"></small></div>
+          <div><span>Dev runs</span><b id="bjs-dev">…</b><small id="bjs-dev-at"></small></div>
+          <div><span>Newest Babylon</span><b id="bjs-latest">…</b><small id="bjs-latest-at"></small></div>
+        </div>
+        <div id="bjs-verdict">Checking…</div>
+        <div class="row">
+          <button id="bjs-apply" class="primary" type="button" onclick="bjsApply()" disabled>Put it on dev</button>
+          <a id="bjs-preview" class="btn" target="_blank" rel="noopener" href="#" hidden>Try it first ↗</a>
+          <button id="bjs-run" type="button" onclick="bjsRun()">Run the robot now</button>
+          <button id="bjs-check" type="button" onclick="bjsLoad(true)">Check for updates</button>
+          <span id="bjs-status"></span>
+        </div>
+        <p>Put it on dev = the dev preview runs it right away (try it there); the live site gets it with the next dev → main, like any other change. Staying on the version you have is always safe: updating every month or two is plenty.</p>
+      </section>
+    </section>
+  </main>
+</div>
+
+<div class="ttip" id="ttip" hidden></div>
 
 <script>
 async function checkAdminSession() {
@@ -414,6 +453,7 @@ async function checkAdminSession() {
       return;
     }
 
+    if (data.consoleUrl) document.getElementById('console-link').href = String(data.consoleUrl).replace(/\/admin\/open\/universe$/, '/admin');
     document.getElementById('auth-loading').style.display = 'none';
     document.getElementById('admin-hub').style.display = 'flex';
   } catch(e) {
@@ -831,7 +871,406 @@ function eventForm(e) {
 }
 document.querySelectorAll('#mpa-tabs button[data-t]').forEach(b => (b.onclick = () => mpaShow(b.dataset.t).catch(e => mpaStatus(e.message, true))));
 
-checkAdminSession().then(() => { loadAnnouncements(); bjsLoad(); mpaLoad(); });
+// ---- The dashboard (Oct 30): /api/admin-stats = the services checked now, players online, how the game runs (fps, ping,
+// drops: the pages' minute reports through the rooms), what went wrong on players' screens (errors, startup problems,
+// ready times) and the site's days (players, sign-ins, points, forges, badges); alerts worked out from them. Every
+// number on screen comes from there; nothing a player typed is shown here (chat stays on Players and chat).
+const D = { hours: 24, data: null, busy: false, tables: {}, err: null };
+const SVGNS = 'http://www.w3.org/2000/svg';
+const $ = id => document.getElementById(id);
+const sv = (tag, a) => { const e = document.createElementNS(SVGNS, tag); for (const k in a) e.setAttribute(k, a[k]); return e; };
+const fmtN = n => (n == null || !isFinite(n) ? '–' : Math.round(n).toLocaleString());
+const fmtK = n => { n = +n || 0; const a = Math.abs(n); return a >= 1e6 ? (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M' : a >= 1e4 ? Math.round(n / 1e3) + 'K' : a >= 1e3 ? (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'K' : String(Math.round(n * 10) / 10); };
+const fmtSec = ms => (ms == null ? '–' : ms < 10000 ? (ms / 1000).toFixed(1) + ' s' : Math.round(ms / 1000) + ' s');
+const vname = id => VILLAGE_NAMES[id] || id || '–';
+const ago = ms => { if (!ms) return '–'; const s = Math.max(0, (Date.now() - ms) / 1000); return s < 90 ? 'just now' : s < 5400 ? Math.round(s / 60) + ' min ago' : s < 129600 ? Math.round(s / 3600) + ' h ago' : Math.round(s / 86400) + ' days ago'; };
+const xShort = t => (D.hours <= 48 ? new Date(t).toLocaleTimeString([], { hour: 'numeric' }) : new Date(t).toLocaleDateString([], { weekday: 'short', day: 'numeric' }));
+const xLong = t => { const d = new Date(t); return `${d.toLocaleDateString([], { weekday: 'short' })} ${d.getDate()}, ${d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`; };
+const PROBLEMS = { crash: 'Page closed on screen (most likely out of memory)', 'gl-lost': 'The 3D was lost (graphics reset: phones, memory)', 'slow-start': 'Start still going after 90 s', webgl: 'No WebGL (graphics switched off or blocked)', rig: "The Rebel's model couldn't download" };
+const DEVN = { ios: 'iPhone / iPad', android: 'Android', mac: 'Mac', win: 'Windows', linux: 'Linux', cros: 'Chromebook', other: 'Other' };
+const BRN = { safari: 'Safari', chrome: 'Chrome', firefox: 'Firefox', edge: 'Edge', opera: 'Opera', other: 'Other' };
+
+// ---- pages: the address's #name picks one (#overview, #performance, #issues, #services, #players, #chat, #events,
+// #announcements, #badges, #babylon)
+const ROUTES = { overview: ['overview'], performance: ['performance'], issues: ['issues'], services: ['services'], players: ['players', 'online'], chat: ['players', 'log'], reports: ['players', 'reports'], events: ['players', 'events'], announcements: ['content', 'ann'], badges: ['content', 'bdg'], babylon: ['babylon'] };
+let PAGE = 'overview', mpaReady = false;
+function route() {
+  const key = (location.hash || '').slice(1), r = ROUTES[key] || ROUTES.overview, pg = r[0];
+  PAGE = pg;
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('on', p.id === 'pg-' + pg));
+  document.querySelectorAll('#side a[data-go]').forEach(a => { if (a.dataset.go === (ROUTES[key] ? key : 'overview')) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  $('side').classList.remove('open'); $('menu-btn').setAttribute('aria-expanded', 'false');
+  if (pg === 'players' && r[1]) { if (mpaReady) mpaShow(r[1]).catch(e => mpaStatus(e.message, true)); else mpa.tab = r[1]; }
+  if (pg === 'content' && r[1]) requestAnimationFrame(() => $(r[1]).scrollIntoView({ block: 'start' }));
+  else window.scrollTo(0, 0);
+  hideTip(); dashRender();
+}
+function toggleMenu() { const s = $('side'), on = !s.classList.contains('open'); s.classList.toggle('open', on); $('menu-btn').setAttribute('aria-expanded', String(on)); }
+addEventListener('hashchange', route);
+
+// ---- reading
+async function dashLoad(fresh) {
+  if (D.busy) return; D.busy = true; $('content').classList.add('loading');
+  try {
+    const r = await fetch('/api/admin-stats?hours=' + D.hours, { cache: 'no-store' }), d = await r.json().catch(() => ({}));
+    if (r.status === 401) { location.href = 'index.html'; return; }
+    if (!r.ok || !d.ok) throw new Error(d.error || 'The dashboard did not answer (' + r.status + ')');
+    D.data = d; D.err = null;
+  } catch (e) { D.err = e.message || 'The dashboard could not read'; }
+  D.busy = false; $('content').classList.remove('loading');
+  dashRender();
+}
+document.querySelectorAll('.seg button[data-h]').forEach(b => b.onclick = () => {
+  D.hours = +b.dataset.h;
+  document.querySelectorAll('.seg button[data-h]').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.h === D.hours)));
+  dashLoad(true);
+});
+setInterval(() => { if (!document.hidden && ['overview', 'performance', 'issues', 'services'].includes(PAGE)) dashLoad(); }, 30000);
+
+// ---- the step grid of the rooms' series (steps with no report hold no players and no numbers)
+function perfGrid() {
+  const p = D.data?.perf; if (!p || !p.ok) return null;
+  const stepMs = p.step * 60000, end = Math.floor(Date.now() / stepMs) * stepMs, start = end - Math.ceil(D.hours * 60 / p.step - 1) * stepMs;
+  const at = new Map((p.series || []).map(s => [s.t, s])), x = [], rows = [];
+  for (let t = start; t <= end; t += stepMs) { x.push(t); rows.push(at.get(t) || null); }
+  return { x, rows };
+}
+
+// ---- drawing
+function dashRender() {
+  const d = D.data;
+  renderAlerts();
+  if (!d) return;
+  $('site-line').textContent = `${d.site === 'prod' ? 'rebeluniverse.io · live site' : 'dev preview'} · updated ${new Date(d.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}${d.deploy?.commit ? ' · ' + d.deploy.commit : ''}`;
+  sideBadges();
+  if (PAGE === 'overview') renderOverview();
+  if (PAGE === 'performance') renderPerformance();
+  if (PAGE === 'issues') renderIssues();
+  if (PAGE === 'services') renderServices();
+}
+const ICON_WARN = '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/></svg>';
+const ICON_DOWN = '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>';
+const ICON_OK = '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5 5.5-6"/></svg>';
+const AREA_PAGE = { rooms: 'services', redis: 'services', economy: 'services', fps: 'performance', lag: 'performance', drops: 'performance', errors: 'issues', start: 'issues' };
+const AREA_NAME = { rooms: 'Rooms', redis: 'Database', economy: 'Rebel Economy', fps: 'Frame rate', lag: 'Lag', drops: 'Connections', errors: 'Errors', start: 'Startup' };
+function renderAlerts() {
+  const box = $('alerts'), out = [];
+  const chip = (cls, icon, head, text, href) => { const a = mk(href ? 'a' : 'div', 'al ' + cls); if (href) a.href = href; const i = document.createElement('span'); i.innerHTML = icon; const t = mk('span'); t.append(mk('strong', '', head + ' '), document.createTextNode(text)); a.append(i.firstChild, t); return a; };
+  if (D.err) out.push(chip('red', ICON_DOWN, 'The dashboard could not read.', D.err));
+  const al = D.data?.alerts || [];
+  for (const a of al.filter(x => x.level === 'red')) out.push(chip('red', ICON_DOWN, AREA_NAME[a.area] ? AREA_NAME[a.area] + ':' : '', a.text, '#' + (AREA_PAGE[a.area] || 'services')));
+  for (const a of al.filter(x => x.level !== 'red')) out.push(chip('amber', ICON_WARN, AREA_NAME[a.area] ? AREA_NAME[a.area] + ':' : '', a.text, '#' + (AREA_PAGE[a.area] || 'overview')));
+  if (!out.length && D.data) out.push(chip('ok', ICON_OK, 'All good.', 'Everything Universe needs is answering, and nothing on players\' screens needs a look right now.'));
+  box.replaceChildren(...out);
+}
+function setBadge(id, text, cls) { const e = $(id); if (!e) return; e.textContent = text || ''; e.className = 'nb' + (cls ? ' ' + cls : ''); }
+function sideBadges() {
+  const d = D.data; if (!d) return;
+  const al = d.alerts || [], n = area => al.filter(a => area.includes(a.area));
+  const red = al.filter(a => a.level === 'red').length;
+  setBadge('nb-alerts', al.length ? String(al.length) : '', red ? 'bad' : al.length ? 'warn' : '');
+  setBadge('nb-perf', n(['fps', 'lag', 'drops']).length ? '!' : '', n(['fps', 'lag', 'drops']).length ? 'warn' : '');
+  setBadge('nb-issues', n(['errors', 'start']).length ? '!' : '', n(['errors', 'start']).length ? 'warn' : '');
+  const down = (d.health || []).filter(h => !h.ok).length;
+  setBadge('nb-svc', down ? String(down) + ' down' : '', down ? 'bad' : '');
+  setBadge('nb-online', d.online?.ok ? String(d.online.total) : '');
+}
+// reports open and an event live: read on their own (the Players page's tools would redraw what the admin is typing)
+async function sideRooms() {
+  try {
+    const [rp, ev] = await Promise.all([mpaCmd('reports'), mpaCmd('events').catch(() => ({ events: [] }))]);
+    setBadge('nb-reports', rp.open ? String(rp.open) : '', rp.open ? 'warn' : '');
+    setBadge('nb-stage', (ev.events || []).some(e => e.live) ? 'LIVE' : '', 'live');
+  } catch (e) {}
+}
+
+function renderOverview() {
+  const d = D.data, g = perfGrid(), now = d.perf?.ok ? d.perf.now : null, on = d.online;
+  // players online
+  $('t-online').textContent = on?.ok ? fmtN(on.total) : '–';
+  $('t-online-s').textContent = on?.ok ? `${on.signed} signed in · ${on.guests} guests · ${on.villages.length} ${on.villages.length === 1 ? 'village' : 'villages'}` : 'The rooms did not answer';
+  sparkline($('t-online-spark'), g ? g.rows.slice(-24).map(r => (r ? r.online : 0)) : []);
+  // frame rate now
+  if (now && now.reports) {
+    const big = now.fpsD ?? now.fpsP;
+    $('t-fps').replaceChildren(document.createTextNode(fmtN(big)), mk('small', '', now.fpsD != null ? 'fps computers' : 'fps phones'));
+    $('t-fps').className = 'v' + (big < 30 ? ' warn' : '');
+    $('t-fps-s').textContent = `${now.fpsD != null && now.fpsP != null ? `Phones ${fmtN(now.fpsP)} fps · ` : ''}${now.slowPct ?? 0}% under 30 fps · last 5 min`;
+  } else { $('t-fps').textContent = '–'; $('t-fps').className = 'v'; $('t-fps-s').textContent = 'No game reports in the last 5 minutes'; }
+  // connection
+  const lastHr = g ? g.rows.slice(-Math.max(1, Math.round(60 / (d.perf.step || 15)))) : [];
+  const drops = lastHr.reduce((a, r) => a + (r ? r.drops : 0), 0);
+  if (now && now.rtt != null) {
+    $('t-ping').replaceChildren(document.createTextNode(fmtN(now.rtt)), mk('small', '', 'ms ping'));
+    $('t-ping').className = 'v' + (now.rtt >= 200 ? ' warn' : '');
+    $('t-ping-s').textContent = `${now.lagPct ?? 0}% at 200 ms or more · ${drops} ${drops === 1 ? 'drop' : 'drops'} in the last hour`;
+  } else { $('t-ping').textContent = '–'; $('t-ping').className = 'v'; $('t-ping-s').textContent = `No ping reports in the last 5 minutes · ${drops} drops in the last hour`; }
+  // issues
+  const t = d.telemetry;
+  if (t?.ok) {
+    const probs = Object.values(t.problems || {}).reduce((a, p) => a + p.n, 0), crash = t.problems?.crash?.n || 0;
+    $('t-issues').textContent = fmtN(t.totals.err + probs);
+    $('t-issues').className = 'v' + ((d.alerts || []).some(a => a.area === 'errors' || a.area === 'start') ? ' warn' : '');
+    $('t-issues-s').textContent = `${fmtN(t.totals.err)} script errors · ${probs} startup problems${crash ? ` (${crash} crashes)` : ''} · ${rangeName()}`;
+  } else { $('t-issues').textContent = '–'; $('t-issues-s').textContent = t?.error || ''; }
+  // charts
+  if (g) {
+    $('c-online-sub').textContent = `the most at once in each ${stepName(d.perf.step)}, ${rangeName()}`;
+    lineChart($('c-online'), { x: g.x, series: [{ label: 'Players online', color: 'var(--s1)', v: g.rows.map(r => (r ? r.online : 0)) }], area: true, fmt: v => fmtN(v), h: 210, unit: '' });
+    lineChart($('c-fps'), { x: g.x, series: [{ label: 'Computers', color: 'var(--s1)', v: g.rows.map(r => r?.fpsD ?? null) }, { label: 'Phones', color: 'var(--s2)', v: g.rows.map(r => r?.fpsP ?? null) }], refs: [{ v: 30, label: '30 fps' }], fmt: v => fmtN(v) + ' fps', h: 210, yMin: 60 });
+    lineChart($('c-ping'), { x: g.x, series: [{ label: 'Ping', color: 'var(--s1)', v: g.rows.map(r => r?.rtt ?? null) }], refs: [{ v: 200, label: '200 ms' }], fmt: v => fmtN(v) + ' ms', h: 210, yMin: 250 });
+  } else for (const id of ['c-online', 'c-fps', 'c-ping']) emptyChart($(id), perfErr(), 210);
+  hbars($('c-villages'), on?.ok ? on.villages.map(v => ({ label: vname(v.v), v: v.players, note: `${v.signed} signed in, ${v.guests} guests, ${v.copies} ${v.copies === 1 ? 'copy' : 'copies'}` })) : []);
+  $('c-villages-sub').textContent = on?.ok ? (on.villages.length ? `${on.total} ${on.total === 1 ? 'player' : 'players'} in ${on.villages.reduce((a, v) => a + v.copies, 0)} room ${on.villages.reduce((a, v) => a + v.copies, 0) === 1 ? 'copy' : 'copies'} (50 a copy)` : '') : '';
+  // today (UTC day) + the 14 days
+  const c = d.counters, days = c?.ok ? c.days : [], td = days[days.length - 1], yd = days[days.length - 2];
+  const cnt = (day, k) => (day?.counts?.[k] || 0);
+  if (td) {
+    $('d-players').textContent = fmtN(td.players);
+    $('d-players-s').textContent = `${td.signed} signed in · ${td.guests} guests · this week ${fmtN(c.week.players)}${yd ? ` · yesterday ${fmtN(yd.players)}` : ''}`;
+    const si = cnt(td, 'signin:discord') + cnt(td, 'signin:name');
+    $('d-signins').textContent = fmtN(si);
+    $('d-signins-s').textContent = `${cnt(td, 'signin:discord')} Discord · ${cnt(td, 'signin:name')} name and PIN${cnt(td, 'new:name') ? ` · ${cnt(td, 'new:name')} new names` : ''}`;
+    const pts = k => cnt(td, 'pts:' + k), total = pts('chest') + pts('game') + pts('riddle') + pts('find');
+    $('d-points').textContent = fmtN(total);
+    $('d-points-s').textContent = `chests ${fmtN(pts('chest'))} · first clears ${fmtN(pts('game'))} · riddles ${fmtN(pts('riddle'))} · finds ${fmtN(pts('find'))}`;
+    $('d-forges').textContent = fmtN(cnt(td, 'forges'));
+    $('d-forges-s').textContent = `${fmtN(cnt(td, 'forge:pts'))} points paid · ${cnt(td, 'forges:admin')} admin`;
+    $('d-badges').textContent = fmtN(cnt(td, 'badges'));
+    $('d-badges-s').textContent = `${fmtN(cnt(td, 'saves'))} story saves by ${fmtN(td.savers)} players`;
+  }
+  const dl = days.map(x => new Date(x.day + 'T12:00:00Z').toLocaleDateString([], { month: 'short', day: 'numeric' }));
+  colChart($('c-days'), { cats: dl, series: [{ label: 'Signed in', color: 'var(--s1)', v: days.map(x => x.signed) }, { label: 'Guests', color: 'var(--s2)', v: days.map(x => x.guests) }], fmt: v => fmtN(v), h: 190 });
+  colChart($('c-pts'), { cats: dl, series: [['Chests', 'chest', 's1'], ['First clears', 'game', 's2'], ['Riddles', 'riddle', 's3'], ['Finds', 'find', 's4']].map(([label, k, s]) => ({ label, color: `var(--${s})`, v: days.map(x => cnt(x, 'pts:' + k)) })), fmt: v => fmtN(v), h: 190 });
+}
+// why the rooms' numbers are missing (rooms from before the dashboard answer 'Unknown command' until their deploy)
+const perfErr = () => { const e = D.data?.perf?.error; return !e ? 'No reports yet' : /unknown command/i.test(e) ? "The rooms don't keep these numbers yet: they need their update" : 'The rooms did not answer: ' + e; };
+const rangeName = () => (D.hours <= 24 ? 'last 24 hours' : D.hours <= 168 ? 'last 7 days' : 'last 14 days');
+const stepName = m => (m < 60 ? m + ' minutes' : m === 60 ? 'hour' : m / 60 + ' hours');
+
+function renderPerformance() {
+  const d = D.data, g = perfGrid(), now = d.perf?.ok ? d.perf.now : null;
+  $('p-fpsd').textContent = now?.fpsD != null ? fmtN(now.fpsD) : '–'; $('p-fpsd').className = 'v' + (now?.fpsD != null && now.fpsD < 30 ? ' warn' : '');
+  $('p-fpsp').textContent = now?.fpsP != null ? fmtN(now.fpsP) : '–'; $('p-fpsp').className = 'v' + (now?.fpsP != null && now.fpsP < 30 ? ' warn' : '');
+  $('p-fpsd-s').textContent = 'frames a second now (last 5 min)'; $('p-fpsp-s').textContent = 'frames a second now (last 5 min)';
+  $('p-slow').textContent = now?.reports ? (now.slowPct ?? 0) + '%' : '–'; $('p-slow').className = 'v' + ((now?.slowPct || 0) >= 25 ? ' warn' : '');
+  $('p-lag').textContent = now?.rtt != null ? (now.lagPct ?? 0) + '%' : '–'; $('p-lag').className = 'v' + ((now?.lagPct || 0) >= 25 ? ' warn' : '');
+  $('p-lag-s').textContent = now?.rtt != null ? `average ping ${fmtN(now.rtt)} ms` : 'no ping reports in the last 5 minutes';
+  if (g) {
+    lineChart($('p-fps'), { x: g.x, series: [{ label: 'Computers', color: 'var(--s1)', v: g.rows.map(r => r?.fpsD ?? null) }, { label: 'Phones', color: 'var(--s2)', v: g.rows.map(r => r?.fpsP ?? null) }], refs: [{ v: 30, label: '30 fps' }], fmt: v => fmtN(v) + ' fps', h: 230, yMin: 60 });
+    lineChart($('p-slow-c'), { x: g.x, series: [{ label: 'Under 30 fps', color: 'var(--s1)', v: g.rows.map(r => r?.slowPct ?? null) }], fmt: v => fmtN(v) + '%', h: 230, yMin: 20, yMaxCap: 100 });
+    lineChart($('p-ping'), { x: g.x, series: [{ label: 'Ping', color: 'var(--s1)', v: g.rows.map(r => r?.rtt ?? null) }], refs: [{ v: 200, label: '200 ms' }], fmt: v => fmtN(v) + ' ms', h: 230, yMin: 250 });
+    colChart($('p-drops'), { cats: g.x.map(xShort), long: g.x.map(xLong), series: [{ label: 'Dropped connections', color: 'var(--s1)', v: g.rows.map(r => (r ? r.drops : 0)) }], fmt: v => fmtN(v), h: 230 });
+  } else for (const id of ['p-fps', 'p-slow-c', 'p-ping', 'p-drops']) emptyChart($(id), perfErr(), 230);
+  const vs = d.perf?.ok ? d.perf.villages : [];
+  $('p-vil-sub').textContent = rangeName() + ' · peak = the most players at once';
+  table($('p-villages'), ['Village', 'Player-minutes', 'Computers fps', 'Phones fps', 'Under 30 fps', 'Slowest frames', 'Ping', 'Laggy', 'Freezes', 'Peak'],
+    vs.map(v => [vname(v.v), fmtN(v.reports), v.fpsD == null ? '–' : fmtN(v.fpsD), v.fpsP == null ? '–' : fmtN(v.fpsP), v.slowPct == null ? '–' : v.slowPct + '%', v.frameMs == null ? '–' : fmtN(v.frameMs) + ' ms', v.rtt == null ? '–' : fmtN(v.rtt) + ' ms', v.lagPct == null ? '–' : v.lagPct + '%', fmtN(v.freezes || 0), fmtN(v.peak || 0)]),
+    'No reports from players yet in this time.', [4, 7]);
+  const dv = d.perf?.ok ? d.perf.devices : [];
+  table($('p-devices'), ['Device', 'Browser', 'Kind', 'Player-minutes', 'fps', 'Under 30 fps', 'Ping'],
+    dv.map(x => [DEVN[x.o] || x.o, BRN[x.b] || x.b, x.d === 'p' ? 'phone / tablet' : 'computer', fmtN(x.reports), fmtN(x.fps), x.slowPct == null ? '–' : x.slowPct + '%', x.rtt == null ? '–' : fmtN(x.rtt) + ' ms']),
+    'No reports from players yet in this time.', [5]);
+}
+
+function renderIssues() {
+  const d = D.data, t = d.telemetry;
+  if (!t?.ok) { for (const id of ['i-errors', 'i-problems', 'i-readyt', 'i-recent']) $(id).replaceChildren(mk('p', 'note', 'Could not read: ' + (t?.error || '?'))); return; }
+  $('i-err').textContent = fmtN(t.totals.err);
+  $('i-err-s').textContent = t.totals.loads ? `${(t.totals.err / t.totals.loads * 100).toFixed(1)} per 100 pages opened (${fmtN(t.totals.loads)}) · ${rangeName()}` : rangeName();
+  $('i-crash').textContent = fmtN(t.problems?.crash?.n || 0); $('i-crash').className = 'v' + ((t.problems?.crash?.n || 0) >= 3 ? ' warn' : '');
+  $('i-gl').textContent = fmtN(t.problems?.['gl-lost']?.n || 0); $('i-gl').className = 'v' + ((t.problems?.['gl-lost']?.n || 0) >= 3 ? ' warn' : '');
+  const vr = (t.ready || []).filter(r => r.p === 'village'), avg = dd => { const a = vr.filter(r => r.d === dd); const n = a.reduce((s, r) => s + r.n, 0); return n ? a.reduce((s, r) => s + r.ms, 0) / n : null; };
+  const all = vr.reduce((s, r) => s + r.n, 0);
+  $('i-ready').textContent = all ? fmtSec(vr.reduce((s, r) => s + r.ms, 0) / all) : '–';
+  $('i-ready-s').textContent = all ? `on average · computers ${fmtSec(avg('d'))} · phones ${fmtSec(avg('p'))}` : 'no village starts reported yet';
+  $('i-top-sub').textContent = rangeName() + ' · the same mistake counted once a page';
+  table($('i-errors'), ['Times', 'Error', 'Where', 'Page', 'Seen on', 'First seen', 'Last seen'],
+    (t.errors || []).map(e => [fmtN(e.n), { wrap: e.m || '?' }, { mono: String(e.s || '').replace(/^https?:\/\/[^/]+\//, '') }, e.p || '', `${DEVN[e.o] || ''} ${BRN[e.b] || ''}`.trim(), ago(e.first), ago(e.last)]),
+    'No script errors reported in this time.', []);
+  table($('i-problems'), ['Problem', 'Times', 'Phones', 'Computers'],
+    Object.entries(t.problems || {}).sort((a, b) => b[1].n - a[1].n).map(([c, p]) => [{ wrap: PROBLEMS[c] || c }, fmtN(p.n), fmtN(p.p), fmtN(p.d)]),
+    'No startup problems in this time.', []);
+  colChart($('i-hourly'), { cats: t.series.map(s => xShort(s.t)), long: t.series.map(s => xLong(s.t)), series: [{ label: 'Script errors', color: 'var(--s2)', v: t.series.map(s => s.err) }, { label: 'Startup problems', color: 'var(--s1)', v: t.series.map(s => s.prob) }], fmt: v => fmtN(v), h: 200 });
+  table($('i-readyt'), ['Village', 'Device', 'Starts', 'Average'],
+    vr.slice().sort((a, b) => (b.avgMs || 0) - (a.avgMs || 0)).map(r => [vname(r.v), r.d === 'p' ? 'phone / tablet' : 'computer', fmtN(r.n), fmtSec(r.avgMs)]),
+    'No village starts reported yet.', [3]);
+  table($('i-recent'), ['When', 'What', 'Page', 'Device'],
+    (t.recent || []).slice(0, 40).map(r => [ago(r.at), { wrap: r.k === 'err' ? (r.n > 1 ? `×${r.n} ` : '') + r.m + (r.s ? '  · ' + r.s : '') : (PROBLEMS[r.c] || r.c) + (r.m ? ' · ' + r.m : '') }, r.v ? `${r.p} · ${vname(r.v)}` : r.p, `${DEVN[r.o] || ''} ${BRN[r.b] || ''}`.trim()]),
+    'Nothing reported yet.', []);
+}
+
+function renderServices() {
+  const d = D.data, rows = [];
+  for (const h of d.health || []) {
+    const r = mk('div', 'r');
+    r.append(mk('span', 'chip ' + (h.ok ? 'ok' : 'bad'), h.ok ? '● working' : '● down'), mk('span', 'nm', h.label), mk('span', 'note', h.ok ? '' : h.note || ''), mk('span', 'ms', h.ms ? h.ms + ' ms' : ''));
+    rows.push(r);
+  }
+  $('s-list').replaceChildren(...rows);
+  table($('s-site'), ['', ''], [['Site', d.site === 'prod' ? 'rebeluniverse.io (live)' : 'dev preview'], ['Deploy', d.deploy?.env || '–'], ['Version (commit)', d.deploy?.commit || '–'], ['Branch', d.deploy?.branch || '–'], ['Read at', new Date(d.at).toLocaleString()]], '', [], true);
+}
+
+// ---- tables: rows of text, or { wrap } (long text) / { mono } cells
+const NUMERIC = /^(–|[\d.,]+\s?(%|ms|s|fps|K|M)?|[\d.,]+ (min|h|days) ago|just now)$/;
+function table(host, head, rows, empty, warnCols = [], noHead) {
+  if (!rows.length) { host.replaceChildren(mk('p', 'note', empty)); return; }
+  const left = head.map((_, i) => i === 0 || rows.some(r => typeof r[i] === 'object' || !NUMERIC.test(String(r[i] ?? '–'))));
+  const tb = mk('table'), thead = mk('thead'), tr = mk('tr');
+  if (!noHead) { head.forEach((h, i) => tr.append(mk('th', left[i] ? 'l' : '', h))); thead.append(tr); tb.append(thead); }
+  const body = mk('tbody');
+  for (const r of rows) {
+    const row = mk('tr');
+    r.forEach((c, i) => {
+      const td = mk('td', left[i] ? 'l' : '');
+      if (c && typeof c === 'object') { if (c.wrap != null) { td.className = 'wrap'; td.textContent = c.wrap; } else { const s = mk('span', 'mono', c.mono); td.className = 'l'; td.append(s); } }
+      else td.textContent = c == null ? '–' : String(c);
+      if (warnCols.includes(i) && /^\d+(\.\d+)?%$/.test(String(c)) && parseFloat(c) >= 25) td.classList.add('warn');
+      row.append(td);
+    });
+    body.append(row);
+  }
+  tb.append(body); host.replaceChildren(tb);
+}
+
+// ---- charts (inline SVG; hover and keys show every series at a point; "Table" shows the numbers)
+const tip = () => $('ttip');
+function hideTip() { const t = tip(); if (t) t.hidden = true; }
+function showTip(host, px, py, title, rows) {
+  const t = tip(); t.replaceChildren(mk('div', 'tt', title));
+  for (const r of rows) { const line = mk('div', 'tr'); const i = mk('i'); i.style.background = r.color; line.append(i, mk('b', '', r.value), mk('span', '', r.label)); t.append(line); }
+  t.hidden = false;
+  const b = host.getBoundingClientRect(), w = t.offsetWidth, h = t.offsetHeight;
+  let x = b.left + px + 14, y = b.top + py - h - 10;
+  if (x + w > innerWidth - 8) x = b.left + px - w - 14;
+  if (y < 8) y = b.top + py + 14;
+  t.style.left = Math.max(8, x) + scrollX + 'px'; t.style.top = y + scrollY + 'px';
+}
+function emptyChart(host, text, h) { host.style.height = h + 'px'; host.replaceChildren(mk('div', 'empty', text)); D.tables[host.id] = null; }
+// axis ticks: a round step (1, 2 or 5 x 10^n) about a quarter of the top value, the top a whole number of steps
+function niceStep(v) { if (!(v > 0)) return 1; const p = Math.pow(10, Math.floor(Math.log10(v))), f = v / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; }
+function niceMax(v) { const st = niceStep(Math.max(v, 1e-9) / 4); return Math.max(st, Math.ceil(v / st - 1e-9) * st); }
+const ticksOf = max => { const st = niceStep(max / 4), out = []; for (let v = 0; v <= max + st / 1000; v += st) out.push(Math.round(v * 1000) / 1000); return out; };
+function axisLabel(v) { return fmtK(v); }
+function lineChart(host, o) {
+  const H = o.h || 200, W = Math.max(260, host.clientWidth || 600);
+  host.style.height = H + 'px';
+  const vals = o.series.flatMap(s => s.v).filter(v => v != null);
+  D.tables[host.id] = { head: ['Time', ...o.series.map(s => s.label)], rows: o.x.map((t, i) => [xLong(t), ...o.series.map(s => (s.v[i] == null ? '–' : o.fmt(s.v[i])))]) };
+  if (!vals.length || vals.every(v => v === 0) && o.series.length > 1) return emptyChart(host, 'No reports in this time yet', H);
+  const max = Math.min(o.yMaxCap || Infinity, niceMax(Math.max(o.yMin || 0, ...vals, ...(o.refs || []).map(r => r.v * 1.1)))), padL = 40, padR = 70, padT = 10, padB = 24, iw = W - padL - padR, ih = H - padT - padB;
+  const n = o.x.length, X = i => padL + (n <= 1 ? iw / 2 : i * iw / (n - 1)), Y = v => padT + ih - Math.min(1, v / max) * ih;
+  const svg = sv('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img', 'aria-label': `${o.series.map(s => s.label).join(' and ')}, ${rangeName()}` });
+  for (const tv of ticksOf(max)) { svg.append(sv('line', { x1: padL, x2: W - padR, y1: Y(tv), y2: Y(tv), stroke: tv === 0 ? 'var(--axis)' : 'var(--grid)', 'stroke-width': 1 })); const tx = sv('text', { x: padL - 6, y: Y(tv) + 4, 'text-anchor': 'end', fill: 'var(--muted)', 'font-size': 11, 'font-family': 'var(--mono)' }); tx.textContent = axisLabel(tv); svg.append(tx); }
+  const every = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(iw / 90))));
+  for (let i = 0; i < n; i += every) { const tx = sv('text', { x: X(i), y: H - 6, 'text-anchor': 'middle', fill: 'var(--muted)', 'font-size': 11, 'font-family': 'var(--mono)' }); tx.textContent = xShort(o.x[i]); svg.append(tx); }
+  const refLabels = [];
+  for (const r of o.refs || []) { if (r.v > max) continue; svg.append(sv('line', { x1: padL, x2: W - padR, y1: Y(r.v), y2: Y(r.v), stroke: 'var(--muted)', 'stroke-width': 1, opacity: .55 })); const tx = sv('text', { x: padL + 6, y: Y(r.v) - 5, fill: 'var(--muted)', 'font-size': 11, 'font-family': 'var(--mono)', stroke: 'var(--card)', 'stroke-width': 4, 'paint-order': 'stroke', 'stroke-linejoin': 'round' }); tx.textContent = r.label; refLabels.push(tx); }
+  for (const s of o.series) {
+    let dLine = '', dArea = '', run = [];
+    const flush = () => { if (run.length) { dLine += run.map((i, k) => (k ? 'L' : 'M') + X(i).toFixed(1) + ',' + Y(s.v[i]).toFixed(1)).join(' ') + ' '; if (o.area && o.series.length === 1 && run.length > 1) dArea += `M${X(run[0]).toFixed(1)},${Y(0)} ` + run.map(i => 'L' + X(i).toFixed(1) + ',' + Y(s.v[i]).toFixed(1)).join(' ') + ` L${X(run[run.length - 1]).toFixed(1)},${Y(0)} Z `; } run = []; };
+    s.v.forEach((v, i) => { if (v == null) flush(); else run.push(i); }); flush();
+    if (dArea) svg.append(sv('path', { d: dArea, fill: s.color, 'fill-opacity': .12 }));
+    svg.append(sv('path', { d: dLine, fill: 'none', stroke: s.color, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+    // lone points (a value between two gaps) as dots
+    s.v.forEach((v, i) => { if (v != null && s.v[i - 1] == null && s.v[i + 1] == null) svg.append(sv('circle', { cx: X(i), cy: Y(v), r: 3, fill: s.color })); });
+    let li = -1; for (let i = s.v.length - 1; i >= 0; i--) if (s.v[i] != null) { li = i; break; }
+    if (li >= 0) { svg.append(sv('circle', { cx: X(li), cy: Y(s.v[li]), r: 4, fill: s.color, stroke: 'var(--card)', 'stroke-width': 2 })); }
+  }
+  refLabels.forEach(t => svg.append(t)); // (over the lines, with a halo in the card colour)
+  // end labels: the last value of each series beside its line end (nudged apart when they meet)
+  const ends = o.series.map(s => { let li = -1; for (let i = s.v.length - 1; i >= 0; i--) if (s.v[i] != null) { li = i; break; } return li < 0 ? null : { y: Y(s.v[li]), x: X(li), text: o.fmt(s.v[li]) }; }).filter(Boolean).sort((a, b) => a.y - b.y);
+  for (let k = 1; k < ends.length; k++) if (ends[k].y - ends[k - 1].y < 14) ends[k].y = ends[k - 1].y + 14;
+  for (const e of ends) { const tx = sv('text', { x: e.x + 9, y: e.y + 4, fill: 'var(--fg)', 'font-size': 12, 'font-weight': 600 }); tx.textContent = e.text; svg.append(tx); }
+  // the crosshair and its dots
+  const cross = sv('line', { y1: padT, y2: padT + ih, stroke: 'var(--muted)', 'stroke-width': 1, visibility: 'hidden' }); svg.append(cross);
+  const dots = o.series.map(s => { const c = sv('circle', { r: 4, fill: s.color, stroke: 'var(--card)', 'stroke-width': 2, visibility: 'hidden' }); svg.append(c); return c; });
+  const hit = sv('rect', { x: padL, y: padT, width: iw, height: ih, fill: 'transparent' }); svg.append(hit);
+  host.replaceChildren(svg);
+  let cur = -1;
+  const at = i => {
+    cur = Math.max(0, Math.min(n - 1, i));
+    cross.setAttribute('x1', X(cur)); cross.setAttribute('x2', X(cur)); cross.setAttribute('visibility', 'visible');
+    o.series.forEach((s, k) => { const v = s.v[cur]; dots[k].setAttribute('visibility', v == null ? 'hidden' : 'visible'); if (v != null) { dots[k].setAttribute('cx', X(cur)); dots[k].setAttribute('cy', Y(v)); } });
+    const ys = o.series.map(s => s.v[cur]).filter(v => v != null);
+    showTip(host, X(cur), ys.length ? Y(Math.max(...ys)) : padT + ih / 2, xLong(o.x[cur]), o.series.map(s => ({ color: s.color, value: s.v[cur] == null ? 'no reports' : o.fmt(s.v[cur]), label: s.label })));
+  };
+  const off = () => { cur = -1; cross.setAttribute('visibility', 'hidden'); dots.forEach(d => d.setAttribute('visibility', 'hidden')); hideTip(); };
+  hit.addEventListener('pointermove', e => { const b = svg.getBoundingClientRect(), px = (e.clientX - b.left) * (W / b.width); at(Math.round((px - padL) / (iw / Math.max(1, n - 1)))); });
+  hit.addEventListener('pointerleave', off);
+  host.onkeydown = e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); at((cur < 0 ? n - 1 : cur) + (e.key === 'ArrowLeft' ? -1 : 1)); } else if (e.key === 'Escape') off(); };
+  host.onfocus = () => at(n - 1); host.onblur = off;
+}
+function colChart(host, o) {
+  const H = o.h || 190, W = Math.max(260, host.clientWidth || 600), n = o.cats.length;
+  host.style.height = H + 'px';
+  D.tables[host.id] = { head: ['', ...o.series.map(s => s.label), ...(o.series.length > 1 ? ['Total'] : [])], rows: o.cats.map((c, i) => [(o.long || o.cats)[i], ...o.series.map(s => o.fmt(s.v[i] || 0)), ...(o.series.length > 1 ? [o.fmt(o.series.reduce((a, s) => a + (s.v[i] || 0), 0))] : [])]) };
+  const totals = o.cats.map((_, i) => o.series.reduce((a, s) => a + (s.v[i] || 0), 0));
+  if (!n || totals.every(t => !t)) return emptyChart(host, 'Nothing in this time yet', H);
+  const max = niceMax(Math.max(...totals)), padL = 40, padR = 8, padT = 10, padB = 24, iw = W - padL - padR, ih = H - padT - padB, band = iw / n, bw = Math.max(3, Math.min(24, band * .62)), GAP = 2;
+  const Y = v => padT + ih - v / max * ih;
+  const svg = sv('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img', 'aria-label': o.series.map(s => s.label).join(', ') });
+  for (const tv of ticksOf(max)) { svg.append(sv('line', { x1: padL, x2: W - padR, y1: Y(tv), y2: Y(tv), stroke: tv === 0 ? 'var(--axis)' : 'var(--grid)', 'stroke-width': 1 })); const tx = sv('text', { x: padL - 6, y: Y(tv) + 4, 'text-anchor': 'end', fill: 'var(--muted)', 'font-size': 11, 'font-family': 'var(--mono)' }); tx.textContent = axisLabel(tv); svg.append(tx); }
+  const every = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(iw / 64))));
+  const marks = [];
+  o.cats.forEach((c, i) => {
+    const cx = padL + band * i + band / 2, x0 = cx - bw / 2;
+    if (i % every === 0) { const tx = sv('text', { x: cx, y: H - 6, 'text-anchor': 'middle', fill: 'var(--muted)', 'font-size': 11, 'font-family': 'var(--mono)' }); tx.textContent = c; svg.append(tx); }
+    let base = 0; const segs = o.series.map(s => ({ s, v: s.v[i] || 0 })).filter(x => x.v > 0), g = sv('g', {});
+    segs.forEach((x, k) => {
+      const y1 = Y(base), y0 = Y(base + x.v), top = k === segs.length - 1, h = Math.max(1, y1 - y0 - (k ? GAP : 0)), yy = y1 - (k ? GAP : 0) - h, r = top ? Math.min(4, h, bw / 2) : 0;
+      const d = `M${x0},${yy + h} L${x0},${yy + r} Q${x0},${yy} ${x0 + r},${yy} L${x0 + bw - r},${yy} Q${x0 + bw},${yy} ${x0 + bw},${yy + r} L${x0 + bw},${yy + h} Z`;
+      g.append(sv('path', { d, fill: x.s.color })); base += x.v;
+    });
+    svg.append(g); marks.push({ g, cx, top: Y(totals[i]) });
+    const hit = sv('rect', { x: padL + band * i, y: padT, width: band, height: ih, fill: 'transparent' });
+    hit.addEventListener('pointerenter', () => { g.setAttribute('opacity', '.8'); show(i); });
+    hit.addEventListener('pointerleave', () => { g.removeAttribute('opacity'); hideTip(); });
+    svg.append(hit);
+  });
+  const show = i => showTip(host, marks[i].cx, marks[i].top, (o.long || o.cats)[i], [...o.series.map(s => ({ color: s.color, value: o.fmt(s.v[i] || 0), label: s.label })), ...(o.series.length > 1 ? [{ color: 'transparent', value: o.fmt(totals[i]), label: 'in all' }] : [])]);
+  host.replaceChildren(svg);
+  let cur = -1;
+  host.onkeydown = e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); cur = Math.max(0, Math.min(n - 1, (cur < 0 ? n - 1 : cur) + (e.key === 'ArrowLeft' ? -1 : 1))); show(cur); } else if (e.key === 'Escape') hideTip(); };
+  host.onfocus = () => { cur = n - 1; show(cur); }; host.onblur = hideTip;
+}
+function sparkline(host, vals) {
+  if (!host) return;
+  if (vals.length < 2 || vals.every(v => !v)) { host.replaceChildren(); return; }
+  const W = 120, H = 34, max = Math.max(1, ...vals), pts = vals.map((v, i) => `${(i * W / (vals.length - 1)).toFixed(1)},${(H - 3 - v / max * (H - 6)).toFixed(1)}`).join(' ');
+  const svg = sv('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Players online lately, now ${vals[vals.length - 1]}` });
+  svg.append(sv('polyline', { points: pts, fill: 'none', stroke: 'var(--s1)', 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+  host.replaceChildren(svg);
+}
+function hbars(host, rows) {
+  if (!rows.length) { host.replaceChildren(mk('p', 'note', D.data?.online?.ok ? 'Nobody is in Universe right now.' : 'The rooms did not answer.')); return; }
+  const max = Math.max(1, ...rows.map(r => r.v));
+  host.replaceChildren(...rows.slice(0, 9).map(r => { const row = mk('div', 'r'); row.title = r.note || ''; const bar = mk('span', 'bar'); const i = mk('i'); i.style.width = (r.v / max * 100) + '%'; bar.append(i); row.append(mk('span', '', r.label), bar, mk('span', 'n', fmtN(r.v))); return row; }));
+  if (rows.length > 9) host.append(mk('span', 'note', `${rows.length - 9} more villages · ${rows.slice(9).reduce((a, r) => a + r.v, 0)} players`));
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('button.tb[data-table]'); if (!b) return;
+  const id = b.dataset.table, card = b.closest('.cc'), had = card.querySelector('.tview');
+  if (had) { had.remove(); b.textContent = 'Table'; return; }
+  const t = D.tables[id]; if (!t) return;
+  const box = mk('div', 'tview'), tb = mk('table'), hr = mk('tr');
+  t.head.forEach(h => hr.append(mk('th', '', h))); const th = mk('thead'); th.append(hr); tb.append(th);
+  const body = mk('tbody'); for (const r of t.rows.slice().reverse()) { const tr = mk('tr'); r.forEach(c => tr.append(mk('td', '', c))); body.append(tr); } tb.append(body);
+  box.append(tb); card.append(box); b.textContent = 'Hide table';
+});
+let resizeT = 0; addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(dashRender, 200); });
+
+// the Babylon line in the sidebar: NEW when the robot passed a newer version
+function bjsBadge() { const c = bjs.data?.candidate, base = bjs.data?.dev || bjs.data?.pinned; setBadge('nb-bjs', c && c.verdict !== 'fail' && bjsNewer(c.version, base) ? 'NEW' : '', 'warn'); }
+
+checkAdminSession().then(() => {
+  route();
+  dashLoad();
+  loadAnnouncements();
+  bjsLoad().then(bjsBadge);
+  mpaLoad().then(() => { mpaReady = true; });
+  sideRooms(); setInterval(() => { if (!document.hidden) sideRooms(); }, 60000);
+});
 </script>
 
 </body>

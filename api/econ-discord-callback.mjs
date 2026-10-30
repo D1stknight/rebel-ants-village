@@ -5,6 +5,7 @@
 // a full-page sign-in goes straight back to where it started. See api/_econ.mjs.
 import { enforceRateLimit } from './_guard.mjs';
 import { readStateCookie, clearStateCookie, discordUserFromCode, econResolve, econSessionCookie, finishPage } from './_econ.mjs';
+import { bump } from './_site-stats.mjs';
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -24,6 +25,7 @@ export default async function handler(req, res) {
     const d = await discordUserFromCode(req, q.code);
     const acct = await econResolve({ discordId: d.id, username: d.username, displayName: d.global_name || d.username });
     const cookie = econSessionCookie({ u: acct.userId, d: d.id, un: d.username, n: acct.displayName || d.global_name || d.username, a: d.avatar });
+    await bump({ 'signin:discord': 1 }); // (the dashboard)
     if (!popup) {
       res.setHeader('Set-Cookie', [clearStateCookie(), cookie]);
       res.setHeader('Location', ret);

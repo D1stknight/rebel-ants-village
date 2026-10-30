@@ -93,7 +93,7 @@
         if (copy && !opened) wantCopy = 0; // (that copy is full: any copy next time)
         if (e.code === 4001) { closedFor = 'dup'; H.toast?.('Universe is open in another tab: other players show there.'); stopGroup('dup'); return; }
         if (e.code === 4003) { closedFor = closedFor || 'kick'; stopGroup(closedFor); return; }
-        backoff();
+        pf.rc++; backoff();
       };
       s.onerror = () => {};
     } finally { connecting = false; }
@@ -119,6 +119,7 @@
     tell('closed');
   }
   function onMessage(m) {
+    if (m.t === 'pong') return pfPong();
     if (m.t === 'hi') { you = m.you; room = m.room; retry = 0; voiceOn = !!m.cfg?.voice; for (const p of m.peers || []) addPeer(p); last = null; tell('hello', m); voice({ t: 'vcfg', on: voiceOn }); return; }
     if (m.t === 'j') { addPeer(m); tell('join', m); return; }
     if (m.t === 'l') { tell('leave', m.id); return removePeer(m.id); }
@@ -477,6 +478,44 @@
   function tick(dt) {
     if (!H || !enabled) return;
     try { step(dt); } catch (e) { if (!warned) { warned = true; console.warn('Multiplayer:', e); } }
+    try { pfFrame(performance.now()); } catch (e) {}
+  }
+
+  // ---- how this page runs (the Admin Hub's dashboard): frames, slow frames (over 50 ms) and freezes (over 1 s) while it
+  // is on screen and played (walking, not admin), the ping to the room, dropped connections; a report to the room once a
+  // minute. Numbers only (no names, nothing typed); the room adds the village and whether the player is signed in
+  const PF_MS = 60000, PF_CAP = 20000;
+  const pf = { frames: 0, vis: 0, slow: 0, freeze: 0, last: 0, gaps: [], rtt: [], pingAt: 0, frozeAt: 0, rc: 0, sent: performance.now() };
+  const UA = navigator.userAgent || '';
+  const DEV = {
+    o: /iPhone|iPad|iPod/.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints > 1) ? 'ios' : /Android/.test(UA) ? 'android' : /CrOS/.test(UA) ? 'cros'
+      : /Mac OS X|Macintosh/.test(UA) ? 'mac' : /Windows/.test(UA) ? 'win' : /Linux/.test(UA) ? 'linux' : 'other',
+    b: /Edg(A|iOS)?\//.test(UA) ? 'edge' : /OPR\/|Opera/.test(UA) ? 'opera' : /Firefox|FxiOS/.test(UA) ? 'firefox' : /CriOS|Chrome\//.test(UA) ? 'chrome' : /Safari/.test(UA) ? 'safari' : 'other'
+  };
+  function pfFrame(now) {
+    if (document.hidden || !H.canSend()) { pf.last = 0; return; } // (a gap that spans hidden or unplayed time is not a frame)
+    if (pf.last) {
+      const g = now - pf.last;
+      pf.frames++; pf.vis += g; if (g > 50) pf.slow++; if (g > 1000) { pf.freeze++; pf.frozeAt = now; }
+      if (pf.gaps.length < PF_CAP) pf.gaps.push(g);
+    }
+    pf.last = now;
+    if (now - pf.sent >= PF_MS && pf.vis >= 20000) pfSend(now);
+  }
+  function pfPong() {
+    // (a ping that waited on a frozen page measures the freeze, counted already, not the connection: dropped)
+    if (pf.pingAt && !document.hidden && !(pf.frozeAt > pf.pingAt)) { const r = performance.now() - pf.pingAt; if (r < 60000) pf.rtt.push(r); }
+    pf.pingAt = 0;
+  }
+  function pfSend(now) {
+    pf.sent = now;
+    if (pf.vis < 5000 || !pf.frames) return; // (hardly on screen since the last one: nothing to say)
+    const g = pf.gaps.slice().sort((a, b) => a - b), p95 = g.length ? g[Math.min(g.length - 1, Math.floor(g.length * .95))] : 0;
+    const rtt = pf.rtt.length ? pf.rtt.reduce((a, b) => a + b, 0) / pf.rtt.length : null, mem = performance.memory?.usedJSHeapSize;
+    const ok = send({ t: 'pf', f: Math.round(pf.frames / (pf.vis / 1000) * 10) / 10, ft: Math.round(p95), sl: pf.slow, fr: pf.freeze, s: Math.round(pf.vis / 1000),
+      rtt: rtt == null ? null : Math.round(rtt), rc: pf.rc, d: H.phone?.() ? 'p' : 'd', o: DEV.o, b: DEV.b, l: +H.light || 0, m: mem ? Math.round(mem / 1048576) : null,
+      n: peers.size, g: H.inGame?.() ? 1 : 0 });
+    if (ok) { pf.frames = 0; pf.vis = 0; pf.slow = 0; pf.freeze = 0; pf.gaps = []; pf.rtt = []; pf.rc = 0; } // (else it goes with the next one)
   }
   function step(dt) {
     const now = performance.now(), me = H.player(), cam = H.scene.activeCamera?.globalPosition;
@@ -571,7 +610,7 @@
     H = host; B = window.BABYLON; maxFull = H.maxFull > 0 ? H.maxFull : H.lite ? 4 : 8; maxLite = H.maxLite >= 0 ? H.maxLite : H.lite ? 10 : 24;
     keepIdle = H.lite ? 1 : 4; keepMs = H.lite ? 20000 : 60000;
     root = new B.TransformNode('mpPlayersRoot', H.scene); root.metadata = { keepInInteriors: true }; // rooms hide the village, not the players (each is shown in its own place)
-    setInterval(() => send('{"t":"ping"}'), PING_MS); // (timers, not frames: a hidden tab draws nothing)
+    setInterval(() => { if (send('{"t":"ping"}')) pf.pingAt = document.hidden ? 0 : performance.now(); }, PING_MS); // (timers, not frames: a hidden tab draws nothing)
     document.addEventListener('visibilitychange', () => { const me = H.player(); if (document.hidden && me && H.canSend()) sendState(me, 1, performance.now()); });
     log('start', H.village, localServer || '');
   }
@@ -587,5 +626,7 @@
   };
   // for the voices (village-voice.js): the room socket carries their offers and answers
   const voiceLink = { send: o => send(o), open: () => !!ws && ws.readyState === 1 && voiceOn, get on() { return voiceOn; }, you: () => you };
-  window.VillageMP = { start, tick, reconnect, emote, peers, chat, voice: voiceLink, speaking, ticket: () => (H && enabled ? ticket() : Promise.resolve(null)), joinCopy, get state() { const v = [...peers.values()]; return { enabled, open: !!ws && ws.readyState === 1, you, room, peers: peers.size, closedFor, files: files.size, full: v.filter(p => p.model).length, lite: v.filter(p => p.lite).length }; }, stop() { enabled = false; const s = ws; ws = null; try { s?.close(1000); } catch (e) {} dropAll(); sweepFiles(Infinity); tell('closed'); } };
+  window.VillageMP = { start, tick, reconnect, emote, peers, chat, voice: voiceLink, speaking, ticket: () => (H && enabled ? ticket() : Promise.resolve(null)), joinCopy,
+    get perf() { return { ...pf, gaps: pf.gaps.length, rtt: pf.rtt.slice(), dev: { ...DEV, d: H?.phone?.() ? 'p' : 'd' } }; }, pfSend: () => pfSend(performance.now()),
+    get state() { const v = [...peers.values()]; return { enabled, open: !!ws && ws.readyState === 1, you, room, peers: peers.size, closedFor, files: files.size, full: v.filter(p => p.model).length, lite: v.filter(p => p.lite).length }; }, stop() { enabled = false; const s = ws; ws = null; try { s?.close(1000); } catch (e) {} dropAll(); sweepFiles(Infinity); tell('closed'); } };
 })();

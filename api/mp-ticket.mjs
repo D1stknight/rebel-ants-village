@@ -15,6 +15,7 @@ import crypto from 'node:crypto';
 import { enforceRateLimit, clientIp } from './_guard.mjs';
 import { econSessionOf, isNameSession } from './_econ.mjs';
 import { walletOf, holderOf, redis } from './_wallet.mjs';
+import { bump } from './_site-stats.mjs';
 
 const TTL = 120;
 const ROOM_SERVERS = { prod: 'wss://rebel-universe-rooms.miguel-a-concepcion.workers.dev', dev: 'wss://rebel-universe-rooms-dev.miguel-a-concepcion.workers.dev' }; // the deployed realtime/ workers (MP_ROOMS_URL wins)
@@ -87,6 +88,7 @@ export default async function handler(req, res) {
     const who = s ? { sub: 'u:' + s.u, n: String(s.n || s.un || 'Rebel').slice(0, 40), k: isNameSession(s) ? 'name' : 'discord', av: avatarOf(s) }
       : { sub: guestSub(String(q.gk || '')), n: 'Guest', k: 'guest', av: '' };
     const payload = { v: 1, site, ...who, look, village, iat: now, exp: now + TTL };
+    await bump({ tickets: 1, ['village:' + village]: 1 }, { players: who.sub, [s ? 'signed' : 'guests']: who.sub }); // (the dashboard: players a day)
     return res.status(200).json({ ok: true, ticket: signTicket(payload, site), url, site, exp: payload.exp, you: { name: who.n, kind: who.k } });
   } catch (e) {
     return res.status(e.status || 500).json({ ok: false, error: e.status ? e.message : 'Could not make a room ticket' });
