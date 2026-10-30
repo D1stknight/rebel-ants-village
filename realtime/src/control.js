@@ -35,7 +35,13 @@ export class RoomControl {
       'CREATE TABLE IF NOT EXISTS rooms (name TEXT PRIMARY KEY, at INTEGER)',
       'CREATE TABLE IF NOT EXISTS nonces (n TEXT PRIMARY KEY, at INTEGER)',
       'CREATE TABLE IF NOT EXISTS made (sub TEXT, day INTEGER, n INTEGER, PRIMARY KEY (sub, day))',
-      'CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, data TEXT, starts INTEGER, ends INTEGER, at INTEGER)'
+      'CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, data TEXT, starts INTEGER, ends INTEGER, at INTEGER)',
+      // how Universe runs (the dashboard), from the rooms' minute sends (perf()): per minute, village and device (phone /
+      // desktop) the pages' reports added up; fps in five bands, ping in four. Kept PERF_DAYS days
+      'CREATE TABLE IF NOT EXISTS perf (m INTEGER, v TEXT, d TEXT, n INTEGER DEFAULT 0, fsum REAL DEFAULT 0, f0 INTEGER DEFAULT 0, f1 INTEGER DEFAULT 0, f2 INTEGER DEFAULT 0, f3 INTEGER DEFAULT 0, f4 INTEGER DEFAULT 0, ftsum REAL DEFAULT 0, sl INTEGER DEFAULT 0, fr INTEGER DEFAULT 0, rsum REAL DEFAULT 0, rn INTEGER DEFAULT 0, r0 INTEGER DEFAULT 0, r1 INTEGER DEFAULT 0, r2 INTEGER DEFAULT 0, r3 INTEGER DEFAULT 0, rc INTEGER DEFAULT 0, ins INTEGER DEFAULT 0, gm INTEGER DEFAULT 0, gs INTEGER DEFAULT 0, msum REAL DEFAULT 0, mn INTEGER DEFAULT 0, PRIMARY KEY (m, v, d))',
+      'CREATE TABLE IF NOT EXISTS online (m INTEGER, room TEXT, v TEXT, peers INTEGER, last INTEGER, joins INTEGER, PRIMARY KEY (m, room))', // (peers: the most in the minute, last: the newest count)
+      'CREATE TABLE IF NOT EXISTS closes (m INTEGER, code INTEGER, n INTEGER, PRIMARY KEY (m, code))',
+      'CREATE TABLE IF NOT EXISTS devs (h INTEGER, d TEXT, o TEXT, b TEXT, n INTEGER DEFAULT 0, fsum REAL DEFAULT 0, slow INTEGER DEFAULT 0, rsum REAL DEFAULT 0, rn INTEGER DEFAULT 0, PRIMARY KEY (h, d, o, b))'
     ]) this.sql.exec(q);
     this.cfgCache = null;
   }
@@ -90,8 +96,84 @@ export class RoomControl {
       if (r.id % 50 === 0) this.sql.exec('DELETE FROM reports WHERE id <= ?', r.id - 1000);
       return json({ ok: true, id: r.id });
     }
+    if (url.pathname === '/perf') { this.perf(body, now); return json({ ok: true }); }
     if (url.pathname === '/admin') return json(await this.admin(body, now));
     return json({ ok: false }, 404);
+  }
+  // a room's minute send (index.js flushPerf): who is in it, how its sockets closed, its pages' reports
+  perf(body, now) {
+    const at = Math.min(now, +body.at || now), m = Math.floor(at / 60000), h = Math.floor(at / 3600000);
+    const room = typeof body.room === 'string' && ROOM.test(body.room) ? body.room : null;
+    const peers = clamp(body.peers, 0, 500, 0);
+    if (room) this.sql.exec('INSERT INTO online (m, room, v, peers, last, joins) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(m, room) DO UPDATE SET peers = MAX(peers, excluded.peers), last = excluded.last, joins = joins + excluded.joins',
+      m, room, room.split(':')[1], peers, peers, clamp(body.joins, 0, 100000, 0));
+    for (const [code, n] of Object.entries(body.closes && typeof body.closes === 'object' ? body.closes : {}).slice(0, 20)) {
+      const c = clamp(code, 0, 9999, 0), k = clamp(n, 0, 100000, 0);
+      if (k) this.sql.exec('INSERT INTO closes (m, code, n) VALUES (?, ?, ?) ON CONFLICT(m, code) DO UPDATE SET n = n + excluded.n', m, c, k);
+    }
+    const by = new Map(), dev = new Map(), num = v => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
+    for (const r of Array.isArray(body.reports) ? body.reports.slice(0, 400) : []) {
+      if (!r || typeof r !== 'object' || !/^[a-z-]{2,20}$/.test(String(r.v)) || !(num(r.f) > 0)) continue;
+      const d = r.d === 'p' ? 'p' : 'd', f = num(r.f), rtt = r.rtt == null ? null : num(r.rtt);
+      const a = by.get(r.v + '|' + d) || by.set(r.v + '|' + d, { v: r.v, d, n: 0, fsum: 0, f: [0, 0, 0, 0, 0], ftsum: 0, sl: 0, fr: 0, rsum: 0, rn: 0, r: [0, 0, 0, 0], rc: 0, ins: 0, gm: 0, gs: 0, msum: 0, mn: 0 }).get(r.v + '|' + d);
+      a.n++; a.fsum += f; a.f[f < 20 ? 0 : f < 30 ? 1 : f < 45 ? 2 : f < 55 ? 3 : 4]++; a.ftsum += num(r.ft); a.sl += num(r.sl); a.fr += num(r.fr); a.rc += num(r.rc);
+      if (rtt != null) { a.rsum += rtt; a.rn++; a.r[rtt < 100 ? 0 : rtt < 200 ? 1 : rtt < 400 ? 2 : 3]++; }
+      if (r.i) a.ins++; if (r.g) a.gm++; if (r.k === 'g') a.gs++; if (r.m != null && num(r.m) > 0) { a.msum += num(r.m); a.mn++; }
+      const o = ['ios', 'android', 'mac', 'win', 'linux', 'cros'].includes(r.o) ? r.o : 'other', b = ['safari', 'chrome', 'firefox', 'edge', 'opera'].includes(r.b) ? r.b : 'other';
+      const e = dev.get(d + '|' + o + '|' + b) || dev.set(d + '|' + o + '|' + b, { d, o, b, n: 0, fsum: 0, slow: 0, rsum: 0, rn: 0 }).get(d + '|' + o + '|' + b);
+      e.n++; e.fsum += f; if (f < 30) e.slow++; if (rtt != null) { e.rsum += rtt; e.rn++; }
+    }
+    for (const a of by.values()) this.sql.exec(`INSERT INTO perf (m, v, d, n, fsum, f0, f1, f2, f3, f4, ftsum, sl, fr, rsum, rn, r0, r1, r2, r3, rc, ins, gm, gs, msum, mn) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(m, v, d) DO UPDATE SET n = n + excluded.n, fsum = fsum + excluded.fsum, f0 = f0 + excluded.f0, f1 = f1 + excluded.f1, f2 = f2 + excluded.f2, f3 = f3 + excluded.f3, f4 = f4 + excluded.f4, ftsum = ftsum + excluded.ftsum,
+      sl = sl + excluded.sl, fr = fr + excluded.fr, rsum = rsum + excluded.rsum, rn = rn + excluded.rn, r0 = r0 + excluded.r0, r1 = r1 + excluded.r1, r2 = r2 + excluded.r2, r3 = r3 + excluded.r3, rc = rc + excluded.rc,
+      ins = ins + excluded.ins, gm = gm + excluded.gm, gs = gs + excluded.gs, msum = msum + excluded.msum, mn = mn + excluded.mn`,
+      m, a.v, a.d, a.n, a.fsum, ...a.f, a.ftsum, a.sl, a.fr, a.rsum, a.rn, ...a.r, a.rc, a.ins, a.gm, a.gs, a.msum, a.mn);
+    for (const e of dev.values()) this.sql.exec('INSERT INTO devs (h, d, o, b, n, fsum, slow, rsum, rn) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(h, d, o, b) DO UPDATE SET n = n + excluded.n, fsum = fsum + excluded.fsum, slow = slow + excluded.slow, rsum = rsum + excluded.rsum, rn = rn + excluded.rn',
+      h, e.d, e.o, e.b, e.n, e.fsum, e.slow, e.rsum, e.rn);
+    // older than PERF_DAYS days: gone (looked at once every 30 minutes)
+    const pruned = +((this.sql.exec("SELECT v FROM kv WHERE k = 'perfPruned'").toArray()[0] || {}).v || 0);
+    if (m - pruned >= 30) {
+      const cut = m - Math.max(1, +this.env.PERF_DAYS || 14) * 1440;
+      for (const t of ['perf', 'online', 'closes']) this.sql.exec(`DELETE FROM ${t} WHERE m < ?`, cut);
+      this.sql.exec('DELETE FROM devs WHERE h < ?', Math.floor(cut / 60));
+      this.sql.exec("INSERT INTO kv (k, v) VALUES ('perfPruned', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v", String(m));
+    }
+  }
+  // the dashboard's numbers over the last `hours` (1 h to 14 days): a series in steps (players online: the most in a step;
+  // fps by device, the share under 30 fps, ping, the share at 200 ms or more, dropped connections), each village and
+  // device family over the whole span, and the last five minutes
+  stats(args, now) {
+    const hours = clamp(args.hours, 1, 336, 24), from = Math.floor((now - hours * 3600000) / 60000);
+    const step = clamp(args.step, 1, 1440, hours <= 6 ? 5 : hours <= 48 ? 15 : hours <= 168 ? 60 : 180), at = mm => Math.floor(mm / step) * step;
+    const series = new Map(), S = mm => { const k = at(mm); return series.get(k) || series.set(k, { t: k * 60000, online: 0, joins: 0, nD: 0, fD: 0, nP: 0, fP: 0, slow: 0, n: 0, rsum: 0, rn: 0, lag: 0, drops: 0, freezes: 0, reconnects: 0 }).get(k); };
+    // players online in a step: each copy's most in it, added up (copies send in different minutes)
+    for (const r of this.sql.exec('SELECT k, SUM(mp) AS p, SUM(j) AS j FROM (SELECT (m / ?) * ? AS k, room, MAX(peers) AS mp, SUM(joins) AS j FROM online WHERE m >= ? GROUP BY k, room) GROUP BY k', step, step, from).toArray()) { const s = S(r.k); s.online = r.p; s.joins = r.j; }
+    for (const r of this.sql.exec('SELECT m, d, SUM(n) AS n, SUM(fsum) AS fsum, SUM(f0 + f1) AS slow, SUM(rsum) AS rsum, SUM(rn) AS rn, SUM(r2 + r3) AS lag, SUM(fr) AS fr, SUM(rc) AS rc FROM perf WHERE m >= ? GROUP BY m, d', from).toArray()) {
+      const s = S(r.m); if (r.d === 'p') { s.nP += r.n; s.fP += r.fsum; } else { s.nD += r.n; s.fD += r.fsum; }
+      s.n += r.n; s.slow += r.slow; s.rsum += r.rsum; s.rn += r.rn; s.lag += r.lag; s.freezes += r.fr; s.reconnects += r.rc;
+    }
+    const DROP = [1006, 1011, 4002, 4008];
+    const closes = {};
+    for (const r of this.sql.exec('SELECT m, code, SUM(n) AS n FROM closes WHERE m >= ? GROUP BY m, code', from).toArray()) { closes[r.code] = (closes[r.code] || 0) + r.n; if (DROP.includes(r.code)) S(r.m).drops += r.n; }
+    const r1 = v => Math.round(v * 10) / 10, pct = (a, b) => (b ? Math.round(a / b * 1000) / 10 : null);
+    const out = [...series.values()].sort((a, b) => a.t - b.t).map(s => ({ t: s.t, online: s.online, joins: s.joins, fpsD: s.nD ? r1(s.fD / s.nD) : null, fpsP: s.nP ? r1(s.fP / s.nP) : null,
+      reports: s.n, slowPct: pct(s.slow, s.n), rtt: s.rn ? Math.round(s.rsum / s.rn) : null, lagPct: pct(s.lag, s.rn), drops: s.drops, freezes: s.freezes, reconnects: s.reconnects }));
+    const peaks = new Map(this.sql.exec('SELECT v, MAX(t) AS peak FROM (SELECT k, v, SUM(mp) AS t FROM (SELECT m / 5 AS k, room, v, MAX(peers) AS mp FROM online WHERE m >= ? GROUP BY k, room) GROUP BY k, v) GROUP BY v', from).toArray().map(r => [r.v, r.peak]));
+    const villages = this.sql.exec(`SELECT v, SUM(n) AS n, SUM(fsum) AS fsum, SUM(f0) AS f0, SUM(f1) AS f1, SUM(f2) AS f2, SUM(f3) AS f3, SUM(f4) AS f4, SUM(ftsum) AS ftsum, SUM(rsum) AS rsum, SUM(rn) AS rn, SUM(r2 + r3) AS lag,
+      SUM(fr) AS fr, SUM(sl) AS sl, SUM(ins) AS ins, SUM(gm) AS gm, SUM(CASE WHEN d = 'p' THEN n ELSE 0 END) AS np, SUM(CASE WHEN d = 'p' THEN fsum ELSE 0 END) AS fp FROM perf WHERE m >= ? GROUP BY v ORDER BY n DESC`, from).toArray()
+      .map(r => ({ v: r.v, reports: r.n, fps: r1(r.fsum / r.n), fpsP: r.np ? r1(r.fp / r.np) : null, fpsD: r.n - r.np ? r1((r.fsum - r.fp) / (r.n - r.np)) : null, bands: [r.f0, r.f1, r.f2, r.f3, r.f4], slowPct: pct(r.f0 + r.f1, r.n),
+        frameMs: Math.round(r.ftsum / r.n), rtt: r.rn ? Math.round(r.rsum / r.rn) : null, lagPct: pct(r.lag, r.rn), freezes: r.fr, slowFrames: r.sl, inRooms: pct(r.ins, r.n), inGames: pct(r.gm, r.n), peak: peaks.get(r.v) || 0 }));
+    for (const [v, peak] of peaks) if (!villages.some(x => x.v === v)) villages.push({ v, reports: 0, fps: null, slowPct: null, rtt: null, peak });
+    const devices = this.sql.exec('SELECT d, o, b, SUM(n) AS n, SUM(fsum) AS fsum, SUM(slow) AS slow, SUM(rsum) AS rsum, SUM(rn) AS rn FROM devs WHERE h >= ? GROUP BY d, o, b ORDER BY n DESC LIMIT 30', Math.floor(from / 60)).toArray()
+      .map(r => ({ d: r.d, o: r.o, b: r.b, reports: r.n, fps: r1(r.fsum / r.n), slowPct: pct(r.slow, r.n), rtt: r.rn ? Math.round(r.rsum / r.rn) : null }));
+    // the last five minutes (players online: each copy's newest send in them)
+    const m5 = Math.floor(now / 60000) - 5;
+    const latest = new Map(); for (const r of this.sql.exec('SELECT room, last FROM online WHERE m >= ? ORDER BY m DESC', m5).toArray()) if (!latest.has(r.room)) latest.set(r.room, r.last);
+    const recent = this.sql.exec("SELECT SUM(n) AS n, SUM(fsum) AS fsum, SUM(CASE WHEN d = 'p' THEN n ELSE 0 END) AS np, SUM(CASE WHEN d = 'p' THEN fsum ELSE 0 END) AS fp, SUM(f0 + f1) AS slow, SUM(rsum) AS rsum, SUM(rn) AS rn, SUM(r2 + r3) AS lag, SUM(msum) AS msum, SUM(mn) AS mn FROM perf WHERE m >= ?", m5).one();
+    const n = recent.n || 0, nd = n - (recent.np || 0);
+    const nowStats = { reports: n, online: [...latest.values()].reduce((a, b) => a + b, 0), rooms: [...latest.values()].filter(Boolean).length, fpsD: nd ? r1((recent.fsum - recent.fp) / nd) : null, fpsP: recent.np ? r1(recent.fp / recent.np) : null, slowPct: pct(recent.slow || 0, n),
+      rtt: recent.rn ? Math.round(recent.rsum / recent.rn) : null, lagPct: pct(recent.lag || 0, recent.rn || 0), memMB: recent.mn ? Math.round(recent.msum / recent.mn) : null };
+    return { at: now, hours, step, series: out, villages, devices, closes, now: nowStats };
   }
   // a command to the rooms: every room copy and group open in the last three days, or only the one named (who is online:
   // the room copies only, group members are in rooms too)
@@ -176,6 +258,7 @@ export class RoomControl {
         return { ok: true, reached: reached(await this.each({ op: 'clear' }, only)) };
       }
       case 'cfg-get': return { ok: true, cfg: this.cfg() };
+      case 'stats': return { ok: true, ...this.stats(args, now) };
       // the Colony Stage's events (events.js): the list (admins see everything), made or changed, live now, ended, the show,
       // a host added from Online now or taken off, deleted
       case 'events': {
