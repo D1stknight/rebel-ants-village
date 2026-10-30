@@ -30515,6 +30515,8 @@ function startVillageMultiplayer() {
     player: () => charMesh ? { x: charMesh.position.x, y: charMesh.position.y, z: charMesh.position.z, yaw: charMesh.rotation.y, anim: mpAnimName(),
       interior: ActiveInterior ? String(ActiveInterior.targetInteriorId || ActiveInterior.interiorType || 'room') : null } : null,
     canSend: () => walkMode && !adminMode,
+    // for the dashboard's minute reports: a touch screen, the after-crash light level, in a game or dance-off
+    phone: () => !!window.VillageTouch?.on, light: CRASH_LIGHT, inGame: () => !!(MiniGames.on || DanceOff.on),
     character: () => { const c = window.activeCharacter || activeCharacter; return { col: c.collectionKey || 'battle_for_colony', tok: c.tokenId ? String(c.tokenId) : '' }; },
     viaSite: u => (window.viaSite ? window.viaSite(u) : u),
     toast: m => showToast(m, 6000)
