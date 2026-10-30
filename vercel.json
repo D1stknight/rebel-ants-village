@@ -80,6 +80,9 @@
     "api/mp-admin.mjs": {
       "maxDuration": 30
     },
+    "api/admin-stats.mjs": {
+      "maxDuration": 30
+    },
     "api/econ-name-login.mjs": {
       "maxDuration": 30
     },
