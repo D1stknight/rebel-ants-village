@@ -80,6 +80,7 @@ html.vt-touch .vc-chip,html.vt-touch .vc-ico{min-height:34px;padding:9px 11px}
 #vcPanel button.row small{color:#8b93a8;margin-left:6px}
 #vcPanel label{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;cursor:pointer}
 #vcPanel label input{width:18px;height:18px;accent-color:#5ecfca}
+#vcPanel label.range input{width:150px;height:auto;flex:0 0 150px;margin-left:12px}
 #vcPanel .sep{height:1px;background:rgba(255,255,255,.1);margin:8px 0}
 #vcPanel .grow{display:flex;align-items:center;gap:6px;padding:0 10px 0 0}
 #vcPanel .grow button.row{flex:1;min-width:0}
@@ -326,7 +327,7 @@ body.in-game #vcChat,body.in-game #vcBtn,body.in-game #vcPanel,body.in-game #vcM
     const VV = window.VillageVoice;
     if (VV && voiceHere()) { // voice (when it is on here): hear the others, how loud (village-voice.js keeps these)
       const l = document.createElement('label'); const s = document.createElement('span'); s.textContent = 'Hear voices'; const c = document.createElement('input'); c.type = 'checkbox'; c.checked = VV.settings.hear !== false; c.onchange = () => VV.set('hear', c.checked); l.append(s, c); el.panel.appendChild(l);
-      const lv = document.createElement('label'); lv.className = 'range'; const sv = document.createElement('span'); sv.textContent = 'Voice volume'; const r = document.createElement('input'); r.type = 'range'; r.min = '0'; r.max = '1.5'; r.step = '0.05'; r.value = String(VV.settings.volume ?? 1); r.oninput = () => VV.set('volume', +r.value); lv.append(sv, r); el.panel.appendChild(lv);
+      const lv = document.createElement('label'); lv.className = 'range'; const sv = document.createElement('span'); const pct = () => { sv.textContent = 'Voice volume · ' + Math.round(+r.value * 100) + '%'; }; const r = document.createElement('input'); r.type = 'range'; r.min = '0'; r.max = '1.5'; r.step = '0.05'; r.value = String(VV.settings.volume ?? 1); pct(); r.oninput = () => { VV.set('volume', +r.value); pct(); }; lv.append(sv, r); el.panel.appendChild(lv);
       const how = document.createElement('div'); how.className = 'sub'; how.textContent = H.signedIn() ? 'Hold X (the Talk button on phones) to talk: the players near you hear you, or your group with Group picked.' : 'Sign in to talk and hear voices.'; el.panel.appendChild(how);
     }
     const lists = [['Blocked', blocked, BLOCK_KEY], ['Muted', muted, MUTE_KEY]];
