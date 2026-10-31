@@ -100,7 +100,7 @@ body.in-game #vcChat,body.in-game #vcBtn,body.in-game #vcPanel,body.in-game #vcM
 #vcVoice.guest{color:#8b93a8;border-color:rgba(139,147,168,.55)}
 #vcVoice.hear{animation:vcRing 1.2s infinite}
 #vcVoice.wait{border-color:#e8c56a;color:#ffe08a}
-#vcVoice.talk{background:#2f9e5a;border-color:#7be38a;color:#fff;animation:vcRing .9s infinite}
+#vcVoice.talk{background:#2f9e5a;border-color:#7be38a;color:#fff;box-shadow:0 0 0 calc(2px + var(--vl,0) * 12px) rgba(123,227,138,.34);transition:box-shadow .08s linear} /* (the ring = how loud the microphone is: village-voice.js sets --vl) */
 @keyframes vcRing{0%{box-shadow:0 0 0 0 rgba(123,227,138,.6)}70%{box-shadow:0 0 0 11px rgba(123,227,138,0)}100%{box-shadow:0 0 0 0 rgba(123,227,138,0)}}
 #vcVoiceTip{position:fixed;left:132px;bottom:29px;z-index:16;display:none;padding:7px 11px;background:rgba(5,10,28,.92);border:1px solid rgba(94,207,202,.5);color:#e9fffd;font:600 12px -apple-system,'Segoe UI',Arial,sans-serif;pointer-events:none;white-space:nowrap;backdrop-filter:blur(8px)}
 #vcVoiceTip.on{display:block}
@@ -139,9 +139,10 @@ body:has(#wb:not(.on)) #vcVoice,body:has(#wb:not(.on)) #vcVoiceTip,html.vt-touch
     v.addEventListener('mouseleave', () => { voiceHover = false; paintVoice(); });
     el.input.addEventListener('keydown', e => {
       e.stopPropagation();
-      // Enter sends and the chat stays open for the next line (Oct 31, Miguel: "keep the conversation open"); Enter on an
-      // empty line or Esc closes it
-      if (e.key === 'Enter') { e.preventDefault(); if (!el.input.value.trim()) { if (!window.VillageTouch?.on) close(); } else sendLine(); }
+      // Enter sends and the chat stays open (Oct 31, Miguel: "keep the conversation open"); on a computer the line is put
+      // down once sent, so the keys are the game's again (X talks, W A S D walk: holding X with the line up only typed
+      // x's, "he cant hear me"), and Enter takes it up for the next line. Enter on an empty line or Esc closes it
+      if (e.key === 'Enter') { e.preventDefault(); if (!el.input.value.trim()) { if (!window.VillageTouch?.on) close(); } else if (sendLine() && !window.VillageTouch?.on) { try { el.input.blur(); } catch (x) {} } }
       else if (e.key === 'Escape') { e.preventDefault(); el.input.value = ''; paintCount(); close(); } // (Esc cancels the line)
     });
     el.input.addEventListener('keyup', e => e.stopPropagation());

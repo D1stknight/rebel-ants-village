@@ -37,17 +37,72 @@
   const ACTIVATE = ['pointerup', 'touchend', 'click', 'keydown', 'mousedown', 'pointerdown'];
   function wake() { if (ctx) audio(); else if (H && (available() || S.stage.subs.size)) audio(); }
   const waitingTap = () => !!ctx && ctx.state !== 'running' && [S.room, S.group, S.stage].some(sc => [...sc.subs.values()].some(s => s.node));
-  // the microphone once (asks the first time); each scope talks through its own copy of the track
+  // the microphone once (asks the first time); each scope talks through its own copy of the track. A microphone that
+  // stopped (AirPods connected, or taken by the phone; a headset unplugged) or a change of the computer's inputs is taken
+  // again on the next press, or at once while talking, and each scope swaps its copy without a new connection
+  // (replaceTrack). Before, the page kept the dead microphone for the visit: "Talking" showed and nobody heard anything
+  // (Oct 31, Miguel: "i have my airpods connected ... he cant hear me")
+  let micStale = false;
   async function micTrack() {
+    if (mic && (micStale || mic.readyState !== 'live')) { try { mic.stop(); } catch (e) {} mic = null; }
+    micStale = false;
     if (mic) return mic;
     if (micAsk) return micAsk;
     micAsk = (async () => {
       try { if (navigator.audioSession) navigator.audioSession.type = 'play-and-record'; } catch (e) {} // (iOS: keep the voices on the speaker)
       const st = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
-      mic = st.getAudioTracks()[0]; mic.enabled = false;
-      return mic;
-    })().catch(e => { micAsk = null; throw e; });
+      const m = st.getAudioTracks()[0]; m.enabled = false;
+      m.addEventListener('ended', () => { if (mic !== m) return; micStale = true; report('mic-ended'); if (talking) refreshMic(); });
+      return (mic = m);
+    })().finally(() => { micAsk = null; });
     return micAsk;
+  }
+  // this scope's copy of the microphone, from the microphone in use (a new copy when it was taken again)
+  async function freshTrack(sc) {
+    const m = await micTrack();
+    if (sc.track && sc.trackOf === m && sc.track.readyState === 'live') return sc.track;
+    const t = m.clone(); t.enabled = false;
+    const snd = sc.prod?.getSenders?.().find(x => !x.track || x.track.kind === 'audio');
+    if (snd) await snd.replaceTrack(t);
+    const old = sc.track; sc.track = t; sc.trackOf = m; if (old && old !== t) { try { old.stop(); } catch (e) {} }
+    return t;
+  }
+  async function refreshMic() {
+    const tk = talking; if (!tk) return; const sc = S[tk.where];
+    try { await freshTrack(sc); if (talking === tk && tk.ready && sc.track) { sc.track.enabled = true; meter(sc.track); } report('mic-refreshed'); }
+    catch (e) { report('mic-refresh-fail:' + (e?.name || '')); }
+  }
+  try { navigator.mediaDevices?.addEventListener?.('devicechange', () => { if (!mic) return; micStale = true; report('devicechange'); if (talking?.ready) refreshMic(); }); } catch (e) {}
+  // how loud the microphone is while talking: a meter on the badge and the voice bubble (village-chat.js reads --vl), and
+  // a hint when it hears nothing at all (a wrong or dead input) after a few seconds of talking
+  const MIC = { an: null, src: null, of: null, buf: null, timer: 0, level: 0, peak: 0, since: 0, hinted: false };
+  function meter(track) {
+    const ac = audio(); if (!ac || !track) return;
+    if (MIC.of !== track) {
+      try { MIC.src?.disconnect(); } catch (e) {}
+      try {
+        if (!MIC.an) { MIC.an = ac.createAnalyser(); MIC.an.fftSize = 1024; MIC.buf = new Float32Array(MIC.an.fftSize); const z = ac.createGain(); z.gain.value = 0; MIC.an.connect(z); z.connect(ac.destination); } // (silent: only to keep the analyser running)
+        MIC.src = ac.createMediaStreamSource(new MediaStream([track])); MIC.src.connect(MIC.an); MIC.of = track;
+      } catch (e) { MIC.src = null; MIC.of = null; }
+    }
+    MIC.peak = 0; MIC.since = performance.now();
+    if (!MIC.timer) MIC.timer = setInterval(meterTick, 80);
+  }
+  function meterTick() {
+    if (!talking?.ready || !MIC.an) { clearInterval(MIC.timer); MIC.timer = 0; MIC.level = 0; paintMeter(); return; }
+    MIC.an.getFloatTimeDomainData(MIC.buf); let s = 0; for (let i = 0; i < MIC.buf.length; i++) s += MIC.buf[i] * MIC.buf[i];
+    const rms = Math.sqrt(s / MIC.buf.length); MIC.peak = Math.max(MIC.peak, rms);
+    MIC.level = Math.max(rms > MIC.level ? rms : MIC.level * .82, 0); paintMeter();
+    const tk = S[talking.where]?.track;
+    if (!MIC.hinted && performance.now() - MIC.since > 5000 && (MIC.peak < .002 || tk?.muted)) {
+      MIC.hinted = true; report('mic-silent:' + MIC.peak.toFixed(5) + (tk?.muted ? ':muted' : ''));
+      H.toast?.("Your microphone isn't picking up any sound. Check the input in your computer's sound settings (AirPods: pick them as the input), or let go and press again.");
+    }
+  }
+  function paintMeter() {
+    const k = Math.min(1, Math.sqrt(MIC.level) * 3.2); // (speech sits around 0.02-0.1 rms)
+    const i = badge?.querySelector('.lvl i'); if (i) i.style.width = Math.round(k * 100) + '%';
+    document.getElementById('vcVoice')?.style.setProperty('--vl', k.toFixed(2));
   }
   const dtx = sdp => sdp.replace(/a=fmtp:(\d+) ([^\r\n]*)/g, (l, pt, p) => (new RegExp('a=rtpmap:' + pt + ' opus/', 'i').test(sdp) && !/usedtx/.test(p) ? `a=fmtp:${pt} ${p};usedtx=1` : l)); // (Opus DTX: silence costs next to nothing)
   const pc = () => new RTCPeerConnection({ bundlePolicy: 'max-bundle', iceServers: ICE });
@@ -59,7 +114,7 @@
     sc.pubWait = (async () => {
       const m = await micTrack();
       if (sc.prod) { try { sc.prod.close(); } catch (e) {} }
-      sc.track = m.clone(); sc.track.enabled = false;
+      sc.track = m.clone(); sc.track.enabled = false; sc.trackOf = m;
       sc.prod = pc();
       const tx = sc.prod.addTransceiver(sc.track, { direction: 'sendonly' });
       const offer = await sc.prod.createOffer(); offer.sdp = dtx(offer.sdp);
@@ -86,10 +141,10 @@
       if (!link(sc)?.open()) { H.toast?.(where === 'group' ? 'Not connected to your group yet.' : 'Voice is only for your group here: pick Group in the chat.'); return; }
       talking = { where, at: performance.now(), ready: false };
       paintBadge();
-      try { await publish(sc); }
+      try { await publish(sc); await freshTrack(sc); }
       catch (e) { const why = e?.why || (e?.name === 'NotAllowedError' ? 'mic' : 'mic-none'); talking = null; paintBadge(); report('talk-fail:' + why + (e?.name ? ':' + e.name : '')); H.toast?.(why === 'mic' ? 'Universe needs your microphone to talk: allow it in the browser (the icon by the address).' : why === 'mic-none' ? 'No microphone found.' : WHY[why] || WHY.sfu); return; }
       if (!talking || talking.where !== where) return; // (let go meanwhile)
-      sc.track.enabled = true; talking.ready = true; paintBadge(); report('talk-on');
+      sc.track.enabled = true; talking.ready = true; paintBadge(); meter(sc.track); report('talk-on');
     } else {
       if (!talking) return;
       const sc = S[talking.where]; if (sc.track) sc.track.enabled = false;
@@ -231,13 +286,15 @@
 #vvBadge .wait{background:#e8c56a;animation:none}
 #vvBadge .spk{color:#7be38a}
 #vvBadge .tap{color:#ffe08a}
+#vvBadge .lvl{width:46px;height:6px;border-radius:3px;background:rgba(255,255,255,.14);overflow:hidden}
+#vvBadge .lvl i{display:block;height:100%;width:0;background:linear-gradient(90deg,#5ecfca,#7be38a);transition:width .08s linear}
 @keyframes vvp{0%{box-shadow:0 0 0 0 rgba(224,90,107,.7)}70%{box-shadow:0 0 0 9px rgba(224,90,107,0)}100%{box-shadow:0 0 0 0 rgba(224,90,107,0)}}
 html.vt-touch #vvBadge{top:calc(max(12px,env(safe-area-inset-top,0px)) + 64px)}
 body.in-game #vvBadge{display:none!important}`;
   function paintBadge() {
     if (!badge) return;
     const parts = [];
-    if (talking) parts.push(`<span class="mic${talking.ready ? '' : ' wait'}"></span><span>${talking.ready ? 'Talking' : 'Connecting voice…'} · ${talking.where === 'group' ? 'Group' : talking.where === 'stage' ? 'Stage' : 'Nearby'}</span>`);
+    if (talking) parts.push(`<span class="mic${talking.ready ? '' : ' wait'}"></span><span>${talking.ready ? 'Talking' : 'Connecting voice…'} · ${talking.where === 'group' ? 'Group' : talking.where === 'stage' ? 'Stage' : 'Nearby'}</span>${talking.ready ? '<span class="lvl" title="Your microphone"><i></i></span>' : ''}`);
     const g = [...[...S.group.subs.values()].filter(s => s.speaking).map(s => H.group?.member?.(s.key)?.n), ...[...S.stage.subs.values()].filter(s => s.speaking).map(s => H.stage?.nameOf?.(s.key))].filter(Boolean);
     if (g.length) parts.push(`<span class="spk">🔊 ${g.map(n => n.replace(/[<>&"]/g, '')).join(', ')}</span>`);
     if (waitingTap()) parts.push('<span class="tap">🔇 Tap the screen to hear voices</span>');
@@ -312,6 +369,7 @@ body.in-game #vvBadge{display:none!important}`;
     mute: (u, n, on) => { if (!u) return; if (on) vmuted[u] = { n: n || 'Rebel', at: Date.now() }; else delete vmuted[u]; save(MUTED, vmuted); S.room.syncAt = S.group.syncAt = 0; },
     muted: () => ({ ...vmuted }),
     get settings() { return settings; },
+    _dbg: { mic: () => mic, scope: n => S[n], meter: () => ({ level: MIC.level, peak: MIC.peak, on: !!MIC.timer }) }, // (tests)
     set: (k, v) => { settings[k] = v; save(SETTINGS, settings); if (k === 'volume' && master) master.gain.value = v; if (k === 'hear') { S.room.syncAt = S.group.syncAt = 0; } },
     get state() { const sub = sc => [...sc.subs.values()].map(s => ({ key: s.key, mid: s.mid, on: !!s.node, speaking: !!s.speaking })); return { talking: talking ? { ...talking } : null, ctx: ctx?.state || null, mic: !!mic, room: { pub: S.room.pub, subs: sub(S.room), prod: S.room.prod?.connectionState || null, cons: S.room.cons?.connectionState || null }, group: { pub: S.group.pub, subs: sub(S.group), prod: S.group.prod?.connectionState || null, cons: S.group.cons?.connectionState || null }, stage: { pub: S.stage.pub, subs: sub(S.stage), prod: S.stage.prod?.connectionState || null, cons: S.stage.cons?.connectionState || null } }; }
   };
