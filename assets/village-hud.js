@@ -59,10 +59,11 @@ body.rebel-panel-open #questBtn,body.in-game #questBtn,body.vc-open #questBtn,ht
     document.body.appendChild(b);
     b.addEventListener('click', e => { e.stopPropagation(); HUD.togglePanel(); b.blur(); });
     const q = document.createElement('div'); q.id = 'questLine'; q.innerHTML = '<b></b><span></span>'; document.body.appendChild(q);
-    let open = false; try { open = localStorage.getItem('rebelAntsHudPanelOpen') === '1'; } catch (e) {}
-    // touch screens start with it folded: while it is open the stick and buttons step aside (village.html)
-    if (window.VillageTouch?.on) open = false;
-    document.body.classList.toggle('rebel-panel-open', open);
+    // every screen starts with it folded, as on phones (Miguel, Oct 31: "the same as on the phone, and then you click it
+    // to open it"); the button or Tab opens it, the button, Tab or Esc folds it. Computers used to remember it open
+    // (rebelAntsHudPanelOpen): that old setting goes. On touch screens the stick and buttons step aside while it is open.
+    try { localStorage.removeItem('rebelAntsHudPanelOpen'); } catch (e) {}
+    document.body.classList.remove('rebel-panel-open');
     window.addEventListener('keydown', e => {
       if (e.key !== 'Tab' || e.ctrlKey || e.metaKey || e.altKey) return;
       const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
@@ -85,8 +86,8 @@ body.rebel-panel-open #questBtn,body.in-game #questBtn,body.vc-open #questBtn,ht
   HUD.togglePanel = function (force) {
     const open = typeof force === 'boolean' ? force : !document.body.classList.contains('rebel-panel-open');
     document.body.classList.toggle('rebel-panel-open', open);
-    try { localStorage.setItem('rebelAntsHudPanelOpen', open ? '1' : '0'); } catch (e) {}
     if (open) { dot = false; document.getElementById('rebelHudBtn')?.classList.remove('has-news'); }
+    else window.togglePlayerGlovePanel?.(false); // (the glove colours open from the panel: they fold with it)
   };
 
   // the mission card on phones: open (a tap) or popped (a few seconds); HUD.mission(true | false) is a tap

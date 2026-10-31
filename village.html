@@ -28083,6 +28083,9 @@ document.addEventListener('keydown', async e => {
     closeNPCDialogue();
     return;
   }
+  // Esc folds the glove colours, then the Rebel panel, before it leaves walking
+  if (key === 'escape' && !adminMode && document.getElementById('glovePanel')?.classList.contains('on')) { e.preventDefault(); window.togglePlayerGlovePanel(false); return; }
+  if (key === 'escape' && !adminMode && document.body.classList.contains('rebel-panel-open') && window.VillageHud?.togglePanel) { e.preventDefault(); window.VillageHud.togglePanel(false); return; }
   if (key === 'escape' && walkMode) toggleWalk();
 
   if (adminMode && key === 'n') {
