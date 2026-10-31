@@ -146,6 +146,25 @@ html.vt-touch #selectedRebelPanel{max-height:calc(100vh - 168px);overflow-y:auto
 #glovePanel .gp-note{font-size:11px;color:#aab3c2;margin-top:4px}
 #glovePanel .gp-close{position:absolute;top:8px;right:10px;background:none;border:0;color:#cfd8e6;font-size:16px;cursor:pointer}
 @media (max-width:700px){#glovePanel{left:50%;top:50%;transform:translate(-50%,-50%)}}
+/* the player's own sound levels (Miguel, Oct 31: "is there a way they can lower the music or sound effects volume") */
+#soundBtn{margin-top:5px;width:100%;height:24px;border:1px solid rgba(180,160,255,.36);background:rgba(180,160,255,.05);color:#c4b5ff;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:2px;cursor:pointer}
+#soundBtn:hover{background:rgba(180,160,255,.13)}
+html.vt-touch #soundBtn{height:32px}
+#soundPanel{position:fixed;top:124px;left:340px;width:min(300px,calc(100vw - 32px));box-sizing:border-box;padding:12px 12px 10px;background:rgba(5,10,28,.95);border:1px solid rgba(180,160,255,.45);backdrop-filter:blur(12px);z-index:30;display:none;color:#f3e6c4;font:600 12px/1.3 Georgia,serif}
+#soundPanel.on{display:block}
+#soundPanel h4{margin:0 0 10px;font:700 10px 'Cinzel Decorative',serif;letter-spacing:2px;color:#c4b5ff;text-transform:uppercase}
+#soundPanel .sp-row{display:grid;grid-template-columns:32px minmax(0,1fr);column-gap:9px;align-items:center;margin-bottom:9px}
+#soundPanel .sp-mute{grid-row:span 2;width:32px;height:32px;border-radius:50%;border:1px solid rgba(180,160,255,.42);background:rgba(180,160,255,.07);color:#ddd4ff;cursor:pointer;padding:0;display:grid;place-items:center}
+#soundPanel .sp-mute:hover{background:rgba(180,160,255,.16)}
+#soundPanel .sp-mute.off{color:#7d8296;border-color:rgba(255,255,255,.18);background:none}
+#soundPanel .sp-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12px;color:#e6ecf6}
+#soundPanel .sp-pct{font:600 11px ui-monospace,Menlo,monospace;color:#c4b5ff}
+#soundPanel .sp-row.off .sp-pct{color:#7d8296}
+#soundPanel input[type=range]{width:100%;height:20px;margin:2px 0 0;accent-color:#b9a7ff;cursor:pointer}
+html.vt-touch #soundPanel input[type=range]{height:30px}
+#soundPanel .sp-note{font-size:11px;color:#aab3c2;margin-top:2px}
+#soundPanel .sp-close{position:absolute;top:8px;right:10px;background:none;border:0;color:#cfd8e6;font-size:16px;cursor:pointer}
+@media (max-width:700px){#soundPanel{left:50%;top:50%;transform:translate(-50%,-50%)}}
 #questTracker{
   margin-top:7px;
   padding-top:7px;
@@ -1794,6 +1813,7 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
       <div class="world-status-row"><span>Items</span><span class="world-status-value" id="hudCollectibleCount">0</span></div>
       <div class="world-status-row"><span>Quests</span><span class="world-status-value" id="hudQuestCount">0</span></div>
       <button id="journalBtn" type="button" onclick="openProgressionJournal()">Journal</button>
+      <button id="soundBtn" type="button" onclick="toggleSoundPanel()">Sound</button>
       <button id="gloveBtn" type="button" onclick="togglePlayerGlovePanel()">Gloves</button>
       <button id="mobHubBtn" type="button" onclick="returnToHubVillage()">Return to Hub</button>
     </div>
@@ -1806,6 +1826,7 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
   </div>
 </div>
 <div id="glovePanel" role="dialog" aria-label="Glove colours"><button class="gp-close" type="button" onclick="togglePlayerGlovePanel(false)" aria-label="Close">✕</button><h4>Gloves</h4><div class="gp-row"><div class="gp-label"><span>Gloves</span><span class="gp-name" data-k="glove"></span></div><div class="gp-sw" data-k="glove"></div></div><div class="gp-row"><div class="gp-label"><span>Cuffs</span><span class="gp-name" data-k="cuff"></span></div><div class="gp-sw" data-k="cuff"></div></div><div class="gp-note">Saved for this Rebel on this device. The first swatch is how your Rebel looks now, the ringed one the colour the Forge gave it.</div></div>
+<div id="soundPanel" role="dialog" aria-label="Sound"><button class="sp-close" type="button" onclick="toggleSoundPanel(false)" aria-label="Close">✕</button><h4>Sound</h4><div id="soundRows"></div><div class="sp-note">Saved on this device. 100% is how Universe is mixed.</div></div>
 <button id="backToLobbyBtn" onclick="backToLobby()">← Back to Lobby</button>
 
 <button id="wb" onclick="toggleWalk()">⚔️ &nbsp;ENTER VILLAGE</button>
@@ -4193,7 +4214,7 @@ window.setTaleMoon = key => { TaleMoonPreview = key === undefined ? undefined : 
 // a slow chant for patience. They follow the Master and Interaction sliders; a new one fades out the one playing.
 const MoonTaleSounds = (() => {
   let ctx = null, out = null, bus = null;
-  const vol = () => WeatherManager.interactionAudioEnabled === false ? 0 : (WeatherManager.masterVolume ?? .8) * (WeatherManager.interactionVolume ?? .7);
+  const vol = () => WeatherManager.interactionAudioEnabled === false ? 0 : (WeatherManager.masterVolume ?? .8) * (WeatherManager.interactionVolume ?? .7) * playerSound('effects');
   const ensure = () => {
     if (ctx) return ctx;
     try {
@@ -12257,7 +12278,7 @@ function buildMiniGameCtx(def, src, frame) {
     },
     music(name, loops) { if (name) MoonTaleSounds.play(name, loops); }, stopMusic() { MoonTaleSounds.stop(.3); },
     audio() { return MoonTaleSounds.mix(); },                // a music bus of the game's own (Web Audio), or null
-    sfx(name, opts) { try { (MiniGames.sfx ||= window.RebelWeapon?.sfx?.({ scene, clip: () => null, kind: 'bow', volume: () => (WeatherManager.interactionAudioEnabled ? WeatherManager.masterVolume * WeatherManager.interactionVolume * 1.4 : 0) }))?.play?.(name, opts); } catch (e) {} },
+    sfx(name, opts) { try { (MiniGames.sfx ||= window.RebelWeapon?.sfx?.({ scene, clip: () => null, kind: 'bow', volume: () => (WeatherManager.interactionAudioEnabled ? WeatherManager.masterVolume * WeatherManager.interactionVolume * 1.4 * playerSound('effects') : 0) }))?.play?.(name, opts); } catch (e) {} },
     // a screen point (CSS px) of a world point, for score pops
     screenOf(p) { const r = engine.getRenderingCanvasClientRect(); const v = BABYLON.Vector3.Project(p, BABYLON.Matrix.Identity(), scene.getTransformMatrix(), walk.viewport.toGlobal(engine.getRenderWidth(), engine.getRenderHeight()));
       return { x: (r?.left || 0) + v.x * (r ? r.width / engine.getRenderWidth() : 1), y: (r?.top || 0) + v.y * (r ? r.height / engine.getRenderHeight() : 1), behind: v.z > 1 || v.z < 0 }; },
@@ -12455,7 +12476,7 @@ const PlayerGloves = (() => {
 window.PlayerGloves = PlayerGloves; // tests
 window.togglePlayerGlovePanel = function (on) {
   const el = document.getElementById('glovePanel'); if (!el || !PlayerGloves.available()) return;
-  const show = on == null ? !el.classList.contains('on') : !!on; el.classList.toggle('on', show); if (show) PlayerGloves.paint();
+  const show = on == null ? !el.classList.contains('on') : !!on; el.classList.toggle('on', show); if (show) { PlayerGloves.paint(); window.toggleSoundPanel?.(false); }
 };
 // The games pack (v2.24): Miguel's Mixamo moves for the games (game_cast / reel / fish_wait, game_dig, game_plant,
 // game_pick_up, game_throw / throw_far, game_chop, game_cheer, game_push / push_walk, dance_wave / tut / house /
@@ -14819,7 +14840,7 @@ function getInteriorAudioId(path = getActiveInteriorAudioPath()) {
 function getInteriorAudioTargetVolume() {
   if (!WeatherManager.masterAudioEnabled || !WeatherManager.musicEnabled) return 0;
   const blendedInteriorVolume = Math.sqrt(Math.max(0, WeatherManager.musicVolume) * Math.max(0, WeatherManager.ambienceVolume));
-  return WeatherManager.masterVolume * blendedInteriorVolume * .85;
+  return WeatherManager.masterVolume * blendedInteriorVolume * .85 * playerSound('music');
 }
 
 function updateInteriorAudioStatus(message = '', force = false) {
@@ -14939,7 +14960,7 @@ function getWeatherAudioTargets() {
   if (ActiveInterior) return targets;
   if (!WeatherManager.audioEnabled) return targets;
   (WEATHER_AUDIO_TRACKS[WeatherManager.mode] || []).forEach(track => {
-    targets[track.id] = Math.max(targets[track.id] || 0, (track.volume || .2) * WeatherManager.masterVolume * WeatherManager.weatherVolume);
+    targets[track.id] = Math.max(targets[track.id] || 0, (track.volume || .2) * WeatherManager.masterVolume * WeatherManager.weatherVolume * playerSound('ambience'));
     getWeatherAudioTrack(track.id, track.path);
   });
   return targets;
@@ -14952,13 +14973,13 @@ function getVillageAmbienceTargets() {
   const profile = VILLAGE_AMBIENCE_PROFILES[CURRENT_VILLAGE_ID] || DEFAULT_VILLAGE_AMBIENCE;
   const moodScale = getWeatherAmbienceMultiplier();
   (profile.loops || []).forEach(track => {
-    targets[track.id] = Math.max(targets[track.id] || 0, (track.volume || .25) * WeatherManager.masterVolume * WeatherManager.ambienceVolume * moodScale);
+    targets[track.id] = Math.max(targets[track.id] || 0, (track.volume || .25) * WeatherManager.masterVolume * WeatherManager.ambienceVolume * moodScale * playerSound('ambience'));
     getWeatherAudioTrack(track.id, track.path);
   });
   const nearGate = walkMode && !adminMode && getNearestVillageGateInRange(10.5);
   if (nearGate || isVillageGateMenuOpen()) {
     const pulse = .82 + Math.sin(performance.now() * .003) * .18;
-    targets[PORTAL_HUM_AUDIO.id] = PORTAL_HUM_AUDIO.volume * WeatherManager.masterVolume * WeatherManager.ambienceVolume * pulse;
+    targets[PORTAL_HUM_AUDIO.id] = PORTAL_HUM_AUDIO.volume * WeatherManager.masterVolume * WeatherManager.ambienceVolume * pulse * playerSound('ambience');
     getWeatherAudioTrack(PORTAL_HUM_AUDIO.id, PORTAL_HUM_AUDIO.path);
   }
   return targets;
@@ -15023,7 +15044,7 @@ function ensureVillageMusicTrack() {
 function getVillageMusicTargetVolume() {
   if (ActiveInterior) return 0;
   if (!WeatherManager.musicEnabled || !WeatherManager.musicUnlocked || WeatherManager.musicTravelMuted) return 0;
-  return WeatherManager.masterVolume * WeatherManager.musicVolume;
+  return WeatherManager.masterVolume * WeatherManager.musicVolume * playerSound('music');
 }
 
 function updateVillageMusic() {
@@ -15075,7 +15096,7 @@ function playWeatherThunderAudio(strikeId, dist = 300, loud = true) {
   const src = ctx.createBufferSource(), lp = ctx.createBiquadFilter(), g = ctx.createGain();
   src.buffer = buf; src.playbackRate.value = .86 + Math.random() * .24;
   lp.type = 'lowpass'; lp.frequency.value = near ? 9000 : 900 + 1600 * (460 - dist) / 200;
-  const vol = (WeatherManager.masterVolume ?? .8) * (WeatherManager.weatherVolume ?? .65) * (near ? .85 : .6) * (loud ? 1 : .7);
+  const vol = (WeatherManager.masterVolume ?? .8) * (WeatherManager.weatherVolume ?? .65) * (near ? .85 : .6) * (loud ? 1 : .7) * playerSound('ambience');
   g.gain.value = Math.max(0, Math.min(1, vol));
   src.connect(lp).connect(g).connect(ctx.destination);
   src.start(ctx.currentTime + dist / 343);
@@ -15111,7 +15132,7 @@ function playInteractionAudio(key) {
   WeatherManager.audioCooldowns[key] = now + (cfg.cooldownMs || 500);
   const audio = getInteractionAudioTrack(cfg.id, cfg.path);
   if (!audio || audio._unavailable) return;
-  audio.volume = (cfg.volume || .6) * WeatherManager.masterVolume * WeatherManager.interactionVolume;
+  audio.volume = (cfg.volume || .6) * WeatherManager.masterVolume * WeatherManager.interactionVolume * playerSound('effects');
   audio.currentTime = 0;
   audio.play().catch(error => { markAudioPlayFailure(audio, error); });
 }
@@ -15215,7 +15236,7 @@ function playFootstep(surface, run, level = 1) {
   FootstepAudio.last[surface] = i;
   const src = ctx.createBufferSource(), g = ctx.createGain(), pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
   src.buffer = list[i]; src.playbackRate.value = .94 + Math.random() * .12;
-  g.gain.value = WeatherManager.masterVolume * WeatherManager.footstepVolume * (FOOTSTEP_GAIN[surface] || 1) * (run ? 1.12 : .92) * (.86 + Math.random() * .14) * FOOTSTEP_LEVEL * level;
+  g.gain.value = WeatherManager.masterVolume * WeatherManager.footstepVolume * playerSound('effects') * (FOOTSTEP_GAIN[surface] || 1) * (run ? 1.12 : .92) * (.86 + Math.random() * .14) * FOOTSTEP_LEVEL * level;
   src.connect(g);
   if (pan) { FootstepAudio.side = -FootstepAudio.side; pan.pan.value = FootstepAudio.side * .08; g.connect(pan).connect(FootstepAudio.out); } else g.connect(FootstepAudio.out);
   src.start();
@@ -15289,7 +15310,7 @@ function updateEnvironmentalOneShotAudio() {
   if (cfg) {
     const audio = getInteractionAudioTrack(cfg.id, cfg.path);
     if (audio && !audio._unavailable) {
-      audio.volume = (cfg.volume || .25) * WeatherManager.masterVolume * WeatherManager.ambienceVolume;
+      audio.volume = (cfg.volume || .25) * WeatherManager.masterVolume * WeatherManager.ambienceVolume * playerSound('ambience');
       audio.currentTime = 0;
       audio.play().catch(error => { markAudioPlayFailure(audio, error); });
     }
@@ -15446,6 +15467,67 @@ function setFootstepVolume(value) {
   WeatherManager.footstepVolume = clampAudioVolume(value);
   persistAudioSettings();
 }
+
+// The player's own sound levels (the Rebel panel's Sound; Miguel, Oct 31: players asked "is there a way they can lower
+// the music or sound effects volume"): 0-1 of how Universe is mixed (Admin > Audio stays the mix), saved on this device
+// (localStorage rebelAntsSound:v1). music = the village and room music; effects = interactions, chests, footsteps,
+// weapon and game sounds, the games' songs, the tales' sounds; ambience = the ambience and weather loops, the random
+// ambience sounds, thunder, running water, the surf, the portal hum. Voices keep their own level (VillageVoice.settings
+// .volume, also in the chat's settings). A function, so sounds made before this line runs read it too.
+var PlayerSoundLevels;
+function playerSound(kind) {
+  if (!PlayerSoundLevels) {
+    PlayerSoundLevels = { music: 1, effects: 1, ambience: 1 };
+    try { const s = JSON.parse(localStorage.getItem('rebelAntsSound:v1') || 'null'); if (s && typeof s === 'object') for (const k of Object.keys(PlayerSoundLevels)) if (s[k] != null && Number.isFinite(+s[k])) PlayerSoundLevels[k] = Math.max(0, Math.min(1, +s[k])); } catch (e) {}
+  }
+  return PlayerSoundLevels[kind] ?? 1;
+}
+function setPlayerSound(kind, value) {
+  playerSound(kind); if (!(kind in PlayerSoundLevels)) return;
+  PlayerSoundLevels[kind] = Math.max(0, Math.min(1, Number(value) || 0));
+  try { localStorage.setItem('rebelAntsSound:v1', JSON.stringify(PlayerSoundLevels)); } catch (e) {}
+  updateWeatherAudio(); if (kind === 'music') updateVillageMusic();
+}
+// The Sound panel (the Rebel panel's Sound button; the chat's settings link to it too): a slider and a mute button for
+// each kind; Voices only where voice is on here (the same level as the chat's Voice volume, 0-150 %).
+const SOUND_ROWS = [['music', 'Music', 'The village and room music'], ['effects', 'Sound effects', 'Footsteps, chests, games, moves'], ['ambience', 'Ambience & weather', 'Birds, wind, rain, water']];
+const SOUND_ICON = {
+  on: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
+  off: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor"/><path d="m16 9 6 6M22 9l-6 6"/></svg>'
+};
+const soundLast = {}; // (the level a mute button brings back)
+function soundVoiceHere() { return !!window.VillageVoice && !!(window.VillageMP?.voice?.on || window.VillageGroup?.voice?.open?.() || window.VillageStage?.voice?.open?.()); }
+function paintSoundPanel() {
+  const box = document.getElementById('soundRows'); if (!box) return; box.innerHTML = '';
+  const rows = SOUND_ROWS.map(([k, label, hint]) => ({ k, label, hint, max: 1, get: () => playerSound(k), set: v => setPlayerSound(k, v) }));
+  const VV = window.VillageVoice;
+  if (soundVoiceHere()) rows.push({ k: 'voices', label: 'Voices', hint: 'Players talking near you', max: 1.5, get: () => +(VV.settings.volume ?? 1), set: v => VV.set('volume', v) });
+  for (const R of rows) {
+    const row = document.createElement('div'); row.className = 'sp-row'; row.title = R.hint; row.dataset.k = R.k;
+    const mute = document.createElement('button'); mute.type = 'button'; mute.className = 'sp-mute';
+    const top = document.createElement('div'); top.className = 'sp-top';
+    const name = document.createElement('span'); name.textContent = R.label; const pct = document.createElement('span'); pct.className = 'sp-pct'; top.append(name, pct);
+    const r = document.createElement('input'); r.type = 'range'; r.min = '0'; r.max = String(R.max); r.step = '0.05'; r.value = String(R.get()); r.setAttribute('aria-label', R.label + ' volume');
+    const show = () => {
+      const off = +r.value <= 0; pct.textContent = Math.round(+r.value * 100) + '%'; row.classList.toggle('off', off); mute.classList.toggle('off', off);
+      mute.innerHTML = off ? SOUND_ICON.off : SOUND_ICON.on; mute.title = (off ? 'Turn on ' : 'Mute ') + R.label.toLowerCase(); mute.setAttribute('aria-label', mute.title);
+    };
+    r.oninput = () => { R.set(+r.value); if (+r.value > 0) soundLast[R.k] = +r.value; show(); };
+    r.onchange = () => r.blur(); // (let go: the walk keys work again)
+    mute.onclick = e => { e.stopPropagation(); const cur = +r.value; if (cur > 0) soundLast[R.k] = cur; r.value = String(cur > 0 ? 0 : (soundLast[R.k] || 1)); R.set(+r.value); show(); };
+    show(); row.append(mute, top, r); box.appendChild(row);
+  }
+}
+window.toggleSoundPanel = function (on) {
+  const el = document.getElementById('soundPanel'); if (!el) return;
+  const show = on == null ? !el.classList.contains('on') : !!on;
+  if (show) { window.togglePlayerGlovePanel?.(false); paintSoundPanel(); }
+  el.classList.toggle('on', show);
+  if (!show && el.contains(document.activeElement)) document.activeElement.blur();
+};
+// Esc with a slider in hand (the page's own keys skip inputs)
+document.getElementById('soundPanel')?.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); window.toggleSoundPanel(false); } });
+window.PlayerSound = { get: playerSound, set: setPlayerSound, get levels() { playerSound('music'); return { ...PlayerSoundLevels }; } }; // (tests)
 
 function getWeatherReactiveRoots() {
   const reactiveTypes = new Set(['lantern_1','hanging_lantern','hangingLantern','toro_lantern','tree_1','pine_1','cherry_blossom','bamboo','ronin_dead_tree','ronin_mist']);
@@ -25776,7 +25858,7 @@ async function lendGameWeapon(kind, weaponId) {
       const grip = RebelWeapon.twoHand({ scene, meshes: body, held, H: back.info.H });
       const curClip = () => { const g = animGroups[animState]; if (!g) return null; const an = g.animatables && g.animatables[0]; const fps = (g.targetedAnimations[0] && g.targetedAnimations[0].animation.framePerSecond) || 30;
         return { name: g.name, frac: an ? (an.masterFrame - g.from) / ((g.to - g.from) || 1) : 0, dur: (g.to - g.from) / fps / (g.speedRatio || 1) }; };
-      const sfx = RebelWeapon.sfx({ scene, clip: curClip, kind: kindOf, volume: () => (WeatherManager.interactionAudioEnabled ? WeatherManager.masterVolume * WeatherManager.interactionVolume * 1.4 : 0) });
+      const sfx = RebelWeapon.sfx({ scene, clip: curClip, kind: kindOf, volume: () => (WeatherManager.interactionAudioEnabled ? WeatherManager.masterVolume * WeatherManager.interactionVolume * 1.4 * playerSound('effects') : 0) });
       // the bow's own arrow is the game's to fly: onRelease hands over the release point (the archer's arrow is removed)
       const archer = kindOf === 'bow' ? RebelWeapon.archer({ scene, meshes: body, held, back, H: back.info.H, clip: curClip, ignore: (m) => m.isDescendantOf && m.isDescendantOf(charMesh),
         onNock: () => sfx.play('arrow_nock'), onRelease: (p) => { sfx.play('bow_release'); const a = L.archer?.flying.pop(); a?.n.dispose(); L.onRelease?.(p); } }) : null;
@@ -25819,7 +25901,7 @@ async function armVillageWeapon(r, body, pick, back) {
   const curClip = () => { const g = animGroups[animState]; if (!g) return null; const an = g.animatables && g.animatables[0]; const fps = (g.targetedAnimations[0] && g.targetedAnimations[0].animation.framePerSecond) || 30;
     return { name: g.name, frac: an ? (an.masterFrame - g.from) / ((g.to - g.from) || 1) : 0, dur: (g.to - g.from) / fps / (g.speedRatio || 1) }; };
   // weapon sounds follow the village's interaction volume (and its mute)
-  const sfx = RebelWeapon.sfx({ scene, clip: curClip, kind: RebelWeapon.kindOf(pick.weapon.id), volume: () => (WeatherManager.interactionAudioEnabled ? WeatherManager.masterVolume * WeatherManager.interactionVolume * 1.4 : 0) });
+  const sfx = RebelWeapon.sfx({ scene, clip: curClip, kind: RebelWeapon.kindOf(pick.weapon.id), volume: () => (WeatherManager.interactionAudioEnabled ? WeatherManager.masterVolume * WeatherManager.interactionVolume * 1.4 * playerSound('effects') : 0) });
   const near = (d) => Math.min(1, 3 / (1 + d));
   const archer = RebelWeapon.kindOf(pick.weapon.id) === 'bow' ? RebelWeapon.archer({ scene, meshes: body, held, back, H: back.info.H, clip: curClip, ignore: (m) => m.isDescendantOf && m.isDescendantOf(charMesh),
     onNock: () => sfx.play('arrow_nock'), onRelease: () => { sfx.play('bow_release'); sfx.play('arrow_fly', { vol: 0.8 }); }, onHit: (p, d) => sfx.play('arrow_hit', { vol: near(d) }) }) : null;
@@ -27229,7 +27311,7 @@ function startNewTerrainWaterSound(NT) {
   setInterval(() => {
     if (!gain || !charMesh) return;
     const level = NT.waterSoundAt(charMesh.position.x, charMesh.position.z);
-    const vol = level * .5 * (WeatherManager.masterVolume ?? .8) * (WeatherManager.ambienceVolume ?? .55) * (document.hidden ? 0 : 1) * voiceDuck(VoiceDuck.amb);
+    const vol = level * .5 * (WeatherManager.masterVolume ?? .8) * (WeatherManager.ambienceVolume ?? .55) * playerSound('ambience') * (document.hidden ? 0 : 1) * voiceDuck(VoiceDuck.amb);
     gain.gain.setTargetAtTime(vol, ctx.currentTime, .4);
   }, 250);
 }
@@ -27299,7 +27381,7 @@ function startNewTerrainSurfSound(NT) {
     while (nextWave < now + 1) nextWave = wave(Math.max(nextWave, now + .05));
     const on = WeatherManager.masterAudioEnabled && !ActiveInterior && !document.hidden;
     const near = on ? NT.surfSoundAt(charMesh.position.x, charMesh.position.z) : 0, level = calm ? 1.6 * near ** 2.4 : near; // the lake is heard close to its shore
-    out.gain.setTargetAtTime(level * 1.1 * (WeatherManager.masterVolume ?? .8) * (WeatherManager.ambienceVolume ?? .55) * voiceDuck(VoiceDuck.amb), now, .5);
+    out.gain.setTargetAtTime(level * 1.1 * (WeatherManager.masterVolume ?? .8) * (WeatherManager.ambienceVolume ?? .55) * playerSound('ambience') * voiceDuck(VoiceDuck.amb), now, .5);
   }, 250);
 }
 function newTerrainLayoutToSaved(data) {
@@ -28087,8 +28169,9 @@ document.addEventListener('keydown', async e => {
     closeNPCDialogue();
     return;
   }
-  // Esc folds the glove colours, then the Rebel panel, before it leaves walking
+  // Esc folds the glove colours or the Sound panel, then the Rebel panel, before it leaves walking
   if (key === 'escape' && !adminMode && document.getElementById('glovePanel')?.classList.contains('on')) { e.preventDefault(); window.togglePlayerGlovePanel(false); return; }
+  if (key === 'escape' && !adminMode && document.getElementById('soundPanel')?.classList.contains('on')) { e.preventDefault(); window.toggleSoundPanel(false); return; }
   if (key === 'escape' && !adminMode && document.body.classList.contains('rebel-panel-open') && window.VillageHud?.togglePanel) { e.preventDefault(); window.VillageHud.togglePanel(false); return; }
   if (key === 'escape' && walkMode) toggleWalk();
 
@@ -30503,7 +30586,7 @@ async function loadForgeCollectionsConfig() {
 // touch screens: the stick and buttons (assets/village-touch.js) show while walking, not in admin or a board game, nor
 // while a talk box, a reading card, the gloves panel or the Rebel panel is open (they sat over the talk box's words and
 // the panel's buttons)
-const touchCovers = ['npcDialogueOverlay', 'panel', 'glovePanel'];
+const touchCovers = ['npcDialogueOverlay', 'panel', 'glovePanel', 'soundPanel'];
 setInterval(() => window.VillageTouch?.update({ walking: !!walkMode && !adminMode && !(MiniGames.on && !MiniGames.roam) && !DanceOff.on && !DanceOff.choosing
   && !touchCovers.some(id => document.getElementById(id)?.classList.contains('on')) && !document.body.classList.contains('rebel-panel-open') && !document.body.classList.contains('vc-open') }), 250);
 // ── Multiplayer, step 2: the other players in this village (assets/village-multiplayer.js; the rooms: realtime/, tickets:

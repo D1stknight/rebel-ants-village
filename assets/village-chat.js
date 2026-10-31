@@ -414,6 +414,10 @@ body:has(#wb:not(.on)) #vcVoice,body:has(#wb:not(.on)) #vcVoiceTip,html.vt-touch
       const lv = document.createElement('label'); lv.className = 'range'; const sv = document.createElement('span'); const pct = () => { sv.textContent = 'Voice volume · ' + Math.round(+r.value * 100) + '%'; }; const r = document.createElement('input'); r.type = 'range'; r.min = '0'; r.max = '1.5'; r.step = '0.05'; r.value = String(VV.settings.volume ?? 1); pct(); r.oninput = () => { VV.set('volume', +r.value); pct(); }; lv.append(sv, r); el.panel.appendChild(lv);
       const how = document.createElement('div'); how.className = 'sub'; how.textContent = H.signedIn() ? 'Hold X (the Talk button on phones) to talk: the players near you hear you, or your group with Group picked.' : 'Sign in to talk and hear voices.'; el.panel.appendChild(how);
     }
+    if (window.toggleSoundPanel) { // the music, sound effects and ambience levels live in the Rebel panel's Sound (village.html)
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'row'; b.textContent = 'Music and sound effects ›';
+      b.onclick = e => { e.stopPropagation(); el.panel.classList.remove('on'); close(); window.toggleSoundPanel(true); }; el.panel.appendChild(b);
+    }
     const lists = [['Blocked', blocked, BLOCK_KEY], ['Muted', muted, MUTE_KEY]];
     for (const [title, map, key] of lists) {
       const ks = Object.keys(map); if (!ks.length) continue;
