@@ -51,7 +51,7 @@
 #vcNote{display:none;margin-top:7px;font-size:12px;color:#e8c56a}
 #vcNote.on{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 #vcNote button{font:700 9px/1 'Cinzel Decorative',serif;letter-spacing:1.4px;background:rgba(232,197,106,.16);border:1px solid rgba(232,197,106,.6);color:#ffe9b0;padding:7px 10px;cursor:pointer}
-#vcBtn{position:fixed;left:336px;bottom:22px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(94,207,202,.7);background:rgba(10,13,22,.85);color:#bff3ef;z-index:16;display:none;padding:0;cursor:pointer}
+#vcBtn{position:fixed;left:28px;bottom:22px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(94,207,202,.7);background:rgba(10,13,22,.85);color:#bff3ef;z-index:16;display:none;padding:0;cursor:pointer}
 #vcBtn svg{width:22px;height:22px;display:block;margin:auto}
 #vcBtn i{position:absolute;right:2px;top:2px;min-width:16px;height:16px;border-radius:8px;background:#e05a6b;color:#fff;font:700 10px/16px Arial,sans-serif;font-style:normal;display:none}
 #vcBtn.unread i{display:block}
@@ -90,8 +90,27 @@ html.vt-touch .vc-chip,html.vt-touch .vc-ico{min-height:34px;padding:9px 11px}
 html.vt-touch #vcPanel .grow .go,html.vt-touch #vcPanel .leave{min-height:36px}
 html.vt-touch #vcPanel{left:12px;right:12px;width:auto;bottom:auto;top:calc(max(12px,env(safe-area-inset-top,0px)) + 54px)}
 body.in-game #vcChat,body.in-game #vcBtn,body.in-game #vcPanel,body.in-game #vcMenu{display:none!important}
+/* computers: the voice bubble beside the chat bubble (Oct 31, Miguel: "a bubble for audio next to that ... it tells the
+   person to press X to chat with voice"): hold it, or X, to talk; its tip says so; it lights while you talk and pulses
+   while someone near you speaks. Phones keep Talk in the ••• buttons. */
+#vcVoice{position:fixed;left:80px;bottom:22px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(94,207,202,.7);background:rgba(10,13,22,.85);color:#bff3ef;z-index:16;display:none;padding:0;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none}
+#vcVoice.on{display:block}
+#vcVoice svg{width:22px;height:22px;display:block;margin:auto;pointer-events:none}
+#vcVoice:hover{border-color:#5ecfca;color:#e9fffd}
+#vcVoice.guest{color:#8b93a8;border-color:rgba(139,147,168,.55)}
+#vcVoice.hear{animation:vcRing 1.2s infinite}
+#vcVoice.wait{border-color:#e8c56a;color:#ffe08a}
+#vcVoice.talk{background:#2f9e5a;border-color:#7be38a;color:#fff;animation:vcRing .9s infinite}
+@keyframes vcRing{0%{box-shadow:0 0 0 0 rgba(123,227,138,.6)}70%{box-shadow:0 0 0 11px rgba(123,227,138,0)}100%{box-shadow:0 0 0 0 rgba(123,227,138,0)}}
+#vcVoiceTip{position:fixed;left:132px;bottom:29px;z-index:16;display:none;padding:7px 11px;background:rgba(5,10,28,.92);border:1px solid rgba(94,207,202,.5);color:#e9fffd;font:600 12px -apple-system,'Segoe UI',Arial,sans-serif;pointer-events:none;white-space:nowrap;backdrop-filter:blur(8px)}
+#vcVoiceTip.on{display:block}
+#vcVoiceTip kbd{display:inline-block;min-width:16px;padding:1px 5px;margin:0 2px;border:1px solid rgba(255,224,138,.7);border-radius:4px;color:#ffe08a;font:700 11px/16px -apple-system,'Segoe UI',Arial,sans-serif;text-align:center}
+body:has(#wb:not(.on)) #vcVoice,body:has(#wb:not(.on)) #vcVoiceTip,html.vt-touch #vcVoice,html.vt-touch #vcVoiceTip,body.in-game #vcVoice,body.in-game #vcVoiceTip{display:none!important}
 `;
   const ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v10H9l-4 4v-4H4z"/><path d="M8 9h8M8 12h5"/></svg>';
+  const MIC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg>';
+  const MIC_OFF = MIC.replace('</svg>', '<path d="M4 4l16 16"/></svg>');
+  const TIP_KEY = 'rebelAntsVoiceTip:v1', TIP_TIMES = 3, TIP_MS = 7000;
 
   function build() {
     const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
@@ -102,8 +121,22 @@ body.in-game #vcChat,body.in-game #vcBtn,body.in-game #vcPanel,body.in-game #vcM
     const b = document.createElement('button'); b.id = 'vcBtn'; b.type = 'button'; b.title = 'Chat'; b.innerHTML = ICON + '<i></i>'; document.body.appendChild(b);
     const m = document.createElement('div'); m.id = 'vcMenu'; document.body.appendChild(m);
     const p = document.createElement('div'); p.id = 'vcPanel'; document.body.appendChild(p);
-    el = { box, log: box.querySelector('#vcLog'), bar: box.querySelector('#vcBar'), chips: box.querySelector('#vcChips'), input: box.querySelector('#vcIn'), count: box.querySelector('#vcCount'), note: box.querySelector('#vcNote'), btn: b, menu: m, panel: p };
+    const v = document.createElement('button'); v.id = 'vcVoice'; v.type = 'button'; v.setAttribute('aria-label', 'Voice'); document.body.appendChild(v);
+    const vt = document.createElement('div'); vt.id = 'vcVoiceTip'; vt.setAttribute('role', 'status'); document.body.appendChild(vt);
+    el = { box, log: box.querySelector('#vcLog'), bar: box.querySelector('#vcBar'), chips: box.querySelector('#vcChips'), input: box.querySelector('#vcIn'), count: box.querySelector('#vcCount'), note: box.querySelector('#vcNote'), btn: b, menu: m, panel: p, voice: v, voiceTip: vt };
     b.onclick = e => { e.stopPropagation(); open ? close() : openChat(); };
+    // the voice bubble: hold it to talk (as X); a guest's click offers the sign-in
+    v.addEventListener('pointerdown', e => {
+      e.preventDefault(); e.stopPropagation();
+      if (e.button > 0 || !H.signedIn()) return;
+      try { v.setPointerCapture(e.pointerId); } catch (x) {}
+      voiceHold = true; window.VillageVoice?.talk(true); paintVoice();
+    });
+    const letGo = () => { if (!voiceHold) return; voiceHold = false; window.VillageVoice?.talk(false); paintVoice(); };
+    v.addEventListener('pointerup', letGo); v.addEventListener('pointercancel', letGo); v.addEventListener('lostpointercapture', letGo);
+    v.addEventListener('click', e => { e.stopPropagation(); if (!H.signedIn()) { close(); H.signIn(); } });
+    v.addEventListener('mouseenter', () => { voiceHover = true; paintVoice(); });
+    v.addEventListener('mouseleave', () => { voiceHover = false; paintVoice(); });
     el.input.addEventListener('keydown', e => {
       e.stopPropagation();
       if (e.key === 'Enter') { e.preventDefault(); const sent = sendLine(); if (sent && !window.VillageTouch?.on) close(); }
@@ -125,9 +158,36 @@ body.in-game #vcChat,body.in-game #vcBtn,body.in-game #vcPanel,body.in-game #vcM
     document.addEventListener('pointerdown', e => {
       if (el.menu.classList.contains('on') && !el.menu.contains(e.target)) closeMenu();
       if (el.panel.classList.contains('on') && !el.panel.contains(e.target) && !e.target.closest?.('.vc-ico')) el.panel.classList.remove('on');
-      if (open && !el.box.contains(e.target) && e.target !== el.btn && !el.btn.contains(e.target) && !el.menu.contains(e.target) && !el.panel.contains(e.target)) close();
+      if (open && !el.box.contains(e.target) && e.target !== el.btn && !el.btn.contains(e.target) && !el.voice.contains(e.target) && !el.menu.contains(e.target) && !el.panel.contains(e.target)) close();
     }, true);
     setInterval(tickLines, 1000);
+    setInterval(paintVoice, 250);
+  }
+  // the voice bubble (computers): shown while voice is on here; its tip says how to talk, on hover and by itself the
+  // first few times; green while you talk, a ring while someone near you speaks
+  let voiceHold = false, voiceHover = false, tipUntil = 0, tipCounted = false;
+  function paintVoice() {
+    const v = el.voice; if (!v) return;
+    const VV = window.VillageVoice, show = !!VV && live && voiceHere() && !window.VillageTouch?.on;
+    v.classList.toggle('on', show);
+    if (!show) { el.voiceTip.classList.remove('on'); return; }
+    const guest = !H.signedIn(), t = guest ? null : VV.state?.talking, talking = !!t, ready = !!t?.ready;
+    if (voiceHold && !talking && !guest && !VV.available?.()) voiceHold = false;
+    const icon = guest ? 'off' : 'on';
+    if (v.dataset.icon !== icon) { v.dataset.icon = icon; v.innerHTML = guest ? MIC_OFF : MIC; }
+    v.classList.toggle('guest', guest); v.classList.toggle('talk', talking && ready); v.classList.toggle('wait', talking && !ready);
+    v.classList.toggle('hear', !guest && !talking && !!VV.busy?.());
+    v.title = guest ? 'Sign in to talk and hear voices' : 'Voice: hold X (or hold this button) to talk';
+    // the tip by itself: the first few visits voice shows, for a few seconds
+    const now = performance.now();
+    if (!tipCounted && !guest && document.getElementById('wb')?.classList.contains('on')) {
+      tipCounted = true;
+      let n = 0; try { n = +localStorage.getItem(TIP_KEY) || 0; } catch (x) {}
+      if (n < TIP_TIMES) { tipUntil = now + TIP_MS; try { localStorage.setItem(TIP_KEY, String(n + 1)); } catch (x) {} }
+    }
+    const html = talking ? '' : guest ? (voiceHover ? 'Sign in to talk and hear voices' : '') : (voiceHover || now < tipUntil) ? 'Hold <kbd>X</kbd> to talk · or hold this button' : '';
+    if (el.voiceTip.dataset.html !== html) { el.voiceTip.dataset.html = html; el.voiceTip.innerHTML = html; }
+    el.voiceTip.classList.toggle('on', !!html);
   }
 
   // ---- the window ----
