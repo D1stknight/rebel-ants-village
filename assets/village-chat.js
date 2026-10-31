@@ -167,8 +167,25 @@ body:has(#wb:not(.on)) #vcVoice,body:has(#wb:not(.on)) #vcVoiceTip,html.vt-touch
         if (window.VillageTouch?.on) close(); else try { el.input.blur(); } catch (x) {}
       }
     }, true);
+    // a chat bubble over a head, clicked or tapped: the chat opens on that bubble's channel (before the game hears the
+    // press: no camera drag, nothing behind it picked)
+    document.addEventListener('pointerdown', e => {
+      if (!bubbles.size || !live || e.button > 0) return;
+      const cv = H.scene?.getEngine?.().getRenderingCanvas?.(); if (!cv || e.target !== cv || !H.canChat()) return;
+      const hit = bubbleAt(cv, e.clientX, e.clientY); if (!hit) return;
+      e.preventDefault(); e.stopPropagation();
+      if (hit.ch === 'n' || hit.ch === 'v' || hit.ch === 'g' || hit.ch === 'e') channel = hit.ch;
+      if (open) { paintBar(); if (canWrite() && !window.VillageTouch?.on) el.input.focus(); } else openChat();
+    }, true);
     setInterval(tickLines, 1000);
     setInterval(paintVoice, 250);
+  }
+  // the bubble under a point of the screen (CSS pixels), only the bubbles: { key, ch } or null
+  function bubbleAt(cv, cx, cy) {
+    const shown = new Map(); for (const [k, b] of bubbles) if (b.mesh.isEnabled() && b.mat.alpha > .2) shown.set(b.mesh, { key: k, ch: b.ch });
+    if (!shown.size) return null;
+    const r = cv.getBoundingClientRect(), pick = H.scene.pick(cx - r.left, cy - r.top, m => shown.has(m), false, H.scene.activeCamera);
+    return pick?.hit ? shown.get(pick.pickedMesh) || null : null;
   }
   // the voice bubble (computers): shown while voice is on here; its tip says how to talk, on hover and by itself the
   // first few times; green while you talk, a ring while someone near you speaks
@@ -456,7 +473,7 @@ body:has(#wb:not(.on)) #vcVoice,body:has(#wb:not(.on)) #vcVoiceTip,html.vt-touch
     mesh.material = mat; mesh.billboardMode = B.Mesh.BILLBOARDMODE_ALL; mesh.isPickable = false; mesh.applyFog = false;
     mesh.metadata = { camSkip: true, mpPeer: true }; mesh.setEnabled(false);
     const now = performance.now();
-    bubbles.set(key, { mesh, mat, tex, u: m.u || '', i: m.gi ? 'g' + m.gi : m.ei ? 'e' + m.ei : m.i || 0, born: now, until: now + (window._vcBubbleMs || Math.min(10000, 4200 + [...m.x].length * 70)) }); // (_vcBubbleMs: tests on slow frames)
+    bubbles.set(key, { mesh, mat, tex, u: m.u || '', ch: m.ch || 'n', i: m.gi ? 'g' + m.gi : m.ei ? 'e' + m.ei : m.i || 0, born: now, until: now + (window._vcBubbleMs || Math.min(10000, 4200 + [...m.x].length * 70)) }); // (_vcBubbleMs: tests on slow frames)
   }
   function tickBubbles() {
     if (!bubbles.size) return;
