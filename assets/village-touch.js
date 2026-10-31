@@ -49,7 +49,7 @@
 .vtBtn.use.ready{border-color:#ffe08a;color:#fff3cf;animation:vtReady 1.6s ease-in-out infinite}
 @keyframes vtReady{0%,100%{box-shadow:0 0 0 2px rgba(232,197,106,.35),0 0 12px rgba(232,197,106,.45)}50%{box-shadow:0 0 0 5px rgba(232,197,106,.16),0 0 22px rgba(232,197,106,.75)}}
 body.game-hide-touch-btns #vtBtns{display:none}
-html.vt-touch #ctrl{display:none}
+html.vt-touch #ctrlBtn{display:none}
 html.vt-touch #photoBtn{display:none!important}
 `;
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);

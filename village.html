@@ -20,8 +20,27 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:20px 28px;pointer-events:none;z-index:10}
 #logo h1{font-family:'Cinzel Decorative',serif;font-size:22px;font-weight:900;color:#e8c56a;letter-spacing:4px;text-shadow:0 0 25px rgba(232,197,106,.8),0 2px 8px rgba(0,0,0,.9);line-height:1}
 #logo span{font-size:10px;letter-spacing:7px;color:#5ecfca;text-transform:uppercase;margin-top:5px;display:block;text-shadow:0 0 10px rgba(94,207,202,.6)}
-#ctrl{font-size:10px;color:rgba(255,255,255,.45);letter-spacing:2px;text-align:right;line-height:2.2;text-transform:uppercase}
-#ctrl kbd{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:3px;padding:1px 6px;font-size:9px;color:#e8c56a}
+/* the controls: a circle at the top right that opens the guide (Miguel, Oct 31: "can this be a circle that opens up and
+   explains all the controls, what buttons do what, what the mouse does") */
+#ctrlBtn{pointer-events:auto;width:44px;height:44px;border-radius:50%;border:1px solid rgba(232,197,106,.55);background:rgba(10,13,22,.8);color:#e8c56a;display:grid;place-items:center;cursor:pointer;padding:0;box-shadow:0 2px 12px rgba(0,0,0,.45);transition:background .15s,transform .15s}
+#ctrlBtn:hover{background:rgba(232,197,106,.16);transform:scale(1.06)}
+#ctrlBtn svg{width:24px;height:24px}
+#ctrlWrap{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:rgba(2,4,12,.42);padding:16px}
+#ctrlWrap.on{display:flex}
+#ctrlCard{position:relative;width:min(780px,100%);max-height:calc(100vh - 48px);overflow:auto;overscroll-behavior:contain;background:rgba(5,10,28,.96);border:1px solid rgba(232,197,106,.5);box-shadow:0 18px 60px rgba(0,0,0,.6);padding:18px 20px 16px;color:#e6ecf6;font:500 12.5px/1.35 Georgia,serif}
+#ctrlCard h4{margin:0 0 2px;font:700 13px 'Cinzel Decorative',serif;letter-spacing:3px;color:#e8c56a;text-transform:uppercase}
+#ctrlCard .cc-sub{color:#8f9ab0;font-size:11.5px;margin-bottom:12px}
+#ctrlCard .cc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 22px}
+#ctrlCard section h5{margin:0 0 6px;padding-bottom:4px;border-bottom:1px solid rgba(94,207,202,.22);font:700 10px 'Cinzel Decorative',serif;letter-spacing:2px;color:#5ecfca;text-transform:uppercase}
+#ctrlCard .cc-row{display:grid;grid-template-columns:118px minmax(0,1fr);gap:10px;align-items:baseline;padding:3px 0}
+#ctrlCard .cc-keys{display:flex;flex-wrap:wrap;gap:3px;justify-content:flex-end}
+#ctrlCard kbd{display:inline-block;min-width:20px;text-align:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);border-bottom-width:2px;border-radius:4px;padding:1px 6px;font:700 10px/1.5 ui-monospace,Menlo,monospace;color:#e8c56a;letter-spacing:.5px;white-space:nowrap}
+#ctrlCard kbd.m{color:#bff3ef;border-color:rgba(94,207,202,.4)}
+#ctrlCard .cc-what small{color:#8f9ab0}
+#ctrlCard .cc-close{position:absolute;top:10px;right:12px;background:none;border:0;color:#cfd8e6;font-size:18px;cursor:pointer;padding:4px}
+@media (max-width:640px){#ctrlCard .cc-grid{grid-template-columns:minmax(0,1fr)}#ctrlCard .cc-row{grid-template-columns:96px minmax(0,1fr)}}
+#ctrlPanelBtn{margin-top:5px;width:100%;height:32px;border:1px solid rgba(232,197,106,.34);background:rgba(232,197,106,.05);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:2px;cursor:pointer;display:none}
+html.vt-touch #ctrlPanelBtn{display:block}
 
 #selectedRebelPanel{
   position:fixed;
@@ -1792,7 +1811,7 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
 <div id="saveBadge">SAVED ✓</div>
 <div id="hud">
   <div id="logo"><h1>REBEL ANTS</h1><span>The Hidden Village</span></div>
-  <div id="ctrl"><kbd>W A S D</kbd> Walk<br><kbd>Mouse</kbd> Look<br><kbd>E</kbd> Emotes<br><kbd>Click</kbd> Enter<br><kbd>ESC</kbd> Orbit</div>
+  <button id="ctrlBtn" type="button" title="Controls" aria-label="Controls" onclick="toggleControlsCard()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 7h9a5 5 0 0 1 4.9 4l.7 4.2a2.6 2.6 0 0 1-4.6 2.1L15.6 15H8.4l-1.9 2.3a2.6 2.6 0 0 1-4.6-2.1l.7-4.2A5 5 0 0 1 7.5 7z"/><path d="M8 9.6v3M6.5 11.1h3"/><circle cx="15.6" cy="10.4" r=".9" fill="currentColor" stroke="none"/><circle cx="17.6" cy="12.2" r=".9" fill="currentColor" stroke="none"/></svg></button>
 </div>
 
 <div id="selectedRebelPanel">
@@ -1814,6 +1833,7 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
       <div class="world-status-row"><span>Quests</span><span class="world-status-value" id="hudQuestCount">0</span></div>
       <button id="journalBtn" type="button" onclick="openProgressionJournal()">Journal</button>
       <button id="soundBtn" type="button" onclick="toggleSoundPanel()">Sound</button>
+      <button id="ctrlPanelBtn" type="button" onclick="toggleControlsCard()">Controls</button>
       <button id="gloveBtn" type="button" onclick="togglePlayerGlovePanel()">Gloves</button>
       <button id="mobHubBtn" type="button" onclick="returnToHubVillage()">Return to Hub</button>
     </div>
@@ -1826,6 +1846,7 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
   </div>
 </div>
 <div id="glovePanel" role="dialog" aria-label="Glove colours"><button class="gp-close" type="button" onclick="togglePlayerGlovePanel(false)" aria-label="Close">✕</button><h4>Gloves</h4><div class="gp-row"><div class="gp-label"><span>Gloves</span><span class="gp-name" data-k="glove"></span></div><div class="gp-sw" data-k="glove"></div></div><div class="gp-row"><div class="gp-label"><span>Cuffs</span><span class="gp-name" data-k="cuff"></span></div><div class="gp-sw" data-k="cuff"></div></div><div class="gp-note">Saved for this Rebel on this device. The first swatch is how your Rebel looks now, the ringed one the colour the Forge gave it.</div></div>
+<div id="ctrlWrap" onclick="if(event.target===this)toggleControlsCard(false)"><div id="ctrlCard" role="dialog" aria-label="Controls"></div></div>
 <div id="soundPanel" role="dialog" aria-label="Sound"><button class="sp-close" type="button" onclick="toggleSoundPanel(false)" aria-label="Close">✕</button><h4>Sound</h4><div id="soundRows"></div><div class="sp-note">Saved on this device. 100% is how Universe is mixed.</div></div>
 <button id="backToLobbyBtn" onclick="backToLobby()">← Back to Lobby</button>
 
@@ -15529,6 +15550,36 @@ window.toggleSoundPanel = function (on) {
 document.getElementById('soundPanel')?.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); window.toggleSoundPanel(false); } });
 window.PlayerSound = { get: playerSound, set: setPlayerSound, get levels() { playerSound('music'); return { ...PlayerSoundLevels }; } }; // (tests)
 
+// The controls guide (the circle at the top right; on a phone, Controls in the Rebel panel): every key, the mouse and the
+// buttons, from the game's own key handling (keydown below, assets/village-touch.js, village-chat.js, village-voice.js)
+const CK = (...k) => k.map(x => x.startsWith('~') ? `<kbd class="m">${x.slice(1)}</kbd>` : `<kbd>${x}</kbd>`).join('');
+const CONTROLS_DESK = [
+  ['Move', [[CK('W', 'A', 'S', 'D'), 'Walk, the way the camera looks <small>(or the arrow keys)</small>'], [CK('R'), 'Run <small>(hold)</small>'], [CK('Space'), 'Jump'], [CK('~Drag'), 'Look around <small>(hold a mouse button and move)</small>'], [CK('Esc'), 'Close a window · again: stop walking, see the village from above']]],
+  ['Do', [[CK('O'), 'Use: talk, open, enter, read, play <small>(the prompt on screen says which)</small>'], [CK('E'), 'Emotes, then <kbd>1</kbd>-<kbd>5</kbd> to pick one'], [CK('P'), 'Take a photo'], [CK('Tab'), 'Your Rebel: Journal, Sound, Gloves, Back to Lobby'], [CK('Q'), 'Draw or put away your weapon <small>(Rebels that carry one)</small>']]],
+  ['Fight moves', [[CK('F'), 'Kicks <small>(press again for the next one)</small>'], [CK('G'), 'Punches <small>(press again for the next one)</small>'], [CK('T'), 'Fight stance on / off'], [CK('C', 'B', 'V'), 'Cartwheel · backflip · front flip'], [CK('H', 'K'), 'Get hit · get knocked down']]],
+  ['Players', [[CK('Enter'), 'Chat: type, <kbd>Enter</kbd> sends, <kbd>Enter</kbd> again for the next line, <kbd>Esc</kbd> closes'], [CK('X'), 'Talk with your voice <small>(hold; or hold the 🎤 button, bottom left; signed in)</small>'], [CK('~Click'), 'A name in the chat: whisper, mute, block, report'], [CK('~Click'), 'A chat bubble over a head: answer in the chat']]],
+  ['On the screen', [[CK('~Click'), 'The round button, top left: your Rebel <small>(same as Tab)</small>'], [CK('~Click'), 'The ◆ line beside it: your mission'], [CK('~Click'), 'The map, bottom right: zoom in or out'], [CK('~Click'), 'The 📷 above the map: take a photo']]]
+];
+const CONTROLS_TOUCH = [
+  ['Move', [[CK('~Stick'), 'Walk: the stick, bottom left <small>(push it to the rim to run)</small>'], [CK('~Drag'), 'Look around: drag anywhere else on the screen']]],
+  ['Do', [[CK('~Use'), 'Talk, open, enter, read, play <small>(the button says which)</small>'], [CK('~•••'), 'More: Jump, Hit, Talk, Emote, Photo']]],
+  ['Your Rebel', [[CK('~Round'), 'The round button, top left: Journal, Sound, Gloves, Controls, Back to Lobby'], [CK('~◆'), 'The gold circle under it: your mission'], [CK('~Map'), 'Tap the map to zoom in or out']]],
+  ['Players', [[CK('~💬'), 'Chat: the button at the top right'], [CK('~Talk'), 'Talk with your voice: hold Talk, under ••• <small>(signed in)</small>'], [CK('~Tap'), 'A name in the chat: whisper, mute, block, report']]]
+];
+function paintControlsCard() {
+  const card = document.getElementById('ctrlCard'); if (!card) return;
+  const touch = document.documentElement.classList.contains('vt-touch'), list = touch ? CONTROLS_TOUCH : CONTROLS_DESK;
+  card.innerHTML = '<button class="cc-close" type="button" aria-label="Close" onclick="toggleControlsCard(false)">✕</button><h4>Controls</h4>'
+    + `<div class="cc-sub">${touch ? 'Tap anywhere outside this card to close it.' : 'Esc or a click outside this card closes it.'}</div>`
+    + '<div class="cc-grid">' + list.map(([h, rows]) => `<section><h5>${h}</h5>` + rows.map(([k, w]) => `<div class="cc-row"><span class="cc-keys">${k}</span><span class="cc-what">${w}</span></div>`).join('') + '</section>').join('') + '</div>';
+}
+window.toggleControlsCard = function (on) {
+  const w = document.getElementById('ctrlWrap'); if (!w) return;
+  const show = on == null ? !w.classList.contains('on') : !!on;
+  if (show) paintControlsCard();
+  w.classList.toggle('on', show);
+};
+
 function getWeatherReactiveRoots() {
   const reactiveTypes = new Set(['lantern_1','hanging_lantern','hangingLantern','toro_lantern','tree_1','pine_1','cherry_blossom','bamboo','ronin_dead_tree','ronin_mist']);
   return scene.transformNodes.filter(node => node?.metadata?.type && reactiveTypes.has(node.metadata.type));
@@ -25907,7 +25958,6 @@ async function armVillageWeapon(r, body, pick, back) {
     onNock: () => sfx.play('arrow_nock'), onRelease: () => { sfx.play('bow_release'); sfx.play('arrow_fly', { vol: 0.8 }); }, onHit: (p, d) => sfx.play('arrow_hit', { vol: near(d) }) }) : null;
   if (slot.bow_aim != null) animGroups[slot.bow_aim].speedRatio = 1.8;   // the power draw is a long charge: quicker in play
   window._villageWeapon = { set, slot, held, back, grip, archer, sfx, state: 'back', draw: slot[hL && set.drawL ? set.drawL : set.draw], stow: slot[hL && set.sheatheL ? set.sheatheL : set.sheathe], orig: null, cycle: -1 };
-  const hint = document.getElementById('ctrl'); if (hint && !/Draw weapon/.test(hint.innerHTML)) hint.innerHTML += '<br><kbd>Q</kbd> Draw weapon';
   console.log('Weapon moves ready:', Object.keys(groups).length, 'clips');
 }
 function villageWeaponShow(mode) {
@@ -28170,6 +28220,7 @@ document.addEventListener('keydown', async e => {
     return;
   }
   // Esc folds the glove colours or the Sound panel, then the Rebel panel, before it leaves walking
+  if (key === 'escape' && document.getElementById('ctrlWrap')?.classList.contains('on')) { e.preventDefault(); window.toggleControlsCard(false); return; }
   if (key === 'escape' && !adminMode && document.getElementById('glovePanel')?.classList.contains('on')) { e.preventDefault(); window.togglePlayerGlovePanel(false); return; }
   if (key === 'escape' && !adminMode && document.getElementById('soundPanel')?.classList.contains('on')) { e.preventDefault(); window.toggleSoundPanel(false); return; }
   if (key === 'escape' && !adminMode && document.body.classList.contains('rebel-panel-open') && window.VillageHud?.togglePanel) { e.preventDefault(); window.VillageHud.togglePanel(false); return; }
@@ -30586,7 +30637,7 @@ async function loadForgeCollectionsConfig() {
 // touch screens: the stick and buttons (assets/village-touch.js) show while walking, not in admin or a board game, nor
 // while a talk box, a reading card, the gloves panel or the Rebel panel is open (they sat over the talk box's words and
 // the panel's buttons)
-const touchCovers = ['npcDialogueOverlay', 'panel', 'glovePanel', 'soundPanel'];
+const touchCovers = ['npcDialogueOverlay', 'panel', 'glovePanel', 'soundPanel', 'ctrlWrap'];
 setInterval(() => window.VillageTouch?.update({ walking: !!walkMode && !adminMode && !(MiniGames.on && !MiniGames.roam) && !DanceOff.on && !DanceOff.choosing
   && !touchCovers.some(id => document.getElementById(id)?.classList.contains('on')) && !document.body.classList.contains('rebel-panel-open') && !document.body.classList.contains('vc-open') }), 250);
 // ── Multiplayer, step 2: the other players in this village (assets/village-multiplayer.js; the rooms: realtime/, tickets:
