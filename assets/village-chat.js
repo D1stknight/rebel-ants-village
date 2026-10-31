@@ -139,7 +139,9 @@ body:has(#wb:not(.on)) #vcVoice,body:has(#wb:not(.on)) #vcVoiceTip,html.vt-touch
     v.addEventListener('mouseleave', () => { voiceHover = false; paintVoice(); });
     el.input.addEventListener('keydown', e => {
       e.stopPropagation();
-      if (e.key === 'Enter') { e.preventDefault(); const sent = sendLine(); if (sent && !window.VillageTouch?.on) close(); }
+      // Enter sends and the chat stays open for the next line (Oct 31, Miguel: "keep the conversation open"); Enter on an
+      // empty line or Esc closes it
+      if (e.key === 'Enter') { e.preventDefault(); if (!el.input.value.trim()) { if (!window.VillageTouch?.on) close(); } else sendLine(); }
       else if (e.key === 'Escape') { e.preventDefault(); el.input.value = ''; paintCount(); close(); } // (Esc cancels the line)
     });
     el.input.addEventListener('keyup', e => e.stopPropagation());
@@ -152,13 +154,18 @@ body:has(#wb:not(.on)) #vcVoice,body:has(#wb:not(.on)) #vcVoiceTip,html.vt-touch
       const t = e.target, typing = t && (t.tagName === 'TEXTAREA' || t.isContentEditable || (t.tagName === 'INPUT' && !/^(checkbox|radio|button|range)$/i.test(t.type || '')));
       if (typing) return; // (the chat line handles its own keys; other fields are someone else's)
       if (e.key === 'Escape' && (open || el.menu.classList.contains('on') || el.panel.classList.contains('on'))) { e.preventDefault(); e.stopImmediatePropagation(); close(); return; }
-      if (e.key !== 'Enter' || e.repeat || !live || open || !H.canChat()) return;
+      if (e.key !== 'Enter' || e.repeat || !live || !H.canChat()) return;
+      if (open) { if (canWrite() && document.activeElement !== el.input) { e.preventDefault(); e.stopImmediatePropagation(); el.input.focus(); } return; } // (open, the line put down: Enter takes it up again)
       e.preventDefault(); e.stopImmediatePropagation(); openChat();
     }, true);
+    // a click elsewhere closes the menus; on a computer the chat stays open (the line is put down, the keys walk again:
+    // Enter takes the line up, Esc or the chat bubble closes it), on a phone it closes (its buttons come back)
     document.addEventListener('pointerdown', e => {
       if (el.menu.classList.contains('on') && !el.menu.contains(e.target)) closeMenu();
       if (el.panel.classList.contains('on') && !el.panel.contains(e.target) && !e.target.closest?.('.vc-ico')) el.panel.classList.remove('on');
-      if (open && !el.box.contains(e.target) && e.target !== el.btn && !el.btn.contains(e.target) && !el.voice.contains(e.target) && !el.menu.contains(e.target) && !el.panel.contains(e.target)) close();
+      if (open && !el.box.contains(e.target) && e.target !== el.btn && !el.btn.contains(e.target) && !el.voice.contains(e.target) && !el.menu.contains(e.target) && !el.panel.contains(e.target)) {
+        if (window.VillageTouch?.on) close(); else try { el.input.blur(); } catch (x) {}
+      }
     }, true);
     setInterval(tickLines, 1000);
     setInterval(paintVoice, 250);
