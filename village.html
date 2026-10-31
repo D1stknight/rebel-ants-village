@@ -117,13 +117,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #gloveBtn{margin-top:5px;width:100%;height:24px;border:1px solid rgba(232,197,106,.34);background:rgba(232,197,106,.05);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:2px;cursor:pointer;display:none}
 #gloveBtn:hover{background:rgba(232,197,106,.13)}
 body.has-gloves #gloveBtn{display:block}
-/* touch screens: Return to Hub (and, while walking, Back to Lobby) sit in the Rebel panel instead of over the view and
-   beside the stick (Miguel, Oct 24: "Return to hub should be a small button out of the way in mobile") */
+/* touch screens: Return to Hub sits in the Rebel panel instead of over the view and beside the stick (Miguel, Oct 24:
+   "Return to hub should be a small button out of the way in mobile"); while walking Back to Lobby sits at the bottom of
+   the panel on every screen (Oct 31: "add back to lobby inside the information square probably on the bottom and just
+   leave the chat bubble on the left corner") */
 #mobHubBtn,#mobLobbyBtn{margin-top:6px;width:100%;height:34px;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:2px;cursor:pointer;display:none}
 #mobHubBtn{border:1px solid rgba(232,197,106,.45);background:rgba(232,197,106,.07);color:#e8c56a}
 #mobLobbyBtn{border:1px solid rgba(94,207,202,.34);background:rgba(94,207,202,.05);color:#5ecfca}
-html.vt-touch #mobHubBtn.on,html.vt-touch body:has(#wb.on) #mobLobbyBtn{display:block}
-html.vt-touch #returnHubBtn.on,html.vt-touch body:has(#wb.on) #backToLobbyBtn{display:none}
+#mobLobbyBtn:hover{background:rgba(94,207,202,.13)}
+html:not(.vt-touch) #mobLobbyBtn{height:26px;margin-top:10px}
+html.vt-touch #mobHubBtn.on,body:has(#wb.on) #mobLobbyBtn{display:block}
+html.vt-touch #returnHubBtn.on,body:has(#wb.on) #backToLobbyBtn{display:none}
 html.vt-touch #selectedRebelPanel{max-height:calc(100vh - 168px);overflow-y:auto;overscroll-behavior:contain}
 /* a phone held sideways: the open panel starts at the top beside the round button, so its buttons fit on the screen */
 @media (max-height:500px){html.vt-touch body.rebel-panel-open #selectedRebelPanel{top:12px;left:100px;max-height:calc(100vh - 24px)}html.vt-touch body.rebel-panel-open #wb.on{visibility:hidden}}
@@ -1792,13 +1796,13 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
       <button id="journalBtn" type="button" onclick="openProgressionJournal()">Journal</button>
       <button id="gloveBtn" type="button" onclick="togglePlayerGlovePanel()">Gloves</button>
       <button id="mobHubBtn" type="button" onclick="returnToHubVillage()">Return to Hub</button>
-      <button id="mobLobbyBtn" type="button" onclick="backToLobby()">← Back to Lobby</button>
     </div>
     <div id="questTracker">
       <div id="questTrackerTitle">Active Quest</div>
       <div id="questTrackerObjective">Speak with the Ashigaru villager.</div>
       <div id="questTrackerSide"></div>
     </div>
+    <button id="mobLobbyBtn" type="button" onclick="backToLobby()">← Back to Lobby</button>
   </div>
 </div>
 <div id="glovePanel" role="dialog" aria-label="Glove colours"><button class="gp-close" type="button" onclick="togglePlayerGlovePanel(false)" aria-label="Close">✕</button><h4>Gloves</h4><div class="gp-row"><div class="gp-label"><span>Gloves</span><span class="gp-name" data-k="glove"></span></div><div class="gp-sw" data-k="glove"></div></div><div class="gp-row"><div class="gp-label"><span>Cuffs</span><span class="gp-name" data-k="cuff"></span></div><div class="gp-sw" data-k="cuff"></div></div><div class="gp-note">Saved for this Rebel on this device. The first swatch is how your Rebel looks now, the ringed one the colour the Forge gave it.</div></div>
@@ -28083,6 +28087,9 @@ document.addEventListener('keydown', async e => {
     closeNPCDialogue();
     return;
   }
+  // Esc folds the glove colours, then the Rebel panel, before it leaves walking
+  if (key === 'escape' && !adminMode && document.getElementById('glovePanel')?.classList.contains('on')) { e.preventDefault(); window.togglePlayerGlovePanel(false); return; }
+  if (key === 'escape' && !adminMode && document.body.classList.contains('rebel-panel-open') && window.VillageHud?.togglePanel) { e.preventDefault(); window.VillageHud.togglePanel(false); return; }
   if (key === 'escape' && walkMode) toggleWalk();
 
   if (adminMode && key === 'n') {
