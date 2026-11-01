@@ -15,6 +15,11 @@ const arr = (v) => (Array.isArray(v) ? v : []);
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const parse = (s) => { if (typeof s !== 'string' || !s) return null; try { return JSON.parse(s); } catch (e) { return null; } };
 const union = (x, y) => [...new Set([...arr(x), ...arr(y)])];
+// badges are kept by name (ProgressionState.badges): a badge renamed after players earned it keeps its old name here,
+// old -> new, so a save with the old name counts as the new one wherever names are read (the page, this merge, the
+// badge sender). Nov 1: rival-highlow is "Hot Streak", as in the Rebel Economy's catalog.
+export const BADGE_RENAMES = { 'Lucky Streak': 'Hot Streak' };
+export const renameBadges = (list) => [...new Set(arr(list).map((n) => (typeof n === 'string' && Object.prototype.hasOwnProperty.call(BADGE_RENAMES, n) ? BADGE_RENAMES[n] : n)))];
 // the same content in any key order (deciding "did the merge change anything")
 export function canonical(v) {
   if (Array.isArray(v)) return '[' + v.map(canonical).join(',') + ']';
@@ -71,7 +76,7 @@ function mergeProgression(x, y) {
   if (!isObj(x) || !isObj(y)) return isObj(x) ? x : y;
   const out = { ...y, ...x }, has = (k) => k in x || k in y;
   for (const k of ['badges', 'completedQuests', 'villagesVisited', 'chestsOpened', 'collectiblesFound', 'secretsFound', 'spotsUsed', 'journalEntriesUnlocked']) {
-    if (Array.isArray(x[k]) || Array.isArray(y[k])) out[k] = union(x[k], y[k]);
+    if (Array.isArray(x[k]) || Array.isArray(y[k])) out[k] = k === 'badges' ? renameBadges(union(x[k], y[k])) : union(x[k], y[k]);
   }
   if (has('xp')) out.xp = Math.max(num(x.xp), num(y.xp));
   if (has('rebelPoints')) out.rebelPoints = Math.max(num(x.rebelPoints), num(y.rebelPoints));   // practice points (an account's are in the economy)

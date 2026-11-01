@@ -263,7 +263,7 @@ export const UNIVERSE_FAMILIES: FamilyDef[] = [
     ["rival-tug","Rope Burn","common","Win the Tug of War against the Fort Smith","C"],
     ["rival-quickdraw","Fastest Blade","rare","Win the Quick Draw duel in Kenshi","C"],
     ["rival-reversi","Corner Taker","rare","Clear Colony Corners in the Hub (beat one of the stronger opponents)","C"],
-    ["rival-highlow","Lucky Streak","common","Beat Peely at High-Low","C"],
+    ["rival-highlow","Hot Streak","common","Beat Peely at High-Low","C"],
     ["rival-shells","Eagle Eye","common","Win the Mini Ant Shell Game","C"],
     ["rival-ring","Iron Will","common","Win in the Warrior Fighting Ring","C"],
     ["rival-drop","Top Banana","epic","Beat the toughest ape at Banana Drop","C"],

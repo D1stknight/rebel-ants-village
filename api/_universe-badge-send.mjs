@@ -18,6 +18,7 @@ import { BADGE_IDS, LEDGER_CHECKS, ECONOMY_V1 } from './_universe-badges.mjs';
 import { econCall, redis } from './_econ.mjs';
 import { KEYS, oneTimeEarned } from './_econ-ledger.mjs';
 import { bump } from './_site-stats.mjs';
+import { renameBadges } from '../assets/story-save.js';
 
 const PROG = 'rebelAntsProgression:v1';
 export const PER_CALL = 40;
@@ -29,11 +30,12 @@ const BOARD_ENV = process.env.VERCEL_ENV === 'production' ? 'prod' : 'dev';
 const rankKey = (u) => `games:board:v1:${BOARD_ENV}:rank:${u}`;
 const FORGE_COLS = ['battle_for_colony', 'chumpz', 'saints'];
 
-// the badge ids a saved story has earned (the names its progression keeps -> ids; badges the economy doesn't list are left out)
+// the badge ids a saved story has earned (the names its progression keeps -> ids, a renamed badge's old name counted as
+// its new one: assets/story-save.js BADGE_RENAMES; badges the economy doesn't list are left out)
 export function storyBadgeIds(story) {
   let p = null;
   try { p = JSON.parse(story?.keys?.[PROG] || 'null'); } catch (e) { p = null; }
-  const names = Array.isArray(p?.badges) ? p.badges : [];
+  const names = renameBadges(p?.badges);
   return [...new Set(names.map((n) => BADGE_IDS[String(n)]).filter(Boolean))];
 }
 

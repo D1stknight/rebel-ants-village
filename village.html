@@ -4886,7 +4886,7 @@ const BADGE_WORLD = {"points":32795,"rooms":63,"sealed":["hub_ancient_tunnels","
   add('rival-tug', 'Rope Burn', 'rivals', 'Common', 'gamesAll', ['war-tug-of-war'], 'Win the Tug of War against the Fort Smith', 'The Fort Smith let go first.', { icon:'rope' });
   add('rival-quickdraw', 'Fastest Blade', 'rivals', 'Rare', 'gamesAll', ['kenshi-quick-draw'], 'Win the Quick Draw duel in Kenshi', 'You drew first.', { icon:'sword' });
   add('rival-reversi', 'Corner Taker', 'rivals', 'Rare', 'gamesAll', ['hub-colony-corners'], 'Clear Colony Corners in the Hub (beat one of the stronger opponents)', 'You took the corners and the board.', { icon:'board' });
-  add('rival-highlow', 'Lucky Streak', 'rivals', 'Common', 'gamesAll', ['chz-high-low'], 'Beat Peely at High-Low', 'Five right calls in a row.', { icon:'dice' });
+  add('rival-highlow', 'Hot Streak', 'rivals', 'Common', 'gamesAll', ['chz-high-low'], 'Beat Peely at High-Low', 'Five right calls in a row.', { icon:'dice' });
   add('rival-shells', 'Eagle Eye', 'rivals', 'Common', 'gamesAll', ['hub-shell-game'], 'Win the Mini Ant Shell Game', 'You never lost sight of the ant.', { icon:'eye' });
   add('rival-ring', 'Iron Will', 'rivals', 'Common', 'gamesAll', ['war-fighting-ring'], 'Win in the Warrior Fighting Ring', 'The iron dummy hit hard. You hit harder.', { icon:'fist' });
   add('rival-drop', 'Top Banana', 'rivals', 'Epic', 'gameLevel', { id:'chz-banana-drop', level:9 }, 'Beat the toughest ape at Banana Drop', 'Four in a row against the best in the cove.', { icon:'banana', look:'chumpz' });
@@ -5411,7 +5411,15 @@ function getDefaultProgressionState() {
 
 function loadProgressionState() {
   try {
-    return { ...getDefaultProgressionState(), ...(JSON.parse(localStorage.getItem(PROGRESSION_KEY) || '{}')) };
+    const state = { ...getDefaultProgressionState(), ...(JSON.parse(localStorage.getItem(PROGRESSION_KEY) || '{}')) };
+    // badges are kept by name: one renamed after players earned it comes back under its new name, saved at once so the
+    // story sync sees the same list (assets/story-save.js BADGE_RENAMES; without the module the boot's badge check
+    // gives an auto badge back under its new name anyway)
+    if (Array.isArray(state.badges) && StorySave?.renameBadges) {
+      const badges = StorySave.renameBadges(state.badges);
+      if (badges.join('\n') !== state.badges.join('\n')) { state.badges = badges; try { localStorage.setItem(PROGRESSION_KEY, JSON.stringify(state)); } catch (e) {} }
+    }
+    return state;
   } catch (_) {
     return getDefaultProgressionState();
   }
