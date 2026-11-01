@@ -9,7 +9,7 @@
 // the files its image lacked, gamesError: made but not saved).
 import { put } from '@vercel/blob';
 import { isAdminRequest } from './_admin-auth.mjs';
-import { Sandbox, creds, WORKER_KEY, FW, JOB_DIR, JOB_TIMEOUT_MS, redis, getJson, loadBuild, sourceGlbUrl, readText, sanitize, body, jointsEnv } from './_forge-rig.mjs';
+import { Sandbox, creds, WORKER_KEY, FW, JOB_DIR, JOB_TIMEOUT_MS, redis, getJson, loadBuild, sourceGlbUrl, readText, sanitize, body, jointsEnv, anthonyEnv } from './_forge-rig.mjs';
 
 const KEY = (id) => `forge:moves-job:v1:${id}`;
 const BLOB = /^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\//;
@@ -44,7 +44,7 @@ export default async function handler(req, res) {
         ...(o.headUrl ? { FORGE_HEAD_URL: String(o.headUrl) } : {}), ...(o.armorUrl ? { FORGE_ARMOR_URL: String(o.armorUrl), FORGE_ANCHORS_URL: String(o.anchorsUrl) } : {}),
         ...(o.cutBridges && !o.skirtfix ? { FORGE_KEEP_TEAR: '', FORGE_KEEP_BRIDGE: '' } : {}), ...(o.headScale != null ? { FORGE_HEAD_SCALE: String(o.headScale) } : {}),
         ...(o.headAuto ? { FORGE_HEAD_AUTO: '1' } : {}), ...(o.friend ? { FORGE_FRIEND: String(o.friend) } : {}),   // v2.36 a Chumpz / Saints player: the same skeleton as its rig
-        ...jointsEnv(o) };   // v2.40 #001: its own joints
+        ...jointsEnv(o), ...anthonyEnv(rec) };   // v2.40 #001: its own joints; v2.42 its own moves (Ant-Thony)
       const sandbox = await Sandbox.create({ source: { type: 'snapshot', snapshotId: worker.snapshotId }, persistent: false, resources: { vcpus: 2 }, timeout: JOB_TIMEOUT_MS,
         tags: { purpose: 'forge-moves-job', build: buildId.slice(0, 200) }, ...creds() });
       const cmd = await sandbox.runCommand({ cmd: 'bash', args: ['-c', `mkdir -p ${JOB_DIR} && bash ${FW}/job.sh "$SRC_URL" "$RIG_NAME" ${JOB_DIR}`], env, sudo: true, detached: true });

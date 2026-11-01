@@ -21,7 +21,7 @@ import { getToken } from './_nft.mjs';
 import { getCollection } from './_collections.mjs';
 import { requireForgeStep, walletOf, holderOf } from './_wallet.mjs';
 import { enforceRateLimit } from './_guard.mjs';
-import { Sandbox, creds, REPO, WORKER_KEY, FW, JOB_DIR, JOB_TIMEOUT_MS, redis, getJson, buildKey, loadBuild, updateRigging, sourceGlbUrl, sanitize, body, jointsEnv } from './_forge-rig.mjs';
+import { Sandbox, creds, REPO, WORKER_KEY, FW, JOB_DIR, JOB_TIMEOUT_MS, redis, getJson, buildKey, loadBuild, updateRigging, sourceGlbUrl, sanitize, body, jointsEnv, anthonyEnv } from './_forge-rig.mjs';
 
 const SOURCE_OK = /^https:\/\/(raw\.githubusercontent\.com\/D1stknight\/rebel-ants-village\/[\w.-]+\/assets\/forge\/sources\/[\w.-]+\.glb|[a-z0-9]+\.public\.blob\.vercel-storage\.com\/[\w./-]+\.glb)$/;
 const ANCHORS_OK = /^https:\/\/raw\.githubusercontent\.com\/D1stknight\/rebel-ants-village\/[\w.-]+\/assets\/forge\/sources\/[\w.-]+\.json$/;
@@ -212,7 +212,7 @@ async function startRebel001(req, res, { force, rec }) {
     const hf = cleanHandFit({ glove: M1.glove, cuff: M1.glove });
     const o = { skirtfix: false, headUp: 0, headUrl: null, armorUrl: null, anchorsUrl: null, cutBridges: false, headScale: null, headAuto: false, npc: false, handFit: hf, species: null, friend: null,
       master001: true, joints, decimate: M1.decimate };
-    const { sandbox, cmd } = await runJob(worker, buildId, src, 'rebel1', { ...optionEnv({ up: 0, hs: null, hf }), ...jointsEnv(o) });
+    const { sandbox, cmd } = await runJob(worker, buildId, src, 'rebel1', { ...optionEnv({ up: 0, hs: null, hf }), ...jointsEnv(o), FORGE_ANTHONY: '1' });
     // a re-rig: the rig it replaces leads to the new one (forge-rig-status links rigHistory), so a saved #001 follows it
     const rigHistory = [...new Set([...(cur.rigHistory || []), rec.output?.forgeRigGlbUrl])].filter((u) => BLOB.test(u || '')).slice(-20);
     const next = await updateRigging(buildId, {
@@ -280,7 +280,7 @@ export default async function handler(req, res) {
     // v2.23 NPC species (the NPC Forge's collection): Chumpz are apes, Saints are humans, from the page or the NPC's key
     // (chumpz_ / saints_). Only those get FORGE_NPC_SPECIES; Rebel villagers (ants) run exactly as before.
     const npcSpecies = !npc ? '' : ['ape', 'human'].includes(String(species)) ? String(species) : String(species) === 'ant' ? '' : /^chumpz_/.test(rec.tokenId || '') ? 'ape' : /^saints_/.test(rec.tokenId || '') ? 'human' : '';
-    const { sandbox, cmd } = await runJob(worker, buildId, src, name, { ...optionEnv({ skirtfix, up, headUrl, armorUrl, anchorsUrl, cutBridges, hs, headAuto, npc, npcSpecies, friend, hf }), ...(withJaw ? { FORGE_JAW: '1' } : {}) });
+    const { sandbox, cmd } = await runJob(worker, buildId, src, name, { ...optionEnv({ skirtfix, up, headUrl, armorUrl, anchorsUrl, cutBridges, hs, headAuto, npc, npcSpecies, friend, hf }), ...(withJaw ? { FORGE_JAW: '1' } : {}), ...(npc ? {} : anthonyEnv(rec)) });
     const next = await updateRigging(buildId, {
       engine: 'forge-rigger',
       status: 'running',

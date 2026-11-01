@@ -144,6 +144,19 @@ for f in sorted(set(c['file'] for c in cl) - set(c['file'] for c in have)):
     print(f'games pack missing: {f} (upload it in the Rig worker box, then rebuild the worker); its moves are left out')
 json.dump(have, open(out, 'w'), indent=1)
 PY
+  # v2.42 #001's own moves (FORGE_ANTHONY, set by the API only for battle_for_colony token 1: Ant-Thony roams Universe
+  # and talks in his apps): the stand-up set, sitting idle and talking, a wave, a stair climb, after the shared moves in
+  # his games pack. Every other Rebel's list is unchanged. A file the image lacks leaves out its move.
+  if [ -n "${FORGE_ANTHONY:-}" ]; then
+  "$PY" - "$FW/anim/clips_anthony.json" "$FORGE_PACK" "$FORGE_GAME_CLIPS" >> "$JOB/log" 2>&1 <<'PY'
+import json, os, sys
+src, pack, out = sys.argv[1:4]; cl = json.load(open(src)); have = [c for c in cl if os.path.isfile(os.path.join(pack, c['file']))]
+for f in sorted(set(c['file'] for c in cl) - set(c['file'] for c in have)):
+    print(f'anthony moves missing: {f} (upload it in the Rig worker box, then rebuild the worker); its moves are left out')
+games = json.load(open(out)); names = {c['name'] for c in games}
+json.dump(games + [c for c in have if c['name'] not in names], open(out, 'w'), indent=1)
+PY
+  fi
   if [ "$("$PY" -c 'import json, sys; print(len(json.load(open(sys.argv[1]))))' "$FORGE_GAME_CLIPS")" -gt 0 ]; then GAMES=1; fi
   if [ -n "$GAMES" ]; then
     export FORGE_HEAD_SKIP="${FORGE_HEAD_SKIP-cartwheel,backflip,front_flip,flip_kick,spin_flip_kick,knockdown,get_up},$("$PY" -c 'import json, sys; print(",".join(c["name"] for c in json.load(open(sys.argv[1]))))' "$FORGE_GAME_CLIPS")"

@@ -73,6 +73,12 @@ export function jointsEnv(o) {
   return { ...(o?.joints ? { FORGE_JOINTS: JSON.stringify(o.joints) } : {}), ...(o?.decimate ? { FORGE_DECIMATE: String(o.decimate) } : {}) };
 }
 
+// v2.42 Ant-Thony's own moves (forge-worker/anim/clips_anthony.json: the stand-up set, sitting idle / talking, a wave,
+// a stair climb) go into Rebel #001's games pack only: every job of a battle_for_colony token 1 build that makes a
+// games pack (a re-rig, a games run) sets FORGE_ANTHONY. Other Rebels' jobs are unchanged.
+export const isRebel001 = (rec) => (rec?.collectionKey || 'battle_for_colony') === 'battle_for_colony' && /^0*1$/.test(String(rec?.tokenId || '')) && !rec?.forgeRig?.options?.npc;
+export const anthonyEnv = (rec) => (isRebel001(rec) ? { FORGE_ANTHONY: '1' } : {});
+
 // Credentials: Vercel OIDC inside the deployment (default). If OIDC is off for the project, set
 // FORGE_SANDBOX_TOKEN (a Vercel access token) and the team/project ids are filled in from the system env.
 export function creds() {

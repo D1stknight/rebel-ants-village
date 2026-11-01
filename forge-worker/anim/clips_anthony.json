@@ -1,0 +1,46 @@
+[
+ {
+  "name": "game_standup",
+  "file": "mixamo/gm_standup.npz",
+  "t0": 1.0,
+  "t1": 19.93,
+  "pack": "games",
+  "loop": true
+ },
+ {
+  "name": "sit_idle",
+  "file": "mixamo/gm_sit_idle.npz",
+  "t0": 0.0,
+  "t1": 4.3,
+  "pack": "games",
+  "loop": true
+ },
+ {
+  "name": "sit_talk",
+  "file": "mixamo/gm_sit_talk.npz",
+  "t0": 0.0,
+  "t1": 44.03,
+  "pack": "games",
+  "loop": true
+ },
+ {
+  "name": "sit_talk_2",
+  "file": "mixamo/gm_sit_talk_2.npz",
+  "t0": 0.0,
+  "t1": 44.97,
+  "pack": "games",
+  "loop": true
+ },
+ {
+  "name": "wave",
+  "file": "mixamo/waving.npz",
+  "pack": "games"
+ },
+ {
+  "name": "stairs_up",
+  "file": "mixamo/gm_stairs_up.npz",
+  "t0": 0.0,
+  "t1": 1.17,
+  "pack": "games"
+ }
+]
