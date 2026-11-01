@@ -98,6 +98,16 @@
     },
     "api/badges-backfill.mjs": {
       "maxDuration": 90
+    },
+    "api/anthony-talk.mjs": {
+      "maxDuration": 60
+    },
+    "api/anthony-voice.mjs": {
+      "maxDuration": 90
+    },
+    "api/anthony-knowledge.mjs": {
+      "maxDuration": 30,
+      "includeFiles": "docs/anthony-universe-guide.txt"
     }
   },
   "crons": [
