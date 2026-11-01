@@ -115,8 +115,19 @@
       }
       Object.assign(rec, { stage, out, g, vtrack, manual, mix: tracks.length > 1 ? mix : null, mr, type, src, onAuto: o.onAuto, max: Math.max(3, o.maxSec || 60) * 1000 });
       mr.ondataavailable = (e) => { if (e.data && e.data.size) rec.chunks.push(e.data); };
+      // the first frame (drawn above) is sent now and again when the recorder says it has started: a busy page's
+      // recorder can take seconds to start, and a frame sent before that is lost. The browser takes a requested frame
+      // only from a canvas drawn since the last screen frame, so one clear pixel marks it drawn. Without these the
+      // first frame never went in, and a clip whose game drew no new frame after the start (a short one, a busy or
+      // paused page) came out as an empty file
+      const firstAgain = () => {
+        if (R !== rec) return; // (over and cleaned up; a clip being stopped still takes it: the stop can come first)
+        if (manual) { try { vtrack.requestFrame(); } catch (e) {} }
+        g.fillStyle = 'rgba(0,0,0,0)'; g.fillRect(0, 0, 1, 1);
+      };
+      mr.addEventListener('start', firstAgain, { once: true });
       mr.start(); // (one piece at the end: Safari's MP4 pieces don't always join into a playable file)
-      if (manual) { try { vtrack.requestFrame(); } catch (e) {} } // (the first frame, drawn above)
+      firstAgain();
       const gap = 1000 / Math.min(30, o.fps || 30) - 4;
       rec.off = o.onFrame(() => {
         if (rec.stopping) return;
