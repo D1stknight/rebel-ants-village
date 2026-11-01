@@ -217,6 +217,7 @@ body.walk-photo #photoBtn{display:block}
 #photoOverlay .ph-style b{font:700 10px Georgia,serif;letter-spacing:.14em;color:#7a5a2a;text-transform:uppercase;margin-right:2px}
 #photoOverlay .ph-style button{display:flex;align-items:center;gap:7px;padding:3px 10px 3px 3px;border-radius:7px;border:1px solid rgba(138,106,42,.55);background:#ece1c8;color:#3b2a14;font:600 12px Georgia,serif;cursor:pointer}
 #photoOverlay .ph-style button img{display:block;width:30px;height:37px;object-fit:cover;border-radius:3px;background:#d9cdb1}
+#photoOverlay .ph-style [data-style="polaroid"] img{box-sizing:content-box;width:22px;height:21px;margin:2px 3px 3px 2px;border:2px solid #f6f0e2;border-bottom-width:7px;border-radius:1px;background:#f6f0e2;transform:rotate(-7deg);box-shadow:0 0 0 1px rgba(80,58,24,.4),0 2px 4px rgba(0,0,0,.4)}
 #photoOverlay .ph-style button[aria-pressed="true"]{background:#2a1d10;color:#ffe9b0;border-color:#d8b35c;box-shadow:0 0 0 2px rgba(216,179,92,.3)}
 #photoOverlay .ph-sep{width:1px;height:30px;background:rgba(138,106,42,.35)}
 #photoOverlay .ph-share{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
@@ -12540,7 +12541,9 @@ async function takeVillagePhoto(caption) {
     VillagePhoto.caption = caption || `${VILLAGE_REGISTRY[CURRENT_VILLAGE_ID]?.displayName || 'Rebel Ants'} · ${new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
     document.getElementById('photoImg').src = url;
     document.querySelector('#photoOverlay .ph-cap').textContent = VillagePhoto.caption;
-    const thumb = document.querySelector('#photoOverlay .ph-style [data-style="photo"] img'); if (thumb) thumb.src = url;
+    // both buttons show the picture itself: Photo as it is, Polaroid in a small tilted print (CSS; the 1080 x 1350
+    // poster shrunk to 30 x 37 px was a smudge)
+    document.querySelectorAll('#photoOverlay .ph-style button img').forEach((img) => { img.src = url; });
     photoMsg('');
     startVillagePolaroid();
     setTimeout(() => document.getElementById('photoOverlay')?.classList.add('on'), 380);
@@ -12577,8 +12580,6 @@ async function startVillagePolaroid() {
   const gen = ++VillagePhoto.gen;
   if (VillagePhoto.pol?.url) URL.revokeObjectURL(VillagePhoto.pol.url);
   VillagePhoto.pol = null; VillagePhoto.polFailed = !window.PhotoShare;
-  const thumb = document.querySelector('#photoOverlay .ph-style [data-style="polaroid"] img');
-  if (thumb) thumb.removeAttribute('src');
   paintVillagePhotoShare();
   if (VillagePhoto.polFailed) return;
   try {
@@ -12587,7 +12588,6 @@ async function startVillagePolaroid() {
     VillagePhoto.pol = { jpeg: r.jpeg, url: URL.createObjectURL(r.jpeg), png: null, pngP: r.png };
     // a computer's clipboard takes PNG only: ready before the X button wants it
     if (!photoOnPhone()) r.png().then((b) => { if (gen === VillagePhoto.gen && VillagePhoto.pol) VillagePhoto.pol.png = b; }).catch(() => {});
-    if (thumb) thumb.src = VillagePhoto.pol.url;
   } catch (e) {
     if (gen !== VillagePhoto.gen) return;
     console.warn('polaroid failed', e); VillagePhoto.polFailed = true;
