@@ -66,6 +66,9 @@
     return {
       track: dest.stream.getAudioTracks()[0] || null, addEl,
       update() { for (const [el, e] of els) if (e.g) e.g.gain.value = vol(el); },
+      // (when the player stops: the clip's sound fades out in 60 ms, so the moments the encoder takes to finish add a
+      // quiet end, not more of the game's sound over the last picture)
+      hush() { try { const t = mix.currentTime; bus.gain.cancelScheduledValues(t); bus.gain.setValueAtTime(bus.gain.value, t); bus.gain.linearRampToValueAtTime(0, t + 0.06); } catch (e) {} },
       close() {
         if (U.onContext === addCtx) U.onContext = null;
         for (const l of links.values()) { try { l.tap.disconnect(l.d); } catch (e) {} try { l.s.disconnect(); } catch (e) {} }
@@ -165,6 +168,7 @@
     rec.stopping = true;
     if (!rec.mr) { cleanup(rec); if (R === rec) R = null; return null; } // (still starting)
     try { rec.off?.(); } catch (e) {} rec.off = null;
+    rec.mix?.hush();
     const ms = rec.t0 ? performance.now() - rec.t0 : 0;
     // the video encoder finishes the frames it was given first: a slow one (software, a busy computer) can be seconds
     // behind, and the browser drops what it hasn't finished when the recording stops. Until a slice of the recording
