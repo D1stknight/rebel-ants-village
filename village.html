@@ -207,13 +207,27 @@ html.vt-touch #soundPanel input[type=range]{height:30px}
 body.walk-photo #photoBtn{display:block}
 @media (max-width:480px){#photoBtn{right:14px;bottom:194px;width:40px;height:40px;line-height:38px}}
 #photoFlash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:10001;transition:opacity .45s ease-out}
-#photoOverlay{position:fixed;inset:0;background:rgba(2,6,14,.78);display:none;align-items:center;justify-content:center;z-index:10000;padding:18px}
+#photoOverlay{position:fixed;inset:0;background:rgba(2,6,14,.78);display:none;align-items:center;justify-content:center;z-index:10000;padding:18px;overflow:auto}
 #photoOverlay.on{display:flex}
-#photoOverlay .ph-card{background:#f6f0e2;padding:12px 12px 14px;border-radius:6px;box-shadow:0 14px 40px rgba(0,0,0,.6);max-width:min(1100px,96vw);transform:rotate(-1deg)}
-#photoOverlay img{display:block;max-width:100%;max-height:72vh;border-radius:2px}
+#photoOverlay .ph-card{background:#f6f0e2;padding:12px 12px 14px;border-radius:6px;box-shadow:0 14px 40px rgba(0,0,0,.6);max-width:min(1100px,96vw);transform:rotate(-1deg);margin:auto}
+#photoImg{display:block;max-width:100%;max-height:min(72vh,calc(100vh - 300px));border-radius:2px;margin:0 auto}
 #photoOverlay .ph-cap{font:600 15px/1.3 Georgia,serif;color:#3b2a14;margin:10px 4px 8px;text-align:center}
+#photoOverlay .ph-row{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px 12px;margin:0 0 10px}
+#photoOverlay .ph-style{display:flex;align-items:center;gap:6px}
+#photoOverlay .ph-style b{font:700 10px Georgia,serif;letter-spacing:.14em;color:#7a5a2a;text-transform:uppercase;margin-right:2px}
+#photoOverlay .ph-style button{display:flex;align-items:center;gap:7px;padding:3px 10px 3px 3px;border-radius:7px;border:1px solid rgba(138,106,42,.55);background:#ece1c8;color:#3b2a14;font:600 12px Georgia,serif;cursor:pointer}
+#photoOverlay .ph-style button img{display:block;width:30px;height:37px;object-fit:cover;border-radius:3px;background:#d9cdb1}
+#photoOverlay .ph-style button[aria-pressed="true"]{background:#2a1d10;color:#ffe9b0;border-color:#d8b35c;box-shadow:0 0 0 2px rgba(216,179,92,.3)}
+#photoOverlay .ph-sep{width:1px;height:30px;background:rgba(138,106,42,.35)}
+#photoOverlay .ph-share{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+#photoOverlay .ph-share button{display:flex;align-items:center;gap:7px;font:600 13px Georgia,serif;padding:8px 14px 8px 11px;border-radius:999px;border:1px solid #8a6a2a;background:#2a1d10;color:#ffe9b0;cursor:pointer}
+#photoOverlay .ph-share button svg{width:17px;height:17px;flex:none}
+#photoOverlay .ph-share button:disabled{opacity:.55;cursor:progress}
 #photoOverlay .ph-btns{display:flex;justify-content:center;gap:10px}
 #photoOverlay .ph-btns button{font:600 13px Georgia,serif;letter-spacing:.06em;padding:8px 18px;border-radius:6px;border:1px solid #8a6a2a;background:#2a1d10;color:#ffe9b0;cursor:pointer}
+#photoOverlay .ph-msg{min-height:17px;max-width:560px;margin:8px auto 0;font:600 12px/1.4 Georgia,serif;color:#6b4f22;text-align:center}
+#photoOverlay .ph-msg a{color:#8a4b12;text-decoration:underline}
+@media (max-width:560px){#photoOverlay .ph-sep{display:none}#photoOverlay .ph-share button{padding:8px 11px 8px 9px;font-size:12px}#photoOverlay .ph-style b{display:none}}
 /* the dance-off (DanceOff): arrows come down the lane to the ring */
 #danceOff{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);width:min(560px,92vw);padding:12px 16px 12px;background:rgba(10,13,22,.9);border:1px solid rgba(216,179,92,.6);border-radius:14px;color:#f3e6c4;font:600 14px/1.3 Georgia,serif;text-align:center;z-index:60;display:none;box-shadow:0 8px 30px rgba(0,0,0,.45);user-select:none}
 #danceOff.on{display:block}
@@ -1782,7 +1796,20 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
 <!-- the quest mini-games: the dance-off lane and the timing bar (top level: the Rebel panel hides its children) -->
 <button id="photoBtn" title="Take a picture (P)" onclick="window.takeVillagePhoto && window.takeVillagePhoto()">&#128247;</button>
 <div id="photoFlash"></div>
-<div id="photoOverlay"><div class="ph-card"><img id="photoImg" alt="Your picture"><div class="ph-cap"></div><div class="ph-btns"><button onclick="window.saveVillagePhoto()">Save</button><button onclick="window.shareVillagePhoto()">Share</button><button onclick="window.closeVillagePhoto()">Close</button></div></div></div>
+<div id="photoOverlay"><div class="ph-card"><img id="photoImg" alt="Your picture"><div class="ph-cap"></div>
+<div class="ph-row">
+<div class="ph-style" role="group" aria-label="Share as"><b>Share as</b>
+<button type="button" data-style="polaroid" aria-pressed="true" onclick="window.setVillagePhotoStyle('polaroid')"><img alt=""><span>Polaroid</span></button>
+<button type="button" data-style="photo" aria-pressed="false" onclick="window.setVillagePhotoStyle('photo')"><img alt=""><span>Photo</span></button></div>
+<span class="ph-sep"></span>
+<div class="ph-share">
+<button type="button" data-share="x" title="Post it on X" onclick="window.shareVillagePhotoTo('x')"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>Post</button>
+<button type="button" data-share="instagram" title="Share it on Instagram" onclick="window.shareVillagePhotoTo('instagram')"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="phIgGrad" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#feda75"/><stop offset=".3" stop-color="#fa7e1e"/><stop offset=".55" stop-color="#d62976"/><stop offset=".8" stop-color="#962fbf"/><stop offset="1" stop-color="#4f5bd5"/></linearGradient></defs><path fill="url(#phIgGrad)" d="M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077"/></svg>Instagram</button>
+<button type="button" data-share="tiktok" title="Share it on TikTok" onclick="window.shareVillagePhotoTo('tiktok')"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><path id="phTkPath" d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></defs><use href="#phTkPath" fill="#25f4ee" transform="translate(-.9 -.6)"/><use href="#phTkPath" fill="#fe2c55" transform="translate(.9 .6)"/><use href="#phTkPath" fill="currentColor"/></svg>TikTok</button>
+<button type="button" data-share="more" title="Share it with another app, or copy it" onclick="window.shareVillagePhotoTo('more')"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>More</button>
+</div></div>
+<div class="ph-btns"><button onclick="window.saveVillagePhoto()">Save</button><button onclick="window.closeVillagePhoto()">Close</button></div>
+<div class="ph-msg" aria-live="polite"></div></div></div>
 <div id="danceOff"><div class="do-title"></div><div class="do-levels"></div><div class="do-lane"><div class="do-ring"></div><div class="do-notes"></div></div><div class="do-score"><span class="do-count"></span><span class="do-judge"></span></div><div class="do-pads"><button class="do-pad" onpointerdown="event.preventDefault(); window.pressDance && window.pressDance(0)">←</button><button class="do-pad" onpointerdown="event.preventDefault(); window.pressDance && window.pressDance(1)">↑</button><button class="do-pad" onpointerdown="event.preventDefault(); window.pressDance && window.pressDance(2)">→</button><button class="do-pad" onpointerdown="event.preventDefault(); window.pressDance && window.pressDance(3)">↓</button></div><button class="mg-restart" onclick="this.blur(); window.restartDanceOff && window.restartDanceOff()">Restart</button><button class="mg-leave" onclick="this.blur(); window.leaveDanceOff && window.leaveDanceOff()">Leave</button></div>
 <div id="skillBar" onpointerdown="if (!event.target.closest('button')) { event.preventDefault(); window.pressSkillBar && window.pressSkillBar(); }"><div class="sb-title"></div><div class="sb-track"><div class="sb-zone"></div><div class="sb-mark"></div></div><div class="sb-pips"></div><div class="sb-msg"></div><button class="mg-restart" onclick="event.stopPropagation(); this.blur(); window.restartSkillBar && window.restartSkillBar()">Restart</button></div>
 <div id="playerStartupOverlay" aria-hidden="true">
@@ -1873,6 +1900,7 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
 <script src="assets/village-hud.js"></script>
 <script src="assets/village-weather.js"></script>
 <script src="assets/badge-art.js"></script>
+<script src="assets/photo-share.js"></script>
 <script src="assets/village-touch.js"></script>
 <script src="assets/samurai-kit.js"></script>
 <script src="assets/walk-gen.js"></script>
@@ -12486,9 +12514,18 @@ function taleThunderSky() {
 window._skillBar = SkillBar; // tests
 
 // The photo camera: P (out of the editor) or the camera button takes a picture of the game view (the page's HUD is not in
-// it; the quest guide's beam is left out): a flash and a shutter, then the picture full size with a caption, Save (a PNG
-// download) and Share (the system share sheet with the picture where there is one, else a copy to paste, else a save).
-const VillagePhoto = { url:null, blob:null, caption:'', busy:false };
+// it; the quest guide's beam is left out): a flash and a shutter, then the picture full size with a caption.
+// Sharing (Nov 1): Share as Polaroid (assets/photo-share.js: the print tilted on a blurred copy of the picture, the
+// Rebel Ants Universe sticker, "Check me out in the Rebel Universe"; made as soon as the picture is taken) or Photo
+// (the picture as it is), kept on the device. Phones (a touch screen with a share sheet): X / Instagram / TikTok open
+// the share sheet with the picture, where the player picks the app (a website can't open Instagram's or TikTok's
+// composer with a picture); for Instagram / TikTok the caption is copied first. Computers: X opens its post window
+// with the text and the link and the picture is copied to paste in (X's web link can't carry a picture); Instagram /
+// TikTok save the picture, copy the caption and open their site. More = the share sheet where there is one, else the
+// picture copied, else saved. Save saves the style picked. Messages show in the card (the page's toasts sit under it).
+const VillagePhoto = { url:null, blob:null, caption:'', busy:false, gen:0, pol:null, polFailed:false, style:null };
+const PHOTO_STYLE_KEY = 'rebelAntsPhotoStyle:v1';
+const PHOTO_APPS = { x: 'X', instagram: 'Instagram', tiktok: 'TikTok' };
 async function takeVillagePhoto(caption) {
   if (!walkMode || adminMode || VillagePhoto.busy || document.getElementById('photoOverlay')?.classList.contains('on')) return false;
   VillagePhoto.busy = true;
@@ -12503,25 +12540,141 @@ async function takeVillagePhoto(caption) {
     VillagePhoto.caption = caption || `${VILLAGE_REGISTRY[CURRENT_VILLAGE_ID]?.displayName || 'Rebel Ants'} · ${new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
     document.getElementById('photoImg').src = url;
     document.querySelector('#photoOverlay .ph-cap').textContent = VillagePhoto.caption;
+    const thumb = document.querySelector('#photoOverlay .ph-style [data-style="photo"] img'); if (thumb) thumb.src = url;
+    photoMsg('');
+    startVillagePolaroid();
     setTimeout(() => document.getElementById('photoOverlay')?.classList.add('on'), 380);
     return true;
   } catch (e) { console.warn('photo failed', e); showToast('The camera jammed. Try again.'); return false; }
   finally { if (guide) guide.setEnabled(guideOn); VillagePhoto.busy = false; }
 }
-function closeVillagePhoto() { document.getElementById('photoOverlay')?.classList.remove('on'); }
-function saveVillagePhoto() {
-  if (!VillagePhoto.url) return;
-  const a = document.createElement('a'); a.href = VillagePhoto.url; a.download = `rebel-ants-${CURRENT_VILLAGE_ID}-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.png`;
+function closeVillagePhoto() { document.getElementById('photoOverlay')?.classList.remove('on'); photoMsg(''); }
+// the style to share: the player's pick (Polaroid unless they chose Photo), Photo when the polaroid can't be made
+function villagePhotoStyle() {
+  if (!VillagePhoto.style) { let s = null; try { s = localStorage.getItem(PHOTO_STYLE_KEY); } catch (e) {} VillagePhoto.style = s === 'photo' ? 'photo' : 'polaroid'; }
+  return (VillagePhoto.polFailed || !window.PhotoShare) ? 'photo' : VillagePhoto.style;
+}
+function setVillagePhotoStyle(style) {
+  VillagePhoto.style = style === 'photo' ? 'photo' : 'polaroid';
+  try { localStorage.setItem(PHOTO_STYLE_KEY, VillagePhoto.style); } catch (e) {}
+  photoMsg(''); paintVillagePhotoShare();
+}
+function photoMsg(text, link) {
+  const el = document.querySelector('#photoOverlay .ph-msg'); if (!el) return;
+  el.textContent = text || '';
+  if (link) { const a = document.createElement('a'); a.href = link.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = link.label; el.append(text ? ' ' : '', a); }
+}
+function paintVillagePhotoShare() {
+  const style = villagePhotoStyle(), ready = style === 'photo' ? !!VillagePhoto.blob : !!VillagePhoto.pol;
+  document.querySelectorAll('#photoOverlay .ph-style button').forEach((b) => {
+    b.setAttribute('aria-pressed', String(b.dataset.style === style));
+    if (b.dataset.style === 'polaroid') b.hidden = VillagePhoto.polFailed || !window.PhotoShare;
+  });
+  document.querySelectorAll('#photoOverlay .ph-share button').forEach((b) => { b.disabled = !ready; });
+}
+function photoOnPhone() { return !!(window.VillageTouch?.on || window.matchMedia?.('(pointer: coarse)')?.matches); }
+async function startVillagePolaroid() {
+  const gen = ++VillagePhoto.gen;
+  if (VillagePhoto.pol?.url) URL.revokeObjectURL(VillagePhoto.pol.url);
+  VillagePhoto.pol = null; VillagePhoto.polFailed = !window.PhotoShare;
+  const thumb = document.querySelector('#photoOverlay .ph-style [data-style="polaroid"] img');
+  if (thumb) thumb.removeAttribute('src');
+  paintVillagePhotoShare();
+  if (VillagePhoto.polFailed) return;
+  try {
+    const r = await window.PhotoShare.compose(VillagePhoto.url, { caption: VillagePhoto.caption });
+    if (gen !== VillagePhoto.gen) return;
+    VillagePhoto.pol = { jpeg: r.jpeg, url: URL.createObjectURL(r.jpeg), png: null, pngP: r.png };
+    // a computer's clipboard takes PNG only: ready before the X button wants it
+    if (!photoOnPhone()) r.png().then((b) => { if (gen === VillagePhoto.gen && VillagePhoto.pol) VillagePhoto.pol.png = b; }).catch(() => {});
+    if (thumb) thumb.src = VillagePhoto.pol.url;
+  } catch (e) {
+    if (gen !== VillagePhoto.gen) return;
+    console.warn('polaroid failed', e); VillagePhoto.polFailed = true;
+  }
+  paintVillagePhotoShare();
+}
+// the picture of the style picked: { blob, url, name, png (Blob) | pngP (() => Promise<Blob>) }; null while the polaroid
+// is still being made
+function villagePhotoPicture() {
+  if (villagePhotoStyle() === 'polaroid') {
+    const p = VillagePhoto.pol;
+    return p ? { blob: p.jpeg, url: p.url, name: 'rebel-universe-polaroid.jpg', png: p.png, pngP: p.pngP } : null;
+  }
+  return VillagePhoto.blob ? { blob: VillagePhoto.blob, url: VillagePhoto.url, name: 'rebel-universe-photo.png', png: VillagePhoto.blob } : null;
+}
+function downloadVillagePhoto(pic) {
+  const a = document.createElement('a'); a.href = pic.url;
+  a.download = `rebel-ants-${CURRENT_VILLAGE_ID}-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}${pic.name.includes('polaroid') ? '-polaroid.jpg' : '.png'}`;
   document.body.appendChild(a); a.click(); a.remove();
 }
-async function shareVillagePhoto() {
-  if (!VillagePhoto.blob) return;
-  const file = new File([VillagePhoto.blob], 'rebel-ants-photo.png', { type: 'image/png' });
-  if (navigator.canShare?.({ files: [file] })) { try { await navigator.share({ files: [file], title: 'Rebel Ants', text: VillagePhoto.caption }); return; } catch (e) { if (e?.name === 'AbortError') return; } }
-  try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': VillagePhoto.blob })]); showToast('Picture copied: paste it anywhere to share it.'); }
-  catch (e) { saveVillagePhoto(); showToast('Picture saved: share it from your downloads.'); }
+function saveVillagePhoto() {
+  const pic = villagePhotoPicture();
+  if (!pic) { photoMsg('One moment: the polaroid is still developing.'); return; }
+  downloadVillagePhoto(pic); photoMsg('Picture saved.');
 }
-Object.assign(window, { takeVillagePhoto, closeVillagePhoto, saveVillagePhoto, shareVillagePhoto });
+function copyVillagePhotoText(text) {
+  try { return navigator.clipboard?.writeText ? navigator.clipboard.writeText(text).then(() => true, () => false) : Promise.resolve(false); }
+  catch (e) { return Promise.resolve(false); }
+}
+function copyVillagePhotoImage(pic) {
+  try {
+    if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') return Promise.resolve(false);
+    const data = pic.png || pic.pngP?.(); if (!data) return Promise.resolve(false);
+    return navigator.clipboard.write([new ClipboardItem({ 'image/png': data })]).then(() => true, () => false);
+  } catch (e) { return Promise.resolve(false); }
+}
+// a new tab with that site; when the browser holds it back (a pop-up blocker), the message gets a link to it instead
+function openVillagePhotoSite(url, label) {
+  let w = null; try { w = window.open(url, '_blank'); } catch (e) {}
+  if (w) { try { w.opener = null; } catch (e) {} return true; }
+  photoMsg(document.querySelector('#photoOverlay .ph-msg')?.textContent || '', { url, label });
+  return false;
+}
+async function shareVillagePhotoTo(target) {
+  const pic = villagePhotoPicture();
+  if (!pic) { photoMsg('One moment: the polaroid is still developing.'); return; }
+  const PS = window.PhotoShare, line = PS?.TEXT || 'Check me out in the Rebel Universe #RebelAnts', link = PS?.LINK || 'https://rebeluniverse.io';
+  const text = `${line} ${link}`, app = PHOTO_APPS[target] || '';
+  const file = new File([pic.blob], pic.name, { type: pic.blob.type || 'image/png' });
+  let sheet = false; try { sheet = !!navigator.canShare?.({ files: [file] }); } catch (e) {}
+  if (sheet && (target === 'more' || (app && photoOnPhone()))) {
+    // the share sheet: called straight from the press (iPhones refuse it after a wait)
+    if (target === 'instagram' || target === 'tiktok') copyVillagePhotoText(text);
+    photoMsg(app ? `Pick ${app} in the share sheet.${target === 'x' ? '' : ' The caption is copied: paste it in your post.'}` : '');
+    try {
+      await navigator.share(target === 'instagram' || target === 'tiktok' ? { files: [file] } : { files: [file], text });
+      badgeStat('shares');
+    } catch (e) {
+      if (e?.name === 'AbortError') { photoMsg(''); return; }
+      photoMsg('The share sheet did not open: press the button again.');
+    }
+    return;
+  }
+  if (target === 'more') {
+    if (await copyVillagePhotoImage(pic)) photoMsg('Picture copied: paste it anywhere to share it.');
+    else { downloadVillagePhoto(pic); photoMsg('Picture saved: share it from your downloads.'); }
+    return;
+  }
+  if (target === 'x') {
+    const copied = await copyVillagePhotoImage(pic);
+    if (!copied) downloadVillagePhoto(pic);
+    const keys = /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent || '') ? '⌘V' : 'Ctrl+V';
+    photoMsg(copied ? `Picture copied: paste it into your post on X (${keys}).` : 'Picture saved: add it to your post on X.');
+    openVillagePhotoSite(`https://twitter.com/intent/tweet?text=${encodeURIComponent(line)}&url=${encodeURIComponent(link)}`, 'Open X');
+    badgeStat('shares');
+    return;
+  }
+  // Instagram / TikTok on a computer: the picture saved, the caption copied, their site opened
+  downloadVillagePhoto(pic);
+  const copied = await copyVillagePhotoText(text);
+  photoMsg(`Picture saved${copied ? ' and caption copied' : ''}: on ${app}, make a new post and pick the picture.`);
+  openVillagePhotoSite(target === 'instagram' ? 'https://www.instagram.com/' : 'https://www.tiktok.com/upload', `Open ${app}`);
+  badgeStat('shares');
+}
+function shareVillagePhoto() { return shareVillagePhotoTo('more'); }
+Object.assign(window, { takeVillagePhoto, closeVillagePhoto, saveVillagePhoto, shareVillagePhoto, shareVillagePhotoTo, setVillagePhotoStyle });
+window._villagePhoto = VillagePhoto; // tests
 
 // ── Mini-games (Oct 15): a quest spot (spotConfig.game) or a room hotspot (game) with { type, id, title, pass, points,
 // questOn, ...the game's own fields } starts one. assets/rebel-games.js runs it; the game itself (assets/games/<type>.js)
@@ -28610,7 +28763,11 @@ document.addEventListener('keydown', async e => {
   if (tag === 'INPUT' || tag === 'TEXTAREA') return;
   const key = e.key.toLowerCase();
 
-  if (document.getElementById('photoOverlay')?.classList.contains('on')) { if (key === 'escape' || key === 'p' || key === 'enter') { e.preventDefault(); closeVillagePhoto(); } return; }
+  if (document.getElementById('photoOverlay')?.classList.contains('on')) {
+    if (key === 'enter' && e.target?.closest?.('#photoOverlay button')) return;   // Enter on the card's buttons presses them
+    if (key === 'escape' || key === 'p' || key === 'enter') { e.preventDefault(); closeVillagePhoto(); }
+    return;
+  }
   if (document.getElementById('panel')?.classList.contains('on') && !adminMode && (key === 'escape' || (key === 'o' && walkMode))) { e.preventDefault(); closeReadingPanel(); return; }
   if (MiniGames.on && (!MiniGames.roam || miniGameRoamKey(e, true))) { if (!MiniGames.roam) miniGameKey(e, true); return; }
   if (key === 'p' && !adminMode && walkMode && !e.repeat && !DanceOff.on && !SkillBar.on) { e.preventDefault(); takeVillagePhoto(); return; }
