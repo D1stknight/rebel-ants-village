@@ -67,7 +67,7 @@
         if (st.phase !== 'play' || st.lock > 0 || !stones[i]) return;
         const r = asked[st.k]; st.lock = 1.1;
         const ok = i === r.stone;
-        if (ok) { st.right++; st.score += 20; stones[i].glow = 1.4; ctx.sound('gamewin'); H.msg('Named', 800); }
+        if (ok) { st.right++; ctx.count?.('riddles'); st.score += 20; stones[i].glow = 1.4; ctx.sound('gamewin'); H.msg('Named', 800); }
         else { st.wrong++; stones[i].crack = 1; ctx.sound('thock'); stones[r.stone].glow = 1.4; H.msg(`Not ${STONES[i].name}`, 1100); st.lock = 2.2; }
         // the reason stays in the door's card until the next riddle
         H.card(panel(`<div style="font:600 13px/1.3 Georgia,serif;letter-spacing:.12em;color:${ok ? '#9be38f' : '#ff9a8a'};text-transform:uppercase">${ok ? 'The debt is named' : 'The stone cracks'}</div>

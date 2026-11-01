@@ -41,7 +41,20 @@ function mergeGame(x, y) {
   if (low) out.low = true;
   const cleared = [x.clearedAt, y.clearedAt].map(Number).filter((n) => n > 0);
   if (cleared.length) out.clearedAt = Math.min(...cleared); else delete out.clearedAt;
+  // the badges' game facts (Oct 31): the levels solved and the songs cleared on hard join, the most levels known, the
+  // best medal, the best place on the board
+  for (const k of ['lv', 'hard']) if (Array.isArray(x[k]) || Array.isArray(y[k])) out[k] = union(x[k], y[k]).sort((a, b) => a - b);
+  if (has('lvn')) out.lvn = Math.max(num(x.lvn), num(y.lvn));
+  if (has('medal')) { const M = { bronze: 1, silver: 2, gold: 3 }; out.medal = (M[y.medal] || 0) > (M[x.medal] || 0) ? y.medal : x.medal; }
+  if (has('rank')) { const r = [x.rank, y.rank].map(Number).filter((n) => n > 0); if (r.length) out.rank = Math.min(...r); else delete out.rank; }
   return out;
+}
+// the badge counters (ProgressionState.stats): a list joins (the rooms, villagers, days played ...), a number keeps the
+// larger (each device counts its own share; the larger is the closer one)
+const STAT_LIST_MAX = 1200;
+function mergeStat(a, b) {
+  if (Array.isArray(a) || Array.isArray(b)) return union(a, b).slice(0, STAT_LIST_MAX);
+  return Math.max(num(a), num(b));
 }
 function mergeRiddle(x, y) {
   if (!isObj(x) || !isObj(y)) return isObj(x) ? x : y;
@@ -64,7 +77,8 @@ function mergeProgression(x, y) {
   if (has('rebelPoints')) out.rebelPoints = Math.max(num(x.rebelPoints), num(y.rebelPoints));   // practice points (an account's are in the economy)
   if (has('rebelPointsLog')) { const log = new Map(); for (const e of [...arr(x.rebelPointsLog), ...arr(y.rebelPointsLog)]) if (isObj(e) && !log.has(logKey(e))) log.set(logKey(e), e);
     out.rebelPointsLog = [...log.values()].sort((a, b) => num(a.at) - num(b.at) || (logKey(a) < logKey(b) ? -1 : 1)).slice(-LOG_MAX); }
-  const objs = { secretParts: union, ecosystemActions: (a, b) => a || b, customJournalEntries: (a) => a, games: mergeGame, riddles: mergeRiddle, gamePointsDay: (a, b) => Math.max(num(a), num(b)) };
+  const objs = { secretParts: union, ecosystemActions: (a, b) => a || b, customJournalEntries: (a) => a, games: mergeGame, riddles: mergeRiddle, gamePointsDay: (a, b) => Math.max(num(a), num(b)),
+    stats: mergeStat, forged: (a, b) => a || b };
   for (const [k, f] of Object.entries(objs)) if (has(k)) out[k] = perKey(x[k], y[k], f);
   if (has('updatedAt')) out.updatedAt = later(x.updatedAt, y.updatedAt) || null;
   return out;

@@ -50,7 +50,12 @@
     builder:   { field: ['#2a1806', '#9a6418'], ink: '#ffe0a0', pattern: 'kikko', shape: 'diamond' },
     villages:  { shape: 'shield' },
     secrets:   { field: ['#0c0620', '#3c1f78'], ink: '#dccbff', pattern: 'stars', shape: 'hex' },
-    collector: { field: ['#04261c', '#137a58'], ink: 'gold', pattern: 'seigaiha', shape: 'coin' }
+    collector: { field: ['#04261c', '#137a58'], ink: 'gold', pattern: 'seigaiha', shape: 'coin' },
+    // Oct 31 (300 badges): four more paths, each a medal shape of its own
+    rivals:     { field: ['#2a0606', '#b3261e'], ink: 'gold', pattern: 'rays', shape: 'star6' },
+    riddles:    { field: ['#0b1430', '#2d4fb6'], ink: '#ffe9a8', pattern: 'stars', shape: 'pent' },
+    forge:      { field: ['#1c0b03', '#b85a12'], ink: '#ffdcae', pattern: 'kikko', shape: 'gear' },
+    dedication: { field: ['#03222a', '#108a86'], ink: 'gold', pattern: 'seigaiha', shape: 'circle' }
   };
   // story medals each in a colour of their own (a chapter, a friend village)
   const BADGE_LOOK = {
@@ -65,7 +70,8 @@
     'story-tunnel-witness': { field: ['#160c05', '#6e4626'], pattern: 'kikko' },
     'story-dust-reader': { field: ['#260805', '#ab3e26'], pattern: 'stars' },
     'story-old-roots': { field: ['#061609', '#2f6d36'], pattern: 'asanoha' },
-    'secret-beneath-roots': { field: ['#040207', '#2c0f3e'], pattern: 'stars', ink: '#ffb066', nebula: true }
+    'secret-beneath-roots': { field: ['#040207', '#2c0f3e'], pattern: 'stars', ink: '#ffb066', nebula: true },
+    'master-all': { field: ['#1a0a02', '#c8860f'], pattern: 'rays', ink: '#fff6d8', nebula: true }
   };
   // the icon of each badge (village badges carry their emblem)
   const BADGE_ICON = {
@@ -87,12 +93,13 @@
   function plan(badge) {
     const id = badge.badgeId || '', cat = badge.category || 'explorer';
     let village = null, kind = null, m;
-    if ((m = id.match(/^(crest|secrets|games|legend-chest)-(.+)$/)) && VILLAGE_LOOK[m[2]]) { kind = m[1]; village = m[2]; }
+    if ((m = id.match(/^(crest|secrets|games|legend-chest|master)-(.+)$/)) && VILLAGE_LOOK[m[2]]) { kind = m[1]; village = m[2]; }
     if (badge.emblem && !village) village = badge.emblem;
-    const base = CATEGORY_LOOK[cat] || CATEGORY_LOOK.explorer;
-    const look = { ...base, ...(village ? VILLAGE_LOOK[village] : {}), ...(BADGE_LOOK[id] || {}) };
-    const p = { shape: base.shape || 'circle', look, village, kind, ornament: null, number: null };
+    const base = CATEGORY_LOOK[cat] || CATEGORY_LOOK.explorer, lookOf = badge.look && VILLAGE_LOOK[badge.look] ? VILLAGE_LOOK[badge.look] : {};
+    const look = { ...base, ...(village ? VILLAGE_LOOK[village] : {}), ...lookOf, ...(BADGE_LOOK[id] || {}) };
+    const p = { shape: base.shape || 'circle', look, village, kind, ornament: null, number: null, icon: badge.icon || null };
     if (kind === 'crest') p.shape = 'shield';
+    if (kind === 'master' || id === 'master-all') { p.shape = 'star8'; p.ornament = 'crown'; }
     if (kind === 'secrets') { p.shape = 'hex'; p.ornament = 'eye'; }
     if (kind === 'games') { p.shape = 'oct'; p.ornament = 'crown'; }
     if (kind === 'legend-chest') { p.shape = 'coin'; p.icon = 'chest'; p.small = true; }
@@ -101,8 +108,24 @@
     if (badge.requirementType === 'secretCount') { p.icon = 'keyhole'; p.number = badge.requirementValue; }
     if (id === 'mystery') { p.icon = 'question'; p.look = { field: ['#07060c', '#1c1830'], ink: '#8a83a8', pattern: 'stars' }; }
     if (badge.requirementType === 'miniAnts' || badge.requirementType === 'chestCount' && Number(badge.requirementValue) > 1) p.number = badge.requirementValue;
+    if (p.number == null) p.number = tierNumber(badge);
     if (kind === 'legend-chest' && FACTIONS.includes(village)) p.emblem = village; // the chest with the village's emblem over it
     return p;
+  }
+
+  // the number on a tiered medal (rooms 10 / 30, 5 km / 25 km, 10H, 1K points, the boards' #1 ...): none for one-offs
+  const K = (n) => (n >= 1000 ? `${Math.round(n / 100) / 10}K`.replace('.0K', 'K') : String(n));
+  const UNIT = { walkM: (n) => `${n / 1000}K`, swimM: (n) => `${n / 1000}K`, playS: (n) => `${n / 3600}H`, sessionMax: (n) => `${n / 3600}H`, voiceS: (n) => (n >= 3600 ? `${n / 3600}H` : null), strike: () => null, signin: () => null, stage: () => null, hosted: () => null, shows: () => null, book: () => null, goto: () => null, emoteCrowd: () => null };
+  function tierNumber(b) {
+    const t = b.requirementType, v = b.requirementValue;
+    if (t === 'stat' && v) { const f = UNIT[v.key]; const out = f ? f(v.n) : v.n > 1 ? K(v.n) : null; return out; }
+    if ((t === 'gamesCleared' || t === 'levelsAll' || t === 'collectibleCount' || t === 'villagesCount') && Number(v) > 1) return K(Number(v));
+    if (t === 'gamesPlayed' || t === 'levelsTotal' || t === 'gamesTried' && Number(v) > 1 || t === 'points' && Number(v) < 30000) return Number(v) ? K(Number(v)) : null;
+    if (t === 'questPrefix' && v?.n > 1) return v.n;
+    if (t === 'collectSet' && v?.n > 1) return v.n;
+    if (t === 'boardRank') return v.n > 1 ? v.n : `#${v.rank}`;
+    if (t === 'kindGames' && v?.n > 1) return v.n;
+    return null;
   }
 
   // ---------- paths ----------
@@ -115,6 +138,9 @@
     else if (shape === 'diamond') { const k = r * 1.16, q = .3; g.moveTo(0, -k); g.quadraticCurveTo(k * q, -k * q, k, 0); g.quadraticCurveTo(k * q, k * q, 0, k); g.quadraticCurveTo(-k * q, k * q, -k, 0); g.quadraticCurveTo(-k * q, -k * q, 0, -k); }
     else if (shape === 'star8') { for (let i = 0; i < 16; i++) { const a = i / 16 * TAU - Math.PI / 2, rr = i % 2 ? r * .8 : r * (i % 4 ? 1 : 1.07); g.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } }
     else if (shape === 'kiku') { const n = 16; for (let i = 0; i < n; i++) { const a0 = i / n * TAU - Math.PI / 2, a1 = (i + 1) / n * TAU - Math.PI / 2, am = (a0 + a1) / 2; g.arc(Math.cos(am) * r * .9, Math.sin(am) * r * .9, r * .19, am - Math.PI * .62, am + Math.PI * .62); } }
+    else if (shape === 'pent') { for (let i = 0; i < 5; i++) { const a = i / 5 * TAU - Math.PI / 2; corner(g, i, Math.cos(a) * r * 1.08, Math.sin(a) * r * 1.08); } }
+    else if (shape === 'star6') { for (let i = 0; i < 12; i++) { const a = i / 12 * TAU - Math.PI / 2, rr = i % 2 ? r * .86 : r * 1.06; corner(g, i, Math.cos(a) * rr, Math.sin(a) * rr); } }
+    else if (shape === 'gear') { const n = 12; for (let i = 0; i < n * 4; i++) { const a = i / (n * 4) * TAU - Math.PI / 2, rr = (i % 4 < 2) ? r * 1.04 : r * .92; corner(g, i, Math.cos(a) * rr, Math.sin(a) * rr); } }
     else if (shape === 'shield') {
       const w = r * .98, top = -r * 1.02;
       g.moveTo(-w, top + r * .1); g.quadraticCurveTo(-w * .55, top - r * .02, 0, top + r * .06); g.quadraticCurveTo(w * .55, top - r * .02, w, top + r * .1);
@@ -319,7 +345,57 @@
     abyss: g => {
       ICONS.eye(g);
       for (let k = 0; k < 10; k++) { const a = k / 10 * TAU; stroke(g, .06, () => { g.moveTo(Math.cos(a) * .86, Math.sin(a) * .62); g.quadraticCurveTo(Math.cos(a + .3) * 1.02, Math.sin(a + .3) * .9, Math.cos(a + .15) * .98, Math.sin(a + .15) * 1.0); }); }
-    }
+    },
+    // ── Oct 31: the icons of the 300 ──
+    map: g => { fillPoly(g, [[-.9, -.62], [-.32, -.82], [.3, -.62], [.9, -.82], [.9, .62], [.3, .82], [-.32, .62], [-.9, .82]]); cut(g, () => { g.lineWidth = .05; g.beginPath(); g.moveTo(-.32, -.82); g.lineTo(-.32, .62); g.moveTo(.3, -.62); g.lineTo(.3, .82); g.stroke(); stroke(g, .06, () => { g.setLineDash([.1, .09]); g.moveTo(-.7, .4); g.quadraticCurveTo(-.1, -.5, .62, .1); }); g.setLineDash([]); }); },
+    handshake: g => { g.save(); g.rotate(-.12); g.beginPath(); g.roundRect(-.95, -.2, .7, .42, .1); g.fill(); g.beginPath(); g.roundRect(.25, -.2, .7, .42, .1); g.fill(); g.beginPath(); g.ellipse(0, .02, .42, .26, 0, 0, TAU); g.fill(); cut(g, () => { g.lineWidth = .04; [-.16, -.02, .12].forEach(x => { g.beginPath(); g.moveTo(x, -.18); g.lineTo(x + .06, .2); g.stroke(); }); }); g.restore(); },
+    door: g => { g.beginPath(); g.moveTo(-.6, .95); g.lineTo(-.6, -.45); g.arc(0, -.45, .6, Math.PI, TAU); g.lineTo(.6, .95); g.closePath(); g.fill(); cut(g, () => { g.beginPath(); g.moveTo(-.44, .95); g.lineTo(-.44, -.42); g.arc(0, -.42, .44, Math.PI, TAU); g.lineTo(.44, .95); g.closePath(); g.fill(); }); g.beginPath(); g.moveTo(-.36, .95); g.lineTo(-.36, -.38); g.arc(0, -.38, .36, Math.PI, TAU); g.lineTo(.36, .95); g.closePath(); g.fill(); cut(g, () => ell(g, .2, .2, .06, .06)); },
+    lock: g => { stroke(g, .16, () => { g.moveTo(-.38, -.05); g.lineTo(-.38, -.4); g.arc(0, -.4, .38, Math.PI, TAU); g.lineTo(.38, -.05); }); g.beginPath(); g.roundRect(-.62, -.08, 1.24, .98, .12); g.fill(); cut(g, () => { ell(g, 0, .3, .12, .12); fillPoly(g, [[-.06, .32], [.06, .32], [.1, .66], [-.1, .66]]); }); },
+    mic: g => { g.beginPath(); g.roundRect(-.26, -.95, .52, .98, .26); g.fill(); stroke(g, .1, () => { g.arc(0, -.2, .46, .1, Math.PI - .1); }); g.fillRect(-.06, .26, .12, .44); g.beginPath(); g.roundRect(-.38, .68, .76, .14, .06); g.fill(); cut(g, () => { g.lineWidth = .04; [-.7, -.56, -.42].forEach(y => { g.beginPath(); g.moveTo(-.26, y); g.lineTo(.26, y); g.stroke(); }); }); },
+    wave: g => { g.beginPath(); g.moveTo(-1, .9); g.lineTo(-1, .2); g.bezierCurveTo(-.7, -.4, -.1, -.95, .5, -.6); g.bezierCurveTo(.15, -.55, .02, -.2, .2, .05); g.bezierCurveTo(.4, .3, .75, .1, 1, -.05); g.lineTo(1, .9); g.closePath(); g.fill(); cut(g, () => { g.lineWidth = .06; g.beginPath(); g.moveTo(-.9, .55); g.quadraticCurveTo(0, .35, .95, .55); g.stroke(); }); },
+    rain: g => { ell(g, -.4, -.42, .32, .28); ell(g, .06, -.62, .4, .34); ell(g, .5, -.38, .32, .28); g.fillRect(-.58, -.46, 1.08, .3); [[-.45, .05], [.05, .1], [.5, .02], [-.2, .45], [.3, .5]].forEach(([x, y]) => { g.beginPath(); g.moveTo(x, y - .14); g.quadraticCurveTo(x + .12, y + .06, x, y + .14); g.quadraticCurveTo(x - .12, y + .06, x, y - .14); g.fill(); }); },
+    snow: g => { for (let k = 0; k < 6; k++) { g.save(); g.rotate(k * Math.PI / 3); stroke(g, .1, () => { g.moveTo(0, 0); g.lineTo(0, -.92); g.moveTo(0, -.5); g.lineTo(-.24, -.72); g.moveTo(0, -.5); g.lineTo(.24, -.72); g.moveTo(0, -.25); g.lineTo(-.16, -.38); g.moveTo(0, -.25); g.lineTo(.16, -.38); }); g.restore(); } ell(g, 0, 0, .14, .14); },
+    fog: g => { [[-.55, .9], [-.2, 1.2], [.15, .8], [.5, 1.1]].forEach(([y, w], i) => { g.beginPath(); g.roundRect(-w * .8 + (i % 2) * .15, y - .07, w * 1.5, .15, .07); g.fill(); }); ell(g, .1, -.75, .3, .22); },
+    sun: g => { ell(g, 0, 0, .42, .42); for (let k = 0; k < 12; k++) { const a = k / 12 * TAU; fillPoly(g, [[Math.cos(a - .12) * .55, Math.sin(a - .12) * .55], [Math.cos(a) * .98, Math.sin(a) * .98], [Math.cos(a + .12) * .55, Math.sin(a + .12) * .55]]); } cut(g, () => ell(g, 0, 0, .3, .3)); ell(g, 0, 0, .24, .24); },
+    bolt: g => fillPoly(g, [[.18, -1], [-.52, .12], [-.06, .12], [-.28, 1], [.5, -.2], [.04, -.2], [.32, -1]]),
+    camera: g => { g.beginPath(); g.roundRect(-.92, -.42, 1.84, 1.18, .16); g.fill(); fillPoly(g, [[-.38, -.42], [-.26, -.66], [.26, -.66], [.38, -.42]]); cut(g, () => ell(g, 0, .16, .4, .4)); ell(g, 0, .16, .28, .28); cut(g, () => ell(g, -.08, .08, .08, .08)); g.beginPath(); g.roundRect(.5, -.32, .24, .14, .04); cut(g, () => g.fill()); },
+    book: g => { g.beginPath(); g.moveTo(0, -.6); g.quadraticCurveTo(-.45, -.82, -.95, -.66); g.lineTo(-.95, .72); g.quadraticCurveTo(-.45, .56, 0, .78); g.quadraticCurveTo(.45, .56, .95, .72); g.lineTo(.95, -.66); g.quadraticCurveTo(.45, -.82, 0, -.6); g.closePath(); g.fill(); cut(g, () => { g.lineWidth = .05; g.beginPath(); g.moveTo(0, -.55); g.lineTo(0, .72); g.stroke(); [-.35, -.12, .11, .34].forEach(y => { g.beginPath(); g.moveTo(-.78, y); g.quadraticCurveTo(-.4, y - .1, -.12, y); g.moveTo(.12, y); g.quadraticCurveTo(.4, y - .1, .78, y); g.stroke(); }); }); },
+    blossom: g => { for (let k = 0; k < 5; k++) { g.save(); g.rotate(k / 5 * TAU); g.beginPath(); g.moveTo(0, -.1); g.bezierCurveTo(-.42, -.4, -.3, -.95, 0, -.82); g.bezierCurveTo(.3, -.95, .42, -.4, 0, -.1); g.fill(); g.restore(); } cut(g, () => ell(g, 0, 0, .2, .2)); for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + .6; ell(g, Math.cos(a) * .12, Math.sin(a) * .12, .04, .04); } },
+    fish: g => { g.beginPath(); g.moveTo(-.62, 0); g.bezierCurveTo(-.3, -.55, .45, -.5, .7, 0); g.bezierCurveTo(.45, .5, -.3, .55, -.62, 0); g.fill(); fillPoly(g, [[-.5, 0], [-.98, -.42], [-.86, 0], [-.98, .42]]); fillPoly(g, [[-.05, -.38], [.25, -.68], [.22, -.36]]); cut(g, () => { ell(g, .42, -.08, .07, .07); g.lineWidth = .04; g.beginPath(); g.arc(.12, 0, .26, -1, 1); g.stroke(); }); },
+    dice: g => { g.save(); g.rotate(-.18); g.beginPath(); g.roundRect(-.72, -.72, 1.44, 1.44, .22); g.fill(); cut(g, () => [[-.38, -.38], [.38, -.38], [0, 0], [-.38, .38], [.38, .38]].forEach(([x, y]) => ell(g, x, y, .13, .13))); g.restore(); },
+    note: g => { ell(g, -.42, .62, .3, .22, -.4); ell(g, .5, .38, .3, .22, -.4); g.fillRect(-.18, -.72, .12, 1.32); g.fillRect(.74, -.95, .12, 1.32); fillPoly(g, [[-.18, -.72], [.86, -.95], [.86, -.62], [-.18, -.4]]); },
+    flag: g => { g.fillRect(-.7, -.95, .12, 1.9); g.beginPath(); g.moveTo(-.58, -.9); g.quadraticCurveTo(-.1, -1.05, .2, -.82); g.quadraticCurveTo(.5, -.62, .9, -.78); g.lineTo(.9, .02); g.quadraticCurveTo(.5, .16, .2, -.04); g.quadraticCurveTo(-.1, -.24, -.58, -.1); g.closePath(); g.fill(); cut(g, () => { for (let r = 0; r < 2; r++) for (let c = 0; c < 4; c++) if ((r + c) % 2) { const x = -.52 + c * .35, y = -.82 + r * .36; g.fillRect(x, y + (c > 1 ? .06 : 0), .33, .34); } }); },
+    anchor: g => { stroke(g, .12, () => { g.moveTo(0, -.6); g.lineTo(0, .82); g.moveTo(-.38, -.36); g.lineTo(.38, -.36); g.moveTo(-.78, .2); g.quadraticCurveTo(-.7, .82, 0, .86); g.quadraticCurveTo(.7, .82, .78, .2); }); stroke(g, .1, () => g.arc(0, -.76, .16, 0, TAU)); fillPoly(g, [[-.92, .28], [-.62, .16], [-.82, .02]]); fillPoly(g, [[.92, .28], [.62, .16], [.82, .02]]); },
+    wrench: g => { g.save(); g.rotate(-.78); g.fillRect(-.1, -.4, .2, 1.32); g.beginPath(); g.arc(0, -.55, .36, 0, TAU); g.fill(); cut(g, () => g.fillRect(-.12, -1, .24, .5)); g.beginPath(); g.arc(0, .95, .16, 0, TAU); g.fill(); g.restore(); },
+    ball: g => { ell(g, 0, 0, .86, .86); cut(g, () => { g.lineWidth = .07; g.beginPath(); g.moveTo(-.86, 0); g.lineTo(.86, 0); g.moveTo(0, -.86); g.lineTo(0, .86); g.stroke(); g.beginPath(); g.arc(-1.05, 0, .74, -.95, .95); g.stroke(); g.beginPath(); g.arc(1.05, 0, .74, Math.PI - .95, Math.PI + .95); g.stroke(); }); },
+    medal: g => { fillPoly(g, [[-.42, -.98], [-.12, -.98], [.06, -.38], [-.2, -.3]]); fillPoly(g, [[.42, -.98], [.12, -.98], [-.06, -.38], [.2, -.3]]); ell(g, 0, .28, .58, .58); cut(g, () => ell(g, 0, .28, .44, .44)); star5(g, 0, .3, .34); },
+    lantern: g => { g.fillRect(-.06, -1, .12, .2); g.beginPath(); g.roundRect(-.36, -.82, .72, .12, .04); g.fill(); g.beginPath(); g.ellipse(0, .02, .52, .7, 0, 0, TAU); g.fill(); cut(g, () => { g.lineWidth = .045; [-.36, -.12, .12, .36].forEach(y => { g.beginPath(); g.ellipse(0, y, .5 * Math.sqrt(1 - (y / .7) ** 2), .02, 0, 0, TAU); g.stroke(); }); }); g.beginPath(); g.roundRect(-.3, .7, .6, .12, .04); g.fill(); stroke(g, .05, () => { g.moveTo(0, .82); g.lineTo(0, .98); }); },
+    target: g => { ell(g, 0, 0, .9, .9); cut(g, () => ell(g, 0, 0, .7, .7)); ell(g, 0, 0, .52, .52); cut(g, () => ell(g, 0, 0, .34, .34)); ell(g, 0, 0, .17, .17); g.save(); g.rotate(-.8); g.fillRect(-.03, -1.1, .06, 1.05); fillPoly(g, [[-.12, -1.1], [.12, -1.1], [0, -.92]]); g.restore(); },
+    sword: g => { g.save(); g.rotate(.78); g.beginPath(); g.moveTo(-.07, .45); g.lineTo(-.07, -.8); g.quadraticCurveTo(0, -1.02, .1, -.8); g.lineTo(.07, .45); g.closePath(); g.fill(); g.beginPath(); g.ellipse(0, .5, .26, .07, 0, 0, TAU); g.fill(); g.fillRect(-.06, .55, .12, .36); ell(g, 0, .94, .08, .08); g.restore(); },
+    stairs: g => { fillPoly(g, [[-.95, .9], [-.95, .5], [-.5, .5], [-.5, .1], [-.05, .1], [-.05, -.3], [.4, -.3], [.4, -.7], [.95, -.7], [.95, .9]]); star5(g, .66, -.9, .2); },
+    cup: g => { fillPoly(g, [[-.6, -.72], [.6, -.72], [.42, .82], [-.42, .82]]); cut(g, () => { g.fillRect(-.58, -.5, 1.16, .08); }); ell(g, -.15, -.95, .14, .14); ell(g, .2, -1.02, .1, .1); },
+    stones: g => { ell(g, 0, .62, .82, .26); ell(g, -.02, .08, .58, .22); ell(g, .04, -.38, .4, .18); ell(g, 0, -.75, .22, .12); },
+    rope: g => { for (let k = 0; k < 8; k++) { const x = -.95 + k * .27; g.save(); g.translate(x, 0); g.rotate(.6); ell(g, 0, 0, .1, .26); g.restore(); } ell(g, -.98, 0, .16, .16); ell(g, .98, 0, .16, .16); },
+    board: g => { g.beginPath(); g.roundRect(-.85, -.85, 1.7, 1.7, .1); g.fill(); cut(g, () => { for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) if ((r + c) % 2) g.fillRect(-.7 + c * .35, -.7 + r * .35, .35, .35); }); ell(g, -.18, -.18, .14, .14); },
+    fist: g => { g.beginPath(); g.roundRect(-.6, -.55, 1.2, .9, .22); g.fill(); g.beginPath(); g.roundRect(-.42, .25, .84, .55, .12); g.fill(); cut(g, () => { g.lineWidth = .05; [-.3, 0, .3].forEach(x => { g.beginPath(); g.moveTo(x, -.55); g.lineTo(x, -.2); g.stroke(); }); g.beginPath(); g.moveTo(-.6, .05); g.quadraticCurveTo(-.1, .18, .3, .02); g.stroke(); }); },
+    podium: g => { g.fillRect(-.3, -.2, .6, 1.1); g.fillRect(-.92, .2, .6, .7); g.fillRect(.32, .4, .6, .5); cut(g, () => { g.font = 'bold .5px serif'; g.textAlign = 'center'; g.fillText('1', 0, .3); }); star5(g, 0, -.58, .28); },
+    crown: g => { fillPoly(g, [[-.9, .55], [-.95, -.5], [-.45, -.05], [0, -.72], [.45, -.05], [.95, -.5], [.9, .55]]); g.fillRect(-.9, .6, 1.8, .22); [[-.95, -.58], [0, -.8], [.95, -.58]].forEach(([x, y]) => ell(g, x, y, .1, .1)); cut(g, () => ell(g, 0, .2, .11, .11)); },
+    bulb: g => { g.beginPath(); g.arc(0, -.25, .58, Math.PI * .8, Math.PI * 2.2); g.lineTo(.22, .5); g.lineTo(-.22, .5); g.closePath(); g.fill(); g.fillRect(-.24, .55, .48, .12); g.fillRect(-.2, .72, .4, .1); ell(g, 0, .9, .1, .06); cut(g, () => { g.lineWidth = .05; g.beginPath(); g.moveTo(-.12, .45); g.lineTo(-.12, .02); g.lineTo(.12, .02); g.lineTo(.12, .45); g.stroke(); }); },
+    grave: g => { g.beginPath(); g.moveTo(-.55, .85); g.lineTo(-.55, -.3); g.arc(0, -.3, .55, Math.PI, TAU); g.lineTo(.55, .85); g.closePath(); g.fill(); g.fillRect(-.85, .78, 1.7, .16); cut(g, () => { g.fillRect(-.05, -.5, .1, .62); g.fillRect(-.24, -.3, .48, .1); }); },
+    cauldron: g => { g.beginPath(); g.ellipse(0, .18, .78, .62, 0, Math.PI * 1.05, Math.PI * 1.95, true); g.fill(); g.beginPath(); g.roundRect(-.86, -.32, 1.72, .2, .08); g.fill(); g.fillRect(-.55, .7, .14, .22); g.fillRect(.41, .7, .14, .22); ell(g, -.2, -.6, .14, .14); ell(g, .15, -.78, .1, .1); ell(g, .4, -.55, .08, .08); },
+    chat: g => { g.beginPath(); g.roundRect(-.92, -.72, 1.84, 1.18, .3); g.fill(); fillPoly(g, [[-.5, .4], [-.62, .9], [-.1, .44]]); cut(g, () => [-.42, 0, .42].forEach(x => ell(g, x, -.13, .11, .11))); },
+    heart: g => { g.beginPath(); g.moveTo(0, .88); g.bezierCurveTo(-.95, .2, -.95, -.6, -.45, -.72); g.bezierCurveTo(-.18, -.78, 0, -.55, 0, -.4); g.bezierCurveTo(0, -.55, .18, -.78, .45, -.72); g.bezierCurveTo(.95, -.6, .95, .2, 0, .88); g.fill(); },
+    group: g => { [[-.58, .06, .22], [.58, .06, .22], [0, -.18, .28]].forEach(([x, y, r]) => { ell(g, x, y - r * 1.4, r, r); g.beginPath(); g.ellipse(x, y + r * 1.9, r * 1.7, r * 1.6, 0, Math.PI, TAU); g.fill(); }); },
+    stage: g => { g.fillRect(-.95, .55, 1.9, .3); g.beginPath(); g.moveTo(-.95, -.95); g.lineTo(-.95, .5); g.quadraticCurveTo(-.7, -.1, -.45, -.62); g.lineTo(-.45, -.95); g.closePath(); g.fill(); g.beginPath(); g.moveTo(.95, -.95); g.lineTo(.95, .5); g.quadraticCurveTo(.7, -.1, .45, -.62); g.lineTo(.45, -.95); g.closePath(); g.fill(); g.fillRect(-.95, -.98, 1.9, .14); g.fillRect(-.03, -.2, .06, .7); ell(g, 0, -.3, .12, .14); },
+    key: g => { stroke(g, .14, () => g.arc(-.45, 0, .32, 0, TAU)); g.fillRect(-.16, -.07, 1.06, .14); g.fillRect(.6, .05, .1, .26); g.fillRect(.8, .05, .1, .2); },
+    anvil: g => { fillPoly(g, [[-1, -.42], [.5, -.42], [.62, -.55], [.95, -.55], [.95, -.2], [.4, -.05], [.25, .25], [.5, .3], [.6, .62], [-.6, .62], [-.5, .3], [-.25, .25], [-.4, -.1], [-.82, -.16]]); g.fillRect(-.7, .62, 1.4, .18); fillPoly(g, [[.15, -.95], [.32, -.62], [.05, -.68]]); fillPoly(g, [[-.2, -.98], [-.05, -.6], [-.32, -.66]]); },
+    glove: g => { g.beginPath(); g.roundRect(-.48, -.12, .96, .72, .24); g.fill(); [[-.4, -.5], [-.15, -.68], [.1, -.7], [.35, -.56]].forEach(([x, y]) => { g.beginPath(); g.roundRect(x - .1, y, .2, .62, .1); g.fill(); }); g.save(); g.translate(-.5, .05); g.rotate(-.7); g.beginPath(); g.roundRect(-.1, -.3, .2, .48, .1); g.fill(); g.restore(); g.fillRect(-.42, .58, .84, .3); cut(g, () => g.fillRect(-.42, .62, .84, .05)); },
+    mask: g => { g.beginPath(); g.moveTo(-.95, -.3); g.quadraticCurveTo(0, -.75, .95, -.3); g.quadraticCurveTo(.92, .45, .3, .48); g.quadraticCurveTo(0, .2, -.3, .48); g.quadraticCurveTo(-.92, .45, -.95, -.3); g.fill(); cut(g, () => { ell(g, -.42, -.08, .2, .13, .2); ell(g, .42, -.08, .2, .13, -.2); }); },
+    calendar: g => { g.beginPath(); g.roundRect(-.82, -.66, 1.64, 1.56, .14); g.fill(); g.fillRect(-.5, -.92, .14, .38); g.fillRect(.36, -.92, .14, .38); cut(g, () => { g.fillRect(-.7, -.3, 1.4, .06); for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) g.fillRect(-.62 + c * .33, -.12 + r * .3, .2, .18); }); },
+    flame: g => { g.beginPath(); g.moveTo(0, -1); g.bezierCurveTo(.5, -.4, .82, -.1, .7, .35); g.bezierCurveTo(.6, .78, .3, .95, 0, .95); g.bezierCurveTo(-.3, .95, -.6, .78, -.7, .35); g.bezierCurveTo(-.78, -.05, -.4, -.25, -.3, -.6); g.bezierCurveTo(-.15, -.35, -.05, -.45, 0, -1); g.fill(); cut(g, () => { g.beginPath(); g.moveTo(0, -.15); g.bezierCurveTo(.3, .15, .38, .4, .3, .58); g.bezierCurveTo(.2, .78, -.2, .78, -.3, .58); g.bezierCurveTo(-.38, .38, -.15, .2, 0, -.15); g.fill(); }); },
+    hourglass: g => { g.fillRect(-.66, -.95, 1.32, .14); g.fillRect(-.66, .81, 1.32, .14); fillPoly(g, [[-.5, -.8], [.5, -.8], [.08, 0], [.5, .8], [-.5, .8], [-.08, 0]]); cut(g, () => { fillPoly(g, [[-.36, -.7], [.36, -.7], [0, -.18]]); fillPoly(g, [[0, .18], [.04, .2], [.32, .7], [-.32, .7], [-.04, .2]]); }); fillPoly(g, [[-.22, .7], [.22, .7], [0, .38]]); },
+    shovel: g => { g.save(); g.rotate(.6); g.fillRect(-.06, -.95, .12, 1.1); g.beginPath(); g.roundRect(-.26, -1.08, .52, .16, .06); g.fill(); g.beginPath(); g.moveTo(-.34, .12); g.lineTo(.34, .12); g.lineTo(.34, .55); g.quadraticCurveTo(.2, .9, 0, .98); g.quadraticCurveTo(-.2, .9, -.34, .55); g.closePath(); g.fill(); g.restore(); },
+    firework: g => { for (let k = 0; k < 12; k++) { const a = k / 12 * TAU; stroke(g, .07, () => { g.moveTo(Math.cos(a) * .22, Math.sin(a) * .22 - .1); g.lineTo(Math.cos(a) * .78, Math.sin(a) * .78 - .1); }); ell(g, Math.cos(a) * .9, Math.sin(a) * .9 - .1, .06, .06); } ell(g, 0, -.1, .12, .12); }
   };
 
   // canvases kept on the CPU (willReadFrequently): GPU canvases cost a read-back for every copy and every picture made
@@ -448,7 +524,7 @@
     g.restore();
     shapePath(g, p.shape, r * .8); g.lineWidth = r * .02; g.strokeStyle = 'rgba(0,0,0,.6)'; g.stroke();
     // rivets / lights on the frame (the brand ring's lit windows)
-    if (R.rivets && p.shape !== 'coin') { const n = p.shape === 'hex' ? 6 : p.shape === 'oct' ? 8 : 12; for (let i = 0; i < n; i++) { const a = (i + (p.shape === 'oct' ? .5 : 0)) / n * TAU - Math.PI / 2, rr = r * (p.shape === 'hex' ? .8 : .845); if (p.shape === 'shield' || p.shape === 'kiku' || p.shape === 'star8' || p.shape === 'diamond') continue; g.save(); g.translate(Math.cos(a) * rr, Math.sin(a) * rr); g.shadowColor = R.glow; g.shadowBlur = r * .08; g.fillStyle = R.glow; g.beginPath(); g.arc(0, 0, r * .026, 0, TAU); g.fill(); g.restore(); } }
+    if (R.rivets && p.shape !== 'coin') { const n = p.shape === 'hex' ? 6 : p.shape === 'oct' ? 8 : 12; for (let i = 0; i < n; i++) { const a = (i + (p.shape === 'oct' ? .5 : 0)) / n * TAU - Math.PI / 2, rr = r * (p.shape === 'hex' ? .8 : .845); if (p.shape === 'shield' || p.shape === 'kiku' || p.shape === 'star8' || p.shape === 'diamond' || p.shape === 'pent' || p.shape === 'star6' || p.shape === 'gear') continue; g.save(); g.translate(Math.cos(a) * rr, Math.sin(a) * rr); g.shadowColor = R.glow; g.shadowBlur = r * .08; g.fillStyle = R.glow; g.beginPath(); g.arc(0, 0, r * .026, 0, TAU); g.fill(); g.restore(); } }
     // ornament behind / around the icon
     if (p.ornament === 'eye') { g.save(); g.globalAlpha = .35; const m = iconMask({ icon: 'eye' }, 256, {}); drawEmboss(g, m, r * 1.35, look.ink === 'gold' ? 'gold' : look.ink, metal, null); g.restore(); }
     // icon / emblem

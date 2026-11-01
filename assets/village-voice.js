@@ -144,10 +144,11 @@
       try { await publish(sc); await freshTrack(sc); }
       catch (e) { const why = e?.why || (e?.name === 'NotAllowedError' ? 'mic' : 'mic-none'); talking = null; paintBadge(); report('talk-fail:' + why + (e?.name ? ':' + e.name : '')); H.toast?.(why === 'mic' ? 'Universe needs your microphone to talk: allow it in the browser (the icon by the address).' : why === 'mic-none' ? 'No microphone found.' : WHY[why] || WHY.sfu); return; }
       if (!talking || talking.where !== where) return; // (let go meanwhile)
-      sc.track.enabled = true; talking.ready = true; paintBadge(); meter(sc.track); report('talk-on');
+      sc.track.enabled = true; talking.ready = true; talking.on = performance.now(); paintBadge(); meter(sc.track); report('talk-on');
     } else {
       if (!talking) return;
       const sc = S[talking.where]; if (sc.track) sc.track.enabled = false;
+      if (talking.on) try { window.badgeStat?.('voiceS', Math.min(600, (performance.now() - talking.on) / 1000)); } catch (e) {} // (the badges: seconds talked)
       talking = null; paintBadge(); report('talk-off');
     }
   }

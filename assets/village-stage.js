@@ -80,6 +80,7 @@
       S.ev = m.ev; S.host = !!m.host; S.you = m.you; S.speakers = m.speakers || []; S.hands = m.hands || []; S.hand = !!m.hand; S.n = m.n || 1;
       S.cfg = m.cfg || S.cfg; S.mute = m.mute || 0; S.show = m.show || null; offset = (+m.now || Date.now()) - Date.now();
       if (S.goal && S.goal.id === m.ev?.id) setGoal(null);
+      try { if (m.ev?.id) { window.badgeStat?.('events', String(m.ev.id)); if (S.host) window.badgeStat?.('hosted', String(m.ev.id)); } } catch (e) {} // (the badges)
       voice({ t: 'vcfg', on: !!S.cfg.voice }); emit('hello', m); paint(); return;
     }
     if (t === 'sc' || t === 'scx' || t === 'scd' || t === 'scc' || t === 'rpok') { emit(t === 'sc' ? 'msg' : t, t === 'sc' ? m.m : m); return; }
@@ -87,7 +88,7 @@
     if (t === 'shand') { S.hand = !!m.on; paint(); return; }
     if (t === 'sspk') {
       const was = S.speakers.some(s => s.u === S.you); S.speakers = m.speakers || []; const now = S.speakers.some(s => s.u === S.you);
-      if (now && !was) { S.hand = false; H.toast?.(S.cfg.voice ? "You're on stage: hold X (the Talk button) to talk to everyone here." : "You're on stage."); }
+      if (now && !was) { try { window.badgeStat?.('stage'); } catch (e) {} S.hand = false; H.toast?.(S.cfg.voice ? "You're on stage: hold X (the Talk button) to talk to everyone here." : "You're on stage."); }
       if (was && !now) H.toast?.("You're back in the audience.");
       voice({ t: 'vo', key: '', on: true }); paint(); return;
     }
@@ -266,6 +267,9 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     if (!sh || !inPlace || !settings.show || t < -.5 || t >= sh.len + 1) { if (SH) stopShow(); return; }
     if (!SH || SH.key !== sh.startAt) startShow();
     if (!SH) return;
+    // the badges: a show watched to its end (here for at least half of it, or its last minute)
+    if (SH.seenFrom == null) SH.seenFrom = Math.max(0, t);
+    if (!SH.seen && t >= sh.len - .5 && sh.len - SH.seenFrom >= Math.min(sh.len * .5, 60)) { SH.seen = true; try { window.badgeStat?.('shows'); } catch (e) {} }
     const ac = audioCtx();
     // the audio, kept within a few tenths of a second of the show's time
     if (SH.audio) {

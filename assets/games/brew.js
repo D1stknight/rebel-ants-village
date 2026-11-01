@@ -100,7 +100,7 @@
       }
       function settle(b) { // the jar has poured: the brew answers
         if (b.right) {
-          want = ING[b.j.k].c.map((v, i) => v * .55 + col[i] * .45); st.step++;
+          want = ING[b.j.k].c.map((v, i) => v * .55 + col[i] * .45); st.step++; ctx.count?.('riddles'); // (the badges: a riddle answered right)
           H.msg(st.step >= STEPS ? 'The brew is ready!' : 'The brew takes it', 900);
           ctx.note(523 + st.step * 66, 'bell');
           for (let n = 0; n < 6; n++) spark(.6);

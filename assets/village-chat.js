@@ -325,6 +325,7 @@ body:has(#wb:not(.on)) #vcVoice,body:has(#wb:not(.on)) #vcVoiceTip,html.vt-touch
       if (!SG().say(x)) { sys('Not connected to the event yet.'); return false; }
     } else if (!H.mp.chat.send(ch, x, to)) { sys('Not connected to the room yet.'); return false; }
     lastSent = Date.now(); el.input.value = ''; paintCount();
+    try { window.badgeStat?.('chat'); if (ch === 'w') window.badgeStat?.('whisper'); } catch (e) {} // (the badges)
     return true;
   }
 

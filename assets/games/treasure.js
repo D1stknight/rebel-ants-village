@@ -46,7 +46,7 @@
         st.holes.push(hole, mound); ctx.sound('splash');
         let hit = null; for (const c of chests) if (!c.found && Math.hypot(c.x - hx, c.z - hz) < FIND) { hit = c; break; }
         if (!hit) { H.msg('Only sand', 700); return; }
-        hit.found = true; st.found++; st.score += 50; ctx.sound(st.found >= chests.length ? 'gamewin' : 'strike');
+        hit.found = true; st.found++; ctx.count?.('digs'); st.score += 50; ctx.sound(st.found >= chests.length ? 'gamewin' : 'strike');
         // a little chest comes up out of the hole and opens on its gold
         const ch = keep(new B.TransformNode('tdChest', scene)); ch.position.set(hx, gy - .5, hz); ch.rotation.y = yaw + Math.PI;
         const box = (n, w, h, d, m, x, y, z, par) => { const b = B.MeshBuilder.CreateBox(n, { width: w, height: h, depth: d }, scene); b.material = m; b.parent = par; b.position.set(x, y, z); b.isPickable = false; ctx.add(b); return b; };
