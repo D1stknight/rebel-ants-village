@@ -25,18 +25,27 @@
     return typeof window.MediaRecorder === 'function' && typeof HTMLCanvasElement !== 'undefined' && typeof HTMLCanvasElement.prototype.captureStream === 'function' && !!pick(false) && !!window.PhotoShare?.clipStage;
   }
   let R = null; // the recording
+  const LIFT = 4; // (+12 dB into the limiter)
 
   // ── the sound: every tapped AudioContext and the elements outside Web Audio, mixed in a context of our own ──
   function openMix(elements) {
     const U = window._audioUnlock, AC = window.AudioContext || window.webkitAudioContext;
     if (!AC || !U?.tap || !U?.list) return null;
-    let mix = null, dest = null;
-    try { mix = new AC(); mix.__noTap = true; dest = mix.createMediaStreamDestination(); } catch (e) { try { mix?.close(); } catch (x) {} return null; }
+    let mix = null, dest = null, bus = null;
+    try {
+      mix = new AC(); mix.__noTap = true; dest = mix.createMediaStreamDestination();
+      // the game's mix plays well under full scale (music at a fifth, room for the voices); social apps play their
+      // videos loud, so the clip's sound is lifted and held under full scale by a limiter (the game itself is unchanged)
+      bus = mix.createGain(); bus.gain.value = LIFT;
+      const lim = mix.createDynamicsCompressor();
+      lim.threshold.value = -16; lim.knee.value = 4; lim.ratio.value = 20; lim.attack.value = 0.002; lim.release.value = 0.25;
+      bus.connect(lim); lim.connect(dest);
+    } catch (e) { try { mix?.close(); } catch (x) {} return null; }
     const links = new Map(), els = new Map();
     function addCtx(ctx) {
       if (!ctx || ctx === mix || ctx.__noTap || ctx.state === 'closed' || links.has(ctx)) return;
       const tap = U.tap(ctx); if (!tap) return;
-      try { const d = ctx.createMediaStreamDestination(); tap.connect(d); const s = mix.createMediaStreamSource(d.stream); s.connect(dest); links.set(ctx, { tap, d, s }); } catch (e) {}
+      try { const d = ctx.createMediaStreamDestination(); tap.connect(d); const s = mix.createMediaStreamSource(d.stream); s.connect(bus); links.set(ctx, { tap, d, s }); } catch (e) {}
     }
     const vol = (el) => (el.muted || el.paused ? 0 : Math.max(0, Math.min(1, Number(el.volume) || 0)));
     function addEl(el) {
@@ -47,7 +56,7 @@
       const e = { st, s: null, g: null }; els.set(el, e);
       const hook = () => {
         if (e.s || !st.getAudioTracks().length) return;
-        try { e.s = mix.createMediaStreamSource(st); e.g = mix.createGain(); e.g.gain.value = vol(el); e.s.connect(e.g); e.g.connect(dest); } catch (x) {}
+        try { e.s = mix.createMediaStreamSource(st); e.g = mix.createGain(); e.g.gain.value = vol(el); e.s.connect(e.g); e.g.connect(bus); } catch (x) {}
       };
       hook(); if (!e.s) st.addEventListener('addtrack', hook);
     }
