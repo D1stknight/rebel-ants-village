@@ -2696,7 +2696,7 @@
   {
    "id": "rival-highlow",
    "fullId": "universe:rival-highlow",
-   "name": "Lucky Streak",
+   "name": "Hot Streak",
    "family": "rivals",
    "tier": "common",
    "rarity": "Common",
@@ -3079,7 +3079,7 @@
    "tier": "epic",
    "rarity": "Epic",
    "hidden": false,
-   "howToEarn": "Clear the four hardest riddle sets: the Watcher's Trial, the Lord's Puzzles, the Engineer's Puzzles, the Broker's Wagers",
+   "howToEarn": "Clear the four hardest riddle sets: the Watcher's Trial, the Lord's Puzzles, the Engineer's Puzzles, the Broker's Riddles",
    "description": "The trickiest questions in the colony, answered.",
    "new": true,
    "serverChecked": true,
