@@ -1882,6 +1882,7 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
       <div id="hudNextBadgeProgress">Next Badge: Forest Wanderer — 0 / 100 progress</div>
       <div class="world-status-row"><span>Items</span><span class="world-status-value" id="hudCollectibleCount">0</span></div>
       <div class="world-status-row"><span>Quests</span><span class="world-status-value" id="hudQuestCount">0</span></div>
+      <div class="world-status-row" title="Rebel #001 roams the villages: walk up to him and ask anything"><span>Ant-Thony</span><span class="world-status-value" id="hudAntWhere">–</span></div>
       <button id="journalBtn" type="button" onclick="openProgressionJournal()">Journal</button>
       <button id="soundBtn" type="button" onclick="toggleSoundPanel()">Sound</button>
       <button id="ctrlPanelBtn" type="button" onclick="toggleControlsCard()">Controls</button>
@@ -1937,6 +1938,7 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
 <script src="assets/village-groups.js"></script>
 <script src="assets/village-voice.js"></script>
 <script src="assets/village-stage.js"></script>
+<script src="assets/village-anthony.js"></script>
 <script type="module">
 // The story save (Oct 25; assets/story-save.js, api/story-save.mjs): signed in, the story kept under the player's Rebel
 // Economy account joins this browser's before the game reads it, so another device starts where they left off and nothing
@@ -11215,6 +11217,11 @@ function updateInteractionPrompt() {
     return;
   }
 
+  if (walkMode && !adminMode && window.VillageAnthony?.near?.()) {
+    setInteractionPrompt('Press O to Talk to Ant-Thony', true); // (he roams the villages: assets/village-anthony.js)
+    return;
+  }
+
   if (walkMode && !adminMode && getNearestNPCInRange()) {
     setInteractionPrompt('Press O to Talk', true);
     return;
@@ -15525,7 +15532,7 @@ window._elementAudio = ElementAudio; // tests
 const VoiceDuck = { k: 0, at: 0, until: 0, on: false, music: .25, amb: .45, hold: 0, phone: !!window.VillageTouch?.on || ElementAudio.readOnly() };
 if (VoiceDuck.phone) Object.assign(VoiceDuck, { music: 0, amb: 0, hold: 3500 });
 function updateVoiceDuck() {
-  const now = performance.now(), dt = Math.min(.25, Math.max(0, (now - (VoiceDuck.at || now)) / 1000)), busy = !!window.VillageVoice?.busy?.();
+  const now = performance.now(), dt = Math.min(.25, Math.max(0, (now - (VoiceDuck.at || now)) / 1000)), busy = !!window.VillageVoice?.busy?.() || !!window.VillageAnthony?.speaking;
   if (busy) VoiceDuck.until = now + VoiceDuck.hold;
   const on = busy || now < VoiceDuck.until;
   VoiceDuck.at = now; VoiceDuck.on = on;
@@ -29104,7 +29111,7 @@ document.addEventListener('keydown', async e => {
     enterInterior(selectedObject);
     return;
   }
-  if (!adminMode && key === 'o' && ((ActiveInterior && getNearestInteriorNftFrameInRange() && inspectInteriorNftFrame(getNearestInteriorNftFrameInRange())) || (ActiveInterior && getNearestInteriorHotspotInRange() && interactInteriorHotspot(getNearestInteriorHotspotInRange())) || (ActiveInterior && getNearestInteriorVideoScreenInRange() && interactInteriorVideoScreen(getNearestInteriorVideoScreenInRange())) || (ActiveInterior && getNearestInteriorDisplayInRange() && interactInteriorDisplay(getNearestInteriorDisplayInRange())) || (ActiveInterior && getNearestInteriorExitInRange() && returnToVillageFromInterior()) || tryObserveTimeWeatherQuest() || tryTalkToNearbyQuestNpc() || tryEnterNearbyInterior() || tryOpenNearbyVillageGate() || tryUseNearbyQuestSpot() || tryTalkToNearbySmallAnt() || tryTalkToNearbyNPC() || tryOpenNearbySign() || tryOpenNearbyTreasureChest())) {
+  if (!adminMode && key === 'o' && ((ActiveInterior && getNearestInteriorNftFrameInRange() && inspectInteriorNftFrame(getNearestInteriorNftFrameInRange())) || (ActiveInterior && getNearestInteriorHotspotInRange() && interactInteriorHotspot(getNearestInteriorHotspotInRange())) || (ActiveInterior && getNearestInteriorVideoScreenInRange() && interactInteriorVideoScreen(getNearestInteriorVideoScreenInRange())) || (ActiveInterior && getNearestInteriorDisplayInRange() && interactInteriorDisplay(getNearestInteriorDisplayInRange())) || (ActiveInterior && getNearestInteriorExitInRange() && returnToVillageFromInterior()) || tryObserveTimeWeatherQuest() || tryTalkToNearbyQuestNpc() || tryEnterNearbyInterior() || tryOpenNearbyVillageGate() || tryUseNearbyQuestSpot() || tryTalkToNearbySmallAnt() || (walkMode && !!window.VillageAnthony?.talk?.()) || tryTalkToNearbyNPC() || tryOpenNearbySign() || tryOpenNearbyTreasureChest())) {
     e.preventDefault();
     return;
   }
@@ -31460,7 +31467,7 @@ async function loadForgeCollectionsConfig() {
 // touch screens: the stick and buttons (assets/village-touch.js) show while walking, not in admin or a board game, nor
 // while a talk box, a reading card, the gloves panel or the Rebel panel is open (they sat over the talk box's words and
 // the panel's buttons)
-const touchCovers = ['npcDialogueOverlay', 'panel', 'glovePanel', 'soundPanel', 'ctrlWrap'];
+const touchCovers = ['npcDialogueOverlay', 'panel', 'glovePanel', 'soundPanel', 'ctrlWrap', 'antTalk'];
 setInterval(() => window.VillageTouch?.update({ walking: !!walkMode && !adminMode && !(MiniGames.on && !MiniGames.roam) && !DanceOff.on && !DanceOff.choosing
   && !touchCovers.some(id => document.getElementById(id)?.classList.contains('on')) && !document.body.classList.contains('rebel-panel-open') && !document.body.classList.contains('vc-open') }), 250);
 // ── Multiplayer, step 2: the other players in this village (assets/village-multiplayer.js; the rooms: realtime/, tickets:
@@ -31476,6 +31483,29 @@ function mpAnimName() {
   const slots = window._forgeClipSlots || {};
   for (const k in slots) if (slots[k] === animState) return k;
   return 'idle';
+}
+// Ant-Thony (Nov 1, assets/village-anthony.js): Rebel #001 roams the villages on a timetable every page works out from the
+// clock; walk up for his hello (once a day), press O (Use) to ask him anything about Universe. His brain and voice are the
+// Rebel Economy's (api/anthony-talk.mjs, api/anthony-voice.mjs); a signed-in player may get a tip, which the economy pays.
+function startVillageAnthony() {
+  if (!window.VillageAnthony || startVillageAnthony.on) return;
+  startVillageAnthony.on = true;
+  window.VillageAnthony.start({
+    scene, village: CURRENT_VILLAGE_ID,
+    player: () => charMesh && walkMode && !adminMode && !ActiveInterior ? { x: charMesh.position.x, z: charMesh.position.z, yaw: charMesh.rotation.y } : null,
+    ground: (x, z) => getNPCGroundHeightAt(x, z),
+    free: (x, z) => !villagePointBlocked(x, z, 1),
+    clear: (ax, az, bx, bz) => !villageSegmentBlocked(ax, az, bx, bz, .8),
+    canAct: () => walkMode && !adminMode && !ActiveInterior && !(MiniGames.on && !MiniGames.roam) && !DanceOff.on && !DanceOff.choosing && !isVillageGateMenuOpen(),
+    signedIn: () => !!Econ.on,
+    signIn: () => { activeJournalTab = 'overview'; openProgressionJournal(); },
+    points: () => { try { refreshEcon(true); } catch (e) {} },
+    volume: () => (WeatherManager.masterVolume ?? .8) * 1.1 * playerSound('effects'),
+    sound: name => MoonTaleSounds.fx(name),
+    viaSite: u => (window.viaSite ? window.viaSite(u) : u),
+    shadows: () => shadows,
+    toast: m => showToast(m, 7000)
+  });
 }
 function startVillageMultiplayer() {
   if (!window.VillageMP || startVillageMultiplayer.on) return;
@@ -31497,7 +31527,7 @@ function startVillageMultiplayer() {
   // offered the journal's sign-in card (Discord, or a name and PIN)
   window.VillageChat?.start({
     scene, mp: window.VillageMP,
-    canChat: () => walkMode && !adminMode && !MiniGames.on && !DanceOff.on && !DanceOff.choosing && !SkillBar.on && !activeNPCDialogue && !isVillageGateMenuOpen()
+    canChat: () => walkMode && !adminMode && !MiniGames.on && !DanceOff.on && !DanceOff.choosing && !SkillBar.on && !activeNPCDialogue && !isVillageGateMenuOpen() && !window.VillageAnthony?.open?.()
       && !['panel', 'photoOverlay'].some(id => document.getElementById(id)?.classList.contains('on')),
     signedIn: () => !!Econ.on,
     signIn: () => { activeJournalTab = 'overview'; openProgressionJournal(); },
@@ -31561,7 +31591,7 @@ function initVillageHud() {
     window.VillageHud?.init(scene, {
       isWalking: () => walkMode && !adminMode,
       inInterior: () => !!ActiveInterior,
-      friends: () => { try { const a = window.VillageGroup?.dots?.() || [], b = window.VillageStage?.dots?.() || []; return a.length || b.length ? a.concat(b) : null; } catch (e) { return null; } },
+      friends: () => { try { const a = window.VillageGroup?.dots?.() || [], b = window.VillageStage?.dots?.() || [], c = window.VillageAnthony?.dots?.() || []; return a.length || b.length || c.length ? a.concat(b, c) : null; } catch (e) { return null; } },
       questTarget: () => {
         // a roam game (a run, a chase): where it wants you next
         if (MiniGames.on && MiniGames.roam) { try { return MiniGames.inst?.target?.() || null; } catch (e) { return null; } }
@@ -31645,6 +31675,7 @@ function markVillageStartupInteractive() {
   schedulePostInteractiveStartupTask(startVillagePetalEffects, 1200);
   schedulePostInteractiveStartupTask(initVillageHud, 300);
   schedulePostInteractiveStartupTask(startVillageMultiplayer, 1500); // the other players (VillageMP)
+  schedulePostInteractiveStartupTask(startVillageAnthony, 2500); // Ant-Thony roaming the villages
   if (window._crashLightNew) schedulePostInteractiveStartupTask(() => showToast("Universe closed on this phone last time (it ran out of memory), so it's running lighter for a few days.", 9000), 2000);
   if (PlaytestNote) schedulePostInteractiveStartupTask(() => showToast(PlaytestNote, 9000), 2500); // a playtest jump says where it put you
   // loaded again with the starter ant because the Rebel's model didn't download (rigFallbackToStarter): say so, and take
