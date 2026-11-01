@@ -12776,12 +12776,22 @@ async function startVillageClip() {
 async function stopVillageClip(why) {
   if (!VillageClip.on || VillageClip.busy) return null;
   VillageClip.on = false; VillageClip.busy = true; clearInterval(VillageClip.timer); paintVillageClip();
+  // (a clip that is dropped anyway (under 1.5 s, leaving the page) doesn't wait for the encoder; a slow encoder gets a
+  // word while it finishes)
+  const quick = why === 'leave' || window.ClipRecorder.seconds < 1.5;
+  const slow = quick ? 0 : setTimeout(() => { if (VillageClip.busy) showToast('Finishing the clip...', 9000); }, 1500);
   let res = null;
-  try { res = await window.ClipRecorder.stop(); } catch (e) { console.warn('clip did not stop cleanly', e); }
+  try { res = await window.ClipRecorder.stop({ quick }); } catch (e) { console.warn('clip did not stop cleanly', e); }
+  clearTimeout(slow);
+  const toast = document.getElementById('toast');
+  if (toast?.textContent === 'Finishing the clip...') toast.classList.remove('on');
   VillageClip.busy = false;
-  if (why === 'leave') { if (res) URL.revokeObjectURL(res.url); return null; }
+  if (quick) {
+    if (res) URL.revokeObjectURL(res.url);
+    if (why !== 'leave') showToast('Too short for a clip: keep it going a little longer.');
+    return null;
+  }
   if (!res?.bytes) { showToast('The clip came out empty: try again.'); return null; }
-  if (res.ms < 1500) { URL.revokeObjectURL(res.url); showToast('Too short for a clip: keep it going a little longer.'); return null; }
   badgeStat('clips');
   openVillageClipCard(res, why);
   return res;
