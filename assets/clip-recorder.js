@@ -145,8 +145,25 @@
     if (!rec.mr) { cleanup(rec); if (R === rec) R = null; return null; } // (still starting)
     try { rec.off?.(); } catch (e) {} rec.off = null;
     const ms = rec.t0 ? performance.now() - rec.t0 : 0;
-    // a moment for the video encoder to finish the frames it was given (a slow one drops the last second otherwise)
-    await new Promise((res) => setTimeout(res, 500));
+    // the video encoder finishes the frames it was given first: a slow one (software, a busy computer) can be seconds
+    // behind, and the browser drops what it hasn't finished when the recording stops. Until a slice of the recording
+    // comes back with little more than the sound in it, twice (at most 5 s). Safari: a fixed half second (its MP4
+    // pieces don't always join, and its encoders are the hardware's)
+    const until = performance.now() + 5000;
+    if (!WEBKIT && typeof rec.mr.requestData === 'function') {
+      let small = 0;
+      while (small < 2 && performance.now() < until && rec.mr.state === 'recording') {
+        const got = new Promise((res) => {
+          const h = (e) => { rec.mr.removeEventListener('dataavailable', h); res(e.data ? e.data.size : 0); };
+          rec.mr.addEventListener('dataavailable', h);
+          setTimeout(() => { rec.mr.removeEventListener('dataavailable', h); res(-1); }, 1500);
+        });
+        try { rec.mr.requestData(); } catch (e) { break; }
+        const size = await got;
+        small = size >= 0 && size < 12000 ? small + 1 : 0;
+        if (small < 2) await new Promise((res) => setTimeout(res, 300));
+      }
+    } else await new Promise((res) => setTimeout(res, 500));
     await new Promise((res) => {
       const t = setTimeout(res, 4000); // (onstop never came)
       try { rec.mr.onstop = () => { clearTimeout(t); res(); }; if (rec.mr.state !== 'inactive') rec.mr.stop(); else { clearTimeout(t); res(); } }
