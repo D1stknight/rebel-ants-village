@@ -81,7 +81,17 @@
       const k = o.light ? 0.75 : 1; // (a phone that ran out of memory: 540 x 960)
       const out = document.createElement('canvas'); out.width = Math.round(stage.W * k); out.height = Math.round(stage.H * k);
       const g = out.getContext('2d', { alpha: false }); if (k !== 1) g.setTransform(k, 0, 0, k, 0, 0);
-      g.fillStyle = '#05060a'; g.fillRect(0, 0, stage.W, stage.H);
+      // the first frame is drawn before the video starts, so the clip never opens on a blank picture (a video's first
+      // frame is its cover in most apps); the game's picture can only be copied right after the game has drawn it
+      const first = await new Promise((res) => {
+        let off = null, done = false;
+        const end = (v) => { if (done) return; done = true; clearTimeout(t); try { off?.(); } catch (e) {} res(v); };
+        const t = setTimeout(() => end(false), 8000);
+        off = o.onFrame(() => { try { if (stage.frame(g, src)) end(true); } catch (e) { end(false); } });
+      });
+      if (R !== rec) { mix?.close(); return { ok: false, reason: 'stopped' }; }
+      if (!first) throw new Error('no frame from the game');
+      rec.t0 = rec.last = performance.now(); rec.frames = 1;
       let vstream = out.captureStream(0), vtrack = vstream.getVideoTracks()[0];
       const manual = typeof vtrack?.requestFrame === 'function';
       if (!manual) { vtrack?.stop(); vstream = out.captureStream(30); vtrack = vstream.getVideoTracks()[0]; }
@@ -97,6 +107,7 @@
       Object.assign(rec, { stage, out, g, vtrack, manual, mix: tracks.length > 1 ? mix : null, mr, type, src, onAuto: o.onAuto, max: Math.max(3, o.maxSec || 60) * 1000 });
       mr.ondataavailable = (e) => { if (e.data && e.data.size) rec.chunks.push(e.data); };
       mr.start(); // (one piece at the end: Safari's MP4 pieces don't always join into a playable file)
+      if (manual) { try { vtrack.requestFrame(); } catch (e) {} } // (the first frame, drawn above)
       const gap = 1000 / Math.min(30, o.fps || 30) - 4;
       rec.off = o.onFrame(() => {
         if (rec.stopping) return;
