@@ -9,6 +9,7 @@
 import { enforceRateLimit } from './_guard.mjs';
 import { isAdminRequest } from './_admin-auth.mjs';
 import { walletOf, holderOf, redis, isAddr } from './_wallet.mjs';
+import { econSessionOf } from './_econ.mjs';
 
 const ENV = process.env.VERCEL_ENV === 'production' ? 'prod' : 'dev';
 const P = `games:board:v1:${ENV}`;
@@ -23,6 +24,23 @@ function valueOf(kind, v) {
   if (!Number.isFinite(n)) return null;
   if (kind === 's') return n >= 0 && n <= 1e7 ? Math.round(n) : null;
   return n >= 0.5 && n <= 36000 ? Math.round(n * 10) / 10 : null;           // seconds, to the tenth
+}
+
+// Universe's board badges (top 10, top 3, #1): the best place this wallet reached on a board, kept under the Rebel
+// Economy account signed in beside it (games:board:v1:<env>:rank:<account> { '<kind>:<game>': place }), so the badge
+// sender can check a board badge against what the board itself said (api/_universe-badge-send.mjs)
+export const rankKey = (u) => `${P}:rank:${u}`;
+async function noteRank(req, game, kind, out) {
+  const r = out?.you?.rank;
+  if (!(r >= 1 && r <= 10)) return;
+  let s = null; try { s = econSessionOf(req); } catch (e) { s = null; }
+  if (!s?.u) return;
+  const k = rankKey(s.u), f = `${kind}:${game}`;
+  try {
+    const [old] = await redis([['HGET', k, f]]);
+    if (old?.result != null && Number(old.result) <= r) return;
+    await redis([['HSET', k, f, String(r)], ['EXPIRE', k, String(60 * 60 * 24 * 400)]]);
+  } catch (e) {}
 }
 
 async function board(game, kind, wallet) {
@@ -56,7 +74,9 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       // per wallet when signed in (players behind one shared address don't use up each other's allowance)
       if (!(await enforceRateLimit(req, res, wallet ? `game-board-get:${wallet}` : 'game-board-get', 1500, 3600, 'leaderboard requests'))) return;
-      return res.status(200).json(await board(game, kind, wallet));
+      const out = await board(game, kind, wallet);
+      if (wallet) await noteRank(req, game, kind, out);
+      return res.status(200).json(out);
     }
     if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
@@ -91,6 +111,7 @@ export default async function handler(req, res) {
       ]);
     }
     const out = await board(game, kind, wallet);
+    await noteRank(req, game, kind, out);
     return res.status(200).json({ ...out, posted: true, improved: better, previous: old });
   } catch (e) {
     return res.status(500).json({ ok: false, error: e.message || 'Leaderboard failed' });

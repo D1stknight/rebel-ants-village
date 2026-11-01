@@ -120,6 +120,14 @@ export async function today(u) {
   const owed = (Array.isArray(o?.result) ? o.result : []).reduce((s, v) => { try { return s + (Number(JSON.parse(v).amount) || 0); } catch (e) { return s; } }, 0);
   return { today: Number(d?.result) || 0, cap: CAP, owed };
 }
+// the Rebel Points an account has had from Universe's one-time awards (chests, first clears, place riddles: 'kind:id' as
+// the claimed set keeps them), at the catalog's amounts: what Universe's points badges ask for (econ-me's earned, and
+// the badge sender's check)
+export function oneTimeEarned(list) {
+  let n = 0;
+  for (const k of list || []) { const i = String(k).indexOf(':'); if (i < 1) continue; const e = lookup(String(k).slice(0, i), String(k).slice(i + 1)); if (e) n += Number(e.amount) || 0; }
+  return n;
+}
 export async function claimed(u) {
   const [c] = await redis([['SMEMBERS', KEYS.claimed(u)]]);
   return Array.isArray(c?.result) ? c.result.map(String) : [];
