@@ -292,7 +292,7 @@ export const UNIVERSE_FAMILIES: FamilyDef[] = [
     ["riddle-herald","The Herald's Three","rare","Solve the Shogun Herald's three riddles","C"],
     ["riddle-brew","Witch's Apprentice","rare","Clear the Witch's Brew in Cute & Creepy","C"],
     ["riddle-debts","Debts Settled","rare","Clear The Debt Marker in Ronin","C"],
-    ["riddle-hard","Hard Questions","epic","Clear the four hardest riddle sets: the Watcher's Trial, the Lord's Puzzles, the Engineer's Puzzles, the Broker's Wagers","C"],
+    ["riddle-hard","Hard Questions","epic","Clear the four hardest riddle sets: the Watcher's Trial, the Lord's Puzzles, the Engineer's Puzzles, the Broker's Riddles","C"],
   ] },
   { id: "forge", name: "Forge", note: "Forged characters and who you play as", badges: [
     ["forge-own-rebel","Forged in Fire","rare","Play as your own forged Rebel","C"],

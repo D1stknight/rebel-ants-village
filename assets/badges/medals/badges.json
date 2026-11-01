@@ -3673,7 +3673,7 @@
       "categoryLabel": "Riddles",
       "rarity": "Epic",
       "description": "The trickiest questions in the colony, answered.",
-      "requirement": "Clear the four hardest riddle sets: the Watcher's Trial, the Lord's Puzzles, the Engineer's Puzzles, the Broker's Wagers",
+      "requirement": "Clear the four hardest riddle sets: the Watcher's Trial, the Lord's Puzzles, the Engineer's Puzzles, the Broker's Riddles",
       "hidden": false,
       "rule": {
         "type": "gamesAll",
