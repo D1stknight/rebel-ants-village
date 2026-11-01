@@ -23,7 +23,7 @@
         return { update() {}, _test: { t, medal }, dispose() { if (timer) clearTimeout(timer); } };
       }
       // the start: the rules, the order, your best; Start hands the run to the village
-      const low = ctx.record?.().low, hud = document.getElementById('gameHud'), card = document.createElement('div');
+      const rec0 = ctx.record?.() || {}, low = rec0.low && rec0.best > 0 ? rec0.best : 0, hud = document.getElementById('gameHud'), card = document.createElement('div');
       card.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(440px,92vw);max-height:80vh;overflow:auto;background:rgba(14,12,20,.95);border:1px solid rgba(232,190,90,.75);border-radius:14px;padding:16px 18px;pointer-events:auto;font:15px/1.45 Georgia,serif;color:#f1e9d6;text-align:center';
       card.innerHTML = `<div style="font:700 13px/1.2 Georgia,serif;letter-spacing:.14em;text-transform:uppercase;color:#e8be5a;margin-bottom:8px">The Grand Relay</div>
         <div style="margin-bottom:10px">Run through all fifteen villages, gate to gate. In each one the clock runs from the moment you arrive until you reach its gate; the gate takes you straight on to the next. Loading is not timed.</div>

@@ -76,12 +76,13 @@
       G.id = m.g; G.you = m.you; G.lead = m.lead; G.max = m.max || 8; G.cfg = m.cfg || G.cfg; G.mute = m.mute || 0; G.hist = m.hist || [];
       voice({ t: 'vcfg', on: !!G.cfg?.voice });
       G.members.clear(); for (const x of m.members || []) G.members.set(x.u, x);
+      try { if (first) window.badgeStat?.('groups'); window.badgeStat?.('groupMax', G.members.size, 'max'); } catch (e) {} // (the badges)
       retry = 0; fails = 0; store(); lastGpKey = ''; lastGp = 0;
       emit('hello', { first, ...m });
       if (pending) { const p = pending; pending = null; invite(p); }
       return;
     }
-    if (m.t === 'gj') { G.members.set(m.m.u, m.m); emit('join', m.m); return; }
+    if (m.t === 'gj') { G.members.set(m.m.u, m.m); try { window.badgeStat?.('groupMax', G.members.size, 'max'); } catch (e) {} emit('join', m.m); return; }
     if (m.t === 'gx') {
       const was = G.members.get(m.u); G.members.delete(m.u);
       if (m.u === G.you) { reset(); emit('gone', { why: m.why }); return; }
@@ -213,6 +214,7 @@
     const x = G.members.get(u); if (!x || u === G.you) return false;
     const pl = placeOf(x);
     if (!pl) { H.toast?.(x.n + " isn't playing right now."); return false; }
+    try { window.badgeStat?.('goto'); } catch (e) {} // (the badges)
     const me = H.player?.(), room = H.mp?.state?.room;
     if (pl.v !== H.village) { setGoal({ u, until: Date.now() + GOTO_MS }); H.toast?.('Off to ' + (H.villageName?.(pl.v) || pl.v) + ' to find ' + x.n + '…'); H.travel?.(pl.v); return true; }
     if (pl.c && room && room.copy !== pl.c && H.mp?.joinCopy?.(pl.c)) emit('copy', { n: x.n, c: pl.c }); // (another copy of this village: theirs)

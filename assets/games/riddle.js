@@ -52,7 +52,7 @@
         if (st.phase !== 'ask') return;
         const r = R[st.k]; if (!r || i < 0 || i >= r.a.length) return;
         st.picked = i; st.phase = 'answered'; st.wait = .6;
-        if (i === r.right) { st.right++; H.score(st.right); H.msg('Right!', 800); if (def.bell) ctx.note(def.bell, 'bell'); else ctx.sound('gamewin'); }
+        if (i === r.right) { st.right++; ctx.count?.('riddles'); H.score(st.right); H.msg('Right!', 800); if (def.bell) ctx.note(def.bell, 'bell'); else ctx.sound('gamewin'); }
         else { H.msg('Not quite', 900); ctx.sound('thock'); }
         render();
       }

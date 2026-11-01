@@ -11,6 +11,10 @@
       "description": "You stepped into the Rebel Ants Universe.",
       "requirement": "Start your Rebel journey",
       "hidden": false,
+      "rule": {
+        "type": "xp",
+        "value": 0
+      },
       "image": "assets/badges/medals/explorer-sprout.webp"
     },
     {
@@ -22,6 +26,10 @@
       "description": "You are learning the paths between roots, villages, and hidden signs.",
       "requirement": "Reach 100 progress",
       "hidden": false,
+      "rule": {
+        "type": "xp",
+        "value": 100
+      },
       "image": "assets/badges/medals/explorer-forest-wanderer.webp"
     },
     {
@@ -33,6 +41,10 @@
       "description": "You are finding routes others miss.",
       "requirement": "Reach 250 progress",
       "hidden": false,
+      "rule": {
+        "type": "xp",
+        "value": 250
+      },
       "image": "assets/badges/medals/explorer-pathfinder.webp"
     },
     {
@@ -44,6 +56,10 @@
       "description": "You have begun moving between colonies like a true traveler.",
       "requirement": "Reach 1000 progress",
       "hidden": false,
+      "rule": {
+        "type": "xp",
+        "value": 1000
+      },
       "image": "assets/badges/medals/explorer-realm-traveler.webp"
     },
     {
@@ -55,6 +71,10 @@
       "description": "You know the root paths by instinct.",
       "requirement": "Reach 3000 progress",
       "hidden": false,
+      "rule": {
+        "type": "xp",
+        "value": 3000
+      },
       "image": "assets/badges/medals/explorer-root-runner.webp"
     },
     {
@@ -66,6 +86,10 @@
       "description": "You learned the first paths through the Rebel Ants Universe.",
       "requirement": "Complete the Hub Journey",
       "hidden": false,
+      "rule": {
+        "type": "quest",
+        "value": "hub-tutorial-complete"
+      },
       "image": "assets/badges/medals/story-hub-initiate.webp"
     },
     {
@@ -77,6 +101,10 @@
       "description": "You heard the first truth about the breathing tunnels.",
       "requirement": "Complete The First Warning quest",
       "hidden": false,
+      "rule": {
+        "type": "quest",
+        "value": "first-warning"
+      },
       "image": "assets/badges/medals/story-first-warning.webp"
     },
     {
@@ -88,6 +116,10 @@
       "description": "You heard the old tunnels answer back.",
       "requirement": "Complete Book 1 Chapter 2",
       "hidden": false,
+      "rule": {
+        "type": "quest",
+        "value": "book1-main-20"
+      },
       "image": "assets/badges/medals/book1-echo-witness.webp"
     },
     {
@@ -99,6 +131,10 @@
       "description": "You carried truth between divided villages.",
       "requirement": "Complete Book 1 Chapter 3",
       "hidden": false,
+      "rule": {
+        "type": "quest",
+        "value": "book1-main-30"
+      },
       "image": "assets/badges/medals/book1-faction-envoy.webp"
     },
     {
@@ -110,6 +146,10 @@
       "description": "You stood with the colony before the awakening.",
       "requirement": "Complete Book 1 Chapter 4",
       "hidden": false,
+      "rule": {
+        "type": "quest",
+        "value": "book1-main-40"
+      },
       "image": "assets/badges/medals/book1-storm-watcher.webp"
     },
     {
@@ -121,6 +161,10 @@
       "description": "You helped the whole block get ready and danced on the court until the stars came out.",
       "requirement": "Dance at the Saints Block Party",
       "hidden": false,
+      "rule": {
+        "type": "quest",
+        "value": "saints-la-20"
+      },
       "image": "assets/badges/medals/saints-la-party.webp"
     },
     {
@@ -132,6 +176,10 @@
       "description": "You got the whole cove ready for the Beach Party and danced until the stars came out.",
       "requirement": "Dance at the Chumpz Cove Beach Party",
       "hidden": false,
+      "rule": {
+        "type": "quest",
+        "value": "chumpz-cove-20"
+      },
       "image": "assets/badges/medals/chumpz-cove-party.webp"
     },
     {
@@ -143,6 +191,10 @@
       "description": "You kept the Coven's joy safe until the first blush of dawn.",
       "requirement": "Keep watch with Mamoru at the Harvest Festival",
       "hidden": false,
+      "rule": {
+        "type": "quest",
+        "value": "moon-tales-20"
+      },
       "image": "assets/badges/medals/moon-tales-coven.webp"
     },
     {
@@ -154,6 +206,10 @@
       "description": "You followed the Owl's call, greeted the four covens and watched a constellation woven above the forest.",
       "requirement": "Gather the covens with the Owl of Summoning",
       "hidden": false,
+      "rule": {
+        "type": "quest",
+        "value": "moon-tales-24"
+      },
       "image": "assets/badges/medals/moon-tales-gathering.webp"
     },
     {
@@ -165,6 +221,10 @@
       "description": "You helped the villages remember they are one colony.",
       "requirement": "Complete Book 1",
       "hidden": false,
+      "rule": {
+        "type": "quest",
+        "value": "book1-main-50"
+      },
       "image": "assets/badges/medals/book1-colony-awake.webp"
     },
     {
@@ -173,9 +233,18 @@
       "category": "story",
       "categoryLabel": "Story",
       "rarity": "Uncommon",
-      "description": "You witnessed signs beneath the roots.",
-      "requirement": "Future Book 1 story milestone",
+      "description": "You walked the tunnels the colony sealed long ago.",
+      "requirement": "Enter the Ancient Tunnels beneath the Hub",
       "hidden": false,
+      "rule": {
+        "type": "statHas",
+        "value": {
+          "key": "rooms",
+          "all": [
+            "hub_ancient_tunnels"
+          ]
+        }
+      },
       "image": "assets/badges/medals/story-tunnel-witness.webp"
     },
     {
@@ -185,8 +254,12 @@
       "categoryLabel": "Story",
       "rarity": "Rare",
       "description": "You learned to read the red dust.",
-      "requirement": "Future Book 1 story milestone",
+      "requirement": "Complete Dust On The Roots (Book One, quest 2)",
       "hidden": false,
+      "rule": {
+        "type": "quest",
+        "value": "book1-main-02"
+      },
       "image": "assets/badges/medals/story-dust-reader.webp"
     },
     {
@@ -195,9 +268,15 @@
       "category": "story",
       "categoryLabel": "Story",
       "rarity": "Epic",
-      "description": "The roots remembered what the colony buried.",
-      "requirement": "Future Book 1 story milestone",
+      "description": "Every root memory found: the roots remember, and so do you.",
+      "requirement": "Find all 11 root memories",
       "hidden": false,
+      "rule": {
+        "type": "collectSet",
+        "value": {
+          "set": "roots"
+        }
+      },
       "image": "assets/badges/medals/story-old-roots.webp"
     },
     {
@@ -209,6 +288,10 @@
       "description": "The shadows have noticed you.",
       "requirement": "Meet the Ronin watcher",
       "hidden": false,
+      "rule": {
+        "type": "quest",
+        "value": "first-warning"
+      },
       "image": "assets/badges/medals/ronin-watcher.webp"
     },
     {
@@ -218,8 +301,15 @@
       "categoryLabel": "Ronin",
       "rarity": "Rare",
       "description": "You know how to move where warnings hide.",
-      "requirement": "Future Ronin milestone",
+      "requirement": "Clear Silent Steps and The Silent Path in Ronin",
       "hidden": false,
+      "rule": {
+        "type": "gamesAll",
+        "value": [
+          "ronin-silent-steps",
+          "ronin-silent-path"
+        ]
+      },
       "image": "assets/badges/medals/ronin-shadow-walker.webp"
     },
     {
@@ -231,6 +321,10 @@
       "description": "A hidden hand moved before the warning spread.",
       "requirement": "Secret Ronin discovery",
       "hidden": true,
+      "rule": {
+        "type": "secret",
+        "value": "unseen-hand"
+      },
       "image": "assets/badges/medals/ronin-unseen-hand.webp"
     },
     {
@@ -242,6 +336,10 @@
       "description": "You took your first step on the Samurai path.",
       "requirement": "Visit Samurai Village",
       "hidden": false,
+      "rule": {
+        "type": "village",
+        "value": "samurai"
+      },
       "image": "assets/badges/medals/samurai-initiate.webp"
     },
     {
@@ -251,8 +349,16 @@
       "categoryLabel": "Samurai",
       "rarity": "Rare",
       "description": "You earned trust through discipline.",
-      "requirement": "Future Samurai milestone",
+      "requirement": "Clear the Yabusame Range, Tameshigiri and the Swordsmith's Forge in Samurai",
       "hidden": false,
+      "rule": {
+        "type": "gamesAll",
+        "value": [
+          "sam-yabusame",
+          "sam-tameshigiri",
+          "sam-swordsmith-forge"
+        ]
+      },
       "image": "assets/badges/medals/samurai-honor-guard.webp"
     },
     {
@@ -264,6 +370,10 @@
       "description": "You found where village paths become games.",
       "requirement": "Open an arcade/game sign",
       "hidden": false,
+      "rule": {
+        "type": "ecosystem",
+        "value": "arcade"
+      },
       "image": "assets/badges/medals/arcade-initiate.webp"
     },
     {
@@ -273,8 +383,12 @@
       "categoryLabel": "Arcade",
       "rarity": "Uncommon",
       "description": "Your arcade reflexes are waking up.",
-      "requirement": "Future arcade score milestone",
+      "requirement": "Clear 10 games",
       "hidden": false,
+      "rule": {
+        "type": "gamesCleared",
+        "value": 10
+      },
       "image": "assets/badges/medals/arcade-combo-spark.webp"
     },
     {
@@ -284,8 +398,12 @@
       "categoryLabel": "Community",
       "rarity": "Common",
       "description": "You reached beyond the village.",
-      "requirement": "Future community action",
+      "requirement": "Open the Rebel Ants Discord from a sign in Universe",
       "hidden": false,
+      "rule": {
+        "type": "ecosystem",
+        "value": "discord"
+      },
       "image": "assets/badges/medals/community-colony-caller.webp"
     },
     {
@@ -294,9 +412,16 @@
       "category": "community",
       "categoryLabel": "Community",
       "rarity": "Uncommon",
-      "description": "You carried the signal to another path.",
-      "requirement": "Open Rebel Ants content",
+      "description": "Your words reached the rest of the colony.",
+      "requirement": "Send your first message in the chat",
       "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "chat",
+          "n": 1
+        }
+      },
       "image": "assets/badges/medals/community-signal-carrier.webp"
     },
     {
@@ -306,8 +431,12 @@
       "categoryLabel": "Builder",
       "rarity": "Common",
       "description": "You helped shape the Rebel world.",
-      "requirement": "Use builder/admin progression hooks",
+      "requirement": "Open the Overlay Builder from a sign in Universe",
       "hidden": false,
+      "rule": {
+        "type": "builder",
+        "value": "overlay_builder"
+      },
       "image": "assets/badges/medals/builder-world-builder.webp"
     },
     {
@@ -316,9 +445,17 @@
       "category": "builder",
       "categoryLabel": "Builder",
       "rarity": "Rare",
-      "description": "You shaped land around the old roots.",
-      "requirement": "Future terrain builder milestone",
+      "description": "You shaped the land around the old roots: roots sealed, sand raked.",
+      "requirement": "Clear Root Seal, The Raking Path and Raked Stones",
       "hidden": false,
+      "rule": {
+        "type": "gamesAll",
+        "value": [
+          "hub-root-seal",
+          "sohei-raking-path",
+          "kenshi-raked-stones"
+        ]
+      },
       "image": "assets/badges/medals/builder-root-sculptor.webp"
     },
     {
@@ -330,6 +467,10 @@
       "description": "Something beneath the roots answered back.",
       "requirement": "Hidden discovery",
       "hidden": true,
+      "rule": {
+        "type": "secret",
+        "value": "beneath-roots"
+      },
       "image": "assets/badges/medals/secret-beneath-roots.webp"
     },
     {
@@ -341,6 +482,10 @@
       "description": "Hub counts you as one of its own.",
       "requirement": "Finish every quest in Hub",
       "hidden": false,
+      "rule": {
+        "type": "villageQuests",
+        "value": "hub"
+      },
       "image": "assets/badges/medals/crest-hub.webp"
     },
     {
@@ -352,6 +497,10 @@
       "description": "Ronin counts you as one of its own.",
       "requirement": "Finish every quest in Ronin",
       "hidden": false,
+      "rule": {
+        "type": "villageQuests",
+        "value": "ronin"
+      },
       "image": "assets/badges/medals/crest-ronin.webp"
     },
     {
@@ -363,6 +512,10 @@
       "description": "Samurai counts you as one of its own.",
       "requirement": "Finish every quest in Samurai",
       "hidden": false,
+      "rule": {
+        "type": "villageQuests",
+        "value": "samurai"
+      },
       "image": "assets/badges/medals/crest-samurai.webp"
     },
     {
@@ -374,6 +527,10 @@
       "description": "Shogun counts you as one of its own.",
       "requirement": "Finish every quest in Shogun",
       "hidden": false,
+      "rule": {
+        "type": "villageQuests",
+        "value": "shogun"
+      },
       "image": "assets/badges/medals/crest-shogun.webp"
     },
     {
@@ -385,6 +542,10 @@
       "description": "Bushi counts you as one of its own.",
       "requirement": "Finish every quest in Bushi",
       "hidden": false,
+      "rule": {
+        "type": "villageQuests",
+        "value": "bushi"
+      },
       "image": "assets/badges/medals/crest-bushi.webp"
     },
     {
@@ -396,6 +557,10 @@
       "description": "Buke counts you as one of its own.",
       "requirement": "Finish every quest in Buke",
       "hidden": false,
+      "rule": {
+        "type": "villageQuests",
+        "value": "buke"
+      },
       "image": "assets/badges/medals/crest-buke.webp"
     },
     {
@@ -407,6 +572,10 @@
       "description": "Ashigaru counts you as one of its own.",
       "requirement": "Finish every quest in Ashigaru",
       "hidden": false,
+      "rule": {
+        "type": "villageQuests",
+        "value": "ashigaru"
+      },
       "image": "assets/badges/medals/crest-ashigaru.webp"
     },
     {
@@ -418,6 +587,10 @@
       "description": "Kenshi counts you as one of its own.",
       "requirement": "Finish every quest in Kenshi",
       "hidden": false,
+      "rule": {
+        "type": "villageQuests",
+        "value": "kenshi"
+      },
       "image": "assets/badges/medals/crest-kenshi.webp"
     },
     {
@@ -429,6 +602,10 @@
       "description": "Yamabushi counts you as one of its own.",
       "requirement": "Finish every quest in Yamabushi",
       "hidden": false,
+      "rule": {
+        "type": "villageQuests",
+        "value": "yamabushi"
+      },
       "image": "assets/badges/medals/crest-yamabushi.webp"
     },
     {
@@ -440,6 +617,10 @@
       "description": "Sohei counts you as one of its own.",
       "requirement": "Finish every quest in Sohei",
       "hidden": false,
+      "rule": {
+        "type": "villageQuests",
+        "value": "sohei"
+      },
       "image": "assets/badges/medals/crest-sohei.webp"
     },
     {
@@ -451,6 +632,10 @@
       "description": "Wokou counts you as one of its own.",
       "requirement": "Finish every quest in Wokou",
       "hidden": false,
+      "rule": {
+        "type": "villageQuests",
+        "value": "wokou"
+      },
       "image": "assets/badges/medals/crest-wokou.webp"
     },
     {
@@ -462,6 +647,10 @@
       "description": "Warrior counts you as one of its own.",
       "requirement": "Finish every quest in Warrior",
       "hidden": false,
+      "rule": {
+        "type": "villageQuests",
+        "value": "warrior"
+      },
       "image": "assets/badges/medals/crest-warrior.webp"
     },
     {
@@ -473,6 +662,10 @@
       "description": "Cute & Creepy counts you as one of its own.",
       "requirement": "Finish every quest in Cute & Creepy",
       "hidden": false,
+      "rule": {
+        "type": "villageQuests",
+        "value": "cute-creepy"
+      },
       "image": "assets/badges/medals/crest-cute-creepy.webp"
     },
     {
@@ -484,6 +677,10 @@
       "description": "Chumpz counts you as one of its own.",
       "requirement": "Finish every quest in Chumpz",
       "hidden": false,
+      "rule": {
+        "type": "villageQuests",
+        "value": "chumpz"
+      },
       "image": "assets/badges/medals/crest-chumpz.webp"
     },
     {
@@ -495,6 +692,10 @@
       "description": "Saints of LA counts you as one of its own.",
       "requirement": "Finish every quest in Saints of LA",
       "hidden": false,
+      "rule": {
+        "type": "villageQuests",
+        "value": "saints-la"
+      },
       "image": "assets/badges/medals/crest-saints-la.webp"
     },
     {
@@ -506,6 +707,10 @@
       "description": "Nothing in this village is hidden from you any more.",
       "requirement": "Find every secret in Hub",
       "hidden": false,
+      "rule": {
+        "type": "villageSecrets",
+        "value": "hub"
+      },
       "image": "assets/badges/medals/secrets-hub.webp"
     },
     {
@@ -517,6 +722,10 @@
       "description": "Nothing in this village is hidden from you any more.",
       "requirement": "Find every secret in Ronin",
       "hidden": false,
+      "rule": {
+        "type": "villageSecrets",
+        "value": "ronin"
+      },
       "image": "assets/badges/medals/secrets-ronin.webp"
     },
     {
@@ -528,6 +737,10 @@
       "description": "Nothing in this village is hidden from you any more.",
       "requirement": "Find every secret in Samurai",
       "hidden": false,
+      "rule": {
+        "type": "villageSecrets",
+        "value": "samurai"
+      },
       "image": "assets/badges/medals/secrets-samurai.webp"
     },
     {
@@ -539,6 +752,10 @@
       "description": "Nothing in this village is hidden from you any more.",
       "requirement": "Find every secret in Shogun",
       "hidden": false,
+      "rule": {
+        "type": "villageSecrets",
+        "value": "shogun"
+      },
       "image": "assets/badges/medals/secrets-shogun.webp"
     },
     {
@@ -550,6 +767,10 @@
       "description": "Nothing in this village is hidden from you any more.",
       "requirement": "Find every secret in Bushi",
       "hidden": false,
+      "rule": {
+        "type": "villageSecrets",
+        "value": "bushi"
+      },
       "image": "assets/badges/medals/secrets-bushi.webp"
     },
     {
@@ -561,6 +782,10 @@
       "description": "Nothing in this village is hidden from you any more.",
       "requirement": "Find every secret in Buke",
       "hidden": false,
+      "rule": {
+        "type": "villageSecrets",
+        "value": "buke"
+      },
       "image": "assets/badges/medals/secrets-buke.webp"
     },
     {
@@ -572,6 +797,10 @@
       "description": "Nothing in this village is hidden from you any more.",
       "requirement": "Find every secret in Ashigaru",
       "hidden": false,
+      "rule": {
+        "type": "villageSecrets",
+        "value": "ashigaru"
+      },
       "image": "assets/badges/medals/secrets-ashigaru.webp"
     },
     {
@@ -583,6 +812,10 @@
       "description": "Nothing in this village is hidden from you any more.",
       "requirement": "Find every secret in Kenshi",
       "hidden": false,
+      "rule": {
+        "type": "villageSecrets",
+        "value": "kenshi"
+      },
       "image": "assets/badges/medals/secrets-kenshi.webp"
     },
     {
@@ -594,6 +827,10 @@
       "description": "Nothing in this village is hidden from you any more.",
       "requirement": "Find every secret in Yamabushi",
       "hidden": false,
+      "rule": {
+        "type": "villageSecrets",
+        "value": "yamabushi"
+      },
       "image": "assets/badges/medals/secrets-yamabushi.webp"
     },
     {
@@ -605,6 +842,10 @@
       "description": "Nothing in this village is hidden from you any more.",
       "requirement": "Find every secret in Sohei",
       "hidden": false,
+      "rule": {
+        "type": "villageSecrets",
+        "value": "sohei"
+      },
       "image": "assets/badges/medals/secrets-sohei.webp"
     },
     {
@@ -616,6 +857,10 @@
       "description": "Nothing in this village is hidden from you any more.",
       "requirement": "Find every secret in Wokou",
       "hidden": false,
+      "rule": {
+        "type": "villageSecrets",
+        "value": "wokou"
+      },
       "image": "assets/badges/medals/secrets-wokou.webp"
     },
     {
@@ -627,6 +872,10 @@
       "description": "Nothing in this village is hidden from you any more.",
       "requirement": "Find every secret in Warrior",
       "hidden": false,
+      "rule": {
+        "type": "villageSecrets",
+        "value": "warrior"
+      },
       "image": "assets/badges/medals/secrets-warrior.webp"
     },
     {
@@ -638,6 +887,10 @@
       "description": "Nothing in this village is hidden from you any more.",
       "requirement": "Find every secret in Cute & Creepy",
       "hidden": false,
+      "rule": {
+        "type": "villageSecrets",
+        "value": "cute-creepy"
+      },
       "image": "assets/badges/medals/secrets-cute-creepy.webp"
     },
     {
@@ -649,6 +902,10 @@
       "description": "Nothing in this village is hidden from you any more.",
       "requirement": "Find every secret in Chumpz",
       "hidden": false,
+      "rule": {
+        "type": "villageSecrets",
+        "value": "chumpz"
+      },
       "image": "assets/badges/medals/secrets-chumpz.webp"
     },
     {
@@ -660,6 +917,10 @@
       "description": "Nothing in this village is hidden from you any more.",
       "requirement": "Find every secret in Saints of LA",
       "hidden": false,
+      "rule": {
+        "type": "villageSecrets",
+        "value": "saints-la"
+      },
       "image": "assets/badges/medals/secrets-saints-la.webp"
     },
     {
@@ -671,6 +932,10 @@
       "description": "10 hidden discoveries.",
       "requirement": "Find 10 secrets",
       "hidden": false,
+      "rule": {
+        "type": "secretCount",
+        "value": 10
+      },
       "image": "assets/badges/medals/secrets-count-10.webp"
     },
     {
@@ -682,6 +947,10 @@
       "description": "25 hidden discoveries.",
       "requirement": "Find 25 secrets",
       "hidden": false,
+      "rule": {
+        "type": "secretCount",
+        "value": 25
+      },
       "image": "assets/badges/medals/secrets-count-25.webp"
     },
     {
@@ -693,6 +962,10 @@
       "description": "50 hidden discoveries.",
       "requirement": "Find 50 secrets",
       "hidden": false,
+      "rule": {
+        "type": "secretCount",
+        "value": 50
+      },
       "image": "assets/badges/medals/secrets-count-50.webp"
     },
     {
@@ -704,6 +977,10 @@
       "description": "75 hidden discoveries.",
       "requirement": "Find 75 secrets",
       "hidden": false,
+      "rule": {
+        "type": "secretCount",
+        "value": 75
+      },
       "image": "assets/badges/medals/secrets-count-75.webp"
     },
     {
@@ -715,6 +992,10 @@
       "description": "Every secret in the universe. Every one.",
       "requirement": "Find 100 secrets",
       "hidden": false,
+      "rule": {
+        "type": "secretCount",
+        "value": 100
+      },
       "image": "assets/badges/medals/secrets-count-100.webp"
     },
     {
@@ -726,6 +1007,10 @@
       "description": "They are small, and they noticed you.",
       "requirement": "Find 5 hidden mini ants",
       "hidden": false,
+      "rule": {
+        "type": "miniAnts",
+        "value": 5
+      },
       "image": "assets/badges/medals/mini-ants-5.webp"
     },
     {
@@ -737,6 +1022,10 @@
       "description": "Every mini ant in every village.",
       "requirement": "Find all 15 hidden mini ants",
       "hidden": false,
+      "rule": {
+        "type": "miniAnts",
+        "value": 15
+      },
       "image": "assets/badges/medals/mini-ants-15.webp"
     },
     {
@@ -748,6 +1037,10 @@
       "description": "The first Rebel points of many.",
       "requirement": "Open your first chest",
       "hidden": false,
+      "rule": {
+        "type": "chestCount",
+        "value": 1
+      },
       "image": "assets/badges/medals/chest-first-coin.webp"
     },
     {
@@ -759,6 +1052,10 @@
       "description": "You know where chests like to hide.",
       "requirement": "Open 25 chests",
       "hidden": false,
+      "rule": {
+        "type": "chestCount",
+        "value": 25
+      },
       "image": "assets/badges/medals/chest-hunter.webp"
     },
     {
@@ -770,6 +1067,10 @@
       "description": "One hundred chests, opened.",
       "requirement": "Open 100 chests",
       "hidden": false,
+      "rule": {
+        "type": "chestCount",
+        "value": 100
+      },
       "image": "assets/badges/medals/chest-master.webp"
     },
     {
@@ -781,6 +1082,10 @@
       "description": "A thousand Rebel points, and a story to go with it.",
       "requirement": "Open the legend chest in Hub",
       "hidden": false,
+      "rule": {
+        "type": "chestId",
+        "value": "hub-chest-legend-1"
+      },
       "image": "assets/badges/medals/legend-chest-hub.webp"
     },
     {
@@ -792,6 +1097,10 @@
       "description": "A thousand Rebel points, and a story to go with it.",
       "requirement": "Open the legend chest in Ronin",
       "hidden": false,
+      "rule": {
+        "type": "chestId",
+        "value": "ronin-chest-legend-1"
+      },
       "image": "assets/badges/medals/legend-chest-ronin.webp"
     },
     {
@@ -803,6 +1112,10 @@
       "description": "A thousand Rebel points, and a story to go with it.",
       "requirement": "Open the legend chest in Shogun",
       "hidden": false,
+      "rule": {
+        "type": "chestId",
+        "value": "sho-chest-legend-1"
+      },
       "image": "assets/badges/medals/legend-chest-shogun.webp"
     },
     {
@@ -814,6 +1127,10 @@
       "description": "A thousand Rebel points, and a story to go with it.",
       "requirement": "Open the legend chest in Yamabushi",
       "hidden": false,
+      "rule": {
+        "type": "chestId",
+        "value": "yam-chest-legend-1"
+      },
       "image": "assets/badges/medals/legend-chest-yamabushi.webp"
     },
     {
@@ -825,6 +1142,10 @@
       "description": "A thousand Rebel points, and a story to go with it.",
       "requirement": "Open the legend chest in Wokou",
       "hidden": false,
+      "rule": {
+        "type": "chestId",
+        "value": "wok-chest-legend-1"
+      },
       "image": "assets/badges/medals/legend-chest-wokou.webp"
     },
     {
@@ -836,6 +1157,10 @@
       "description": "Every game, puzzle and riddle in Hub, cleared.",
       "requirement": "Clear every game in Hub",
       "hidden": false,
+      "rule": {
+        "type": "villageGames",
+        "value": "hub"
+      },
       "image": "assets/badges/medals/games-hub.webp"
     },
     {
@@ -847,6 +1172,10 @@
       "description": "Every game, puzzle and riddle in Ronin, cleared.",
       "requirement": "Clear every game in Ronin",
       "hidden": false,
+      "rule": {
+        "type": "villageGames",
+        "value": "ronin"
+      },
       "image": "assets/badges/medals/games-ronin.webp"
     },
     {
@@ -858,6 +1187,10 @@
       "description": "Every game, puzzle and riddle in Samurai, cleared.",
       "requirement": "Clear every game in Samurai",
       "hidden": false,
+      "rule": {
+        "type": "villageGames",
+        "value": "samurai"
+      },
       "image": "assets/badges/medals/games-samurai.webp"
     },
     {
@@ -869,6 +1202,10 @@
       "description": "Every game, puzzle and riddle in Shogun, cleared.",
       "requirement": "Clear every game in Shogun",
       "hidden": false,
+      "rule": {
+        "type": "villageGames",
+        "value": "shogun"
+      },
       "image": "assets/badges/medals/games-shogun.webp"
     },
     {
@@ -880,6 +1217,10 @@
       "description": "Every game, puzzle and riddle in Bushi, cleared.",
       "requirement": "Clear every game in Bushi",
       "hidden": false,
+      "rule": {
+        "type": "villageGames",
+        "value": "bushi"
+      },
       "image": "assets/badges/medals/games-bushi.webp"
     },
     {
@@ -891,6 +1232,10 @@
       "description": "Every game, puzzle and riddle in Buke, cleared.",
       "requirement": "Clear every game in Buke",
       "hidden": false,
+      "rule": {
+        "type": "villageGames",
+        "value": "buke"
+      },
       "image": "assets/badges/medals/games-buke.webp"
     },
     {
@@ -902,6 +1247,10 @@
       "description": "Every game, puzzle and riddle in Ashigaru, cleared.",
       "requirement": "Clear every game in Ashigaru",
       "hidden": false,
+      "rule": {
+        "type": "villageGames",
+        "value": "ashigaru"
+      },
       "image": "assets/badges/medals/games-ashigaru.webp"
     },
     {
@@ -913,6 +1262,10 @@
       "description": "Every game, puzzle and riddle in Kenshi, cleared.",
       "requirement": "Clear every game in Kenshi",
       "hidden": false,
+      "rule": {
+        "type": "villageGames",
+        "value": "kenshi"
+      },
       "image": "assets/badges/medals/games-kenshi.webp"
     },
     {
@@ -924,6 +1277,10 @@
       "description": "Every game, puzzle and riddle in Yamabushi, cleared.",
       "requirement": "Clear every game in Yamabushi",
       "hidden": false,
+      "rule": {
+        "type": "villageGames",
+        "value": "yamabushi"
+      },
       "image": "assets/badges/medals/games-yamabushi.webp"
     },
     {
@@ -935,6 +1292,10 @@
       "description": "Every game, puzzle and riddle in Sohei, cleared.",
       "requirement": "Clear every game in Sohei",
       "hidden": false,
+      "rule": {
+        "type": "villageGames",
+        "value": "sohei"
+      },
       "image": "assets/badges/medals/games-sohei.webp"
     },
     {
@@ -946,6 +1307,10 @@
       "description": "Every game, puzzle and riddle in Wokou, cleared.",
       "requirement": "Clear every game in Wokou",
       "hidden": false,
+      "rule": {
+        "type": "villageGames",
+        "value": "wokou"
+      },
       "image": "assets/badges/medals/games-wokou.webp"
     },
     {
@@ -957,6 +1322,10 @@
       "description": "Every game, puzzle and riddle in Warrior, cleared.",
       "requirement": "Clear every game in Warrior",
       "hidden": false,
+      "rule": {
+        "type": "villageGames",
+        "value": "warrior"
+      },
       "image": "assets/badges/medals/games-warrior.webp"
     },
     {
@@ -968,6 +1337,10 @@
       "description": "Every game, puzzle and riddle in Cute & Creepy, cleared.",
       "requirement": "Clear every game in Cute & Creepy",
       "hidden": false,
+      "rule": {
+        "type": "villageGames",
+        "value": "cute-creepy"
+      },
       "image": "assets/badges/medals/games-cute-creepy.webp"
     },
     {
@@ -979,6 +1352,10 @@
       "description": "Every game, puzzle and riddle in Chumpz, cleared.",
       "requirement": "Clear every game in Chumpz",
       "hidden": false,
+      "rule": {
+        "type": "villageGames",
+        "value": "chumpz"
+      },
       "image": "assets/badges/medals/games-chumpz.webp"
     },
     {
@@ -990,6 +1367,10 @@
       "description": "Every game, puzzle and riddle in Saints of LA, cleared.",
       "requirement": "Clear every game in Saints of LA",
       "hidden": false,
+      "rule": {
+        "type": "villageGames",
+        "value": "saints-la"
+      },
       "image": "assets/badges/medals/games-saints-la.webp"
     },
     {
@@ -1001,6 +1382,10 @@
       "description": "Every game in all fifteen villages, cleared.",
       "requirement": "Clear every game in the colony",
       "hidden": false,
+      "rule": {
+        "type": "allGames",
+        "value": "all"
+      },
       "image": "assets/badges/medals/games-all.webp"
     },
     {
@@ -1012,7 +1397,3719 @@
       "description": "The archive has nothing left to ask of you.",
       "requirement": "Collect every collectible",
       "hidden": false,
+      "rule": {
+        "type": "collectibleCount",
+        "value": 97
+      },
       "image": "assets/badges/medals/collector-relic-keeper.webp"
+    },
+    {
+      "badgeId": "world-villages-5",
+      "name": "Wayfarer",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Common",
+      "description": "Five gates, five welcomes.",
+      "requirement": "Visit 5 villages",
+      "hidden": false,
+      "rule": {
+        "type": "villagesCount",
+        "value": 5
+      },
+      "image": "assets/badges/medals/world-villages-5.webp"
+    },
+    {
+      "badgeId": "world-villages-all",
+      "name": "All Fifteen",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Uncommon",
+      "description": "Every gate in the colony has let you through.",
+      "requirement": "Visit all 15 villages",
+      "hidden": false,
+      "rule": {
+        "type": "villagesCount",
+        "value": "all"
+      },
+      "image": "assets/badges/medals/world-villages-all.webp"
+    },
+    {
+      "badgeId": "world-friends",
+      "name": "Good Neighbour",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Common",
+      "description": "The friend villages know your face.",
+      "requirement": "Visit Chumpz, Saints of LA and Cute & Creepy",
+      "hidden": false,
+      "rule": {
+        "type": "villagesCount",
+        "value": [
+          "chumpz",
+          "saints-la",
+          "cute-creepy"
+        ]
+      },
+      "image": "assets/badges/medals/world-friends.webp"
+    },
+    {
+      "badgeId": "room-first",
+      "name": "Come On In",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Common",
+      "description": "Every door hides a story.",
+      "requirement": "Step inside a room",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "rooms",
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/room-first.webp"
+    },
+    {
+      "badgeId": "room-10",
+      "name": "House Guest",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Common",
+      "description": "Ten doors opened, ten rooms remembered.",
+      "requirement": "Enter 10 different rooms",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "rooms",
+          "n": 10
+        }
+      },
+      "image": "assets/badges/medals/room-10.webp"
+    },
+    {
+      "badgeId": "room-30",
+      "name": "Room to Room",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Uncommon",
+      "description": "Halls, vaults, lounges and dojos: you have seen the inside of the colony.",
+      "requirement": "Enter 30 different rooms",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "rooms",
+          "n": 30
+        }
+      },
+      "image": "assets/badges/medals/room-30.webp"
+    },
+    {
+      "badgeId": "room-all",
+      "name": "Every Door",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Legendary",
+      "description": "There is no door in the colony you have not walked through.",
+      "requirement": "Enter every room in Universe (63)",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "rooms",
+          "n": 63
+        }
+      },
+      "image": "assets/badges/medals/room-all.webp"
+    },
+    {
+      "badgeId": "room-sealed",
+      "name": "Behind Sealed Doors",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Epic",
+      "description": "The Descent Path, the Old Door and the Ancient Tunnels: sealed for the rest, open for you.",
+      "requirement": "Enter the three sealed rooms",
+      "hidden": false,
+      "rule": {
+        "type": "statHas",
+        "value": {
+          "key": "rooms",
+          "all": [
+            "hub_ancient_tunnels",
+            "ronin_old_door",
+            "yamabushi_descent_path"
+          ]
+        }
+      },
+      "image": "assets/badges/medals/room-sealed.webp"
+    },
+    {
+      "badgeId": "room-nightlife",
+      "name": "Night on the Town",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Common",
+      "description": "A laugh at the club, a night After Dark.",
+      "requirement": "Visit Antthony's Comedy Club and Rebel Ants After Dark",
+      "hidden": false,
+      "rule": {
+        "type": "statHas",
+        "value": {
+          "key": "rooms",
+          "all": [
+            "hub_comedy_club",
+            "hub_after_dark"
+          ]
+        }
+      },
+      "image": "assets/badges/medals/room-nightlife.webp"
+    },
+    {
+      "badgeId": "swim-first",
+      "name": "Making Waves",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Common",
+      "description": "In you go.",
+      "requirement": "Go for a swim",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "swims",
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/swim-first.webp"
+    },
+    {
+      "badgeId": "swim-villages",
+      "name": "Island Hopper",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Uncommon",
+      "description": "Seas, lakes, ponds and canals: you have swum them all.",
+      "requirement": "Swim in 4 different villages",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "swimV",
+          "n": 4
+        }
+      },
+      "image": "assets/badges/medals/swim-villages.webp"
+    },
+    {
+      "badgeId": "swim-1k",
+      "name": "Long Distance Swimmer",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Rare",
+      "description": "A thousand metres of open water behind you.",
+      "requirement": "Swim 1 km in all",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "swimM",
+          "n": 1000
+        }
+      },
+      "image": "assets/badges/medals/swim-1k.webp"
+    },
+    {
+      "badgeId": "walk-5k",
+      "name": "Trailblazer",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Common",
+      "description": "Five kilometres of paths, steps and bridges.",
+      "requirement": "Travel 5 km on foot",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "walkM",
+          "n": 5000
+        }
+      },
+      "image": "assets/badges/medals/walk-5k.webp"
+    },
+    {
+      "badgeId": "walk-25k",
+      "name": "Long Road",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Common",
+      "description": "Twenty-five kilometres: your feet know the colony.",
+      "requirement": "Travel 25 km on foot",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "walkM",
+          "n": 25000
+        }
+      },
+      "image": "assets/badges/medals/walk-25k.webp"
+    },
+    {
+      "badgeId": "walk-100k",
+      "name": "Marathon Ant",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Rare",
+      "description": "A hundred kilometres. Most ants never leave their village.",
+      "requirement": "Travel 100 km on foot",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "walkM",
+          "n": 100000
+        }
+      },
+      "image": "assets/badges/medals/walk-100k.webp"
+    },
+    {
+      "badgeId": "walk-500k",
+      "name": "Pilgrim of the Colony",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Epic",
+      "description": "Five hundred kilometres: a pilgrimage, step by step.",
+      "requirement": "Travel 500 km on foot",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "walkM",
+          "n": 500000
+        }
+      },
+      "image": "assets/badges/medals/walk-500k.webp"
+    },
+    {
+      "badgeId": "weather-rain",
+      "name": "Singing in the Rain",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Common",
+      "description": "Wet fur, wet roads, a good day anyway.",
+      "requirement": "Be out in the rain",
+      "hidden": false,
+      "rule": {
+        "type": "statHas",
+        "value": {
+          "key": "weather",
+          "all": [
+            "rain"
+          ]
+        }
+      },
+      "image": "assets/badges/medals/weather-rain.webp"
+    },
+    {
+      "badgeId": "weather-storm",
+      "name": "Storm Chaser",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Common",
+      "description": "Thunder overhead and you kept walking.",
+      "requirement": "Be out in a storm",
+      "hidden": false,
+      "rule": {
+        "type": "statHas",
+        "value": {
+          "key": "weather",
+          "all": [
+            "storm"
+          ]
+        }
+      },
+      "image": "assets/badges/medals/weather-storm.webp"
+    },
+    {
+      "badgeId": "weather-snow",
+      "name": "Snowfall",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Common",
+      "description": "Footprints in fresh snow.",
+      "requirement": "Be out in the snow",
+      "hidden": false,
+      "rule": {
+        "type": "statHas",
+        "value": {
+          "key": "weather",
+          "all": [
+            "snow"
+          ]
+        }
+      },
+      "image": "assets/badges/medals/weather-snow.webp"
+    },
+    {
+      "badgeId": "weather-fog",
+      "name": "Into the Mist",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Common",
+      "description": "You found your way when the world went white.",
+      "requirement": "Be out in the fog",
+      "hidden": false,
+      "rule": {
+        "type": "statHas",
+        "value": {
+          "key": "weather",
+          "all": [
+            "fog"
+          ]
+        }
+      },
+      "image": "assets/badges/medals/weather-fog.webp"
+    },
+    {
+      "badgeId": "weather-all",
+      "name": "Every Sky",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Uncommon",
+      "description": "Sun, storm, snow and everything between.",
+      "requirement": "Be out in every kind of weather: clear, rain, storm, snow, fog, heat and cold",
+      "hidden": false,
+      "rule": {
+        "type": "statHas",
+        "value": {
+          "key": "weather",
+          "all": [
+            "clear",
+            "rain",
+            "storm",
+            "snow",
+            "fog",
+            "heat",
+            "cold"
+          ]
+        }
+      },
+      "image": "assets/badges/medals/weather-all.webp"
+    },
+    {
+      "badgeId": "lightning-near",
+      "name": "Too Close for Comfort",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Rare",
+      "description": "The thunder came before you could count.",
+      "requirement": "Be out when lightning strikes within 200 m of you",
+      "hidden": true,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "strike",
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/lightning-near.webp"
+    },
+    {
+      "badgeId": "photo-first",
+      "name": "Say Cheese",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Common",
+      "description": "Your first picture of the colony.",
+      "requirement": "Take a photo (P)",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "photos",
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/photo-first.webp"
+    },
+    {
+      "badgeId": "photo-50",
+      "name": "Shutterbug",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Uncommon",
+      "description": "Fifty pictures: a whole album of the colony.",
+      "requirement": "Take 50 photos",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "photos",
+          "n": 50
+        }
+      },
+      "image": "assets/badges/medals/photo-50.webp"
+    },
+    {
+      "badgeId": "time-night",
+      "name": "Night Walker",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Common",
+      "description": "Lanterns lit, the moon up, the paths yours.",
+      "requirement": "Walk Universe at night",
+      "hidden": false,
+      "rule": {
+        "type": "statHas",
+        "value": {
+          "key": "times",
+          "all": [
+            "night"
+          ]
+        }
+      },
+      "image": "assets/badges/medals/time-night.webp"
+    },
+    {
+      "badgeId": "time-dawn",
+      "name": "Early Riser",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Uncommon",
+      "description": "You saw the colony wake.",
+      "requirement": "Be out at dawn (5 to 7 in the morning, by your clock)",
+      "hidden": false,
+      "rule": {
+        "type": "statHas",
+        "value": {
+          "key": "times",
+          "all": [
+            "dawn"
+          ]
+        }
+      },
+      "image": "assets/badges/medals/time-dawn.webp"
+    },
+    {
+      "badgeId": "book-opened",
+      "name": "Turn the Page",
+      "category": "explorer",
+      "categoryLabel": "Explorer",
+      "rarity": "Common",
+      "description": "The book opened for you.",
+      "requirement": "Open The Warning in the Hub Library",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "book",
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/book-opened.webp"
+    },
+    {
+      "badgeId": "book1-chapter-1",
+      "name": "Chapter One",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Uncommon",
+      "description": "The first warning heeded, the first chapter closed.",
+      "requirement": "Complete Book One, Chapter 1",
+      "hidden": false,
+      "rule": {
+        "type": "quest",
+        "value": "book1-main-10"
+      },
+      "image": "assets/badges/medals/book1-chapter-1.webp"
+    },
+    {
+      "badgeId": "book1-side-10",
+      "name": "Side Paths",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Common",
+      "description": "Ten favours for ten villagers.",
+      "requirement": "Finish 10 Book One side quests",
+      "hidden": false,
+      "rule": {
+        "type": "questPrefix",
+        "value": {
+          "prefix": "book1-side-",
+          "n": 10
+        }
+      },
+      "image": "assets/badges/medals/book1-side-10.webp"
+    },
+    {
+      "badgeId": "book1-side-20",
+      "name": "Helping Hands",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Uncommon",
+      "description": "Twenty quests off the main road.",
+      "requirement": "Finish 20 Book One side quests",
+      "hidden": false,
+      "rule": {
+        "type": "questPrefix",
+        "value": {
+          "prefix": "book1-side-",
+          "n": 20
+        }
+      },
+      "image": "assets/badges/medals/book1-side-20.webp"
+    },
+    {
+      "badgeId": "book1-side-30",
+      "name": "Every Side Story",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Epic",
+      "description": "No villager left waiting.",
+      "requirement": "Finish all 30 Book One side quests",
+      "hidden": false,
+      "rule": {
+        "type": "questPrefix",
+        "value": {
+          "prefix": "book1-side-",
+          "n": 30
+        }
+      },
+      "image": "assets/badges/medals/book1-side-30.webp"
+    },
+    {
+      "badgeId": "book1-friends",
+      "name": "Friend of Every Village",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Rare",
+      "description": "Welcomed in Chumpz, Saints of LA and Cute & Creepy.",
+      "requirement": "Finish the Traveling Guide's quests to the friend villages",
+      "hidden": false,
+      "rule": {
+        "type": "questsAll",
+        "value": [
+          "book1-side-27",
+          "book1-side-28"
+        ]
+      },
+      "image": "assets/badges/medals/book1-friends.webp"
+    },
+    {
+      "badgeId": "tale-mamoru",
+      "name": "Harvest Moon",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Rare",
+      "description": "You kept watch with Mamoru under the Harvest Moon.",
+      "requirement": "Finish Mamoru's tale (Moon Tales 1-4)",
+      "hidden": false,
+      "rule": {
+        "type": "questsAll",
+        "value": [
+          "moon-tales-01",
+          "moon-tales-02",
+          "moon-tales-03",
+          "moon-tales-04"
+        ]
+      },
+      "image": "assets/badges/medals/tale-mamoru.webp"
+    },
+    {
+      "badgeId": "tale-mochi",
+      "name": "Pink Moon",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Rare",
+      "description": "Never walk alone: Mochi and the moth witch walked with you.",
+      "requirement": "Finish Mochi's tale (Moon Tales 5-8)",
+      "hidden": false,
+      "rule": {
+        "type": "questsAll",
+        "value": [
+          "moon-tales-05",
+          "moon-tales-06",
+          "moon-tales-07",
+          "moon-tales-08"
+        ]
+      },
+      "image": "assets/badges/medals/tale-mochi.webp"
+    },
+    {
+      "badgeId": "tale-flower",
+      "name": "Flower Moon",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Rare",
+      "description": "The great tree blossomed for you.",
+      "requirement": "Finish Kokeshi Flower Moon's tale (Moon Tales 9-12)",
+      "hidden": false,
+      "rule": {
+        "type": "questsAll",
+        "value": [
+          "moon-tales-09",
+          "moon-tales-10",
+          "moon-tales-11",
+          "moon-tales-12"
+        ]
+      },
+      "image": "assets/badges/medals/tale-flower.webp"
+    },
+    {
+      "badgeId": "tale-ostara",
+      "name": "Hare Moon",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Rare",
+      "description": "The silver bell rang and the shadows cleared.",
+      "requirement": "Finish Ostara's tale (Moon Tales 13-16)",
+      "hidden": false,
+      "rule": {
+        "type": "questsAll",
+        "value": [
+          "moon-tales-13",
+          "moon-tales-14",
+          "moon-tales-15",
+          "moon-tales-16"
+        ]
+      },
+      "image": "assets/badges/medals/tale-ostara.webp"
+    },
+    {
+      "badgeId": "tale-nariko",
+      "name": "Thunder Moon",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Rare",
+      "description": "Seven stones woke and the storm answered.",
+      "requirement": "Finish Nariko's tale (Moon Tales 17-19)",
+      "hidden": false,
+      "rule": {
+        "type": "questsAll",
+        "value": [
+          "moon-tales-17",
+          "moon-tales-18",
+          "moon-tales-19"
+        ]
+      },
+      "image": "assets/badges/medals/tale-nariko.webp"
+    },
+    {
+      "badgeId": "tale-all",
+      "name": "Keeper of the Moon Tales",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Epic",
+      "description": "Every moon, every tale, every witch of the coven.",
+      "requirement": "Finish every Moon Tale (1-24)",
+      "hidden": false,
+      "rule": {
+        "type": "questsAll",
+        "value": [
+          "moon-tales-01",
+          "moon-tales-02",
+          "moon-tales-03",
+          "moon-tales-04",
+          "moon-tales-05",
+          "moon-tales-06",
+          "moon-tales-07",
+          "moon-tales-08",
+          "moon-tales-09",
+          "moon-tales-10",
+          "moon-tales-11",
+          "moon-tales-12",
+          "moon-tales-13",
+          "moon-tales-14",
+          "moon-tales-15",
+          "moon-tales-16",
+          "moon-tales-17",
+          "moon-tales-18",
+          "moon-tales-19",
+          "moon-tales-20",
+          "moon-tales-21",
+          "moon-tales-22",
+          "moon-tales-23",
+          "moon-tales-24"
+        ]
+      },
+      "image": "assets/badges/medals/tale-all.webp"
+    },
+    {
+      "badgeId": "cove-big-chain",
+      "name": "Big Chain's Right Hand",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Uncommon",
+      "description": "The order, the wish, the tab and the torches: done.",
+      "requirement": "Finish Big Chain's quests in Chumpz Cove",
+      "hidden": false,
+      "rule": {
+        "type": "questsAll",
+        "value": [
+          "chumpz-cove-01",
+          "chumpz-cove-10",
+          "chumpz-cove-15",
+          "chumpz-cove-17"
+        ]
+      },
+      "image": "assets/badges/medals/cove-big-chain.webp"
+    },
+    {
+      "badgeId": "cove-pengu",
+      "name": "Pengu's Deckhand",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Uncommon",
+      "description": "Nets mended, sails up, the Big Catch landed.",
+      "requirement": "Finish Pengu's quests in Chumpz Cove",
+      "hidden": false,
+      "rule": {
+        "type": "questsAll",
+        "value": [
+          "chumpz-cove-02",
+          "chumpz-cove-07",
+          "chumpz-cove-08",
+          "chumpz-cove-12",
+          "chumpz-cove-13",
+          "chumpz-cove-18"
+        ]
+      },
+      "image": "assets/badges/medals/cove-pengu.webp"
+    },
+    {
+      "badgeId": "cove-peely",
+      "name": "Peely's Partner",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Uncommon",
+      "description": "The dice rolled and the Golden Coconut came up.",
+      "requirement": "Finish Peely's quests in Chumpz Cove",
+      "hidden": false,
+      "rule": {
+        "type": "questsAll",
+        "value": [
+          "chumpz-cove-03",
+          "chumpz-cove-19"
+        ]
+      },
+      "image": "assets/badges/medals/cove-peely.webp"
+    },
+    {
+      "badgeId": "cove-band",
+      "name": "Roadie",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Uncommon",
+      "description": "Instruments found, shades found, bananas brought.",
+      "requirement": "Finish Banana Band's quests in Chumpz Cove",
+      "hidden": false,
+      "rule": {
+        "type": "questsAll",
+        "value": [
+          "chumpz-cove-04",
+          "chumpz-cove-09",
+          "chumpz-cove-14"
+        ]
+      },
+      "image": "assets/badges/medals/cove-band.webp"
+    },
+    {
+      "badgeId": "cove-racer",
+      "name": "Boardwalk Lap",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Common",
+      "description": "Ten flags, one lap, one very fast ape.",
+      "requirement": "Race the Chumpz Racer round the boardwalk",
+      "hidden": false,
+      "rule": {
+        "type": "questsAll",
+        "value": [
+          "chumpz-cove-05"
+        ]
+      },
+      "image": "assets/badges/medals/cove-racer.webp"
+    },
+    {
+      "badgeId": "cove-barnacle",
+      "name": "Dock Inspector",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Uncommon",
+      "description": "Bait run, dock inspection, the racks counted.",
+      "requirement": "Finish Barnacle's quests in Chumpz Cove",
+      "hidden": false,
+      "rule": {
+        "type": "questsAll",
+        "value": [
+          "chumpz-cove-06",
+          "chumpz-cove-11",
+          "chumpz-cove-16"
+        ]
+      },
+      "image": "assets/badges/medals/cove-barnacle.webp"
+    },
+    {
+      "badgeId": "cove-all",
+      "name": "Legend of the Cove",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Epic",
+      "description": "The whole cove, ready for the party, thanks to you.",
+      "requirement": "Finish every Chumpz Cove quest (1-20)",
+      "hidden": false,
+      "rule": {
+        "type": "questsAll",
+        "value": [
+          "chumpz-cove-01",
+          "chumpz-cove-02",
+          "chumpz-cove-03",
+          "chumpz-cove-04",
+          "chumpz-cove-05",
+          "chumpz-cove-06",
+          "chumpz-cove-07",
+          "chumpz-cove-08",
+          "chumpz-cove-09",
+          "chumpz-cove-10",
+          "chumpz-cove-11",
+          "chumpz-cove-12",
+          "chumpz-cove-13",
+          "chumpz-cove-14",
+          "chumpz-cove-15",
+          "chumpz-cove-16",
+          "chumpz-cove-17",
+          "chumpz-cove-18",
+          "chumpz-cove-19",
+          "chumpz-cove-20"
+        ]
+      },
+      "image": "assets/badges/medals/cove-all.webp"
+    },
+    {
+      "badgeId": "city-greeter",
+      "name": "Tour Guide",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Uncommon",
+      "description": "You know the block better than the Greeter does.",
+      "requirement": "Finish the Greeter's quests in Saints of LA",
+      "hidden": false,
+      "rule": {
+        "type": "questsAll",
+        "value": [
+          "saints-la-01",
+          "saints-la-08",
+          "saints-la-10",
+          "saints-la-13",
+          "saints-la-14",
+          "saints-la-17"
+        ]
+      },
+      "image": "assets/badges/medals/city-greeter.webp"
+    },
+    {
+      "badgeId": "city-mechanic",
+      "name": "Grease Monkey",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Uncommon",
+      "description": "Parts found, lowriders polished, the lights back on.",
+      "requirement": "Finish the Mechanic's quests in Saints of LA",
+      "hidden": false,
+      "rule": {
+        "type": "questsAll",
+        "value": [
+          "saints-la-02",
+          "saints-la-04",
+          "saints-la-09",
+          "saints-la-11"
+        ]
+      },
+      "image": "assets/badges/medals/city-mechanic.webp"
+    },
+    {
+      "badgeId": "city-court",
+      "name": "Court Regular",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Uncommon",
+      "description": "The corners, the patrol, the streak.",
+      "requirement": "Finish the Court Regular's quests in Saints of LA",
+      "hidden": false,
+      "rule": {
+        "type": "questsAll",
+        "value": [
+          "saints-la-03",
+          "saints-la-16",
+          "saints-la-18"
+        ]
+      },
+      "image": "assets/badges/medals/city-court.webp"
+    },
+    {
+      "badgeId": "city-librarian",
+      "name": "Card Carrier",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Uncommon",
+      "description": "A library card, a tower view, safe crossings.",
+      "requirement": "Finish the Librarian's quests in Saints of LA",
+      "hidden": false,
+      "rule": {
+        "type": "questsAll",
+        "value": [
+          "saints-la-05",
+          "saints-la-15",
+          "saints-la-19"
+        ]
+      },
+      "image": "assets/badges/medals/city-librarian.webp"
+    },
+    {
+      "badgeId": "city-shopkeeper",
+      "name": "Halo Runner",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Uncommon",
+      "description": "The market run and the halo pins.",
+      "requirement": "Finish the Shopkeeper's quests in Saints of LA",
+      "hidden": false,
+      "rule": {
+        "type": "questsAll",
+        "value": [
+          "saints-la-07",
+          "saints-la-12"
+        ]
+      },
+      "image": "assets/badges/medals/city-shopkeeper.webp"
+    },
+    {
+      "badgeId": "city-dj",
+      "name": "Arcade Night",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Common",
+      "description": "A strike, a record crate, a night to remember.",
+      "requirement": "Spend Arcade Night with the DJ in the Game Hall",
+      "hidden": false,
+      "rule": {
+        "type": "questsAll",
+        "value": [
+          "saints-la-06"
+        ]
+      },
+      "image": "assets/badges/medals/city-dj.webp"
+    },
+    {
+      "badgeId": "city-all",
+      "name": "Saint of the City",
+      "category": "story",
+      "categoryLabel": "Story",
+      "rarity": "Epic",
+      "description": "The whole block owes you one.",
+      "requirement": "Finish every Saints of LA quest (1-20)",
+      "hidden": false,
+      "rule": {
+        "type": "questsAll",
+        "value": [
+          "saints-la-01",
+          "saints-la-02",
+          "saints-la-03",
+          "saints-la-04",
+          "saints-la-05",
+          "saints-la-06",
+          "saints-la-07",
+          "saints-la-08",
+          "saints-la-09",
+          "saints-la-10",
+          "saints-la-11",
+          "saints-la-12",
+          "saints-la-13",
+          "saints-la-14",
+          "saints-la-15",
+          "saints-la-16",
+          "saints-la-17",
+          "saints-la-18",
+          "saints-la-19",
+          "saints-la-20"
+        ]
+      },
+      "image": "assets/badges/medals/city-all.webp"
+    },
+    {
+      "badgeId": "arcade-first-clear",
+      "name": "First Clear",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Common",
+      "description": "One down. A hundred and fifty-seven to go.",
+      "requirement": "Clear your first game",
+      "hidden": false,
+      "rule": {
+        "type": "gamesCleared",
+        "value": 1
+      },
+      "image": "assets/badges/medals/arcade-first-clear.webp"
+    },
+    {
+      "badgeId": "arcade-clear-25",
+      "name": "Quarter Century",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Uncommon",
+      "description": "Twenty-five games cleared across the colony.",
+      "requirement": "Clear 25 games",
+      "hidden": false,
+      "rule": {
+        "type": "gamesCleared",
+        "value": 25
+      },
+      "image": "assets/badges/medals/arcade-clear-25.webp"
+    },
+    {
+      "badgeId": "arcade-clear-50",
+      "name": "Half the Board",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Epic",
+      "description": "Fifty cleared: the villages talk about you.",
+      "requirement": "Clear 50 games",
+      "hidden": false,
+      "rule": {
+        "type": "gamesCleared",
+        "value": 50
+      },
+      "image": "assets/badges/medals/arcade-clear-50.webp"
+    },
+    {
+      "badgeId": "arcade-clear-100",
+      "name": "Centurion",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Legendary",
+      "description": "A hundred games cleared.",
+      "requirement": "Clear 100 games",
+      "hidden": false,
+      "rule": {
+        "type": "gamesCleared",
+        "value": 100
+      },
+      "image": "assets/badges/medals/arcade-clear-100.webp"
+    },
+    {
+      "badgeId": "arcade-plays-50",
+      "name": "Warmed Up",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Common",
+      "description": "Fifty rounds in and just getting started.",
+      "requirement": "Play 50 rounds of any games",
+      "hidden": false,
+      "rule": {
+        "type": "gamesPlayed",
+        "value": 50
+      },
+      "image": "assets/badges/medals/arcade-plays-50.webp"
+    },
+    {
+      "badgeId": "arcade-plays-250",
+      "name": "Arcade Regular",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Common",
+      "description": "The game spots know your footsteps.",
+      "requirement": "Play 250 rounds of any games",
+      "hidden": false,
+      "rule": {
+        "type": "gamesPlayed",
+        "value": 250
+      },
+      "image": "assets/badges/medals/arcade-plays-250.webp"
+    },
+    {
+      "badgeId": "arcade-plays-1000",
+      "name": "One More Round",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Uncommon",
+      "description": "A thousand rounds. Just one more.",
+      "requirement": "Play 1,000 rounds of any games",
+      "hidden": false,
+      "rule": {
+        "type": "gamesPlayed",
+        "value": 1000
+      },
+      "image": "assets/badges/medals/arcade-plays-1000.webp"
+    },
+    {
+      "badgeId": "arcade-tried-25",
+      "name": "Sampler",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Common",
+      "description": "A taste of everything.",
+      "requirement": "Play 25 different games",
+      "hidden": false,
+      "rule": {
+        "type": "gamesTried",
+        "value": 25
+      },
+      "image": "assets/badges/medals/arcade-tried-25.webp"
+    },
+    {
+      "badgeId": "arcade-tried-all",
+      "name": "Tried Them All",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Rare",
+      "description": "Not one game left untried.",
+      "requirement": "Play every game in Universe at least once",
+      "hidden": false,
+      "rule": {
+        "type": "gamesTried",
+        "value": "all"
+      },
+      "image": "assets/badges/medals/arcade-tried-all.webp"
+    },
+    {
+      "badgeId": "arcade-runs",
+      "name": "Fleet Foot",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Epic",
+      "description": "Every run in every village, beaten.",
+      "requirement": "Clear all 15 Village Runs",
+      "hidden": false,
+      "rule": {
+        "type": "kindGames",
+        "value": {
+          "kinds": [
+            "course"
+          ]
+        }
+      },
+      "image": "assets/badges/medals/arcade-runs.webp"
+    },
+    {
+      "badgeId": "arcade-run-gold",
+      "name": "Golden Stride",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Uncommon",
+      "description": "Gold on the clock.",
+      "requirement": "Win a gold medal on a Village Run",
+      "hidden": false,
+      "rule": {
+        "type": "runMedals",
+        "value": {
+          "medal": "gold",
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/arcade-run-gold.webp"
+    },
+    {
+      "badgeId": "arcade-runs-gold",
+      "name": "Gold Rush",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Legendary",
+      "description": "Fifteen runs, fifteen golds.",
+      "requirement": "Win gold on all 15 Village Runs",
+      "hidden": false,
+      "rule": {
+        "type": "runMedals",
+        "value": {
+          "medal": "gold",
+          "n": "all"
+        }
+      },
+      "image": "assets/badges/medals/arcade-runs-gold.webp"
+    },
+    {
+      "badgeId": "arcade-dances",
+      "name": "Dance Floor Royalty",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Rare",
+      "description": "Every village has seen you dance.",
+      "requirement": "Clear all 14 dance-offs",
+      "hidden": false,
+      "rule": {
+        "type": "kindGames",
+        "value": {
+          "kinds": [
+            "dance"
+          ]
+        }
+      },
+      "image": "assets/badges/medals/arcade-dances.webp"
+    },
+    {
+      "badgeId": "arcade-chases",
+      "name": "Catch Me If You Can",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Rare",
+      "description": "Thieves, spies, crabs and chickens: all caught.",
+      "requirement": "Clear all 11 chases",
+      "hidden": false,
+      "rule": {
+        "type": "kindGames",
+        "value": {
+          "kinds": [
+            "chase"
+          ]
+        }
+      },
+      "image": "assets/badges/medals/arcade-chases.webp"
+    },
+    {
+      "badgeId": "arcade-tend",
+      "name": "Keeper of the Flame",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Rare",
+      "description": "Not one lantern went dark on your watch.",
+      "requirement": "Clear all 4 keep-the-lights-lit games",
+      "hidden": false,
+      "rule": {
+        "type": "kindGames",
+        "value": {
+          "kinds": [
+            "tend"
+          ]
+        }
+      },
+      "image": "assets/badges/medals/arcade-tend.webp"
+    },
+    {
+      "badgeId": "arcade-gather",
+      "name": "Errand Runner",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Common",
+      "description": "Sheaves, messages, prayer flags: delivered.",
+      "requirement": "Clear all 3 collect runs",
+      "hidden": false,
+      "rule": {
+        "type": "kindGames",
+        "value": {
+          "kinds": [
+            "gather"
+          ]
+        }
+      },
+      "image": "assets/badges/medals/arcade-gather.webp"
+    },
+    {
+      "badgeId": "arcade-sharp",
+      "name": "Sharpshooter",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Rare",
+      "description": "Coconuts, spears, arrows, shuriken and stones: on target.",
+      "requirement": "Clear every throwing and shooting game (8)",
+      "hidden": false,
+      "rule": {
+        "type": "kindGames",
+        "value": {
+          "kinds": [
+            "toss",
+            "archery",
+            "shuriken",
+            "siege"
+          ]
+        }
+      },
+      "image": "assets/badges/medals/arcade-sharp.webp"
+    },
+    {
+      "badgeId": "arcade-allstar",
+      "name": "All-Star",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Rare",
+      "description": "Lanes, hoops, lakes and waves.",
+      "requirement": "Clear Bowling, the 3-Point Contest, Free Throws, Stone Skipping and Surf the Cove",
+      "hidden": false,
+      "rule": {
+        "type": "gamesAll",
+        "value": [
+          "sl-bowling",
+          "sl-three-point",
+          "sl-free-throws",
+          "kenshi-stone-skipping",
+          "chz-surf-the-cove"
+        ]
+      },
+      "image": "assets/badges/medals/arcade-allstar.webp"
+    },
+    {
+      "badgeId": "arcade-fighter",
+      "name": "Fighting Spirit",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Rare",
+      "description": "Fists, blades and shields: you have trained with them all.",
+      "requirement": "Clear the Fighting Ring, Dummy Drill, Shield Wall, Quick Draw, Tameshigiri, Bamboo Cut and Log Split",
+      "hidden": false,
+      "rule": {
+        "type": "gamesAll",
+        "value": [
+          "war-fighting-ring",
+          "hub-dummy-drill",
+          "buke-shield-wall",
+          "kenshi-quick-draw",
+          "sam-tameshigiri",
+          "kenshi-bamboo-cut",
+          "ashi-log-split"
+        ]
+      },
+      "image": "assets/badges/medals/arcade-fighter.webp"
+    },
+    {
+      "badgeId": "arcade-angler",
+      "name": "Master Angler",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Common",
+      "description": "From the pier and the harbour, the big ones came in.",
+      "requirement": "Clear Pier Fishing and Harbour Fishing",
+      "hidden": false,
+      "rule": {
+        "type": "kindGames",
+        "value": {
+          "kinds": [
+            "fishing"
+          ]
+        }
+      },
+      "image": "assets/badges/medals/arcade-angler.webp"
+    },
+    {
+      "badgeId": "arcade-relay",
+      "name": "Fifteen Gates",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Rare",
+      "description": "Gate to gate across the whole colony.",
+      "requirement": "Finish the Grand Relay through all 15 villages",
+      "hidden": false,
+      "rule": {
+        "type": "gamesAll",
+        "value": [
+          "grand-relay"
+        ]
+      },
+      "image": "assets/badges/medals/arcade-relay.webp"
+    },
+    {
+      "badgeId": "arcade-relay-gold",
+      "name": "Relay Legend",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Epic",
+      "description": "The colony in three minutes and change.",
+      "requirement": "Win gold on the Grand Relay (3:15 or less)",
+      "hidden": false,
+      "rule": {
+        "type": "gameMedal",
+        "value": {
+          "id": "grand-relay",
+          "medal": "gold"
+        }
+      },
+      "image": "assets/badges/medals/arcade-relay-gold.webp"
+    },
+    {
+      "badgeId": "arcade-levels-1",
+      "name": "Every Last Level",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Uncommon",
+      "description": "All of it. Every level.",
+      "requirement": "Solve every level of a game",
+      "hidden": false,
+      "rule": {
+        "type": "levelsAll",
+        "value": 1
+      },
+      "image": "assets/badges/medals/arcade-levels-1.webp"
+    },
+    {
+      "badgeId": "arcade-levels-10",
+      "name": "Completionist",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Epic",
+      "description": "Ten games, every level of each.",
+      "requirement": "Solve every level of 10 games",
+      "hidden": false,
+      "rule": {
+        "type": "levelsAll",
+        "value": 10
+      },
+      "image": "assets/badges/medals/arcade-levels-10.webp"
+    },
+    {
+      "badgeId": "arcade-levels-25",
+      "name": "Level Hoarder",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Epic",
+      "description": "Twenty-five games emptied of levels.",
+      "requirement": "Solve every level of 25 games",
+      "hidden": false,
+      "rule": {
+        "type": "levelsAll",
+        "value": 25
+      },
+      "image": "assets/badges/medals/arcade-levels-25.webp"
+    },
+    {
+      "badgeId": "arcade-levels-100",
+      "name": "Hundred Levels",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Uncommon",
+      "description": "A hundred levels solved.",
+      "requirement": "Solve 100 levels in all",
+      "hidden": false,
+      "rule": {
+        "type": "levelsTotal",
+        "value": 100
+      },
+      "image": "assets/badges/medals/arcade-levels-100.webp"
+    },
+    {
+      "badgeId": "arcade-levels-500",
+      "name": "Five Hundred Levels",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Epic",
+      "description": "Five hundred levels. The puzzle makers salute you.",
+      "requirement": "Solve 500 levels in all",
+      "hidden": false,
+      "rule": {
+        "type": "levelsTotal",
+        "value": 500
+      },
+      "image": "assets/badges/medals/arcade-levels-500.webp"
+    },
+    {
+      "badgeId": "arcade-dance-top",
+      "name": "Top of the Charts",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Rare",
+      "description": "The fastest song, the tightest timing: cleared.",
+      "requirement": "Clear song 10, the hardest, of a dance-off",
+      "hidden": false,
+      "rule": {
+        "type": "kindLevel",
+        "value": {
+          "kinds": [
+            "dance"
+          ],
+          "level": 9
+        }
+      },
+      "image": "assets/badges/medals/arcade-dance-top.webp"
+    },
+    {
+      "badgeId": "arcade-dance-songs",
+      "name": "Ten Songs Deep",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Epic",
+      "description": "Every song of one village, danced.",
+      "requirement": "Clear all 10 songs of a dance-off",
+      "hidden": false,
+      "rule": {
+        "type": "levelsAllKind",
+        "value": {
+          "kinds": [
+            "dance"
+          ],
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/arcade-dance-songs.webp"
+    },
+    {
+      "badgeId": "arcade-dance-legend",
+      "name": "Legend of the Dance",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Mythic",
+      "description": "A hundred and forty songs. The colony dances to your beat.",
+      "requirement": "Clear all 10 songs of all 14 dance-offs",
+      "hidden": false,
+      "rule": {
+        "type": "levelsAllKind",
+        "value": {
+          "kinds": [
+            "dance"
+          ],
+          "n": "all"
+        }
+      },
+      "image": "assets/badges/medals/arcade-dance-legend.webp"
+    },
+    {
+      "badgeId": "arcade-bowling-200",
+      "name": "Two Hundred Club",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Rare",
+      "description": "Strikes and spares all night.",
+      "requirement": "Bowl 200 or more in the Saints Game Hall",
+      "hidden": false,
+      "rule": {
+        "type": "gameBest",
+        "value": {
+          "id": "sl-bowling",
+          "min": 200
+        }
+      },
+      "image": "assets/badges/medals/arcade-bowling-200.webp"
+    },
+    {
+      "badgeId": "arcade-bowling-300",
+      "name": "Perfect Game",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Mythic",
+      "description": "Twelve strikes in a row.",
+      "requirement": "Bowl a perfect 300",
+      "hidden": true,
+      "rule": {
+        "type": "gameBest",
+        "value": {
+          "id": "sl-bowling",
+          "min": 300
+        }
+      },
+      "image": "assets/badges/medals/arcade-bowling-300.webp"
+    },
+    {
+      "badgeId": "arcade-hoops-30",
+      "name": "Nothing but Net",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Legendary",
+      "description": "Twenty-five shots, twenty-five swishes.",
+      "requirement": "Score 30 in the 3-Point Contest: every ball in",
+      "hidden": true,
+      "rule": {
+        "type": "gameBest",
+        "value": {
+          "id": "sl-three-point",
+          "min": 30
+        }
+      },
+      "image": "assets/badges/medals/arcade-hoops-30.webp"
+    },
+    {
+      "badgeId": "arcade-siege",
+      "name": "Siege Master",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Rare",
+      "description": "Ten towers down and stones left over.",
+      "requirement": "Bring down every tower at the Siege Engine with stones to spare",
+      "hidden": false,
+      "rule": {
+        "type": "gameBest",
+        "value": {
+          "id": "war-siege-engine",
+          "min": 636
+        }
+      },
+      "image": "assets/badges/medals/arcade-siege.webp"
+    },
+    {
+      "badgeId": "arcade-crane",
+      "name": "Crane Operator",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Rare",
+      "description": "Not one wasted swing.",
+      "requirement": "Move a Cargo Crane load in the fewest moves",
+      "hidden": false,
+      "rule": {
+        "type": "gameBest",
+        "value": {
+          "id": "wok-cargo-crane",
+          "min": 100
+        }
+      },
+      "image": "assets/badges/medals/arcade-crane.webp"
+    },
+    {
+      "badgeId": "arcade-cairn",
+      "name": "Cairn Builder",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Rare",
+      "description": "A cairn the mountain will remember.",
+      "requirement": "Score 100 at Cairn Stack in Yamabushi",
+      "hidden": false,
+      "rule": {
+        "type": "gameBest",
+        "value": {
+          "id": "yam-cairn-stack",
+          "min": 100
+        }
+      },
+      "image": "assets/badges/medals/arcade-cairn.webp"
+    },
+    {
+      "badgeId": "arcade-blocks",
+      "name": "High Rise",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Epic",
+      "description": "A skyline of your own.",
+      "requirement": "Score 10,000 at Skyline Blocks",
+      "hidden": false,
+      "rule": {
+        "type": "gameBest",
+        "value": {
+          "id": "sl-skyline-blocks",
+          "min": 10000
+        }
+      },
+      "image": "assets/badges/medals/arcade-blocks.webp"
+    },
+    {
+      "badgeId": "arcade-blade",
+      "name": "Razor's Edge",
+      "category": "arcade",
+      "categoryLabel": "Arcade",
+      "rarity": "Rare",
+      "description": "Twenty mats, nearly every cut perfect.",
+      "requirement": "Score 250 at Tameshigiri",
+      "hidden": false,
+      "rule": {
+        "type": "gameBest",
+        "value": {
+          "id": "sam-tameshigiri",
+          "min": 250
+        }
+      },
+      "image": "assets/badges/medals/arcade-blade.webp"
+    },
+    {
+      "badgeId": "rival-pong",
+      "name": "Pong King",
+      "category": "rivals",
+      "categoryLabel": "Rivals & Boards",
+      "rarity": "Rare",
+      "description": "Big Chain bought the next round.",
+      "requirement": "Beat Big Chain at Beer Pong in the Banana Bar",
+      "hidden": false,
+      "rule": {
+        "type": "gamesAll",
+        "value": [
+          "chz-beer-pong"
+        ]
+      },
+      "image": "assets/badges/medals/rival-pong.webp"
+    },
+    {
+      "badgeId": "rival-nim",
+      "name": "Stone Cold",
+      "category": "rivals",
+      "categoryLabel": "Rivals & Boards",
+      "rarity": "Rare",
+      "description": "The Archivist never misses a winning move. You won anyway.",
+      "requirement": "Beat the Archivist at his stones in Kenshi",
+      "hidden": false,
+      "rule": {
+        "type": "gamesAll",
+        "value": [
+          "kenshi-archivist-stones"
+        ]
+      },
+      "image": "assets/badges/medals/rival-nim.webp"
+    },
+    {
+      "badgeId": "rival-tug",
+      "name": "Rope Burn",
+      "category": "rivals",
+      "categoryLabel": "Rivals & Boards",
+      "rarity": "Common",
+      "description": "The Fort Smith let go first.",
+      "requirement": "Win the Tug of War against the Fort Smith",
+      "hidden": false,
+      "rule": {
+        "type": "gamesAll",
+        "value": [
+          "war-tug-of-war"
+        ]
+      },
+      "image": "assets/badges/medals/rival-tug.webp"
+    },
+    {
+      "badgeId": "rival-quickdraw",
+      "name": "Fastest Blade",
+      "category": "rivals",
+      "categoryLabel": "Rivals & Boards",
+      "rarity": "Rare",
+      "description": "You drew first.",
+      "requirement": "Win the Quick Draw duel in Kenshi",
+      "hidden": false,
+      "rule": {
+        "type": "gamesAll",
+        "value": [
+          "kenshi-quick-draw"
+        ]
+      },
+      "image": "assets/badges/medals/rival-quickdraw.webp"
+    },
+    {
+      "badgeId": "rival-reversi",
+      "name": "Corner Taker",
+      "category": "rivals",
+      "categoryLabel": "Rivals & Boards",
+      "rarity": "Rare",
+      "description": "You took the corners and the board.",
+      "requirement": "Clear Colony Corners in the Hub (beat one of the stronger opponents)",
+      "hidden": false,
+      "rule": {
+        "type": "gamesAll",
+        "value": [
+          "hub-colony-corners"
+        ]
+      },
+      "image": "assets/badges/medals/rival-reversi.webp"
+    },
+    {
+      "badgeId": "rival-highlow",
+      "name": "Lucky Streak",
+      "category": "rivals",
+      "categoryLabel": "Rivals & Boards",
+      "rarity": "Common",
+      "description": "Five right calls in a row.",
+      "requirement": "Beat Peely at High-Low",
+      "hidden": false,
+      "rule": {
+        "type": "gamesAll",
+        "value": [
+          "chz-high-low"
+        ]
+      },
+      "image": "assets/badges/medals/rival-highlow.webp"
+    },
+    {
+      "badgeId": "rival-shells",
+      "name": "Eagle Eye",
+      "category": "rivals",
+      "categoryLabel": "Rivals & Boards",
+      "rarity": "Common",
+      "description": "You never lost sight of the ant.",
+      "requirement": "Win the Mini Ant Shell Game",
+      "hidden": false,
+      "rule": {
+        "type": "gamesAll",
+        "value": [
+          "hub-shell-game"
+        ]
+      },
+      "image": "assets/badges/medals/rival-shells.webp"
+    },
+    {
+      "badgeId": "rival-ring",
+      "name": "Iron Will",
+      "category": "rivals",
+      "categoryLabel": "Rivals & Boards",
+      "rarity": "Common",
+      "description": "The iron dummy hit hard. You hit harder.",
+      "requirement": "Win in the Warrior Fighting Ring",
+      "hidden": false,
+      "rule": {
+        "type": "gamesAll",
+        "value": [
+          "war-fighting-ring"
+        ]
+      },
+      "image": "assets/badges/medals/rival-ring.webp"
+    },
+    {
+      "badgeId": "rival-drop",
+      "name": "Top Banana",
+      "category": "rivals",
+      "categoryLabel": "Rivals & Boards",
+      "rarity": "Epic",
+      "description": "Four in a row against the best in the cove.",
+      "requirement": "Beat the toughest ape at Banana Drop",
+      "hidden": false,
+      "rule": {
+        "type": "gameLevel",
+        "value": {
+          "id": "chz-banana-drop",
+          "level": 9
+        }
+      },
+      "image": "assets/badges/medals/rival-drop.webp"
+    },
+    {
+      "badgeId": "rival-nim-master",
+      "name": "Last Stone Standing",
+      "category": "rivals",
+      "categoryLabel": "Rivals & Boards",
+      "rarity": "Epic",
+      "description": "His hardest board, and still you won.",
+      "requirement": "Beat the Archivist on his last board of stones",
+      "hidden": false,
+      "rule": {
+        "type": "gameLevel",
+        "value": {
+          "id": "kenshi-archivist-stones",
+          "level": 9
+        }
+      },
+      "image": "assets/badges/medals/rival-nim-master.webp"
+    },
+    {
+      "badgeId": "rival-corners-master",
+      "name": "Master of Corners",
+      "category": "rivals",
+      "categoryLabel": "Rivals & Boards",
+      "rarity": "Epic",
+      "description": "The best player in the Hub, beaten.",
+      "requirement": "Beat the strongest opponent at Colony Corners",
+      "hidden": false,
+      "rule": {
+        "type": "gameLevel",
+        "value": {
+          "id": "hub-colony-corners",
+          "level": 9
+        }
+      },
+      "image": "assets/badges/medals/rival-corners-master.webp"
+    },
+    {
+      "badgeId": "rival-quickdraw-master",
+      "name": "Lightning Hands",
+      "category": "rivals",
+      "categoryLabel": "Rivals & Boards",
+      "rarity": "Epic",
+      "description": "The shadow duelist at its fastest: you were faster.",
+      "requirement": "Win the Quick Draw on its last level",
+      "hidden": false,
+      "rule": {
+        "type": "gameLevel",
+        "value": {
+          "id": "kenshi-quick-draw",
+          "level": 9
+        }
+      },
+      "image": "assets/badges/medals/rival-quickdraw-master.webp"
+    },
+    {
+      "badgeId": "board-top10",
+      "name": "On the Board",
+      "category": "rivals",
+      "categoryLabel": "Rivals & Boards",
+      "rarity": "Uncommon",
+      "description": "Your name, up there with the best.",
+      "requirement": "Make the top 10 of a game's leaderboard",
+      "hidden": false,
+      "rule": {
+        "type": "boardRank",
+        "value": {
+          "rank": 10,
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/board-top10.webp"
+    },
+    {
+      "badgeId": "board-top3",
+      "name": "Podium",
+      "category": "rivals",
+      "categoryLabel": "Rivals & Boards",
+      "rarity": "Rare",
+      "description": "On the podium.",
+      "requirement": "Make the top 3 of a game's leaderboard",
+      "hidden": false,
+      "rule": {
+        "type": "boardRank",
+        "value": {
+          "rank": 3,
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/board-top3.webp"
+    },
+    {
+      "badgeId": "board-first",
+      "name": "Number One",
+      "category": "rivals",
+      "categoryLabel": "Rivals & Boards",
+      "rarity": "Epic",
+      "description": "First place. Everyone else is chasing you.",
+      "requirement": "Top a game's leaderboard",
+      "hidden": false,
+      "rule": {
+        "type": "boardRank",
+        "value": {
+          "rank": 1,
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/board-first.webp"
+    },
+    {
+      "badgeId": "board-top10-10",
+      "name": "Board Regular",
+      "category": "rivals",
+      "categoryLabel": "Rivals & Boards",
+      "rarity": "Epic",
+      "description": "Ten boards with your name on them.",
+      "requirement": "Make the top 10 on 10 different leaderboards",
+      "hidden": false,
+      "rule": {
+        "type": "boardRank",
+        "value": {
+          "rank": 10,
+          "n": 10
+        }
+      },
+      "image": "assets/badges/medals/board-top10-10.webp"
+    },
+    {
+      "badgeId": "board-first-5",
+      "name": "Untouchable",
+      "category": "rivals",
+      "categoryLabel": "Rivals & Boards",
+      "rarity": "Epic",
+      "description": "Five boards, five first places.",
+      "requirement": "Top 5 different leaderboards",
+      "hidden": false,
+      "rule": {
+        "type": "boardRank",
+        "value": {
+          "rank": 1,
+          "n": 5
+        }
+      },
+      "image": "assets/badges/medals/board-first-5.webp"
+    },
+    {
+      "badgeId": "board-first-15",
+      "name": "Undisputed",
+      "category": "rivals",
+      "categoryLabel": "Rivals & Boards",
+      "rarity": "Mythic",
+      "description": "The name everyone in the colony knows.",
+      "requirement": "Top 15 different leaderboards",
+      "hidden": false,
+      "rule": {
+        "type": "boardRank",
+        "value": {
+          "rank": 1,
+          "n": 15
+        }
+      },
+      "image": "assets/badges/medals/board-first-15.webp"
+    },
+    {
+      "badgeId": "riddle-first",
+      "name": "First Answer",
+      "category": "riddles",
+      "categoryLabel": "Riddles",
+      "rarity": "Common",
+      "description": "The first of many answers.",
+      "requirement": "Answer a riddle right",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "riddles",
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/riddle-first.webp"
+    },
+    {
+      "badgeId": "riddle-25",
+      "name": "Quick Wit",
+      "category": "riddles",
+      "categoryLabel": "Riddles",
+      "rarity": "Common",
+      "description": "Twenty-five riddles, answered.",
+      "requirement": "Answer 25 riddles right",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "riddles",
+          "n": 25
+        }
+      },
+      "image": "assets/badges/medals/riddle-25.webp"
+    },
+    {
+      "badgeId": "riddle-100",
+      "name": "Sharp Mind",
+      "category": "riddles",
+      "categoryLabel": "Riddles",
+      "rarity": "Uncommon",
+      "description": "A hundred right answers.",
+      "requirement": "Answer 100 riddles right",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "riddles",
+          "n": 100
+        }
+      },
+      "image": "assets/badges/medals/riddle-100.webp"
+    },
+    {
+      "badgeId": "riddle-250",
+      "name": "Sage",
+      "category": "riddles",
+      "categoryLabel": "Riddles",
+      "rarity": "Epic",
+      "description": "The riddle-givers come to you now.",
+      "requirement": "Answer 250 riddles right",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "riddles",
+          "n": 250
+        }
+      },
+      "image": "assets/badges/medals/riddle-250.webp"
+    },
+    {
+      "badgeId": "riddle-500",
+      "name": "Oracle",
+      "category": "riddles",
+      "categoryLabel": "Riddles",
+      "rarity": "Epic",
+      "description": "Five hundred answers. Nothing puzzles you.",
+      "requirement": "Answer 500 riddles right",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "riddles",
+          "n": 500
+        }
+      },
+      "image": "assets/badges/medals/riddle-500.webp"
+    },
+    {
+      "badgeId": "riddle-givers-5",
+      "name": "Good Listener",
+      "category": "riddles",
+      "categoryLabel": "Riddles",
+      "rarity": "Common",
+      "description": "Five riddle-givers satisfied.",
+      "requirement": "Clear 5 riddle-givers' sets",
+      "hidden": false,
+      "rule": {
+        "type": "kindGames",
+        "value": {
+          "kinds": [
+            "riddle"
+          ],
+          "n": 5
+        }
+      },
+      "image": "assets/badges/medals/riddle-givers-5.webp"
+    },
+    {
+      "badgeId": "riddle-givers-all",
+      "name": "Riddle Master",
+      "category": "riddles",
+      "categoryLabel": "Riddles",
+      "rarity": "Epic",
+      "description": "Every riddle-giver in the colony, answered in full.",
+      "requirement": "Clear every riddle-giver's set (17)",
+      "hidden": false,
+      "rule": {
+        "type": "kindGames",
+        "value": {
+          "kinds": [
+            "riddle"
+          ]
+        }
+      },
+      "image": "assets/badges/medals/riddle-givers-all.webp"
+    },
+    {
+      "badgeId": "riddle-place-first",
+      "name": "Read the Land",
+      "category": "riddles",
+      "categoryLabel": "Riddles",
+      "rarity": "Common",
+      "description": "The answer was a place, and you went there.",
+      "requirement": "Solve a place riddle",
+      "hidden": false,
+      "rule": {
+        "type": "placeRiddles",
+        "value": 1
+      },
+      "image": "assets/badges/medals/riddle-place-first.webp"
+    },
+    {
+      "badgeId": "riddle-place-all",
+      "name": "Every Stone Answers",
+      "category": "riddles",
+      "categoryLabel": "Riddles",
+      "rarity": "Epic",
+      "description": "Every riddle written into the land, solved.",
+      "requirement": "Solve all 8 place riddles",
+      "hidden": false,
+      "rule": {
+        "type": "placeRiddles",
+        "value": "all"
+      },
+      "image": "assets/badges/medals/riddle-place-all.webp"
+    },
+    {
+      "badgeId": "riddle-wanderer",
+      "name": "Wanderer's Way",
+      "category": "riddles",
+      "categoryLabel": "Riddles",
+      "rarity": "Epic",
+      "description": "From the Hub to Ronin, Chumpz, Wokou, Cute & Creepy and back.",
+      "requirement": "Solve the Wanderer's Map across five villages",
+      "hidden": false,
+      "rule": {
+        "type": "placeRiddles",
+        "value": [
+          "grand-wanderers-map"
+        ]
+      },
+      "image": "assets/badges/medals/riddle-wanderer.webp"
+    },
+    {
+      "badgeId": "riddle-graves",
+      "name": "Grave Matters",
+      "category": "riddles",
+      "categoryLabel": "Riddles",
+      "rarity": "Rare",
+      "description": "The dead had questions. You had answers.",
+      "requirement": "Solve the three graves' riddles in Cute & Creepy",
+      "hidden": false,
+      "rule": {
+        "type": "placeRiddles",
+        "value": [
+          "cc-grave-riddle-1",
+          "cc-grave-riddle-2",
+          "cc-grave-riddle-3"
+        ]
+      },
+      "image": "assets/badges/medals/riddle-graves.webp"
+    },
+    {
+      "badgeId": "riddle-herald",
+      "name": "The Herald's Three",
+      "category": "riddles",
+      "categoryLabel": "Riddles",
+      "rarity": "Rare",
+      "description": "Shrine, bridge, well: the Herald is impressed.",
+      "requirement": "Solve the Shogun Herald's three riddles",
+      "hidden": false,
+      "rule": {
+        "type": "placeRiddles",
+        "value": [
+          "sho-herald-riddles"
+        ]
+      },
+      "image": "assets/badges/medals/riddle-herald.webp"
+    },
+    {
+      "badgeId": "riddle-brew",
+      "name": "Witch's Apprentice",
+      "category": "riddles",
+      "categoryLabel": "Riddles",
+      "rarity": "Rare",
+      "description": "Every ingredient, guessed from a riddle.",
+      "requirement": "Clear the Witch's Brew in Cute & Creepy",
+      "hidden": false,
+      "rule": {
+        "type": "gamesAll",
+        "value": [
+          "cc-witch-brew"
+        ]
+      },
+      "image": "assets/badges/medals/riddle-brew.webp"
+    },
+    {
+      "badgeId": "riddle-debts",
+      "name": "Debts Settled",
+      "category": "riddles",
+      "categoryLabel": "Riddles",
+      "rarity": "Rare",
+      "description": "Six riddles at the stone, and the debt is paid.",
+      "requirement": "Clear The Debt Marker in Ronin",
+      "hidden": false,
+      "rule": {
+        "type": "gamesAll",
+        "value": [
+          "ronin-debt-marker-stones"
+        ]
+      },
+      "image": "assets/badges/medals/riddle-debts.webp"
+    },
+    {
+      "badgeId": "riddle-hard",
+      "name": "Hard Questions",
+      "category": "riddles",
+      "categoryLabel": "Riddles",
+      "rarity": "Epic",
+      "description": "The trickiest questions in the colony, answered.",
+      "requirement": "Clear the four hardest riddle sets: the Watcher's Trial, the Lord's Puzzles, the Engineer's Puzzles, the Broker's Wagers",
+      "hidden": false,
+      "rule": {
+        "type": "gamesAll",
+        "value": [
+          "ronin-watcher-trial",
+          "shogun-lords-puzzles",
+          "buke-engineer-puzzles",
+          "wokou-broker-wagers"
+        ]
+      },
+      "image": "assets/badges/medals/riddle-hard.webp"
+    },
+    {
+      "badgeId": "npc-first",
+      "name": "Hello There",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Common",
+      "description": "A first hello.",
+      "requirement": "Talk to a villager",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "npcs",
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/npc-first.webp"
+    },
+    {
+      "badgeId": "npc-25",
+      "name": "Friendly Face",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Common",
+      "description": "Twenty-five villagers know your name.",
+      "requirement": "Talk to 25 different villagers",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "npcs",
+          "n": 25
+        }
+      },
+      "image": "assets/badges/medals/npc-25.webp"
+    },
+    {
+      "badgeId": "npc-50",
+      "name": "Well Known",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Uncommon",
+      "description": "Half the colony has chatted with you.",
+      "requirement": "Talk to 50 different villagers",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "npcs",
+          "n": 50
+        }
+      },
+      "image": "assets/badges/medals/npc-50.webp"
+    },
+    {
+      "badgeId": "npc-all",
+      "name": "Everybody's Friend",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Epic",
+      "description": "There is no one in the colony you have not met.",
+      "requirement": "Talk to every villager in Universe (83)",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "npcs",
+          "n": 83
+        }
+      },
+      "image": "assets/badges/medals/npc-all.webp"
+    },
+    {
+      "badgeId": "chat-100",
+      "name": "Chatterbox",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Common",
+      "description": "A hundred messages to the colony.",
+      "requirement": "Send 100 chat messages",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "chat",
+          "n": 100
+        }
+      },
+      "image": "assets/badges/medals/chat-100.webp"
+    },
+    {
+      "badgeId": "chat-1000",
+      "name": "Voice of the Village",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Rare",
+      "description": "A thousand messages. The village listens.",
+      "requirement": "Send 1,000 chat messages",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "chat",
+          "n": 1000
+        }
+      },
+      "image": "assets/badges/medals/chat-1000.webp"
+    },
+    {
+      "badgeId": "chat-whisper",
+      "name": "Psst",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Common",
+      "description": "Just between the two of you.",
+      "requirement": "Whisper to another player",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "whisper",
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/chat-whisper.webp"
+    },
+    {
+      "badgeId": "voice-first",
+      "name": "On the Mic",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Common",
+      "description": "Your voice, heard across the village.",
+      "requirement": "Talk to other players with your voice (hold X)",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "voiceS",
+          "n": 5
+        }
+      },
+      "image": "assets/badges/medals/voice-first.webp"
+    },
+    {
+      "badgeId": "voice-60",
+      "name": "Talk of the Town",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Rare",
+      "description": "An hour of talking: the colony knows your voice.",
+      "requirement": "Talk for an hour in all",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "voiceS",
+          "n": 3600
+        }
+      },
+      "image": "assets/badges/medals/voice-60.webp"
+    },
+    {
+      "badgeId": "group-join",
+      "name": "Squad Up",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Common",
+      "description": "Never walk alone.",
+      "requirement": "Join or start a group",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "groups",
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/group-join.webp"
+    },
+    {
+      "badgeId": "group-full",
+      "name": "Full House",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Uncommon",
+      "description": "Eight Rebels, one group.",
+      "requirement": "Be in a group of 8",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "groupMax",
+          "n": 8
+        }
+      },
+      "image": "assets/badges/medals/group-full.webp"
+    },
+    {
+      "badgeId": "group-goto",
+      "name": "On My Way",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Common",
+      "description": "Wherever they are, you go.",
+      "requirement": "Use Go to them to reach a group member",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "goto",
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/group-goto.webp"
+    },
+    {
+      "badgeId": "meet-10",
+      "name": "New Faces",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Common",
+      "description": "Ten fellow Rebels, met in the colony.",
+      "requirement": "Meet 10 players (be within 10 m of them)",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "met",
+          "n": 10
+        }
+      },
+      "image": "assets/badges/medals/meet-10.webp"
+    },
+    {
+      "badgeId": "meet-100",
+      "name": "Socialite",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Uncommon",
+      "description": "A hundred Rebels crossed your path.",
+      "requirement": "Meet 100 players",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "met",
+          "n": 100
+        }
+      },
+      "image": "assets/badges/medals/meet-100.webp"
+    },
+    {
+      "badgeId": "meet-500",
+      "name": "Colony Celebrity",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Epic",
+      "description": "Five hundred Rebels. Everyone has met you.",
+      "requirement": "Meet 500 players",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "met",
+          "n": 500
+        }
+      },
+      "image": "assets/badges/medals/meet-500.webp"
+    },
+    {
+      "badgeId": "event-first",
+      "name": "In the Crowd",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Common",
+      "description": "You were there.",
+      "requirement": "Go to an event at the Colony Stage",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "events",
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/event-first.webp"
+    },
+    {
+      "badgeId": "event-10",
+      "name": "Front Row",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Uncommon",
+      "description": "Ten events, always in the front row.",
+      "requirement": "Go to 10 events",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "events",
+          "n": 10
+        }
+      },
+      "image": "assets/badges/medals/event-10.webp"
+    },
+    {
+      "badgeId": "event-stage",
+      "name": "Spotlight",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Rare",
+      "description": "The whole crowd heard you.",
+      "requirement": "Be brought up on stage at an event",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "stage",
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/event-stage.webp"
+    },
+    {
+      "badgeId": "event-host",
+      "name": "Host with the Most",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Epic",
+      "description": "You ran the show.",
+      "requirement": "Host an event at the Colony Stage",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "hosted",
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/event-host.webp"
+    },
+    {
+      "badgeId": "event-show",
+      "name": "Encore",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Common",
+      "description": "You stayed for the last line.",
+      "requirement": "Watch a show at an event to the end",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "shows",
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/event-show.webp"
+    },
+    {
+      "badgeId": "emote-first",
+      "name": "Show Off",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Common",
+      "description": "A little flair.",
+      "requirement": "Do an emote (E)",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "emotes",
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/emote-first.webp"
+    },
+    {
+      "badgeId": "emote-all",
+      "name": "Every Move",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Common",
+      "description": "Every move in the book.",
+      "requirement": "Do all five emotes: Cheer, Wave, Tut, House and Gallop",
+      "hidden": false,
+      "rule": {
+        "type": "statHas",
+        "value": {
+          "key": "emotes",
+          "all": [
+            "game_cheer",
+            "dance_wave",
+            "dance_tut",
+            "dance_house",
+            "dance_gangnam"
+          ]
+        }
+      },
+      "image": "assets/badges/medals/emote-all.webp"
+    },
+    {
+      "badgeId": "emote-crowd",
+      "name": "Dance Party",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Rare",
+      "description": "The whole crowd danced.",
+      "requirement": "Dance with 5 other players around you",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "emoteCrowd",
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/emote-crowd.webp"
+    },
+    {
+      "badgeId": "signin",
+      "name": "One of Us",
+      "category": "community",
+      "categoryLabel": "Community",
+      "rarity": "Common",
+      "description": "Your story is saved to your account.",
+      "requirement": "Sign in (Discord, or a name and PIN) so your story follows you",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "signin",
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/signin.webp"
+    },
+    {
+      "badgeId": "forge-own-rebel",
+      "name": "Forged in Fire",
+      "category": "forge",
+      "categoryLabel": "Forge",
+      "rarity": "Rare",
+      "description": "Your Rebel, forged and walking the colony.",
+      "requirement": "Play as your own forged Rebel",
+      "hidden": false,
+      "rule": {
+        "type": "forged",
+        "value": "battle_for_colony"
+      },
+      "image": "assets/badges/medals/forge-own-rebel.webp"
+    },
+    {
+      "badgeId": "forge-own-chumpz",
+      "name": "Ape Awakened",
+      "category": "forge",
+      "categoryLabel": "Forge",
+      "rarity": "Rare",
+      "description": "Your Chumpz, forged and awake.",
+      "requirement": "Play as your own forged Chumpz",
+      "hidden": false,
+      "rule": {
+        "type": "forged",
+        "value": "chumpz"
+      },
+      "image": "assets/badges/medals/forge-own-chumpz.webp"
+    },
+    {
+      "badgeId": "forge-own-saint",
+      "name": "Saint Awakened",
+      "category": "forge",
+      "categoryLabel": "Forge",
+      "rarity": "Rare",
+      "description": "Your Saint, forged and on the block.",
+      "requirement": "Play as your own forged Saint",
+      "hidden": false,
+      "rule": {
+        "type": "forged",
+        "value": "saints"
+      },
+      "image": "assets/badges/medals/forge-own-saint.webp"
+    },
+    {
+      "badgeId": "forge-gloves",
+      "name": "Hand-Fitted",
+      "category": "forge",
+      "categoryLabel": "Forge",
+      "rarity": "Epic",
+      "description": "Gloves made to measure.",
+      "requirement": "Play wearing gloves you forged in the Rebel Forge",
+      "hidden": false,
+      "rule": {
+        "type": "forged",
+        "value": "gloves"
+      },
+      "image": "assets/badges/medals/forge-gloves.webp"
+    },
+    {
+      "badgeId": "forge-trio",
+      "name": "Three Collections",
+      "category": "forge",
+      "categoryLabel": "Forge",
+      "rarity": "Legendary",
+      "description": "A Rebel, a Chumpz and a Saint: all yours, all forged.",
+      "requirement": "Play as your own forged Rebel, Chumpz and Saint",
+      "hidden": false,
+      "rule": {
+        "type": "forged",
+        "value": "trio"
+      },
+      "image": "assets/badges/medals/forge-trio.webp"
+    },
+    {
+      "badgeId": "char-001",
+      "name": "The Master",
+      "category": "forge",
+      "categoryLabel": "Forge",
+      "rarity": "Uncommon",
+      "description": "You walked in the master's footsteps.",
+      "requirement": "Play as #001",
+      "hidden": false,
+      "rule": {
+        "type": "playedAs",
+        "value": "001"
+      },
+      "image": "assets/badges/medals/char-001.webp"
+    },
+    {
+      "badgeId": "char-free",
+      "name": "Free Spirit",
+      "category": "forge",
+      "categoryLabel": "Forge",
+      "rarity": "Common",
+      "description": "Borrowed armour, real adventures.",
+      "requirement": "Play a Free to play character",
+      "hidden": false,
+      "rule": {
+        "type": "playedAs",
+        "value": "free"
+      },
+      "image": "assets/badges/medals/char-free.webp"
+    },
+    {
+      "badgeId": "char-chumpz",
+      "name": "Going Ape",
+      "category": "forge",
+      "categoryLabel": "Forge",
+      "rarity": "Common",
+      "description": "Banana in hand, ape at heart.",
+      "requirement": "Play as a Chumpz",
+      "hidden": false,
+      "rule": {
+        "type": "playedAs",
+        "value": "chumpz"
+      },
+      "image": "assets/badges/medals/char-chumpz.webp"
+    },
+    {
+      "badgeId": "char-saint",
+      "name": "Halo On",
+      "category": "forge",
+      "categoryLabel": "Forge",
+      "rarity": "Common",
+      "description": "Halo on, straight from Los Angeles.",
+      "requirement": "Play as a Saint",
+      "hidden": false,
+      "rule": {
+        "type": "playedAs",
+        "value": "saints"
+      },
+      "image": "assets/badges/medals/char-saint.webp"
+    },
+    {
+      "badgeId": "char-racer",
+      "name": "Need for Speed",
+      "category": "forge",
+      "categoryLabel": "Forge",
+      "rarity": "Uncommon",
+      "description": "The fastest ape in the cove, at your fingertips.",
+      "requirement": "Play as the Chumpz Racer",
+      "hidden": false,
+      "rule": {
+        "type": "playedAs",
+        "value": "racer"
+      },
+      "image": "assets/badges/medals/char-racer.webp"
+    },
+    {
+      "badgeId": "char-5",
+      "name": "Many Faces",
+      "category": "forge",
+      "categoryLabel": "Forge",
+      "rarity": "Common",
+      "description": "Five characters, one player.",
+      "requirement": "Play as 5 different characters",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "chars",
+          "n": 5
+        }
+      },
+      "image": "assets/badges/medals/char-5.webp"
+    },
+    {
+      "badgeId": "char-10",
+      "name": "Shapeshifter",
+      "category": "forge",
+      "categoryLabel": "Forge",
+      "rarity": "Uncommon",
+      "description": "Ten characters. Which one is really you?",
+      "requirement": "Play as 10 different characters",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "chars",
+          "n": 10
+        }
+      },
+      "image": "assets/badges/medals/char-10.webp"
+    },
+    {
+      "badgeId": "glove-colour",
+      "name": "Custom Fit",
+      "category": "forge",
+      "categoryLabel": "Forge",
+      "rarity": "Common",
+      "description": "Your colours, your gloves.",
+      "requirement": "Pick a new colour for your gloves (Rebel panel, Gloves)",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "glove",
+          "n": 1
+        }
+      },
+      "image": "assets/badges/medals/glove-colour.webp"
+    },
+    {
+      "badgeId": "days-3",
+      "name": "Coming Back",
+      "category": "dedication",
+      "categoryLabel": "Dedication",
+      "rarity": "Common",
+      "description": "You came back. They always come back.",
+      "requirement": "Play on 3 different days",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "days",
+          "n": 3
+        }
+      },
+      "image": "assets/badges/medals/days-3.webp"
+    },
+    {
+      "badgeId": "days-7",
+      "name": "Week One",
+      "category": "dedication",
+      "categoryLabel": "Dedication",
+      "rarity": "Common",
+      "description": "A week of the colony.",
+      "requirement": "Play on 7 different days",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "days",
+          "n": 7
+        }
+      },
+      "image": "assets/badges/medals/days-7.webp"
+    },
+    {
+      "badgeId": "days-30",
+      "name": "Thirty Days",
+      "category": "dedication",
+      "categoryLabel": "Dedication",
+      "rarity": "Rare",
+      "description": "A month of days in Universe.",
+      "requirement": "Play on 30 different days",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "days",
+          "n": 30
+        }
+      },
+      "image": "assets/badges/medals/days-30.webp"
+    },
+    {
+      "badgeId": "days-100",
+      "name": "Lifer",
+      "category": "dedication",
+      "categoryLabel": "Dedication",
+      "rarity": "Epic",
+      "description": "A hundred days. This is home.",
+      "requirement": "Play on 100 different days",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "days",
+          "n": 100
+        }
+      },
+      "image": "assets/badges/medals/days-100.webp"
+    },
+    {
+      "badgeId": "days-365",
+      "name": "Year of the Ant",
+      "category": "dedication",
+      "categoryLabel": "Dedication",
+      "rarity": "Mythic",
+      "description": "A whole year of days in the colony.",
+      "requirement": "Play on 365 different days",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "days",
+          "n": 365
+        }
+      },
+      "image": "assets/badges/medals/days-365.webp"
+    },
+    {
+      "badgeId": "streak-7",
+      "name": "Seven in a Row",
+      "category": "dedication",
+      "categoryLabel": "Dedication",
+      "rarity": "Rare",
+      "description": "Seven days, not one missed.",
+      "requirement": "Play 7 days in a row",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "streak",
+          "n": 7
+        }
+      },
+      "image": "assets/badges/medals/streak-7.webp"
+    },
+    {
+      "badgeId": "streak-30",
+      "name": "Unbroken",
+      "category": "dedication",
+      "categoryLabel": "Dedication",
+      "rarity": "Epic",
+      "description": "Thirty days in a row. Unbroken.",
+      "requirement": "Play 30 days in a row",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "streak",
+          "n": 30
+        }
+      },
+      "image": "assets/badges/medals/streak-30.webp"
+    },
+    {
+      "badgeId": "hours-10",
+      "name": "Time Well Spent",
+      "category": "dedication",
+      "categoryLabel": "Dedication",
+      "rarity": "Uncommon",
+      "description": "Ten hours in the colony.",
+      "requirement": "Play for 10 hours in all",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "playS",
+          "n": 36000
+        }
+      },
+      "image": "assets/badges/medals/hours-10.webp"
+    },
+    {
+      "badgeId": "hours-50",
+      "name": "Dedicated",
+      "category": "dedication",
+      "categoryLabel": "Dedication",
+      "rarity": "Rare",
+      "description": "Fifty hours: a true Rebel.",
+      "requirement": "Play for 50 hours in all",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "playS",
+          "n": 180000
+        }
+      },
+      "image": "assets/badges/medals/hours-50.webp"
+    },
+    {
+      "badgeId": "hours-100",
+      "name": "Hundred Hours",
+      "category": "dedication",
+      "categoryLabel": "Dedication",
+      "rarity": "Epic",
+      "description": "A hundred hours of Universe.",
+      "requirement": "Play for 100 hours in all",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "playS",
+          "n": 360000
+        }
+      },
+      "image": "assets/badges/medals/hours-100.webp"
+    },
+    {
+      "badgeId": "session-2h",
+      "name": "Marathon Session",
+      "category": "dedication",
+      "categoryLabel": "Dedication",
+      "rarity": "Uncommon",
+      "description": "Two hours without leaving. Snacks recommended.",
+      "requirement": "Play for 2 hours in one visit",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "sessionMax",
+          "n": 7200
+        }
+      },
+      "image": "assets/badges/medals/session-2h.webp"
+    },
+    {
+      "badgeId": "points-1k",
+      "name": "Pocket Change",
+      "category": "dedication",
+      "categoryLabel": "Dedication",
+      "rarity": "Common",
+      "description": "The first thousand.",
+      "requirement": "Earn 1,000 Rebel Points in Universe (chests, first clears, place riddles)",
+      "hidden": false,
+      "rule": {
+        "type": "points",
+        "value": 1000
+      },
+      "image": "assets/badges/medals/points-1k.webp"
+    },
+    {
+      "badgeId": "points-5k",
+      "name": "Stacking Up",
+      "category": "dedication",
+      "categoryLabel": "Dedication",
+      "rarity": "Uncommon",
+      "description": "Five thousand Rebel Points, earned the hard way.",
+      "requirement": "Earn 5,000 Rebel Points in Universe",
+      "hidden": false,
+      "rule": {
+        "type": "points",
+        "value": 5000
+      },
+      "image": "assets/badges/medals/points-5k.webp"
+    },
+    {
+      "badgeId": "points-10k",
+      "name": "Ten Grand",
+      "category": "dedication",
+      "categoryLabel": "Dedication",
+      "rarity": "Rare",
+      "description": "Ten thousand points.",
+      "requirement": "Earn 10,000 Rebel Points in Universe",
+      "hidden": false,
+      "rule": {
+        "type": "points",
+        "value": 10000
+      },
+      "image": "assets/badges/medals/points-10k.webp"
+    },
+    {
+      "badgeId": "points-20k",
+      "name": "Forge Fund",
+      "category": "dedication",
+      "categoryLabel": "Dedication",
+      "rarity": "Epic",
+      "description": "Enough to forge a character, all earned in Universe.",
+      "requirement": "Earn 20,000 Rebel Points in Universe (a forge's worth)",
+      "hidden": false,
+      "rule": {
+        "type": "points",
+        "value": 20000
+      },
+      "image": "assets/badges/medals/points-20k.webp"
+    },
+    {
+      "badgeId": "points-all",
+      "name": "Every Point",
+      "category": "dedication",
+      "categoryLabel": "Dedication",
+      "rarity": "Legendary",
+      "description": "Every chest, every first clear, every place riddle: paid.",
+      "requirement": "Earn every one-time Rebel Point in Universe (32,795)",
+      "hidden": false,
+      "rule": {
+        "type": "points",
+        "value": 32795
+      },
+      "image": "assets/badges/medals/points-all.webp"
+    },
+    {
+      "badgeId": "digs-25",
+      "name": "Beachcomber",
+      "category": "dedication",
+      "categoryLabel": "Dedication",
+      "rarity": "Common",
+      "description": "The beach has given up its secrets.",
+      "requirement": "Dig up 25 finds in the Treasure Dig",
+      "hidden": false,
+      "rule": {
+        "type": "stat",
+        "value": {
+          "key": "digs",
+          "n": 25
+        }
+      },
+      "image": "assets/badges/medals/digs-25.webp"
+    },
+    {
+      "badgeId": "season-founder",
+      "name": "Founding Rebel",
+      "category": "dedication",
+      "categoryLabel": "Dedication",
+      "rarity": "Epic",
+      "description": "You were here at the beginning.",
+      "requirement": "Play Universe in 2026, its first year",
+      "hidden": false,
+      "rule": {
+        "type": "statHas",
+        "value": {
+          "key": "seasons",
+          "all": [
+            "2026"
+          ]
+        }
+      },
+      "image": "assets/badges/medals/season-founder.webp"
+    },
+    {
+      "badgeId": "season-halloween",
+      "name": "Trick or Treat",
+      "category": "dedication",
+      "categoryLabel": "Dedication",
+      "rarity": "Rare",
+      "description": "Candy, ghosts and the full moon.",
+      "requirement": "Play on Halloween (October 31)",
+      "hidden": false,
+      "rule": {
+        "type": "statHas",
+        "value": {
+          "key": "seasons",
+          "all": [
+            "halloween"
+          ]
+        }
+      },
+      "image": "assets/badges/medals/season-halloween.webp"
+    },
+    {
+      "badgeId": "season-winter",
+      "name": "Winter Lights",
+      "category": "dedication",
+      "categoryLabel": "Dedication",
+      "rarity": "Common",
+      "description": "Lanterns against the long nights.",
+      "requirement": "Play between December 21 and January 6",
+      "hidden": false,
+      "rule": {
+        "type": "statHas",
+        "value": {
+          "key": "seasons",
+          "all": [
+            "winter"
+          ]
+        }
+      },
+      "image": "assets/badges/medals/season-winter.webp"
+    },
+    {
+      "badgeId": "season-newyear",
+      "name": "First of the Year",
+      "category": "dedication",
+      "categoryLabel": "Dedication",
+      "rarity": "Rare",
+      "description": "The first steps of a new year, taken in the colony.",
+      "requirement": "Play on New Year's Day",
+      "hidden": false,
+      "rule": {
+        "type": "statHas",
+        "value": {
+          "key": "seasons",
+          "all": [
+            "newyear"
+          ]
+        }
+      },
+      "image": "assets/badges/medals/season-newyear.webp"
+    },
+    {
+      "badgeId": "chest-10",
+      "name": "Treasure Seeker",
+      "category": "collector",
+      "categoryLabel": "Treasure",
+      "rarity": "Common",
+      "description": "Ten chests and counting.",
+      "requirement": "Open 10 chests",
+      "hidden": false,
+      "rule": {
+        "type": "chestCount",
+        "value": 10
+      },
+      "image": "assets/badges/medals/chest-10.webp"
+    },
+    {
+      "badgeId": "chest-50",
+      "name": "Treasure Hoarder",
+      "category": "collector",
+      "categoryLabel": "Treasure",
+      "rarity": "Rare",
+      "description": "Fifty chests: the colony's treasure is yours.",
+      "requirement": "Open 50 chests",
+      "hidden": false,
+      "rule": {
+        "type": "chestCount",
+        "value": 50
+      },
+      "image": "assets/badges/medals/chest-50.webp"
+    },
+    {
+      "badgeId": "chest-all",
+      "name": "Every Last Chest",
+      "category": "collector",
+      "categoryLabel": "Treasure",
+      "rarity": "Mythic",
+      "description": "Not one chest left closed.",
+      "requirement": "Open every chest in Universe (102)",
+      "hidden": false,
+      "rule": {
+        "type": "chestTotal",
+        "value": "all"
+      },
+      "image": "assets/badges/medals/chest-all.webp"
+    },
+    {
+      "badgeId": "chest-treasure",
+      "name": "Treasure Trove",
+      "category": "collector",
+      "categoryLabel": "Treasure",
+      "rarity": "Rare",
+      "description": "Every treasure chest in the colony.",
+      "requirement": "Open all 10 treasure chests",
+      "hidden": false,
+      "rule": {
+        "type": "chestSet",
+        "value": "treasure"
+      },
+      "image": "assets/badges/medals/chest-treasure.webp"
+    },
+    {
+      "badgeId": "chest-legends",
+      "name": "Legend Hunter",
+      "category": "collector",
+      "categoryLabel": "Treasure",
+      "rarity": "Mythic",
+      "description": "The five legends of the colony, opened.",
+      "requirement": "Open all 5 legend chests",
+      "hidden": false,
+      "rule": {
+        "type": "chestSet",
+        "value": "legend"
+      },
+      "image": "assets/badges/medals/chest-legends.webp"
+    },
+    {
+      "badgeId": "collect-first",
+      "name": "Finders Keepers",
+      "category": "collector",
+      "categoryLabel": "Treasure",
+      "rarity": "Common",
+      "description": "The first find.",
+      "requirement": "Pick up your first collectible",
+      "hidden": false,
+      "rule": {
+        "type": "collectibleCount",
+        "value": 1
+      },
+      "image": "assets/badges/medals/collect-first.webp"
+    },
+    {
+      "badgeId": "collect-50",
+      "name": "Magpie",
+      "category": "collector",
+      "categoryLabel": "Treasure",
+      "rarity": "Uncommon",
+      "description": "Fifty shiny things.",
+      "requirement": "Pick up 50 collectibles",
+      "hidden": false,
+      "rule": {
+        "type": "collectibleCount",
+        "value": 50
+      },
+      "image": "assets/badges/medals/collect-50.webp"
+    },
+    {
+      "badgeId": "relic-10",
+      "name": "Relic Seeker",
+      "category": "collector",
+      "categoryLabel": "Treasure",
+      "rarity": "Common",
+      "description": "Ten pieces of the past.",
+      "requirement": "Find 10 ancient relic fragments",
+      "hidden": false,
+      "rule": {
+        "type": "collectSet",
+        "value": {
+          "set": "relics",
+          "n": 10
+        }
+      },
+      "image": "assets/badges/medals/relic-10.webp"
+    },
+    {
+      "badgeId": "relic-all",
+      "name": "Relic Restorer",
+      "category": "collector",
+      "categoryLabel": "Treasure",
+      "rarity": "Rare",
+      "description": "The relic, whole again.",
+      "requirement": "Find all 33 ancient relic fragments",
+      "hidden": false,
+      "rule": {
+        "type": "collectSet",
+        "value": {
+          "set": "relics"
+        }
+      },
+      "image": "assets/badges/medals/relic-all.webp"
+    },
+    {
+      "badgeId": "scrolls-all",
+      "name": "Scroll Keeper",
+      "category": "collector",
+      "categoryLabel": "Treasure",
+      "rarity": "Uncommon",
+      "description": "Every lost scroll back in the archive.",
+      "requirement": "Find all 25 ancient scrolls",
+      "hidden": false,
+      "rule": {
+        "type": "collectSet",
+        "value": {
+          "set": "scrolls"
+        }
+      },
+      "image": "assets/badges/medals/scrolls-all.webp"
+    },
+    {
+      "badgeId": "secret-first",
+      "name": "First Secret",
+      "category": "secrets",
+      "categoryLabel": "Secret",
+      "rarity": "Common",
+      "description": "You noticed what others walk past.",
+      "requirement": "Find your first secret",
+      "hidden": false,
+      "rule": {
+        "type": "secretCount",
+        "value": 1
+      },
+      "image": "assets/badges/medals/secret-first.webp"
+    },
+    {
+      "badgeId": "master-hub",
+      "name": "Hub Mastered",
+      "category": "villages",
+      "categoryLabel": "Village Crest",
+      "rarity": "Legendary",
+      "description": "Hub has nothing left to teach you.",
+      "requirement": "Every quest, secret, game and chest in Hub",
+      "hidden": false,
+      "rule": {
+        "type": "villageAll",
+        "value": "hub"
+      },
+      "image": "assets/badges/medals/master-hub.webp"
+    },
+    {
+      "badgeId": "master-ronin",
+      "name": "Ronin Mastered",
+      "category": "villages",
+      "categoryLabel": "Village Crest",
+      "rarity": "Legendary",
+      "description": "Ronin has nothing left to teach you.",
+      "requirement": "Every quest, secret, game and chest in Ronin",
+      "hidden": false,
+      "rule": {
+        "type": "villageAll",
+        "value": "ronin"
+      },
+      "image": "assets/badges/medals/master-ronin.webp"
+    },
+    {
+      "badgeId": "master-samurai",
+      "name": "Samurai Mastered",
+      "category": "villages",
+      "categoryLabel": "Village Crest",
+      "rarity": "Legendary",
+      "description": "Samurai has nothing left to teach you.",
+      "requirement": "Every quest, secret, game and chest in Samurai",
+      "hidden": false,
+      "rule": {
+        "type": "villageAll",
+        "value": "samurai"
+      },
+      "image": "assets/badges/medals/master-samurai.webp"
+    },
+    {
+      "badgeId": "master-shogun",
+      "name": "Shogun Mastered",
+      "category": "villages",
+      "categoryLabel": "Village Crest",
+      "rarity": "Legendary",
+      "description": "Shogun has nothing left to teach you.",
+      "requirement": "Every quest, secret, game and chest in Shogun",
+      "hidden": false,
+      "rule": {
+        "type": "villageAll",
+        "value": "shogun"
+      },
+      "image": "assets/badges/medals/master-shogun.webp"
+    },
+    {
+      "badgeId": "master-bushi",
+      "name": "Bushi Mastered",
+      "category": "villages",
+      "categoryLabel": "Village Crest",
+      "rarity": "Legendary",
+      "description": "Bushi has nothing left to teach you.",
+      "requirement": "Every quest, secret, game and chest in Bushi",
+      "hidden": false,
+      "rule": {
+        "type": "villageAll",
+        "value": "bushi"
+      },
+      "image": "assets/badges/medals/master-bushi.webp"
+    },
+    {
+      "badgeId": "master-buke",
+      "name": "Buke Mastered",
+      "category": "villages",
+      "categoryLabel": "Village Crest",
+      "rarity": "Legendary",
+      "description": "Buke has nothing left to teach you.",
+      "requirement": "Every quest, secret, game and chest in Buke",
+      "hidden": false,
+      "rule": {
+        "type": "villageAll",
+        "value": "buke"
+      },
+      "image": "assets/badges/medals/master-buke.webp"
+    },
+    {
+      "badgeId": "master-ashigaru",
+      "name": "Ashigaru Mastered",
+      "category": "villages",
+      "categoryLabel": "Village Crest",
+      "rarity": "Legendary",
+      "description": "Ashigaru has nothing left to teach you.",
+      "requirement": "Every quest, secret, game and chest in Ashigaru",
+      "hidden": false,
+      "rule": {
+        "type": "villageAll",
+        "value": "ashigaru"
+      },
+      "image": "assets/badges/medals/master-ashigaru.webp"
+    },
+    {
+      "badgeId": "master-kenshi",
+      "name": "Kenshi Mastered",
+      "category": "villages",
+      "categoryLabel": "Village Crest",
+      "rarity": "Legendary",
+      "description": "Kenshi has nothing left to teach you.",
+      "requirement": "Every quest, secret, game and chest in Kenshi",
+      "hidden": false,
+      "rule": {
+        "type": "villageAll",
+        "value": "kenshi"
+      },
+      "image": "assets/badges/medals/master-kenshi.webp"
+    },
+    {
+      "badgeId": "master-yamabushi",
+      "name": "Yamabushi Mastered",
+      "category": "villages",
+      "categoryLabel": "Village Crest",
+      "rarity": "Legendary",
+      "description": "Yamabushi has nothing left to teach you.",
+      "requirement": "Every quest, secret, game and chest in Yamabushi",
+      "hidden": false,
+      "rule": {
+        "type": "villageAll",
+        "value": "yamabushi"
+      },
+      "image": "assets/badges/medals/master-yamabushi.webp"
+    },
+    {
+      "badgeId": "master-sohei",
+      "name": "Sohei Mastered",
+      "category": "villages",
+      "categoryLabel": "Village Crest",
+      "rarity": "Legendary",
+      "description": "Sohei has nothing left to teach you.",
+      "requirement": "Every quest, secret, game and chest in Sohei",
+      "hidden": false,
+      "rule": {
+        "type": "villageAll",
+        "value": "sohei"
+      },
+      "image": "assets/badges/medals/master-sohei.webp"
+    },
+    {
+      "badgeId": "master-wokou",
+      "name": "Wokou Mastered",
+      "category": "villages",
+      "categoryLabel": "Village Crest",
+      "rarity": "Legendary",
+      "description": "Wokou has nothing left to teach you.",
+      "requirement": "Every quest, secret, game and chest in Wokou",
+      "hidden": false,
+      "rule": {
+        "type": "villageAll",
+        "value": "wokou"
+      },
+      "image": "assets/badges/medals/master-wokou.webp"
+    },
+    {
+      "badgeId": "master-warrior",
+      "name": "Warrior Mastered",
+      "category": "villages",
+      "categoryLabel": "Village Crest",
+      "rarity": "Legendary",
+      "description": "Warrior has nothing left to teach you.",
+      "requirement": "Every quest, secret, game and chest in Warrior",
+      "hidden": false,
+      "rule": {
+        "type": "villageAll",
+        "value": "warrior"
+      },
+      "image": "assets/badges/medals/master-warrior.webp"
+    },
+    {
+      "badgeId": "master-cute-creepy",
+      "name": "Cute & Creepy Mastered",
+      "category": "villages",
+      "categoryLabel": "Village Crest",
+      "rarity": "Legendary",
+      "description": "Cute & Creepy has nothing left to teach you.",
+      "requirement": "Every quest, secret, game and chest in Cute & Creepy",
+      "hidden": false,
+      "rule": {
+        "type": "villageAll",
+        "value": "cute-creepy"
+      },
+      "image": "assets/badges/medals/master-cute-creepy.webp"
+    },
+    {
+      "badgeId": "master-chumpz",
+      "name": "Chumpz Mastered",
+      "category": "villages",
+      "categoryLabel": "Village Crest",
+      "rarity": "Legendary",
+      "description": "Chumpz has nothing left to teach you.",
+      "requirement": "Every quest, secret, game and chest in Chumpz",
+      "hidden": false,
+      "rule": {
+        "type": "villageAll",
+        "value": "chumpz"
+      },
+      "image": "assets/badges/medals/master-chumpz.webp"
+    },
+    {
+      "badgeId": "master-saints-la",
+      "name": "Saints of LA Mastered",
+      "category": "villages",
+      "categoryLabel": "Village Crest",
+      "rarity": "Legendary",
+      "description": "Saints of LA has nothing left to teach you.",
+      "requirement": "Every quest, secret, game and chest in Saints of LA",
+      "hidden": false,
+      "rule": {
+        "type": "villageAll",
+        "value": "saints-la"
+      },
+      "image": "assets/badges/medals/master-saints-la.webp"
+    },
+    {
+      "badgeId": "master-all",
+      "name": "The Whole Colony",
+      "category": "villages",
+      "categoryLabel": "Village Crest",
+      "rarity": "Mythic",
+      "description": "Every village, mastered. The colony is yours.",
+      "requirement": "Master all 15 villages",
+      "hidden": false,
+      "rule": {
+        "type": "colonyAll",
+        "value": "all"
+      },
+      "image": "assets/badges/medals/master-all.webp"
     }
   ]
 }

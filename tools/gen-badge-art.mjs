@@ -47,7 +47,7 @@ window.renderAll = async (size, only, format) => {
     if (only && !only.includes(badge.badgeId)) continue;
     const c = document.createElement('canvas'); c.width = c.height = size;
     BadgeArtKit.draw(c.getContext('2d'), badge, size, { label: true, assets: { emblems: em } });
-    out.push({ badge: { badgeId: badge.badgeId, name: badge.name, category: badge.category, categoryLabel: window.CATS[badge.category] || badge.category, rarity: badge.rarity, description: badge.description, requirement: badge.requirementText, hidden: !!badge.hidden }, data: c.toDataURL('image/' + format, .92) });
+    out.push({ badge: { badgeId: badge.badgeId, name: badge.name, category: badge.category, categoryLabel: window.CATS[badge.category] || badge.category, rarity: badge.rarity, description: badge.description, requirement: badge.requirementText, hidden: !!badge.hidden, rule: { type: badge.requirementType, value: badge.requirementValue ?? null } }, data: c.toDataURL('image/' + format, .92) });
   }
   return out;
 };

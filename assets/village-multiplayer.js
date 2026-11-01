@@ -626,7 +626,9 @@
   };
   // for the voices (village-voice.js): the room socket carries their offers and answers
   const voiceLink = { send: o => send(o), open: () => !!ws && ws.readyState === 1 && voiceOn, get on() { return voiceOn; }, you: () => you };
-  window.VillageMP = { start, tick, reconnect, emote, peers, chat, voice: voiceLink, speaking, ticket: () => (H && enabled ? ticket() : Promise.resolve(null)), joinCopy,
+  // the players in the same place within r metres (the badges' players met: village.html badgeStat)
+  const near = r => [...peers.values()].filter(p => p.d != null && p.d <= r && p.holder?.isEnabled?.());
+  window.VillageMP = { start, tick, reconnect, emote, peers, chat, voice: voiceLink, speaking, near, ticket: () => (H && enabled ? ticket() : Promise.resolve(null)), joinCopy,
     get perf() { return { ...pf, gaps: pf.gaps.length, rtt: pf.rtt.slice(), dev: { ...DEV, d: H?.phone?.() ? 'p' : 'd' } }; }, pfSend: () => pfSend(performance.now()),
     get state() { const v = [...peers.values()]; return { enabled, open: !!ws && ws.readyState === 1, you, room, peers: peers.size, closedFor, files: files.size, full: v.filter(p => p.model).length, lite: v.filter(p => p.lite).length }; }, stop() { enabled = false; const s = ws; ws = null; try { s?.close(1000); } catch (e) {} dropAll(); sweepFiles(Infinity); tell('closed'); } };
 })();

@@ -11,6 +11,7 @@ import { enforceRateLimit } from './_guard.mjs';
 import { econSessionOf, redis } from './_econ.mjs';
 import { mergeStory, cleanStory, storySize, canonical } from '../assets/story-save.js';
 import { sendStoryBadges } from './_universe-badge-send.mjs';
+import { walletOf } from './_wallet.mjs';
 import { bump } from './_site-stats.mjs';
 
 const SITE = process.env.VERCEL_ENV === 'production' ? 'prod' : 'dev';
@@ -25,9 +26,11 @@ async function readStory(u) {
   let doc = null; try { doc = data?.result ? JSON.parse(data.result) : null; } catch (e) { doc = null; }
   return { story: doc?.keys ? { keys: doc.keys, t: doc.t || {} } : null, at: doc?.at || null, ver: Number(ver?.result || 0) };
 }
-// the badges go to the economy before the answer (a save is a background request); a badge never fails a save
-async function badges(u, story) {
-  try { await sendStoryBadges(u, story, { site: SITE }); } catch (e) { console.warn('[story-save] badges', e.message); }
+// the badges go to the economy before the answer (a save is a background request); a badge never fails a save. The
+// wallet signed in beside the account (if any) lets the Forge badges be checked against that wallet's own characters.
+async function badges(u, story, req) {
+  let wallet = null; try { wallet = walletOf(req); } catch (e) { wallet = null; }
+  try { await sendStoryBadges(u, story, { site: SITE, wallet: wallet ? String(wallet).toLowerCase() : null }); } catch (e) { console.warn('[story-save] badges', e.message); }
 }
 const same = (a, b) => !!a && !!b && Object.keys({ ...a.keys, ...b.keys }).every((k) => {
   const x = a.keys[k] ?? null, y = b.keys[k] ?? null; if (x === y) return true;
@@ -53,13 +56,13 @@ export default async function handler(req, res) {
       const cur = await readStory(s.u);
       const next = body.replace === true || !cur.story ? incoming : mergeStory(cur.story, incoming);
       if (cur.story && same(cur.story, next)) {
-        await badges(s.u, cur.story);
+        await badges(s.u, cur.story, req);
         return res.status(200).json({ ok: true, account: s.u, story: cur.story, ver: cur.ver, at: cur.at, changed: false });
       }
       const at = Date.now(), doc = JSON.stringify({ keys: next.keys, t: next.t, at });
       const [w] = await redis([['EVAL', CAS, 2, KEY(s.u), VER(s.u), cur.ver, doc, KEEP]]);
       if (Number(w?.result) === 1) {
-        await badges(s.u, next);
+        await badges(s.u, next, req);
         return res.status(200).json({ ok: true, account: s.u, story: next, ver: cur.ver + 1, at, changed: true, size: storySize(next) });
       }
     }

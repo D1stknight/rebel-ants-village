@@ -46,7 +46,10 @@ export default async function handler(req,res){
     // Public showcase records remain public. They never become a wallet's NFT
     // identity or grant its private selection/RAAP permissions.
     if(!character&&!unavailable&&!guest&&token){const sample=parse(rows[2]);if(matches(sample,collection,token)&&!sample.walletAddress)character=sample;}
-    return res.status(200).json({ok:true,activeCharacter:character,hasActiveCharacter:!!character,selectionUnavailable:unavailable,
+    // the badges (Universe's Hand-Fitted): the wallet's own character wears gloves forged in the Rebel Forge
+    let gloves=false;
+    if(character&&character.walletAddress&&character.activeForgeBuildId){try{const [b]=await read(['forge:3d-build:v1:'+character.activeForgeBuildId]);gloves=!!parse(b)?.forgeRig?.gloves?.doneAt;}catch{}}
+    return res.status(200).json({ok:true,activeCharacter:character,hasActiveCharacter:!!character,selectionUnavailable:unavailable,gloves,
       storageResult:{storage:'redis',source:character?(character.walletAddress?'wallet_selection':'public_sample'):'none'}});
   }catch{ return res.status(503).json({ok:false,error:'Could not verify the saved character. Please reload before playing.'});}
 }

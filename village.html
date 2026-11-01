@@ -20,8 +20,27 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:20px 28px;pointer-events:none;z-index:10}
 #logo h1{font-family:'Cinzel Decorative',serif;font-size:22px;font-weight:900;color:#e8c56a;letter-spacing:4px;text-shadow:0 0 25px rgba(232,197,106,.8),0 2px 8px rgba(0,0,0,.9);line-height:1}
 #logo span{font-size:10px;letter-spacing:7px;color:#5ecfca;text-transform:uppercase;margin-top:5px;display:block;text-shadow:0 0 10px rgba(94,207,202,.6)}
-#ctrl{font-size:10px;color:rgba(255,255,255,.45);letter-spacing:2px;text-align:right;line-height:2.2;text-transform:uppercase}
-#ctrl kbd{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:3px;padding:1px 6px;font-size:9px;color:#e8c56a}
+/* the controls: a circle at the top right that opens the guide (Miguel, Oct 31: "can this be a circle that opens up and
+   explains all the controls, what buttons do what, what the mouse does") */
+#ctrlBtn{pointer-events:auto;width:44px;height:44px;border-radius:50%;border:1px solid rgba(232,197,106,.55);background:rgba(10,13,22,.8);color:#e8c56a;display:grid;place-items:center;cursor:pointer;padding:0;box-shadow:0 2px 12px rgba(0,0,0,.45);transition:background .15s,transform .15s}
+#ctrlBtn:hover{background:rgba(232,197,106,.16);transform:scale(1.06)}
+#ctrlBtn svg{width:24px;height:24px}
+#ctrlWrap{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:rgba(2,4,12,.42);padding:16px}
+#ctrlWrap.on{display:flex}
+#ctrlCard{position:relative;width:min(780px,100%);max-height:calc(100vh - 48px);overflow:auto;overscroll-behavior:contain;background:rgba(5,10,28,.96);border:1px solid rgba(232,197,106,.5);box-shadow:0 18px 60px rgba(0,0,0,.6);padding:18px 20px 16px;color:#e6ecf6;font:500 12.5px/1.35 Georgia,serif}
+#ctrlCard h4{margin:0 0 2px;font:700 13px 'Cinzel Decorative',serif;letter-spacing:3px;color:#e8c56a;text-transform:uppercase}
+#ctrlCard .cc-sub{color:#8f9ab0;font-size:11.5px;margin-bottom:12px}
+#ctrlCard .cc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 22px}
+#ctrlCard section h5{margin:0 0 6px;padding-bottom:4px;border-bottom:1px solid rgba(94,207,202,.22);font:700 10px 'Cinzel Decorative',serif;letter-spacing:2px;color:#5ecfca;text-transform:uppercase}
+#ctrlCard .cc-row{display:grid;grid-template-columns:118px minmax(0,1fr);gap:10px;align-items:baseline;padding:3px 0}
+#ctrlCard .cc-keys{display:flex;flex-wrap:wrap;gap:3px;justify-content:flex-end}
+#ctrlCard kbd{display:inline-block;min-width:20px;text-align:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);border-bottom-width:2px;border-radius:4px;padding:1px 6px;font:700 10px/1.5 ui-monospace,Menlo,monospace;color:#e8c56a;letter-spacing:.5px;white-space:nowrap}
+#ctrlCard kbd.m{color:#bff3ef;border-color:rgba(94,207,202,.4)}
+#ctrlCard .cc-what small{color:#8f9ab0}
+#ctrlCard .cc-close{position:absolute;top:10px;right:12px;background:none;border:0;color:#cfd8e6;font-size:18px;cursor:pointer;padding:4px}
+@media (max-width:640px){#ctrlCard .cc-grid{grid-template-columns:minmax(0,1fr)}#ctrlCard .cc-row{grid-template-columns:96px minmax(0,1fr)}}
+#ctrlPanelBtn{margin-top:5px;width:100%;height:32px;border:1px solid rgba(232,197,106,.34);background:rgba(232,197,106,.05);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:2px;cursor:pointer;display:none}
+html.vt-touch #ctrlPanelBtn{display:block}
 
 #selectedRebelPanel{
   position:fixed;
@@ -146,6 +165,25 @@ html.vt-touch #selectedRebelPanel{max-height:calc(100vh - 168px);overflow-y:auto
 #glovePanel .gp-note{font-size:11px;color:#aab3c2;margin-top:4px}
 #glovePanel .gp-close{position:absolute;top:8px;right:10px;background:none;border:0;color:#cfd8e6;font-size:16px;cursor:pointer}
 @media (max-width:700px){#glovePanel{left:50%;top:50%;transform:translate(-50%,-50%)}}
+/* the player's own sound levels (Miguel, Oct 31: "is there a way they can lower the music or sound effects volume") */
+#soundBtn{margin-top:5px;width:100%;height:24px;border:1px solid rgba(180,160,255,.36);background:rgba(180,160,255,.05);color:#c4b5ff;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:2px;cursor:pointer}
+#soundBtn:hover{background:rgba(180,160,255,.13)}
+html.vt-touch #soundBtn{height:32px}
+#soundPanel{position:fixed;top:124px;left:340px;width:min(300px,calc(100vw - 32px));box-sizing:border-box;padding:12px 12px 10px;background:rgba(5,10,28,.95);border:1px solid rgba(180,160,255,.45);backdrop-filter:blur(12px);z-index:30;display:none;color:#f3e6c4;font:600 12px/1.3 Georgia,serif}
+#soundPanel.on{display:block}
+#soundPanel h4{margin:0 0 10px;font:700 10px 'Cinzel Decorative',serif;letter-spacing:2px;color:#c4b5ff;text-transform:uppercase}
+#soundPanel .sp-row{display:grid;grid-template-columns:32px minmax(0,1fr);column-gap:9px;align-items:center;margin-bottom:9px}
+#soundPanel .sp-mute{grid-row:span 2;width:32px;height:32px;border-radius:50%;border:1px solid rgba(180,160,255,.42);background:rgba(180,160,255,.07);color:#ddd4ff;cursor:pointer;padding:0;display:grid;place-items:center}
+#soundPanel .sp-mute:hover{background:rgba(180,160,255,.16)}
+#soundPanel .sp-mute.off{color:#7d8296;border-color:rgba(255,255,255,.18);background:none}
+#soundPanel .sp-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12px;color:#e6ecf6}
+#soundPanel .sp-pct{font:600 11px ui-monospace,Menlo,monospace;color:#c4b5ff}
+#soundPanel .sp-row.off .sp-pct{color:#7d8296}
+#soundPanel input[type=range]{width:100%;height:20px;margin:2px 0 0;accent-color:#b9a7ff;cursor:pointer}
+html.vt-touch #soundPanel input[type=range]{height:30px}
+#soundPanel .sp-note{font-size:11px;color:#aab3c2;margin-top:2px}
+#soundPanel .sp-close{position:absolute;top:8px;right:10px;background:none;border:0;color:#cfd8e6;font-size:16px;cursor:pointer}
+@media (max-width:700px){#soundPanel{left:50%;top:50%;transform:translate(-50%,-50%)}}
 #questTracker{
   margin-top:7px;
   padding-top:7px;
@@ -1773,7 +1811,7 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
 <div id="saveBadge">SAVED ✓</div>
 <div id="hud">
   <div id="logo"><h1>REBEL ANTS</h1><span>The Hidden Village</span></div>
-  <div id="ctrl"><kbd>W A S D</kbd> Walk<br><kbd>Mouse</kbd> Look<br><kbd>E</kbd> Emotes<br><kbd>Click</kbd> Enter<br><kbd>ESC</kbd> Orbit</div>
+  <button id="ctrlBtn" type="button" title="Controls" aria-label="Controls" onclick="toggleControlsCard()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 7h9a5 5 0 0 1 4.9 4l.7 4.2a2.6 2.6 0 0 1-4.6 2.1L15.6 15H8.4l-1.9 2.3a2.6 2.6 0 0 1-4.6-2.1l.7-4.2A5 5 0 0 1 7.5 7z"/><path d="M8 9.6v3M6.5 11.1h3"/><circle cx="15.6" cy="10.4" r=".9" fill="currentColor" stroke="none"/><circle cx="17.6" cy="12.2" r=".9" fill="currentColor" stroke="none"/></svg></button>
 </div>
 
 <div id="selectedRebelPanel">
@@ -1794,6 +1832,8 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
       <div class="world-status-row"><span>Items</span><span class="world-status-value" id="hudCollectibleCount">0</span></div>
       <div class="world-status-row"><span>Quests</span><span class="world-status-value" id="hudQuestCount">0</span></div>
       <button id="journalBtn" type="button" onclick="openProgressionJournal()">Journal</button>
+      <button id="soundBtn" type="button" onclick="toggleSoundPanel()">Sound</button>
+      <button id="ctrlPanelBtn" type="button" onclick="toggleControlsCard()">Controls</button>
       <button id="gloveBtn" type="button" onclick="togglePlayerGlovePanel()">Gloves</button>
       <button id="mobHubBtn" type="button" onclick="returnToHubVillage()">Return to Hub</button>
     </div>
@@ -1806,6 +1846,8 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
   </div>
 </div>
 <div id="glovePanel" role="dialog" aria-label="Glove colours"><button class="gp-close" type="button" onclick="togglePlayerGlovePanel(false)" aria-label="Close">✕</button><h4>Gloves</h4><div class="gp-row"><div class="gp-label"><span>Gloves</span><span class="gp-name" data-k="glove"></span></div><div class="gp-sw" data-k="glove"></div></div><div class="gp-row"><div class="gp-label"><span>Cuffs</span><span class="gp-name" data-k="cuff"></span></div><div class="gp-sw" data-k="cuff"></div></div><div class="gp-note">Saved for this Rebel on this device. The first swatch is how your Rebel looks now, the ringed one the colour the Forge gave it.</div></div>
+<div id="ctrlWrap" onclick="if(event.target===this)toggleControlsCard(false)"><div id="ctrlCard" role="dialog" aria-label="Controls"></div></div>
+<div id="soundPanel" role="dialog" aria-label="Sound"><button class="sp-close" type="button" onclick="toggleSoundPanel(false)" aria-label="Close">✕</button><h4>Sound</h4><div id="soundRows"></div><div class="sp-note">Saved on this device. 100% is how Universe is mixed.</div></div>
 <button id="backToLobbyBtn" onclick="backToLobby()">← Back to Lobby</button>
 
 <button id="wb" onclick="toggleWalk()">⚔️ &nbsp;ENTER VILLAGE</button>
@@ -4193,7 +4235,7 @@ window.setTaleMoon = key => { TaleMoonPreview = key === undefined ? undefined : 
 // a slow chant for patience. They follow the Master and Interaction sliders; a new one fades out the one playing.
 const MoonTaleSounds = (() => {
   let ctx = null, out = null, bus = null;
-  const vol = () => WeatherManager.interactionAudioEnabled === false ? 0 : (WeatherManager.masterVolume ?? .8) * (WeatherManager.interactionVolume ?? .7);
+  const vol = () => WeatherManager.interactionAudioEnabled === false ? 0 : (WeatherManager.masterVolume ?? .8) * (WeatherManager.interactionVolume ?? .7) * playerSound('effects');
   const ensure = () => {
     if (ctx) return ctx;
     try {
@@ -4646,7 +4688,11 @@ const PROGRESSION_BADGE_CATEGORIES = {
   ronin: 'Ronin',
   samurai: 'Samurai',
   arcade: 'Arcade',
+  rivals: 'Rivals & Boards',
+  riddles: 'Riddles',
   community: 'Community',
+  forge: 'Forge',
+  dedication: 'Dedication',
   builder: 'Builder',
   villages: 'Village Crest',
   secrets: 'Secret',
@@ -4670,7 +4716,7 @@ const DEFAULT_BADGE_DEFINITIONS = [
   { badgeId:'moon-tales-gathering', name:'Moonlit Gathering', category:'story', rarity:'Legendary', imageUrl:'', emblem:null, requirementType:'quest', requirementValue:'moon-tales-24', requirementText:'Gather the covens with the Owl of Summoning', description:'You followed the Owl\'s call, greeted the four covens and watched a constellation woven above the forest.' },
   { badgeId:'book1-colony-awake', name:'Colony Awake', category:'story', rarity:'Legendary', imageUrl:'/assets/badges/book1-colony-awake.png', requirementType:'quest', requirementValue:'book1-main-50', requirementText:'Complete Book 1', description:'You helped the villages remember they are one colony.' },
   { badgeId:'story-tunnel-witness', name:'Tunnel Witness', category:'story', rarity:'Uncommon', imageUrl:'/assets/badges/story-tunnel-witness.png', requirementType:'story', requirementValue:'future-tunnels', requirementText:'Future Book 1 story milestone', description:'You witnessed signs beneath the roots.' },
-  { badgeId:'story-dust-reader', name:'Dust Reader', category:'story', rarity:'Rare', imageUrl:'/assets/badges/story-dust-reader.png', requirementType:'story', requirementValue:'future-red-dust', requirementText:'Future Book 1 story milestone', description:'You learned to read the red dust.' },
+  { badgeId:'story-dust-reader', name:'Dust Reader', category:'story', rarity:'Rare', imageUrl:'/assets/badges/story-dust-reader.png', requirementType:'quest', requirementValue:'book1-main-02', requirementText:'Complete Dust On The Roots (Book One, quest 2)', description:'You learned to read the red dust.' },
   { badgeId:'story-old-roots', name:'Old Roots Remember', category:'story', rarity:'Epic', imageUrl:'/assets/badges/story-old-roots.png', requirementType:'story', requirementValue:'future-old-roots', requirementText:'Future Book 1 story milestone', description:'The roots remembered what the colony buried.' },
   { badgeId:'ronin-watcher', name:'Watcher', category:'ronin', rarity:'Common', imageUrl:'/assets/badges/ronin-watcher.png', requirementType:'quest', requirementValue:'first-warning', requirementText:'Meet the Ronin watcher', description:'The shadows have noticed you.' },
   { badgeId:'ronin-shadow-walker', name:'Shadow Walker', category:'ronin', rarity:'Rare', imageUrl:'/assets/badges/ronin-shadow-walker.png', requirementType:'villageActions', requirementValue:'ronin:future', requirementText:'Future Ronin milestone', description:'You know how to move where warnings hide.' },
@@ -4679,16 +4725,19 @@ const DEFAULT_BADGE_DEFINITIONS = [
   { badgeId:'samurai-honor-guard', name:'Honor Guard', category:'samurai', rarity:'Rare', imageUrl:'/assets/badges/samurai-honor-guard.png', requirementType:'villageActions', requirementValue:'samurai:future', requirementText:'Future Samurai milestone', description:'You earned trust through discipline.' },
   { badgeId:'arcade-initiate', name:'Arcade Initiate', category:'arcade', rarity:'Common', imageUrl:'/assets/badges/arcade-initiate.png', requirementType:'ecosystem', requirementValue:'arcade', requirementText:'Open an arcade/game sign', description:'You found where village paths become games.' },
   { badgeId:'arcade-combo-spark', name:'Combo Spark', category:'arcade', rarity:'Uncommon', imageUrl:'/assets/badges/arcade-combo-spark.png', requirementType:'arcade', requirementValue:'future-score', requirementText:'Future arcade score milestone', description:'Your arcade reflexes are waking up.' },
-  { badgeId:'community-colony-caller', name:'Colony Caller', category:'community', rarity:'Common', imageUrl:'/assets/badges/community-colony-caller.png', requirementType:'ecosystem', requirementValue:'discord', requirementText:'Future community action', description:'You reached beyond the village.' },
+  { badgeId:'community-colony-caller', name:'Colony Caller', category:'community', rarity:'Common', imageUrl:'/assets/badges/community-colony-caller.png', requirementType:'ecosystem', requirementValue:'discord', requirementText:'Open the Rebel Ants Discord from a sign in Universe', description:'You reached beyond the village.' },
   { badgeId:'community-signal-carrier', name:'Signal Carrier', category:'community', rarity:'Uncommon', imageUrl:'/assets/badges/community-signal-carrier.png', requirementType:'ecosystem', requirementValue:'youtube', requirementText:'Open Rebel Ants content', description:'You carried the signal to another path.' },
-  { badgeId:'builder-world-builder', name:'World Builder', category:'builder', rarity:'Common', imageUrl:'/assets/badges/builder-world-builder.png', requirementType:'builder', requirementValue:'future-builder', requirementText:'Use builder/admin progression hooks', description:'You helped shape the Rebel world.' },
+  { badgeId:'builder-world-builder', name:'World Builder', category:'builder', rarity:'Common', imageUrl:'/assets/badges/builder-world-builder.png', requirementType:'builder', requirementValue:'overlay_builder', requirementText:'Open the Overlay Builder from a sign in Universe', description:'You helped shape the Rebel world.' },
   { badgeId:'builder-root-sculptor', name:'Root Sculptor', category:'builder', rarity:'Rare', imageUrl:'/assets/badges/builder-root-sculptor.png', requirementType:'builder', requirementValue:'future-terrain', requirementText:'Future terrain builder milestone', description:'You shaped land around the old roots.' },
   { badgeId:'secret-beneath-roots', name:'Beneath the Roots', category:'story', rarity:'Mythic', imageUrl:'/assets/badges/secret-beneath-roots.png', requirementType:'secret', requirementValue:'beneath-roots', requirementText:'Hidden discovery', description:'Something beneath the roots answered back.', hidden:true }
 ];
 // Every collectible placed in the village layouts (Hub + 14 villages; rooms have none): the Relic Keeper badge asks for
 // all of them. Update it whenever collectibles are added or removed (the friend-village quests will bring their items).
 const COLLECTIBLE_TOTAL = 97;
-// The other 62 of the 91 badges: a crest, an all-secrets and an all-games badge per village, secret milestones, mini
+// What the badges count (rooms, villagers, each village's chests, the relic / scroll / root memory sets, the place
+// riddles): written by node tools/gen-badge-world.mjs from the layouts. Run it after adding or removing any of them.
+const BADGE_WORLD = {"points":32795,"rooms":63,"sealed":["hub_ancient_tunnels","ronin_old_door","yamabushi_descent_path"],"npcs":83,"chests":{"hub":["ashigaru-chest-1779579829051-47531","hub-chest-legend-1","hub-chest-wood-2","hub-chest-wood-3","hub-chest-iron-1","hub-chest-iron-2","hub-chest-iron-3","hub-chest-gold-1","hub-chest-gold-2","hub-chest-silver-1"],"ashigaru":["ashi-chest-treasure-1","ashi-chest-wood-1","ashi-chest-iron-1","ashi-chest-iron-2","ashi-chest-gold-1","ashi-chest-silver-1"],"buke":["buke-chest-treasure-1","buke-chest-silver-1","buke-chest-gold-1","buke-chest-iron-1","buke-chest-iron-2","buke-chest-wood-1"],"bushi":["bushi-chest-treasure-1","bushi-chest-silver-1","bushi-chest-gold-1","bushi-chest-iron-1","bushi-chest-iron-2","bushi-chest-wood-1"],"chumpz":["chz-chest-treasure-1","chz-chest-silver-1","chz-chest-gold-1","chz-chest-gold-2","chz-chest-wood-1","chz-chest-wood-2","chz-chest-wood-3","chz-chest-wood-4"],"cute-creepy":["cc-chest-treasure-1","cc-chest-silver-1","cc-chest-gold-1","cc-chest-gold-2","cc-chest-wood-1","cc-chest-wood-2","cc-chest-wood-3","cc-chest-wood-4"],"kenshi":["kenshi-chest-treasure-1","kenshi-chest-silver-1","kenshi-chest-gold-1","kenshi-chest-iron-1","kenshi-chest-iron-2","kenshi-chest-wood-1"],"ronin":["ronin-chest-legend-1","ronin-chest-silver-1","ronin-chest-gold-1","ronin-chest-iron-1","ronin-chest-iron-2","ronin-chest-wood-1"],"saints-la":["sl-chest-treasure-1","sl-chest-silver-1","sl-chest-gold-1","sl-chest-gold-2","sl-chest-gold-3","sl-chest-wood-1","sl-chest-wood-2","sl-chest-wood-3"],"samurai":["sam-chest-treasure-1","sam-chest-silver-1","sam-chest-gold-1","sam-chest-iron-1","sam-chest-iron-2","sam-chest-wood-1"],"shogun":["sho-chest-legend-1","sho-chest-silver-1","sho-chest-iron-3","sho-chest-gold-1","sho-chest-iron-1","sho-chest-iron-2","sho-chest-wood-1"],"sohei":["sohei-chest-treasure-1","sohei-chest-silver-1","sohei-chest-gold-1","sohei-chest-iron-1","sohei-chest-iron-2","sohei-chest-wood-1"],"warrior":["war-chest-iron-3","war-chest-gold-1","war-chest-iron-1","war-chest-iron-2","war-chest-wood-1","war-chest-treasure-1","war-chest-silver-1"],"wokou":["wok-chest-legend-1","wok-chest-silver-1","wok-chest-gold-1","wok-chest-iron-1","wok-chest-iron-2","wok-chest-wood-1"],"yamabushi":["yam-chest-legend-1","yam-chest-silver-1","yam-chest-gold-1","yam-chest-iron-1","yam-chest-iron-2","yam-chest-wood-1"]},"treasure":["ashi-chest-treasure-1","buke-chest-treasure-1","bushi-chest-treasure-1","chz-chest-treasure-1","cc-chest-treasure-1","kenshi-chest-treasure-1","sl-chest-treasure-1","sam-chest-treasure-1","sohei-chest-treasure-1","war-chest-treasure-1"],"legend":["hub-chest-legend-1","ronin-chest-legend-1","sho-chest-legend-1","wok-chest-legend-1","yam-chest-legend-1"],"relics":["hub:ancient-relic-fragment-hub-1","hub:ancient-relic-fragment-hub-2","hub:ancient-relic-fragment-hub-3","hub:ancient-relic-fragment-hub-4","ashigaru:ancient-relic-fragment-ashigaru","ashigaru:ancient-relic-fragment-ashigaru-2","ashigaru:ancient-relic-fragment-ashigaru-3","buke:ancient-relic-fragment-buke","buke:ancient-relic-fragment-buke-2","bushi:ancient-relic-fragment-bushi-1","bushi:ancient-relic-fragment-bushi-2","kenshi:ancient-relic-fragment-kenshi","kenshi:ancient-relic-fragment-kenshi-2","kenshi:ancient-relic-fragment-kenshi-3","kenshi:ancient-relic-fragment-kenshi-4","ronin:ancient-relic-fragment-ronin-1","ronin:ancient-relic-fragment-ronin-2","ronin:ancient-relic-fragment-ronin-3","samurai:ancient-relic-fragment-samurai-1","samurai:ancient-relic-fragment-samurai-2","samurai:ancient-relic-fragment-samurai-3","shogun:ancient-relic-fragment-shogun","shogun:ancient-relic-fragment-shogun-2","shogun:ancient-relic-fragment-shogun-3","warrior:ancient-relic-fragment-warrior","warrior:ancient-relic-fragment-warrior-2","warrior:ancient-relic-fragment-warrior-3","warrior:ancient-relic-fragment-warrior-4","warrior:ancient-relic-fragment-warrior-5","wokou:ancient-relic-fragment-wokou-1","wokou:ancient-relic-fragment-wokou-2","yamabushi:ancient-relic-fragment-yamabushi-1","yamabushi:ancient-relic-fragment-yamabushi-2"],"scrolls":["hub:hub-lost-scroll-1","hub:hub-lost-scroll-2","hub:hub-lost-scroll-3","buke:buke-survey-mark-1","buke:buke-survey-mark-2","buke:buke-survey-mark-3","buke:buke-blueprint-case","buke:buke-brace-plan-workshop","buke:buke-brace-plan-gate","buke:buke-brace-plan-hall","bushi:bushi-scout-tag","bushi:bushi-brace-material-rope","samurai:sam-etiquette-scroll-1","samurai:sam-etiquette-scroll-2","samurai:sam-etiquette-scroll-3","shogun:sho-seal-ribbon-pond","shogun:sho-seal-ribbon-shrine","shogun:sho-seal-ribbon-store","sohei:sohei-bell-note-1","sohei:sohei-bell-note-2","sohei:sohei-bell-note-3","wokou:wok-supply-ledger-quay","wokou:wok-supply-ledger-shed","wokou:wok-supply-ledger-market","yamabushi:yam-old-root-map"],"roots":["hub:hub-forest-memory-1","hub:hub-forest-memory-2","hub:hub-forest-memory-3","bushi:bushi-brace-material-timber","sohei:sohei-balance-token-bell","sohei:sohei-balance-token-pond","sohei:sohei-balance-token-stone","wokou:wok-hollow-jar","yamabushi:yam-root-herb-1","yamabushi:yam-root-herb-2","yamabushi:yam-root-herb-3"],"riddles":["grand-wanderers-map","ashi-sprout-riddle","cc-grave-riddle-1","cc-grave-riddle-2","cc-grave-riddle-3","sam-ancestor-lanterns","sho-herald-riddles","yam-seer-riddle"]};
+// 62 more of the badges: a crest, an all-secrets and an all-games badge per village, secret milestones, mini
 // ant spotters, chest and collector badges, every game cleared. All award themselves (checkAutoBadges).
 (() => {
   const FACTION_ART = new Set(['ronin','samurai','shogun','bushi','buke','ashigaru','kenshi','yamabushi','sohei','wokou','warrior']);
@@ -4711,12 +4760,254 @@ const COLLECTIBLE_TOTAL = 97;
   add({ badgeId:'collector-relic-keeper', name:'Relic Keeper', category:'collector', rarity:'Epic', requirementType:'collectibleCount', requirementValue:COLLECTIBLE_TOTAL, requirementText:'Collect every collectible', description:'The archive has nothing left to ask of you.' });
 })();
 
-// Quests that count toward a village crest: wired Book One quests set in that village.
+// Oct 31 (Miguel: "I'm talking about 300 badges ... games, riddles, secrets, game play, forges, completions, talking,
+// winnings"): 208 more, and the 7 that nobody could earn made real, so 300 in all. Every one awards itself
+// (checkAutoBadges): the rules are in isMoreBadgeEarned, the counters in badgeStat / ProgressionState.stats, the
+// numbers from BADGE_WORLD (tools/gen-badge-world.mjs). icon: the medal's picture (assets/badge-art.js ICONS).
+(() => {
+  const add = (badgeId, name, category, rarity, requirementType, requirementValue, requirementText, description, extra = {}) =>
+    DEFAULT_BADGE_DEFINITIONS.push({ badgeId, name, category, rarity, imageUrl:'', requirementType, requirementValue, requirementText, description, ...extra });
+  const W = BADGE_WORLD, villages = ['hub','ronin','samurai','shogun','bushi','buke','ashigaru','kenshi','yamabushi','sohei','wokou','warrior','cute-creepy','chumpz','saints-la'];
+  const FACTION_ART = new Set(['ronin','samurai','shogun','bushi','buke','ashigaru','kenshi','yamabushi','sohei','wokou','warrior']);
+  const short = id => ({ hub:'Hub', 'cute-creepy':'Cute & Creepy', chumpz:'Chumpz', 'saints-la':'Saints of LA' }[id] || id[0].toUpperCase() + id.slice(1));
+  const q = (pre, ns) => ns.map(n => `${pre}${String(n).padStart(2, '0')}`);
+  const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+  const st = (key, n) => ({ key, n });
+
+  // the seven that waited on "future" milestones: real rules now (same ids, names and rarities)
+  const real = (id, requirementType, requirementValue, requirementText, extra = {}) => Object.assign(DEFAULT_BADGE_DEFINITIONS.find(b => b.badgeId === id) || {}, { requirementType, requirementValue, requirementText, ...extra });
+  real('story-tunnel-witness', 'statHas', { key:'rooms', all:['hub_ancient_tunnels'] }, 'Enter the Ancient Tunnels beneath the Hub', { description:'You walked the tunnels the colony sealed long ago.' });
+  real('story-old-roots', 'collectSet', { set:'roots' }, `Find all ${W.roots?.length || 11} root memories`, { description:'Every root memory found: the roots remember, and so do you.' });
+  real('ronin-shadow-walker', 'gamesAll', ['ronin-silent-steps','ronin-silent-path'], 'Clear Silent Steps and The Silent Path in Ronin');
+  real('samurai-honor-guard', 'gamesAll', ['sam-yabusame','sam-tameshigiri','sam-swordsmith-forge'], 'Clear the Yabusame Range, Tameshigiri and the Swordsmith\'s Forge in Samurai');
+  real('arcade-combo-spark', 'gamesCleared', 10, 'Clear 10 games');
+  real('community-signal-carrier', 'stat', st('chat', 1), 'Send your first message in the chat', { description:'Your words reached the rest of the colony.' });
+  real('builder-root-sculptor', 'gamesAll', ['hub-root-seal','sohei-raking-path','kenshi-raked-stones'], 'Clear Root Seal, The Raking Path and Raked Stones', { description:'You shaped the land around the old roots: roots sealed, sand raked.' });
+
+  // ── explorer: villages, rooms, swimming, the road, the weather, the camera ──
+  add('world-villages-5', 'Wayfarer', 'explorer', 'Common', 'villagesCount', 5, 'Visit 5 villages', 'Five gates, five welcomes.', { icon:'torii' });
+  add('world-villages-all', 'All Fifteen', 'explorer', 'Uncommon', 'villagesCount', 'all', 'Visit all 15 villages', 'Every gate in the colony has let you through.', { icon:'map' });
+  add('world-friends', 'Good Neighbour', 'explorer', 'Common', 'villagesCount', ['chumpz','saints-la','cute-creepy'], 'Visit Chumpz, Saints of LA and Cute & Creepy', 'The friend villages know your face.', { icon:'heart' });
+  add('room-first', 'Come On In', 'explorer', 'Common', 'stat', st('rooms', 1), 'Step inside a room', 'Every door hides a story.', { icon:'door' });
+  add('room-10', 'House Guest', 'explorer', 'Common', 'stat', st('rooms', 10), 'Enter 10 different rooms', 'Ten doors opened, ten rooms remembered.', { icon:'door' });
+  add('room-30', 'Room to Room', 'explorer', 'Uncommon', 'stat', st('rooms', 30), 'Enter 30 different rooms', 'Halls, vaults, lounges and dojos: you have seen the inside of the colony.', { icon:'door' });
+  add('room-all', 'Every Door', 'explorer', 'Legendary', 'stat', st('rooms', W.rooms || 63), `Enter every room in Universe (${W.rooms || 63})`, 'There is no door in the colony you have not walked through.', { icon:'door' });
+  add('room-sealed', 'Behind Sealed Doors', 'explorer', 'Epic', 'statHas', { key:'rooms', all:W.sealed || [] }, 'Enter the three sealed rooms', 'The Descent Path, the Old Door and the Ancient Tunnels: sealed for the rest, open for you.', { icon:'lock' });
+  add('room-nightlife', 'Night on the Town', 'explorer', 'Common', 'statHas', { key:'rooms', all:['hub_comedy_club','hub_after_dark'] }, 'Visit Antthony\'s Comedy Club and Rebel Ants After Dark', 'A laugh at the club, a night After Dark.', { icon:'mic' });
+  add('swim-first', 'Making Waves', 'explorer', 'Common', 'stat', st('swims', 1), 'Go for a swim', 'In you go.', { icon:'wave' });
+  add('swim-villages', 'Island Hopper', 'explorer', 'Uncommon', 'stat', st('swimV', 4), 'Swim in 4 different villages', 'Seas, lakes, ponds and canals: you have swum them all.', { icon:'wave' });
+  add('swim-1k', 'Long Distance Swimmer', 'explorer', 'Rare', 'stat', st('swimM', 1000), 'Swim 1 km in all', 'A thousand metres of open water behind you.', { icon:'wave' });
+  add('walk-5k', 'Trailblazer', 'explorer', 'Common', 'stat', st('walkM', 5000), 'Travel 5 km on foot', 'Five kilometres of paths, steps and bridges.', { icon:'steps' });
+  add('walk-25k', 'Long Road', 'explorer', 'Common', 'stat', st('walkM', 25000), 'Travel 25 km on foot', 'Twenty-five kilometres: your feet know the colony.', { icon:'steps' });
+  add('walk-100k', 'Marathon Ant', 'explorer', 'Rare', 'stat', st('walkM', 100000), 'Travel 100 km on foot', 'A hundred kilometres. Most ants never leave their village.', { icon:'steps' });
+  add('walk-500k', 'Pilgrim of the Colony', 'explorer', 'Epic', 'stat', st('walkM', 500000), 'Travel 500 km on foot', 'Five hundred kilometres: a pilgrimage, step by step.', { icon:'steps' });
+  add('weather-rain', 'Singing in the Rain', 'explorer', 'Common', 'statHas', { key:'weather', all:['rain'] }, 'Be out in the rain', 'Wet fur, wet roads, a good day anyway.', { icon:'rain' });
+  add('weather-storm', 'Storm Chaser', 'explorer', 'Common', 'statHas', { key:'weather', all:['storm'] }, 'Be out in a storm', 'Thunder overhead and you kept walking.', { icon:'storm' });
+  add('weather-snow', 'Snowfall', 'explorer', 'Common', 'statHas', { key:'weather', all:['snow'] }, 'Be out in the snow', 'Footprints in fresh snow.', { icon:'snow' });
+  add('weather-fog', 'Into the Mist', 'explorer', 'Common', 'statHas', { key:'weather', all:['fog'] }, 'Be out in the fog', 'You found your way when the world went white.', { icon:'fog' });
+  add('weather-all', 'Every Sky', 'explorer', 'Uncommon', 'statHas', { key:'weather', all:['clear','rain','storm','snow','fog','heat','cold'] }, 'Be out in every kind of weather: clear, rain, storm, snow, fog, heat and cold', 'Sun, storm, snow and everything between.', { icon:'sun' });
+  add('lightning-near', 'Too Close for Comfort', 'explorer', 'Rare', 'stat', st('strike', 1), 'Be out when lightning strikes within 200 m of you', 'The thunder came before you could count.', { icon:'bolt', hidden:true });
+  add('photo-first', 'Say Cheese', 'explorer', 'Common', 'stat', st('photos', 1), 'Take a photo (P)', 'Your first picture of the colony.', { icon:'camera' });
+  add('photo-50', 'Shutterbug', 'explorer', 'Uncommon', 'stat', st('photos', 50), 'Take 50 photos', 'Fifty pictures: a whole album of the colony.', { icon:'camera' });
+  add('time-night', 'Night Walker', 'explorer', 'Common', 'statHas', { key:'times', all:['night'] }, 'Walk Universe at night', 'Lanterns lit, the moon up, the paths yours.', { icon:'moon' });
+  add('time-dawn', 'Early Riser', 'explorer', 'Uncommon', 'statHas', { key:'times', all:['dawn'] }, 'Be out at dawn (5 to 7 in the morning, by your clock)', 'You saw the colony wake.', { icon:'sunrise' });
+  add('book-opened', 'Turn the Page', 'explorer', 'Common', 'stat', st('book', 1), 'Open The Warning in the Hub Library', 'The book opened for you.', { icon:'book' });
+
+  // ── story: the arcs ──
+  add('book1-chapter-1', 'Chapter One', 'story', 'Uncommon', 'quest', 'book1-main-10', 'Complete Book One, Chapter 1', 'The first warning heeded, the first chapter closed.', { icon:'scroll' });
+  add('book1-side-10', 'Side Paths', 'story', 'Common', 'questPrefix', { prefix:'book1-side-', n:10 }, 'Finish 10 Book One side quests', 'Ten favours for ten villagers.', { icon:'scroll' });
+  add('book1-side-20', 'Helping Hands', 'story', 'Uncommon', 'questPrefix', { prefix:'book1-side-', n:20 }, 'Finish 20 Book One side quests', 'Twenty quests off the main road.', { icon:'scroll' });
+  add('book1-side-30', 'Every Side Story', 'story', 'Epic', 'questPrefix', { prefix:'book1-side-', n:30 }, 'Finish all 30 Book One side quests', 'No villager left waiting.', { icon:'scroll' });
+  add('book1-friends', 'Friend of Every Village', 'story', 'Rare', 'questsAll', ['book1-side-27','book1-side-28'], 'Finish the Traveling Guide\'s quests to the friend villages', 'Welcomed in Chumpz, Saints of LA and Cute & Creepy.', { icon:'heart' });
+  add('tale-mamoru', 'Harvest Moon', 'story', 'Rare', 'questsAll', q('moon-tales-', range(1, 4)), 'Finish Mamoru\'s tale (Moon Tales 1-4)', 'You kept watch with Mamoru under the Harvest Moon.', { icon:'moon', emblem:null, look:'cute-creepy' });
+  add('tale-mochi', 'Pink Moon', 'story', 'Rare', 'questsAll', q('moon-tales-', range(5, 8)), 'Finish Mochi\'s tale (Moon Tales 5-8)', 'Never walk alone: Mochi and the moth witch walked with you.', { icon:'moon', look:'cute-creepy' });
+  add('tale-flower', 'Flower Moon', 'story', 'Rare', 'questsAll', q('moon-tales-', range(9, 12)), 'Finish Kokeshi Flower Moon\'s tale (Moon Tales 9-12)', 'The great tree blossomed for you.', { icon:'blossom', look:'cute-creepy' });
+  add('tale-ostara', 'Hare Moon', 'story', 'Rare', 'questsAll', q('moon-tales-', range(13, 16)), 'Finish Ostara\'s tale (Moon Tales 13-16)', 'The silver bell rang and the shadows cleared.', { icon:'bell', look:'cute-creepy' });
+  add('tale-nariko', 'Thunder Moon', 'story', 'Rare', 'questsAll', q('moon-tales-', range(17, 19)), 'Finish Nariko\'s tale (Moon Tales 17-19)', 'Seven stones woke and the storm answered.', { icon:'bolt', look:'cute-creepy' });
+  add('tale-all', 'Keeper of the Moon Tales', 'story', 'Epic', 'questsAll', q('moon-tales-', range(1, 24)), 'Finish every Moon Tale (1-24)', 'Every moon, every tale, every witch of the coven.', { icon:'moon', look:'cute-creepy' });
+  add('cove-big-chain', 'Big Chain\'s Right Hand', 'story', 'Uncommon', 'questsAll', q('chumpz-cove-', [1,10,15,17]), 'Finish Big Chain\'s quests in Chumpz Cove', 'The order, the wish, the tab and the torches: done.', { icon:'banana', look:'chumpz' });
+  add('cove-pengu', 'Pengu\'s Deckhand', 'story', 'Uncommon', 'questsAll', q('chumpz-cove-', [2,7,8,12,13,18]), 'Finish Pengu\'s quests in Chumpz Cove', 'Nets mended, sails up, the Big Catch landed.', { icon:'fish', look:'chumpz' });
+  add('cove-peely', 'Peely\'s Partner', 'story', 'Uncommon', 'questsAll', q('chumpz-cove-', [3,19]), 'Finish Peely\'s quests in Chumpz Cove', 'The dice rolled and the Golden Coconut came up.', { icon:'dice', look:'chumpz' });
+  add('cove-band', 'Roadie', 'story', 'Uncommon', 'questsAll', q('chumpz-cove-', [4,9,14]), 'Finish Banana Band\'s quests in Chumpz Cove', 'Instruments found, shades found, bananas brought.', { icon:'note', look:'chumpz' });
+  add('cove-racer', 'Boardwalk Lap', 'story', 'Common', 'questsAll', q('chumpz-cove-', [5]), 'Race the Chumpz Racer round the boardwalk', 'Ten flags, one lap, one very fast ape.', { icon:'flag', look:'chumpz' });
+  add('cove-barnacle', 'Dock Inspector', 'story', 'Uncommon', 'questsAll', q('chumpz-cove-', [6,11,16]), 'Finish Barnacle\'s quests in Chumpz Cove', 'Bait run, dock inspection, the racks counted.', { icon:'anchor', look:'chumpz' });
+  add('cove-all', 'Legend of the Cove', 'story', 'Epic', 'questsAll', q('chumpz-cove-', range(1, 20)), 'Finish every Chumpz Cove quest (1-20)', 'The whole cove, ready for the party, thanks to you.', { icon:'banana', look:'chumpz' });
+  add('city-greeter', 'Tour Guide', 'story', 'Uncommon', 'questsAll', q('saints-la-', [1,8,10,13,14,17]), 'Finish the Greeter\'s quests in Saints of LA', 'You know the block better than the Greeter does.', { icon:'halo', look:'saints-la' });
+  add('city-mechanic', 'Grease Monkey', 'story', 'Uncommon', 'questsAll', q('saints-la-', [2,4,9,11]), 'Finish the Mechanic\'s quests in Saints of LA', 'Parts found, lowriders polished, the lights back on.', { icon:'wrench', look:'saints-la' });
+  add('city-court', 'Court Regular', 'story', 'Uncommon', 'questsAll', q('saints-la-', [3,16,18]), 'Finish the Court Regular\'s quests in Saints of LA', 'The corners, the patrol, the streak.', { icon:'ball', look:'saints-la' });
+  add('city-librarian', 'Card Carrier', 'story', 'Uncommon', 'questsAll', q('saints-la-', [5,15,19]), 'Finish the Librarian\'s quests in Saints of LA', 'A library card, a tower view, safe crossings.', { icon:'book', look:'saints-la' });
+  add('city-shopkeeper', 'Halo Runner', 'story', 'Uncommon', 'questsAll', q('saints-la-', [7,12]), 'Finish the Shopkeeper\'s quests in Saints of LA', 'The market run and the halo pins.', { icon:'halo', look:'saints-la' });
+  add('city-dj', 'Arcade Night', 'story', 'Common', 'questsAll', q('saints-la-', [6]), 'Spend Arcade Night with the DJ in the Game Hall', 'A strike, a record crate, a night to remember.', { icon:'note', look:'saints-la' });
+  add('city-all', 'Saint of the City', 'story', 'Epic', 'questsAll', q('saints-la-', range(1, 20)), 'Finish every Saints of LA quest (1-20)', 'The whole block owes you one.', { icon:'halo', look:'saints-la' });
+
+  // ── arcade: the games ──
+  add('arcade-first-clear', 'First Clear', 'arcade', 'Common', 'gamesCleared', 1, 'Clear your first game', 'One down. A hundred and fifty-seven to go.', { icon:'joystick' });
+  add('arcade-clear-25', 'Quarter Century', 'arcade', 'Uncommon', 'gamesCleared', 25, 'Clear 25 games', 'Twenty-five games cleared across the colony.', { icon:'joystick' });
+  add('arcade-clear-50', 'Half the Board', 'arcade', 'Epic', 'gamesCleared', 50, 'Clear 50 games', 'Fifty cleared: the villages talk about you.', { icon:'trophy' });
+  add('arcade-clear-100', 'Centurion', 'arcade', 'Legendary', 'gamesCleared', 100, 'Clear 100 games', 'A hundred games cleared.', { icon:'trophy' });
+  add('arcade-plays-50', 'Warmed Up', 'arcade', 'Common', 'gamesPlayed', 50, 'Play 50 rounds of any games', 'Fifty rounds in and just getting started.', { icon:'joystick' });
+  add('arcade-plays-250', 'Arcade Regular', 'arcade', 'Common', 'gamesPlayed', 250, 'Play 250 rounds of any games', 'The game spots know your footsteps.', { icon:'joystick' });
+  add('arcade-plays-1000', 'One More Round', 'arcade', 'Uncommon', 'gamesPlayed', 1000, 'Play 1,000 rounds of any games', 'A thousand rounds. Just one more.', { icon:'joystick' });
+  add('arcade-tried-25', 'Sampler', 'arcade', 'Common', 'gamesTried', 25, 'Play 25 different games', 'A taste of everything.', { icon:'dice' });
+  add('arcade-tried-all', 'Tried Them All', 'arcade', 'Rare', 'gamesTried', 'all', 'Play every game in Universe at least once', 'Not one game left untried.', { icon:'dice' });
+  add('arcade-runs', 'Fleet Foot', 'arcade', 'Epic', 'kindGames', { kinds:['course'] }, 'Clear all 15 Village Runs', 'Every run in every village, beaten.', { icon:'flag' });
+  add('arcade-run-gold', 'Golden Stride', 'arcade', 'Uncommon', 'runMedals', { medal:'gold', n:1 }, 'Win a gold medal on a Village Run', 'Gold on the clock.', { icon:'medal' });
+  add('arcade-runs-gold', 'Gold Rush', 'arcade', 'Legendary', 'runMedals', { medal:'gold', n:'all' }, 'Win gold on all 15 Village Runs', 'Fifteen runs, fifteen golds.', { icon:'medal' });
+  add('arcade-dances', 'Dance Floor Royalty', 'arcade', 'Rare', 'kindGames', { kinds:['dance'] }, 'Clear all 14 dance-offs', 'Every village has seen you dance.', { icon:'note' });
+  add('arcade-chases', 'Catch Me If You Can', 'arcade', 'Rare', 'kindGames', { kinds:['chase'] }, 'Clear all 11 chases', 'Thieves, spies, crabs and chickens: all caught.', { icon:'steps' });
+  add('arcade-tend', 'Keeper of the Flame', 'arcade', 'Rare', 'kindGames', { kinds:['tend'] }, 'Clear all 4 keep-the-lights-lit games', 'Not one lantern went dark on your watch.', { icon:'lantern' });
+  add('arcade-gather', 'Errand Runner', 'arcade', 'Common', 'kindGames', { kinds:['gather'] }, 'Clear all 3 collect runs', 'Sheaves, messages, prayer flags: delivered.', { icon:'flag' });
+  add('arcade-sharp', 'Sharpshooter', 'arcade', 'Rare', 'kindGames', { kinds:['toss','archery','shuriken','siege'] }, 'Clear every throwing and shooting game (8)', 'Coconuts, spears, arrows, shuriken and stones: on target.', { icon:'target' });
+  add('arcade-allstar', 'All-Star', 'arcade', 'Rare', 'gamesAll', ['sl-bowling','sl-three-point','sl-free-throws','kenshi-stone-skipping','chz-surf-the-cove'], 'Clear Bowling, the 3-Point Contest, Free Throws, Stone Skipping and Surf the Cove', 'Lanes, hoops, lakes and waves.', { icon:'ball' });
+  add('arcade-fighter', 'Fighting Spirit', 'arcade', 'Rare', 'gamesAll', ['war-fighting-ring','hub-dummy-drill','buke-shield-wall','kenshi-quick-draw','sam-tameshigiri','kenshi-bamboo-cut','ashi-log-split'], 'Clear the Fighting Ring, Dummy Drill, Shield Wall, Quick Draw, Tameshigiri, Bamboo Cut and Log Split', 'Fists, blades and shields: you have trained with them all.', { icon:'sword' });
+  add('arcade-angler', 'Master Angler', 'arcade', 'Common', 'kindGames', { kinds:['fishing'] }, 'Clear Pier Fishing and Harbour Fishing', 'From the pier and the harbour, the big ones came in.', { icon:'fish' });
+  add('arcade-relay', 'Fifteen Gates', 'arcade', 'Rare', 'gamesAll', ['grand-relay'], 'Finish the Grand Relay through all 15 villages', 'Gate to gate across the whole colony.', { icon:'torii' });
+  add('arcade-relay-gold', 'Relay Legend', 'arcade', 'Epic', 'gameMedal', { id:'grand-relay', medal:'gold' }, 'Win gold on the Grand Relay (3:15 or less)', 'The colony in three minutes and change.', { icon:'medal' });
+  add('arcade-levels-1', 'Every Last Level', 'arcade', 'Uncommon', 'levelsAll', 1, 'Solve every level of a game', 'All of it. Every level.', { icon:'stairs' });
+  add('arcade-levels-10', 'Completionist', 'arcade', 'Epic', 'levelsAll', 10, 'Solve every level of 10 games', 'Ten games, every level of each.', { icon:'stairs' });
+  add('arcade-levels-25', 'Level Hoarder', 'arcade', 'Epic', 'levelsAll', 25, 'Solve every level of 25 games', 'Twenty-five games emptied of levels.', { icon:'stairs' });
+  add('arcade-levels-100', 'Hundred Levels', 'arcade', 'Uncommon', 'levelsTotal', 100, 'Solve 100 levels in all', 'A hundred levels solved.', { icon:'stairs' });
+  add('arcade-levels-500', 'Five Hundred Levels', 'arcade', 'Epic', 'levelsTotal', 500, 'Solve 500 levels in all', 'Five hundred levels. The puzzle makers salute you.', { icon:'stairs' });
+  add('arcade-dance-top', 'Top of the Charts', 'arcade', 'Rare', 'kindLevel', { kinds:['dance'], level:9 }, 'Clear song 10, the hardest, of a dance-off', 'The fastest song, the tightest timing: cleared.', { icon:'note' });
+  add('arcade-dance-songs', 'Ten Songs Deep', 'arcade', 'Epic', 'levelsAllKind', { kinds:['dance'], n:1 }, 'Clear all 10 songs of a dance-off', 'Every song of one village, danced.', { icon:'note' });
+  add('arcade-dance-legend', 'Legend of the Dance', 'arcade', 'Mythic', 'levelsAllKind', { kinds:['dance'], n:'all' }, 'Clear all 10 songs of all 14 dance-offs', 'A hundred and forty songs. The colony dances to your beat.', { icon:'crown' });
+  add('arcade-bowling-200', 'Two Hundred Club', 'arcade', 'Rare', 'gameBest', { id:'sl-bowling', min:200 }, 'Bowl 200 or more in the Saints Game Hall', 'Strikes and spares all night.', { icon:'ball', look:'saints-la' });
+  add('arcade-bowling-300', 'Perfect Game', 'arcade', 'Mythic', 'gameBest', { id:'sl-bowling', min:300 }, 'Bowl a perfect 300', 'Twelve strikes in a row.', { icon:'crown', hidden:true, look:'saints-la' });
+  add('arcade-hoops-30', 'Nothing but Net', 'arcade', 'Legendary', 'gameBest', { id:'sl-three-point', min:30 }, 'Score 30 in the 3-Point Contest: every ball in', 'Twenty-five shots, twenty-five swishes.', { icon:'ball', hidden:true, look:'saints-la' });
+  add('arcade-siege', 'Siege Master', 'arcade', 'Rare', 'gameBest', { id:'war-siege-engine', min:636 }, 'Bring down every tower at the Siege Engine with stones to spare', 'Ten towers down and stones left over.', { icon:'target', emblem:'warrior' });
+  add('arcade-crane', 'Crane Operator', 'arcade', 'Rare', 'gameBest', { id:'wok-cargo-crane', min:100 }, 'Move a Cargo Crane load in the fewest moves', 'Not one wasted swing.', { icon:'anchor', emblem:'wokou' });
+  add('arcade-cairn', 'Cairn Builder', 'arcade', 'Rare', 'gameBest', { id:'yam-cairn-stack', min:100 }, 'Score 100 at Cairn Stack in Yamabushi', 'A cairn the mountain will remember.', { icon:'stones', emblem:'yamabushi' });
+  add('arcade-blocks', 'High Rise', 'arcade', 'Epic', 'gameBest', { id:'sl-skyline-blocks', min:10000 }, 'Score 10,000 at Skyline Blocks', 'A skyline of your own.', { icon:'stairs', look:'saints-la' });
+  add('arcade-blade', 'Razor\'s Edge', 'arcade', 'Rare', 'gameBest', { id:'sam-tameshigiri', min:250 }, 'Score 250 at Tameshigiri', 'Twenty mats, nearly every cut perfect.', { icon:'sword', emblem:'samurai' });
+
+  // ── rivals & boards: beating the villagers, the leaderboards ──
+  add('rival-pong', 'Pong King', 'rivals', 'Rare', 'gamesAll', ['chz-beer-pong'], 'Beat Big Chain at Beer Pong in the Banana Bar', 'Big Chain bought the next round.', { icon:'cup' });
+  add('rival-nim', 'Stone Cold', 'rivals', 'Rare', 'gamesAll', ['kenshi-archivist-stones'], 'Beat the Archivist at his stones in Kenshi', 'The Archivist never misses a winning move. You won anyway.', { icon:'stones' });
+  add('rival-tug', 'Rope Burn', 'rivals', 'Common', 'gamesAll', ['war-tug-of-war'], 'Win the Tug of War against the Fort Smith', 'The Fort Smith let go first.', { icon:'rope' });
+  add('rival-quickdraw', 'Fastest Blade', 'rivals', 'Rare', 'gamesAll', ['kenshi-quick-draw'], 'Win the Quick Draw duel in Kenshi', 'You drew first.', { icon:'sword' });
+  add('rival-reversi', 'Corner Taker', 'rivals', 'Rare', 'gamesAll', ['hub-colony-corners'], 'Clear Colony Corners in the Hub (beat one of the stronger opponents)', 'You took the corners and the board.', { icon:'board' });
+  add('rival-highlow', 'Lucky Streak', 'rivals', 'Common', 'gamesAll', ['chz-high-low'], 'Beat Peely at High-Low', 'Five right calls in a row.', { icon:'dice' });
+  add('rival-shells', 'Eagle Eye', 'rivals', 'Common', 'gamesAll', ['hub-shell-game'], 'Win the Mini Ant Shell Game', 'You never lost sight of the ant.', { icon:'eye' });
+  add('rival-ring', 'Iron Will', 'rivals', 'Common', 'gamesAll', ['war-fighting-ring'], 'Win in the Warrior Fighting Ring', 'The iron dummy hit hard. You hit harder.', { icon:'fist' });
+  add('rival-drop', 'Top Banana', 'rivals', 'Epic', 'gameLevel', { id:'chz-banana-drop', level:9 }, 'Beat the toughest ape at Banana Drop', 'Four in a row against the best in the cove.', { icon:'banana', look:'chumpz' });
+  add('rival-nim-master', 'Last Stone Standing', 'rivals', 'Epic', 'gameLevel', { id:'kenshi-archivist-stones', level:9 }, 'Beat the Archivist on his last board of stones', 'His hardest board, and still you won.', { icon:'stones', emblem:'kenshi' });
+  add('rival-corners-master', 'Master of Corners', 'rivals', 'Epic', 'gameLevel', { id:'hub-colony-corners', level:9 }, 'Beat the strongest opponent at Colony Corners', 'The best player in the Hub, beaten.', { icon:'board' });
+  add('rival-quickdraw-master', 'Lightning Hands', 'rivals', 'Epic', 'gameLevel', { id:'kenshi-quick-draw', level:9 }, 'Win the Quick Draw on its last level', 'The shadow duelist at its fastest: you were faster.', { icon:'bolt', emblem:'kenshi' });
+  add('board-top10', 'On the Board', 'rivals', 'Uncommon', 'boardRank', { rank:10, n:1 }, 'Make the top 10 of a game\'s leaderboard', 'Your name, up there with the best.', { icon:'podium' });
+  add('board-top3', 'Podium', 'rivals', 'Rare', 'boardRank', { rank:3, n:1 }, 'Make the top 3 of a game\'s leaderboard', 'On the podium.', { icon:'podium' });
+  add('board-first', 'Number One', 'rivals', 'Epic', 'boardRank', { rank:1, n:1 }, 'Top a game\'s leaderboard', 'First place. Everyone else is chasing you.', { icon:'crown' });
+  add('board-top10-10', 'Board Regular', 'rivals', 'Epic', 'boardRank', { rank:10, n:10 }, 'Make the top 10 on 10 different leaderboards', 'Ten boards with your name on them.', { icon:'podium' });
+  add('board-first-5', 'Untouchable', 'rivals', 'Epic', 'boardRank', { rank:1, n:5 }, 'Top 5 different leaderboards', 'Five boards, five first places.', { icon:'crown' });
+  add('board-first-15', 'Undisputed', 'rivals', 'Mythic', 'boardRank', { rank:1, n:15 }, 'Top 15 different leaderboards', 'The name everyone in the colony knows.', { icon:'crown' });
+
+  // ── riddles ──
+  add('riddle-first', 'First Answer', 'riddles', 'Common', 'stat', st('riddles', 1), 'Answer a riddle right', 'The first of many answers.', { icon:'question' });
+  add('riddle-25', 'Quick Wit', 'riddles', 'Common', 'stat', st('riddles', 25), 'Answer 25 riddles right', 'Twenty-five riddles, answered.', { icon:'question' });
+  add('riddle-100', 'Sharp Mind', 'riddles', 'Uncommon', 'stat', st('riddles', 100), 'Answer 100 riddles right', 'A hundred right answers.', { icon:'bulb' });
+  add('riddle-250', 'Sage', 'riddles', 'Epic', 'stat', st('riddles', 250), 'Answer 250 riddles right', 'The riddle-givers come to you now.', { icon:'bulb' });
+  add('riddle-500', 'Oracle', 'riddles', 'Epic', 'stat', st('riddles', 500), 'Answer 500 riddles right', 'Five hundred answers. Nothing puzzles you.', { icon:'eye' });
+  add('riddle-givers-5', 'Good Listener', 'riddles', 'Common', 'kindGames', { kinds:['riddle'], n:5 }, 'Clear 5 riddle-givers\' sets', 'Five riddle-givers satisfied.', { icon:'scroll' });
+  add('riddle-givers-all', 'Riddle Master', 'riddles', 'Epic', 'kindGames', { kinds:['riddle'] }, 'Clear every riddle-giver\'s set (17)', 'Every riddle-giver in the colony, answered in full.', { icon:'bulb' });
+  add('riddle-place-first', 'Read the Land', 'riddles', 'Common', 'placeRiddles', 1, 'Solve a place riddle', 'The answer was a place, and you went there.', { icon:'map' });
+  add('riddle-place-all', 'Every Stone Answers', 'riddles', 'Epic', 'placeRiddles', 'all', `Solve all ${W.riddles?.length || 8} place riddles`, 'Every riddle written into the land, solved.', { icon:'map' });
+  add('riddle-wanderer', 'Wanderer\'s Way', 'riddles', 'Epic', 'placeRiddles', ['grand-wanderers-map'], 'Solve the Wanderer\'s Map across five villages', 'From the Hub to Ronin, Chumpz, Wokou, Cute & Creepy and back.', { icon:'compass' });
+  add('riddle-graves', 'Grave Matters', 'riddles', 'Rare', 'placeRiddles', ['cc-grave-riddle-1','cc-grave-riddle-2','cc-grave-riddle-3'], 'Solve the three graves\' riddles in Cute & Creepy', 'The dead had questions. You had answers.', { icon:'grave', look:'cute-creepy' });
+  add('riddle-herald', 'The Herald\'s Three', 'riddles', 'Rare', 'placeRiddles', ['sho-herald-riddles'], 'Solve the Shogun Herald\'s three riddles', 'Shrine, bridge, well: the Herald is impressed.', { icon:'scroll', emblem:'shogun' });
+  add('riddle-brew', 'Witch\'s Apprentice', 'riddles', 'Rare', 'gamesAll', ['cc-witch-brew'], 'Clear the Witch\'s Brew in Cute & Creepy', 'Every ingredient, guessed from a riddle.', { icon:'cauldron', look:'cute-creepy' });
+  add('riddle-debts', 'Debts Settled', 'riddles', 'Rare', 'gamesAll', ['ronin-debt-marker-stones'], 'Clear The Debt Marker in Ronin', 'Six riddles at the stone, and the debt is paid.', { icon:'hand', emblem:'ronin' });
+  add('riddle-hard', 'Hard Questions', 'riddles', 'Epic', 'gamesAll', ['ronin-watcher-trial','shogun-lords-puzzles','buke-engineer-puzzles','wokou-broker-wagers'], 'Clear the four hardest riddle sets: the Watcher\'s Trial, the Lord\'s Puzzles, the Engineer\'s Puzzles, the Broker\'s Wagers', 'The trickiest questions in the colony, answered.', { icon:'bulb' });
+
+  // ── community: villagers and players ──
+  add('npc-first', 'Hello There', 'community', 'Common', 'stat', st('npcs', 1), 'Talk to a villager', 'A first hello.', { icon:'chat' });
+  add('npc-25', 'Friendly Face', 'community', 'Common', 'stat', st('npcs', 25), 'Talk to 25 different villagers', 'Twenty-five villagers know your name.', { icon:'chat' });
+  add('npc-50', 'Well Known', 'community', 'Uncommon', 'stat', st('npcs', 50), 'Talk to 50 different villagers', 'Half the colony has chatted with you.', { icon:'chat' });
+  add('npc-all', 'Everybody\'s Friend', 'community', 'Epic', 'stat', st('npcs', W.npcs || 83), `Talk to every villager in Universe (${W.npcs || 83})`, 'There is no one in the colony you have not met.', { icon:'heart' });
+  add('chat-100', 'Chatterbox', 'community', 'Common', 'stat', st('chat', 100), 'Send 100 chat messages', 'A hundred messages to the colony.', { icon:'chat' });
+  add('chat-1000', 'Voice of the Village', 'community', 'Rare', 'stat', st('chat', 1000), 'Send 1,000 chat messages', 'A thousand messages. The village listens.', { icon:'chat' });
+  add('chat-whisper', 'Psst', 'community', 'Common', 'stat', st('whisper', 1), 'Whisper to another player', 'Just between the two of you.', { icon:'chat' });
+  add('voice-first', 'On the Mic', 'community', 'Common', 'stat', st('voiceS', 5), 'Talk to other players with your voice (hold X)', 'Your voice, heard across the village.', { icon:'mic' });
+  add('voice-60', 'Talk of the Town', 'community', 'Rare', 'stat', st('voiceS', 3600), 'Talk for an hour in all', 'An hour of talking: the colony knows your voice.', { icon:'mic' });
+  add('group-join', 'Squad Up', 'community', 'Common', 'stat', st('groups', 1), 'Join or start a group', 'Never walk alone.', { icon:'group' });
+  add('group-full', 'Full House', 'community', 'Uncommon', 'stat', st('groupMax', 8), 'Be in a group of 8', 'Eight Rebels, one group.', { icon:'group' });
+  add('group-goto', 'On My Way', 'community', 'Common', 'stat', st('goto', 1), 'Use Go to them to reach a group member', 'Wherever they are, you go.', { icon:'compass' });
+  add('meet-10', 'New Faces', 'community', 'Common', 'stat', st('met', 10), 'Meet 10 players (be within 10 m of them)', 'Ten fellow Rebels, met in the colony.', { icon:'group' });
+  add('meet-100', 'Socialite', 'community', 'Uncommon', 'stat', st('met', 100), 'Meet 100 players', 'A hundred Rebels crossed your path.', { icon:'group' });
+  add('meet-500', 'Colony Celebrity', 'community', 'Epic', 'stat', st('met', 500), 'Meet 500 players', 'Five hundred Rebels. Everyone has met you.', { icon:'star' });
+  add('event-first', 'In the Crowd', 'community', 'Common', 'stat', st('events', 1), 'Go to an event at the Colony Stage', 'You were there.', { icon:'stage' });
+  add('event-10', 'Front Row', 'community', 'Uncommon', 'stat', st('events', 10), 'Go to 10 events', 'Ten events, always in the front row.', { icon:'stage' });
+  add('event-stage', 'Spotlight', 'community', 'Rare', 'stat', st('stage', 1), 'Be brought up on stage at an event', 'The whole crowd heard you.', { icon:'mic' });
+  add('event-host', 'Host with the Most', 'community', 'Epic', 'stat', st('hosted', 1), 'Host an event at the Colony Stage', 'You ran the show.', { icon:'crown' });
+  add('event-show', 'Encore', 'community', 'Common', 'stat', st('shows', 1), 'Watch a show at an event to the end', 'You stayed for the last line.', { icon:'stage' });
+  add('emote-first', 'Show Off', 'community', 'Common', 'stat', st('emotes', 1), 'Do an emote (E)', 'A little flair.', { icon:'note' });
+  add('emote-all', 'Every Move', 'community', 'Common', 'statHas', { key:'emotes', all:['game_cheer','dance_wave','dance_tut','dance_house','dance_gangnam'] }, 'Do all five emotes: Cheer, Wave, Tut, House and Gallop', 'Every move in the book.', { icon:'note' });
+  add('emote-crowd', 'Dance Party', 'community', 'Rare', 'stat', st('emoteCrowd', 1), 'Dance with 5 other players around you', 'The whole crowd danced.', { icon:'note' });
+  add('signin', 'One of Us', 'community', 'Common', 'stat', st('signin', 1), 'Sign in (Discord, or a name and PIN) so your story follows you', 'Your story is saved to your account.', { icon:'key' });
+
+  // ── forge: forged characters, who you play as ──
+  add('forge-own-rebel', 'Forged in Fire', 'forge', 'Rare', 'forged', 'battle_for_colony', 'Play as your own forged Rebel', 'Your Rebel, forged and walking the colony.', { icon:'anvil' });
+  add('forge-own-chumpz', 'Ape Awakened', 'forge', 'Rare', 'forged', 'chumpz', 'Play as your own forged Chumpz', 'Your Chumpz, forged and awake.', { icon:'banana', look:'chumpz' });
+  add('forge-own-saint', 'Saint Awakened', 'forge', 'Rare', 'forged', 'saints', 'Play as your own forged Saint', 'Your Saint, forged and on the block.', { icon:'halo', look:'saints-la' });
+  add('forge-gloves', 'Hand-Fitted', 'forge', 'Epic', 'forged', 'gloves', 'Play wearing gloves you forged in the Rebel Forge', 'Gloves made to measure.', { icon:'glove' });
+  add('forge-trio', 'Three Collections', 'forge', 'Legendary', 'forged', 'trio', 'Play as your own forged Rebel, Chumpz and Saint', 'A Rebel, a Chumpz and a Saint: all yours, all forged.', { icon:'anvil' });
+  add('char-001', 'The Master', 'forge', 'Uncommon', 'playedAs', '001', 'Play as #001', 'You walked in the master\'s footsteps.', { icon:'ninja' });
+  add('char-free', 'Free Spirit', 'forge', 'Common', 'playedAs', 'free', 'Play a Free to play character', 'Borrowed armour, real adventures.', { icon:'star' });
+  add('char-chumpz', 'Going Ape', 'forge', 'Common', 'playedAs', 'chumpz', 'Play as a Chumpz', 'Banana in hand, ape at heart.', { icon:'banana', look:'chumpz' });
+  add('char-saint', 'Halo On', 'forge', 'Common', 'playedAs', 'saints', 'Play as a Saint', 'Halo on, straight from Los Angeles.', { icon:'halo', look:'saints-la' });
+  add('char-racer', 'Need for Speed', 'forge', 'Uncommon', 'playedAs', 'racer', 'Play as the Chumpz Racer', 'The fastest ape in the cove, at your fingertips.', { icon:'flag', look:'chumpz' });
+  add('char-5', 'Many Faces', 'forge', 'Common', 'stat', st('chars', 5), 'Play as 5 different characters', 'Five characters, one player.', { icon:'mask' });
+  add('char-10', 'Shapeshifter', 'forge', 'Uncommon', 'stat', st('chars', 10), 'Play as 10 different characters', 'Ten characters. Which one is really you?', { icon:'mask' });
+  add('glove-colour', 'Custom Fit', 'forge', 'Common', 'stat', st('glove', 1), 'Pick a new colour for your gloves (Rebel panel, Gloves)', 'Your colours, your gloves.', { icon:'glove' });
+
+  // ── dedication: days, time, Rebel Points, seasons ──
+  add('days-3', 'Coming Back', 'dedication', 'Common', 'stat', st('days', 3), 'Play on 3 different days', 'You came back. They always come back.', { icon:'calendar' });
+  add('days-7', 'Week One', 'dedication', 'Common', 'stat', st('days', 7), 'Play on 7 different days', 'A week of the colony.', { icon:'calendar' });
+  add('days-30', 'Thirty Days', 'dedication', 'Rare', 'stat', st('days', 30), 'Play on 30 different days', 'A month of days in Universe.', { icon:'calendar' });
+  add('days-100', 'Lifer', 'dedication', 'Epic', 'stat', st('days', 100), 'Play on 100 different days', 'A hundred days. This is home.', { icon:'calendar' });
+  add('days-365', 'Year of the Ant', 'dedication', 'Mythic', 'stat', st('days', 365), 'Play on 365 different days', 'A whole year of days in the colony.', { icon:'sunrise' });
+  add('streak-7', 'Seven in a Row', 'dedication', 'Rare', 'stat', st('streak', 7), 'Play 7 days in a row', 'Seven days, not one missed.', { icon:'flame' });
+  add('streak-30', 'Unbroken', 'dedication', 'Epic', 'stat', st('streak', 30), 'Play 30 days in a row', 'Thirty days in a row. Unbroken.', { icon:'flame' });
+  add('hours-10', 'Time Well Spent', 'dedication', 'Uncommon', 'stat', st('playS', 36000), 'Play for 10 hours in all', 'Ten hours in the colony.', { icon:'hourglass' });
+  add('hours-50', 'Dedicated', 'dedication', 'Rare', 'stat', st('playS', 180000), 'Play for 50 hours in all', 'Fifty hours: a true Rebel.', { icon:'hourglass' });
+  add('hours-100', 'Hundred Hours', 'dedication', 'Epic', 'stat', st('playS', 360000), 'Play for 100 hours in all', 'A hundred hours of Universe.', { icon:'hourglass' });
+  add('session-2h', 'Marathon Session', 'dedication', 'Uncommon', 'stat', st('sessionMax', 7200), 'Play for 2 hours in one visit', 'Two hours without leaving. Snacks recommended.', { icon:'hourglass' });
+  add('points-1k', 'Pocket Change', 'dedication', 'Common', 'points', 1000, 'Earn 1,000 Rebel Points in Universe (chests, first clears, place riddles)', 'The first thousand.', { icon:'coin' });
+  add('points-5k', 'Stacking Up', 'dedication', 'Uncommon', 'points', 5000, 'Earn 5,000 Rebel Points in Universe', 'Five thousand Rebel Points, earned the hard way.', { icon:'coin' });
+  add('points-10k', 'Ten Grand', 'dedication', 'Rare', 'points', 10000, 'Earn 10,000 Rebel Points in Universe', 'Ten thousand points.', { icon:'coin' });
+  add('points-20k', 'Forge Fund', 'dedication', 'Epic', 'points', 20000, 'Earn 20,000 Rebel Points in Universe (a forge\'s worth)', 'Enough to forge a character, all earned in Universe.', { icon:'anvil' });
+  add('points-all', 'Every Point', 'dedication', 'Legendary', 'points', W.points || 32795, `Earn every one-time Rebel Point in Universe (${(W.points || 32795).toLocaleString('en-US')})`, 'Every chest, every first clear, every place riddle: paid.', { icon:'hoard' });
+  add('digs-25', 'Beachcomber', 'dedication', 'Common', 'stat', st('digs', 25), 'Dig up 25 finds in the Treasure Dig', 'The beach has given up its secrets.', { icon:'shovel', look:'chumpz' });
+  add('season-founder', 'Founding Rebel', 'dedication', 'Epic', 'statHas', { key:'seasons', all:['2026'] }, 'Play Universe in 2026, its first year', 'You were here at the beginning.', { icon:'torii' });
+  add('season-halloween', 'Trick or Treat', 'dedication', 'Rare', 'statHas', { key:'seasons', all:['halloween'] }, 'Play on Halloween (October 31)', 'Candy, ghosts and the full moon.', { icon:'pumpkin', look:'cute-creepy' });
+  add('season-winter', 'Winter Lights', 'dedication', 'Common', 'statHas', { key:'seasons', all:['winter'] }, 'Play between December 21 and January 6', 'Lanterns against the long nights.', { icon:'snow' });
+  add('season-newyear', 'First of the Year', 'dedication', 'Rare', 'statHas', { key:'seasons', all:['newyear'] }, 'Play on New Year\'s Day', 'The first steps of a new year, taken in the colony.', { icon:'firework' });
+
+  // ── collector & secrets ──
+  add('chest-10', 'Treasure Seeker', 'collector', 'Common', 'chestCount', 10, 'Open 10 chests', 'Ten chests and counting.', { icon:'chest' });
+  add('chest-50', 'Treasure Hoarder', 'collector', 'Rare', 'chestCount', 50, 'Open 50 chests', 'Fifty chests: the colony\'s treasure is yours.', { icon:'chest' });
+  add('chest-all', 'Every Last Chest', 'collector', 'Mythic', 'chestTotal', 'all', `Open every chest in Universe (${Object.values(W.chests || {}).flat().length || 102})`, 'Not one chest left closed.', { icon:'hoard' });
+  add('chest-treasure', 'Treasure Trove', 'collector', 'Rare', 'chestSet', 'treasure', `Open all ${W.treasure?.length || 10} treasure chests`, 'Every treasure chest in the colony.', { icon:'chest' });
+  add('chest-legends', 'Legend Hunter', 'collector', 'Mythic', 'chestSet', 'legend', `Open all ${W.legend?.length || 5} legend chests`, 'The five legends of the colony, opened.', { icon:'crown' });
+  add('collect-first', 'Finders Keepers', 'collector', 'Common', 'collectibleCount', 1, 'Pick up your first collectible', 'The first find.', { icon:'shard' });
+  add('collect-50', 'Magpie', 'collector', 'Uncommon', 'collectibleCount', 50, 'Pick up 50 collectibles', 'Fifty shiny things.', { icon:'shard' });
+  add('relic-10', 'Relic Seeker', 'collector', 'Common', 'collectSet', { set:'relics', n:10 }, 'Find 10 ancient relic fragments', 'Ten pieces of the past.', { icon:'shard' });
+  add('relic-all', 'Relic Restorer', 'collector', 'Rare', 'collectSet', { set:'relics' }, `Find all ${W.relics?.length || 33} ancient relic fragments`, 'The relic, whole again.', { icon:'shard' });
+  add('scrolls-all', 'Scroll Keeper', 'collector', 'Uncommon', 'collectSet', { set:'scrolls' }, `Find all ${W.scrolls?.length || 25} ancient scrolls`, 'Every lost scroll back in the archive.', { icon:'scroll' });
+  add('secret-first', 'First Secret', 'secrets', 'Common', 'secretCount', 1, 'Find your first secret', 'You noticed what others walk past.', { icon:'keyhole' });
+
+  // ── village crests: a village mastered ──
+  villages.forEach(v => add(`master-${v}`, `${short(v)} Mastered`, 'villages', 'Legendary', 'villageAll', v, `Every quest, secret, game and chest in ${short(v)}`, `${short(v)} has nothing left to teach you.`, { emblem:FACTION_ART.has(v) ? v : null }));
+  add('master-all', 'The Whole Colony', 'villages', 'Mythic', 'colonyAll', 'all', 'Master all 15 villages', 'Every village, mastered. The colony is yours.', { icon:'ant' });
+})();
+
+// Quests that count toward a village crest: wired Book One quests set in that village; the friend villages (none of
+// Book One's quests are set there) count their own series: the Chumpz Cove quests, Saints of LA's, the Moon Tales
 function getVillageQuestIds(villageId) {
   const name = String(VILLAGE_REGISTRY[villageId]?.displayName || villageId).replace(/ Village$/, '').toLowerCase();
-  return [...BOOK1_MAIN_QUESTS, ...BOOK1_SIDE_QUESTS]
+  const book = [...BOOK1_MAIN_QUESTS, ...BOOK1_SIDE_QUESTS]
     .filter(q => getBook1Wiring(q) && String(q.village || '').toLowerCase().split(/[^a-z&]+/).join(' ').includes(name.split(/[^a-z&]+/).join(' ')))
     .map(q => q.questId);
+  const series = { chumpz: CHUMPZ_COVE_QUESTS, 'saints-la': SAINTS_LA_QUESTS, 'cute-creepy': MOON_TALES_QUESTS }[villageId] || [];
+  return [...book, ...series.map(q => q.questId)];
 }
 
 function isAutoBadgeEarned(badge) {
@@ -4735,6 +5026,91 @@ function isAutoBadgeEarned(badge) {
     // games (GAME_LIST, defined further down: a check before it exists counts nothing)
     case 'villageGames': try { const ids = GAME_LIST.filter(g => g[2] === v).map(g => g[0]); return ids.length > 0 && ids.every(id => P.games?.[id]?.cleared); } catch (e) { return false; }
     case 'allGames': try { return GAME_LIST.length > 0 && GAME_LIST.every(g => P.games?.[g[0]]?.cleared); } catch (e) { return false; }
+    default: try { return isMoreBadgeEarned(badge.requirementType, v, P); } catch (e) { return false; } // GAME_LIST etc. not there yet: nothing counts
+  }
+}
+// The badges added Oct 31 (300 in all): games and their levels, medals and boards, quest arcs, a village mastered, chest
+// and collectible sets, place riddles, Rebel Points, forged characters, and what ProgressionState.stats counts
+// (badgeStat: rooms, villagers, swims, distance, weather, photos, chat, voice, groups, events, emotes, days played ...)
+const BADGE_VILLAGES = ['hub','ronin','samurai','shogun','bushi','buke','ashigaru','kenshi','yamabushi','sohei','wokou','warrior','cute-creepy','chumpz','saints-la'];
+const MEDAL_RANK = { bronze: 1, silver: 2, gold: 3 };
+function badgeStatValue(k) { const s = ProgressionState.stats?.[k]; return Array.isArray(s) ? s.length : Number(s) || 0; }
+function badgeStatHas(k, list) { const s = ProgressionState.stats?.[k]; return Array.isArray(s) && list.length > 0 && list.every(x => s.includes(x)); }
+function gameIdsOfKinds(kinds) { return GAME_LIST.filter(g => kinds.includes(g[3])).map(g => g[0]); }
+function placeRiddleSolved(id) { return !!(ProgressionState.riddles?.[id]?.solved || (Econ.on && econClaimed('riddle', id))); }
+function chestOpenedForBadge(id) { return (ProgressionState.chestsOpened || []).includes(id) || (Econ.on && econClaimed('chest', id)); }
+// a village mastered: every quest of its crest, every secret, every game and every chest in it
+function villageMastered(v) {
+  const P = ProgressionState, qs = getVillageQuestIds(v), games = GAME_LIST.filter(g => g[2] === v).map(g => g[0]);
+  const secrets = SECRET_DEFINITIONS.filter(d => d.villageId === v), chests = BADGE_WORLD.chests?.[v] || [];
+  return qs.length > 0 && qs.every(isQuestIdCompleted) && secrets.every(d => (P.secretsFound || []).includes(d.secretId))
+    && games.length > 0 && games.every(id => P.games?.[id]?.cleared) && chests.every(chestOpenedForBadge);
+}
+// how far along a counted badge is, for the journal ('12 / 30', '3 / 5 quests', '4.2 / 25 km'), or null
+function badgeCountProgress(badge) {
+  try {
+    const P = ProgressionState, v = badge.requirementValue, rec = P.games || {}, t = badge.requirementType, n = x => Number(x) || 0;
+    const of = (have, need, unit = '') => need > 1 ? `${Math.min(have, need).toLocaleString('en-US')} / ${need.toLocaleString('en-US')}${unit}` : null;
+    const UNIT = { walkM: [1000, ' km'], swimM: [1000, ' km'], playS: [3600, ' h'], sessionMax: [3600, ' h'], voiceS: [60, ' min'] };
+    switch (t) {
+      case 'stat': { const u = UNIT[v.key]; if (u) { const have = Math.floor(badgeStatValue(v.key) / u[0] * 10) / 10, need = v.n / u[0]; return need >= 1 ? `${Math.min(have, need)} / ${need}${u[1]}` : null; } return of(badgeStatValue(v.key), v.n); }
+      case 'statHas': { const s = P.stats?.[v.key] || []; return of(v.all.filter(x => s.includes(x)).length, v.all.length); }
+      case 'gamesCleared': return of(GAME_LIST.filter(g => rec[g[0]]?.cleared).length, v);
+      case 'gamesPlayed': return of(GAME_LIST.reduce((a, g) => a + n(rec[g[0]]?.plays), 0), v);
+      case 'gamesTried': return of(GAME_LIST.filter(g => rec[g[0]]?.plays).length, v === 'all' ? GAME_LIST.length : v);
+      case 'kindGames': { const ids = gameIdsOfKinds(v.kinds); return of(ids.filter(id => rec[id]?.cleared).length, v.n ?? ids.length); }
+      case 'gamesAll': return of(v.filter(id => rec[id]?.cleared).length, v.length);
+      case 'levelsTotal': return of(GAME_LIST.reduce((a, g) => a + new Set(rec[g[0]]?.lv || []).size, 0), v);
+      case 'questsAll': return of(v.filter(isQuestIdCompleted).length, v.length, ' quests');
+      case 'questPrefix': return of((P.completedQuests || []).filter(q => String(q).startsWith(v.prefix)).length, v.n, ' quests');
+      case 'villagesCount': { const seen = new Set(P.villagesVisited || []); return Array.isArray(v) ? of(v.filter(x => seen.has(x)).length, v.length) : of(v === 'all' ? BADGE_VILLAGES.filter(x => seen.has(x)).length : seen.size, v === 'all' ? BADGE_VILLAGES.length : v); }
+      case 'chestCount': return of((P.chestsOpened || []).length, n(v));
+      case 'chestTotal': { const all = Object.values(BADGE_WORLD.chests || {}).flat(); return of(all.filter(chestOpenedForBadge).length, all.length); }
+      case 'chestSet': { const ids = BADGE_WORLD[v] || []; return of(ids.filter(chestOpenedForBadge).length, ids.length); }
+      case 'collectibleCount': return of((P.collectiblesFound || []).length, n(v));
+      case 'collectSet': { const keys = BADGE_WORLD[v.set] || [], f = new Set(P.collectiblesFound || []); return of(keys.filter(k => f.has(k)).length, v.n ?? keys.length); }
+      case 'secretCount': return of((P.secretsFound || []).length, n(v));
+      case 'placeRiddles': { const ids = Array.isArray(v) ? v : BADGE_WORLD.riddles || []; return of(ids.filter(placeRiddleSolved).length, Array.isArray(v) || v === 'all' ? ids.length : v); }
+      case 'points': return Econ.on ? of(n(Econ.earned), v, ' points') : null;
+      case 'boardRank': return of(GAME_LIST.filter(g => rec[g[0]]?.rank > 0 && rec[g[0]].rank <= v.rank).length, v.n);
+      case 'runMedals': { const ids = gameIdsOfKinds(['course']), want = MEDAL_RANK[v.medal] || 3; return of(ids.filter(id => (MEDAL_RANK[rec[id]?.medal] || 0) >= want).length, v.n === 'all' ? ids.length : v.n); }
+      case 'levelsAllKind': { const ids = gameIdsOfKinds(v.kinds); return of(ids.filter(id => { const r = rec[id]; return r?.lvn > 0 && new Set(r.lv || []).size >= r.lvn; }).length, v.n === 'all' ? ids.length : v.n); }
+      case 'colonyAll': return of(BADGE_VILLAGES.filter(villageMastered).length, BADGE_VILLAGES.length, ' villages');
+      default: return null;
+    }
+  } catch (e) { return null; }
+}
+function isMoreBadgeEarned(type, v, P) {
+  const rec = P.games || {}, has = id => !!rec[id]?.cleared;
+  switch (type) {
+    case 'gamesCleared': return GAME_LIST.filter(g => has(g[0])).length >= v;
+    case 'gamesPlayed': return GAME_LIST.reduce((n, g) => n + (Number(rec[g[0]]?.plays) || 0), 0) >= v;
+    case 'gamesTried': return GAME_LIST.length > 0 && GAME_LIST.filter(g => rec[g[0]]?.plays).length >= (v === 'all' ? GAME_LIST.length : v);
+    case 'kindGames': { const ids = gameIdsOfKinds(v.kinds); return ids.length > 0 && ids.filter(has).length >= (v.n ?? ids.length); }
+    case 'gamesAll': return v.length > 0 && v.every(has);
+    case 'gameBest': { const r = rec[v.id]; return !!r && (v.max != null ? (r.low && r.best > 0 && r.best <= v.max) : Number(r.best) >= v.min); }
+    case 'gameLevel': return (rec[v.id]?.lv || []).includes(v.level);
+    case 'runMedals': { const ids = gameIdsOfKinds(['course']), want = MEDAL_RANK[v.medal] || 3; return ids.length > 0 && ids.filter(id => (MEDAL_RANK[rec[id]?.medal] || 0) >= want).length >= (v.n === 'all' ? ids.length : v.n); }
+    case 'levelsAll': return GAME_LIST.filter(g => { const r = rec[g[0]]; return r?.lvn > 0 && new Set(r.lv || []).size >= r.lvn; }).length >= v;
+    case 'levelsTotal': return GAME_LIST.reduce((n, g) => n + new Set(rec[g[0]]?.lv || []).size, 0) >= v;
+    case 'boardRank': return GAME_LIST.filter(g => rec[g[0]]?.rank > 0 && rec[g[0]].rank <= v.rank).length >= v.n;
+    case 'questsAll': return v.length > 0 && v.every(isQuestIdCompleted);
+    case 'questPrefix': return (P.completedQuests || []).filter(q => String(q).startsWith(v.prefix)).length >= v.n;
+    case 'villageAll': return villageMastered(v);
+    case 'colonyAll': return BADGE_VILLAGES.every(villageMastered);
+    case 'villagesCount': { const seen = P.villagesVisited || []; return Array.isArray(v) ? v.every(x => seen.includes(x)) : v === 'all' ? BADGE_VILLAGES.every(x => seen.includes(x)) : new Set(seen).size >= v; }
+    case 'chestSet': { const ids = BADGE_WORLD[v] || []; return ids.length > 0 && ids.every(chestOpenedForBadge); }
+    case 'chestTotal': { const all = Object.values(BADGE_WORLD.chests || {}).flat(); return all.length > 0 && all.filter(chestOpenedForBadge).length >= (v === 'all' ? all.length : v); }
+    case 'collectSet': { const keys = BADGE_WORLD[v.set] || [], found = new Set(P.collectiblesFound || []); return keys.length > 0 && keys.filter(k => found.has(k)).length >= (v.n ?? keys.length); }
+    case 'placeRiddles': { const ids = Array.isArray(v) ? v : BADGE_WORLD.riddles || []; const need = Array.isArray(v) || v === 'all' ? ids.length : v; return ids.length > 0 && ids.filter(placeRiddleSolved).length >= need; }
+    case 'stat': return badgeStatValue(v.key) >= v.n;
+    case 'statHas': return badgeStatHas(v.key, v.all);
+    case 'points': return Econ.on && Number(Econ.earned) >= v;
+    case 'forged': { const f = P.forged || {}; return v === 'trio' ? !!(f.battle_for_colony && f.chumpz && f.saints) : !!f[v]; }
+    case 'playedAs': { const c = P.stats?.chars || []; return c.some(k => v === '001' ? k === 'battle_for_colony:1' : v === 'racer' ? k === 'chumpz:900001' : v === 'free' ? k.startsWith('free:') : k.startsWith(v + ':')); }
+    case 'gameMedal': return (MEDAL_RANK[rec[v.id]?.medal] || 0) >= (MEDAL_RANK[v.medal] || 3);
+    case 'kindLevel': return gameIdsOfKinds(v.kinds).filter(id => (rec[id]?.lv || []).includes(v.level)).length >= (v.n || 1);
+    case 'levelsAllKind': { const ids = gameIdsOfKinds(v.kinds), done = ids.filter(id => { const r = rec[id]; return r?.lvn > 0 && new Set(r.lv || []).size >= r.lvn; }).length; return ids.length > 0 && done >= (v.n === 'all' ? ids.length : v.n); }
     default: return false;
   }
 }
@@ -4751,6 +5127,86 @@ function checkAutoBadges(silent = false) {
     });
     if (changed) saveProgressionState();
   } finally { _autoBadgeCheck = false; }
+}
+
+// ── badge counters (ProgressionState.stats) ──
+// badgeStat(key, value, mode): a string is added to the list under key (rooms, npcs, swimV, weather, times, emotes, met,
+// events, chars, days, seasons), a number added to it ('max': kept when larger). Saved a moment later, then the badges
+// are checked; the busy ones (distance, time played, swim distance) build up in memory and go every 30 s.
+// window.badgeStat = the same, for the multiplayer, chat, voice, groups and stage modules.
+const BADGE_STAT_CAP = { met: 600, days: 1200, chars: 200 };
+const BadgeStats = { timer: 0, dirty: false, sets: {}, session: 0, flushAt: 0, wx: {}, wxGroup: '', last: null, mpAt: 0, timeAt: 0, dayKey: '' };
+function badgeStat(key, value = 1, mode) {
+  if (!key) return;
+  const P = ProgressionState, st = P.stats && typeof P.stats === 'object' ? P.stats : (P.stats = {});
+  if (typeof value === 'string') {
+    if (!value) return;
+    let set = BadgeStats.sets[key];
+    if (!set) { set = BadgeStats.sets[key] = new Set(Array.isArray(st[key]) ? st[key] : []); if (!Array.isArray(st[key])) st[key] = [...set]; }
+    if (set.has(value) || set.size >= (BADGE_STAT_CAP[key] || 400)) return;
+    set.add(value); st[key].push(value);
+  } else {
+    const n = Number(value) || 0, old = Number(st[key]) || 0, next = mode === 'max' ? Math.max(old, n) : old + n;
+    if (next === old) return;
+    st[key] = Math.round(next * 10) / 10;
+  }
+  BadgeStats.dirty = true;
+  if (!BadgeStats.timer) BadgeStats.timer = setTimeout(flushBadgeStats, 1500);
+}
+window.badgeStat = badgeStat;
+function flushBadgeStats() {
+  clearTimeout(BadgeStats.timer); BadgeStats.timer = 0; BadgeStats.flushAt = performance.now();
+  if (!BadgeStats.dirty) return;
+  BadgeStats.dirty = false;
+  saveProgressionState();
+  checkAutoBadges();
+}
+// the days played (the player's own calendar) and the longest run of days in a row; the season windows
+function badgeDayKey(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+function noteBadgeDay() {
+  const now = new Date(), key = badgeDayKey(now);
+  if (BadgeStats.dayKey === key) return;
+  BadgeStats.dayKey = key;
+  badgeStat('days', key);
+  const days = new Set(ProgressionState.stats?.days || []);
+  let run = 0; for (const d = new Date(now); days.has(badgeDayKey(d)); d.setDate(d.getDate() - 1)) run++;
+  badgeStat('streak', run, 'max');
+  const md = (now.getMonth() + 1) * 100 + now.getDate();
+  badgeStat('seasons', String(now.getFullYear()));
+  if (md === 1031) badgeStat('seasons', 'halloween');
+  if (md >= 1221 || md <= 106) badgeStat('seasons', 'winter');
+  if (md === 101) badgeStat('seasons', 'newyear');
+}
+// the weather kinds a badge counts (WEATHER_MODES ids -> one word each)
+const BADGE_WEATHER = { clear: 'clear', 'light-rain': 'rain', 'heavy-rain': 'rain', storm: 'storm', fog: 'fog', heat: 'heat', cold: 'cold', snow: 'snow' };
+// every frame (from updateWeatherManager): distance on foot or swum, time played, the weather and time of day while
+// outdoors, the players met (within 10 m, every 2 s)
+function updateBadgeStats() {
+  const now = performance.now(), dt = Math.min(0.25, Math.max(0, (now - (BadgeStats.now || now)) / 1000)); BadgeStats.now = now;
+  if (!walkMode || adminMode || document.visibilityState !== 'visible' || !charMesh) { BadgeStats.last = null; return; }
+  const st = ProgressionState.stats && typeof ProgressionState.stats === 'object' ? ProgressionState.stats : (ProgressionState.stats = {});
+  const p = charMesh.position, last = BadgeStats.last;
+  if (last) {
+    const d = Math.hypot(p.x - last.x, p.z - last.z);
+    if (d > 0.01 && d < 12 * Math.max(dt, 1 / 60) * 4) { if (SWIM.on) st.swimM = (Number(st.swimM) || 0) + d; else st.walkM = (Number(st.walkM) || 0) + d; }
+  }
+  BadgeStats.last = { x: p.x, z: p.z };
+  st.playS = (Number(st.playS) || 0) + dt; BadgeStats.session += dt;
+  if (BadgeStats.session > (Number(st.sessionMax) || 0)) st.sessionMax = Math.round(BadgeStats.session);
+  if (!ActiveInterior) {
+    const w = BADGE_WEATHER[WeatherManager.mode];
+    if (w) { BadgeStats.wx[w] = (BadgeStats.wx[w] || 0) + dt; if (BadgeStats.wx[w] >= 30) badgeStat('weather', w); }
+  }
+  if (now - BadgeStats.timeAt > 5000) {
+    BadgeStats.timeAt = now;
+    noteBadgeDay();
+    if (!ActiveInterior) { const h = villageClockHour(); if (h >= 21 || h < 5) badgeStat('times', 'night'); else if (h >= 5 && h < 7) badgeStat('times', 'dawn'); else if (h >= 18 && h < 21) badgeStat('times', 'dusk'); }
+  }
+  if (now - BadgeStats.mpAt > 2000) {
+    BadgeStats.mpAt = now;
+    try { for (const peer of window.VillageMP?.near?.(10) || []) if (peer?.u) badgeStat('met', String(peer.u)); } catch (e) {}
+  }
+  if (now - BadgeStats.flushAt > 30000) { BadgeStats.dirty = true; flushBadgeStats(); }
 }
 
 // Badge art: uploaded art (admin) when there is some, else the badge's medal drawn by assets/badge-art.js
@@ -5296,9 +5752,10 @@ function renderBadgeCard(badge) {
   const name = hiddenLocked ? 'Unknown Badge' : badge.name;
   const desc = hiddenLocked ? 'A secret waits somewhere in the roots.' : badge.description;
   const req = unlocked ? 'Unlocked' : (hiddenLocked ? 'Hidden discovery' : badge.requirementText);
+  const counted = !unlocked && !hiddenLocked ? badgeCountProgress(badge) : null;
   const progress = isProgressBadgeType(badge.requirementType) && !unlocked
     ? `<br>${Math.min(getBadgeProgressValue(badge), Number(badge.requirementValue) || 0)} / ${badge.requirementValue} progress`
-    : '';
+    : counted ? `<br>${counted}` : '';
   const rarityClass = `rarity-${String(badge.rarity || 'Common').toLowerCase()}`;
   return `<div class="badge-chip ${unlocked ? 'unlocked' : 'locked'} ${active ? 'current' : ''} ${rarityClass}">
     ${renderBadgeIcon(badge, unlocked && !hiddenLocked)}
@@ -9380,7 +9837,7 @@ function setInteractionPrompt(text, visible) {
 // most 2,000 a day; more is held and paid on a later day). A guest's points are practice points, kept on this device
 // (ProgressionState.rebelPoints) and never carried over. While signed in, which chests are looted and which riddles are
 // solved follows the account, so a chest first opened as a guest still pays the account once.
-const Econ = { checked:false, configured:false, on:false, kind:'', name:'', avatar:null, balance:null, today:0, cap:2000, owed:0, claimed:new Set(), hinted:false, badgeWall:null };
+const Econ = { checked:false, configured:false, on:false, kind:'', name:'', avatar:null, balance:null, today:0, cap:2000, owed:0, claimed:new Set(), earned:0, hinted:false, badgeWall:null };
 // ── the story save (the early sync at the top of this script; assets/story-save.js) ──
 // Signed in, the story goes to the account: a few seconds after something is saved, every 30 s while it changes, and when
 // the page is left. A sign-in on the lobby or in the journal joins the account's story to this browser's (a reload when
@@ -9479,7 +9936,9 @@ async function refreshEcon(force) {
   const was = Econ.on, wasClaimed = [...Econ.claimed].sort().join('|');
   Object.assign(Econ, { checked:true, configured:!!d.configured, on:!!d.signedIn, kind:d.signedIn ? (d.kind || 'discord') : '', name:d.name || '', avatar:d.avatar || null,
     balance:d.signedIn ? (d.balance ?? Econ.balance) : null, today:d.today || 0, cap:d.cap || 2000, owed:d.owed || 0, claimed:new Set(d.claimed || []),
+    earned:d.signedIn ? Number(d.earned) || 0 : 0, // (the points badges: the one-time Rebel Points this account has had from Universe)
     badgeWall:d.signedIn && /^https:\/\//.test(d.badgeWall || '') ? d.badgeWall : null });
+  if (Econ.on) { badgeStat('signin', 1, 'max'); setTimeout(() => checkAutoBadges(), 0); }
   renderEconBadge();
   if (d.paidNow) showToast(`+${Number(d.paidNow).toLocaleString('en-US')} Rebel points held from an earlier day went to your account.`, 6000);
   if (was !== Econ.on || wasClaimed !== [...Econ.claimed].sort().join('|')) refreshEconWorld();
@@ -9575,7 +10034,7 @@ async function econNameSubmit(action) {
 }
 async function econSignOut() {
   try { await fetch('/api/econ-me', { method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ action:'logout' }) }); } catch (e) {}
-  Object.assign(Econ, { on:false, kind:'', name:'', avatar:null, balance:null, today:0, owed:0, claimed:new Set(), badgeWall:null });
+  Object.assign(Econ, { on:false, kind:'', name:'', avatar:null, balance:null, today:0, owed:0, claimed:new Set(), earned:0, badgeWall:null });
   storySyncOnEcon();
   mpOnEcon();
   refreshEconWorld(); renderJournalIfOpen(); renderEconBadge();
@@ -10951,9 +11410,9 @@ function getSecretVillageTotal(villageId) {
   return VILLAGE_REGISTRY[villageId] ? 6 : 0;
 }
 
-// The Games tab: every mini-game in the villages (GAME_LIST: [id, title, village], written by tools/gen-game-list.mjs
+// The Games tab: every mini-game in the villages (GAME_LIST: [id, title, village, type], written by tools/gen-game-list.mjs
 // from the layouts); the ones played show their best score and a tick once cleared, the rest stay unnamed until found
-const GAME_LIST = [["hub-shell-game","Mini Ant Shell Game","hub"],["hub-archivist-riddles","The Archivist's Riddles","hub"],["hub-emblem-match","Emblem Match","hub"],["hub-sorting-crates","Sorting the Crates","hub"],["hub-colony-corners","Colony Corners","hub"],["hub-courtyard-circuit","Courtyard Circuit","hub"],["hub-rebel-groove","Rebel Groove","hub"],["hub-mini-ant-tag","Mini Ant Tag","hub"],["hub-root-seal","Root Seal","hub"],["grand-relay","The Grand Relay","hub"],["hub-ant-claw","Ant Claw","hub"],["hub-dummy-drill","Dummy Drill","hub"],["ashi-log-split","Log Split","ashigaru"],["ashi-sprout-field","Sprout Field","ashigaru"],["ashi-lookout","The Lookout","ashigaru"],["ashi-keeper-questions","The Archive Keeper's Questions","ashigaru"],["ashi-farmers-fields","The Farmer's Fields","ashigaru"],["ashi-irrigation-channels","The Irrigation Channels","ashigaru"],["ashi-palisade-run","Palisade Run","ashigaru"],["ashi-rice-planting-song","Rice Planting Song","ashigaru"],["ashi-loose-chickens","Loose Chickens","ashigaru"],["ashi-harvest-run","Harvest Run","ashigaru"],["ashi-rice-planting","Rice Planting","ashigaru"],["buke-shield-wall","Shield Wall","buke"],["buke-engineer-puzzles","The Engineer's Puzzles","buke"],["buke-canal-gates","The Canal Gates","buke"],["buke-canal-ferry","The Canal Ferry","buke"],["buke-canal-islands","The Canal Islands","buke"],["buke-canal-run","Canal Run","buke"],["buke-trident-march","Trident March","buke"],["buke-archive-thief","Archive Thief","buke"],["buke-canal-lanterns","Canal Lanterns","buke"],["buke-engineer-basins","The Engineer's Basins","buke"],["bushi-signal-fires","Signal Fires","bushi"],["bushi-strategist-question","The Strategist's Question","bushi"],["bushi-cavalry-ride","The Cavalry Ride","bushi"],["bushi-spys-code","The Spy's Code","bushi"],["bushi-war-camp","The War Camp","bushi"],["bushi-beacon-relay","Beacon Relay","bushi"],["bushi-war-fan-dance","War Fan Dance","bushi"],["bushi-catch-the-spy","Catch the Spy","bushi"],["bushi-long-shot","Long Shot","bushi"],["bushi-banners","The Tactician's Banners","bushi"],["chz-coconut-toss","Coconut Toss","chumpz"],["chz-high-low","High-Low with Peely","chumpz"],["chz-beer-pong","Beer Pong","chumpz"],["chumpz-peely-riddles","Peely's Riddles","chumpz"],["chz-pier-fishing","Pier Fishing","chumpz"],["chz-banana-merge","Banana Merge","chumpz"],["chz-banana-drop","Banana Drop","chumpz"],["chz-jungle-run","Jungle Run","chumpz"],["chz-calypso-cove","Calypso Cove","chumpz"],["chz-sneaky-crab","Sneaky Crab","chumpz"],["chz-treasure-dig","Treasure Dig","chumpz"],["chz-surf-the-cove","Surf the Cove","chumpz"],["cc-ghost-catch","Ghost Catch","cute-creepy"],["cc-mochi-riddles","Mochi's Lucky Riddles","cute-creepy"],["cc-potion-shelf","The Potion Shelf","cute-creepy"],["cc-restless-graves","The Restless Graves","cute-creepy"],["cc-moons-and-suns","Moons and Suns","cute-creepy"],["cc-graveyard-run","Graveyard Run","cute-creepy"],["cc-monster-mash","Monster Mash","cute-creepy"],["cc-lantern-thief","Lantern Thief","cute-creepy"],["cc-trick-or-treat","Trick or Treat Night","cute-creepy"],["cc-witch-brew","The Witch's Brew","cute-creepy"],["cc-claw-machine","Claw Machine","cute-creepy"],["kenshi-raked-stones","Raked Stones","kenshi"],["kenshi-duelist-questions","The Duelist's Questions","kenshi"],["kenshi-archivist-stones","The Archivist's Stones","kenshi"],["kenshi-stone-skipping","Stone Skipping","kenshi"],["kenshi-sacred-rope","The Sacred Rope","kenshi"],["kenshi-dojo-circuit","Dojo Circuit","kenshi"],["kenshi-blade-kata","Blade Kata","kenshi"],["kenshi-stolen-blade","The Stolen Blade","kenshi"],["kenshi-bamboo-cut","Bamboo Cut","kenshi"],["kenshi-quick-draw","The Quick Draw","kenshi"],["ronin-stone-court","The Stone Court","ronin"],["ronin-watcher-trial","The Watcher's Trial","ronin"],["ronin-silent-path","The Silent Path","ronin"],["ronin-watchmans-lanterns","The Watchman's Lanterns","ronin"],["ronin-ronins-shadows","The Ronin's Shadows","ronin"],["ronin-fortress-run","Fortress Run","ronin"],["ronin-shadow-chase","Shadow Chase","ronin"],["ronin-watch-fires","Watch Fires","ronin"],["ronin-silent-steps","Silent Steps","ronin"],["ronin-debt-marker-stones","The Debt Marker","ronin"],["ronin-shuriken","Shuriken","ronin"],["sl-three-point","3-Point Contest","saints-la"],["saints-librarian-riddles","The Librarian's Riddles","saints-la"],["sl-free-throws","Free Throws","saints-la"],["sl-crosswalk-rush","Crosswalk Rush","saints-la"],["sl-valet-parking","Valet Parking","saints-la"],["sl-skyline-blocks","Skyline Blocks","saints-la"],["sl-skyline-view","Skyline View","saints-la"],["sl-downtown-sprint","Downtown Sprint","saints-la"],["sl-lowrider-hop","Lowrider Hop","saints-la"],["sl-street-art","Street Art","saints-la"],["sl-bowling","Bowling","saints-la"],["sam-yabusame","Yabusame Range","samurai"],["sam-tameshigiri","Tameshigiri","samurai"],["samurai-captain-riddles","The Captain's Riddles","samurai"],["sam-swordsmith-forge","The Swordsmith's Forge","samurai"],["sam-ancestors-grid","The Ancestor's Grid","samurai"],["sam-tile-garden","The Tile Garden","samurai"],["sam-terrace-run","Terrace Run","samurai"],["sam-taiko-thunder","Taiko Thunder","samurai"],["sam-lantern-night","Lantern Night","samurai"],["sam-messenger-run","Messenger Run","samurai"],["shogun-sun-mirrors","The Sun Mirrors","shogun"],["shogun-lords-puzzles","The Lord's Puzzles","shogun"],["shogun-lacquer-floor","The Lacquer Floor","shogun"],["shogun-garden-bridges","The Garden Bridges","shogun"],["shogun-land-grants","The Land Grants","shogun"],["shogun-castle-run","Castle Run","shogun"],["shogun-court-fan-dance","Court Fan Dance","shogun"],["shogun-keep-thief","Keep Thief","shogun"],["shogun-koi-feeding","Koi Feeding","shogun"],["shogun-broken-seal","The Broken Seal","shogun"],["sohei-bell-song","Bell Song","sohei"],["sohei-monk-koan","The Monk's Koan","sohei"],["sohei-raking-path","The Raking Path","sohei"],["sohei-maple-catch","Maple Catch","sohei"],["sohei-temple-scales","The Temple Scales","sohei"],["sohei-temple-abacus","The Temple Abacus","sohei"],["sohei-temple-steps","Temple Steps","sohei"],["sohei-temple-drum","Temple Drum","sohei"],["sohei-temple-lamps","Temple Lamps","sohei"],["sohei-water-bowl","Water Bowl","sohei"],["warrior-cracked-circle","The Cracked Circle","warrior"],["war-spear-throw","Spear Throw","warrior"],["war-tug-of-war","Tug of War","warrior"],["war-siege-engine","The Siege Engine","warrior"],["war-war-banner","The War Banner","warrior"],["war-war-drums","The War Drums","warrior"],["war-obstacle-course","Obstacle Course","warrior"],["war-war-dance","War Dance","warrior"],["war-spy-in-the-fort","Spy in the Fort","warrior"],["war-fighting-ring","Fighting Ring","warrior"],["wok-cargo-crane","Cargo Crane","wokou"],["wok-swivel-gun","Swivel Gun","wokou"],["wokou-broker-wagers","The Broker's Wagers","wokou"],["wok-buried-chest","The Buried Chest","wokou"],["wok-fleet-chart","The Fleet Chart","wokou"],["wok-pearl-route","The Pearl Route","wokou"],["wok-pier-run","Pier Run","wokou"],["wok-sea-shanty","Sea Shanty","wokou"],["wok-harbour-fishing","Harbour Fishing","wokou"],["wok-strongbox","The Broker's Strongbox","wokou"],["yam-spirit-lanterns","Spirit Lanterns","yamabushi"],["yam-misty-stones","The Misty Stones","yamabushi"],["yam-cairn-stack","Cairn Stack","yamabushi"],["yam-herbalist-questions","The Herbalist's Questions","yamabushi"],["yam-hermits-pegs","The Hermit's Pegs","yamabushi"],["yam-pilgrims-path","The Pilgrim's Path","yamabushi"],["yam-before-the-mist","Before the Mist","yamabushi"],["yam-spirit-dance","Spirit Dance","yamabushi"],["yam-spirit-chase","Spirit Chase","yamabushi"],["yam-prayer-flags","Prayer Flags","yamabushi"]];
+const GAME_LIST = [["hub-shell-game","Mini Ant Shell Game","hub","shells"],["hub-archivist-riddles","The Archivist's Riddles","hub","riddle"],["hub-emblem-match","Emblem Match","hub","memory"],["hub-sorting-crates","Sorting the Crates","hub","riddle"],["hub-colony-corners","Colony Corners","hub","reversi"],["hub-courtyard-circuit","Courtyard Circuit","hub","course"],["hub-rebel-groove","Rebel Groove","hub","dance"],["hub-mini-ant-tag","Mini Ant Tag","hub","chase"],["hub-root-seal","Root Seal","hub","roots"],["grand-relay","The Grand Relay","hub","relay"],["hub-ant-claw","Ant Claw","hub","claw"],["hub-dummy-drill","Dummy Drill","hub","drill"],["ashi-log-split","Log Split","ashigaru","chop"],["ashi-sprout-field","Sprout Field","ashigaru","sprouts"],["ashi-lookout","The Lookout","ashigaru","lookout"],["ashi-keeper-questions","The Archive Keeper's Questions","ashigaru","riddle"],["ashi-farmers-fields","The Farmer's Fields","ashigaru","riddle"],["ashi-irrigation-channels","The Irrigation Channels","ashigaru","channels"],["ashi-palisade-run","Palisade Run","ashigaru","course"],["ashi-rice-planting-song","Rice Planting Song","ashigaru","dance"],["ashi-loose-chickens","Loose Chickens","ashigaru","chase"],["ashi-harvest-run","Harvest Run","ashigaru","gather"],["ashi-rice-planting","Rice Planting","ashigaru","plant"],["buke-shield-wall","Shield Wall","buke","guard"],["buke-engineer-puzzles","The Engineer's Puzzles","buke","riddle"],["buke-canal-gates","The Canal Gates","buke","pipes"],["buke-canal-ferry","The Canal Ferry","buke","ferry"],["buke-canal-islands","The Canal Islands","buke","canals"],["buke-canal-run","Canal Run","buke","course"],["buke-trident-march","Trident March","buke","dance"],["buke-archive-thief","Archive Thief","buke","chase"],["buke-canal-lanterns","Canal Lanterns","buke","tend"],["buke-engineer-basins","The Engineer's Basins","buke","basins"],["bushi-signal-fires","Signal Fires","bushi","sequence"],["bushi-strategist-question","The Strategist's Question","bushi","riddle"],["bushi-cavalry-ride","The Cavalry Ride","bushi","knight"],["bushi-spys-code","The Spy's Code","bushi","mastermind"],["bushi-war-camp","The War Camp","bushi","tents"],["bushi-beacon-relay","Beacon Relay","bushi","course"],["bushi-war-fan-dance","War Fan Dance","bushi","dance"],["bushi-catch-the-spy","Catch the Spy","bushi","chase"],["bushi-long-shot","Long Shot","bushi","archery"],["bushi-banners","The Tactician's Banners","bushi","queens"],["chz-coconut-toss","Coconut Toss","chumpz","toss"],["chz-high-low","High-Low with Peely","chumpz","highlow"],["chz-beer-pong","Beer Pong","chumpz","pong"],["chumpz-peely-riddles","Peely's Riddles","chumpz","riddle"],["chz-pier-fishing","Pier Fishing","chumpz","fishing"],["chz-banana-merge","Banana Merge","chumpz","merge"],["chz-banana-drop","Banana Drop","chumpz","four"],["chz-jungle-run","Jungle Run","chumpz","course"],["chz-calypso-cove","Calypso Cove","chumpz","dance"],["chz-sneaky-crab","Sneaky Crab","chumpz","chase"],["chz-treasure-dig","Treasure Dig","chumpz","treasure"],["chz-surf-the-cove","Surf the Cove","chumpz","surf"],["cc-ghost-catch","Ghost Catch","cute-creepy","ghosts"],["cc-mochi-riddles","Mochi's Lucky Riddles","cute-creepy","riddle"],["cc-potion-shelf","The Potion Shelf","cute-creepy","potion"],["cc-restless-graves","The Restless Graves","cute-creepy","graves"],["cc-moons-and-suns","Moons and Suns","cute-creepy","moons"],["cc-graveyard-run","Graveyard Run","cute-creepy","course"],["cc-monster-mash","Monster Mash","cute-creepy","dance"],["cc-lantern-thief","Lantern Thief","cute-creepy","chase"],["cc-trick-or-treat","Trick or Treat Night","cute-creepy","trick"],["cc-witch-brew","The Witch's Brew","cute-creepy","brew"],["cc-claw-machine","Claw Machine","cute-creepy","claw"],["kenshi-raked-stones","Raked Stones","kenshi","tiles"],["kenshi-duelist-questions","The Duelist's Questions","kenshi","riddle"],["kenshi-archivist-stones","The Archivist's Stones","kenshi","nim"],["kenshi-stone-skipping","Stone Skipping","kenshi","skip"],["kenshi-sacred-rope","The Sacred Rope","kenshi","loop"],["kenshi-dojo-circuit","Dojo Circuit","kenshi","course"],["kenshi-blade-kata","Blade Kata","kenshi","dance"],["kenshi-stolen-blade","The Stolen Blade","kenshi","chase"],["kenshi-bamboo-cut","Bamboo Cut","kenshi","bamboo"],["kenshi-quick-draw","The Quick Draw","kenshi","quickdraw"],["ronin-stone-court","The Stone Court","ronin","push"],["ronin-watcher-trial","The Watcher's Trial","ronin","riddle"],["ronin-silent-path","The Silent Path","ronin","silent"],["ronin-watchmans-lanterns","The Watchman's Lanterns","ronin","akari"],["ronin-ronins-shadows","The Ronin's Shadows","ronin","shadows"],["ronin-fortress-run","Fortress Run","ronin","course"],["ronin-shadow-chase","Shadow Chase","ronin","chase"],["ronin-watch-fires","Watch Fires","ronin","tend"],["ronin-silent-steps","Silent Steps","ronin","stealth"],["ronin-debt-marker-stones","The Debt Marker","ronin","debts"],["ronin-shuriken","Shuriken","ronin","shuriken"],["sl-three-point","3-Point Contest","saints-la","hoops"],["saints-librarian-riddles","The Librarian's Riddles","saints-la","riddle"],["sl-free-throws","Free Throws","saints-la","toss"],["sl-crosswalk-rush","Crosswalk Rush","saints-la","crossing"],["sl-valet-parking","Valet Parking","saints-la","valet"],["sl-skyline-blocks","Skyline Blocks","saints-la","blocks"],["sl-skyline-view","Skyline View","saints-la","sky"],["sl-downtown-sprint","Downtown Sprint","saints-la","course"],["sl-lowrider-hop","Lowrider Hop","saints-la","dance"],["sl-street-art","Street Art","saints-la","mural"],["sl-bowling","Bowling","saints-la","bowling"],["sam-yabusame","Yabusame Range","samurai","archery"],["sam-tameshigiri","Tameshigiri","samurai","tameshigiri"],["samurai-captain-riddles","The Captain's Riddles","samurai","riddle"],["sam-swordsmith-forge","The Swordsmith's Forge","samurai","forge"],["sam-ancestors-grid","The Ancestor's Grid","samurai","sudoku"],["sam-tile-garden","The Tile Garden","samurai","mahjong"],["sam-terrace-run","Terrace Run","samurai","course"],["sam-taiko-thunder","Taiko Thunder","samurai","dance"],["sam-lantern-night","Lantern Night","samurai","tend"],["sam-messenger-run","Messenger Run","samurai","gather"],["shogun-sun-mirrors","The Sun Mirrors","shogun","mirrors"],["shogun-lords-puzzles","The Lord's Puzzles","shogun","riddle"],["shogun-lacquer-floor","The Lacquer Floor","shogun","iceslide"],["shogun-garden-bridges","The Garden Bridges","shogun","hashi"],["shogun-land-grants","The Land Grants","shogun","grants"],["shogun-castle-run","Castle Run","shogun","course"],["shogun-court-fan-dance","Court Fan Dance","shogun","dance"],["shogun-keep-thief","Keep Thief","shogun","chase"],["shogun-koi-feeding","Koi Feeding","shogun","koi"],["shogun-broken-seal","The Broken Seal","shogun","slide"],["sohei-bell-song","Bell Song","sohei","sequence"],["sohei-monk-koan","The Monk's Koan","sohei","riddle"],["sohei-raking-path","The Raking Path","sohei","rake"],["sohei-maple-catch","Maple Catch","sohei","leaves"],["sohei-temple-scales","The Temple Scales","sohei","scales"],["sohei-temple-abacus","The Temple Abacus","sohei","kenken"],["sohei-temple-steps","Temple Steps","sohei","course"],["sohei-temple-drum","Temple Drum","sohei","dance"],["sohei-temple-lamps","Temple Lamps","sohei","tend"],["sohei-water-bowl","Water Bowl","sohei","bowl"],["warrior-cracked-circle","The Cracked Circle","warrior","riddle"],["war-spear-throw","Spear Throw","warrior","toss"],["war-tug-of-war","Tug of War","warrior","tug"],["war-siege-engine","The Siege Engine","warrior","siege"],["war-war-banner","The War Banner","warrior","nonogram"],["war-war-drums","The War Drums","warrior","drums"],["war-obstacle-course","Obstacle Course","warrior","course"],["war-war-dance","War Dance","warrior","dance"],["war-spy-in-the-fort","Spy in the Fort","warrior","chase"],["war-fighting-ring","Fighting Ring","warrior","spar"],["wok-cargo-crane","Cargo Crane","wokou","crane"],["wok-swivel-gun","Swivel Gun","wokou","toss"],["wokou-broker-wagers","The Broker's Wagers","wokou","riddle"],["wok-buried-chest","The Buried Chest","wokou","dig"],["wok-fleet-chart","The Fleet Chart","wokou","fleet"],["wok-pearl-route","The Pearl Route","wokou","pearls"],["wok-pier-run","Pier Run","wokou","course"],["wok-sea-shanty","Sea Shanty","wokou","dance"],["wok-harbour-fishing","Harbour Fishing","wokou","fishing"],["wok-strongbox","The Broker's Strongbox","wokou","lock"],["yam-spirit-lanterns","Spirit Lanterns","yamabushi","sequence"],["yam-misty-stones","The Misty Stones","yamabushi","stones"],["yam-cairn-stack","Cairn Stack","yamabushi","stack"],["yam-herbalist-questions","The Herbalist's Questions","yamabushi","riddle"],["yam-hermits-pegs","The Hermit's Pegs","yamabushi","pegs"],["yam-pilgrims-path","The Pilgrim's Path","yamabushi","hidato"],["yam-before-the-mist","Before the Mist","yamabushi","course"],["yam-spirit-dance","Spirit Dance","yamabushi","dance"],["yam-spirit-chase","Spirit Chase","yamabushi","chase"],["yam-prayer-flags","Prayer Flags","yamabushi","gather"]];
 function renderGamesJournal() {
   const rec = ProgressionState.games || {}, played = GAME_LIST.filter(([id]) => rec[id]?.plays).length, cleared = GAME_LIST.filter(([id]) => rec[id]?.cleared).length;
   const rows = Object.values(VILLAGE_REGISTRY).map(village => {
@@ -11431,6 +11890,7 @@ function answerPlaceRiddle(cfg) {
     return true;
   }
   if (cfg.donePiece && !(ProgressionState.spotsUsed || []).includes(cfg.spotId)) (ProgressionState.spotsUsed ||= []).push(cfg.spotId); // its piece shows (a lantern lights)
+  badgeStat('riddles'); // (the badges: a riddle answered right)
   r.part = (r.part || 0) + 1;
   if (r.part < R.parts.length) { saveProgressionState(); if (A.text) showToast(A.text, 4500); showPlaceRiddlePart(R, r.part); return true; }
   r.solved = true; r.solvedAt = Date.now();
@@ -11445,6 +11905,7 @@ function answerPlaceRiddle(cfg) {
     econPracticeHint();
   }
   saveProgressionState();
+  checkAutoBadges();
   try { window.dispatchEvent(new CustomEvent('rebelAntsRiddle', { detail:{ riddleId:R.id, villageId:CURRENT_VILLAGE_ID } })); } catch (e) {}
   MoonTaleSounds.fx?.('gamewin');
   queueQuestCelebration({ kicker:'Riddle Solved', title:R.title, body:escapeHTML(A.text || R.solvedText || ''), chips:pts ? [{ label:`+${pts} ${Econ.on || !Econ.configured ? 'Rebel' : 'practice'} points`, tone:'gold' }] : [], duration:7000 });
@@ -12030,6 +12491,7 @@ async function takeVillagePhoto(caption) {
     MoonTaleSounds.play('camera');
     const fl = document.getElementById('photoFlash'); if (fl) { fl.style.transition = 'none'; fl.style.opacity = '.85'; void fl.offsetWidth; fl.style.transition = ''; fl.style.opacity = '0'; }
     VillagePhoto.url = url; VillagePhoto.blob = await (await fetch(url)).blob();
+    badgeStat('photos'); // (the badges)
     VillagePhoto.caption = caption || `${VILLAGE_REGISTRY[CURRENT_VILLAGE_ID]?.displayName || 'Rebel Ants'} · ${new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
     document.getElementById('photoImg').src = url;
     document.querySelector('#photoOverlay .ph-cap').textContent = VillagePhoto.caption;
@@ -12189,6 +12651,8 @@ function buildMiniGameCtx(def, src, frame) {
     // a chest's (rebelPointsLog, the coin pop), at most `cap` a day per game so a replay can't farm them; returns the
     // points given (0 once the day's cap is reached)
     rebelPoints(points, cap = 40) { return grantMiniGameRebelPoints(def, points, cap); },
+    // the badges' counters (badgeStat): riddles answered right, Treasure Dig finds
+    count(key, n = 1) { if (/^(riddles|digs)$/.test(key)) badgeStat(key, n); },
     toWorld: (x, y, z) => V3.TransformCoordinates(new V3(x, y, z), frame.getWorldMatrix()),
     toLocal: (p) => V3.TransformCoordinates(p, BABYLON.Matrix.Invert(frame.getWorldMatrix())),
     // the camera: at local position p, looking at local point t
@@ -12257,7 +12721,7 @@ function buildMiniGameCtx(def, src, frame) {
     },
     music(name, loops) { if (name) MoonTaleSounds.play(name, loops); }, stopMusic() { MoonTaleSounds.stop(.3); },
     audio() { return MoonTaleSounds.mix(); },                // a music bus of the game's own (Web Audio), or null
-    sfx(name, opts) { try { (MiniGames.sfx ||= window.RebelWeapon?.sfx?.({ scene, clip: () => null, kind: 'bow', volume: () => (WeatherManager.interactionAudioEnabled ? WeatherManager.masterVolume * WeatherManager.interactionVolume * 1.4 : 0) }))?.play?.(name, opts); } catch (e) {} },
+    sfx(name, opts) { try { (MiniGames.sfx ||= window.RebelWeapon?.sfx?.({ scene, clip: () => null, kind: 'bow', volume: () => (WeatherManager.interactionAudioEnabled ? WeatherManager.masterVolume * WeatherManager.interactionVolume * 1.4 * playerSound('effects') : 0) }))?.play?.(name, opts); } catch (e) {} },
     // a screen point (CSS px) of a world point, for score pops
     screenOf(p) { const r = engine.getRenderingCanvasClientRect(); const v = BABYLON.Vector3.Project(p, BABYLON.Matrix.Identity(), scene.getTransformMatrix(), walk.viewport.toGlobal(engine.getRenderWidth(), engine.getRenderHeight()));
       return { x: (r?.left || 0) + v.x * (r ? r.width / engine.getRenderWidth() : 1), y: (r?.top || 0) + v.y * (r ? r.height / engine.getRenderHeight() : 1), behind: v.z > 1 || v.z < 0 }; },
@@ -12431,7 +12895,7 @@ const PlayerGloves = (() => {
     if (!mats) return; const c = choice();
     for (const k of ['glove', 'cuff']) for (const e of mats[k]) { const col = colourFor(e, c[k]); if (e.m.albedoColor) e.m.albedoColor = col.clone(); else e.m.diffuseColor = col.clone(); }
   }
-  function set(k, v) { const c = { ...choice() }; c[k] = v ? String(v).toLowerCase() : null; save(c); apply(); paint(); }
+  function set(k, v) { const c = { ...choice() }; c[k] = v ? String(v).toLowerCase() : null; save(c); apply(); paint(); if (v) badgeStat('glove'); }
   function paint() {
     const el = document.getElementById('glovePanel'); if (!el) return; const c = choice();
     for (const k of ['glove', 'cuff']) {
@@ -12455,7 +12919,7 @@ const PlayerGloves = (() => {
 window.PlayerGloves = PlayerGloves; // tests
 window.togglePlayerGlovePanel = function (on) {
   const el = document.getElementById('glovePanel'); if (!el || !PlayerGloves.available()) return;
-  const show = on == null ? !el.classList.contains('on') : !!on; el.classList.toggle('on', show); if (show) PlayerGloves.paint();
+  const show = on == null ? !el.classList.contains('on') : !!on; el.classList.toggle('on', show); if (show) { PlayerGloves.paint(); window.toggleSoundPanel?.(false); }
 };
 // The games pack (v2.24): Miguel's Mixamo moves for the games (game_cast / reel / fish_wait, game_dig, game_plant,
 // game_pick_up, game_throw / throw_far, game_chop, game_cheer, game_push / push_walk, dance_wave / tut / house /
@@ -12535,6 +12999,8 @@ async function playEmote(id) {
   const m = EMOTES.find(x => x.id === id); closeEmoteBar();
   if (!m || emoteBlocked()) return false;
   stopEmote();
+  badgeStat('emotes', id); // (the badges: every emote, and a dance with 5 other players around)
+  try { if (!m.once && (window.VillageMP?.near?.(15) || []).length >= 5) badgeStat('emoteCrowd'); } catch (e) {}
   const kind = emoteKind();
   if (kind === 'kit') { // a Chumpz kit ape: a jump for the cheer, its own dance (again and again) for the dances
     SamuraiKit.actorAction(window.kitPlayerModel, m.once ? 'jump' : 'dance');
@@ -12652,6 +13118,18 @@ function finishMiniGame(r) {
   const prevBest = rec.best || 0, newBest = rec.plays > 0 && done && (low ? !prevBest || score < prevBest : score > prevBest);
   rec.plays = (rec.plays || 0) + 1; rec.best = low ? (done ? (prevBest ? Math.min(prevBest, score) : score) : prevBest) : Math.max(prevBest, score); rec.last = score; rec.at = Date.now();
   if (low) rec.low = true;
+  // the badges: the levels solved (a game with a level picker: MiniGames.level / levels; a level counts when the game
+  // says it was solved, else when it reached its next level, else when it passed; Shield Wall's picker is the start
+  // wave, not a level), and a time trial's best medal (its time against the def's medals [gold, silver, bronze], as
+  // the games decide it: the unrounded time)
+  const levelSolved = r.solved != null ? !!r.solved : r.next != null ? true : passed;
+  if (levelSolved && Number.isFinite(MiniGames.level) && MiniGames.levels > 0 && def.type !== 'guard') {
+    rec.lv = [...new Set([...(rec.lv || []), MiniGames.level])].sort((a, b) => a - b); rec.lvn = Math.max(rec.lvn || 0, MiniGames.levels);
+  }
+  if (low && done && Array.isArray(def.medals) && def.medals.length >= 3) {
+    const t = Number(r.time), m = t <= def.medals[0] ? 'gold' : t <= def.medals[1] ? 'silver' : t <= def.medals[2] ? 'bronze' : null;
+    if (m && (MEDAL_RANK[m] || 0) > (MEDAL_RANK[rec.medal] || 0)) rec.medal = m;
+  }
   let points = 0, firstClear = false, toAccount = false;
   if (passed && !rec.cleared) { rec.cleared = true; rec.clearedAt = Date.now(); firstClear = true; }
   const clearPts = (def.points || 0) * GAME_POINTS_X;
@@ -12667,7 +13145,7 @@ function finishMiniGame(r) {
     econPracticeHint();
   }
   saveProgressionState();
-  if (firstClear) checkAutoBadges(); // a first clear can finish a village's games (the card waits for the game to end)
+  checkAutoBadges(); // a clear, a level, a medal, a play: the games badges (the card waits for the game to end)
   if (passed && def.questOn === 'pass') miniGameQuestHook();
   if (passed && GamesPack.slots?.game_cheer && !MiniGames.roam) playMiniGameClip('game_cheer'); // a Rebel with the games pack cheers a clear
   try { window.dispatchEvent(new CustomEvent('rebelAntsGameEnd', { detail:{ game:def.id, score, passed, best:rec.best, newBest, points } })); } catch (e) {}
@@ -12709,12 +13187,21 @@ const GameBoard = (() => {
     const me = await session();
     let b = me && postValue != null ? await post(game, kind, postValue) : null;
     if (!b) b = await get(game, kind);
+    noteBoardRank(game, b);
     if (t !== el._gbTok || !el.isConnected) return;
     el.innerHTML = b ? html(b, kind, !!b.signedIn) : '';
   }
   return { session, get, post, show, html, fmt };
 })();
 window.GameBoard = GameBoard; // tests
+// the board badges: the best place this player's wallet reached on a game's board (its top 10), kept with the game
+function noteBoardRank(game, b) {
+  const r = Number(b?.you?.rank);
+  if (!(r >= 1 && r <= 10) || !game) return;
+  const rec = miniGameRecord(game);
+  if (rec.rank && rec.rank <= r) return;
+  rec.rank = r; saveProgressionState(); checkAutoBadges();
+}
 function showGameResultBoard(def, low, done, score, rec) {
   const el = RebelGames.resultBoard?.(); if (!el || !def?.id) return;
   // a finished run posts this device's best (the server keeps each wallet's best), so a best set before signing in counts too
@@ -14819,7 +15306,7 @@ function getInteriorAudioId(path = getActiveInteriorAudioPath()) {
 function getInteriorAudioTargetVolume() {
   if (!WeatherManager.masterAudioEnabled || !WeatherManager.musicEnabled) return 0;
   const blendedInteriorVolume = Math.sqrt(Math.max(0, WeatherManager.musicVolume) * Math.max(0, WeatherManager.ambienceVolume));
-  return WeatherManager.masterVolume * blendedInteriorVolume * .85;
+  return WeatherManager.masterVolume * blendedInteriorVolume * .85 * playerSound('music');
 }
 
 function updateInteriorAudioStatus(message = '', force = false) {
@@ -14939,7 +15426,7 @@ function getWeatherAudioTargets() {
   if (ActiveInterior) return targets;
   if (!WeatherManager.audioEnabled) return targets;
   (WEATHER_AUDIO_TRACKS[WeatherManager.mode] || []).forEach(track => {
-    targets[track.id] = Math.max(targets[track.id] || 0, (track.volume || .2) * WeatherManager.masterVolume * WeatherManager.weatherVolume);
+    targets[track.id] = Math.max(targets[track.id] || 0, (track.volume || .2) * WeatherManager.masterVolume * WeatherManager.weatherVolume * playerSound('ambience'));
     getWeatherAudioTrack(track.id, track.path);
   });
   return targets;
@@ -14952,13 +15439,13 @@ function getVillageAmbienceTargets() {
   const profile = VILLAGE_AMBIENCE_PROFILES[CURRENT_VILLAGE_ID] || DEFAULT_VILLAGE_AMBIENCE;
   const moodScale = getWeatherAmbienceMultiplier();
   (profile.loops || []).forEach(track => {
-    targets[track.id] = Math.max(targets[track.id] || 0, (track.volume || .25) * WeatherManager.masterVolume * WeatherManager.ambienceVolume * moodScale);
+    targets[track.id] = Math.max(targets[track.id] || 0, (track.volume || .25) * WeatherManager.masterVolume * WeatherManager.ambienceVolume * moodScale * playerSound('ambience'));
     getWeatherAudioTrack(track.id, track.path);
   });
   const nearGate = walkMode && !adminMode && getNearestVillageGateInRange(10.5);
   if (nearGate || isVillageGateMenuOpen()) {
     const pulse = .82 + Math.sin(performance.now() * .003) * .18;
-    targets[PORTAL_HUM_AUDIO.id] = PORTAL_HUM_AUDIO.volume * WeatherManager.masterVolume * WeatherManager.ambienceVolume * pulse;
+    targets[PORTAL_HUM_AUDIO.id] = PORTAL_HUM_AUDIO.volume * WeatherManager.masterVolume * WeatherManager.ambienceVolume * pulse * playerSound('ambience');
     getWeatherAudioTrack(PORTAL_HUM_AUDIO.id, PORTAL_HUM_AUDIO.path);
   }
   return targets;
@@ -15023,7 +15510,7 @@ function ensureVillageMusicTrack() {
 function getVillageMusicTargetVolume() {
   if (ActiveInterior) return 0;
   if (!WeatherManager.musicEnabled || !WeatherManager.musicUnlocked || WeatherManager.musicTravelMuted) return 0;
-  return WeatherManager.masterVolume * WeatherManager.musicVolume;
+  return WeatherManager.masterVolume * WeatherManager.musicVolume * playerSound('music');
 }
 
 function updateVillageMusic() {
@@ -15075,7 +15562,7 @@ function playWeatherThunderAudio(strikeId, dist = 300, loud = true) {
   const src = ctx.createBufferSource(), lp = ctx.createBiquadFilter(), g = ctx.createGain();
   src.buffer = buf; src.playbackRate.value = .86 + Math.random() * .24;
   lp.type = 'lowpass'; lp.frequency.value = near ? 9000 : 900 + 1600 * (460 - dist) / 200;
-  const vol = (WeatherManager.masterVolume ?? .8) * (WeatherManager.weatherVolume ?? .65) * (near ? .85 : .6) * (loud ? 1 : .7);
+  const vol = (WeatherManager.masterVolume ?? .8) * (WeatherManager.weatherVolume ?? .65) * (near ? .85 : .6) * (loud ? 1 : .7) * playerSound('ambience');
   g.gain.value = Math.max(0, Math.min(1, vol));
   src.connect(lp).connect(g).connect(ctx.destination);
   src.start(ctx.currentTime + dist / 343);
@@ -15111,7 +15598,7 @@ function playInteractionAudio(key) {
   WeatherManager.audioCooldowns[key] = now + (cfg.cooldownMs || 500);
   const audio = getInteractionAudioTrack(cfg.id, cfg.path);
   if (!audio || audio._unavailable) return;
-  audio.volume = (cfg.volume || .6) * WeatherManager.masterVolume * WeatherManager.interactionVolume;
+  audio.volume = (cfg.volume || .6) * WeatherManager.masterVolume * WeatherManager.interactionVolume * playerSound('effects');
   audio.currentTime = 0;
   audio.play().catch(error => { markAudioPlayFailure(audio, error); });
 }
@@ -15215,7 +15702,7 @@ function playFootstep(surface, run, level = 1) {
   FootstepAudio.last[surface] = i;
   const src = ctx.createBufferSource(), g = ctx.createGain(), pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
   src.buffer = list[i]; src.playbackRate.value = .94 + Math.random() * .12;
-  g.gain.value = WeatherManager.masterVolume * WeatherManager.footstepVolume * (FOOTSTEP_GAIN[surface] || 1) * (run ? 1.12 : .92) * (.86 + Math.random() * .14) * FOOTSTEP_LEVEL * level;
+  g.gain.value = WeatherManager.masterVolume * WeatherManager.footstepVolume * playerSound('effects') * (FOOTSTEP_GAIN[surface] || 1) * (run ? 1.12 : .92) * (.86 + Math.random() * .14) * FOOTSTEP_LEVEL * level;
   src.connect(g);
   if (pan) { FootstepAudio.side = -FootstepAudio.side; pan.pan.value = FootstepAudio.side * .08; g.connect(pan).connect(FootstepAudio.out); } else g.connect(FootstepAudio.out);
   src.start();
@@ -15289,7 +15776,7 @@ function updateEnvironmentalOneShotAudio() {
   if (cfg) {
     const audio = getInteractionAudioTrack(cfg.id, cfg.path);
     if (audio && !audio._unavailable) {
-      audio.volume = (cfg.volume || .25) * WeatherManager.masterVolume * WeatherManager.ambienceVolume;
+      audio.volume = (cfg.volume || .25) * WeatherManager.masterVolume * WeatherManager.ambienceVolume * playerSound('ambience');
       audio.currentTime = 0;
       audio.play().catch(error => { markAudioPlayFailure(audio, error); });
     }
@@ -15447,6 +15934,97 @@ function setFootstepVolume(value) {
   persistAudioSettings();
 }
 
+// The player's own sound levels (the Rebel panel's Sound; Miguel, Oct 31: players asked "is there a way they can lower
+// the music or sound effects volume"): 0-1 of how Universe is mixed (Admin > Audio stays the mix), saved on this device
+// (localStorage rebelAntsSound:v1). music = the village and room music; effects = interactions, chests, footsteps,
+// weapon and game sounds, the games' songs, the tales' sounds; ambience = the ambience and weather loops, the random
+// ambience sounds, thunder, running water, the surf, the portal hum. Voices keep their own level (VillageVoice.settings
+// .volume, also in the chat's settings). A function, so sounds made before this line runs read it too.
+var PlayerSoundLevels;
+function playerSound(kind) {
+  if (!PlayerSoundLevels) {
+    PlayerSoundLevels = { music: 1, effects: 1, ambience: 1 };
+    try { const s = JSON.parse(localStorage.getItem('rebelAntsSound:v1') || 'null'); if (s && typeof s === 'object') for (const k of Object.keys(PlayerSoundLevels)) if (s[k] != null && Number.isFinite(+s[k])) PlayerSoundLevels[k] = Math.max(0, Math.min(1, +s[k])); } catch (e) {}
+  }
+  return PlayerSoundLevels[kind] ?? 1;
+}
+function setPlayerSound(kind, value) {
+  playerSound(kind); if (!(kind in PlayerSoundLevels)) return;
+  PlayerSoundLevels[kind] = Math.max(0, Math.min(1, Number(value) || 0));
+  try { localStorage.setItem('rebelAntsSound:v1', JSON.stringify(PlayerSoundLevels)); } catch (e) {}
+  updateWeatherAudio(); if (kind === 'music') updateVillageMusic();
+}
+// The Sound panel (the Rebel panel's Sound button; the chat's settings link to it too): a slider and a mute button for
+// each kind; Voices only where voice is on here (the same level as the chat's Voice volume, 0-150 %).
+const SOUND_ROWS = [['music', 'Music', 'The village and room music'], ['effects', 'Sound effects', 'Footsteps, chests, games, moves'], ['ambience', 'Ambience & weather', 'Birds, wind, rain, water']];
+const SOUND_ICON = {
+  on: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
+  off: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor"/><path d="m16 9 6 6M22 9l-6 6"/></svg>'
+};
+const soundLast = {}; // (the level a mute button brings back)
+function soundVoiceHere() { return !!window.VillageVoice && !!(window.VillageMP?.voice?.on || window.VillageGroup?.voice?.open?.() || window.VillageStage?.voice?.open?.()); }
+function paintSoundPanel() {
+  const box = document.getElementById('soundRows'); if (!box) return; box.innerHTML = '';
+  const rows = SOUND_ROWS.map(([k, label, hint]) => ({ k, label, hint, max: 1, get: () => playerSound(k), set: v => setPlayerSound(k, v) }));
+  const VV = window.VillageVoice;
+  if (soundVoiceHere()) rows.push({ k: 'voices', label: 'Voices', hint: 'Players talking near you', max: 1.5, get: () => +(VV.settings.volume ?? 1), set: v => VV.set('volume', v) });
+  for (const R of rows) {
+    const row = document.createElement('div'); row.className = 'sp-row'; row.title = R.hint; row.dataset.k = R.k;
+    const mute = document.createElement('button'); mute.type = 'button'; mute.className = 'sp-mute';
+    const top = document.createElement('div'); top.className = 'sp-top';
+    const name = document.createElement('span'); name.textContent = R.label; const pct = document.createElement('span'); pct.className = 'sp-pct'; top.append(name, pct);
+    const r = document.createElement('input'); r.type = 'range'; r.min = '0'; r.max = String(R.max); r.step = '0.05'; r.value = String(R.get()); r.setAttribute('aria-label', R.label + ' volume');
+    const show = () => {
+      const off = +r.value <= 0; pct.textContent = Math.round(+r.value * 100) + '%'; row.classList.toggle('off', off); mute.classList.toggle('off', off);
+      mute.innerHTML = off ? SOUND_ICON.off : SOUND_ICON.on; mute.title = (off ? 'Turn on ' : 'Mute ') + R.label.toLowerCase(); mute.setAttribute('aria-label', mute.title);
+    };
+    r.oninput = () => { R.set(+r.value); if (+r.value > 0) soundLast[R.k] = +r.value; show(); };
+    r.onchange = () => r.blur(); // (let go: the walk keys work again)
+    mute.onclick = e => { e.stopPropagation(); const cur = +r.value; if (cur > 0) soundLast[R.k] = cur; r.value = String(cur > 0 ? 0 : (soundLast[R.k] || 1)); R.set(+r.value); show(); };
+    show(); row.append(mute, top, r); box.appendChild(row);
+  }
+}
+window.toggleSoundPanel = function (on) {
+  const el = document.getElementById('soundPanel'); if (!el) return;
+  const show = on == null ? !el.classList.contains('on') : !!on;
+  if (show) { window.togglePlayerGlovePanel?.(false); paintSoundPanel(); }
+  el.classList.toggle('on', show);
+  if (!show && el.contains(document.activeElement)) document.activeElement.blur();
+};
+// Esc with a slider in hand (the page's own keys skip inputs)
+document.getElementById('soundPanel')?.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); window.toggleSoundPanel(false); } });
+window.PlayerSound = { get: playerSound, set: setPlayerSound, get levels() { playerSound('music'); return { ...PlayerSoundLevels }; } }; // (tests)
+
+// The controls guide (the circle at the top right; on a phone, Controls in the Rebel panel): every key, the mouse and the
+// buttons, from the game's own key handling (keydown below, assets/village-touch.js, village-chat.js, village-voice.js)
+const CK = (...k) => k.map(x => x.startsWith('~') ? `<kbd class="m">${x.slice(1)}</kbd>` : `<kbd>${x}</kbd>`).join('');
+const CONTROLS_DESK = [
+  ['Move', [[CK('W', 'A', 'S', 'D'), 'Walk, the way the camera looks <small>(or the arrow keys)</small>'], [CK('R'), 'Run <small>(hold)</small>'], [CK('Space'), 'Jump'], [CK('~Drag'), 'Look around <small>(hold a mouse button and move)</small>'], [CK('Esc'), 'Close a window · again: stop walking, see the village from above']]],
+  ['Do', [[CK('O'), 'Use: talk, open, enter, read, play <small>(the prompt on screen says which)</small>'], [CK('E'), 'Emotes, then <kbd>1</kbd>-<kbd>5</kbd> to pick one'], [CK('P'), 'Take a photo'], [CK('Tab'), 'Your Rebel: Journal, Sound, Gloves, Back to Lobby'], [CK('Q'), 'Draw or put away your weapon <small>(Rebels that carry one)</small>']]],
+  ['Fight moves', [[CK('F'), 'Kicks <small>(press again for the next one)</small>'], [CK('G'), 'Punches <small>(press again for the next one)</small>'], [CK('T'), 'Fight stance on / off'], [CK('C', 'B', 'V'), 'Cartwheel · backflip · front flip'], [CK('H', 'K'), 'Get hit · get knocked down']]],
+  ['Players', [[CK('Enter'), 'Chat: type, <kbd>Enter</kbd> sends, <kbd>Enter</kbd> again for the next line, <kbd>Esc</kbd> closes'], [CK('X'), 'Talk with your voice <small>(hold; or hold the 🎤 button, bottom left; signed in)</small>'], [CK('~Click'), 'A name in the chat: whisper, mute, block, report'], [CK('~Click'), 'A chat bubble over a head: answer in the chat']]],
+  ['On the screen', [[CK('~Click'), 'The round button, top left: your Rebel <small>(same as Tab)</small>'], [CK('~Click'), 'The ◆ line beside it: your mission'], [CK('~Click'), 'The map, bottom right: zoom in or out'], [CK('~Click'), 'The 📷 above the map: take a photo']]]
+];
+const CONTROLS_TOUCH = [
+  ['Move', [[CK('~Stick'), 'Walk: the stick, bottom left <small>(push it to the rim to run)</small>'], [CK('~Drag'), 'Look around: drag anywhere else on the screen']]],
+  ['Do', [[CK('~Use'), 'Talk, open, enter, read, play <small>(the button says which)</small>'], [CK('~•••'), 'More: Jump, Hit, Talk, Emote, Photo']]],
+  ['Your Rebel', [[CK('~Round'), 'The round button, top left: Journal, Sound, Gloves, Controls, Back to Lobby'], [CK('~◆'), 'The gold circle under it: your mission'], [CK('~Map'), 'Tap the map to zoom in or out']]],
+  ['Players', [[CK('~💬'), 'Chat: the button at the top right'], [CK('~Talk'), 'Talk with your voice: hold Talk, under ••• <small>(signed in)</small>'], [CK('~Tap'), 'A name in the chat: whisper, mute, block, report']]]
+];
+function paintControlsCard() {
+  const card = document.getElementById('ctrlCard'); if (!card) return;
+  const touch = document.documentElement.classList.contains('vt-touch'), list = touch ? CONTROLS_TOUCH : CONTROLS_DESK;
+  card.innerHTML = '<button class="cc-close" type="button" aria-label="Close" onclick="toggleControlsCard(false)">✕</button><h4>Controls</h4>'
+    + `<div class="cc-sub">${touch ? 'Tap anywhere outside this card to close it.' : 'Esc or a click outside this card closes it.'}</div>`
+    + '<div class="cc-grid">' + list.map(([h, rows]) => `<section><h5>${h}</h5>` + rows.map(([k, w]) => `<div class="cc-row"><span class="cc-keys">${k}</span><span class="cc-what">${w}</span></div>`).join('') + '</section>').join('') + '</div>';
+}
+window.toggleControlsCard = function (on) {
+  const w = document.getElementById('ctrlWrap'); if (!w) return;
+  const show = on == null ? !w.classList.contains('on') : !!on;
+  if (show) paintControlsCard();
+  w.classList.toggle('on', show);
+};
+
 function getWeatherReactiveRoots() {
   const reactiveTypes = new Set(['lantern_1','hanging_lantern','hangingLantern','toro_lantern','tree_1','pine_1','cherry_blossom','bamboo','ronin_dead_tree','ronin_mist']);
   return scene.transformNodes.filter(node => node?.metadata?.type && reactiveTypes.has(node.metadata.type));
@@ -15507,6 +16085,7 @@ function triggerDistantLightning(withFlash = false) {
   const to = new BABYLON.Vector3(x, gy, z);
   window.VillageWeather?.bolt?.(to, c.y + 170);
   WeatherManager.lastStrike = { at: to, dist: d, t: performance.now() };
+  if (d <= 200 && walkMode && !adminMode && !ActiveInterior) badgeStat('strike'); // (the badges: a bolt within 200 m)
   playWeatherThunderAudio(WeatherManager.lastStrike.t, d, withFlash);
 }
 
@@ -15730,6 +16309,7 @@ function setWeatherCycleSpeed(speed) {
 
 function updateWeatherManager() {
   updateVoiceDuck();
+  try { updateBadgeStats(); } catch (e) {}
   if (ActiveInterior) {
     window.VillageWeather?.hide?.();
     setInteriorWeatherOverlaysVisible(false);
@@ -20756,6 +21336,7 @@ function openNPCDialogue(npc) {
   if (!npc || !['npc','small_village_ant'].includes(npc.metadata?.type)) return false;
   const overlay = document.getElementById('npcDialogueOverlay');
   if (!overlay) return false;
+  if (npc.metadata.type === 'npc' && npc.metadata.npcId && !adminMode) badgeStat('npcs', `${CURRENT_VILLAGE_ID}:${npc.metadata.npcId}`); // (the badges)
   const customLines = String(npc.metadata.customDialogue || '')
     .split(/\n+/)
     .map(line => line.trim())
@@ -21982,6 +22563,7 @@ async function loadActiveForgeCharacterForVillage(rebel) {
   try {
     const response = await fetch(`/api/forge-active-character-get?${params.toString()}`);
     const data = await response.json();
+    try { noteCharacterForBadges(rebel, response.ok && data?.ok ? data : null); } catch (e) {}
 
     if (!response.ok || !data.ok || !data.hasActiveCharacter) {
       return null;
@@ -21991,6 +22573,26 @@ async function loadActiveForgeCharacterForVillage(rebel) {
   } catch(e) {
     console.warn('Could not refresh active Forge character in Village:', e);
     return null;
+  }
+}
+
+// the badges: every character played ('<collection>:<token>', a Free to play card also 'free:...'), and the player's own
+// forged characters: the server answered with the signed-in wallet's own record (storageResult.source wallet_selection,
+// its holder checked fresh), so ProgressionState.forged keeps that collection's token (and gloves: that build's gloves
+// were forged in the Rebel Forge); the badge sender checks them again with the wallet session before they go
+function noteCharacterForBadges(rebel, data) {
+  if (!rebel || adminMode) return;
+  const col = String(rebel.collectionKey || 'battle_for_colony'), tok = String(rebel.tokenId || String(rebel.rebelId || rebel.id || '').replace(/^rebel_/, '') || '');
+  if (!/^[a-z0-9_]{1,40}$/.test(col) || !/^\d{1,7}$/.test(tok)) return;
+  badgeStat('chars', `${col}:${Number(tok)}`);
+  if (rebel.free) badgeStat('chars', `free:${col}:${Number(tok)}`);
+  const c = data?.activeCharacter;
+  if (data?.storageResult?.source === 'wallet_selection' && c?.walletAddress && String(c.tokenId) === String(Number(tok))) {
+    const f = ProgressionState.forged && typeof ProgressionState.forged === 'object' ? ProgressionState.forged : (ProgressionState.forged = {});
+    let changed = false;
+    if (f[col] !== String(Number(tok))) { f[col] = String(Number(tok)); changed = true; }
+    if (data.gloves && f.gloves !== `${col}:${Number(tok)}`) { f.gloves = `${col}:${Number(tok)}`; changed = true; }
+    if (changed) { BadgeStats.dirty = true; if (!BadgeStats.timer) BadgeStats.timer = setTimeout(flushBadgeStats, 1500); }
   }
 }
 
@@ -25776,7 +26378,7 @@ async function lendGameWeapon(kind, weaponId) {
       const grip = RebelWeapon.twoHand({ scene, meshes: body, held, H: back.info.H });
       const curClip = () => { const g = animGroups[animState]; if (!g) return null; const an = g.animatables && g.animatables[0]; const fps = (g.targetedAnimations[0] && g.targetedAnimations[0].animation.framePerSecond) || 30;
         return { name: g.name, frac: an ? (an.masterFrame - g.from) / ((g.to - g.from) || 1) : 0, dur: (g.to - g.from) / fps / (g.speedRatio || 1) }; };
-      const sfx = RebelWeapon.sfx({ scene, clip: curClip, kind: kindOf, volume: () => (WeatherManager.interactionAudioEnabled ? WeatherManager.masterVolume * WeatherManager.interactionVolume * 1.4 : 0) });
+      const sfx = RebelWeapon.sfx({ scene, clip: curClip, kind: kindOf, volume: () => (WeatherManager.interactionAudioEnabled ? WeatherManager.masterVolume * WeatherManager.interactionVolume * 1.4 * playerSound('effects') : 0) });
       // the bow's own arrow is the game's to fly: onRelease hands over the release point (the archer's arrow is removed)
       const archer = kindOf === 'bow' ? RebelWeapon.archer({ scene, meshes: body, held, back, H: back.info.H, clip: curClip, ignore: (m) => m.isDescendantOf && m.isDescendantOf(charMesh),
         onNock: () => sfx.play('arrow_nock'), onRelease: (p) => { sfx.play('bow_release'); const a = L.archer?.flying.pop(); a?.n.dispose(); L.onRelease?.(p); } }) : null;
@@ -25819,13 +26421,12 @@ async function armVillageWeapon(r, body, pick, back) {
   const curClip = () => { const g = animGroups[animState]; if (!g) return null; const an = g.animatables && g.animatables[0]; const fps = (g.targetedAnimations[0] && g.targetedAnimations[0].animation.framePerSecond) || 30;
     return { name: g.name, frac: an ? (an.masterFrame - g.from) / ((g.to - g.from) || 1) : 0, dur: (g.to - g.from) / fps / (g.speedRatio || 1) }; };
   // weapon sounds follow the village's interaction volume (and its mute)
-  const sfx = RebelWeapon.sfx({ scene, clip: curClip, kind: RebelWeapon.kindOf(pick.weapon.id), volume: () => (WeatherManager.interactionAudioEnabled ? WeatherManager.masterVolume * WeatherManager.interactionVolume * 1.4 : 0) });
+  const sfx = RebelWeapon.sfx({ scene, clip: curClip, kind: RebelWeapon.kindOf(pick.weapon.id), volume: () => (WeatherManager.interactionAudioEnabled ? WeatherManager.masterVolume * WeatherManager.interactionVolume * 1.4 * playerSound('effects') : 0) });
   const near = (d) => Math.min(1, 3 / (1 + d));
   const archer = RebelWeapon.kindOf(pick.weapon.id) === 'bow' ? RebelWeapon.archer({ scene, meshes: body, held, back, H: back.info.H, clip: curClip, ignore: (m) => m.isDescendantOf && m.isDescendantOf(charMesh),
     onNock: () => sfx.play('arrow_nock'), onRelease: () => { sfx.play('bow_release'); sfx.play('arrow_fly', { vol: 0.8 }); }, onHit: (p, d) => sfx.play('arrow_hit', { vol: near(d) }) }) : null;
   if (slot.bow_aim != null) animGroups[slot.bow_aim].speedRatio = 1.8;   // the power draw is a long charge: quicker in play
   window._villageWeapon = { set, slot, held, back, grip, archer, sfx, state: 'back', draw: slot[hL && set.drawL ? set.drawL : set.draw], stow: slot[hL && set.sheatheL ? set.sheatheL : set.sheathe], orig: null, cycle: -1 };
-  const hint = document.getElementById('ctrl'); if (hint && !/Draw weapon/.test(hint.innerHTML)) hint.innerHTML += '<br><kbd>Q</kbd> Draw weapon';
   console.log('Weapon moves ready:', Object.keys(groups).length, 'clips');
 }
 function villageWeaponShow(mode) {
@@ -27229,7 +27830,7 @@ function startNewTerrainWaterSound(NT) {
   setInterval(() => {
     if (!gain || !charMesh) return;
     const level = NT.waterSoundAt(charMesh.position.x, charMesh.position.z);
-    const vol = level * .5 * (WeatherManager.masterVolume ?? .8) * (WeatherManager.ambienceVolume ?? .55) * (document.hidden ? 0 : 1) * voiceDuck(VoiceDuck.amb);
+    const vol = level * .5 * (WeatherManager.masterVolume ?? .8) * (WeatherManager.ambienceVolume ?? .55) * playerSound('ambience') * (document.hidden ? 0 : 1) * voiceDuck(VoiceDuck.amb);
     gain.gain.setTargetAtTime(vol, ctx.currentTime, .4);
   }, 250);
 }
@@ -27299,7 +27900,7 @@ function startNewTerrainSurfSound(NT) {
     while (nextWave < now + 1) nextWave = wave(Math.max(nextWave, now + .05));
     const on = WeatherManager.masterAudioEnabled && !ActiveInterior && !document.hidden;
     const near = on ? NT.surfSoundAt(charMesh.position.x, charMesh.position.z) : 0, level = calm ? 1.6 * near ** 2.4 : near; // the lake is heard close to its shore
-    out.gain.setTargetAtTime(level * 1.1 * (WeatherManager.masterVolume ?? .8) * (WeatherManager.ambienceVolume ?? .55) * voiceDuck(VoiceDuck.amb), now, .5);
+    out.gain.setTargetAtTime(level * 1.1 * (WeatherManager.masterVolume ?? .8) * (WeatherManager.ambienceVolume ?? .55) * playerSound('ambience') * voiceDuck(VoiceDuck.amb), now, .5);
   }, 250);
 }
 function newTerrainLayoutToSaved(data) {
@@ -28087,8 +28688,10 @@ document.addEventListener('keydown', async e => {
     closeNPCDialogue();
     return;
   }
-  // Esc folds the glove colours, then the Rebel panel, before it leaves walking
+  // Esc folds the glove colours or the Sound panel, then the Rebel panel, before it leaves walking
+  if (key === 'escape' && document.getElementById('ctrlWrap')?.classList.contains('on')) { e.preventDefault(); window.toggleControlsCard(false); return; }
   if (key === 'escape' && !adminMode && document.getElementById('glovePanel')?.classList.contains('on')) { e.preventDefault(); window.togglePlayerGlovePanel(false); return; }
+  if (key === 'escape' && !adminMode && document.getElementById('soundPanel')?.classList.contains('on')) { e.preventDefault(); window.toggleSoundPanel(false); return; }
   if (key === 'escape' && !adminMode && document.body.classList.contains('rebel-panel-open') && window.VillageHud?.togglePanel) { e.preventDefault(); window.VillageHud.togglePanel(false); return; }
   if (key === 'escape' && walkMode) toggleWalk();
 
@@ -29507,7 +30110,7 @@ function updatePlayerSwim(groundY, dt) {
   SWIM.on = depth > (was ? SWIM.out : SWIM.in); SWIM.wading = !SWIM.on && depth > SWIM.wade; SWIM.waterY = w;
   updateSwimRings(dt);
   if (!SWIM.on) { if (was) leavePlayerSwim(); return groundY; }
-  if (!was) { if (!GamesPack.ready) loadGamesPack(); MoonTaleSounds.fx('splash'); SWIM.base = null; swimRing(p.x, w, p.z, 1.6); }
+  if (!was) { if (!GamesPack.ready) loadGamesPack(); MoonTaleSounds.fx('splash'); SWIM.base = null; swimRing(p.x, w, p.z, 1.6); badgeStat('swims'); badgeStat('swimV', CURRENT_VILLAGE_ID); }
   const slot = miniGameClipSlot('game_swim');
   SWIM.slot = slot != null && animGroups[slot] ? slot : null;
   // the hips just under the surface while the crawl plays (from where they are drawn); without it, chest-deep
@@ -30503,7 +31106,7 @@ async function loadForgeCollectionsConfig() {
 // touch screens: the stick and buttons (assets/village-touch.js) show while walking, not in admin or a board game, nor
 // while a talk box, a reading card, the gloves panel or the Rebel panel is open (they sat over the talk box's words and
 // the panel's buttons)
-const touchCovers = ['npcDialogueOverlay', 'panel', 'glovePanel'];
+const touchCovers = ['npcDialogueOverlay', 'panel', 'glovePanel', 'soundPanel', 'ctrlWrap'];
 setInterval(() => window.VillageTouch?.update({ walking: !!walkMode && !adminMode && !(MiniGames.on && !MiniGames.roam) && !DanceOff.on && !DanceOff.choosing
   && !touchCovers.some(id => document.getElementById(id)?.classList.contains('on')) && !document.body.classList.contains('rebel-panel-open') && !document.body.classList.contains('vc-open') }), 250);
 // ── Multiplayer, step 2: the other players in this village (assets/village-multiplayer.js; the rooms: realtime/, tickets:
@@ -35448,6 +36051,7 @@ function interactInteriorHotspot(hotspot) {
   // the Library's book (Oct 25): it opens (glow, sound) and its card links to the Colony Library. A show through the games
   // system that is never scored or listed (not a game field); in admin the info card as before
   if (meta.book && walkMode && !adminMode && window.RebelGames) {
+    badgeStat('book'); // (the badges: Turn the Page)
     startMiniGame({ type:'book', id:'book:' + meta.hotspotId, title:meta.book.title || 'The Warning', ...meta.book, text:meta.description || '' }, { kind:'hotspot', root:hotspot, meta });
     return true;
   }
@@ -36910,6 +37514,7 @@ function recordInteriorQuestHook(entrance, actionType = 'enterInterior') {
 function enterInterior(entrance, options = {}) {
   if (!entrance || entrance.metadata?.type !== 'interior_entrance' || entrance.metadata.enabled === false || ActiveInterior) return false;
   if (isInteriorEntranceSealed(entrance)) { showToast(entrance.metadata.interiorDefinition.sealedText || 'Sealed. It will not open yet.', 5200); return false; }
+  { const d = entrance.metadata.interiorDefinition || {}; if (!adminMode && (d.id || d.kit)) badgeStat('rooms', String(d.id || d.kit)); } // (the badges)
   const type = normalizeInteriorType(entrance.metadata.interiorType);
   setVillageTravelFade(true);
   playInteractionAudio('portalOpen');

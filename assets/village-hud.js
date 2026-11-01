@@ -87,7 +87,7 @@ body.rebel-panel-open #questBtn,body.in-game #questBtn,body.vc-open #questBtn,ht
     const open = typeof force === 'boolean' ? force : !document.body.classList.contains('rebel-panel-open');
     document.body.classList.toggle('rebel-panel-open', open);
     if (open) { dot = false; document.getElementById('rebelHudBtn')?.classList.remove('has-news'); }
-    else window.togglePlayerGlovePanel?.(false); // (the glove colours open from the panel: they fold with it)
+    else { window.togglePlayerGlovePanel?.(false); window.toggleSoundPanel?.(false); } // (the glove colours and the Sound panel open from the panel: they fold with it)
   };
 
   // the mission card on phones: open (a tap) or popped (a few seconds); HUD.mission(true | false) is a tap
