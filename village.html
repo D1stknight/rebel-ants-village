@@ -15462,6 +15462,8 @@ const ElementAudio = (() => {
     return ctx;
   }
   function route(audio) {
+    // (a clip recording takes the sound of elements made while it runs too: after routing, which puts a phone's in its tap)
+    if (audio && window.ClipRecorder?.recording) queueMicrotask(() => window.ClipRecorder?.addElement(audio));
     if (!audio || audio._gain || broken || !readOnly()) return audio;
     try { if (new URL(audio.src, location.href).origin !== location.origin) return audio; } catch (e) { return audio; } // (another site's file would come through silent)
     const c = context(); if (!c) return audio;
