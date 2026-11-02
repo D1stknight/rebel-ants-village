@@ -1210,6 +1210,7 @@ const villageRigged = (rebel) => (sameCollection(rebel, {}) ? VILLAGE_RIGGED[Str
 // guests, wallets without a Rebel and holders whose own Rebels are not forged yet. An entry is a Rebel's number or, since
 // Oct 25, a Chumpz / Saint as '<collection>:<token>'. Never #001 (the starter card) nor the Racer (its own card).
 const FREE_NEVER = new Set(['1', 'chumpz:900001']);
+const GUEST_START_TOKEN = '262', GUEST_START_KEY = 'rebelAntsGuestStart:v1';   // guests' first Rebel (Nov 2)
 const freeEntry = (e) => { const m = /^([a-z_]+):(\d+)$/.exec(String(e)); return m ? { col: m[1], tok: m[2] } : { col: 'battle_for_colony', tok: String(e) }; };
 const cardKey = (r) => `${r?.collectionKey || 'battle_for_colony'}:${r?.tokenId || ''}`;   // a Chumpz #5 is not Rebel #5
 async function loadFreeRoster() {
@@ -1343,7 +1344,17 @@ async function showDefaultCard() {
   // the last Rebel picked here or set in the Forge (matched by card id, then by token)
   const storedCard = ownedRebels.find((rebel) => rebel.id === storedSelected.id) ||
     (storedSelected.tokenId ? ownedRebels.find((rebel) => String(rebel.tokenId || '') === String(storedSelected.tokenId) && sameCollection(rebel, storedSelected)) : null);
-  selectedAnt = storedCard ? storedCard.id : 'ant_1';
+  // Nov 2 (Miguel: "yes start them as 262"): guests start as Rebel #262 (Free to play), not #001, so nobody walks in as
+  // Ant-Thony's twin; it leads the row, #001 stays in it for anyone who picks it. A #001 stored before this (the old
+  // default, saved on every visit) moves to #262 once; a pick made after that stays.
+  const guestStart = ownedRebels.find((rebel) => rebel.free && sameCollection(rebel, {}) && String(rebel.tokenId) === GUEST_START_TOKEN) ||
+    ownedRebels.find((rebel) => rebel.free) || defaultRebel;
+  ownedRebels = [guestStart, ...ownedRebels.filter((rebel) => rebel !== guestStart)];
+  let startMoved = false;
+  try { startMoved = localStorage.getItem(GUEST_START_KEY) === GUEST_START_TOKEN; } catch(e) {}
+  const old001 = !startMoved && storedCard && storedCard.id === 'ant_1';
+  selectedAnt = storedCard && !old001 ? storedCard.id : guestStart.id;
+  try { localStorage.setItem(GUEST_START_KEY, GUEST_START_TOKEN); } catch(e) {}
 
   charRow.innerHTML = '';
   ownedRebels.forEach(buildCard);

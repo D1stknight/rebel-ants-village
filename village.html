@@ -1962,6 +1962,24 @@ const storyEarlyRun = (async () => {
   storyCommit(res, d);
   return { account:d.account, ver:d.ver, upload:res.upload, changed:res.changed };
 })();
+// Nothing picked in the lobby (a link straight to Universe): Rebel #262, the lobby's first card for guests (Nov 2). Its
+// public Forge character is read here, beside the story, and kept as the pick, so it plays like a Free to play card (the
+// starter ant when it can't be read in 3 s).
+const GUEST_START_REBEL = { id:'rebel_262', rebelId:'rebel_262', name:'Rebel #262', tokenId:'262', collectionKey:'battle_for_colony', free:true, image:'/api/nft-image?c=battle_for_colony&t=262&s=thumb' };
+let guestStartRebel = null;
+const guestStartRun = (async () => {
+  try { const raw = localStorage.getItem('selectedRebel'); if (raw && JSON.parse(raw)?.id) return null; } catch (e) {}
+  const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 3000);
+  try {
+    const r = await fetch('/api/forge-active-character-get?collectionKey=battle_for_colony&tokenId=' + GUEST_START_REBEL.tokenId, { cache:'no-store', signal:ctl.signal });
+    const d = await r.json().catch(() => null);
+    const c = r.ok && d?.ok && d.hasActiveCharacter ? d.activeCharacter : null;
+    if (!c || String(c.tokenId) !== GUEST_START_REBEL.tokenId) return null;
+    guestStartRebel = { ...GUEST_START_REBEL, activeForgeCharacter:c, activeGlbUrl:c.activeGlbUrl || null, characterSource:'forge_glb' };
+    try { localStorage.setItem('selectedRebel', JSON.stringify(guestStartRebel)); } catch (e) {}
+    return guestStartRebel;
+  } catch (e) { return null; } finally { clearTimeout(tm); }
+})();
 // New terrain (Oct 2026): villages with a terrain recipe (hub, ronin, samurai) get the Terrain Lab ground: eroded hills, painted
 // ground, far mountains, grass, trees, rocks (the hub also has its river and waterfall). ?terrain=old shows the previous
 // ground. Villages without a recipe keep the old ground.
@@ -1970,6 +1988,7 @@ const NEW_TERRAIN_MODULE = new URLSearchParams(location.search).get('terrain') !
   : null;
 const STORY_EARLY = await Promise.race([storyEarlyRun, new Promise(r => setTimeout(() => r(null), 3000))]);
 storyEarly.late = true;
+await Promise.race([guestStartRun, new Promise(r => setTimeout(() => r(null), 3000))]);
 const canvas=document.getElementById('c');
 const setSt=t=>{const el=document.getElementById('ldst'); if(el) el.textContent=t;};
 // the dashboard (assets/site-report.js): a start still going after 90 s on screen says where it stopped
@@ -22881,19 +22900,9 @@ function getSelectedRebel() {
   try {
     const raw = localStorage.getItem('selectedRebel');
     const rebel = raw ? JSON.parse(raw) : null;
-    return rebel && rebel.id ? rebel : {
-      id: 'ant_1',
-      name: 'Rebel #001',
-      image: 'assets/lobby/ant_1.JPG',
-      tokenId: null
-    };
+    return rebel && rebel.id ? rebel : (guestStartRebel || { ...GUEST_START_REBEL });
   } catch(e) {
-    return {
-      id: 'ant_1',
-      name: 'Rebel #001',
-      image: 'assets/lobby/ant_1.JPG',
-      tokenId: null
-    };
+    return guestStartRebel || { ...GUEST_START_REBEL };
   }
 }
 
