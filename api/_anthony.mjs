@@ -46,6 +46,26 @@ export async function firstGreetToday(who) {
   } catch (e) { return false; }
 }
 
+// his dad (Nov 2, Miguel: "he should call me dad, he should know its me from discord and that im the creator of
+// everything including him"): the account set from the Admin Hub's Ant-Thony card (I'm his dad: the signed-in Universe
+// account in that browser), one for every site (the economy's accounts are the same everywhere). Kept a minute in memory
+const CREATOR = 'anthony:creator:v1';
+let creatorMem = { at: 0, v: null };
+export async function creator(fresh) {
+  if (!fresh && Date.now() - creatorMem.at < 60000) return creatorMem.v;
+  try { const r = await redis([['GET', CREATOR]]); creatorMem = { at: Date.now(), v: r?.[0]?.result ? JSON.parse(r[0].result) : null }; }
+  catch (e) { creatorMem = { at: Date.now() - 50000, v: creatorMem.v }; }
+  return creatorMem.v;
+}
+export async function setCreator(v) { await redis(v ? [['SET', CREATOR, JSON.stringify(v)]] : [['DEL', CREATOR]]); creatorMem = { at: Date.now(), v: v || null }; }
+export async function isCreator(who) {
+  if (!who?.signedIn) return false;
+  const c = await creator(); if (!c) return false;
+  return (!!c.u && c.u === who.userId) || (!!c.d && !!who.discordId && c.d === who.discordId);
+}
+// what his brain hears about his dad (with every line he says to him)
+export const DAD = 'This player is Miguel, your dad: 1stKnight on Discord, also called Knight. He founded Rebel Ants and created everything here: the Rebel Ants NFTs, Rebel Universe and its villages, the Rebel Economy and its apps, and you, Ant-Thony (Rebel #001). Call him Dad, talk to him like his son and biggest fan, warm and funny, never formal.';
+
 // his voice speaks only lines his brain gave: each reply carries a token (10 minutes)
 const secret = () => env('VILLAGE_SESSION_SECRET');
 const mac = (exp, text) => crypto.createHmac('sha256', secret()).update(`anthony-voice:v1:${SITE}:${exp}:${text}`).digest('base64url');

@@ -7,7 +7,7 @@
 // the id the points use) and he may tip them a few points (canTip): the economy pays that itself, with its caps; the
 // page only shows it. Guests can talk too, without tips.
 import { econCall } from './_econ.mjs';
-import { asker, underLimits, firstGreetToday, voiceToken, clean, VILLAGE_NAMES } from './_anthony.mjs';
+import { asker, underLimits, firstGreetToday, voiceToken, clean, VILLAGE_NAMES, isCreator, DAD } from './_anthony.mjs';
 
 const CASINO = /\b(bets?|betting|wager(s|ing)?|odds|luck|payouts?|jackpots?|cash(ing)? ?out|gambl(e|es|ing)|casinos?)\b/i;
 const HELD = "Ha, that one's not for me, buddy. Ask me about the villages, the games here, a quest, or a spot where you're stuck and I've got you.";
@@ -24,13 +24,15 @@ export default async function handler(req, res) {
   const place = clean(b.place, 80);
   const where = `${VILLAGE_NAMES[village]}${place ? ` (${place})` : ''}`;
   const name = who.signedIn ? who.name : 'a guest';
+  const dad = await isCreator(who);   // (his dad: set from the Admin Hub's Ant-Thony card)
 
   let body;
   if (kind === 'greet') {
     if (!(await underLimits([[`greet:site:${new Date().toISOString().slice(0, 10)}`, 1500, 86400]]))) return res.status(200).json({ ok: true, skip: true, why: 'budget' });
     if (!(await firstGreetToday(who))) return res.status(200).json({ ok: true, skip: true, why: 'today' });
     body = {
-      scene: `You are walking around ${where} in Rebel Universe, the Rebel Ants' 3D world, as your own 3D character. ${who.signedIn ? name : 'A guest player'} just walked up to you. Wave and greet them with one short line in character, maybe a hint of something fun to do here. No questions back needed.`,
+      scene: dad ? `You are walking around ${where} in Rebel Universe, the Rebel Ants' 3D world, as your own 3D character. Your dad just walked up to you. ${DAD} Wave and greet him with one short line in character. No questions back needed.`
+        : `You are walking around ${where} in Rebel Universe, the Rebel Ants' 3D world, as your own 3D character. ${who.signedIn ? name : 'A guest player'} just walked up to you. Wave and greet them with one short line in character, maybe a hint of something fun to do here. No questions back needed.`,
       member: who.signedIn ? { userId: who.userId, name, ...(who.discordId ? { discordId: who.discordId } : {}) } : undefined, short: true, spoken: true
     };
   } else {
@@ -44,7 +46,7 @@ export default async function handler(req, res) {
       .map((l) => ({ name: l?.who === 'him' ? 'Ant-Thony' : (who.signedIn ? name : 'Guest'), text: clean(l?.text, 400) })).filter((l) => l.text);
     lines.push({ name: who.signedIn ? name : 'Guest', text: question });
     body = {
-      scene: `You are roaming ${where} in Rebel Universe, the Rebel Ants' 3D world, as your own 3D character. ${who.signedIn ? name : 'A guest player'} walked up to you and typed a question. Answer it as their buddy and guide to Universe: how to play, what a game or thing is, where something is, how to fix a problem. Keep it short and clear.`,
+      scene: `You are roaming ${where} in Rebel Universe, the Rebel Ants' 3D world, as your own 3D character. ${dad ? `Your dad walked up to you and typed a question. ${DAD} Answer him as his son and as a guide to Universe` : `${who.signedIn ? name : 'A guest player'} walked up to you and typed a question. Answer it as their buddy and guide to Universe`}: how to play, what a game or thing is, where something is, how to fix a problem. Keep it short and clear.`,
       member: who.signedIn ? { userId: who.userId, name, ...(who.discordId ? { discordId: who.discordId } : {}) } : undefined, transcript: lines.slice(-12), spoken: true, canTip: who.signedIn
     };
   }
