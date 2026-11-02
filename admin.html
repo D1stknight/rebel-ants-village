@@ -419,10 +419,14 @@ a.tile:hover{border-color:#343846;color:var(--fg)}
         <h2>Ant-Thony</h2>
         <p>Rebel #001 roams Universe and answers players' questions. His brain and voice are the Rebel Economy's; what he knows about Universe is this site's guide (docs/anthony-universe-guide.txt, made by tools/gen-anthony-guide.mjs from the games, villages and controls). Send it again after Universe changes. The dev preview and rebeluniverse.io keep their own copy (each has its own app key), so send it on each.</p>
         <div id="ant-state" style="font:13px var(--mono);color:var(--muted);margin:10px 0">–</div>
+        <div id="ant-dad" style="font:13px var(--mono);color:var(--muted);margin:0 0 10px">His dad: –</div>
+        <style>#ant [hidden]{display:none !important}</style>
         <div class="row">
           <button id="ant-send" class="primary" type="button" onclick="antSend()">Send the guide to Ant-Thony</button>
           <button type="button" onclick="antLoad()">Check again</button>
           <a class="btn" target="_blank" rel="noopener" href="/docs/anthony-universe-guide.txt">Read the guide ↗</a>
+          <button id="ant-dad-set" type="button" onclick="antDad(true)" title="Sign in to Universe in this browser first (Discord or your name): that account becomes his dad">I'm his dad</button>
+          <button id="ant-dad-clear" type="button" onclick="antDad(false)" hidden>Clear his dad</button>
           <span id="ant-status"></span>
         </div>
       </section>
@@ -519,7 +523,20 @@ async function antLoad() {
     const when = (t) => { try { return new Date(t).toLocaleString(); } catch (e) { return t; } };
     const has = d.stored ? `the economy has ${d.stored.chars.toLocaleString()} characters${d.stored.at ? ' (' + when(d.stored.at) + ')' : ''}` : `the economy has none yet${d.storedError && !/404|none/.test(d.storedError) ? ' (' + d.storedError + ')' : ''}`;
     box.innerHTML = `This site's guide: ${d.guide.chars.toLocaleString()} characters · ${has} · ` + (d.current ? '<b class="good">up to date ✓</b>' : d.stored ? '<b class="warn">older guide: send again</b>' : '<b class="warn">not sent yet</b>');
+    const dad = document.getElementById('ant-dad'), c = d.creator;
+    dad.textContent = c ? `His dad: ${c.name || 'set'} (${c.kind === 'name' ? 'name account' : 'Discord'}) · set ${when(c.at)} · he calls him Dad and knows he made everything` : 'His dad: not set. Sign in to Universe in this browser as yourself, then press I\'m his dad.';
+    document.getElementById('ant-dad-clear').hidden = !c;
   } catch (e) { box.textContent = e.message || 'Could not read it'; }
+}
+async function antDad(on) {
+  const st = document.getElementById('ant-status');
+  try {
+    const r = await fetch('/api/anthony-knowledge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: on ? 'creator' : 'creator-clear' }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.ok) throw new Error(d.error || ('Error ' + r.status));
+    st.textContent = on ? `Saved: Ant-Thony knows ${d.creator.name || 'you'} is his dad.` : 'Cleared: no dad set.'; st.className = '';
+  } catch (e) { st.textContent = e.message || 'It did not go'; st.className = 'err'; }
+  antLoad();
 }
 async function antSend() {
   const btn = document.getElementById('ant-send'), st = document.getElementById('ant-status');
