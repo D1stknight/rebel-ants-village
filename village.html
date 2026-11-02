@@ -31504,6 +31504,7 @@ function startVillageAnthony() {
     sound: name => MoonTaleSounds.fx(name),
     viaSite: u => (window.viaSite ? window.viaSite(u) : u),
     shadows: () => shadows,
+    light: CRASH_LIGHT || 0, // (the lightest after-crash level: no model for him)
     toast: m => showToast(m, 7000)
   });
 }

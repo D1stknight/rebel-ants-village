@@ -8,7 +8,7 @@
 // his brain gave), his jaw moving with the voice. A signed-in player may get a tip: the economy pays it, the page shows it.
 // window.VillageAnthony.start(host) from village.html, host = { scene, village, player() -> { x, z, yaw } | null,
 //   ground(x, z), free(x, z), clear(ax, az, bx, bz), canAct(), signedIn(), signIn(), points(), volume(), sound(name),
-//   viaSite(url), shadows(), toast(msg) }
+//   viaSite(url), shadows(), toast(msg), light (the after-crash level: 2 = no model) }
 (function () {
   'use strict';
   const ROT = ['hub', 'samurai', 'chumpz', 'hub', 'ronin', 'saints-la', 'hub', 'kenshi', 'cute-creepy', 'hub', 'wokou', 'shogun', 'hub', 'bushi', 'yamabushi', 'hub', 'sohei', 'buke', 'hub', 'ashigaru', 'warrior'];
@@ -39,8 +39,12 @@
 
   // ---- his loop round the spawn: points the village's own walk rules leave free, with clear legs between them ----
   let ROUTE = null, routeTries = 0;
-  function buildRoute() {
-    const c = { x: 0, z: 18 }, h0 = H.ground(c.x, c.z), pts = [];
+  // his loop: round a centre near the spawn, points the walk rules leave free, legs clear with no step over .5 m (no
+  // jumping off a deck). The centre is the spawn's (0, 18), or the open ground nearby that gives the best loop (Chumpz
+  // spawns on the bar porch: from there only two points joined): every page tries the same centres in the same order
+  function loopAround(c) {
+    const h0 = H.ground(c.x, c.z); if (!Number.isFinite(h0) || !H.free(c.x, c.z)) return null;
+    const pts = [];
     for (let i = 0; i < 8; i++) {
       const a = i * Math.PI / 4 + .35;
       for (const r of [11, 8, 14, 6, 17]) {
@@ -49,24 +53,36 @@
         pts.push({ x, z }); break;
       }
     }
-    const ok = (a, b) => {
-      if (!H.clear(a.x, a.z, b.x, b.z)) return false;
-      const n = Math.max(2, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / .5)); let prev = H.ground(a.x, a.z);
-      for (let k = 1; k <= n; k++) { const h = H.ground(a.x + (b.x - a.x) * k / n, a.z + (b.z - a.z) * k / n); if (!Number.isFinite(h) || Math.abs(h - prev) > .5) return false; prev = h; }
-      return true;
-    };
     // the longest run of points joined by clear legs (round the loop: start anywhere)
     let best = [];
     for (let s = 0; s < pts.length; s++) {
       const run = [pts[s]];
-      for (let k = 1; k < pts.length; k++) { const p = pts[(s + k) % pts.length]; if (!ok(run[run.length - 1], p)) break; run.push(p); }
+      for (let k = 1; k < pts.length; k++) { const p = pts[(s + k) % pts.length]; if (!legOk(run[run.length - 1], p)) break; run.push(p); }
       if (run.length > best.length) best = run;
     }
-    const loop = best.length > 2 && ok(best[best.length - 1], best[0]);
-    // not a loop: there and back along the run
-    const path = best.length < 2 ? (best.length ? [best[0]] : (H.free(c.x, c.z) ? [c] : [])) : loop ? best.concat([best[0]]) : best.concat(best.slice(0, -1).reverse());
-    log('route', pts.length, 'points', best.length, 'in a run', loop ? 'loop' : 'there and back');
-    return path.length ? path : null;
+    const loop = best.length > 2 && legOk(best[best.length - 1], best[0]);
+    return { c, best, loop, score: best.length + (loop ? 1.5 : 0) };
+  }
+  function legOk(a, b) {
+    if (!H.clear(a.x, a.z, b.x, b.z)) return false;
+    const n = Math.max(2, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / .5)); let prev = H.ground(a.x, a.z);
+    for (let k = 1; k <= n; k++) { const h = H.ground(a.x + (b.x - a.x) * k / n, a.z + (b.z - a.z) * k / n); if (!Number.isFinite(h) || Math.abs(h - prev) > .5) return false; prev = h; }
+    return true;
+  }
+  function buildRoute() {
+    const home = { x: 0, z: 18 }, tries = [home];
+    for (const r of [14, 26]) for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; tries.push({ x: home.x + Math.sin(a) * r, z: home.z + Math.cos(a) * r }); }
+    let pick = null;
+    for (const c of tries) {
+      const L = loopAround(c); if (!L) continue;
+      if (!pick || L.score > pick.score + .01) pick = L;   // (ties keep the earlier: the spawn's own first)
+      if (c === home && L.loop && L.best.length >= 6) break; // (a good loop at the spawn: no need to look further)
+    }
+    if (!pick) { log('route: nowhere free near the spawn'); return null; }
+    const { best, loop, c } = pick;
+    const path = best.length < 2 ? (best.length ? [best[0]] : [c]) : loop ? best.concat([best[0]]) : best.concat(best.slice(0, -1).reverse());
+    log('route', 'centre', c.x.toFixed(0), c.z.toFixed(0), best.length, 'points', loop ? 'loop' : 'there and back');
+    return path;
   }
   // what he does at a time in his slot: a list of steps (walk a leg, then stop: idle / a stand-up bit / a wave)
   function planOf(slot) {
@@ -355,7 +371,8 @@ html.vt-touch #antTalk input{font-size:16px}`;
     const me = H.player(), sch = scheduled(), canSee = !!sch && !!me && H.canAct();
     S.here = !!sch;
     if (!sch) { if (S.shown) hide(true); if (T.open) close(); return; }
-    if (!S.model) { if (me && Math.hypot(me.x - sch.x, me.z - sch.z) < SHOW_R * 1.5) loadModel(); return; }
+    // (a phone in the lightest after-crash mode skips his model: he stays on the timetable and in the Rebel panel)
+    if (!S.model) { if ((H.light || 0) < 2 && me && Math.hypot(me.x - sch.x, me.z - sch.z) < SHOW_R * 1.5) loadModel(); return; }
     if (!canSee) { if (S.shown) hide(false); return; }
     const dPlayer = Math.hypot(me.x - S.x, me.z - S.z);
     if (!S.shown) { S.x = sch.x; S.z = sch.z; S.y = H.ground(S.x, S.z) || 0; S.yaw = sch.yaw; S.node.setEnabled(true); S.shown = true; if (sch.pose === 'arrive') flash(); }
