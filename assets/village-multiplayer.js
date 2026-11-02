@@ -27,7 +27,9 @@
   // moves that play once (the rest loop); a move the other's model lacks: a kick for these, else idle
   const ONCE = new Set(['jump', 'kick', 'flip_kick', 'front_kick', 'roundhouse_kick', 'side_kick', 'punch_combo', 'cartwheel', 'jump_run', 'backflip', 'front_flip', 'hurricane_kick', 'spin_flip_kick', 'crescent_kick', 'jab', 'cross_punch', 'hook_punch', 'elbow_punch', 'hit_reaction', 'knockdown', 'get_up', 'game_cheer']);
   // the emotes' moves in a Rebel's games pack (the dances loop)
-  const PACK_MOVES = new Set(['game_cheer', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam']);
+  const PACK_MOVES = new Set(['game_cheer', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam', 'sit_idle', 'sit_clap', 'sit_laugh', 'stand_to_sit']);
+  // sitting (Nov 2, the Comedy Club's chairs): 'stand_to_sit' sits down, 'sit_up' is the same move backwards (standing up)
+  const SIT_ONCE = new Set(['stand_to_sit', 'sit_up']);
   let H = null, B = null, root = null, ws = null, connecting = false, you = 0, room = null, closedFor = null, retry = 0, retryAt = 0, maxFull = 8, maxLite = 24, wantCopy = 0;
   let voiceOn = false, spkTex = null; // (the rooms say whether voice is on: village-voice.js)
   const VC = () => window.VillageChat;
@@ -448,6 +450,8 @@
   function groupFor(p, a) {
     const g = view(p)?.groups || {};
     if (a === 'swim') a = 'walk';
+    if (a === 'sit_up') a = 'stand_to_sit';
+    if (/^sit_|^stand_to_sit$/.test(a)) return g[a] || g.idle || null; // (until their pack is here: standing on the chair's spot)
     if (PACK_MOVES.has(a)) return g[a] || (a === 'game_cheer' ? g.jump || g.idle : g.idle) || null; // (until their pack is here)
     return g[a] || (a === 'kick' ? g.flip_kick : a === 'flip_kick' ? g.kick : null)
       || (ONCE.has(a) ? g.flip_kick || g.kick : a === 'run' ? g.walk : a === 'fight_idle' ? g.idle : null) || g.idle || null;
@@ -462,9 +466,11 @@
     }
     const g = groupFor(p, a), again = a !== p.anim;
     p.anim = a;
-    if (!g || (g === p.cur && !(again && ONCE.has(a)))) return;
+    if (!g || (g === p.cur && !(again && (ONCE.has(a) || SIT_ONCE.has(a))))) return;
     try { if (p.cur && p.cur !== g) p.cur.stop(); } catch (e) {}
-    p.cur = g; g.start(!ONCE.has(a), 1, g.from, g.to);
+    p.cur = g;
+    if (SIT_ONCE.has(a)) { if (g.isPlaying) g.stop(); if (a === 'sit_up') g.start(false, 1, g.to, g.from); else g.start(false, 1, g.from, g.to); return; } // (held on its last pose)
+    g.start(!ONCE.has(a), 1, g.from, g.to);
   }
   function playOnce(p, a, over) { // over: it plays to its end even if they walk on meanwhile (an emote stops when they move)
     if (!view(p)) return;

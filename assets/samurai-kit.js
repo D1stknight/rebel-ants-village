@@ -4312,7 +4312,7 @@
   // y1..sy), the mic and the stool on it, the cocktail tables (TX x TY), the snack bar in the front right corner (SNACK: x0, y0),
   // the trophy case in the front left (TROPHY), the wall of fame (PY along each side wall, pictures PS square, centred at PZ)
   const AC = { HX: 15, HY: 13, H: 9, DW: 3.6, DH: 4.6, ST: { x0: -9, x1: 9, y0: -13, y1: -6.2, h: 1.1, sx0: 2.6, sx1: 4.8, sy: -4 },
-    MIC: [0, -8.4], STOOL: [2.3, -9.3], TX: [-10.5, -6, 6, 10.5], TY: [-1.6, 3, 7.6], SNACK: [6.4, 9.8], TROPHY: [-8, 11.4],
+    MIC: [0, -8.4], STOOL: [2.3, -9.3], TX: [-10.5, -6, 6, 10.5], TY: [-1.6, 3, 7.6], SEAT_X: .62, SEAT_Y: 1.05, SEAT_H: .48, SNACK: [6.4, 9.8], TROPHY: [-8, 11.4],
     PY: [-5.2, -2.9, -.6, 1.7, 4, 6.3, 8.6], PS: 1.9, PZ: 4 };
   // Hub Rebel Ants After Dark (the south-east courtyard dojo, Oct 26; afterdark.rebelants.io in the colony): the Hold Em table in
   // the middle (TAB: centre x, y, top radius, height), Rebel 21's half-moon table against the left wall (T21: centre, radius), the
@@ -4531,6 +4531,8 @@
       lights: [{ p: [0, 7.2, -8.6], c: [1, .9, .74], i: 1.25, r: 11 }, { p: [-6, 6.2, -9.4], c: [.62, .34, 1], i: .8, r: 9 }, { p: [6, 6.2, -9.4], c: [1, .34, .46], i: .7, r: 9 },
         { p: [0, 4.2, 2.4], c: [1, .68, .42], i: .6, r: 15, flicker: .12 }, { p: [10.6, 4.6, 10.4], c: [1, .8, .52], i: .6, r: 8 }, { p: [-8, 5, 8.6], c: [.86, .78, 1], i: .4, r: 10 }],
       decks: [{ box: [AC.ST.x0, AC.ST.y0, AC.ST.x1, AC.ST.y1], y: AC.ST.h }, { box: [AC.ST.sx0, AC.ST.y1, AC.ST.sx1, AC.ST.sy], y0: 0, y1: AC.ST.h, axis: 'z', steps: 4, flip: true }],
+      // the chairs a player can sit on: [x, z, facing] (two a table, facing the stage)
+      seats: AC.TX.flatMap(x => AC.TY.flatMap((y, row) => [-1, 1].map(t => [x + t * AC.SEAT_X, y + AC.SEAT_Y, Math.PI, row === 0 ? 1 : 0]))), // (the front row: golden seats)
       blockers: [{ box: [-9.1, -6.98, -6.75, -6.4], minY: .5 }, { box: [6.75, -6.98, 9.1, -6.4], minY: .5 }, { box: [-12.45, -11.9, -10.75, -10.5] }, { box: [10.75, -11.9, 12.45, -10.5] },
         { circle: [...AC.MIC, .42], minY: .5 }, { circle: [...AC.STOOL, .5], minY: .5 }, ...AC.TX.flatMap(x => AC.TY.map(y => ({ circle: [x, y + .45, 1.3] }))),
         { box: [AC.SNACK[0], AC.SNACK[1], AC.HX, AC.HY] }, { box: [AC.TROPHY[0] - 1.45, AC.TROPHY[1] - 1.05, AC.TROPHY[0] + 1.45, AC.TROPHY[1] + 1.05] }]
@@ -5760,7 +5762,8 @@
       for (const x of TX) for (const y of TY) {
         M.cyl('lacquer_black', [x, y, 0], .5, .06, 14); M.cyl('lacquer_black', [x, y, .06], .1, 1.34, 8); M.cyl('darkwood', [x, y, 1.4], .78, .07, 20); M.cyl('gold', [x, y, 1.4], .8, .02, 20);
         M.cyl('candle_glass', [x, y - .1, 1.47], .1, .22, 10); M.sphere('fire', [x, y - .1, 1.74], .04, 1.6, 5, 3);
-        for (const t of [-1, 1]) { const cx = x + t * .62, cy = y + 1.05; M.block('cushion', cx, cy, .82, .72, .72, .12); for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) M.block('lacquer_black', cx + a * .3, cy + b * .3, 0, .07, .07, .82); M.block('lacquer_black', cx, cy + .34, .94, .72, .08, 1.1); }
+        // (seats at a Rebel's sitting height: the games pack's sit moves put the seat .46 m up, Nov 2; were .94)
+        for (const t of [-1, 1]) { const cx = x + t * AC.SEAT_X, cy = y + AC.SEAT_Y; M.block('cushion', cx, cy, AC.SEAT_H - .12, .78, .76, .12); if (y === TY[0]) M.block('gold', cx, cy + .36, AC.SEAT_H + 1.22, .8, .1, .1); /* (the golden front row) */ for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) M.block('lacquer_black', cx + a * .32, cy + b * .31, 0, .07, .07, AC.SEAT_H - .12); M.block('lacquer_black', cx, cy + .36, AC.SEAT_H, .78, .08, 1.3); }
       }
       M.quad('runner', [[-1.5, ST.sy - 2, .012], [1.5, ST.sy - 2, .012], [1.5, HY, .012], [-1.5, HY, .012]], [[0, 0], [1, 0], [1, (HY - ST.sy + 2) / 6.4], [0, (HY - ST.sy + 2) / 6.4]]);
       // the wall of fame: a black mat with a gold liner and a picture light over each of the frames, the sign over them

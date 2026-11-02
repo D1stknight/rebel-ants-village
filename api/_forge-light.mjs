@@ -11,7 +11,7 @@ import sharp from 'sharp';
 
 export const LIGHT_VERSION = 1;
 export const LIGHT_CLIPS = ['idle', 'walk', 'run', 'jump'];
-export const LIGHT_PACK_CLIPS = ['game_cheer', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam'];
+export const LIGHT_PACK_CLIPS = ['game_cheer', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam', 'sit_idle', 'sit_clap', 'sit_laugh', 'stand_to_sit']; // (+ sitting, Nov 2: a remade pack makes the light copy again)
 export const LIGHT_JOINTS = ['Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head',
   'LeftShoulder', 'LeftArm', 'LeftForeArm', 'LeftHand', 'RightShoulder', 'RightArm', 'RightForeArm', 'RightHand',
   'LeftUpLeg', 'LeftLeg', 'LeftFoot', 'LeftToeBase', 'RightUpLeg', 'RightLeg', 'RightFoot', 'RightToeBase'].map((n) => 'mixamorig_' + n);
