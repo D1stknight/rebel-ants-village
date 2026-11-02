@@ -1216,11 +1216,18 @@ const FREE_NEVER = new Set(['1', 'chumpz:900001']);
 const GUEST_START_TOKEN = '262', GUEST_START_KEY = 'rebelAntsGuestStart:v1';   // guests' first Rebel (Nov 2)
 const freeEntry = (e) => { const m = /^([a-z_]+):(\d+)$/.exec(String(e)); return m ? { col: m[1], tok: m[2] } : { col: 'battle_for_colony', tok: String(e) }; };
 const cardKey = (r) => `${r?.collectionKey || 'battle_for_colony'}:${r?.tokenId || ''}`;   // a Chumpz #5 is not Rebel #5
+// Nov 2: #001 and the Chumpz Racer (the lobby's own cards) show unless switched off in the NPC Forge's Free to play box
+// (the roster's hidden list: '1', 'chumpz:900001'); a wallet that holds #001 still sees its own card
+let freeHidden = new Set();
 async function loadFreeRoster() {
   let tokens = null;
-  try { const d = await (await fetch('/api/free-roster', { headers: { accept: 'application/json' } })).json(); if (d && d.ok && Array.isArray(d.tokens)) tokens = d.tokens; } catch (e) {}
+  try {
+    const d = await (await fetch('/api/free-roster', { headers: { accept: 'application/json' } })).json();
+    if (d && d.ok && Array.isArray(d.tokens)) { tokens = d.tokens; freeHidden = new Set(Array.isArray(d.hidden) ? d.hidden.map(String) : []); }
+  } catch (e) {}
   return (tokens || Object.keys(VILLAGE_RIGGED)).map(String).filter((t) => !FREE_NEVER.has(t));
 }
+const friendPlayablesShown = async () => (await loadFriendPlayables()).filter((r) => !freeHidden.has(`${r.collectionKey}:${r.tokenId}`));
 const freeRosterCards = async (entries) => (await Promise.all(entries.map((e) => {
   const { col, tok } = freeEntry(e), label = col === 'battle_for_colony' ? null : FRIEND_LABELS[col];
   if (col !== 'battle_for_colony' && !label) return null;
@@ -1335,8 +1342,8 @@ async function showDefaultCard() {
   const showcase = await freeRosterCards(await loadFreeRoster());
   const showKeys = new Set([cardKey(defaultRebel), ...showcase.map(cardKey)]);
   const savedForgePlayables = (await loadSavedForgePlayableCards()).filter((r) => !showKeys.has(cardKey(r)));
-  const friends = await loadFriendPlayables();
-  ownedRebels = [defaultRebel, ...friends, ...sortRebelsByForgeStatus([...showcase, ...dedupeForgePlayablesByToken(savedForgePlayables)])];
+  const friends = await friendPlayablesShown();
+  ownedRebels = [...(freeHidden.has('1') ? [] : [defaultRebel]), ...friends, ...sortRebelsByForgeStatus([...showcase, ...dedupeForgePlayablesByToken(savedForgePlayables)])];
 
   let storedSelected = {};
 
@@ -1421,11 +1428,12 @@ async function loadNFTs(walletAddress) {
     // the friend playables sit after the wallet's ready Rebels; they are never picked by default
     const firstNotReady = ownedRebels.findIndex((rebel) => getRebelForgeStatus(rebel) !== 'ready');
     const walletReady = firstNotReady !== 0 && ownedRebels.length > 0;
-    ownedRebels.splice(firstNotReady < 0 ? ownedRebels.length : firstNotReady, 0, ...(await loadFriendPlayables()));
+    const rosterTokens = await loadFreeRoster();   // (also the switched-off lobby cards)
+    ownedRebels.splice(firstNotReady < 0 ? ownedRebels.length : firstNotReady, 0, ...(await friendPlayablesShown()));
     // none of the wallet's Rebels is forged yet: the Free to play roster comes after them (never picked by default)
     if (!walletReady) {
       const held = new Set(ownedRebels.filter((rebel) => !rebel.playerModel).map(cardKey));   // its own Rebels, Chumpz and Saints
-      ownedRebels.push(...(await freeRosterCards((await loadFreeRoster()).filter((e) => { const p = freeEntry(e); return !held.has(`${p.col}:${p.tok}`); }))));
+      ownedRebels.push(...(await freeRosterCards(rosterTokens.filter((e) => { const p = freeEntry(e); return !held.has(`${p.col}:${p.tok}`); }))));
     }
     const forgedReadyRebel = ownedRebels.find((rebel) => {
       if (rebel.playerModel || rebel.free) return false;
