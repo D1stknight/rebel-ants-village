@@ -731,6 +731,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 <script src="assets/site-files.js"></script>
 <script src="assets/wallet-auth.js"></script>
 <script src="assets/golden-ticket.js"></script>
+<script src="assets/lobby-tour.js"></script>
 <script>
 // ── NFT CONFIG ──
 const NFT_CONTRACT = '0x96C1469c1C76E3Bb0e37c23a830d0Eea6BCf9221';
@@ -2176,6 +2177,7 @@ window.addEventListener('load', () => {
       setTimeout(() => {
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('ui').style.opacity = '1';
+        window.LobbyTour?.auto(); // (the ? button; the tour on a first visit: assets/lobby-tour.js)
         if (landingUserInteracted) startMusic();
       }, 600);
     }, 800);
