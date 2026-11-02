@@ -53,6 +53,7 @@
   function steps() { return STEPS.filter((st) => (st.only ? st.only() : true) && (!st.el || visible(document.querySelector(st.el)))); }
   function close(done) {
     if (!S) return; document.removeEventListener('keydown', S.key, true); window.removeEventListener('resize', S.paint); window.removeEventListener('scroll', S.paint, true);
+    clearInterval(S.sup); if (S.supHid) window.RebelSupport?.show();
     S.wrap.remove(); S = null; if (done !== false) markSeen();
   }
   function start() {
@@ -61,6 +62,10 @@
     wrap.innerHTML = '<div id="ltShade"></div><div id="ltRing"></div><div id="ltBub"><button class="x" type="button" aria-label="Close the tour">✕</button><div class="lk"></div><h3></h3><p></p><div class="la"></div><div class="arw"></div></div>';
     document.body.appendChild(wrap);
     S = { wrap, list: steps(), i: 0, ring: wrap.querySelector('#ltRing'), bub: wrap.querySelector('#ltBub') };
+    // the Rebel Support bubble (bottom right, over every layer) stays away while the tour is up, so it never sits on a
+    // bubble or its buttons; it loads on its own (async), so it is looked for until it is there
+    const sup = () => { const r = window.RebelSupport; if (S && r && !S.supHid) { r.hide(); S.supHid = true; } };
+    S.sup = setInterval(sup, 300); sup();
     S.bub.querySelector('.x').onclick = () => close();
     // the page behind does nothing while the tour is up: a click on the dim area goes on to the next bubble
     wrap.addEventListener('click', (e) => { if (!S.bub.contains(e.target)) go(1); });
@@ -94,6 +99,12 @@
     if (!el) {
       S.wrap.classList.remove('ring'); S.ring.style.opacity = '0'; arw.style.display = 'none';
       S.bub.style.left = Math.round((W - bw) / 2) + 'px'; S.bub.style.top = Math.round((H - bh) / 2) + 'px'; return;
+    }
+    // a target below the lobby's fold (phones: its scrolling area ends above the help bubble) is scrolled into view first,
+    // once per step (the tour covers the page, so nothing else scrolls it meanwhile)
+    if (S.shown !== S.i) {
+      S.shown = S.i; const ui = el.closest('#ui');
+      if (ui) { const u = ui.getBoundingClientRect(), q = el.getBoundingClientRect(); if (q.bottom > u.bottom - 24) ui.scrollTop += q.bottom - (u.bottom - 24); else if (q.top < u.top + 12) ui.scrollTop -= u.top + 12 - q.top; }
     }
     const r = el.getBoundingClientRect(), pad = 8, x = Math.max(4, r.left - pad), y = Math.max(4, r.top - pad), w = Math.min(W - 8, r.width + pad * 2), h = Math.min(H - 8, r.height + pad * 2);
     S.wrap.classList.add('ring'); S.ring.style.opacity = '1';
