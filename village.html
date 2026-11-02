@@ -16375,7 +16375,7 @@ const CONTROLS_DESK = [
   ['Do', [[CK('O'), 'Use: talk, open, enter, read, play <small>(the prompt on screen says which)</small>'], [CK('E'), 'Emotes, then <kbd>1</kbd>-<kbd>5</kbd> to pick one'], [CK('P'), 'Take a photo'], [CK('Shift', 'P'), 'Record a clip <small>(up to a minute; again to stop)</small>'], [CK('Tab'), 'Your Rebel: Journal, Sound, Gloves, Back to Lobby'], [CK('Q'), 'Draw or put away your weapon <small>(Rebels that carry one)</small>']]],
   ['Fight moves', [[CK('F'), 'Kicks <small>(press again for the next one)</small>'], [CK('G'), 'Punches <small>(press again for the next one)</small>'], [CK('T'), 'Fight stance on / off'], [CK('C', 'B', 'V'), 'Cartwheel · backflip · front flip'], [CK('H', 'K'), 'Get hit · get knocked down']]],
   ['Players', [[CK('Enter'), 'Chat: type, <kbd>Enter</kbd> sends, <kbd>Enter</kbd> again for the next line, <kbd>Esc</kbd> closes'], [CK('X'), 'Talk with your voice <small>(hold; or hold the 🎤 button, bottom left; signed in)</small>'], [CK('~Click'), 'A name in the chat: whisper, mute, block, report'], [CK('~Click'), 'A chat bubble over a head: answer in the chat']]],
-  ['On the screen', [[CK('~Click'), 'The round button, top left: your Rebel <small>(same as Tab)</small>'], [CK('~Click'), 'The ◆ line beside it: your mission'], [CK('~Click'), 'The map, bottom right: zoom in or out'], [CK('~Click'), 'The 📷 above the map: take a photo · the 🎥 over it: record a clip']]]
+  ['On the screen', [[CK('~Click'), 'The round button, top left: your Rebel <small>(same as Tab)</small>'], [CK('~Click'), 'The ◆ circle under it: your mission <small>(it opens by itself when the mission changes)</small>'], [CK('~Click'), 'The map, bottom right: zoom in or out'], [CK('~Click'), 'The 📷 above the map: take a photo · the 🎥 over it: record a clip']]]
 ];
 const CONTROLS_TOUCH = [
   ['Move', [[CK('~Stick'), 'Walk: the stick, bottom left <small>(push it to the rim to run)</small>'], [CK('~Drag'), 'Look around: drag anywhere else on the screen']]],
@@ -31599,6 +31599,9 @@ function initVillageHud() {
   try {
     window.VillageHud?.init(scene, {
       isWalking: () => walkMode && !adminMode,
+      // something in front of the mission card's corner (computers; phones read the touch layer): it pops open after
+      covered: () => (MiniGames.on && !MiniGames.roam) || DanceOff.on || DanceOff.choosing || touchCovers.some(id => document.getElementById(id)?.classList.contains('on'))
+        || document.body.classList.contains('rebel-panel-open'),
       inInterior: () => !!ActiveInterior,
       friends: () => { try { const a = window.VillageGroup?.dots?.() || [], b = window.VillageStage?.dots?.() || [], c = window.VillageAnthony?.dots?.() || []; return a.length || b.length || c.length ? a.concat(b, c) : null; } catch (e) { return null; } },
       questTarget: () => {
