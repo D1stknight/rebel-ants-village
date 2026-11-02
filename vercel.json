@@ -6,6 +6,9 @@
     "api/forge-concepts-upload-image.mjs": {
       "maxDuration": 60
     },
+    "api/admin-upload.mjs": {
+      "maxDuration": 300
+    },
     "api/forge-3d-engine-meshy-create.mjs": {
       "maxDuration": 60
     },
