@@ -3,6 +3,9 @@
 // 0 = not playing), ended (ms, 0 = not ended early), made}. It is live from its start until its end, unless ended early.
 // A show = {title, len (s), audio (a file in our store or /assets/...)|null, cues: [{t (s), say?, clip?, sfx?}]}: with no
 // audio the pages give the performer a babbling voice for each line (captions on screen), with audio they play it.
+// Nov 2: repeat ('' | 'daily' | 'weekly'): once an event is over (its end, or ended early) it moves on to its next time
+// when it is next read (roll); auto: its show starts by itself a minute after the doors open (AUTO_LEAD), unless stopped
+// for this time (autoOff) or started by hand (showAt).
 import { VILLAGES } from './villages.js';
 
 export const EVENT_ID = /^[A-Za-z0-9_-]{10}$/, EVENT_ROOM = /^[a-z]+:event:[A-Za-z0-9_-]{10}$/;
@@ -12,17 +15,32 @@ export const SFX = ['rimshot', 'applause', 'laugh', 'drumroll', 'cheer'];
 export const MAX_HOURS = 12, MAX_HOSTS = 6;
 const label = s => String(s ?? '').replace(/\s+/g, ' ').trim();
 
+export const REPEATS = { daily: 86400000, weekly: 7 * 86400000 }, AUTO_LEAD = 60000;
 export const isLive = (ev, now = Date.now()) => !!ev && !ev.ended && ev.starts <= now && now < ev.ends;
-export const showOf = ev => (ev && ev.show && ev.showAt ? { ...ev.show, startAt: ev.showAt } : null);
+// when the show starts: by hand (showAt), else by itself for an auto event not stopped this time; 0 = not playing
+export const showStart = ev => (ev && ev.show ? ev.showAt || (ev.auto && !ev.autoOff ? ev.starts + AUTO_LEAD : 0) : 0);
+export const showOf = ev => { const at = showStart(ev); return at ? { ...ev.show, startAt: at } : null; };
+// a repeating event that is over moves on to its next time on its schedule (anchor = the time it was set for, len = how
+// long it runs): the first one after the time just over that hasn't ended yet (a "Go live now" ahead of time never takes
+// the scheduled one's place). true when it moved.
+export function roll(ev, now = Date.now()) {
+  const step = REPEATS[ev?.repeat]; if (!step || !(ev.ended || now >= ev.ends)) return false;
+  const anchor = +ev.anchor > 0 ? +ev.anchor : ev.starts, len = +ev.len > 0 && +ev.len < step ? +ev.len : Math.min(ev.ends - ev.starts, step - 60000);
+  let k = Math.max(0, Math.floor((Math.max(now, ev.starts) - anchor) / step) - 1), s = anchor + k * step, guard = 0;
+  while ((s + len <= now || s <= ev.starts) && guard++ < 100000) s = anchor + ++k * step;
+  ev.starts = s; ev.ends = s + len; ev.ended = 0; ev.showAt = 0; ev.autoOff = 0;
+  return true;
+}
 // what an event's pages see (never the hosts' account ids)
 export function pubEvent(ev, now = Date.now()) {
   if (!ev) return null;
   const s = ev.show;
   return { id: ev.id, title: ev.title, place: ev.place, starts: ev.starts, ends: ev.ends, live: isLive(ev, now), over: !!ev.ended || now >= ev.ends,
-    hosts: (ev.hosts || []).map(h => ({ u: h.u, n: h.n })), show: s ? { title: s.title, len: s.len, audio: s.audio || null, cues: s.cues || [] } : null };
+    hosts: (ev.hosts || []).map(h => ({ u: h.u, n: h.n })), show: s ? { title: s.title, len: s.len, audio: s.audio || null, cues: s.cues || [] } : null,
+    repeat: ev.repeat || null, auto: !!ev.auto };
 }
 // the lobby's and the pages' list: what, where, when, who hosts it, whether a show is on
-export const briefEvent = (ev, now = Date.now()) => ({ id: ev.id, title: ev.title, place: ev.place, starts: ev.starts, ends: ev.ends, live: isLive(ev, now), hosts: (ev.hosts || []).map(h => h.n), show: ev.show ? ev.show.title : null, showing: !!(ev.show && ev.showAt && ev.showAt + ev.show.len * 1000 > now) });
+export const briefEvent = (ev, now = Date.now()) => { const at = showStart(ev); return { id: ev.id, title: ev.title, place: ev.place, starts: ev.starts, ends: ev.ends, live: isLive(ev, now), hosts: (ev.hosts || []).map(h => h.n), show: ev.show ? ev.show.title : null, showing: !!(at && at <= now && at + ev.show.len * 1000 > now), repeat: ev.repeat || null }; };
 
 export function normShow(s) {
   if (!s || typeof s !== 'object') return null;
@@ -52,6 +70,8 @@ export function normEvent(a, old, now = Date.now()) {
   const hosts = (Array.isArray(a.hosts) ? a.hosts : old?.hosts || []).filter(h => h && SUB.test(h.sub) && UID.test(h.u) && !/^g:/.test(h.sub))
     .slice(0, MAX_HOSTS).map(h => ({ sub: h.sub, u: h.u, n: label(h.n).slice(0, 40) || 'Host' }));
   const show = 'show' in a ? normShow(a.show) : old?.show || null;
-  return { ev: { id: old?.id || null, title, place, starts, ends, hosts, show, showAt: show ? old?.showAt || 0 : 0, ended: old?.ended || 0, made: old?.made || now } };
+  const repeat = 'repeat' in a ? (REPEATS[a.repeat] ? a.repeat : '') : old?.repeat || '', auto = 'auto' in a ? !!a.auto : !!old?.auto;
+  return { ev: { id: old?.id || null, title, place, starts, ends, hosts, show, showAt: show ? old?.showAt || 0 : 0, ended: old?.ended || 0, made: old?.made || now,
+    repeat, auto, autoOff: old?.autoOff || 0, anchor: starts, len: ends - starts } };
 }
 export const newEventId = () => { const b = crypto.getRandomValues(new Uint8Array(8)); return btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '').slice(0, 10); };

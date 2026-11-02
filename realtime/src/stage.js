@@ -181,6 +181,7 @@ export class StageHall {
   runShow(go, at, fromDesk) {
     const ev = this.ev(); if (!ev || !ev.show) return;
     ev.showAt = go ? (+at > 0 ? +at : Date.now() + LEAD) : 0;
+    if (!go && ev.auto) ev.autoOff = 1; // (an auto show stopped: not again this time)
     this.kvSet('ev', JSON.stringify(ev));
     if (!fromDesk) this.toControl('/showat', { id: ev.id, at: ev.showAt });
     this.all({ t: 'sshow', show: showOf(ev), now: Date.now() });
