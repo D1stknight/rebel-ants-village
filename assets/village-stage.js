@@ -160,7 +160,8 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     if (!away) el.live.dataset.k = '';
     el.bar.classList.toggle('on', !!here);
     const speakingNow = here && S.speakers.some(s => s.u === S.you), showOn = !!(S.show && showTime() >= 0 && showTime() < S.show.len);
-    const kBar = here ? [S.ev.id, S.ev.title, S.n, showOn, S.host, S.hands.length, hostOpen, speakingNow, S.hand, H.signedIn()].join('|') : '';
+    const gold = here ? GOLD.of(S.ev.id) : null;
+    const kBar = here ? [S.ev.id, S.ev.title, S.n, showOn, S.host, S.hands.length, hostOpen, speakingNow, S.hand, H.signedIn(), gold ? gold.mine + ':' + gold.left : ''].join('|') : '';
     if (!here) el.bar.dataset.k = '';
     if (here && el.bar.dataset.k !== kBar) {
       el.bar.dataset.k = kBar;
@@ -169,6 +170,9 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
       if (S.host) el.bar.append(btn('Host · ' + S.hands.length + ' ✋', () => { hostOpen = !hostOpen; paint(); }, hostOpen ? 'on' : ''));
       else if (speaking) el.bar.append(btn('On stage', () => send({ t: 'hand', on: false }), 'on'));
       else if (H.signedIn()) el.bar.append(btn(S.hand ? '✋ Lower' : '✋ Raise hand', () => send({ t: 'hand', on: !S.hand }), S.hand ? 'on' : ''));
+      // golden tickets (the front row): what this player holds, or the card to get one
+      if (gold && window.GoldenTicket) { const holds = gold.mine === 'bought' || gold.mine === 'won';
+        el.bar.append(btn(holds ? '✦ Front row' : '✦ Ticket', () => window.GoldenTicket.open({ event: S.ev.id, title: S.ev.title, signIn: H.signIn, onChange: (g) => { GOLD.set(S.ev.id, g); paint(); } }), holds ? 'on' : '')); }
     }
     el.host.classList.toggle('on', !!(here && S.host && hostOpen));
     const kHost = here && S.host && hostOpen ? JSON.stringify([S.hands.map(x => [x.u, x.n]), S.speakers.map(x => [x.u, x.n]), S.ev.show?.title || '', S.ev.show ? !!(S.show && showTime() < S.show.len) : 0]) : '';
@@ -385,10 +389,16 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     try { p.extra.forEach(g => g.dispose()); p.inst.animationGroups.forEach(g => g.dispose()); p.inst.skeletons?.forEach(s => s.dispose()); p.meshes.forEach(m => m.dispose(false, false)); p.holder.dispose(false, false); p.c.dispose(); } catch (e) {}
   }
 
+  // ---- golden tickets (Nov 2): the event at hand's (api/golden-ticket.mjs, read every minute while there) ----
+  const GOLD = { m: new Map(), at: new Map(),
+    of(id) { return this.m.get(id) || null; },
+    set(id, g) { this.m.set(id, g || null); this.at.set(id, Date.now()); },
+    want(id) { if (!id || !window.GoldenTicket || Date.now() - (this.at.get(id) || 0) < 60000) return; this.at.set(id, Date.now()); window.GoldenTicket.state(id, true).then(g => { this.m.set(id, g); paint(); }); } };
   // ---- twice a second: the list now and then, the hall at the event's place, the performer only in its room ----
   function tick() {
     if (!H) return;
     poll();
+    if (S.ev && hall) GOLD.want(S.ev.id);
     const ev = S.live.find(atPlace) || null;
     if (ev && !ws && !connecting && !stopped && performance.now() >= retryAt) connect(ev.id);
     if (ws && hall && (!ev || ev.id !== hall)) close(); // (left the place, or the event is no longer on)
@@ -411,6 +421,8 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
   }
   window.VillageStage = {
     start, tick, poll, dots, goTo, close,
+    // golden tickets at the event the page is at: { holds: front-row seat theirs, active: the event's front row is reserved }
+    golden: () => { const ev = S.ev && hall ? S.ev : null, g = ev ? GOLD.of(ev.id) : null; return g ? { active: (g.buy || 0) + (g.raffle || 0) > 0, holds: g.mine === 'bought' || g.mine === 'won', room: ev.place?.room || null } : null; },
     // a live event with a show at the Comedy Club: Ant-Thony is there (the roaming one steps off his rounds meanwhile)
     antOnStage: () => S.live.some(e => e.place?.village === 'hub' && e.place?.room === 'hub_comedy_club' && !!e.show),
     say: x => send({ t: 'sc', x: String(x || '') }), report: (i, why) => send({ t: 'rp', i: +i, why: why || 'other' }),

@@ -868,6 +868,7 @@ async function mpaShow(tab) {
       for (const x of ev.hosts || []) hosts.append(mk('span', 'tag', x.n), btn('✕', () => mpaAct('event-host', { id: ev.id, sub: x.sub, on: false }, `${x.n} is no longer a host`)));
       box.append(hosts);
       const sAt = showStartOf(ev), playing = sAt && sAt <= now + 3500 && sAt + ev.show.len * 1000 > now;
+      const gl = mk('div', 'dim gold-line'); gl.textContent = ''; box.append(gl); goldLine(ev, gl);
       if (ev.show) box.append(mk('div', 'dim', `Show: ${ev.show.title} · ${Math.floor(ev.show.len / 60)}:${String(ev.show.len % 60).padStart(2, '0')} · ${ev.show.cues.length} cues${ev.show.audio ? ' · with audio' : ' · babble voice + captions'}${ev.auto ? (ev.autoOff ? ' · starts by itself (stopped this time)' : ' · starts by itself a minute in') : ''}${playing ? ' · PLAYING' : ''}`));
       const acts = mk('div', 'row');
       if (!ev.ended && ev.ends > now) {
@@ -876,7 +877,7 @@ async function mpaShow(tab) {
         if (ev.live && ev.show) acts.append(sAt && sAt + ev.show.len * 1000 > now ? btn('Stop the show', () => mpaAct('event-show', { id: ev.id, go: false }, 'Show stopped')) : btn('Start the show', () => mpaAct('event-show', { id: ev.id, go: true }, 'The show starts in 3 seconds')));
       }
       acts.append(btn('Edit', async () => { const p = EVENT_PLACES.find(x => x.village === ev.place.village && (x.room || null) === (ev.place.room || null)) || { ...ev.place, key: ev.place.village + ':' + (ev.place.room || '') };
-        mpa.edit = { id: ev.id, title: ev.title, place: p, starts: ev.starts, mins: Math.round((ev.ends - ev.starts) / 60000), show: ev.show, script: ev.show?.script || '', repeat: ev.repeat || '', auto: !!ev.auto }; await mpaShow('events'); }));
+        mpa.edit = { id: ev.id, title: ev.title, place: p, starts: ev.starts, mins: Math.round((ev.ends - ev.starts) / 60000), show: ev.show, script: ev.show?.script || '', repeat: ev.repeat || '', auto: !!ev.auto, golden: GOLD_CFG[ev.id] || null }; await mpaShow('events'); }));
       acts.append(btn('Delete', () => confirm(`Delete ${ev.title}?`) && mpaAct('event-delete', { id: ev.id }, 'Event deleted'), 'sm bad'));
       box.append(acts); out.push(box);
     }
@@ -1040,6 +1041,21 @@ function smEncode(pcm, sr, kbps) {
   const f = enc.flush(); if (f.length) out.push(f);
   return new Blob(out, { type: 'audio/mpeg' });
 }
+// golden tickets per event (api/golden-ticket.mjs): what is set, what is sold and drawn, who holds one; a refund button
+const GOLD_CFG = {};
+async function goldLine(ev, el) {
+  try {
+    const r = await fetch('/api/golden-ticket?event=' + encodeURIComponent(ev.id) + '&list=1', { cache: 'no-store' }), d = await r.json().catch(() => ({}));
+    const g = d.golden, c = d.cfg || null; GOLD_CFG[ev.id] = c;
+    if (!c) { el.textContent = ''; return; }
+    el.textContent = g ? `\u2726 Golden: ${g.sold} of ${g.buy} sold at ${Number(g.price).toLocaleString()} pts · raffle ${g.drawn ? `${g.winners} drawn of ${g.entries}` : `${g.raffle} to draw · ${g.entries} in`}` : `\u2726 Golden: ${c.buy} sold at ${Number(c.price).toLocaleString()} pts, ${c.raffle} drawn (this time is not on the list yet)`;
+    if (g?.holders?.some(h => h.how === 'bought')) el.append(' ', btn('Pay the tickets back', async () => {
+      if (!confirm(`Pay back every golden ticket bought for ${ev.title}? (Use it when the event is called off.)`)) return;
+      const rr = await fetch('/api/golden-ticket', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: ev.id, action: 'refund' }) }), dd = await rr.json().catch(() => ({}));
+      mpaStatus(rr.ok && dd.ok ? `Paid back ${dd.refunded} ticket${dd.refunded === 1 ? '' : 's'}${dd.failed ? ` (${dd.failed} failed: try again)` : ''}` : (dd.error || 'Refund failed'), !(rr.ok && dd.ok)); goldLine(ev, el);
+    }, 'sm bad'));
+  } catch (e) { el.textContent = ''; }
+}
 // when an event's show starts: by hand (showAt), else by itself a minute after the doors open (auto, not stopped this time)
 const showStartOf = ev => (ev.show ? ev.showAt || (ev.auto && !ev.autoOff ? ev.starts + 60000 : 0) : 0);
 // an event made or changed: what, where, when, how long, how often, and its show (a script; an audio file is optional)
@@ -1062,6 +1078,11 @@ function eventForm(e) {
   const script = row('Script', mk('textarea')); script.value = e.script || ''; script.placeholder = 'One line each: 0:05 Good evening, Colony! [applause]\n[rimshot] [laugh] [applause] [drumroll] [cheer] = sounds after the line, <cartwheel> = a move';
   const tools = mk('div', 'row'); tools.append(btn('Use the demo set (Antthony)', async () => { script.value = DEMO_SET; if (!stitle.value) stitle.value = "Antthony: Opening Night"; }), mk('span', 'dim', 'Without audio each line gets a babbling voice and a caption; the performer at the Comedy Club\'s mic is Rebel #001.'));
   f.append(mk('span'), tools);
+  const gw = mk('div', 'row'), gnum = (v, max, ph) => { const i = mk('input'); i.type = 'number'; i.min = 0; i.max = max; i.value = v ?? 0; i.style.width = '92px'; i.placeholder = ph; return i; };
+  const gBuy = gnum(e.golden?.buy, 8, 'sold'), gPrice = gnum(e.golden?.price ?? 2500, 1000000, 'points'), gRaffle = gnum(e.golden?.raffle, 8, 'drawn');
+  gBuy.id = 'ev-gbuy'; gPrice.id = 'ev-gprice'; gRaffle.id = 'ev-graffle'; gPrice.style.width = '110px';
+  gw.append(mk('span', 'dim', 'Sold:'), gBuy, mk('span', 'dim', 'at'), gPrice, mk('span', 'dim', 'Rebel Points · free raffle:'), gRaffle, mk('span', 'dim', '(the 8 front-row seats at the Comedy Club; 0 / 0 = none)'));
+  row('Golden tickets', gw);
   const autoL = mk('label', 'tg'), auto = mk('input'); auto.type = 'checkbox'; auto.checked = !!e.auto; auto.id = 'ev-auto';
   autoL.append(auto, mk('span', '', 'The show starts by itself a minute after the doors open (every time it repeats; Stop the show stops it for that time)'));
   f.append(mk('span'), autoL);
@@ -1072,6 +1093,13 @@ function eventForm(e) {
     if (stitle.value.trim() || script.value.trim()) { const sh = parseShow(script.value); show = { title: stitle.value.trim() || 'The show', len: sh.len, audio: audio.value.trim() || null, cues: sh.cues, script: script.value }; }
     const args = { ...(e.id ? { id: e.id } : {}), title: title.value, place: { village: p.village, room: p.room, label: p.label || VILLAGE_NAMES[p.village] }, starts, ends: starts + len, show, repeat: rep.value, auto: auto.checked };
     const d = await mpaCmd('event-save', args);
+    // golden tickets: kept by this site for the event (api/golden-ticket.mjs)
+    const gb = Math.max(0, Math.min(8, +gBuy.value || 0)), gr = Math.max(0, Math.min(8 - gb, +gRaffle.value || 0));
+    if (gb || gr || e.golden) {
+      const gr2 = await fetch('/api/golden-ticket', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: d.ev.id, action: 'config', buy: gb, price: +gPrice.value || 0, raffle: gr }) });
+      const gd = await gr2.json().catch(() => ({})); if (!gr2.ok || !gd.ok) throw new Error('Saved the event, but not its golden tickets: ' + (gd.error || gr2.status));
+      GOLD_CFG[d.ev.id] = gd.cfg;
+    }
     mpa.edit = null; mpaStatus((e.id ? 'Saved: ' : 'Made: ') + d.ev.title); await mpaShow('events');
   }, 'primary'), btn('Cancel', async () => { mpa.edit = null; await mpaShow('events'); }));
   f.append(mk('span'), save);

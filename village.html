@@ -1942,6 +1942,7 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
 <script src="assets/village-chat.js"></script>
 <script src="assets/village-groups.js"></script>
 <script src="assets/village-voice.js"></script>
+<script src="assets/golden-ticket.js"></script>
 <script src="assets/village-stage.js"></script>
 <script src="assets/village-anthony.js"></script>
 <script type="module">
@@ -31712,6 +31713,7 @@ function startVillageMultiplayer() {
     villageName: id => VILLAGE_REGISTRY[id]?.displayName || id,
     player: () => charMesh && walkMode && !adminMode ? { x: charMesh.position.x, z: charMesh.position.z, interior: ActiveInterior ? String(ActiveInterior.targetInteriorId || ActiveInterior.interiorType || 'room') : null } : null,
     signedIn: () => !!Econ.on,
+    signIn: () => { activeJournalTab = 'overview'; openProgressionJournal(); }, // (the journal's account card: golden tickets)
     ticket: () => window.VillageMP.ticket(),
     travel: id => selectVillageGateDestination(id),
     doorOf: id => { const d = scene.transformNodes.find(n => n.metadata?.type === 'interior_entrance' && n.metadata.targetInteriorId === id); return d ? { x: d.position.x, z: d.position.z } : null; },
