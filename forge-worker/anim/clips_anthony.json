@@ -8,14 +8,6 @@
   "loop": true
  },
  {
-  "name": "sit_idle",
-  "file": "mixamo/gm_sit_idle.npz",
-  "t0": 0.0,
-  "t1": 4.3,
-  "pack": "games",
-  "loop": true
- },
- {
   "name": "sit_talk",
   "file": "mixamo/gm_sit_talk.npz",
   "t0": 0.0,
@@ -41,6 +33,21 @@
   "file": "mixamo/gm_stairs_up.npz",
   "t0": 0.0,
   "t1": 1.17,
+  "pack": "games"
+ },
+ {
+  "name": "sleep",
+  "file": "mixamo/gm_sleep.npz",
+  "t0": 0.0,
+  "t1": 1.63,
+  "pack": "games",
+  "loop": true
+ },
+ {
+  "name": "wake",
+  "file": "mixamo/gm_wake.npz",
+  "t0": 0.0,
+  "t1": 1.8,
   "pack": "games"
  }
 ]
