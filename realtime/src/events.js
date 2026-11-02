@@ -40,7 +40,8 @@ export function pubEvent(ev, now = Date.now()) {
     repeat: ev.repeat || null, auto: !!ev.auto };
 }
 // the lobby's and the pages' list: what, where, when, who hosts it, whether a show is on
-export const briefEvent = (ev, now = Date.now()) => { const at = showStart(ev); return { id: ev.id, title: ev.title, place: ev.place, starts: ev.starts, ends: ev.ends, live: isLive(ev, now), hosts: (ev.hosts || []).map(h => h.n), show: ev.show ? ev.show.title : null, showing: !!(at && at <= now && at + ev.show.len * 1000 > now), repeat: ev.repeat || null }; };
+// (showing: on now, or starting within the 3 s every page gets to start it together)
+export const briefEvent = (ev, now = Date.now()) => { const at = showStart(ev); return { id: ev.id, title: ev.title, place: ev.place, starts: ev.starts, ends: ev.ends, live: isLive(ev, now), hosts: (ev.hosts || []).map(h => h.n), show: ev.show ? ev.show.title : null, showing: !!(at && at <= now + 3500 && at + ev.show.len * 1000 > now), repeat: ev.repeat || null }; };
 
 export function normShow(s) {
   if (!s || typeof s !== 'object') return null;
