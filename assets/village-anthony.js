@@ -368,7 +368,9 @@ html.vt-touch #antTalk input{font-size:16px}`;
   function tick() {
     const now = performance.now(), dt = Math.min(.1, lastT ? (now - lastT) / 1000 : 0); lastT = now;
     if (S.flash && flashMesh) { const k = (now - S.flash) / 700; if (k >= 1) { flashMesh.setEnabled(false); S.flash = null; } else { flashMesh.scaling.set(1 + k * .6, 1 - k * .3, 1 + k * .6); flashMesh.material.alpha = .8 * (1 - k); } }
-    const me = H.player(), sch = scheduled(), canSee = !!sch && !!me && H.canAct();
+    // (busy elsewhere: on stage at the Comedy Club: off his rounds, the Rebel panel says where)
+    const busy = H.busy?.() || null;
+    const me = H.player(), sch = busy ? null : scheduled(), canSee = !!sch && !!me && H.canAct();
     S.here = !!sch;
     if (!sch) { if (S.shown) hide(true); if (T.open) close(); return; }
     // (a phone in the lightest after-crash mode skips his model: he stays on the timetable and in the Rebel panel)
@@ -438,8 +440,9 @@ html.vt-touch #antTalk input{font-size:16px}`;
   // the Rebel panel's line: here now, or where he is and when he is next here
   function paintWhere() {
     const el = document.getElementById('hudAntWhere'); if (!el || !H) return;
-    const w = where(); let t;
-    if (w.village === H.village) t = 'Here now';
+    const w = where(), busy = H.busy?.() || null; let t;
+    if (busy) t = busy;
+    else if (w.village === H.village) t = 'Here now';
     else { const nx = nextIn(H.village), min = nx ? Math.max(1, Math.round((nx - Date.now()) / 60000)) : null; t = `${w.name}${min ? ` \u00b7 here in ${min} min` : ''}`; }
     if (el.textContent !== t) el.textContent = t;
   }

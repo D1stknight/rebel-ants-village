@@ -31523,6 +31523,8 @@ function startVillageAnthony() {
     viaSite: u => (window.viaSite ? window.viaSite(u) : u),
     shadows: () => shadows,
     light: CRASH_LIGHT || 0, // (the lightest after-crash level: no model for him)
+    // (on stage at the Comedy Club while a live event there has a show: off his rounds)
+    busy: () => (window.VillageStage?.antOnStage?.() ? "On stage \u00b7 Antthony's Comedy Club" : null),
     toast: m => showToast(m, 7000)
   });
 }
