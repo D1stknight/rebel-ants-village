@@ -4,6 +4,10 @@
 // with this site's own app key: a ticket made for another app never opens Universe), then the browser gets the same
 // admin session the password sign-in gives (ra_admin_session, 12 hours) and the Admin Hub opens.
 //   POST ticket=rat_...  -> a page that opens /admin.html signed in, or says why not
+//   GET ?ticket=rat_...  -> the same, on previews only (Nov 2, Miguel: "we need one that takes me to the dev one also"):
+//                           the console's Apps → Rebel Universe (dev) sends it that way, since the dev preview sits behind
+//                           Vercel Authentication and a cross-site form POST loses its body at that sign-in step. The
+//                           live site takes the POST only (a ticket never sits in its address)
 import { createAdminSessionToken, buildAdminSessionCookie, rebelConsoleUrl } from './_admin-auth.mjs';
 import { econCall } from './_econ.mjs';
 import { rateLimit } from './_guard.mjs';
@@ -13,7 +17,10 @@ const SCOPE = 'universe.admin';
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const consoleUrl = () => rebelConsoleUrl('/admin');
+const LIVE = process.env.VERCEL_ENV === 'production';
+const queryTicket = (req) => { try { return String(new URL(req.url || '/', 'http://x').searchParams.get('ticket') || ''); } catch (e) { return ''; } };
 function ticketOf(req) {
+  if (req.method === 'GET') return queryTicket(req);
   const b = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : req.body;
   if (b && typeof b === 'object') return String(b.ticket || '');
   try { return String(new URLSearchParams(String(b || '')).get('ticket') || ''); } catch (e) { return ''; }
@@ -34,7 +41,7 @@ ${ok ? '<script>location.replace("/admin.html")</script>' : ''}</body></html>`);
 }
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
+  if (req.method !== 'POST' && !(req.method === 'GET' && !LIVE && queryTicket(req))) {
     res.setHeader('Allow', 'POST');
     return page(res, 405, { title: 'Open it from the Rebel Console', text: "Universe's Admin Hub opens from the Rebel Console: Apps → Rebel Universe." });
   }
