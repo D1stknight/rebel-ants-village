@@ -27,7 +27,7 @@
   function audio() {
     if (ctx) { if (ctx.state !== 'running' && ctx.state !== 'closed') ctx.resume().catch(() => {}); return ctx; } // ('suspended', or Safari's 'interrupted')
     const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
-    ctx = new AC(); master = ctx.createGain(); master.gain.value = settings.volume; master.connect(ctx.destination);
+    ctx = new AC(); ctx.__noTap = true; master = ctx.createGain(); master.gain.value = settings.volume; master.connect(ctx.destination); // (__noTap: other players' voices never go into a clip)
     return ctx;
   }
   // iPhones start a page's audio only inside a finger lifting (touchend, pointerup), a click or a key: never on a finger

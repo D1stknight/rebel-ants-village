@@ -51,5 +51,9 @@ print('npc clips', len(npc) - len(nmiss), 'of', len(npc), ('missing: ' + ', '.jo
 gm = sorted(set(c['file'] for c in json.load(open('anim/clips_games.json'))))
 gmiss = [f for f in gm if not os.path.exists(os.path.join('pack', f))]
 print('games clips', len(gm) - len(gmiss), 'of', len(gm), ('missing: ' + ', '.join(gmiss)) if gmiss else 'ok')
+# v2.42 #001's own moves (Ant-Thony): optional, only his runs use them
+am = sorted(set(c['file'] for c in json.load(open('anim/clips_anthony.json'))))
+amiss = [f for f in am if not os.path.exists(os.path.join('pack', f))]
+print('anthony clips', len(am) - len(amiss), 'of', len(am), ('missing: ' + ', '.join(amiss)) if amiss else 'ok')
 PY
 echo ready > "$FW/READY"

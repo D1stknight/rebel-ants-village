@@ -1,7 +1,8 @@
 // assets/village-touch.js — touch controls for phones and tablets (Oct 23).
 // A stick walks (pushed to its rim it runs). Beside the minimap: Use (O: use / talk / open) and ••• (Oct 28, Miguel's
 // mockup: claude.ai/artifact/2Vzhty2c8p8VmNrPtffqdE), which fans out Jump (Space), Hit (F), Talk (hold X, while voice is
-// on), Emote (E: a row of five opens, tapped to play) and Photo (P) onto the spots he drew, and folds them away again.
+// on), Emote (E: a row of five opens, tapped to play) and Photo (P) onto the spots he drew, and folds them away again
+// (Nov 1: Clip, a tap starting or stopping a video clip, left of Talk).
 // They press the same keys the keyboard does (KeyboardEvents on document), so every rule of the walk still applies:
 // walking is camera-relative, prompts, doors, chests. Dragging a finger anywhere else turns the camera, as before.
 // Shown on touch screens only (?touch=1 / ?touch=0 force it), while walking. The village calls
@@ -39,6 +40,12 @@
 .vtBtn.jump svg{stroke-width:2.4}
 .vtBtn.emote svg{width:21px;height:21px;stroke-width:3.4}
 .vtBtn.photo svg{stroke-width:2.1}
+.vtBtn.clip svg{stroke-width:2}
+.vtBtn.clip.rec{background:rgba(200,36,58,.82);border-color:#ff9aa6;color:#fff}
+.vtBtn.clip .sq{display:none;width:13px;height:13px;border-radius:3px;background:#fff;margin:3px 0 2px}
+.vtBtn.clip.rec svg{display:none}
+.vtBtn.clip.rec .sq{display:block}
+.vtBtn.more.rec::after{content:'';position:absolute;top:2px;right:2px;width:11px;height:11px;border-radius:50%;background:#ff3b55;box-shadow:0 0 6px #ff3b55}
 .vtBtn.fan{transform:translate(var(--cx,0px),var(--cy,0px)) scale(.2);opacity:0;visibility:hidden;pointer-events:none;
   transition:transform .24s cubic-bezier(.2,.9,.3,1.3) var(--dc,0ms),opacity .16s ease var(--dc,0ms),visibility 0s linear var(--dv,240ms),background .08s,border-color .08s}
 #vtBtns.open .vtBtn.fan{transform:none;opacity:1;visibility:visible;pointer-events:auto;
@@ -61,6 +68,7 @@ html.vt-touch #photoBtn{display:none!important}
     '<button type="button" class="vtBtn fan talk" data-key="x" aria-label="Hold to talk">' + ico('<rect x="8.5" y="3" width="7" height="11" rx="3.5"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0"/><path d="M12 17.5V21"/>') + '<span>Talk</span></button>' +
     '<button type="button" class="vtBtn fan emote" data-key="e" aria-label="Emotes">' + ico('<circle cx="20" cy="8.5" r="4.2"/><path d="M20 13.5v11M20 16.5 13 7.5M20 16.5l7-9M20 24.5l-5 9M20 24.5l5 9"/>', '0 0 40 40') + 'Emote</button>' +
     '<button type="button" class="vtBtn fan photo" data-key="p" aria-label="Take a picture">' + ico('<rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8.5 7l1.4-2.6h4.2L15.5 7"/><circle cx="12" cy="13.5" r="3.6"/>') + 'Photo</button>' +
+    '<button type="button" class="vtBtn fan clip" aria-label="Record a clip">' + ico('<rect x="2.5" y="6.5" width="13" height="11" rx="2.5"/><path d="M15.5 10.3 21.5 7v10l-6-3.3"/>') + '<i class="sq"></i><span>Clip</span></button>' +
     '<button type="button" class="vtBtn more" aria-label="More buttons" aria-expanded="false">' + ico('<circle cx="5" cy="12" r="2.3"/><circle cx="12" cy="12" r="2.3"/><circle cx="19" cy="12" r="2.3"/>', '0 0 24 24', 'dots') +
       ico('<path d="M6 6l12 12M18 6 6 18"/>', '0 0 24 24', 'x') + '<span>More</span></button>' +
     '<button type="button" class="vtBtn use" data-key="o" aria-label="Use or talk">' + ico('<path d="M8 12.5V6a1.4 1.4 0 0 1 2.8 0v5"/><path d="M10.8 10.5V4.4a1.4 1.4 0 0 1 2.8 0v6"/><path d="M13.6 10.5V5.4a1.4 1.4 0 0 1 2.8 0v6.4"/><path d="M16.4 11.6V8.6a1.4 1.4 0 0 1 2.8 0v5.2A7.2 7.2 0 0 1 12 21h-.4a6.8 6.8 0 0 1-5.7-3.1l-2.6-4a1.5 1.5 0 0 1 2.4-1.8L8 14.4"/>') + '<span>Use</span></button></div>';
@@ -68,7 +76,7 @@ html.vt-touch #photoBtn{display:none!important}
   // list goes and the card names the touch controls
   document.documentElement.classList.add('vt-touch');
   const TOUCH_HELP = [['Move', 'The stick, bottom left'], ['Run', 'Push the stick to its rim'], ['Look', 'Drag anywhere else'], ['Use / talk', 'Use button'],
-    ['More', 'The ••• button: Jump, Hit, Emote, Photo'], ['Talk', 'Hold Talk, under ••• (signed in)'], ['Mission', 'The gold ◆ under your Rebel'], ['Journal', 'Journal button'], ['Chat', 'Chat button, top right']];
+    ['More', 'The ••• button: Jump, Hit, Emote, Photo, Clip'], ['Talk', 'Hold Talk, under ••• (signed in)'], ['Mission', 'The gold ◆ under your Rebel'], ['Journal', 'Journal button'], ['Chat', 'Chat button, top right']];
   const touchHelp = () => { const list = document.getElementById('playerStartupList'); if (list) list.innerHTML = TOUCH_HELP.map(([b, t]) => `<div class="startup-control"><b>${b}</b>${t}</div>`).join(''); };
   const mount = () => { document.body.appendChild(root); touchHelp(); };
   if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);
@@ -120,7 +128,22 @@ html.vt-touch #photoBtn{display:none!important}
     if (b.classList.contains('fan')) fanUps.push(up);
   });
 
-  // ── ••• opens and folds the five (the state is kept on the device; a game played on the walk opens them for its
+  // ── Clip (Nov 1): a tap starts or stops a clip, on the finger's lift (iPhones let a page start its sound only then;
+  // the clip's sound mix starts in it) ──
+  const clipBtn = root.querySelector('.vtBtn.clip'), clipWord = clipBtn.querySelector('span');
+  if (!window.ClipRecorder?.supported?.()) clipBtn.style.display = 'none'; // (a browser that can't record)
+  let clipId = null;
+  clipBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); if (clipId !== null) return; clipId = e.pointerId; try { clipBtn.setPointerCapture(e.pointerId); } catch (_) {} clipBtn.classList.add('down'); });
+  clipBtn.addEventListener('pointerup', (e) => { if (e.pointerId !== clipId) return; clipId = null; clipBtn.classList.remove('down'); window.toggleVillageClip?.(); });
+  ['pointercancel', 'lostpointercapture'].forEach((t) => clipBtn.addEventListener(t, (e) => { if (e.pointerId === clipId) { clipId = null; clipBtn.classList.remove('down'); } }));
+  VT.clipRec = (on) => {
+    on = !!on; if (clipBtn.classList.contains('rec') === on) return;
+    clipBtn.classList.toggle('rec', on); clipWord.textContent = on ? 'Stop' : 'Clip';
+    clipBtn.setAttribute('aria-label', on ? 'Stop the clip' : 'Record a clip');
+    root.querySelector('.vtBtn.more')?.classList.toggle('rec', on); // (a red dot on ••• while the fan is folded)
+  };
+
+  // ── ••• opens and folds the six (the state is kept on the device; a game played on the walk opens them for its
   // length: Treasure Dig digs and Trick or Treat knocks with Jump) ──
   const FAN_KEY = 'rebelAntsTouchFan:v1', box = root.querySelector('#vtBtns'), more = root.querySelector('.vtBtn.more');
   let fanOpen = false, roamOpen = false;
@@ -143,8 +166,8 @@ html.vt-touch #photoBtn{display:none!important}
   // ── where they go: Miguel's spots, as centres from the minimap's centre on an upright phone, whose map ring is 65 px
   // round. On another screen each keeps its gap to the ring along the same direction (a sideways phone's or a tablet's
   // map is 170 px), and when they would meet the stick or the top of the screen they all shrink toward the map ──
-  const SPOTS = { use: [25, -103, 72], more: [-58, -84, 52], jump: [23, -175.5, 50], hit: [-35.5, -137, 50], talk: [-92.5, -146, 50], emote: [-121, -86, 50], photo: [-92, -29, 50] };
-  const FAN = ['jump', 'hit', 'talk', 'emote', 'photo'], RING0 = 65;
+  const SPOTS = { use: [25, -103, 72], more: [-58, -84, 52], jump: [23, -175.5, 50], hit: [-35.5, -137, 50], talk: [-92.5, -146, 50], emote: [-121, -86, 50], photo: [-92, -29, 50], clip: [-165, -140, 50] };
+  const FAN = ['jump', 'hit', 'talk', 'emote', 'photo', 'clip'], RING0 = 65;
   function mapRing() {
     const m = document.getElementById('miniMap'), cs = m && getComputedStyle(m); // (its CSS place, also while a room hides it)
     const w = cs ? parseFloat(cs.width) : NaN, r = cs ? parseFloat(cs.right) : NaN, b = cs ? parseFloat(cs.bottom) : NaN;
@@ -175,7 +198,8 @@ html.vt-touch #photoBtn{display:none!important}
       const i = FAN.indexOf(id);
       if (i >= 0) {
         b.style.setProperty('--cx', Math.round(M.x - c.x) + 'px'); b.style.setProperty('--cy', Math.round(M.y - c.y) + 'px');
-        b.style.setProperty('--do', i * 30 + 'ms'); b.style.setProperty('--dc', (4 - i) * 20 + 'ms'); b.style.setProperty('--dv', 240 + (4 - i) * 20 + 'ms');
+        const back = FAN.length - 1 - i;
+        b.style.setProperty('--do', i * 30 + 'ms'); b.style.setProperty('--dc', back * 20 + 'ms'); b.style.setProperty('--dv', 240 + back * 20 + 'ms');
       }
     }
   }

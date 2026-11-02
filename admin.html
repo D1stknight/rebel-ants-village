@@ -257,6 +257,7 @@ a.tile:hover{border-color:#343846;color:var(--fg)}
     <div class="grp"><span class="lbl">CONTENT</span>
       <a href="#announcements" data-go="announcements"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 10v4h4l7 5V5L7 10z"/><path d="M17.5 9a4 4 0 0 1 0 6"/></svg><span class="t">Announcements</span></a>
       <a href="#badges" data-go="badges"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><circle cx="12" cy="9" r="6"/><path d="M8.5 14l-2 7 5.5-3 5.5 3-2-7"/></svg><span class="t">Badges</span></a>
+      <a href="#anthony" data-go="anthony"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5h16v10H9l-5 4z"/><path d="M8.5 9.5h7M8.5 12h4"/></svg><span class="t">Ant-Thony</span></a>
       <a href="npc-forge.html#free"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12.5l2.5 2.5 4.5-5.5"/></svg><span class="t">Free to play</span><span class="ext" aria-hidden="true">↗</span></a>
     </div>
     <div class="grp"><span class="lbl">FORGE AND WORLD</span>
@@ -414,6 +415,21 @@ a.tile:hover{border-color:#343846;color:var(--fg)}
           <span id="bdg-status"></span>
         </div>
       </section>
+      <section id="ant" class="card">
+        <h2>Ant-Thony</h2>
+        <p>Rebel #001 roams Universe and answers players' questions. His brain and voice are the Rebel Economy's; what he knows about Universe is this site's guide (docs/anthony-universe-guide.txt, made by tools/gen-anthony-guide.mjs from the games, villages and controls). Send it again after Universe changes. The dev preview and rebeluniverse.io keep their own copy (each has its own app key), so send it on each.</p>
+        <div id="ant-state" style="font:13px var(--mono);color:var(--muted);margin:10px 0">–</div>
+        <div id="ant-dad" style="font:13px var(--mono);color:var(--muted);margin:0 0 10px">His dad: –</div>
+        <style>#ant [hidden]{display:none !important}</style>
+        <div class="row">
+          <button id="ant-send" class="primary" type="button" onclick="antSend()">Send the guide to Ant-Thony</button>
+          <button type="button" onclick="antLoad()">Check again</button>
+          <a class="btn" target="_blank" rel="noopener" href="/docs/anthony-universe-guide.txt">Read the guide ↗</a>
+          <button id="ant-dad-set" type="button" onclick="antDad(true)" title="Sign in to Universe in this browser first (Discord or your name): that account becomes his dad">I'm his dad</button>
+          <button id="ant-dad-clear" type="button" onclick="antDad(false)" hidden>Clear his dad</button>
+          <span id="ant-status"></span>
+        </div>
+      </section>
     </section>
 
     <!-- ===== Babylon ===== -->
@@ -496,6 +512,42 @@ async function bdgSendAll() {
     say(`Done${site === 'prod' ? '' : ' (this preview\'s stories)'}: ${sum.accounts} players, ${sum.sent} badges sent${sum.waiting ? `, ${sum.waiting} waiting on chests or first clears` : ''}${stopped ? ', ' + stopped + ': press again in 5 minutes' : ''}.`);
   } catch (e) { say(e.message || 'The badges did not go', true); }
   btn.disabled = false;
+}
+// Ant-Thony (Nov 1): what he knows about Universe (/api/anthony-knowledge: this deploy's guide vs what the Rebel
+// Economy has under this site's app key); Send = the whole guide to the economy
+async function antLoad() {
+  const box = document.getElementById('ant-state');
+  try {
+    const r = await fetch('/api/anthony-knowledge', { cache: 'no-store' }), d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.ok) throw new Error(d.error || ('Error ' + r.status));
+    const when = (t) => { try { return new Date(t).toLocaleString(); } catch (e) { return t; } };
+    const has = d.stored ? `the economy has ${d.stored.chars.toLocaleString()} characters${d.stored.at ? ' (' + when(d.stored.at) + ')' : ''}` : `the economy has none yet${d.storedError && !/404|none/.test(d.storedError) ? ' (' + d.storedError + ')' : ''}`;
+    box.innerHTML = `This site's guide: ${d.guide.chars.toLocaleString()} characters · ${has} · ` + (d.current ? '<b class="good">up to date ✓</b>' : d.stored ? '<b class="warn">older guide: send again</b>' : '<b class="warn">not sent yet</b>');
+    const dad = document.getElementById('ant-dad'), c = d.creator;
+    dad.textContent = c ? `His dad: ${c.name || 'set'} (${c.kind === 'name' ? 'name account' : 'Discord'}) · set ${when(c.at)} · he calls him Dad and knows he made everything` : 'His dad: not set. Sign in to Universe in this browser as yourself, then press I\'m his dad.';
+    document.getElementById('ant-dad-clear').hidden = !c;
+  } catch (e) { box.textContent = e.message || 'Could not read it'; }
+}
+async function antDad(on) {
+  const st = document.getElementById('ant-status');
+  try {
+    const r = await fetch('/api/anthony-knowledge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: on ? 'creator' : 'creator-clear' }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.ok) throw new Error(d.error || ('Error ' + r.status));
+    st.textContent = on ? `Saved: Ant-Thony knows ${d.creator.name || 'you'} is his dad.` : 'Cleared: no dad set.'; st.className = '';
+  } catch (e) { st.textContent = e.message || 'It did not go'; st.className = 'err'; }
+  antLoad();
+}
+async function antSend() {
+  const btn = document.getElementById('ant-send'), st = document.getElementById('ant-status');
+  btn.disabled = true; st.textContent = 'Sending…'; st.className = '';
+  try {
+    const r = await fetch('/api/anthony-knowledge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'send' }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.ok) throw new Error(d.error || ('Error ' + r.status));
+    st.textContent = `Sent: Ant-Thony knows ${Number(d.chars).toLocaleString()} characters of Universe.`;
+  } catch (e) { st.textContent = e.message || 'It did not go'; st.className = 'err'; }
+  btn.disabled = false; antLoad();
 }
 // Announcements (Oct 18): the landing page ticker's lines (/api/site-ticker; production and previews keep their own)
 const ANN_DEFAULT = ['REBEL ANTS — THE HIDDEN VILLAGE', 'Season 1 Now Live', 'New dojos coming soon', 'The Foundry — AI character generation coming', 'Hold your ant. Enter the village.'];
@@ -892,7 +944,7 @@ const BRN = { safari: 'Safari', chrome: 'Chrome', firefox: 'Firefox', edge: 'Edg
 
 // ---- pages: the address's #name picks one (#overview, #performance, #issues, #services, #players, #chat, #events,
 // #announcements, #badges, #babylon)
-const ROUTES = { overview: ['overview'], performance: ['performance'], issues: ['issues'], services: ['services'], players: ['players', 'online'], chat: ['players', 'log'], reports: ['players', 'reports'], events: ['players', 'events'], announcements: ['content', 'ann'], badges: ['content', 'bdg'], babylon: ['babylon'] };
+const ROUTES = { overview: ['overview'], performance: ['performance'], issues: ['issues'], services: ['services'], players: ['players', 'online'], chat: ['players', 'log'], reports: ['players', 'reports'], events: ['players', 'events'], announcements: ['content', 'ann'], badges: ['content', 'bdg'], anthony: ['content', 'ant'], babylon: ['babylon'] };
 let PAGE = 'overview', mpaReady = false;
 function route() {
   const key = (location.hash || '').slice(1), r = ROUTES[key] || ROUTES.overview, pg = r[0];
@@ -1267,6 +1319,7 @@ checkAdminSession().then(() => {
   route();
   dashLoad();
   loadAnnouncements();
+  antLoad();
   bjsLoad().then(bjsBadge);
   mpaLoad().then(() => { mpaReady = true; });
   sideRooms(); setInterval(() => { if (!document.hidden) sideRooms(); }, 60000);

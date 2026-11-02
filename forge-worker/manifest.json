@@ -1,7 +1,8 @@
 {
- "version": "2.41",
+ "version": "2.42",
  "files": [
   "anim/bvhfk.py",
+  "anim/clips_anthony.json",
   "anim/clips.json",
   "anim/clips_games.json",
   "anim/clips_npc.json",

@@ -82,6 +82,7 @@ async function status() {
       // Oct 16: what the image holds of the optional packs (setup.sh's self test), so a games run never starts on an
       // image built before its moves were uploaded
       Object.assign(worker, { snapshotId: snap.snapshotId || snap.id, commit: s.commit, builtAt: new Date().toISOString(), games: packCount(log, 'games'), npc: packCount(log, 'npc'),
+        anthony: packCount(log, 'anthony'),   // v2.42 #001's own moves (Ant-Thony)
         version: await riggerVersion(s.commit) });
       s.status = 'done'; s.finishedAt = worker.builtAt;
       await setJson(WORKER_KEY, worker);

@@ -959,6 +959,10 @@ const GAMES_PACK = ['fishing_cast', 'fishing_idle', 'digging', 'plant', 'throw_o
   'sneak_walk'].map((c) => `mixamo/gm_${c}.npz`);
 // the moves of a pack made before v2.30 (no move list stored with it)
 const GAMES_V1 = ['game_cast', 'game_reel', 'game_fish_wait', 'game_dig', 'game_plant', 'game_pick_up', 'game_throw', 'game_throw_far', 'game_chop', 'game_cheer', 'game_push', 'game_push_walk', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam'];
+// v2.42 Ant-Thony's own moves, in Rebel #001's games pack only (forge-worker/anim/clips_anthony.json: the stand-up set,
+// sitting idle and talking, a stair climb; his wave is the NPC pack's waving.npz)
+const ANTHONY_PACK = ['standup', 'sit_idle', 'sit_talk', 'sit_talk_2', 'stairs_up'].map((c) => `mixamo/gm_${c}.npz`);
+const is001 = (r) => r.collectionKey === 'battle_for_colony' && /^0*1$/.test(String(r.tokenId));
 let workerPoll = null, workerSetup = null, workerBuilding = false, workerInfo = null, packUploaded = new Set();
 // Oct 24 the rigger's version: the image's (the API reads it from the commit the image was built from) and this site's
 // (forge-worker/manifest.json: what a rebuild installs)
@@ -990,7 +994,7 @@ function paintSetup() {
 setInterval(paintSetup, 1000);
 async function loadWorker() {
   let d; try { [d] = await Promise.all([api('/api/forge-rig-worker'), loadSiteRigger()]); } catch (e) { $('#workerBox').innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
-  const w = d.worker || {}; const have = new Set(d.packPaths || []); const miss = NPC_PACK.filter((p) => !have.has(p)), gmiss = GAMES_PACK.filter((p) => !have.has(p)); const s = w.setup || {};
+  const w = d.worker || {}; const have = new Set(d.packPaths || []); const miss = NPC_PACK.filter((p) => !have.has(p)), gmiss = GAMES_PACK.filter((p) => !have.has(p)), amiss = ANTHONY_PACK.filter((p) => !have.has(p)); const s = w.setup || {};
   const was = workerBuilding; const building = s.status === 'running';
   workerBuilding = building; workerSetup = s; workerInfo = w; packUploaded = have;
   // Oct 16: what the worker image itself holds (its setup self test): files uploaded after the last rebuild are not in it
@@ -1004,6 +1008,7 @@ async function loadWorker() {
     ${building ? '<div id="workerProgress" style="margin-top:6px"></div>' : ''}
     <div class="state" style="margin-top:4px">NPC gesture pack: ${NPC_PACK.length - miss.length} of ${NPC_PACK.length} uploaded${miss.length ? ` · missing ${miss.map((m) => m.replace('mixamo/', '').replace('.npz', '')).join(', ')}` : ' ✓'}${inImage(w.npc, !miss.length, false)}</div>
     <div class="state" style="margin-top:2px">Games pack (Rebels): ${GAMES_PACK.length - gmiss.length} of ${GAMES_PACK.length} uploaded${gmiss.length ? ` · missing ${gmiss.map((m) => m.replace('mixamo/', '').replace('.npz', '')).join(', ')}` : ' ✓'}${inImage(w.games, !gmiss.length, true)}</div>
+    <div class="state" style="margin-top:2px">Ant-Thony's moves (#001's games pack only): ${ANTHONY_PACK.length - amiss.length} of ${ANTHONY_PACK.length} uploaded${amiss.length ? ` · missing ${amiss.map((m) => m.replace('mixamo/', '').replace('.npz', '')).join(', ')}` : ' ✓'}${inImage(w.anthony, !amiss.length, true)}</div>
     <div class="row" style="margin-top:8px"><button onclick="uploadPack()">Upload pack files (.npz)</button><button class="teal" onclick="rebuildWorker()" ${building ? 'disabled' : ''}>${building ? 'Rebuilding…' : 'Rebuild worker'}</button></div>
     <div class="state" style="margin-top:4px">Rebuild after uploading pack files or after a worker update (about a minute): jobs only use files uploaded before the last rebuild. NPC jobs need all ${NPC_PACK.length} gesture files in the worker.</div>
     ${s.logTail && (building || s.status === 'failed') ? `<pre style="white-space:pre-wrap;font-size:10px;color:${building ? 'var(--dim)' : 'var(--red)'};max-height:120px;overflow:auto">${esc(s.logTail)}</pre>` : ''}
@@ -1013,11 +1018,14 @@ async function loadWorker() {
 }
 // Games packs for the Rebels in play (v2.24): each Rebel's active rig gets games.glb from a moves re-run on its own
 // sculpt (/api/forge-rig-moves; the rig is not touched). Needs a worker rebuilt with the games pack files.
-let gamesList = null, gamesMoves = null; const gamesRun = { on: false, active: new Map(), note: '' };
+let gamesList = null, gamesMoves = null, anthonyMoves = null; const gamesRun = { on: false, active: new Map(), note: '' };
 const gamesReady = () => { const g = workerInfo?.games; return !!(g && g.have >= g.of); };   // the worker image holds every games move
+const anthonyReady = () => { const a = workerInfo?.anthony; return !!(a && a.have >= a.of); };   // v2.42 ... and Ant-Thony's
 // v2.30 a pack without every current move (made before the second set) is made again; the move list is the deployed one
 const packMoves = (r) => r.gamesClips || GAMES_V1;
-const packOld = (r) => !!r.games && !!gamesMoves && gamesMoves.some((n) => !packMoves(r).includes(n));
+// v2.42 #001's pack without Ant-Thony's moves too, once the worker image has them
+const anthonyOld = (r) => is001(r) && anthonyReady() && !!anthonyMoves && anthonyMoves.some((n) => !packMoves(r).includes(n));
+const packOld = (r) => !!r.games && ((!!gamesMoves && gamesMoves.some((n) => !packMoves(r).includes(n))) || anthonyOld(r));
 const packTodo = (r) => !r.games || packOld(r);
 // Oct 20 the Free to play roster (api/free-roster.mjs): forged characters anyone can play from the lobby; ticked in
 // its own box (Oct 24: it was inside the Rig worker box's games packs list, behind a button). Oct 25 Chumpz and Saints
@@ -1079,6 +1087,7 @@ async function loadGamesPacks() {
   try { [gamesList] = await Promise.all([api('/api/forge-games-packs').then((d) => d.rebels || []), loadFreeRoster()]); }
   catch (e) { freeErr = e.message; const b = $('#gamesBox'); if (b) b.innerHTML = `<div class="err">${esc(e.message)}</div>`; paintFree(); return; }
   try { gamesMoves = (await (await fetch('/forge-worker/anim/clips_games.json', { cache: 'no-store' })).json()).map((c) => c.name); } catch (e) { gamesMoves = null; }
+  try { anthonyMoves = (await (await fetch('/forge-worker/anim/clips_anthony.json', { cache: 'no-store' })).json()).map((c) => c.name); } catch (e) { anthonyMoves = null; }
   paintGames();
   if (location.hash === '#free' && !loadGamesPacks.shown) { loadGamesPacks.shown = true; showFreeBox(); } // (the Admin Hub's Free to play link)
   // jobs still running (started on this or another computer): watch them, so they finish and none is started twice
@@ -1092,6 +1101,7 @@ function paintGames() {
   const have = gamesList.filter((r) => r.games && !packOld(r)).length, todo = gamesList.filter(packTodo), old = todo.filter((r) => r.games).length;
   const line = (r) => {
     if (gamesRun.active.has(r.buildId)) return `making · ${esc(gamesRun.active.get(r.buildId))}`;
+    if (r.games && anthonyOld(r) && !(gamesMoves || []).some((n) => !packMoves(r).includes(n))) return `<span class="bad">without Ant-Thony's moves: make again</span>`;
     if (r.games && packOld(r)) return `<span class="bad">older pack (${packMoves(r).length} of ${gamesMoves.length} moves): make again</span>`;
     if (r.games) return '✓';
     const j = r.job; if (!j || !j.gamesOnly) return 'none yet';   // (a weapon-moves run is not a games run)

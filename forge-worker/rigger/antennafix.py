@@ -138,7 +138,8 @@ tracks = [t for t in arm.animation_data.nla_tracks]
 muted = {t.name: t.mute for t in tracks}
 for t in tracks: t.mute = True
 GAME_LOOPS = {'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam', 'game_sneak', 'game_swim', 'game_dribble',
-              'game_shield_idle', 'game_push_walk', 'game_fish_wait', 'game_plant'}
+              'game_shield_idle', 'game_push_walk', 'game_fish_wait', 'game_plant',
+              'game_standup', 'sit_idle', 'sit_talk', 'sit_talk_2'}   # v2.42 #001's own loops (Ant-Thony)
 n_clips = 0
 for t in tracks:
     if not t.strips: continue
