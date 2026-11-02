@@ -327,9 +327,14 @@ body.in-game #clipRec{left:12px;top:50%;transform:translateY(-50%)}
 #xhair::after{width:2px;height:16px;top:3px;left:10px}
 #wb{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:rgba(5,10,28,.92);border:1px solid rgba(232,197,106,.55);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:11px;letter-spacing:3px;padding:13px 32px;cursor:pointer;z-index:10;transition:all .25s;backdrop-filter:blur(12px)}
 #wb:hover{background:rgba(232,197,106,.18)}
-#wb.on{top:82px;bottom:auto;left:340px;width:92px;min-height:31px;transform:none;padding:7px 8px;background:rgba(5,10,28,.95);border-color:rgba(94,207,202,.62);color:#5ecfca;font-size:8px;letter-spacing:1.5px;z-index:14;box-shadow:0 0 18px rgba(94,207,202,.12)}
-#wb.on:hover{background:rgba(94,207,202,.14);border-color:#5ecfca}
-@media (max-width:480px){#wb.on{left:auto;right:16px;top:auto;bottom:16px}}
+#wb.on{top:auto;left:auto;right:147px;bottom:21px;width:46px;height:46px;min-height:0;transform:none;padding:0;border-radius:50%;background:rgba(5,10,28,.92);border:2px solid rgba(94,207,202,.75);color:#5ecfca;z-index:14;box-shadow:0 0 14px rgba(0,0,0,.45);display:grid;place-items:center;letter-spacing:0}
+#wb.on svg{width:24px;height:24px}
+#wb.on .wb-label{position:absolute;right:54px;top:50%;transform:translateY(-50%);white-space:nowrap;font:700 10px/1 'Cinzel Decorative',Georgia,serif;letter-spacing:1px;color:#5ecfca;background:rgba(5,10,28,.92);border:1px solid rgba(94,207,202,.5);border-radius:6px;padding:6px 9px;opacity:0;pointer-events:none;transition:opacity .15s}
+#wb.on:hover .wb-label,#wb.on:focus-visible .wb-label{opacity:1}
+#wb.on:hover{background:rgba(94,207,202,.18);border-color:#5ecfca}
+#wb:not(.on) .wb-label{display:none}
+@media (max-width:480px){#wb.on{right:101px;bottom:55px;width:44px;height:44px}}
+html.vt-touch #wb.on .wb-label{display:none}
 /* narrow screens (phones, tablets held upright) have no room for Enter Village beside Back to Lobby: it sat under it.
    Enter Village goes above Back to Lobby, both centred, the same width */
 @media (max-width:920px){#wb:not(.on){bottom:80px;width:min(300px,calc(100vw - 56px))}body:has(#wb:not(.on)) #backToLobbyBtn{left:50%;transform:translateX(-50%)}}
@@ -16371,16 +16376,16 @@ window.PlayerSound = { get: playerSound, set: setPlayerSound, get levels() { pla
 // buttons, from the game's own key handling (keydown below, assets/village-touch.js, village-chat.js, village-voice.js)
 const CK = (...k) => k.map(x => x.startsWith('~') ? `<kbd class="m">${x.slice(1)}</kbd>` : `<kbd>${x}</kbd>`).join('');
 const CONTROLS_DESK = [
-  ['Move', [[CK('W', 'A', 'S', 'D'), 'Walk, the way the camera looks <small>(or the arrow keys)</small>'], [CK('R'), 'Run <small>(hold)</small>'], [CK('Space'), 'Jump'], [CK('~Drag'), 'Look around <small>(hold a mouse button and move)</small>'], [CK('Esc'), 'Close a window · again: stop walking, see the village from above']]],
+  ['Move', [[CK('W', 'A', 'S', 'D'), 'Walk, the way the camera looks <small>(or the arrow keys)</small>'], [CK('R'), 'Run <small>(hold)</small>'], [CK('Space'), 'Jump'], [CK('~Drag'), 'Look around <small>(hold a mouse button and move)</small>'], [CK('Esc'), 'Close a window · again: aerial view <small>(the village from above)</small>']]],
   ['Do', [[CK('O'), 'Use: talk, open, enter, read, play <small>(the prompt on screen says which)</small>'], [CK('E'), 'Emotes, then <kbd>1</kbd>-<kbd>5</kbd> to pick one'], [CK('P'), 'Take a photo'], [CK('Shift', 'P'), 'Record a clip <small>(up to a minute; again to stop)</small>'], [CK('Tab'), 'Your Rebel: Journal, Sound, Gloves, Back to Lobby'], [CK('Q'), 'Draw or put away your weapon <small>(Rebels that carry one)</small>']]],
   ['Fight moves', [[CK('F'), 'Kicks <small>(press again for the next one)</small>'], [CK('G'), 'Punches <small>(press again for the next one)</small>'], [CK('T'), 'Fight stance on / off'], [CK('C', 'B', 'V'), 'Cartwheel · backflip · front flip'], [CK('H', 'K'), 'Get hit · get knocked down']]],
   ['Players', [[CK('Enter'), 'Chat: type, <kbd>Enter</kbd> sends, <kbd>Enter</kbd> again for the next line, <kbd>Esc</kbd> closes'], [CK('X'), 'Talk with your voice <small>(hold; or hold the 🎤 button, bottom left; signed in)</small>'], [CK('~Click'), 'A name in the chat: whisper, mute, block, report'], [CK('~Click'), 'A chat bubble over a head: answer in the chat']]],
-  ['On the screen', [[CK('~Click'), 'The round button, top left: your Rebel <small>(same as Tab)</small>'], [CK('~Click'), 'The ◆ circle under it: your mission <small>(it opens by itself when the mission changes)</small>'], [CK('~Click'), 'The map, bottom right: zoom in or out'], [CK('~Click'), 'The 📷 above the map: take a photo · the 🎥 over it: record a clip']]]
+  ['On the screen', [[CK('~Click'), 'The round button, top left: your Rebel <small>(same as Tab)</small>'], [CK('~Click'), 'The ◆ circle under it: your mission <small>(it opens by itself when the mission changes)</small>'], [CK('~Click'), 'The map, bottom right: zoom in or out'], [CK('~Click'), 'The eye at the map\'s lower left: aerial view'], [CK('~Click'), 'The 📷 above the map: take a photo · the 🎥 over it: record a clip']]]
 ];
 const CONTROLS_TOUCH = [
   ['Move', [[CK('~Stick'), 'Walk: the stick, bottom left <small>(push it to the rim to run)</small>'], [CK('~Drag'), 'Look around: drag anywhere else on the screen']]],
   ['Do', [[CK('~Use'), 'Talk, open, enter, read, play <small>(the button says which)</small>'], [CK('~•••'), 'More: Jump, Hit, Talk, Emote, Photo, Clip <small>(a video, up to half a minute)</small>']]],
-  ['Your Rebel', [[CK('~Round'), 'The round button, top left: Journal, Sound, Gloves, Controls, Back to Lobby'], [CK('~◆'), 'The gold circle under it: your mission'], [CK('~Map'), 'Tap the map to zoom in or out']]],
+  ['Your Rebel', [[CK('~Round'), 'The round button, top left: Journal, Sound, Gloves, Controls, Back to Lobby'], [CK('~◆'), 'The gold circle under it: your mission'], [CK('~Map'), 'Tap the map to zoom in or out'], [CK('~Eye'), 'The eye at the map\'s lower left: aerial view']]],
   ['Players', [[CK('~💬'), 'Chat: the button at the top right'], [CK('~Talk'), 'Talk with your voice: hold Talk, under ••• <small>(signed in)</small>'], [CK('~Tap'), 'A name in the chat: whisper, mute, block, report']]]
 ];
 function paintControlsCard() {
@@ -28931,6 +28936,11 @@ function configureInteriorEditCamera() {
   return true;
 }
 
+// walking, the Enter Village button is the round Aerial view button at the minimap's lower-left (Nov 2, Miguel: "the exit
+// walk button should be called aerial view and placed on the left bottom corner of the map"): a camera looking down
+const AERIAL_VIEW_BTN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18.5 8.5 12l3.5 4 2.5-3 6.5 5.5z" fill="currentColor" opacity=".55"/>'
+  + '<path d="M12 3.2c-3.3 0-6 2.2-7.2 4.6 1.2 2.4 3.9 4.6 7.2 4.6s6-2.2 7.2-4.6C18 5.4 15.3 3.2 12 3.2zm0 7.2a2.6 2.6 0 1 1 0-5.2 2.6 2.6 0 0 1 0 5.2z" fill="currentColor"/></svg>'
+  + '<span class="wb-label">Aerial view</span>';
 function toggleWalk() {
   walkMode = !walkMode;
   const wb = document.getElementById('wb'), xh = document.getElementById('xhair');
@@ -28945,7 +28955,7 @@ function toggleWalk() {
     walk.setTarget(new BABYLON.Vector3(charMesh.position.x, _eyeY, charMesh.position.z));
     }
     scene.activeCamera = walk; walk.detachControl(); orbit.detachControl();
-    wb.textContent = 'EXIT WALK'; wb.classList.add('on'); xh.classList.remove('on');
+    wb.innerHTML = AERIAL_VIEW_BTN; wb.title = 'Aerial view: see the village from above'; wb.setAttribute('aria-label', 'Aerial view'); wb.classList.add('on'); xh.classList.remove('on');
     runVillagePerformancePass(true);
     buildVillageHudMap();
     if (PendingRoomRestore) enterPendingRoomRestore();
@@ -28955,7 +28965,7 @@ function toggleWalk() {
     if (!configureInteriorEditCamera()) {
       scene.activeCamera = orbit; orbit.attachControl(canvas, true); walk.detachControl();
     }
-    wb.textContent = '⚔️  ENTER VILLAGE'; wb.classList.remove('on'); xh.classList.remove('on');
+    wb.textContent = '⚔️  ENTER VILLAGE'; wb.removeAttribute('title'); wb.removeAttribute('aria-label'); wb.classList.remove('on'); xh.classList.remove('on');
     runVillagePerformancePass(true);
   }
 }
