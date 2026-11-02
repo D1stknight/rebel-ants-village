@@ -13,7 +13,7 @@
   const visible = (el) => { if (!el) return false; const r = el.getBoundingClientRect(), cs = getComputedStyle(el); return r.width > 4 && r.height > 4 && cs.display !== 'none' && cs.visibility !== 'hidden' && +cs.opacity > .05; };
   // the steps: a target (a selector, or none for a bubble in the middle), a title and the words
   const STEPS = [
-    { title: 'Welcome to Rebel Universe', text: "The Rebel Ants' 3D world: fifteen villages, the colony's story, 157 games and puzzles, live shows and other players. Here's the lobby in six quick steps." },
+    { title: 'Welcome to Rebel Universe', text: "The Rebel Ants' 3D world: fifteen villages, the colony's story, over 150 games and puzzles, live shows and other players. Here's the lobby in six quick steps." },
     { el: '#char-row', title: 'Pick who you play', text: 'Your own Rebels, Chumpz and Saints show up here once your wallet is connected. No NFT? Pick a card marked Free: anyone can play those.' },
     { el: '#btn-wallet', title: 'Connect your wallet', text: 'A browser wallet or WalletConnect on your phone. It only reads which NFTs you hold: playing never asks you to send anything.' },
     { el: '#econChip', title: 'Sign in', text: 'Discord, or a name and PIN. Your Rebel Points, badges and story are saved to your account and follow you to any device. Guests can play too, with practice points.' },
