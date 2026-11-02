@@ -17,8 +17,11 @@ const SENT = `anthony:guide:sent:v1:${SITE}`;
 const FILE = 'docs/anthony-universe-guide.txt';
 async function guide() {
   // (the deploy's own copy: vercel.json includeFiles; the working folder first, then beside this file)
-  const text = await fs.readFile(path.join(process.cwd(), FILE), 'utf8').catch(() => fs.readFile(new URL('../' + FILE, import.meta.url), 'utf8'));
-  return { text, chars: text.length, sha: crypto.createHash('sha256').update(text).digest('hex').slice(0, 16) };
+  const raw = await fs.readFile(path.join(process.cwd(), FILE), 'utf8').catch(() => fs.readFile(new URL('../' + FILE, import.meta.url), 'utf8'));
+  // the economy keeps the text trimmed (its route trims it), so send, count and compare it trimmed: the file's last
+  // newline made this site's count one more than the economy's and the card said "older guide" right after a send
+  const text = raw.trim(), h = (t) => crypto.createHash('sha256').update(t).digest('hex').slice(0, 16);
+  return { text, chars: text.length, sha: h(text), shas: [h(text), h(raw)] };
 }
 
 export default async function handler(req, res) {
@@ -49,7 +52,7 @@ export default async function handler(req, res) {
       redis([['GET', SENT]]).then((x) => { try { return x?.[0]?.result ? JSON.parse(x[0].result) : null; } catch (e) { return null; } }).catch(() => null)]);
     const stored = r.ok && r.data?.ok ? { chars: r.data.chars || 0, at: r.data.at || null, app: r.data.app || null } : null;
     const dad = await creator(true).catch(() => null);
-    return res.status(200).json({ ok: true, guide: { chars: g.chars, sha: g.sha }, stored, storedError: stored ? null : (r.data?.error || `economy ${r.status}`), sent: s, current: !!(s && s.sha === g.sha && stored && stored.chars === g.chars),
+    return res.status(200).json({ ok: true, guide: { chars: g.chars, sha: g.sha }, stored, storedError: stored ? null : (r.data?.error || `economy ${r.status}`), sent: s, current: !!(s && g.shas.includes(s.sha) && stored && stored.chars === g.chars),
       creator: dad ? { name: dad.name, kind: dad.kind, at: dad.at } : null });
   } catch (e) { return res.status(e.status || 500).json({ ok: false, error: e.message }); }
 }
