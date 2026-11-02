@@ -8,7 +8,13 @@
 // his brain gave), his jaw moving with the voice. A signed-in player may get a tip: the economy pays it, the page shows it.
 // window.VillageAnthony.start(host) from village.html, host = { scene, village, player() -> { x, z, yaw } | null,
 //   ground(x, z), free(x, z), clear(ax, az, bx, bz), canAct(), signedIn(), signIn(), points(), volume(), sound(name),
-//   viaSite(url), shadows(), toast(msg), light (the after-crash level: 2 = no model) }
+//   viaSite(url), shadows(), toast(msg), light (the after-crash level: 2 = no model), room() -> { kit, holder, me } | null (in a
+//   kit room), canActRoom(), read({ icon, title, sub, text }) (the reading card), doorOf(roomId) -> { x, z } | null }
+// His house (Nov 2): a cottage by the Hub's pond (kit hub_anthony_house, room room_hub_anthony_home). From 2 to 7 in the
+// morning, New York time, he sleeps there: off his rounds everywhere, in bed in his room (the games pack's sleep move). Press
+// O there to wake him: he sits up (the wake move), says a sleepy line (his brain's, kind wake) and his box opens; after the
+// talk he lies back down. Every page works the hours out from the clock (every player sees the same); waking him is each
+// player's own. Out of those hours the note over his bed says where he is. ?ant=home: asleep now (tests); ?ant=awake: never
 (function () {
   'use strict';
   const ROT = ['hub', 'samurai', 'chumpz', 'hub', 'ronin', 'saints-la', 'hub', 'kenshi', 'cute-creepy', 'hub', 'wokou', 'shogun', 'hub', 'bushi', 'yamabushi', 'hub', 'sohei', 'buke', 'hub', 'ashigaru', 'warrior'];
@@ -24,16 +30,35 @@
 
   // ---- the timetable: where he is at a time (every page the same) ----
   // (?ant=here: he is in the village you are in, his loop and moves as usual: for testing and showing him off)
-  const HERE = (() => { try { return new URLSearchParams(location.search).get('ant') === 'here'; } catch (e) { return false; } })();
+  let FORCE = (() => { try { return new URLSearchParams(location.search).get('ant') || ''; } catch (e) { return ''; } })(); const HERE = FORCE === 'here';
   function where(t = Date.now()) {
-    const n = Math.floor(t / SLOT), village = HERE && H ? H.village : ROT[((n % ROT.length) + ROT.length) % ROT.length];
+    const n = Math.floor(t / SLOT);
+    if (asleep(t)) return { village: 'hub', name: NAMES.hub, n, start: n * SLOT, end: (n + 1) * SLOT, home: true }; // (in bed in his house)
+    const village = HERE && H ? H.village : ROT[((n % ROT.length) + ROT.length) % ROT.length];
     return { village, name: NAMES[village] || village, n, start: n * SLOT, end: (n + 1) * SLOT };
   }
-  // the next time he is in a village (for "He's in Kenshi now - next here in 25 min")
+  // the next time he is in a village (for "He's in Kenshi now - next here in 25 min"), past his sleep
   function nextIn(village, t = Date.now()) {
-    for (let k = 0; k < ROT.length * 2; k++) { const w = where(t + k * SLOT); if (w.village === village) return k ? w.start : t; }
+    for (let k = 0; k < ROT.length * 4; k++) { const w = where(t + k * SLOT); if (w.village === village && !w.home) return k ? w.start : t; }
     return null;
   }
+  // his sleep: 2 to 7 in the morning, New York time (Intl works the summer time out)
+  const SLEEP_TZ = 'America/New_York', SLEEP_FROM = 2, SLEEP_TO = 7;
+  let tzFmt = null;
+  function nyHour(t) {
+    try {
+      tzFmt ||= new Intl.DateTimeFormat('en-US', { timeZone: SLEEP_TZ, hour: 'numeric', minute: 'numeric', hourCycle: 'h23' });
+      const p = tzFmt.formatToParts(new Date(t)), v = (k) => +(p.find((x) => x.type === k)?.value || 0);
+      return (v('hour') % 24) + v('minute') / 60;
+    } catch (e) { const d = new Date(t); return (d.getUTCHours() + 19) % 24 + d.getUTCMinutes() / 60; } // (UTC-5 without Intl)
+  }
+  function asleep(t = Date.now()) {
+    if (FORCE === 'home') return true; if (FORCE === 'here' || FORCE === 'awake') return false;
+    const h = nyHour(t); return h >= SLEEP_FROM && h < SLEEP_TO;
+  }
+  function wakesAt(t = Date.now()) { let s = t; for (let k = 0; k < 80 && asleep(s); k++) s += 5 * 60e3; return s; }      // (within 5 min)
+  function bedTime(t = Date.now()) { let s = t; for (let k = 0; k < 400 && !asleep(s); k++) s += 5 * 60e3; return asleep(s) ? s : null; }
+  const clock = (t) => new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   // a small seeded random (the same for every page): mulberry32
   const rnd = (seed) => () => { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let x = Math.imul(seed ^ (seed >>> 15), 1 | seed); x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x; return ((x ^ (x >>> 14)) >>> 0) / 4294967296; };
 
@@ -101,7 +126,7 @@
   }
   // where he is and what he does now
   function scheduled(now = Date.now()) {
-    const w = where(now); if (w.village !== H.village) return null;
+    const w = where(now); if (w.home || w.village !== H.village) return null;
     if (!ROUTE) { if (routeTries < 6) { routeTries++; ROUTE = buildRoute(); } if (!ROUTE) return null; }
     if (!S.plan || S.plan.n !== w.n) S.plan = { n: w.n, ...planOf(w) };
     const s = (now - w.start) / 1000, P = S.plan;
@@ -128,7 +153,7 @@
     try {
       const url = await rigUrl(); if (!url) { log('no rig'); return; }
       const c = await B.SceneLoader.LoadAssetContainerAsync('', H.viaSite ? H.viaSite(url) : url, H.scene);
-      const node = new B.TransformNode('antThony', H.scene); node.scaling.setAll(SCALE); node.metadata = { antThony: true };
+      const node = new B.TransformNode('antThony', H.scene); node.scaling.setAll(SCALE); node.metadata = { antThony: true, keepInInteriors: true }; // (his house shows him: the page's own code hides him elsewhere in rooms)
       const pre = 'antThony_', inst = c.instantiateModelsToScene((n) => pre + n, false, { doNotInstantiate: true }), meshes = [], groups = {}, joints = new Map();
       for (const r of inst.rootNodes) { if (r instanceof B.AbstractMesh) meshes.push(r); meshes.push(...r.getChildMeshes(false)); }
       meshes.forEach((m) => { m.parent = node; if (m.rotationQuaternion) m.rotationQuaternion = null; m.isPickable = false; m.metadata = { ...(m.metadata || {}), camSkip: true, antThony: true }; fixMaterial(m.material); });
@@ -143,7 +168,7 @@
       S.tag = tagPlane(); S.tag.parent = node; S.tag.position.y = TAG_Y / SCALE;
       play('idle', true);
       log('model', url.split('/').pop(), 'jaw', !!jw);
-      loadPack(url).catch(() => {});
+      S.pack = 'loading'; loadPack(url).then(() => { S.pack = 'done'; }, () => { S.pack = 'none'; });
     } catch (e) { log('model failed', e?.message); }
     finally { S.loading = false; }
   }
@@ -152,27 +177,29 @@
     const c = await B.SceneLoader.LoadAssetContainerAsync('', H.viaSite ? H.viaSite(pack) : pack, H.scene, null, '.glb');
     const m = S.model; if (!m) { c.dispose(); return; }
     for (const src of c.animationGroups) {
-      if (!['wave', 'game_standup', 'game_cheer', 'dance_wave'].includes(src.name) || m.groups[src.name]) continue;
+      if (!['wave', 'game_standup', 'game_cheer', 'dance_wave', 'sleep', 'wake'].includes(src.name) || m.groups[src.name]) continue;
       const g = src.clone('antThony_' + src.name, (t) => (/^cloth_/.test(t?.name || '') ? null : m.joints.get(t?.name) || null));
       for (let j = g.targetedAnimations.length - 1; j >= 0; j--) if (!g.targetedAnimations[j].target) g.targetedAnimations.splice(j, 1);
       g.stop(); g.enableBlending = true; g.blendingSpeed = .1; m.groups[src.name] = g; m.extra.push(g);
     }
     c.animationGroups.forEach((g) => g.dispose()); c.dispose();
-    log('pack', Object.keys(m.groups).join(','));
+    log('pack', Object.keys(m.groups).filter((k) => /sleep|wake|wave|standup/.test(k)).join(','));
+    if (HM.on && HM.plank && !HM.awake && m.groups.sleep) lieDown(true); // (in bed before the pack came: now the real sleep move)
   }
   function fixMaterial(mat) { // (as the village does for its own player: at most 4 lights, no emissive, both faces)
     if (!mat || mat._antFixed) return; mat._antFixed = true;
     if (mat.maxSimultaneousLights !== undefined) { mat.maxSimultaneousLights = 4; mat.backFaceCulling = false; }
     if (mat.getClassName?.() === 'PBRMaterial') { mat.emissiveColor = new B.Color3(0, 0, 0); mat.emissiveIntensity = 0; }
   }
-  // a move by name: the rig's own (idle, walk), else the pack's; one-shots go back to idle
-  function play(name, loop, speed = 1) {
+  // a move by name: the rig's own (idle, walk), else the pack's; one-shots go back to idle (hold: keep their last pose);
+  // blend = how fast the move takes over from the last one (a share a frame: .1 quick, .02 about a second)
+  function play(name, loop, speed = 1, blend = .1, hold = false) {
     const m = S.model; if (!m) return false;
     const g = m.groups[name] || (name === 'wave' ? m.groups.dance_wave : null) || (name === 'game_standup' ? m.groups.fight_idle : null) || m.groups.idle; if (!g) return false;
     if (m.cur === g) { g.speedRatio = speed; return true; }
     if (m.cur) m.cur.stop();
-    m.cur = g; g.start(loop, speed, g.from, g.to, false);
-    if (!loop) g.onAnimationGroupEndObservable.addOnce(() => { if (S.model?.cur === g) { S.model.cur = null; play('idle', true); } });
+    m.cur = g; g.blendingSpeed = blend; g.start(loop, speed, g.from, g.to, false);
+    if (!loop && !hold) g.onAnimationGroupEndObservable.addOnce(() => { if (S.model?.cur === g) { S.model.cur = null; play('idle', true); } });
     return true;
   }
   function jaw(level) {
@@ -212,6 +239,7 @@
     g.beginPath(); g.moveTo(364, top + hgt); g.lineTo(384, top + hgt + 28); g.lineTo(404, top + hgt); g.closePath(); g.fill();
     g.fillStyle = '#f6efd9'; g.textAlign = 'center'; g.textBaseline = 'top';
     shown.forEach((l, i) => g.fillText(l, 384, top + 22 + i * 42));
+    b.p.position.y = (HM.on ? (HM.awake ? 2.6 : 1.6) : TAG_Y + 1.25) / SCALE; // (in his house: over the bed, under the ceiling)
     b.tex.update(); b.p.setEnabled(true); b.until = performance.now() + (ms || Math.min(14000, 4500 + text.length * 55));
   }
 
@@ -326,10 +354,10 @@ html.vt-touch #antTalk input{font-size:16px}`;
       T.open = true; T.el.classList.add('on'); S.talking = true; S.faceUntil = Infinity;
       if (!T.log.children.length) {
         for (const l of T.lines) drawLine(l.who, l.text);
-        if (!T.lines.length) addLine('him', "Yo! I'm Ant-Thony. Ask me anything about Universe: games, quests, where things are, or what to do when you're stuck.");
+        if (!T.lines.length && !HM.on) addLine('him', "Yo! I'm Ant-Thony. Ask me anything about Universe: games, quests, where things are, or what to do when you're stuck.");
         if (!H.signedIn()) addLine('sys', 'Signed-in players can get a little something from Ant-Thony now and then.');
       }
-      play('idle', true);
+      if (!HM.on) play('idle', true); // (in bed he stays as he is)
     }
     if (!window.VillageTouch?.on) setTimeout(() => { try { T.input.focus(); } catch (e) {} }, 30);
     return true;
@@ -345,7 +373,7 @@ html.vt-touch #antTalk input{font-size:16px}`;
     const wait = document.createElement('div'); wait.className = 'ln him dots'; wait.textContent = 'Thinking'; T.log.appendChild(wait); T.log.scrollTop = T.log.scrollHeight;
     try {
       const transcript = T.lines.filter((l) => l.who === 'me' || l.who === 'him').slice(-11, -1).map((l) => ({ who: l.who, text: l.text }));
-      const { ok, d } = await talkApi({ kind: 'ask', question: q, transcript });
+      const { ok, d } = await talkApi({ kind: 'ask', question: q, transcript, ...(HM.on ? { home: true } : {}) });
       wait.remove();
       if (!ok) { addLine('sys', d.error || 'Ant-Thony did not answer: try again.'); return; }
       addLine('him', d.reply); showBubble(d.reply); say(d.reply, d.voiceToken);
@@ -368,6 +396,7 @@ html.vt-touch #antTalk input{font-size:16px}`;
   function tick() {
     const now = performance.now(), dt = Math.min(.1, lastT ? (now - lastT) / 1000 : 0); lastT = now;
     if (S.flash && flashMesh) { const k = (now - S.flash) / 700; if (k >= 1) { flashMesh.setEnabled(false); S.flash = null; } else { flashMesh.scaling.set(1 + k * .6, 1 - k * .3, 1 + k * .6); flashMesh.material.alpha = .8 * (1 - k); } }
+    if (homeTick(dt, now)) return; // (the player is in his house)
     // (busy elsewhere: on stage at the Comedy Club: off his rounds, the Rebel panel says where)
     const busy = H.busy?.() || null;
     const me = H.player(), sch = busy ? null : scheduled(), canSee = !!sch && !!me && H.canAct();
@@ -411,10 +440,93 @@ html.vt-touch #antTalk input{font-size:16px}`;
     if (gone) { stopVoice(); S.plan = null; }
   }
 
+  // ---- his house: in bed from 2 to 7 a.m. New York time; woken by a player, he sits up and talks, then lies back down ----
+  const HOME_KIT = 'room_hub_anthony_home', HOME_ID = 'hub_anthony_home', WAKE_R = 3.2, LIE_AFTER = 5000;
+  const PLANK = [1.6, .27, -Math.PI / 2]; // (#001's games pack without the sleep move yet: flat on his back, feet at the foot end)
+  const SLEEPY = ["Mmf... five more minutes, buddy. Okay, okay. I'm up. Mostly.", "Who's there? It's the middle of the night and my alarm clock is a Rebel. Classic.",
+    "I was dreaming I bombed at the club. Then I woke up and you were standing over my bed. Rough night."];
+  const HM = { on: false, awake: false, busy: false, plank: false, closedAt: 0, x: 0, z: 0, sp: null };
+  function homeRoom() { const r = H?.room?.(); return r && r.kit === HOME_KIT ? r : null; }
+  function homeSpot() { const sp = window.SamuraiKit?.rooms?.[HOME_KIT]; return { sleep: sp?.sleep || [-3.75, .34, -4.95, Math.PI / 2], mid: sp?.bedMid || [-3.9, -4.92] }; }
+  function homeTick(dt, now) {
+    const R = homeRoom();
+    if (!R) { if (HM.on) leaveHome(); return false; }
+    if (!(asleep() || HM.awake)) { if (HM.on) leaveHome(); return true; }   // (out on his rounds: the note over the bed says where)
+    if (!S.model) { if ((H.light || 0) < 2) loadModel(); return true; }
+    if (!HM.on && S.pack === 'loading' && now - (HM.waitFrom ||= now) < 10000) return true; // (his moves pack first: up to 10 s)
+    if (!HM.on) { HM.waitFrom = 0; enterHome(R); }
+    const lvl = speakLevel(); S.jawK += (lvl - S.jawK) * Math.min(1, dt * (lvl > S.jawK ? 22 : 12)); jaw(S.jawK);
+    if (S.bubble && S.bubble.p.isEnabled() && now > S.bubble.until && !S.speak) S.bubble.p.setEnabled(false);
+    const me = R.me; if (T.open && me && Math.hypot(me.x - HM.x, me.z - HM.z) > AWAY + 2) close();
+    // the talk over (the box closed, his line said): a few seconds later he lies back down
+    if (HM.awake && !T.open && !S.speak && !HM.busy) { HM.closedAt ||= now; if (now - HM.closedAt > LIE_AFTER) { HM.awake = false; HM.closedAt = 0; lieDown(false); } }
+    else HM.closedAt = 0;
+    return true;
+  }
+  function enterHome(R) {
+    const { sleep: sp, mid } = homeSpot(), base = R.holder.getAbsolutePosition();
+    if (S.shown) hide(false);
+    HM.on = true; HM.awake = false; HM.x = base.x + mid[0]; HM.z = base.z + mid[1]; HM.sp = [base.x + sp[0], base.y + sp[1], base.z + sp[2], sp[3]];
+    S.tag?.setEnabled(false); S.node.setEnabled(true);
+    // the room's lights light only their own meshes: him too
+    for (const l of R.holder.parent?.metadata?.interiorLights || []) if (l.includedOnlyMeshes?.length) for (const m of S.model.meshes) if (!l.includedOnlyMeshes.includes(m)) l.includedOnlyMeshes.push(m);
+    lieDown(true);
+    log('home: in bed', HM.plank ? '(no sleep move: flat)' : '');
+  }
+  function lieDown(now) {
+    const m = S.model, sp = HM.sp; if (!m || !sp) return;
+    HM.plank = !m.groups.sleep;
+    if (HM.plank) { S.node.position.set(sp[0] + PLANK[0], sp[1] + PLANK[1], sp[2]); S.node.rotation.set(PLANK[2], sp[3], 0); play('idle', true, 1, 1); }
+    else { S.node.position.set(sp[0], sp[1], sp[2]); S.node.rotation.set(0, sp[3], 0); play('sleep', true, 1, now ? 1 : .02); }
+  }
+  function leaveHome() {
+    HM.on = false; HM.awake = false; HM.busy = false; HM.closedAt = 0;
+    if (T.open) close(); stopVoice(); if (S.bubble) S.bubble.p.setEnabled(false);
+    if (S.node) { S.node.setEnabled(false); S.node.rotation.set(0, S.yaw, 0); }
+    S.tag?.setEnabled(true); S.shown = false;
+    if (S.model) play('idle', true, 1, 1);
+  }
+  async function wakeUp() {
+    if (HM.awake) return open();
+    HM.awake = true; HM.busy = true; audio();
+    if (!HM.plank && S.model?.groups.wake) play('wake', false, .8, .02, true); // (sits up slowly, then holds it)
+    open();
+    const wait = document.createElement('div'); wait.className = 'ln him dots'; wait.textContent = 'Mmmf'; T.log.appendChild(wait); T.log.scrollTop = T.log.scrollHeight;
+    try {
+      const { ok, d } = await talkApi({ kind: 'wake' });
+      wait.remove();
+      const line = ok && d.reply ? d.reply : SLEEPY[Math.floor(Math.random() * SLEEPY.length)];
+      addLine('him', line); showBubble(line); if (ok && d.voiceToken) say(line, d.voiceToken);
+      if (ok && d.tipped > 0) { addLine('tip', `+${d.tipped} $REBEL from Ant-Thony`); H.toast?.(`+${d.tipped} $REBEL from Ant-Thony`); H.points?.(); }
+    } catch (e) { wait.remove(); addLine('him', SLEEPY[0]); showBubble(SLEEPY[0]); }
+    finally { HM.busy = false; }
+    return true;
+  }
+  function noteText() {
+    const w = where(), from = bedTime(), to = from ? wakesAt(from) : null;
+    return `Out on my rounds! Right now I'm in ${w.name}${w.village === H.village ? ' (the gold dot on your map)' : ''}.\n\nI'm home from 2 to 7 in the morning, New York time${from && to ? ` (${clock(from)} to ${clock(to)} where you are)` : ''}: my beauty sleep. Knock. I might even get up.\n\n- Ant-Thony\n\nP.S. Don't read my joke notebook.`;
+  }
+  // the page asks (its O chain and its prompt line, in a room): near his bed or his note
+  function homeNear() { const R = homeRoom(); if (!R || !R.me || !H.canActRoom?.()) return null; const { mid } = homeSpot(), b = R.holder.getAbsolutePosition(); return Math.hypot(R.me.x - b.x - mid[0], R.me.z - b.z - mid[1]) <= WAKE_R ? R : null; }
+  function homePrompt() {
+    if (!homeNear()) return null;
+    if (asleep() || HM.awake) return !S.model || !HM.on ? null : HM.awake ? (T.open ? null : 'Press O to Talk to Ant-Thony') : 'Press O to Wake Ant-Thony';
+    return 'Press O to Read the note';
+  }
+  function homeUse() {
+    if (!homeNear()) return false;
+    if (asleep() || HM.awake) { if (!S.model || !HM.on) return false; if (HM.awake) return open(); wakeUp(); return true; }
+    H.read?.({ icon: '\u270D\uFE0F', title: 'A note over the bed', sub: 'Ant-Thony', text: noteText() }); return true;
+  }
+
   // ---- the page asks ----
   const near = () => !!(S.shown && S.node?.isEnabled() && (() => { const me = H.player(); return me && Math.hypot(me.x - S.x, me.z - S.z) < NEAR; })());
   function talk() { if (!near() || !H.canAct()) return false; if (T.open) { if (!window.VillageTouch?.on) try { T.input.focus(); } catch (e) {} return true; } return open(); }
-  function dots() { return S.shown ? [{ x: S.x, z: S.z, color: '#e8c56a' }] : []; }
+  function dots() {
+    if (S.shown) return [{ x: S.x, z: S.z, color: '#e8c56a' }];
+    if (H?.village === 'hub' && asleep()) { const d = H.doorOf?.(HOME_ID); if (d) return [{ x: d.x, z: d.z, color: '#e8c56a' }]; } // (asleep: his door)
+    return [];
+  }
 
   // a tap or a click on him (within 10 m) opens his box: where his body is on the screen (feet to head, a body wide),
   // a press that did not drag (the camera turns on a drag)
@@ -442,6 +554,7 @@ html.vt-touch #antTalk input{font-size:16px}`;
     const el = document.getElementById('hudAntWhere'); if (!el || !H) return;
     const w = where(), busy = H.busy?.() || null; let t;
     if (busy) t = busy;
+    else if (w.home) t = `Asleep at home \u00b7 the Hub \u00b7 up at ${clock(wakesAt())}`;
     else if (w.village === H.village) t = 'Here now';
     else { const nx = nextIn(H.village), min = nx ? Math.max(1, Math.round((nx - Date.now()) / 60000)) : null; t = `${w.name}${min ? ` \u00b7 here in ${min} min` : ''}`; }
     if (el.textContent !== t) el.textContent = t;
@@ -453,13 +566,15 @@ html.vt-touch #antTalk input{font-size:16px}`;
     H.scene.onBeforeRenderObservable.add(() => { try { tick(); } catch (e) { log('tick', e?.message); } });
     try { tapToTalk(); } catch (e) {}
     const w = where(); log('now in', w.village, 'here', w.village === H.village);
-    if (w.village === H.village) setTimeout(() => H.toast?.('Ant-Thony is in this village right now: look for the gold dot on your map and ask him anything.'), 6000);
+    if (w.home && H.village === 'hub') setTimeout(() => H.toast?.('Ant-Thony is asleep in his house by the pond: the gold dot on your map. Knock if you dare.'), 6000);
+    else if (w.village === H.village) setTimeout(() => H.toast?.('Ant-Thony is in this village right now: look for the gold dot on your map and ask him anything.'), 6000);
   }
   window.VillageAnthony = {
-    start, where, nextIn, talk, near, dots, open: () => T.open, close,
+    start, where, nextIn, talk, near, dots, open: () => T.open, close, asleep, wakesAt, homePrompt, homeUse,
     get speaking() { return !!S.speak; },
     get state() { const me = H?.player?.(); return { here: S.here, shown: S.shown, loaded: !!S.model, x: S.x, z: S.z, y: S.y, yaw: S.yaw, pose: S.model?.cur?.name?.replace('antThony_', '') || null, talking: S.talking, open: T.open, lines: T.lines.slice(), speaking: !!S.speak, jaw: S.jawK, route: ROUTE ? ROUTE.length : 0, greeted: greetedToday(), dist: me ? Math.hypot(me.x - S.x, me.z - S.z) : null, moves: S.model ? Object.keys(S.model.groups) : [] }; },
-    _test: { scheduled, buildRoute: () => (ROUTE = buildRoute()), planOf, setRoute: (r) => { ROUTE = r; S.plan = null; }, greet, say, flash, tick, level: () => speakLevel(),
+    get home() { return { on: HM.on, awake: HM.awake, plank: HM.plank, asleep: asleep(), x: S.node?.position.x, y: S.node?.position.y, z: S.node?.position.z, rx: S.node?.rotation.x, ry: S.node?.rotation.y, enabled: !!S.node?.isEnabled(), pose: S.model?.cur?.name?.replace('antThony_', '') || null }; },
+    _test: { scheduled, homeTick: () => homeTick(0, performance.now()), wakeUp, noteText, setForce: (v) => { FORCE = v || ''; }, model: () => S.model, lie: () => lieDown(true), pose: (n, t) => { play(n, false, 1, 1, true); const g = S.model?.groups[n]; if (g && t != null) { g.goToFrame(g.from + t * (g.to - g.from)); g.pause(); } }, buildRoute: () => (ROUTE = buildRoute()), planOf, setRoute: (r) => { ROUTE = r; S.plan = null; }, greet, say, flash, tick, level: () => speakLevel(),
       jawDeg: () => { const m = S.model; if (!m?.jaw || !m.rest) return null; const q = B.Quaternion.Inverse(m.rest).multiply(m.jaw.rotationQuaternion); return 2 * Math.acos(Math.min(1, Math.abs(q.w))) * 180 / Math.PI; } }
   };
 })();

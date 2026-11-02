@@ -11204,6 +11204,7 @@ function updateInteractionPrompt() {
 
   if (ActiveInterior && seatWins()) { setInteractionPrompt('Press O to Sit', true); return; }
   if (ActiveInterior && nearestSeat() == null && goldenSeatHint()) { setInteractionPrompt('\u2726 Golden seat: ticket holders', true); return; }
+  if (ActiveInterior && walkMode && !adminMode) { const ap = window.VillageAnthony?.homePrompt?.(); if (ap) { setInteractionPrompt(ap, true); return; } } // (his house: wake him, or his note)
   if (ActiveInterior && getNearestInteriorNftFrameInRange()) {
     setInteractionPrompt('Press O to Inspect', true);
     return;
@@ -29254,7 +29255,7 @@ document.addEventListener('keydown', async e => {
     enterInterior(selectedObject);
     return;
   }
-  if (!adminMode && key === 'o' && ((Seat.on && standUp()) || (ActiveInterior && seatWins() && (sitDown(nearestSeat()), true)) || (ActiveInterior && getNearestInteriorNftFrameInRange() && inspectInteriorNftFrame(getNearestInteriorNftFrameInRange())) || (ActiveInterior && getNearestInteriorHotspotInRange() && interactInteriorHotspot(getNearestInteriorHotspotInRange())) || (ActiveInterior && getNearestInteriorVideoScreenInRange() && interactInteriorVideoScreen(getNearestInteriorVideoScreenInRange())) || (ActiveInterior && getNearestInteriorDisplayInRange() && interactInteriorDisplay(getNearestInteriorDisplayInRange())) || (ActiveInterior && getNearestInteriorExitInRange() && returnToVillageFromInterior()) || tryObserveTimeWeatherQuest() || tryTalkToNearbyQuestNpc() || tryEnterNearbyInterior() || tryOpenNearbyVillageGate() || tryUseNearbyQuestSpot() || tryTalkToNearbySmallAnt() || (walkMode && !!window.VillageAnthony?.talk?.()) || tryTalkToNearbyNPC() || tryOpenNearbySign() || tryOpenNearbyTreasureChest())) {
+  if (!adminMode && key === 'o' && ((Seat.on && standUp()) || (ActiveInterior && seatWins() && (sitDown(nearestSeat()), true)) || (ActiveInterior && walkMode && !!window.VillageAnthony?.homeUse?.()) || (ActiveInterior && getNearestInteriorNftFrameInRange() && inspectInteriorNftFrame(getNearestInteriorNftFrameInRange())) || (ActiveInterior && getNearestInteriorHotspotInRange() && interactInteriorHotspot(getNearestInteriorHotspotInRange())) || (ActiveInterior && getNearestInteriorVideoScreenInRange() && interactInteriorVideoScreen(getNearestInteriorVideoScreenInRange())) || (ActiveInterior && getNearestInteriorDisplayInRange() && interactInteriorDisplay(getNearestInteriorDisplayInRange())) || (ActiveInterior && getNearestInteriorExitInRange() && returnToVillageFromInterior()) || tryObserveTimeWeatherQuest() || tryTalkToNearbyQuestNpc() || tryEnterNearbyInterior() || tryOpenNearbyVillageGate() || tryUseNearbyQuestSpot() || tryTalkToNearbySmallAnt() || (walkMode && !!window.VillageAnthony?.talk?.()) || tryTalkToNearbyNPC() || tryOpenNearbySign() || tryOpenNearbyTreasureChest())) {
     e.preventDefault();
     return;
   }
@@ -31652,6 +31653,15 @@ function startVillageAnthony() {
     light: CRASH_LIGHT || 0, // (the lightest after-crash level: no model for him)
     // (on stage at the Comedy Club while a live event there has a show: off his rounds)
     busy: () => (window.VillageStage?.antOnStage?.() ? "On stage \u00b7 Antthony's Comedy Club" : null),
+    // his house (Nov 2): the kit room the player is in (its holder, the player's place), acting in a room, the reading card, a door
+    room: () => {
+      if (!ActiveInterior || !walkMode || adminMode || !charMesh) return null;
+      const holder = scene.transformNodes.find(n => n.metadata?.kitRoom && n.parent?.name === 'activeInteriorRoot');
+      return holder ? { kit: holder.metadata.kitRoom, holder, me: { x: charMesh.position.x, z: charMesh.position.z } } : null;
+    },
+    canActRoom: () => walkMode && !adminMode && !!ActiveInterior && !(MiniGames.on && !MiniGames.roam) && !DanceOff.on && !DanceOff.choosing && !Seat.on && !document.getElementById('panel')?.classList.contains('on'),
+    read: o => openReadingPanel(o),
+    doorOf: id => { const d = scene.transformNodes.find(n => n.metadata?.type === 'interior_entrance' && n.metadata.targetInteriorId === id); return d ? { x: d.position.x, z: d.position.z } : null; },
     toast: m => showToast(m, 7000)
   });
 }
