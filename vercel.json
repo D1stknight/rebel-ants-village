@@ -111,6 +111,9 @@
     "api/anthony-knowledge.mjs": {
       "maxDuration": 30,
       "includeFiles": "docs/anthony-universe-guide.txt"
+    },
+    "api/anthony-standup.mjs": {
+      "maxDuration": 200
     }
   },
   "crons": [

@@ -217,6 +217,19 @@ a.tile:hover{border-color:#343846;color:var(--fg)}
 #mpa-body .evf textarea{min-height:220px;font:12.5px/1.45 var(--mono)}
 #mpa-body label.tg{display:flex;gap:10px;align-items:center;cursor:pointer}
 #mpa-body label.tg input{width:18px;height:18px;accent-color:var(--teal)}
+#mpa-body .sm{border:1px solid #4a3a12;background:linear-gradient(180deg,#14110a,#0b0c10);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+#mpa-body .sm h3{font:400 22px var(--display,'Bebas Neue',sans-serif);letter-spacing:.06em;color:var(--gold)}
+#mpa-body .sm .chips{display:flex;flex-wrap:wrap;gap:6px}
+#mpa-body .sm .chip{border:1px solid var(--line2);background:var(--card2);color:var(--fg);border-radius:999px;padding:6px 12px;font:600 12px var(--sans);cursor:pointer;text-align:left}
+#mpa-body .sm .chip small{display:block;font:500 10.5px var(--sans);color:var(--muted)}
+#mpa-body .sm .chip[aria-pressed="true"]{border-color:var(--gold);background:#2a210b;color:#ffe2a0}
+#mpa-body .sm .bits{display:flex;flex-direction:column;gap:6px}
+#mpa-body .sm .bit{display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:start}
+#mpa-body .sm .bit b{font:600 12px var(--mono);color:var(--muted);padding-top:8px;text-align:right}
+#mpa-body .sm .bit textarea{min-height:58px;font:13px/1.45 var(--sans)}
+#mpa-body .sm .prog{height:6px;border-radius:999px;background:var(--line);overflow:hidden}
+#mpa-body .sm .prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),#ffe2a0);transition:width .3s}
+#mpa-body .sm audio{width:100%;max-width:520px}
 
 @media (max-width:900px){
   #admin-hub{flex-direction:column}
@@ -837,27 +850,33 @@ async function mpaShow(tab) {
   if (tab === 'events') {
     const d = await mpaCmd('events'); mpa.events = d.events || [];
     const now = Date.now();
-    out.push(btn('+ New event', async () => { mpa.edit = { title: '', place: EVENT_PLACES[0], starts: now + 3600000, mins: 60, show: null, script: '' }; await mpaShow('events'); }, 'primary'));
+    const top = mk('div', 'row');
+    top.append(btn('+ New event', async () => { mpa.edit = { title: '', place: EVENT_PLACES[0], starts: now + 3600000, mins: 60, show: null, script: '' }; await mpaShow('events'); }, 'primary'),
+      btn(SM.open ? 'Close the set maker' : '\u2728 Set maker: Ant-Thony writes a set', async () => { SM.open = !SM.open; await mpaShow('events'); }));
+    out.push(top);
+    if (SM.open) out.push(setMaker());
     if (mpa.edit) out.push(eventForm(mpa.edit));
     if (!mpa.events.length) out.push(mk('p', 'dim', 'No events yet. Make one, pick its hosts in Online now (Host of…), and Go live: the lobby shows LIVE NOW and everyone at the place hears the hosts.'));
     for (const ev of mpa.events) {
       const box = mk('div', 'ev' + (ev.live ? ' live' : '')), h = mk('h3');
       if (ev.live) h.append(mk('span', 'live-tag', '● LIVE'));
       h.append(document.createTextNode(ev.title));
-      box.append(h, mk('div', 'dim', `${ev.place.label} · ${mpaWhen(ev.starts)} – ${new Date(ev.ends).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}${ev.ended ? ' · ended' : ev.ends < now ? ' · over' : ''}`));
+      const every = ev.repeat === 'daily' ? ' · every day' : ev.repeat === 'weekly' ? ' · every ' + new Date(ev.starts).toLocaleDateString([], { weekday: 'long' }) : '';
+      box.append(h, mk('div', 'dim', `${ev.place.label} · ${mpaWhen(ev.starts)} – ${new Date(ev.ends).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}${every}${ev.ended ? ' · ended' : ev.ends < now ? ' · over' : ''}`));
       const hosts = mk('div', 'row'); hosts.append(mk('span', 'dim', 'Hosts:'));
       if (!(ev.hosts || []).length) hosts.append(mk('span', 'dim', 'none yet (Online now → Host of…)'));
       for (const x of ev.hosts || []) hosts.append(mk('span', 'tag', x.n), btn('✕', () => mpaAct('event-host', { id: ev.id, sub: x.sub, on: false }, `${x.n} is no longer a host`)));
       box.append(hosts);
-      if (ev.show) box.append(mk('div', 'dim', `Show: ${ev.show.title} · ${Math.floor(ev.show.len / 60)}:${String(ev.show.len % 60).padStart(2, '0')} · ${ev.show.cues.length} cues${ev.show.audio ? ' · with audio' : ' · babble voice + captions'}${ev.showAt && ev.showAt + ev.show.len * 1000 > now ? ' · PLAYING' : ''}`));
+      const sAt = showStartOf(ev), playing = sAt && sAt <= now + 3500 && sAt + ev.show.len * 1000 > now;
+      if (ev.show) box.append(mk('div', 'dim', `Show: ${ev.show.title} · ${Math.floor(ev.show.len / 60)}:${String(ev.show.len % 60).padStart(2, '0')} · ${ev.show.cues.length} cues${ev.show.audio ? ' · with audio' : ' · babble voice + captions'}${ev.auto ? (ev.autoOff ? ' · starts by itself (stopped this time)' : ' · starts by itself a minute in') : ''}${playing ? ' · PLAYING' : ''}`));
       const acts = mk('div', 'row');
       if (!ev.ended && ev.ends > now) {
         if (!ev.live) acts.append(btn('Go live now', () => mpaAct('event-live', { id: ev.id }, `${ev.title} is live`), 'sm primary'));
         else acts.append(btn('End now', () => confirm(`End ${ev.title} now? Everyone at it is told.`) && mpaAct('event-end', { id: ev.id }, `${ev.title} ended`), 'sm bad'));
-        if (ev.live && ev.show) acts.append(ev.showAt && ev.showAt + ev.show.len * 1000 > now ? btn('Stop the show', () => mpaAct('event-show', { id: ev.id, go: false }, 'Show stopped')) : btn('Start the show', () => mpaAct('event-show', { id: ev.id, go: true }, 'The show starts in 3 seconds')));
+        if (ev.live && ev.show) acts.append(sAt && sAt + ev.show.len * 1000 > now ? btn('Stop the show', () => mpaAct('event-show', { id: ev.id, go: false }, 'Show stopped')) : btn('Start the show', () => mpaAct('event-show', { id: ev.id, go: true }, 'The show starts in 3 seconds')));
       }
       acts.append(btn('Edit', async () => { const p = EVENT_PLACES.find(x => x.village === ev.place.village && (x.room || null) === (ev.place.room || null)) || { ...ev.place, key: ev.place.village + ':' + (ev.place.room || '') };
-        mpa.edit = { id: ev.id, title: ev.title, place: p, starts: ev.starts, mins: Math.round((ev.ends - ev.starts) / 60000), show: ev.show, script: ev.show?.script || '' }; await mpaShow('events'); }));
+        mpa.edit = { id: ev.id, title: ev.title, place: p, starts: ev.starts, mins: Math.round((ev.ends - ev.starts) / 60000), show: ev.show, script: ev.show?.script || '', repeat: ev.repeat || '', auto: !!ev.auto }; await mpaShow('events'); }));
       acts.append(btn('Delete', () => confirm(`Delete ${ev.title}?`) && mpaAct('event-delete', { id: ev.id }, 'Event deleted'), 'sm bad'));
       box.append(acts); out.push(box);
     }
@@ -890,7 +909,140 @@ async function mpaShow(tab) {
   }
   body.replaceChildren(...out);
 }
-// an event made or changed: what, where, when, how long, and its show (a script; an audio file is optional)
+// ---- Ant-Thony's set maker (Nov 2): a style inspired by a comic (the way they tell jokes, never their jokes), a length
+// and a topic -> his set from the Rebel Economy's writer (his persona, the colony's week, Universe's week); each bit voiced
+// in his own voice (the economy's cloud voice), joined with room for the laughs into one MP3 (lamejs, the site's own copy),
+// uploaded like any show's audio; the script puts each bit's caption and the laughs on the audio's own times.
+const SM = { open: false, styles: null, style: '', minutes: 3, topic: '', set: null, busy: '', done: 0, total: 0, mp3: null, url: '', len: 0, script: '' };
+const SM_LEAD = 1.6, SM_GAP = 1.4, SM_END = 3;
+const smApi = async (body) => { const r = await fetch('/api/anthony-standup', body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}); return r; };
+const smClean = t => String(t || '').replace(/[\[\]<>]/g, '').replace(/\s+/g, ' ').trim();
+const mmss = t => `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}`;
+// (repaints only its own box: the events list is read from the rooms when the tab opens)
+function smPaint() { const old = document.getElementById('sm-box'); if (old && SM.open) old.replaceWith(setMaker()); }
+function setMaker() {
+  const box = mk('div', 'sm'); box.id = 'sm-box';
+  box.append(mk('h3', '', "Ant-Thony's set maker"), mk('div', 'dim', 'Pick a style, a length and (if you want) a topic. He writes new material in his own voice about the colony, Universe and its players: the styles only borrow how a comic tells jokes, never their jokes, voice or name.'));
+  if (!SM.styles) {
+    box.append(mk('div', 'dim', 'Loading the styles…'));
+    smApi().then(async r => { const d = await r.json().catch(() => ({})); SM.styles = d.ok ? d.styles : []; if (!d.ok) mpaStatus(d.error || 'The set writer did not answer', true); smPaint(); });
+    return box;
+  }
+  const chips = mk('div', 'chips');
+  for (const st of [{ id: '', label: 'His own style', inspiredBy: 'Ant-Thony as he is' }, { id: 'surprise', label: 'Surprise me', inspiredBy: 'a style picked at random' }, ...SM.styles]) {
+    const c = mk('button', 'chip'); c.type = 'button'; c.setAttribute('aria-pressed', String(SM.style === st.id));
+    c.append(document.createTextNode(st.label), mk('small', '', st.inspiredBy ? (/^(a style|Ant-Thony)/.test(st.inspiredBy) ? st.inspiredBy : 'inspired by ' + st.inspiredBy) : ''));
+    c.onclick = () => { SM.style = st.id; smPaint(); };
+    chips.append(c);
+  }
+  box.append(mk('div', 'dim', 'Style'), chips);
+  const len = mk('div', 'row'); len.append(mk('span', 'dim', 'Length'));
+  for (const m of [1, 3, 5]) { const b = mk('button', 'chip', m + (m === 1 ? ' minute' : ' minutes')); b.type = 'button'; b.setAttribute('aria-pressed', String(SM.minutes === m)); b.onclick = () => { SM.minutes = m; smPaint(); }; len.append(b); }
+  const topic = mk('input'); topic.type = 'text'; topic.maxLength = 300; topic.value = SM.topic; topic.placeholder = 'Topic (optional): the Grand Relay, Chumpz Cove, the new seats, Monday mornings…'; topic.oninput = () => { SM.topic = topic.value; };
+  box.append(len, topic);
+  const go = mk('div', 'row');
+  go.append(btn(SM.set ? 'Write a new set' : 'Write the set', smWrite, 'primary'));
+  if (SM.busy) go.append(mk('span', 'dim', SM.busy));
+  box.append(go);
+  if (SM.total) { const pr = mk('div', 'prog'), i = mk('i'); i.style.width = Math.round(100 * SM.done / SM.total) + '%'; pr.append(i); box.append(pr); }
+  if (SM.set) {
+    const title = mk('input'); title.type = 'text'; title.maxLength = 80; title.value = SM.set.title; title.oninput = () => { SM.set.title = title.value; SM.mp3 = null; SM.url = ''; };
+    box.append(mk('div', 'dim', `Title · ${SM.set.bits.length} bits${SM.set.style ? ' · style ' + SM.set.style : ''} · edit any line before voicing`), title);
+    const bits = mk('div', 'bits');
+    SM.set.bits.forEach((t, k) => {
+      const row = mk('div', 'bit'), ta = mk('textarea');
+      ta.value = t; ta.oninput = () => { SM.set.bits[k] = ta.value; SM.mp3 = null; SM.url = ''; };
+      row.append(mk('b', '', String(k + 1)), ta, btn('✕', async () => { SM.set.bits.splice(k, 1); SM.mp3 = null; SM.url = ''; smPaint(); }));
+      bits.append(row);
+    });
+    box.append(bits);
+    const acts = mk('div', 'row');
+    acts.append(btn('+ Add a line', async () => { SM.set.bits.push(''); smPaint(); }), btn(SM.url ? 'Voice it again' : 'Voice it in his voice', smVoice, 'primary'));
+    box.append(acts);
+  }
+  if (SM.url) {
+    const au = mk('audio'); au.controls = true; au.src = SM.url; au.preload = 'metadata';
+    const use = mk('div', 'row');
+    use.append(btn('Put it in a new event at the Comedy Club', async () => {
+      const club = EVENT_PLACES.find(x => x.room === 'hub_comedy_club') || EVENT_PLACES[0];
+      mpa.edit = { title: 'Ant-Thony: ' + SM.set.title, place: club, starts: Date.now() + 3600000, mins: Math.max(30, Math.ceil(SM.len / 60) + 20), show: { title: SM.set.title, audio: SM.url }, script: SM.script, repeat: '', auto: true };
+      SM.open = false; await mpaShow('events'); requestAnimationFrame(() => document.querySelector('#mpa-body .evf')?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
+    }, 'primary'), mk('span', 'dim', `${mmss(SM.len)} · ${(SM.mp3?.size / 1048576 || 0).toFixed(1)} MB · his set starts by itself a minute after the doors open (you can change that)`));
+    box.append(mk('div', 'dim', 'Listen first:'), au, use);
+  }
+  return box;
+}
+async function smWrite() {
+  SM.busy = 'Ant-Thony is writing… (about a minute)'; SM.total = 0; smPaint();
+  try {
+    const r = await smApi({ action: 'write', minutes: SM.minutes, style: SM.style, topic: SM.topic }); const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.ok) throw new Error(d.error || 'No set came back');
+    SM.set = { ...d.set, bits: d.set.bits.map(smClean) }; SM.mp3 = null; SM.url = ''; SM.busy = '';
+  } catch (e) { SM.busy = ''; mpaStatus(e.message, true); }
+  smPaint();
+}
+function smScript(times) {
+  // each bit at its own time in the audio, a laugh (now and then a rimshot) as it ends, applause at both ends
+  const lines = ['0:00.0 [applause] <wave>'];
+  times.forEach((t, k) => {
+    const moves = ['', '', '', '<game_cheer>'], sfx = k % 3 === 2 ? '[rimshot]' : '[laugh]';
+    lines.push(`${mmss(t.a)} ${SM.set.bits[t.i]}`);
+    if (k < times.length - 1) lines.push(`${mmss(t.b + .15)} ${sfx} ${moves[k % 4]}`.trim());
+  });
+  const last = times[times.length - 1];
+  lines.push(`${mmss(last.b + .2)} [applause] [cheer] <wave>`);
+  return lines.join('\n');
+}
+async function smVoice() {
+  const bits = SM.set.bits.map((t, i) => ({ t: smClean(t), i })).filter(x => x.t);
+  if (!bits.length) return mpaStatus('No lines to voice', true);
+  SM.total = bits.length + 2; SM.done = 0; SM.busy = `Voicing 0 / ${bits.length}… (his cloud voice: a few seconds a line)`; SM.url = ''; smPaint();
+  try {
+    const SR = 24000, dec = new OfflineAudioContext(1, 1, SR), bufs = [];
+    let next = 0;
+    const one = async (x) => {
+      for (let tries = 0; ; tries++) {
+        const r = await smApi({ action: 'voice', text: x.t });
+        if (r.ok) { bufs[x.k] = await dec.decodeAudioData(await r.arrayBuffer()); return; }
+        const d = await r.json().catch(() => ({}));
+        if (tries >= 1 || r.status === 429 || r.status === 503) throw new Error(`Line ${x.i + 1}: ${d.error || 'his voice did not answer'}`);
+      }
+    };
+    const list = bits.map((x, k) => ({ ...x, k }));
+    const worker = async () => { while (next < list.length) { const x = list[next++]; await one(x); SM.done++; SM.busy = `Voicing ${SM.done} / ${bits.length}…`; smPaint(); } };
+    await Promise.all([worker(), worker()]);
+    // one track: a lead for the applause, each line, room for the laugh after it, a tail for the last applause
+    const times = []; let t = SM_LEAD;
+    for (let k = 0; k < bufs.length; k++) { const d = bufs[k].duration; times.push({ a: t, b: t + d, i: bits[k].i }); t += d + (k < bufs.length - 1 ? SM_GAP : 0); }
+    const total = t + SM_END, pcm = new Float32Array(Math.ceil(total * SR));
+    bufs.forEach((b, k) => pcm.set(b.getChannelData(0), Math.round(times[k].a * SR)));
+    SM.busy = 'Making the MP3…'; smPaint();
+    await smLame();
+    const mp3 = smEncode(pcm, SR, 48);
+    SM.mp3 = mp3.size > 2.9 * 1048576 ? smEncode(pcm, SR, 32) : mp3;
+    if (SM.mp3.size > 2.9 * 1048576) throw new Error('The set is too long for one show file: take a few lines out');
+    SM.done++; SM.busy = 'Uploading…'; smPaint();
+    const data = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = rej; r.readAsDataURL(SM.mp3); });
+    const up = await fetch('/api/mp-show-upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: (SM.set.title || 'antthony-set').slice(0, 40) + '.mp3', type: 'audio/mpeg', data }) });
+    const u = await up.json().catch(() => ({})); if (!up.ok || !u.ok) throw new Error(u.error || 'Upload failed');
+    SM.url = u.url; SM.len = total; SM.script = smScript(times); SM.done = SM.total; SM.busy = 'Ready.';
+  } catch (e) { SM.busy = ''; SM.total = 0; mpaStatus(e.message, true); }
+  smPaint();
+}
+function smLame() {
+  if (window.lamejs) return Promise.resolve();
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = '/assets/vendor/lamejs/1.2.1/lame.min.js'; s.onload = () => res(); s.onerror = () => rej(new Error('The MP3 encoder did not load')); document.head.append(s); });
+}
+function smEncode(pcm, sr, kbps) {
+  const enc = new lamejs.Mp3Encoder(1, sr, kbps), out = [], N = 1152, i16 = new Int16Array(pcm.length);
+  for (let i = 0; i < pcm.length; i++) { const v = Math.max(-1, Math.min(1, pcm[i])); i16[i] = v < 0 ? v * 32768 : v * 32767; }
+  for (let i = 0; i < i16.length; i += N) { const b = enc.encodeBuffer(i16.subarray(i, i + N)); if (b.length) out.push(b); }
+  const f = enc.flush(); if (f.length) out.push(f);
+  return new Blob(out, { type: 'audio/mpeg' });
+}
+// when an event's show starts: by hand (showAt), else by itself a minute after the doors open (auto, not stopped this time)
+const showStartOf = ev => (ev.show ? ev.showAt || (ev.auto && !ev.autoOff ? ev.starts + 60000 : 0) : 0);
+// an event made or changed: what, where, when, how long, how often, and its show (a script; an audio file is optional)
 function eventForm(e) {
   const f = mk('div', 'evf'), row = (label, el) => { f.append(mk('label', '', label), el); return el; };
   const title = row('Title', mk('input')); title.type = 'text'; title.maxLength = 80; title.value = e.title; title.placeholder = "Antthony's Opening Night";
@@ -898,6 +1050,7 @@ function eventForm(e) {
   const pad = n => String(n).padStart(2, '0'), d0 = new Date(e.starts);
   const when = row('Starts', mk('input')); when.type = 'datetime-local'; when.value = `${d0.getFullYear()}-${pad(d0.getMonth() + 1)}-${pad(d0.getDate())}T${pad(d0.getHours())}:${pad(d0.getMinutes())}`;
   const mins = row('Minutes', mk('input')); mins.type = 'number'; mins.min = 10; mins.max = 720; mins.value = e.mins || 60;
+  const rep = row('Repeat', mk('select')); for (const [v, l] of [['', 'Once'], ['daily', 'Every day (same time)'], ['weekly', 'Every week (same day and time)']]) rep.append(new Option(l, v)); rep.value = e.repeat || ''; rep.id = 'ev-repeat';
   const stitle = row('Show', mk('input')); stitle.type = 'text'; stitle.maxLength = 80; stitle.value = e.show?.title || ''; stitle.placeholder = 'No show (a live event: the hosts talk)';
   const audio = mk('input'); audio.type = 'text'; audio.placeholder = 'Audio (optional): upload a file, or a link to one in the site store'; audio.value = e.show?.audio || '';
   const file = mk('input'); file.type = 'file'; file.accept = 'audio/*';
@@ -909,12 +1062,15 @@ function eventForm(e) {
   const script = row('Script', mk('textarea')); script.value = e.script || ''; script.placeholder = 'One line each: 0:05 Good evening, Colony! [applause]\n[rimshot] [laugh] [applause] [drumroll] [cheer] = sounds after the line, <cartwheel> = a move';
   const tools = mk('div', 'row'); tools.append(btn('Use the demo set (Antthony)', async () => { script.value = DEMO_SET; if (!stitle.value) stitle.value = "Antthony: Opening Night"; }), mk('span', 'dim', 'Without audio each line gets a babbling voice and a caption; the performer at the Comedy Club\'s mic is Rebel #001.'));
   f.append(mk('span'), tools);
+  const autoL = mk('label', 'tg'), auto = mk('input'); auto.type = 'checkbox'; auto.checked = !!e.auto; auto.id = 'ev-auto';
+  autoL.append(auto, mk('span', '', 'The show starts by itself a minute after the doors open (every time it repeats; Stop the show stops it for that time)'));
+  f.append(mk('span'), autoL);
   const save = mk('div', 'row');
   save.append(btn(e.id ? 'Save the changes' : 'Make the event', async () => {
     const p = EVENT_PLACES.find(x => x.key === place.value) || EVENT_PLACES[0], starts = new Date(when.value).getTime(), len = Math.max(10, +mins.value || 60) * 60000;
     let show = null;
     if (stitle.value.trim() || script.value.trim()) { const sh = parseShow(script.value); show = { title: stitle.value.trim() || 'The show', len: sh.len, audio: audio.value.trim() || null, cues: sh.cues, script: script.value }; }
-    const args = { ...(e.id ? { id: e.id } : {}), title: title.value, place: { village: p.village, room: p.room, label: p.label || VILLAGE_NAMES[p.village] }, starts, ends: starts + len, show };
+    const args = { ...(e.id ? { id: e.id } : {}), title: title.value, place: { village: p.village, room: p.room, label: p.label || VILLAGE_NAMES[p.village] }, starts, ends: starts + len, show, repeat: rep.value, auto: auto.checked };
     const d = await mpaCmd('event-save', args);
     mpa.edit = null; mpaStatus((e.id ? 'Saved: ' : 'Made: ') + d.ev.title); await mpaShow('events');
   }, 'primary'), btn('Cancel', async () => { mpa.edit = null; await mpaShow('events'); }));
