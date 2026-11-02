@@ -15356,7 +15356,7 @@ const WEATHER_THUNDER_AUDIO = '/assets/audio/weather/thunder-1.mp3';
 const VILLAGE_AMBIENCE_PROFILES = {
   hub: {
     loops: [{ id:'ambience-hub-day', path:'/assets/audio/ambience/hub-day.mp3', volume:.46 }],
-    events: ['hubBirds','templeBell','bambooCreak','windGust']
+    events: ['hubBirds','templeBell','windGust']   // bambooCreak gone (Nov 2): its creak sounded like a pig
   },
   ronin: {
     loops: [{ id:'ambience-ronin-wind', path:'/assets/audio/ambience/ronin-wind.mp3', volume:.52 }],
@@ -15364,7 +15364,7 @@ const VILLAGE_AMBIENCE_PROFILES = {
   },
   samurai: {
     loops: [{ id:'ambience-samurai-courtyard', path:'/assets/audio/ambience/samurai-courtyard.mp3', volume:.42 }],
-    events: ['softChime','templeBell','bambooCreak']
+    events: ['softChime','templeBell']
   }
 };
 const DEFAULT_VILLAGE_AMBIENCE = { loops:[{ id:'ambience-hub-day', path:'/assets/audio/ambience/hub-day.mp3', volume:.24 }], events:['windGust','templeBell'] };
@@ -15385,7 +15385,6 @@ const INTERACTION_AUDIO = {
   hubBirds: { id:'env-hub-birds', path:'/assets/audio/ambience/birds.mp3', volume:.28, cooldownMs:12000 },
   distantCrow: { id:'env-distant-crow', path:'/assets/audio/ambience/distant-crow.mp3', volume:.34, cooldownMs:14000 },
   templeBell: { id:'env-temple-bell', path:'/assets/audio/ambience/temple-bell.mp3', volume:.28, cooldownMs:16000 },
-  bambooCreak: { id:'env-bamboo-creak', path:'/assets/audio/ambience/bamboo-creak.mp3', volume:.24, cooldownMs:9000 },
   windGust: { id:'env-wind-gust', path:'/assets/audio/ambience/wind-gust.mp3', volume:.3, cooldownMs:10000 },
   distantThunder: { id:'env-distant-thunder', path:'/assets/audio/ambience/distant-thunder.mp3', volume:.32, cooldownMs:15000 },
   lanternCreak: { id:'env-lantern-creak', path:'/assets/audio/ambience/lantern-creak.mp3', volume:.24, cooldownMs:10000 },
