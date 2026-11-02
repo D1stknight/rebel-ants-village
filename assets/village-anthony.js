@@ -258,7 +258,7 @@
     css.textContent = `#antTalk{position:fixed;left:50%;bottom:24px;transform:translate(-50%,12px);width:min(560px,calc(100vw - 32px));z-index:64;display:flex;flex-direction:column;border-radius:18px;background:rgba(6,10,24,.92);border:1px solid rgba(232,197,106,.55);box-shadow:0 14px 40px rgba(0,0,0,.55);backdrop-filter:blur(8px);color:#f3e9cf;font:14px/1.45 system-ui,sans-serif;opacity:0;pointer-events:none;transition:opacity .16s,transform .16s}
 #antTalk.on{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
 #antTalk .ah{display:flex;align-items:center;gap:10px;padding:12px 14px 8px}
-#antTalk .ah img{width:34px;height:34px;border-radius:50%;border:1px solid rgba(232,197,106,.6);background:#0b0f1e}
+#antTalk .ah img{width:42px;height:42px;border-radius:50%;border:2px solid rgba(232,197,106,.75);background:#1a1240;object-fit:cover;box-shadow:0 0 12px rgba(120,90,255,.35)}
 #antTalk .ah b{font:700 15px 'Cinzel Decorative',Georgia,serif;letter-spacing:1px;color:#e8c56a}
 #antTalk .ah small{display:block;font-size:11px;color:#b9ad8b;letter-spacing:.06em;text-transform:uppercase}
 #antTalk .ah button{margin-left:auto;width:32px;height:32px;border-radius:50%;border:1px solid rgba(232,197,106,.35);background:transparent;color:#e8c56a;font-size:16px;cursor:pointer}
@@ -280,7 +280,7 @@ html.vt-touch #antTalk.on{transform:translate(-50%,0)}
 html.vt-touch #antTalk input{font-size:16px}`;
     document.head.appendChild(css);
     const el = document.createElement('div'); el.id = 'antTalk'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Talk to Ant-Thony');
-    el.innerHTML = `<div class="ah"><img src="/assets/brand/icon-512.png" alt=""><div><b>Ant-Thony</b><small>Rebel #001 \u00b7 your guide to Universe</small></div><button type="button" aria-label="Close" title="Close (Esc)">\u2715</button></div>
+    el.innerHTML = `<div class="ah"><img src="/assets/npcs/anthony-portrait.webp" alt=""><div><b>Ant-Thony</b><small>Rebel #001 \u00b7 your guide to Universe</small></div><button type="button" aria-label="Close" title="Close (Esc)">\u2715</button></div>
 <div class="al" aria-live="polite"></div>
 <form><input type="text" maxlength="300" autocomplete="off" enterkeyhint="send" placeholder="Ask about a game, a place, a quest..." aria-label="Your question"><button type="submit">Ask</button></form>`;
     document.body.appendChild(el);
