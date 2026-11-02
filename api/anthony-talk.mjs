@@ -9,6 +9,9 @@
 import { econCall } from './_econ.mjs';
 import { asker, underLimits, firstGreetToday, voiceToken, clean, VILLAGE_NAMES } from './_anthony.mjs';
 
+const CASINO = /\b(bets?|betting|wager(s|ing)?|odds|luck|payouts?|jackpots?|cash(ing)? ?out|gambl(e|es|ing)|casinos?)\b/i;
+const HELD = "Ha, that one's not for me, buddy. Ask me about the villages, the games here, a quest, or a spot where you're stuck and I've got you.";
+
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'POST only' });
@@ -54,6 +57,10 @@ export default async function handler(req, res) {
     if (r.status === 401 || r.status === 403) return res.status(503).json({ ok: false, error: 'Ant-Thony is not connected yet.' });
     return res.status(502).json({ ok: false, error: 'Ant-Thony lost his train of thought: try again.' });
   }
-  const reply = clean(d.reply, 900);
-  return res.status(200).json({ ok: true, reply, ...(Number(d.tipped) > 0 ? { tipped: Math.round(Number(d.tipped)) } : {}), voiceToken: voiceToken(reply) });
+  // his rules (the economy's): no casino words, points are loyalty points. A reply that slips is not shown or spoken in
+  // Universe: a neutral line takes its place (the first live check: asked about slots, he said luck, jackpot, odds)
+  let reply = clean(d.reply, 900);
+  const slip = CASINO.exec(reply);
+  if (slip) { console.warn('[anthony] reply held back:', slip[0].toLowerCase()); reply = HELD; }
+  return res.status(200).json({ ok: true, reply, ...(slip ? { held: true } : {}), ...(Number(d.tipped) > 0 ? { tipped: Math.round(Number(d.tipped)) } : {}), voiceToken: voiceToken(reply) });
 }
