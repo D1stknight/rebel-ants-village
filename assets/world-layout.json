@@ -60678,19 +60678,19 @@
     "assetFile": null,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": 142,
+      "x": 153.765,
       "y": 0,
-      "z": 142
+      "z": 134.628
     },
     "rotation": {
       "x": 0,
-      "y": -2.2794,
+      "y": -2.7925,
       "z": 0
     },
     "scaling": {
-      "x": 1,
-      "y": 1,
-      "z": 1
+      "x": 1.5,
+      "y": 1.5,
+      "z": 1.5
     },
     "signConfig": null,
     "toroColor": null,
@@ -60782,13 +60782,13 @@
     "disableGroundSnap": false,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": 144.05,
-      "y": 0.9922,
-      "z": 143.757
+      "x": 155.15,
+      "y": 1.8646,
+      "z": 138.434
     },
     "rotation": {
       "x": 0,
-      "y": -2.2794,
+      "y": -2.7925,
       "z": 0
     },
     "scaling": {
@@ -60902,13 +60902,13 @@
     "disableGroundSnap": false,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": 136.989,
-      "y": 0.4559,
-      "z": 137.705
+      "x": 141.564,
+      "y": 0.2969,
+      "z": 127.762
     },
     "rotation": {
       "x": 0,
-      "y": -2.3693,
+      "y": -2.0834,
       "z": 0
     },
     "scaling": {
