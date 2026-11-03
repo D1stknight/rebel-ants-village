@@ -57,6 +57,9 @@ html.vt-touch #ctrlPanelBtn{display:block}
   backdrop-filter:blur(12px);
   z-index:12;
 }
+/* folded until the player opens it (the HUD's own copy of this rule only arrives once the HUD starts, after the village
+   is ready: until then the panel showed open, then closed) */
+body:not(.rebel-panel-open) #selectedRebelPanel{display:none}
 #selectedRebelImage{
   width:56px;
   height:56px;
