@@ -45,9 +45,10 @@
 #ltBub .arw{position:absolute;width:14px;height:14px;background:#17131f;border:1px solid rgba(232,197,106,.6);transform:rotate(45deg)}
 #ltBub .arw.up{top:-8px;border-right:0;border-bottom:0}
 #ltBub .arw.down{bottom:-8px;border-left:0;border-top:0;background:#100d18}
-#lobbyHelp{position:fixed;left:max(16px,env(safe-area-inset-left,0px));z-index:61;width:40px;height:40px;border-radius:50%;border:1px solid rgba(232,197,106,.55);background:rgba(12,10,20,.72);color:#e8c56a;
+#lobbyHelp{position:fixed;left:max(16px,env(safe-area-inset-left,0px));z-index:13;width:40px;height:40px;border-radius:50%;border:1px solid rgba(232,197,106,.55);background:rgba(12,10,20,.72);color:#e8c56a;
   font:700 18px/1 'Cinzel',Georgia,serif;cursor:pointer;display:grid;place-items:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:transform .15s,border-color .15s}
-#lobbyHelp:hover{transform:translateY(-1px);border-color:#e8c56a}`;
+#lobbyHelp:hover{transform:translateY(-1px);border-color:#e8c56a}
+#econMenu.open~#lobbyHelp{visibility:hidden}`;
     document.head.appendChild(s);
   }
   function steps() { return STEPS.filter((st) => (st.only ? st.only() : true) && (!st.el || visible(document.querySelector(st.el)))); }
