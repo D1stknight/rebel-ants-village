@@ -26,6 +26,7 @@
 //   - up to 40 light copies on a phone (computers 45: a full room copy of 50 shows hardly a stand-in; fewer after a
 //     crash), their files kept a while after use, and a player's light copy stays (hidden, no slot) under their full
 //     model, so it shows at once when the full one goes;
+//   - name tags only for the nearest 8 (computers 12), anyone talking and your group.
 (function () {
   'use strict';
   const PROTOCOL = 'rebel-universe.v1', FULL_R = 80, TAG_R = 45, SEND_MS = 150, BEAT_MS = 12000, PING_MS = 25000;
@@ -42,7 +43,7 @@
   // loads (Nov 3): files downloading at once, new copies a frame, how long a player stands among the nearest few before
   // their full model loads (phones: 1, 1, 5 s; computers: 4, 3, none). A crowd that came at once had a phone download
   // and unpack a dozen characters together, and the page ran out of memory and started again
-  let busy = 0, peakBusy = 0, maxLoads = 4, perFrame = 3, fullWait = 0;
+  let busy = 0, peakBusy = 0, maxLoads = 4, perFrame = 3, fullWait = 0, maxTags = 12; // (name tags: phones 8)
   let voiceOn = false, spkTex = null; // (the rooms say whether voice is on: village-voice.js)
   const VC = () => window.VillageChat;
   const tell = (kind, d) => { try { VC()?.room?.(kind, d); } catch (e) { log('chat', e); } };
@@ -594,7 +595,7 @@
       if (hidden) { disposeModel(p); disposeLite(p); continue; }
       list.push(p);
       if (p.tag) {
-        p.tag.setEnabled(names && p.d < TAG_R); p.tag.visibility = p.d < TAG_R - 10 ? 1 : Math.max(0, (TAG_R - p.d) / 10);
+        p.tag.visibility = p.d < TAG_R - 10 ? 1 : Math.max(0, (TAG_R - p.d) / 10);
         // the same size on screen past 14 m (far names stay readable), and nearer than the walk camera's 9 m (a player
         // right by the camera gets no tag across the screen); the chat bubble keeps to the tag's size
         const ty = p.pos.y + p.tag.position.y * p.holder.scaling.y, dc = cam ? Math.hypot(cam.x - p.pos.x, cam.y - ty, cam.z - p.pos.z) : p.d; // (to the tag itself)
@@ -602,6 +603,15 @@
       }
     }
     list.sort((a, b) => a.d - b.d);
+    // name tags for the nearest few within TAG_R (a crowd showed a wall of names; a tag shown stays until two more come
+    // nearer), and for anyone talking or in your group
+    const grp = window.VillageGroup;
+    let rank = 0;
+    for (const p of list) {
+      const near = names && p.d < TAG_R, on = near && (rank < (p.tagOn ? maxTags + 2 : maxTags) || !!p.talk || !!grp?.isMember?.(p.u));
+      if (near) rank++;
+      p.tagOn = on; if (p.tag) p.tag.setEnabled(on);
+    }
     // the nearest few as their own model, at most maxFull: one drawn stays while it is within two places or 4 m of the
     // nearest few (and 8 m past the range), until someone clearly nearer (3 m) needs its place, so players at about the same
     // distance don't swap back and forth (each swap made a new copy, and loaded the file again once it had gone)
@@ -678,7 +688,7 @@
     if (H || !host || !window.BABYLON) return;
     H = host; B = window.BABYLON; maxFull = H.maxFull > 0 ? H.maxFull : H.lite ? 4 : 8; maxLite = H.maxLite >= 0 ? H.maxLite : H.lite ? 40 : 45;
     keepIdle = H.lite ? 1 : 4; keepMs = H.lite ? 20000 : 60000; keepIdleLite = H.lite ? 12 : 24;
-    maxLoads = H.lite ? 1 : 4; perFrame = H.lite ? 1 : 3; fullWait = H.lite ? 5000 : 0;
+    maxLoads = H.lite ? 1 : 4; perFrame = H.lite ? 1 : 3; fullWait = H.lite ? 5000 : 0; maxTags = H.lite ? 8 : 12;
     root = new B.TransformNode('mpPlayersRoot', H.scene); root.metadata = { keepInInteriors: true }; // rooms hide the village, not the players (each is shown in its own place)
     setInterval(() => { if (send('{"t":"ping"}')) pf.pingAt = document.hidden ? 0 : performance.now(); }, PING_MS); // (timers, not frames: a hidden tab draws nothing)
     document.addEventListener('visibilitychange', () => { const me = H.player(); if (document.hidden && me && H.canSend()) sendState(me, 1, performance.now()); });
@@ -700,5 +710,5 @@
   const near = r => [...peers.values()].filter(p => p.d != null && p.d <= r && p.holder?.isEnabled?.());
   window.VillageMP = { start, tick, reconnect, emote, peers, chat, voice: voiceLink, speaking, near, ticket: () => (H && enabled ? ticket() : Promise.resolve(null)), joinCopy,
     get perf() { return { ...pf, gaps: pf.gaps.length, rtt: pf.rtt.slice(), dev: { ...DEV, d: H?.phone?.() ? 'p' : 'd' } }; }, pfSend: () => pfSend(performance.now()),
-    get state() { const v = [...peers.values()]; return { enabled, open: !!ws && ws.readyState === 1, you, room, peers: peers.size, closedFor, files: files.size, full: v.filter(p => p.model).length, lite: v.filter(p => p.lite).length, busy, peakBusy }; }, stop() { enabled = false; const s = ws; ws = null; try { s?.close(1000); } catch (e) {} dropAll(); sweepFiles(Infinity); tell('closed'); } };
+    get state() { const v = [...peers.values()]; return { enabled, open: !!ws && ws.readyState === 1, you, room, peers: peers.size, closedFor, files: files.size, full: v.filter(p => p.model).length, lite: v.filter(p => p.lite).length, tags: v.filter(p => p.tagOn).length, busy, peakBusy }; }, stop() { enabled = false; const s = ws; ws = null; try { s?.close(1000); } catch (e) {} dropAll(); sweepFiles(Infinity); tell('closed'); } };
 })();
