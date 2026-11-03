@@ -224,12 +224,20 @@
       g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'low';
       g.drawImage(back, 0, 0, w, h);
     }
+    // the game's frame is copied once a clip frame, at most 960 px tall, and the backdrop and the print are drawn from that
+    // copy: each draw of the 3D canvas makes the browser copy its whole picture off the graphics card, slow on a phone
+    // (Nov 3: the backdrop and the print copied it twice, at the phone's full resolution)
+    const shot = canvas(2, 2), sg = shot.getContext('2d', { alpha: false });
     function frame(g, src) {
       const iw = src.videoWidth || src.width, ih = src.videoHeight || src.height;
       if (!iw || !ih) return false;
-      backdropOf(g, src, iw, ih);
+      const k = Math.min(1, 960 / ih), sw = Math.max(1, Math.round(iw * k)), sh = Math.max(1, Math.round(ih * k));
+      if (shot.width !== sw || shot.height !== sh) { shot.width = sw; shot.height = sh; }
+      sg.imageSmoothingEnabled = true; sg.imageSmoothingQuality = 'medium';
+      sg.drawImage(src, 0, 0, sw, sh);
+      backdropOf(g, shot, sw, sh);
       g.drawImage(under, 0, 0);
-      picture(g, L, src, crop(L, iw, ih), 'medium');
+      picture(g, L, shot, crop(L, sw, sh), 'medium');
       g.drawImage(over, 0, 0);
       return true;
     }

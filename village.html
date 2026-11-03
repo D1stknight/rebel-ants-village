@@ -12812,6 +12812,11 @@ async function startVillageClip() {
   const CR = window.ClipRecorder;
   if (!CR?.supported()) { showToast("This browser can't record clips: take a photo instead (P)."); return false; }
   VillageClip.busy = true;
+  // phones: the 3D draws at the CSS pixels while it records (a quarter of the pixels at 2x; the clip's picture is smaller
+  // than that): each clip frame copies the whole 3D picture, slow on a phone (Nov 3: an iPhone lagged recording alone and
+  // started the page again recording in a crowd of 44)
+  const lowRes = photoOnPhone() && engine.getHardwareScalingLevel() < 1;
+  if (lowRes) { window._clipLowRes = true; engine.setHardwareScalingLevel(1); }
   let r = null;
   try {
     r = await CR.start({
@@ -12825,7 +12830,7 @@ async function startVillageClip() {
     });
   } catch (e) { r = { ok: false, reason: 'error', error: String(e?.message || e) }; }
   VillageClip.busy = false;
-  if (!r?.ok) { console.warn('clip did not start', r); showToast('The clip did not start: try again.'); return false; }
+  if (!r?.ok) { if (lowRes) { window._clipLowRes = false; window._villageLook?.applyRes?.(); } console.warn('clip did not start', r); showToast('The clip did not start: try again.'); return false; }
   VillageClip.on = true; VillageClip.max = clipMaxSec();
   try { window.VillageMP?.hold?.(true); } catch (e) {} // (phones: no new full models of other players while it records)
   clearInterval(VillageClip.timer); VillageClip.timer = setInterval(paintVillageClip, 250);
@@ -12838,6 +12843,7 @@ async function stopVillageClip(why) {
   if (!VillageClip.on || VillageClip.busy) return null;
   VillageClip.on = false; VillageClip.busy = true; clearInterval(VillageClip.timer); paintVillageClip();
   try { window.VillageMP?.hold?.(false); } catch (e) {}
+  if (window._clipLowRes) { window._clipLowRes = false; try { window._villageLook?.applyRes?.(); } catch (e) {} } // (the phone's own resolution again)
   // (a clip that is dropped anyway (under 1.5 s, leaving the page) doesn't wait for the encoder; a slow encoder gets a
   // word while it finishes)
   const quick = why === 'leave' || window.ClipRecorder.seconds < 1.5;
@@ -31231,6 +31237,7 @@ refreshQuestBuilderOptions();
   const dpr = Math.max(1, LITE_GRAPHICS ? Math.min([2, 1.5, 1][CRASH_LIGHT], window.devicePixelRatio || 1) : (window.devicePixelRatio || 1));
   const levels = [1 / dpr]; if (dpr >= 1.75) levels.push(1 / 1.5); if (dpr > 1.01) levels.push(1);
   let li = 0, low = 0, high = 0;
+  window._villageLook.applyRes = () => engine.setHardwareScalingLevel(levels[li]); // (after a clip on a phone: startVillageClip)
   const pinned = qs.get('res') === 'native';
   // Each sharper level remembers how often it was too slow. It used to bounce forever:
   // 2x drops to 1.5x at ~40 fps, 1.5x hits 60, climbs back to 2x after 6 s, drops again (FPS readout swinging 35-60).
@@ -31239,7 +31246,7 @@ refreshQuestBuilderOptions();
   const lastDropAt = levels.map(() => 0);
   const RETRY_AFTER_MS = 30000, MAX_FAILS = 2;
   setInterval(() => {
-    if (document.visibilityState !== 'visible') { low = high = 0; return; }
+    if (document.visibilityState !== 'visible' || window._clipLowRes) { low = high = 0; return; } // (a phone recording a clip draws at 1x meanwhile)
     const fps = engine.getFps();
     if (fps < 42) { low++; high = 0; } else if (fps > 57) { high++; low = 0; } else { low = high = 0; }
     if (low >= 2) {
