@@ -31291,8 +31291,16 @@ engine.runRenderLoop(()=>{
     // angle) instead of steering round in a wide arc. R alone runs straight ahead.
     const inF = (moveForward ? 1 : 0) - (moveBackward ? 1 : 0), inR = (turnRight ? 1 : 0) - (turnLeft ? 1 : 0);
     let dirX = 0, dirZ = 0;
-    const _keysNow = inF + ',' + inR;
-    if (inF || inR) {
+    const _keysNow = inF + ',' + inR, _ax = (inF || inR) ? window.VillageTouch?.axis : null;
+    if (_ax) {
+      // Nov 3 the phone stick walks at its own angle (VillageTouch.axis), always from the screen as it is: up is away
+      // from the camera, right is to the screen's right, wherever the thumb goes (no 8 directions, no jumps). The
+      // camera follows behind only gently while the stick is used (below), so holding it to a side walks a straight
+      // line instead of circling round the swinging camera.
+      const fx = -Math.sin(_orbitAngleH), fz = -Math.cos(_orbitAngleH), ca = Math.cos(_ax.a), sa = Math.sin(_ax.a);
+      const dx = fx * ca + fz * sa, dz = fz * ca - fx * sa, l = Math.hypot(dx, dz) || 1;
+      dirX = dx / l; dirZ = dz / l; _moveRefKeys = '';
+    } else if (inF || inR) {
       // the direction is taken from the camera when the keys change (or while the mouse turns it), then kept
       if (_keysNow !== _moveRefKeys || _moveRefYaw === null || performance.now() < _camManualUntil) { _moveRefYaw = _orbitAngleH; _moveRefKeys = _keysNow; }
       const fx = -Math.sin(_moveRefYaw), fz = -Math.cos(_moveRefYaw); // the camera's forward on the ground; its right is (fz, -fx)
@@ -31339,9 +31347,12 @@ engine.runRenderLoop(()=>{
     if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8*(window._walkLightK??1)*(MiniGames.on?(MiniGames.walkLight??1):1);updateSandFootprints(SWIM.on ? NaN : _terrainY);}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
     // the camera swings round behind the character while it moves (about two seconds for a half turn at a walk, quicker
     // running), unless the mouse just turned it: walking out of a doorway toward the camera, it comes round behind
+    // (the phone stick: gently, most when it points away from the camera and not at all from its sides on: a walk to the
+    // side goes straight on, a diagonal curves slowly, a walk away from the camera brings it round behind)
     if (hasDir && Math.abs(charMesh._vel) > .01 && performance.now() > _camManualUntil && !DanceOff.on) {
       const _d = charMesh.rotation.y + Math.PI - _orbitAngleH, da = Math.atan2(Math.sin(_d), Math.cos(_d));
-      _orbitAngleH += da * (1 - Math.exp(-(runKey ? 2.4 : 1.5) * dt));
+      const _sk = _ax ? (runKey ? 0.7 : 0.45) * Math.max(0, Math.cos(_ax.a)) ** 2 : (runKey ? 2.4 : 1.5);
+      _orbitAngleH += da * (1 - Math.exp(-_sk * dt));
     }
     // the camera keeps its distance when running (it used to back out to 13.5 m, so the character looked a third smaller)
     _orbitDist+=(9-_orbitDist)*0.06;
