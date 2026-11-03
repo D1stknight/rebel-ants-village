@@ -12815,8 +12815,10 @@ async function startVillageClip() {
   let r = null;
   try {
     r = await CR.start({
-      canvas: engine.getRenderingCanvas(), caption: villagePhotoCaption(), maxSec: clipMaxSec(), light: CRASH_LIGHT > 0,
-      bitrate: photoOnPhone() ? 2000000 : 2500000, elements: villageAudioElements,
+      // phones: 540 x 960 without the blur filter, at most 24 frames a second and fewer while the game is slow (an iPhone in
+      // a crowd of 44 lagged, then started the page again while recording)
+      canvas: engine.getRenderingCanvas(), caption: villagePhotoCaption(), maxSec: clipMaxSec(), light: CRASH_LIGHT > 0 || photoOnPhone(),
+      fps: photoOnPhone() ? 24 : 30, adaptive: photoOnPhone(), bitrate: photoOnPhone() ? 1500000 : 2500000, elements: villageAudioElements,
       // each frame the game has just drawn (its picture is still there to copy)
       onFrame: (fn) => { const o = engine.onEndFrameObservable.add(fn); return () => engine.onEndFrameObservable.remove(o); },
       onAuto: (why) => { stopVillageClip(why); }
@@ -12825,6 +12827,7 @@ async function startVillageClip() {
   VillageClip.busy = false;
   if (!r?.ok) { console.warn('clip did not start', r); showToast('The clip did not start: try again.'); return false; }
   VillageClip.on = true; VillageClip.max = clipMaxSec();
+  try { window.VillageMP?.hold?.(true); } catch (e) {} // (phones: no new full models of other players while it records)
   clearInterval(VillageClip.timer); VillageClip.timer = setInterval(paintVillageClip, 250);
   paintVillageClip();
   return true;
@@ -12834,6 +12837,7 @@ async function startVillageClip() {
 async function stopVillageClip(why) {
   if (!VillageClip.on || VillageClip.busy) return null;
   VillageClip.on = false; VillageClip.busy = true; clearInterval(VillageClip.timer); paintVillageClip();
+  try { window.VillageMP?.hold?.(false); } catch (e) {}
   // (a clip that is dropped anyway (under 1.5 s, leaving the page) doesn't wait for the encoder; a slow encoder gets a
   // word while it finishes)
   const quick = why === 'leave' || window.ClipRecorder.seconds < 1.5;

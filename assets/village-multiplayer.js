@@ -44,6 +44,7 @@
   // their full model loads (phones: 1, 1, 5 s; computers: 4, 3, none). A crowd that came at once had a phone download
   // and unpack a dozen characters together, and the page ran out of memory and started again
   let busy = 0, peakBusy = 0, maxLoads = 4, perFrame = 3, fullWait = 0, maxTags = 12; // (name tags: phones 8)
+  let held = false; // (a clip records on a phone: no new full models meanwhile, light copies still come: village.html)
   let voiceOn = false, spkTex = null; // (the rooms say whether voice is on: village-voice.js)
   const VC = () => window.VillageChat;
   const tell = (kind, d) => { try { VC()?.room?.(kind, d); } catch (e) { log('chat', e); } };
@@ -651,7 +652,7 @@
     list.forEach((p, i) => {
       if (i >= maxFull || p.d >= fullIn || !able(p)) { p.nearAt = 0; return; }
       if (!p.nearAt) p.nearAt = now;
-      if (p.model || p.loading) return;
+      if (p.model || p.loading || (held && H.lite)) return;
       // its light copy first (quick; one still being made holds the full model up only a moment); a kit ape is built here
       const url = fullUrl(p), here = !url || !!files.get(url)?.c, waited = now - p.nearAt;
       if (!here && (waited < fullWait || (liteAble(p) && !p.lite && waited < (H.lite ? 8000 : 3000)) || !lane(url))) { startLite(p); return; }
@@ -708,7 +709,7 @@
   const voiceLink = { send: o => send(o), open: () => !!ws && ws.readyState === 1 && voiceOn, get on() { return voiceOn; }, you: () => you };
   // the players in the same place within r metres (the badges' players met: village.html badgeStat)
   const near = r => [...peers.values()].filter(p => p.d != null && p.d <= r && p.holder?.isEnabled?.());
-  window.VillageMP = { start, tick, reconnect, emote, peers, chat, voice: voiceLink, speaking, near, ticket: () => (H && enabled ? ticket() : Promise.resolve(null)), joinCopy,
+  window.VillageMP = { start, tick, reconnect, emote, peers, chat, voice: voiceLink, speaking, near, ticket: () => (H && enabled ? ticket() : Promise.resolve(null)), joinCopy, hold: (on) => { held = !!on; },
     get perf() { return { ...pf, gaps: pf.gaps.length, rtt: pf.rtt.slice(), dev: { ...DEV, d: H?.phone?.() ? 'p' : 'd' } }; }, pfSend: () => pfSend(performance.now()),
     get state() { const v = [...peers.values()]; return { enabled, open: !!ws && ws.readyState === 1, you, room, peers: peers.size, closedFor, files: files.size, full: v.filter(p => p.model).length, lite: v.filter(p => p.lite).length, tags: v.filter(p => p.tagOn).length, busy, peakBusy }; }, stop() { enabled = false; const s = ws; ws = null; try { s?.close(1000); } catch (e) {} dropAll(); sweepFiles(Infinity); tell('closed'); } };
 })();

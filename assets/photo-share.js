@@ -213,7 +213,9 @@
     // stretched over the clip; that canvas is big enough that browsers keep it on the graphics card (a smaller one
     // lives in memory, and drawing the game's frame into it reads the whole frame back every time)
     const back = canvas(w / 6, h / 6), bg = back.getContext('2d', { alpha: false });
-    const soft = typeof CanvasRenderingContext2D !== 'undefined' && 'filter' in CanvasRenderingContext2D.prototype;
+    // (opts.plain: no canvas filter, phones: on a busy phone a blur filter on every frame of a clip cost too much; the
+    // small canvas stretched with smoothing is soft anyway)
+    const soft = !opts.plain && typeof CanvasRenderingContext2D !== 'undefined' && 'filter' in CanvasRenderingContext2D.prototype;
     function backdropOf(g, src, iw, ih) {
       const bw = back.width, bh = back.height, s = Math.max(bw / iw, bh / ih) * 1.08, dw = iw * s, dh = ih * s;
       bg.imageSmoothingEnabled = true; bg.imageSmoothingQuality = 'medium';
