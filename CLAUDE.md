@@ -155,6 +155,7 @@ Read this first. It is the hand-off from the Cowork sessions (Sept–Oct 2026) s
 - Minimal narrative, visual outputs (screenshots/side-by-sides).
 - Multiplayer at launch (Miguel, Oct 25: "i want it at launch"; was "launch single player"): one shared world, each player's own missions; Zelda-like vision. Plan: claude.ai/artifact/FSBV7BSK8G25GRHV8dBZcS. Order: Vicky's answers, then Miguel's questions on main, then the plan's steps 1-7.
 - Call this app "Universe", not "the village" (Miguel, Oct 23: "start calling it universe not village"); the places inside it are still villages (Hub, Ronin, Samurai, ...).
+- Admin steps for Miguel always name the admin (Nov 3: "when you tell me to do things going forward in admin please specify which one"): the live admin = rebeluniverse.io (Rebel Console → Apps → Rebel Universe) or the dev admin = the dev preview (Rebel Console → Apps → Rebel Universe (dev)); the NPC Forge the same (live site or dev preview). When either does the same, say so and name the one to use. The Babylon card's Put <version> on dev merges babylon-update into dev from either admin (api/babylon-check.mjs: base 'dev').
 
 ## Next up (one at a time)
 1. Miguel playtests Yamabushi (cliffs, mist, bridge, FPS) and Wokou (surf level).
