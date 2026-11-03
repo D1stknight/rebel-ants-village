@@ -6,7 +6,7 @@
 (function () {
   const TILE = { roof: [1.6, 1.4], roof_brown: [1.6, 1.4], plaster_old: [3, 3], slate: [2.4, 2.4], wood: [1.6, 1.6], darkwood: [1.6, 1.6], plaster: [3, 3], stone: [2.4, 2.4], thatch: [2, 1.6], bark: [1.4, 1.6], earth: [4, 4], shoji: [1.2, 1.5],
     facade_apt: [6, 4.6], facade_stucco: [5, 4.6], facade_brick: [6, 4.6], facade_office: [6, 4.2], facade_glass: [4, 4], facade_shop: [8, 5.2], rollup: [3, 3], sl_brick: [2.4, 2.4], stucco: [3, 3], deco: [3, 3], seigaiha: [2.4, 2.4], sand_ring: [4, 4], checker_cc: [3.2, 3.2], bamboo_wall: [2.4, 2.4],
-    club_brick: [2.4, 2.4], club_wall: [3, 3], club_wall_ext: [3, 3], club_floor: [1.6, 1.6] };
+    club_brick: [2.4, 2.4], club_wall: [3, 3], club_wall_ext: [3, 3], club_floor: [1.6, 1.6], quilt: [1.4, 1.4] };
   const tileOf = m => TILE[m] || [1, 1];
 
   // ── textures (drawn once on small canvases) ─────────────────────────────
@@ -463,6 +463,30 @@
       c.fillStyle = '#e8c56a'; c.beginPath(); c.arc(cx, cy - 26, 24, Math.PI, 0); c.lineTo(cx + 24, cy + 6); c.arc(cx, cy + 6, 24, 0, Math.PI); c.closePath(); c.fill();
       c.fillRect(cx - 5, cy + 30, 10, 24); c.fillRect(cx - 24, cy + 52, 48, 8);
       c.lineWidth = 7; c.beginPath(); c.arc(cx, cy + 4, 36, .25, Math.PI - .25); c.stroke();
+    }),
+    // Ant-Thony's house (Hub, Nov 2): his name plate by the door, the river at night through his window, the note over his bed
+    sign_anthony_home: cv => cv('sign_anthony_home', 512, 160, (c, W, H) => {
+      const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#3a2414'); g.addColorStop(1, '#22140a'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      c.strokeStyle = '#c9a452'; c.lineWidth = 6; c.strokeRect(8, 8, W - 16, H - 16);
+      c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#e8c56a'; c.font = '900 64px Georgia, serif'; c.fillText('ANT-THONY', W / 2, H * .42, W - 60);
+      c.fillStyle = '#d8c7a0'; c.font = '700 24px Georgia, serif'; c.fillText('HOME · PLEASE KNOCK', W / 2, H * .79, W - 60);
+    }),
+    river_night: cv => cv('river_night', 512, 256, (c, W, H) => {
+      const r = rng(77), g = c.createLinearGradient(0, 0, 0, H * .62); g.addColorStop(0, '#0b1030'); g.addColorStop(1, '#2c3262'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      for (let k = 0; k < 90; k++) { c.fillStyle = `rgba(255,252,236,${.3 + r() * .6})`; c.fillRect(r() * W, r() * H * .48, 1.6, 1.6); }
+      const mx = W * .68, my = H * .2, mg = c.createRadialGradient(mx, my, 6, mx, my, 74); mg.addColorStop(0, 'rgba(255,244,206,.55)'); mg.addColorStop(1, 'rgba(255,244,206,0)'); c.fillStyle = mg; c.fillRect(0, 0, W, H);
+      c.fillStyle = '#fff6da'; c.beginPath(); c.arc(mx, my, 15, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#161c3c'; c.beginPath(); c.moveTo(0, H * .62); for (let x = 0; x <= W; x += 16) c.lineTo(x, H * .5 - 16 * Math.sin(x * .013) - 9 * Math.sin(x * .041)); c.lineTo(W, H * .62); c.closePath(); c.fill();
+      c.fillStyle = '#0a0e22'; for (let k = 0; k < 28; k++) { const x = r() * W, h = 22 + r() * 34, b = H * .63; c.beginPath(); c.moveTo(x, b - h); c.lineTo(x - h * .28, b); c.lineTo(x + h * .28, b); c.closePath(); c.fill(); }
+      const wg = c.createLinearGradient(0, H * .62, 0, H); wg.addColorStop(0, '#1e2856'); wg.addColorStop(1, '#0b1030'); c.fillStyle = wg; c.fillRect(0, H * .62, W, H * .38);
+      for (let k = 0; k < 44; k++) { const y = H * .64 + r() * H * .32, w = 8 + r() * 34; c.fillStyle = `rgba(255,238,196,${.2 + r() * .45})`; c.fillRect(mx - w / 2 + (r() - .5) * 34, y, w, 1.7); }
+      c.strokeStyle = '#04060e'; c.lineWidth = 2.2; for (let k = 0; k < 64; k++) { const x = r() * W; c.beginPath(); c.moveTo(x, H); c.quadraticCurveTo(x + 4, H - 18, x + (r() - .5) * 12, H - 22 - r() * 30); c.stroke(); }
+    }),
+    note_anthony: cv => cv('note_anthony', 256, 192, (c, W, H) => {
+      c.fillStyle = '#f4ecd6'; c.fillRect(0, 0, W, H); c.strokeStyle = 'rgba(70,110,200,.35)'; c.lineWidth = 1.5; for (let y = 44; y < H; y += 26) { c.beginPath(); c.moveTo(10, y); c.lineTo(W - 10, y); c.stroke(); }
+      c.strokeStyle = 'rgba(200,60,60,.45)'; c.beginPath(); c.moveTo(34, 0); c.lineTo(34, H); c.stroke();
+      c.fillStyle = '#20263a'; c.font = "italic 700 25px 'Comic Sans MS', 'Segoe Print', cursive";
+      c.fillText('Out on my', 44, 66); c.fillText('rounds!', 44, 92); c.fillText('Home 2-7 a.m.', 44, 118); c.fillText('- A.', 150, 162);
     }),
     // Rebel Ants After Dark (the Hub's south-east courtyard dojo, Oct 26; after afterdark.rebelants.io): the neon sign with the
     // ant crest over the back wall, the colony's motto over the door, the Hold Em felt with the crest, the community cards and
@@ -1104,6 +1128,11 @@
     sign_snacks: { tex: 'sign_snacks', self: true, alphaTex: true }, sign_fame: { tex: 'sign_fame', self: true, alphaTex: true }, plaque_champion: { tex: 'plaque_champion', em: [.22, .17, .06] }, noren_comedy: { tex: 'noren_comedy' },
     bulb: { col: [1, .9, .62], em: [1, .8, .45] }, popcorn: { col: [.98, .86, .48], em: [.16, .12, .04] }, candle_glass: { col: [.86, .26, .2], em: [.72, .2, .12], alpha: .8 }, shaft_spot: { shaft: [1, .84, .58], alpha: .1 },
     poster_neon: { img: 'assets/interiors/antthony/neon-sign.webp', em: [.3, .3, .3] }, poster_micdrop: { img: 'assets/interiors/antthony/mic-drop.webp', em: [.3, .3, .3] },
+    // Ant-Thony's house (Hub, Nov 2)
+    futon: { col: [.92, .89, .82] }, quilt: { tex: 'seigaiha', tint: [.74, .52, 1] }, sign_anthony_home: { tex: 'sign_anthony_home', em: [.2, .16, .09] }, river_night: { tex: 'river_night', self: true },
+    note_anthony: { tex: 'note_anthony', em: [.22, .21, .19] }, poster_spotlight: { img: 'assets/interiors/antthony/spotlight.webp', em: [.3, .3, .3] },
+    poster_letcook: { img: 'assets/interiors/antthony/let-him-cook.webp', em: [.3, .3, .3] }, poster_receipts: { img: 'assets/interiors/antthony/receipts.webp', em: [.3, .3, .3] },
+    poster_touchgrass: { img: 'assets/interiors/antthony/touch-grass.webp', em: [.3, .3, .3] },
     // Rebel Ants After Dark (the Hub's south-east dojo)
     ad_wall: { tex: 'plaster', tint: [.26, .14, .22] }, ad_floor: { tex: 'darkwood', tint: [.8, .64, .72] }, neon_red: { col: [1, .16, .12], em: [1, .12, .08] }, ad_felt21: { col: [.2, .07, .26] },
     ad_sign: { tex: 'ad_sign', self: true, alphaTex: true }, ad_never: { tex: 'ad_never', self: true, alphaTex: true }, ad_felt: { tex: 'ad_felt' }, ad_cards: { tex: 'ad_cards', alphaTex: true, em: [.22, .21, .19] },
@@ -2463,6 +2492,41 @@
         M.block('window_glow', x, y, 1.49, .44, .44, .42); for (const t of [-1, 1]) { M.block('stone', x + t * .25, y, 1.49, .08, .6, .42); M.block('stone', x, y + t * .25, 1.49, .6, .08, .42); }
         M.block('stone', x, y, 1.91, .9, .9, .16); M.cyl('stone', [x, y, 2.07], .14, .18, 6, .03);
       }
+    },
+    // Ant-Thony's house by the Hub's pond (Nov 2): a little cottage of white plaster and dark wood on a low stone base, a covered
+    // porch at the front (a lean-to of tiles on two posts) with a bench looking at the water, the purple noren with his mic crest
+    // at the door, his name plate beside it, a paper lantern each side of the door, warm shoji windows, a stone lantern by the
+    // steps, a red mailbox, flower pots, a fishing rod against the wall; front faces -y (the room's door is a layout door in
+    // front of the recess)
+    hub_anthony_house(M) {
+      const W = 11, D = 9, Z = .5, WH = 3.4, wy = .7, ww = W - 2, wd = D - 3.4, yF = wy - wd / 2, yB = -D / 2; // yF: the front wall, yB: the base's front edge
+      M.block('stone', 0, 0, 0, W, D, Z);
+      steps(M, 0, yB, Z, 2.8, 2);
+      M.block('wood', 0, (yB + .12 + yF) / 2, Z, ww + .6, yF - yB - .12, .08); // the porch boards
+      M.remap = { wood: 'darkwood', shoji: 'shoji_lit' };
+      walls(M, 0, wy, Z, ww, wd, WH, { door: [2, 2.7], windows: [['front', -2.9, Z + 1.05, 1.8, 1.3], ['left', -.6, Z + 1.05, 2, 1.3], ['right', -.6, Z + 1.05, 2, 1.3], ['back', -2, Z + 1.1, 1.8, 1.2], ['back', 2.2, Z + 1.1, 1.8, 1.2]] });
+      M.remap = null;
+      M.roof(0, wy, Z + WH + .22, ww + 1.6, wd + 1.6, 2.3, { lift: .5 });
+      // the porch roof: tiles from under the main eave out over the porch, a fascia beam and two posts at its front corners
+      const y0 = yF - .15, z0 = Z + WH - .05, y1 = yB + .05, z1 = Z + 2.78, len = Math.hypot(y0 - y1, z0 - z1), a = Math.atan2(z0 - z1, y0 - y1);
+      M.box('roof', [0, (y0 + y1) / 2, (z0 + z1) / 2], [ww + 1, len, .14], 0, a);
+      M.block('darkwood', 0, y1 + .12, z1 - .34, ww + 1, .22, .3);
+      for (const sd of [-1, 1]) M.block('darkwood', sd * (ww / 2 + .25), yB + .36, Z + .08, .24, .24, z1 - Z - .4);
+      // the door: the noren with his mic crest, his name plate, a paper lantern each side
+      noren(M, 0, yF - .22, Z + 2.6, 2.1, .8, 'noren_comedy');
+      M.block('darkwood', 2.4, yF - .17, Z + 1.98, 1.96, .06, .72); M.quad('sign_anthony_home', [[1.5, yF - .21, Z + 2.04], [3.3, yF - .21, Z + 2.04], [3.3, yF - .21, Z + 2.64], [1.5, yF - .21, Z + 2.64]]);
+      for (const sd of [-1, 1]) { M.rod('darkwood', [sd * 1.55, yF - .1, Z + 3.25], [sd * 1.55, yF - .45, Z + 3.25], .03, 4); lantern(M, sd * 1.55, yF - .45, Z + 2.75, .2); }
+      // the bench on the porch (it looks at the water), flower pots at its corners, a fishing rod leaning on the wall
+      const by = yB + .95, bz = Z + .08;
+      M.block('wood', -3.1, by, bz + .4, 1.9, .5, .07); for (const t of [-1, 1]) M.block('darkwood', -3.1 + t * .8, by, bz, .1, .42, .4);
+      for (const x of [-4.55, 4.55]) { M.cyl('clay', [x, yB + .45, bz], .17, .32, 10, .22); M.sphere('flower_purple', [x, yB + .45, bz + .46], .25, .75, 8, 4); M.sphere('leaves', [x, yB + .45, bz + .33], .27, .45, 8, 3); }
+      M.rod('bark', [4.15, yF - .22, bz + .05], [3.55, yF - .22, Z + 3.05], .025, 5); M.rod('rope', [3.55, yF - .24, Z + 3.05], [3.7, yF - .3, bz + 1.3], .006, 3);
+      // a stone lantern by the steps, the mailbox on its post
+      { const x = 2.4, y = yB - .7;
+        M.block('stone', x, y, 0, .7, .7, .3); M.block('stone', x, y, .3, .28, .28, .85); M.block('stone', x, y, 1.15, .6, .6, .12);
+        M.block('window_glow', x, y, 1.27, .38, .38, .36); for (const t of [-1, 1]) { M.block('stone', x + t * .21, y, 1.27, .07, .52, .36); M.block('stone', x, y + t * .21, 1.27, .52, .07, .36); }
+        M.block('stone', x, y, 1.63, .78, .78, .14); M.cyl('stone', [x, y, 1.77], .12, .16, 6, .03); }
+      M.block('darkwood', -2.4, yB - .7, 0, .1, .1, 1.1); M.block('lacquer_red', -2.4, yB - .7, 1.1, .34, .46, .28); M.block('gold', -2.4, yB - .94, 1.2, .14, .02, .03);
     },
     // the game hall's back-room door (the Game Hall's): a purple arched door with a pumpkin lamp either side; front faces -y
     cc_hall_door(M) {
@@ -4312,7 +4376,7 @@
   // y1..sy), the mic and the stool on it, the cocktail tables (TX x TY), the snack bar in the front right corner (SNACK: x0, y0),
   // the trophy case in the front left (TROPHY), the wall of fame (PY along each side wall, pictures PS square, centred at PZ)
   const AC = { HX: 15, HY: 13, H: 9, DW: 3.6, DH: 4.6, ST: { x0: -9, x1: 9, y0: -13, y1: -6.2, h: 1.1, sx0: 2.6, sx1: 4.8, sy: -4 },
-    MIC: [0, -8.4], STOOL: [2.3, -9.3], TX: [-10.5, -6, 6, 10.5], TY: [-1.6, 3, 7.6], SNACK: [6.4, 9.8], TROPHY: [-8, 11.4],
+    MIC: [0, -8.4], STOOL: [2.3, -9.3], TX: [-10.5, -6, 6, 10.5], TY: [-1.6, 3, 7.6], SEAT_X: .62, SEAT_Y: 1.05, SEAT_H: .48, SNACK: [6.4, 9.8], TROPHY: [-8, 11.4],
     PY: [-5.2, -2.9, -.6, 1.7, 4, 6.3, 8.6], PS: 1.9, PZ: 4 };
   // Hub Rebel Ants After Dark (the south-east courtyard dojo, Oct 26; afterdark.rebelants.io in the colony): the Hold Em table in
   // the middle (TAB: centre x, y, top radius, height), Rebel 21's half-moon table against the left wall (T21: centre, radius), the
@@ -4321,6 +4385,11 @@
   // the front right (PT: x0, y0, y1), the community sign over its bench on the left wall (CM: y), the moon window (MW: y, z, r)
   const AD = { HX: 17, HY: 15, H: 9.5, DW: 4, DH: 4.8, TAB: [0, -2.5, 3, 1.45], T21: [-13.4, 6.4, 2.3], CL: [-4, 8], SP: [-8.4, -5.8, -3.2, -.6],
     WH: [-9.6, 4.4, 2.6], DR: [9.6, 4.3, 4.4, 5.6], PT: [9.4, 11.2, 12.7], CM: 11.4, MW: [7, 4.8, 1.9] };
+  // Ant-Thony's house (Hub, Nov 2): BED the low platform [x0, x1, y0, y1, platform height, futon], SLEEP where he lies in the
+  // games pack's sleep move [x, height, z (Babylon: kit y), yaw: feet toward +x], TABLE the low table, VAN the dressing table's y on
+  // the right wall, SHELF the book shelf's y range on the left wall, WIN the river window by the door [x, bottom, width, height]
+  const AH = { HX: 7, HY: 6, H: 4.6, DW: 2.4, DH: 3, BED: [-6.1, -1.7, -5.92, -3.92, .22, .12], SLEEP: [-3.75, .34, -4.95, Math.PI / 2],
+    TABLE: [2.3, -1.2], VAN: -3.2, SHELF: [1.2, 4.4], WIN: [-3.9, 1.1, 2.8, 1.8] };
   // Shogun rooms (rebel scale: a Rebel stands 3.4 m, so chairs sit at .85 and tables at 1.45)
   // TS Throne Room: the long table (y0..y1, half width, height), the seats, the chairs' x, the banner poles' x, the dais and its
   // stairs, the throne's y, the canopy posts [x, yBack, yFront], the colonnade (x, ys)
@@ -4531,9 +4600,21 @@
       lights: [{ p: [0, 7.2, -8.6], c: [1, .9, .74], i: 1.25, r: 11 }, { p: [-6, 6.2, -9.4], c: [.62, .34, 1], i: .8, r: 9 }, { p: [6, 6.2, -9.4], c: [1, .34, .46], i: .7, r: 9 },
         { p: [0, 4.2, 2.4], c: [1, .68, .42], i: .6, r: 15, flicker: .12 }, { p: [10.6, 4.6, 10.4], c: [1, .8, .52], i: .6, r: 8 }, { p: [-8, 5, 8.6], c: [.86, .78, 1], i: .4, r: 10 }],
       decks: [{ box: [AC.ST.x0, AC.ST.y0, AC.ST.x1, AC.ST.y1], y: AC.ST.h }, { box: [AC.ST.sx0, AC.ST.y1, AC.ST.sx1, AC.ST.sy], y0: 0, y1: AC.ST.h, axis: 'z', steps: 4, flip: true }],
+      // the chairs a player can sit on: [x, z, facing] (two a table, facing the stage)
+      seats: AC.TX.flatMap(x => AC.TY.flatMap((y, row) => [-1, 1].map(t => [x + t * AC.SEAT_X, y + AC.SEAT_Y, Math.PI, row === 0 ? 1 : 0]))), // (the front row: golden seats)
       blockers: [{ box: [-9.1, -6.98, -6.75, -6.4], minY: .5 }, { box: [6.75, -6.98, 9.1, -6.4], minY: .5 }, { box: [-12.45, -11.9, -10.75, -10.5] }, { box: [10.75, -11.9, 12.45, -10.5] },
         { circle: [...AC.MIC, .42], minY: .5 }, { circle: [...AC.STOOL, .5], minY: .5 }, ...AC.TX.flatMap(x => AC.TY.map(y => ({ circle: [x, y + .45, 1.3] }))),
         { box: [AC.SNACK[0], AC.SNACK[1], AC.HX, AC.HY] }, { box: [AC.TROPHY[0] - 1.45, AC.TROPHY[1] - 1.05, AC.TROPHY[0] + 1.45, AC.TROPHY[1] + 1.05] }]
+    },
+    room_hub_anthony_home: {
+      bounds: [-AH.HX, AH.HX, -AH.HY, AH.HY + .2], spawn: [0, AH.HY - 4.1, Math.PI], exit: [0, AH.HY + .3], ceil: AH.H,
+      hemi: { i: .62, c: [1, .88, .74], g: [.32, .23, .18] },
+      lights: [{ p: [0, 3.5, -1], c: [1, .8, .54], i: 1.05, r: 13 }, { p: [-6.5, 1.15, -5.3], c: [1, .68, .38], i: .7, r: 6.5, flicker: .05 },
+        { p: [AH.HX - 1.2, 2.4, AH.VAN], c: [1, .9, .72], i: .45, r: 6 }, { p: [AH.WIN[0], 2.1, AH.HY - 1.1], c: [.55, .66, 1], i: .35, r: 7 }],
+      // where Ant-Thony sleeps (assets/village-anthony.js): [x, height, z, yaw], and the middle of his bed (his reach is measured from it)
+      sleep: AH.SLEEP, bedMid: [(AH.BED[0] + AH.BED[1]) / 2, (AH.BED[2] + AH.BED[3]) / 2],
+      blockers: [{ box: [-AH.HX, -AH.HY, AH.BED[1] + .05, AH.BED[3] + .05] }, { circle: [AH.TABLE[0], AH.TABLE[1], 1.0] },
+        { box: [AH.HX - .75, AH.VAN - 1.45, AH.HX, AH.VAN + 1.45] }, { box: [-AH.HX, AH.SHELF[0] - .05, -AH.HX + .6, AH.SHELF[1] + .05] }, { circle: [AH.HX - .75, AH.HY - .75, .5] }]
     },
     room_hub_afterdark: {
       bounds: [-AD.HX, AD.HX, -AD.HY, AD.HY + .2], spawn: [0, AD.HY - 4.6, Math.PI], exit: [0, AD.HY + .3], ceil: AD.H,
@@ -5760,7 +5841,8 @@
       for (const x of TX) for (const y of TY) {
         M.cyl('lacquer_black', [x, y, 0], .5, .06, 14); M.cyl('lacquer_black', [x, y, .06], .1, 1.34, 8); M.cyl('darkwood', [x, y, 1.4], .78, .07, 20); M.cyl('gold', [x, y, 1.4], .8, .02, 20);
         M.cyl('candle_glass', [x, y - .1, 1.47], .1, .22, 10); M.sphere('fire', [x, y - .1, 1.74], .04, 1.6, 5, 3);
-        for (const t of [-1, 1]) { const cx = x + t * .62, cy = y + 1.05; M.block('cushion', cx, cy, .82, .72, .72, .12); for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) M.block('lacquer_black', cx + a * .3, cy + b * .3, 0, .07, .07, .82); M.block('lacquer_black', cx, cy + .34, .94, .72, .08, 1.1); }
+        // (seats at a Rebel's sitting height: the games pack's sit moves put the seat .46 m up, Nov 2; were .94)
+        for (const t of [-1, 1]) { const cx = x + t * AC.SEAT_X, cy = y + AC.SEAT_Y; M.block('cushion', cx, cy, AC.SEAT_H - .12, .78, .76, .12); if (y === TY[0]) M.block('gold', cx, cy + .36, AC.SEAT_H + 1.22, .8, .1, .1); /* (the golden front row) */ for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) M.block('lacquer_black', cx + a * .32, cy + b * .31, 0, .07, .07, AC.SEAT_H - .12); M.block('lacquer_black', cx, cy + .36, AC.SEAT_H, .78, .08, 1.3); }
       }
       M.quad('runner', [[-1.5, ST.sy - 2, .012], [1.5, ST.sy - 2, .012], [1.5, HY, .012], [-1.5, HY, .012]], [[0, 0], [1, 0], [1, (HY - ST.sy + 2) / 6.4], [0, (HY - ST.sy + 2) / 6.4]]);
       // the wall of fame: a black mat with a gold liner and a picture light over each of the frames, the sign over them
@@ -5803,6 +5885,59 @@
     // Rebel Ants After Dark (the Hub's south-east courtyard dojo): the colony's points-only game lounge after the After Dark site.
     // The Hold Em table under its red neon ring, Rebel 21 by the left wall, the Colony Clash bracket, the Spinner machines, the
     // Wheel and the Drop board under the REBEL ANTS AFTER DARK neon, the points counter, the community corner, the moon window
+    // Ant-Thony's house (Hub, Nov 2): his room. The futon on a low tatami platform along the back wall (his head to the left
+    // wall), a purple wave quilt over its foot, his note pinned over it, a paper lamp, his phone and a glass of water on the
+    // nightstand; the low table with his desk mic, a teapot, two cups and his joke notebook, cushions round it on a round rug; the
+    // dressing mirror with bulbs over a dressing table on the right wall; joke books on the left wall; the river at night through
+    // the window by the door; four of his posters; the Rebel emblem over the door; a paper lantern from the ceiling; a plant
+    room_hub_anthony_home(M) {
+      M.room = true;
+      const { HX, HY, H, DW, DH, BED, TABLE, VAN, SHELF, WIN } = AH;
+      hall(M, { HX, HY, H, DW, DH, floor: 'club_floor', wall: 'plaster_old', wain: 'darkwood', wainH: 1.05, rail: 'wood', post: 'darkwood', posts: [-HY, -1.6, 2.6, HY], beam: 'darkwood', ceil: 'wood', ceilBeam: 'darkwood', ceilEvery: 2.4 });
+      // the bed: the platform, the futon, a round pillow at the head end, the quilt over the foot end with its rolled hem
+      const [x0, x1, y0, y1, ph, fh] = BED, bx = (x0 + x1) / 2, by = (y0 + y1) / 2, top = ph + fh;
+      M.block('darkwood', bx, by, 0, x1 - x0, y1 - y0, ph - .04); M.block('tatami', bx, by, ph - .04, x1 - x0 - .06, y1 - y0 - .06, .04);
+      const fx0 = x0 + .25, fx1 = x1 - .2, fy0 = y0 + .2, fy1 = y1 - .18, fy = (fy0 + fy1) / 2;
+      M.block('futon', (fx0 + fx1) / 2, fy, ph, fx1 - fx0, fy1 - fy0, fh);
+      M.sphere('futon', [fx0 + .52, fy, top], .46, .2, 14, 5);
+      const qx0 = -3.65; M.block('quilt', (qx0 + fx1 + .06) / 2, fy, top - .02, fx1 + .06 - qx0, fy1 - fy0 + .1, .4); M.rod('quilt', [qx0, fy0 - .04, top + .27], [qx0, fy1 + .04, top + .27], .13, 8);
+      // his note pinned over the bed, the nightstand with a paper lamp, his phone and a glass of water
+      wallArt(M, 'back', bx - .2, 1.45, .5, .38, 'note_anthony', HX, HY, .05); M.sphere('lacquer_red', [bx - .2, -HY + .08, 1.8], .03, 1, 6, 3);
+      const nx = -6.5, ny = -5.3;
+      M.block('darkwood', nx, ny, 0, .56, .56, .5); M.block('darkwood', nx, ny, .5, .36, .36, .04); M.block('andon', nx, ny, .54, .3, .3, .44); M.block('darkwood', nx, ny, .98, .36, .36, .04);
+      M.block('glass_dark', nx + .19, ny + .2, .5, .09, .16, .015); M.cyl('glass', [nx - .2, ny + .19, .5], .045, .13, 10); M.cyl('water', [nx - .2, ny + .19, .51], .038, .09, 10);
+      // the low table on a round rug, cushions round it; on it his desk mic, a teapot and two cups, his notebook and a pen
+      const [tx, ty] = TABLE;
+      M.cyl('velvet', [tx, ty, 0], 2.05, .012, 36);
+      M.cyl('darkwood', [tx, ty, .3], .85, .06, 24); for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) M.block('darkwood', tx + a * .45, ty + b * .45, 0, .08, .08, .3);
+      for (const [dx, dy] of [[0, 1.3], [-1.3, 0], [1.3, 0], [0, -1.3]]) M.block('cushion', tx + dx, ty + dy, 0, .72, .72, .1);
+      M.cyl('iron', [tx - .32, ty - .22, .36], .12, .03, 12); M.rod('steel', [tx - .32, ty - .22, .39], [tx - .32, ty - .22, .64], .015, 6); M.sphere('chrome', [tx - .32, ty - .22, .72], .06, 1.25, 10, 5);
+      M.sphere('porcelain', [tx + .32, ty + .12, .36], .15, 1.25, 12, 6); M.rod('porcelain', [tx + .45, ty + .12, .46], [tx + .58, ty + .12, .56], .025, 5); M.cyl('porcelain', [tx + .32, ty + .12, .54], .04, .05, 8);
+      for (const [dx, dy] of [[.02, .5], [.5, -.3]]) M.cyl('porcelain', [tx + dx, ty + dy, .36], .055, .08, 10);
+      M.block('lacquer_red', tx - .08, ty + .3, .36, .38, .28, .04); M.block('paper', tx - .08, ty + .3, .37, .36, .26, .02); M.rod('lacquer_black', [tx + .16, ty + .14, .4], [tx + .3, ty + .44, .4], .012, 4);
+      // the dressing mirror with bulbs round it over the dressing table on the right wall; a little gold mic trophy on the table
+      M.block('darkwood', HX - .36, VAN, 0, .68, 2.8, .84); M.block('lacquer_black', HX - .36, VAN, .84, .72, 2.86, .05);
+      wallArt(M, 'right', VAN, 1.25, 2.1, 1.6, 'lacquer_black', HX, HY, .04); wallArt(M, 'right', VAN, 1.33, 1.86, 1.44, 'steel', HX, HY, .06);
+      for (let k = 0; k <= 6; k++) M.sphere('bulb', [HX - .1, VAN - .95 + k * 1.9 / 6, 2.92], .07, 1, 6, 3);
+      for (let k = 1; k < 4; k++) for (const sd of [-1, 1]) M.sphere('bulb', [HX - .1, VAN + sd * 1.07, 1.3 + k * 1.6 / 4], .07, 1, 6, 3);
+      M.cyl('lacquer_black', [HX - .4, VAN + .9, .89], .1, .05, 10); M.cyl('gold', [HX - .4, VAN + .9, .94], .03, .16, 8); M.sphere('gold', [HX - .4, VAN + .9, 1.14], .06, 1.2, 10, 5);
+      // the joke books on the left wall, three shelves
+      M.block('darkwood', -HX + .27, (SHELF[0] + SHELF[1]) / 2, 0, .5, SHELF[1] - SHELF[0], 2.3);
+      for (const z of [.12, .86, 1.6]) wallArt(M, 'left', (SHELF[0] + SHELF[1]) / 2, z, SHELF[1] - SHELF[0] - .2, .6, 'books', HX, HY, .53, [[0, 0], [(SHELF[1] - SHELF[0]) / 1.6, 0], [(SHELF[1] - SHELF[0]) / 1.6, 1], [0, 1]]);
+      // the river at night through the window by the door: the view, a dark frame, the lattice
+      const [wu, wz, ww, wh] = WIN;
+      wallArt(M, 'front', wu, wz - .1, ww + .3, wh + .2, 'darkwood', HX, HY, .03); wallArt(M, 'front', wu, wz, ww, wh, 'river_night', HX, HY, .05);
+      for (const k of [1, 2, 3]) M.block('darkwood', wu - ww / 2 + k * ww / 4, HY - .08, wz, .05, .04, wh);
+      M.block('darkwood', wu, HY - .08, wz + wh / 2 - .025, ww, .04, .05); M.block('darkwood', wu, HY - .25, wz - .12, ww + .4, .34, .07);
+      // four of his posters (gold liners), the Rebel emblem over the door
+      for (const [wall, u, mat] of [['back', 1.4, 'poster_letcook'], ['back', 4.3, 'poster_receipts'], ['right', 2.2, 'poster_spotlight'], ['left', -1.4, 'poster_touchgrass']]) {
+        wallArt(M, wall, u, 1.5, 1.66, 1.66, 'gold', HX, HY, .04); wallArt(M, wall, u, 1.58, 1.5, 1.5, mat, HX, HY, .06);
+      }
+      wallArt(M, 'front', 0, DH + .35, .8, .8, 'emblem_rebel', HX, HY, .05);
+      // a paper lantern from the ceiling, a potted plant in the front right corner
+      lantern(M, 0, -1, H - .62, .42);
+      M.cyl('clay', [HX - .75, HY - .75, 0], .28, .5, 12, .36); M.sphere('leaves', [HX - .75, HY - .75, 1.05], .5, 1.1, 10, 6); M.rod('bark', [HX - .75, HY - .75, .45], [HX - .75, HY - .75, .8], .05, 5);
+    },
     room_hub_afterdark(M) {
       M.room = true;
       const { HX, HY, H, DW, DH, TAB, T21, CL, SP, WH, DR, PT, CM, MW } = AD;

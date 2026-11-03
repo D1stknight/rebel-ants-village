@@ -6,7 +6,7 @@
 // many made today?) and send it every message and report. The Admin Hub
 // reaches it through Universe: api/mp-admin.mjs signs each command, the worker checks the signature (index.js /v1/admin),
 // this desk runs it once (each command's nonce is kept 10 minutes) and passes it on to the rooms that need it.
-import { EVENT_ID, EVENT_ROOM, isLive, briefEvent, normEvent, newEventId } from './events.js';
+import { EVENT_ID, EVENT_ROOM, isLive, briefEvent, normEvent, newEventId, roll } from './events.js';
 export const DEFAULT_CFG = { chat: true, slow: 2, links: false, filter: true, words: [], voice: true };
 export function normCfg(c) {
   c = c && typeof c === 'object' ? c : {};
@@ -45,8 +45,16 @@ export class RoomControl {
     ]) this.sql.exec(q);
     this.cfgCache = null;
   }
-  getEvent(id) { if (!EVENT_ID.test(String(id || ''))) return null; const r = this.sql.exec('SELECT data FROM events WHERE id = ?', id).toArray()[0]; try { return r ? JSON.parse(r.data) : null; } catch (e) { return null; } }
-  putEvent(ev) { this.sql.exec('INSERT INTO events (id, data, starts, ends, at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data, starts = excluded.starts, ends = excluded.ends, at = excluded.at', ev.id, JSON.stringify(ev), ev.starts, ev.ends, Date.now()); }
+  // (a repeating event is read at its current time: roll moves one that is over on to its next, kept at once)
+  getEvent(id) {
+    if (!EVENT_ID.test(String(id || ''))) return null; const r = this.sql.exec('SELECT data FROM events WHERE id = ?', id).toArray()[0];
+    let ev = null; try { ev = r ? JSON.parse(r.data) : null; } catch (e) { return null; }
+    if (ev && roll(ev)) this.putEvent(ev);
+    return ev;
+  }
+  rows(q, ...a) { return this.sql.exec(q, ...a).toArray().map(r => JSON.parse(r.data)).map(ev => { if (roll(ev)) this.putEvent(ev); return ev; }); }
+  // (a repeating event's row keeps a far end, so the lists always find it; its real times are in its data)
+  putEvent(ev) { this.sql.exec('INSERT INTO events (id, data, starts, ends, at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data, starts = excluded.starts, ends = excluded.ends, at = excluded.at', ev.id, JSON.stringify(ev), ev.starts, ev.repeat ? 9e15 : ev.ends, Date.now()); }
   // a change to an event's hall, if it has been opened (nobody there: the next page to knock loads the event as it is)
   async toHall(id, op) {
     const name = `${this.site}:event:${id}`;
@@ -79,11 +87,11 @@ export class RoomControl {
     // the events: the public list (the worker's GET /v1/events: the lobby and the pages), one event for its hall, the
     // show started or stopped by a host in the hall
     if (url.pathname === '/events') {
-      const rows = this.sql.exec('SELECT data FROM events WHERE ends > ? AND starts < ? ORDER BY starts', now, now + 30 * 86400000).toArray().map(r => JSON.parse(r.data)).filter(ev => !ev.ended);
+      const rows = this.rows('SELECT data FROM events WHERE ends > ? AND starts < ? ORDER BY starts', now, now + 30 * 86400000).filter(ev => !ev.ended && ev.starts < now + 30 * 86400000).sort((a, b) => a.starts - b.starts);
       return json({ ok: true, now, live: rows.filter(ev => isLive(ev, now)).map(ev => briefEvent(ev, now)), next: rows.filter(ev => ev.starts > now).slice(0, 5).map(ev => briefEvent(ev, now)) });
     }
     if (url.pathname === '/event') return json({ ok: true, ev: this.getEvent(body.id) });
-    if (url.pathname === '/showat') { const ev = this.getEvent(body.id); if (ev && ev.show) { ev.showAt = Math.max(0, Math.round(+body.at || 0)); this.putEvent(ev); } return json({ ok: true }); }
+    if (url.pathname === '/showat') { const ev = this.getEvent(body.id); if (ev && ev.show) { ev.showAt = Math.max(0, Math.round(+body.at || 0)); if (!ev.showAt && ev.auto) ev.autoOff = 1; this.putEvent(ev); } return json({ ok: true }); }
     if (url.pathname === '/log') {
       const m = body.m || {};
       const r = this.sql.exec('INSERT INTO log (room, i, at, ch, sub, n, k, x, raw, tsub, tn) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id',
@@ -262,7 +270,7 @@ export class RoomControl {
       // the Colony Stage's events (events.js): the list (admins see everything), made or changed, live now, ended, the show,
       // a host added from Online now or taken off, deleted
       case 'events': {
-        const events = this.sql.exec('SELECT data FROM events WHERE ends > ? ORDER BY starts DESC LIMIT 100', now - 14 * 86400000).toArray().map(r => JSON.parse(r.data)).map(ev => ({ ...ev, live: isLive(ev, now) }));
+        const events = this.rows('SELECT data FROM events WHERE ends > ? ORDER BY starts DESC LIMIT 100', now - 14 * 86400000).map(ev => ({ ...ev, live: isLive(ev, now) }));
         return { ok: true, now, events };
       }
       case 'event-save': {
@@ -275,7 +283,8 @@ export class RoomControl {
       }
       case 'event-live': case 'event-end': {
         const ev = this.getEvent(args.id); if (!ev) return { ok: false, error: 'No such event' };
-        if (cmd === 'event-live') { ev.starts = now; ev.ends = Math.max(ev.ends, now + 3600000); ev.ended = 0; }
+        // (a repeating event not yet on: this time runs from now for its own length, and its schedule stays)
+        if (cmd === 'event-live') { ev.ends = ev.repeat && ev.starts > now ? now + Math.max(3600000, ev.ends - ev.starts) : Math.max(ev.ends, now + 3600000); ev.starts = now; ev.ended = 0; }
         else { ev.ended = now; ev.showAt = 0; }
         this.putEvent(ev);
         return { ok: true, ev, reached: await this.toHall(ev.id, cmd === 'event-end' ? { op: 'end' } : { op: 'ev', ev }) };
@@ -284,7 +293,7 @@ export class RoomControl {
         const ev = this.getEvent(args.id); if (!ev) return { ok: false, error: 'No such event' };
         if (!ev.show) return { ok: false, error: 'This event has no show yet.' };
         if (args.go && !isLive(ev, now)) return { ok: false, error: 'The event is not live.' };
-        ev.showAt = args.go ? now + 3000 : 0; this.putEvent(ev);
+        ev.showAt = args.go ? now + 3000 : 0; if (!args.go && ev.auto) ev.autoOff = 1; this.putEvent(ev);
         return { ok: true, ev, reached: await this.toHall(ev.id, { op: 'show', go: !!args.go, at: ev.showAt }) };
       }
       case 'event-host': {

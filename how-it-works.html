@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>How It Works · Rebel Universe</title>
+<meta name="description" content="How Rebel Universe works: your character, your wallet, your account, Rebel Points, the Forge, the villages, Ant-Thony, playing together, live events and the controls.">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/favicon-32.png">
+<link rel="apple-touch-icon" href="/assets/brand/apple-touch-icon.png">
+<meta name="theme-color" content="#0a0a14">
+<meta property="og:site_name" content="Rebel Ants Universe">
+<meta property="og:title" content="How Rebel Universe works">
+<meta property="og:description" content="Your character, your account, Rebel Points, the Forge, the villages, Ant-Thony, playing together and the controls, in one page.">
+<meta property="og:image" content="https://rebeluniverse.io/assets/brand/og-image.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0a0a14;--panel:#12111c;--panel2:#181624;--line:rgba(232,197,106,.16);--line2:rgba(232,197,106,.34);
+  --text:#ece6d6;--soft:#b8b0a0;--dim:#8d8676;--gold:#e8c56a;--gold2:#c8922a;--teal:#5ecfca;--red:#e0605a;
+  --serif:'Cinzel',Georgia,serif;--deco:'Cinzel Decorative','Cinzel',Georgia,serif;--sans:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--ink);color:var(--text);font:400 16px/1.65 var(--sans);
+  background-image:radial-gradient(1200px 520px at 50% -160px,rgba(200,146,42,.20),transparent 70%),radial-gradient(900px 600px at 110% 30%,rgba(94,207,202,.06),transparent 70%)}
+a{color:var(--teal);text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{color:#8ee6e2}
+kbd{display:inline-block;min-width:1.7em;padding:1px 6px;border-radius:6px;border:1px solid var(--line2);border-bottom-width:2px;background:#1d1a28;color:#fff3d0;font:700 12.5px/1.5 var(--sans);text-align:center;white-space:nowrap}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+/* the bar */
+header.bar{position:sticky;top:0;z-index:5;background:rgba(10,10,20,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+header.bar .wrap{display:flex;align-items:center;gap:12px;min-height:58px}
+header.bar img{width:30px;height:30px;border-radius:7px}
+header.bar .t{font:700 13px/1.2 var(--serif);letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+header.bar .t span{color:var(--soft);font-weight:600}
+header.bar a.back{margin-left:auto;display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;border:1px solid var(--line2);color:var(--text);text-decoration:none;font:700 11.5px/1 var(--serif);letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
+header.bar a.back:hover{border-color:var(--gold);color:var(--gold)}
+/* the top */
+.hero{padding-block:54px 26px;text-align:center}
+.hero .k{font:700 11px/1 var(--serif);letter-spacing:.32em;text-transform:uppercase;color:var(--teal)}
+.hero h1{margin:14px auto 12px;max-width:16ch;font:900 clamp(30px,6vw,56px)/1.08 var(--deco);color:#fff1c8;text-wrap:balance;text-shadow:0 0 34px rgba(232,197,106,.25)}
+.hero p{margin:0 auto;max-width:62ch;color:var(--soft);font-size:17px;text-wrap:pretty}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:30px auto 0;max-width:900px;text-align:left}
+.step{position:relative;padding:18px 18px 16px 62px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,var(--panel2),var(--panel))}
+.step b{position:absolute;left:16px;top:16px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(180deg,#ffd877,#c8922a);color:#241604;font:900 15px/1 var(--deco)}
+.step h3{margin:0 0 4px;font:700 15px/1.3 var(--serif);letter-spacing:.06em;color:var(--gold)}
+.step p{margin:0;color:var(--soft);font-size:14.5px;line-height:1.55}
+/* contents + sections */
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:40px;padding-block:34px 70px;align-items:start}
+nav.toc{position:sticky;top:82px;padding:14px 0}
+nav.toc .h{font:700 11px/1 var(--serif);letter-spacing:.24em;text-transform:uppercase;color:var(--dim);margin:0 0 12px 12px}
+nav.toc a{display:flex;gap:10px;align-items:baseline;padding:7px 12px;border-radius:10px;color:var(--soft);text-decoration:none;font-size:14.5px;line-height:1.35}
+nav.toc a span{font:700 11px/1 var(--serif);color:var(--gold2);min-width:1.6em}
+nav.toc a:hover,nav.toc a.on{background:rgba(232,197,106,.08);color:#fff3d0}
+main section{scroll-margin-top:80px;padding:28px 0 30px;border-top:1px solid var(--line)}
+main section:first-child{border-top:0;padding-top:0}
+.sh{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.sh .n{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;border:1px solid var(--line2);color:var(--gold);font:900 15px/1 var(--deco);background:rgba(232,197,106,.06)}
+.sh h2{margin:0;font:700 clamp(21px,3.2vw,27px)/1.2 var(--serif);letter-spacing:.04em;color:#fff1c8;text-wrap:balance}
+main p{margin:0 0 12px;max-width:68ch;text-wrap:pretty}
+main p.lead{color:var(--soft);font-size:16.5px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0 4px}
+.card{padding:15px 16px;border:1px solid var(--line);border-radius:14px;background:var(--panel);min-width:0}
+.card h4{margin:0 0 5px;font:700 14px/1.35 var(--serif);letter-spacing:.05em;color:var(--gold)}
+.card p{margin:0;font-size:14.5px;line-height:1.55;color:var(--soft)}
+.card p+p{margin-top:6px}
+.note{margin:14px 0 2px;padding:12px 14px;border-left:3px solid var(--teal);background:rgba(94,207,202,.06);border-radius:0 12px 12px 0;color:#d6f2f0;font-size:14.5px;max-width:68ch}
+.figs{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 4px}
+.fig{flex:1 1 140px;min-width:0;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.fig b{display:block;font:900 26px/1.1 var(--deco);color:var(--gold)}
+.fig span{display:block;margin-top:4px;color:var(--soft);font-size:13px;line-height:1.35}
+.keys{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+.keys .card{padding:14px 16px 10px}
+.krow{display:grid;grid-template-columns:minmax(92px,auto) minmax(0,1fr);gap:10px;align-items:baseline;padding:7px 0;border-top:1px solid rgba(255,255,255,.05);font-size:14.5px;color:var(--soft)}
+.krow:first-of-type{border-top:0}
+.krow .k{display:flex;flex-wrap:wrap;gap:4px}
+.krow .k i{font-style:normal;font:700 12.5px/1.5 var(--sans);color:#fff3d0}
+details{border:1px solid var(--line);border-radius:14px;background:var(--panel);margin:10px 0;max-width:780px}
+details summary{cursor:pointer;list-style:none;padding:14px 46px 14px 16px;position:relative;font-weight:650;color:#fff3d0}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:'+';position:absolute;right:16px;top:50%;transform:translateY(-50%);font:700 20px/1 var(--sans);color:var(--gold)}
+details[open] summary::after{content:'\2212'}
+details p{margin:0;padding:0 16px 14px;color:var(--soft);font-size:15px}
+.cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.cta a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 20px;border-radius:999px;text-decoration:none;font:700 11.5px/1 var(--serif);letter-spacing:.16em;text-transform:uppercase}
+.cta a.p{background:linear-gradient(135deg,#c8922a,#8a5e1a);color:#fff;box-shadow:0 4px 18px rgba(200,146,42,.45)}
+.cta a.s{border:1px solid rgba(94,207,202,.55);color:var(--teal)}
+footer{border-top:1px solid var(--line);padding-block:26px calc(30px + env(safe-area-inset-bottom,0px));color:var(--dim);font-size:13.5px}
+footer .wrap{display:flex;flex-wrap:wrap;gap:12px 22px;align-items:center}
+footer a{color:var(--soft)}
+@media (max-width:980px){
+  .layout{grid-template-columns:minmax(0,1fr);gap:0;padding-top:18px}
+  nav.toc{position:static;display:flex;gap:8px;overflow-x:auto;padding:4px 0 16px;scrollbar-width:none}
+  nav.toc::-webkit-scrollbar{display:none}
+  nav.toc .h{display:none}
+  nav.toc a{flex:none;border:1px solid var(--line);border-radius:999px;padding:8px 13px;font-size:13.5px;white-space:nowrap}
+}
+@media (max-width:720px){
+  .steps,.grid,.keys{grid-template-columns:minmax(0,1fr)}
+  .hero{padding-block:34px 16px}
+  .hero p{font-size:16px}
+  header.bar .t span{display:none}
+}
+</style>
+</head>
+<body>
+<header class="bar"><div class="wrap">
+  <img src="/assets/brand/icon-192.png" alt="">
+  <div class="t">Rebel Universe <span>· How it works</span></div>
+  <a class="back" href="/">&#8592; Lobby</a>
+</div></header>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="k">The colony's field guide</div>
+    <h1>How Rebel Universe works</h1>
+    <p>A 3D world of the Rebel Ants: fifteen villages, the story of the colony, over 150 games and puzzles, live shows, and other players walking around with you. Here is everything in one page.</p>
+    <div class="steps">
+      <div class="step"><b>1</b><h3>Pick a character</h3><p>Your own Rebel, Chumpz or Saint from your wallet, or any Free card. No NFT needed.</p></div>
+      <div class="step"><b>2</b><h3>Sign in</h3><p>Discord, or a name and PIN. Your points, badges and story follow you to any device.</p></div>
+      <div class="step"><b>3</b><h3>Enter Village</h3><p>You start in the Hub. Walk up to anything glowing and press <kbd>O</kbd>.</p></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="On this page">
+    <div class="h">On this page</div>
+    <a href="#character"><span>01</span>Your character</a>
+    <a href="#wallet"><span>02</span>Your wallet</a>
+    <a href="#account"><span>03</span>Your account</a>
+    <a href="#points"><span>04</span>Rebel Points</a>
+    <a href="#forge"><span>05</span>The Forge</a>
+    <a href="#universe"><span>06</span>The Universe</a>
+    <a href="#anthony"><span>07</span>Ant-Thony</a>
+    <a href="#together"><span>08</span>Playing together</a>
+    <a href="#events"><span>09</span>Live events</a>
+    <a href="#controls"><span>10</span>Controls</a>
+    <a href="#photos"><span>11</span>Photos and clips</a>
+    <a href="#faq"><span>12</span>Questions</a>
+  </nav>
+
+  <main>
+    <section id="character">
+      <div class="sh"><div class="n">01</div><h2>Your character</h2></div>
+      <p class="lead">The cards in the lobby are who you can play. Pick one, then press Enter Village.</p>
+      <div class="grid">
+        <div class="card"><h4>Your own NFTs</h4><p>Connect your wallet and your Rebel Ants (Battle for the Colony), Chumpz (ApeChain) and Saints (Ethereum) show up as cards. A card marked Ready has its 3D character; the others play as a stand-in until you forge them.</p></div>
+        <div class="card"><h4>Free cards</h4><p>No NFT? The cards marked Free are forged characters anyone can play. Guests who pick nothing start as Rebel #262.</p></div>
+        <div class="card"><h4>Rebel #001</h4><p>The colony's first Rebel. In Universe he is Ant-Thony, your guide and the colony's comedian, so you will meet him around the villages.</p></div>
+        <div class="card"><h4>Change any time</h4><p>Go back to the lobby (the round Rebel button, then Back to Lobby) and pick another card. Your story and points stay with your account, not with one character.</p></div>
+      </div>
+    </section>
+
+    <section id="wallet">
+      <div class="sh"><div class="n">02</div><h2>Your wallet</h2></div>
+      <p class="lead">Connect Wallet only reads which NFTs you hold. Playing never asks you to send anything.</p>
+      <div class="grid">
+        <div class="card"><h4>Browser wallet</h4><p>MetaMask, Coinbase Wallet, Rabby, Brave Wallet or any other extension on a computer.</p></div>
+        <div class="card"><h4>WalletConnect</h4><p>On a phone, in Safari, or without an extension: scan the code or open your wallet app.</p></div>
+      </div>
+      <p class="note">Signing a message with your wallet is free. It proves the wallet is yours, so your best scores can go on the games' top 10 boards under your Rebel's name.</p>
+    </section>
+
+    <section id="account">
+      <div class="sh"><div class="n">03</div><h2>Your account</h2></div>
+      <p class="lead">Sign in with the round button at the top left of the lobby, or from the Journal in Universe.</p>
+      <div class="grid">
+        <div class="card"><h4>Discord</h4><p>One tap if you are in the Rebel Ants Discord.</p></div>
+        <div class="card"><h4>A name and PIN</h4><p>No Discord? Pick a name and a 4 to 6 digit PIN. It is the same account as Rebel Ants After Dark and the Playground, with the same points.</p></div>
+        <div class="card"><h4>What it saves</h4><p>Your Rebel Points, your badges, the chests you opened, the games you cleared and your place in the story. Sign in on another device and carry on where you left off.</p></div>
+        <div class="card"><h4>Playing as a guest</h4><p>Guests can walk, play and read the chat. Their progress stays on that device and their points are practice points. Sign in later and the story you played joins your account.</p></div>
+      </div>
+    </section>
+
+    <section id="points">
+      <div class="sh"><div class="n">04</div><h2>Rebel Points</h2></div>
+      <p class="lead">Rebel Points are the colony's loyalty points. You earn them by playing, once per account for each find, and spend them in the Forge.</p>
+      <div class="figs">
+        <div class="fig"><b>102</b><span>treasure chests, from wooden boxes to legend chests</span></div>
+        <div class="fig"><b>150+</b><span>games and puzzles: the first clear of each pays</span></div>
+        <div class="fig"><b>8</b><span>place riddles hidden around the villages</span></div>
+        <div class="fig"><b>300</b><span>badges in your Journal</span></div>
+      </div>
+      <div class="grid">
+        <div class="card"><h4>Earning</h4><p>Open a chest, clear a game for the first time, solve a place riddle. Each pays your account once. A few finds you can repeat, like the Treasure Dig on the Chumpz beach, count toward a cap of 2,000 points a day.</p></div>
+        <div class="card"><h4>Getting more</h4><p>Signed in, open your account in the lobby and press Get Rebel Points: the Rebel Economy shop sells point packs by card, APE or ETH.</p></div>
+      </div>
+    </section>
+
+    <section id="forge">
+      <div class="sh"><div class="n">05</div><h2>The Forge</h2></div>
+      <p class="lead">The Forge turns your NFT into a 3D character that walks, runs, fights, dances and sits in Universe.</p>
+      <div class="grid">
+        <div class="card"><h4>How a forge goes</h4><p>Pick your card in the lobby and press Forge. The Forge paints your character from your NFT's picture, sculpts it in 3D, then rigs it with all its moves. Then Awaken it and press Make This My Rebel.</p></div>
+        <div class="card"><h4>What it costs</h4><p>Each forge costs 20,000 Rebel Points from the account you are signed in with. You need to hold the NFT you forge.</p></div>
+        <div class="card"><h4>Gloves</h4><p>On an awakened Rebel or Saint you can fit the gloves: size, cuff and colours, with a live preview, free a few times a day.</p></div>
+        <div class="card"><h4>Chumpz and Saints</h4><p>Holders forge their Chumpz and Saints the same way and play them in every village.</p></div>
+      </div>
+    </section>
+
+    <section id="universe">
+      <div class="sh"><div class="n">06</div><h2>The Universe</h2></div>
+      <p class="lead">You start in the Hub. Every village gate takes you to the others.</p>
+      <div class="grid">
+        <div class="card"><h4>Fifteen villages</h4><p>The Hub, the eleven faction villages (Ronin, Samurai, Shogun, Bushi, Buke, Ashigaru, Kenshi, Yamabushi, Sohei, Wokou, Warrior) and the friend villages: Cute &amp; Creepy, Chumpz Cove and Saints of LA. Walk up to a gate and press <kbd>O</kbd> to travel.</p></div>
+        <div class="card"><h4>The story</h4><p>The Hub Journey teaches you the ropes, then Book One runs fifty chapters across the villages. Thirty side quests, and the friend villages' own tales: Moon Tales, Chumpz Cove and Saints of LA.</p></div>
+        <div class="card"><h4>Your mission</h4><p>The gold &#9670; circle under your Rebel button shows what to do next, and a gold diamond on the map points the way. It opens by itself when the mission changes.</p></div>
+        <div class="card"><h4>Games, rooms, secrets</h4><p>About ten games in every village, rooms behind many doors, a hundred secrets and small ants that whisper hints. Your Journal keeps count of all of it.</p></div>
+      </div>
+    </section>
+
+    <section id="anthony">
+      <div class="sh"><div class="n">07</div><h2>Ant-Thony</h2></div>
+      <p class="lead">Rebel #001, the colony's comedian and your guide. Ask him anything about Universe.</p>
+      <div class="grid">
+        <div class="card"><h4>Where he is</h4><p>He walks the villages on a timetable, ten minutes in each, back in the Hub every third stop. When he is in your village he is the gold dot on your map, and your Rebel panel always says where he is.</p></div>
+        <div class="card"><h4>Talking to him</h4><p>Walk up and he says hello. Press <kbd>O</kbd> (or tap him) to open his chat and type a question: a game, a quest, a place, being stuck. He answers out loud. Signed-in players sometimes get a little tip.</p></div>
+        <div class="card"><h4>His house</h4><p>From 2 to 7 in the morning, New York time, he sleeps in his little house by the Hub's pond. Knock and wake him if you must. The rest of the day the note over his bed says where he went.</p></div>
+        <div class="card"><h4>His club</h4><p>Antthony's Comedy Club is in the forest west of the Hub. Find his Wall of Fame, the snack bar and the Roast Champion trophy, and catch his shows on stage.</p></div>
+      </div>
+    </section>
+
+    <section id="together">
+      <div class="sh"><div class="n">08</div><h2>Playing together</h2></div>
+      <p class="lead">Everyone in your village is live around you. Your missions, chests and scores stay your own.</p>
+      <div class="grid">
+        <div class="card"><h4>Chat</h4><p>Press <kbd>Enter</kbd> (the chat button on a phone). Nearby, the whole village, or a whisper. Signed-in players write; guests read.</p></div>
+        <div class="card"><h4>Voice</h4><p>Hold <kbd>X</kbd> (or Talk on a phone) and the players near you hear you. Signed-in players only. Allow the microphone when the browser asks.</p></div>
+        <div class="card"><h4>Emotes and groups</h4><p>Press <kbd>E</kbd> to cheer or dance. Click a name to invite them to your group: up to eight, with their own chat and voice across villages.</p></div>
+        <div class="card"><h4>Staying safe</h4><p>Click any name to mute, block or report. Moderators read the reports and can mute or remove players.</p></div>
+      </div>
+    </section>
+
+    <section id="events">
+      <div class="sh"><div class="n">09</div><h2>Live events</h2></div>
+      <p class="lead">Shows and meetups happen on the Colony Stage. When one is on, LIVE NOW shows at the top of the lobby.</p>
+      <div class="grid">
+        <div class="card"><h4>Joining</h4><p>Press Join on the LIVE NOW banner and you go straight there. Already in Universe? The LIVE banner's Go there button takes you, and a gold mark shows the door.</p></div>
+        <div class="card"><h4>Golden tickets</h4><p>The front row at the Comedy Club is for golden ticket holders: win one in the free raffle before the doors open, or buy one with Rebel Points.</p></div>
+        <div class="card"><h4>Seats</h4><p>Walk up behind a chair and press <kbd>O</kbd> to sit. Then <kbd>1</kbd> claps and <kbd>2</kbd> laughs; everyone sees it. <kbd>O</kbd> again to stand.</p></div>
+        <div class="card"><h4>Speaking at an event</h4><p>Raise your hand from the stage bar. A host can bring you up to speak to the whole room.</p></div>
+      </div>
+    </section>
+
+    <section id="controls">
+      <div class="sh"><div class="n">10</div><h2>Controls</h2></div>
+      <p class="lead">The controls circle at the top right in Universe (Controls in the Rebel panel on a phone) shows them all.</p>
+      <div class="keys">
+        <div class="card"><h4>On a computer</h4>
+          <div class="krow"><span class="k"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span>Walk the way the camera looks; hold <kbd>R</kbd> to run</span></div>
+          <div class="krow"><span class="k"><i>Drag</i></span><span>Look around (hold a mouse button and move)</span></div>
+          <div class="krow"><span class="k"><kbd>O</kbd></span><span>Use: talk, open, enter, read, play</span></div>
+          <div class="krow"><span class="k"><kbd>Space</kbd></span><span>Jump</span></div>
+          <div class="krow"><span class="k"><kbd>F</kbd><kbd>G</kbd><kbd>T</kbd></span><span>Kicks, punches, fight stance</span></div>
+          <div class="krow"><span class="k"><kbd>E</kbd></span><span>Emotes, then <kbd>1</kbd> to <kbd>5</kbd></span></div>
+          <div class="krow"><span class="k"><kbd>Tab</kbd></span><span>Your Rebel panel: Journal, Sound, Gloves, Back to Lobby</span></div>
+          <div class="krow"><span class="k"><kbd>Enter</kbd><kbd>X</kbd></span><span>Chat; hold to talk with your voice</span></div>
+        </div>
+        <div class="card"><h4>On a phone</h4>
+          <div class="krow"><span class="k"><i>Stick</i></span><span>Walk with the stick at the bottom left; push it to the rim to run</span></div>
+          <div class="krow"><span class="k"><i>Drag</i></span><span>Look around: drag anywhere else on the screen</span></div>
+          <div class="krow"><span class="k"><i>Use</i></span><span>Talk, open, enter, read, play: the button says which</span></div>
+          <div class="krow"><span class="k"><i>&#8226;&#8226;&#8226;</i></span><span>More: Jump, Hit, Talk, Emote, Photo, Clip</span></div>
+          <div class="krow"><span class="k"><i>Round</i></span><span>Your Rebel button, top left: Journal, Sound, Controls, Back to Lobby</span></div>
+          <div class="krow"><span class="k"><i>&#9670;</i></span><span>The gold circle under it: your mission</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="photos">
+      <div class="sh"><div class="n">11</div><h2>Photos and clips</h2></div>
+      <p>Press <kbd>P</kbd> for a photo, or <kbd>Shift</kbd> + <kbd>P</kbd> to record a clip of up to a minute (Photo and Clip under &#8226;&#8226;&#8226; on a phone). Share them as a polaroid to X, Instagram, TikTok or Discord, or save them. A clip you close without saving is gone.</p>
+    </section>
+
+    <section id="faq">
+      <div class="sh"><div class="n">12</div><h2>Questions</h2></div>
+      <details><summary>Do I need an NFT to play?</summary><p>No. Pick a Free card, or just press Enter Village as a guest. NFTs let you play your own character and forge it.</p></details>
+      <details><summary>Does it cost anything?</summary><p>Playing is free. Forging a character costs Rebel Points, which you earn by playing or can buy in the Rebel Economy shop.</p></details>
+      <details><summary>Where is my progress saved?</summary><p>Signed in, on your account, so it follows you to any device. As a guest, on this device only: sign in to keep it.</p></details>
+      <details><summary>I can't chat or talk.</summary><p>Chat and voice need you to be signed in. For voice, hold <kbd>X</kbd> (or Talk), allow the microphone, and on an iPhone tap the screen once so sound can start. The other player has to be near you, in the same place.</p></details>
+      <details><summary>My phone reloads or shows a white screen.</summary><p>That is the phone running out of memory. Close other tabs and apps and try again; after a crash Universe runs lighter on that phone for a few days.</p></details>
+      <details><summary>I'm stuck in a quest.</summary><p>Open the &#9670; circle to see your next step, follow the gold diamond on the map, or find Ant-Thony and ask him.</p></details>
+      <div class="cta"><a class="p" href="/">Back to the lobby</a><a class="s" href="https://discord.com/invite/DkYTPDz4wM" target="_blank" rel="noopener">Ask in Discord</a></div>
+    </section>
+  </main>
+</div>
+
+<footer><div class="wrap">
+  <span>Rebel Ants Universe</span>
+  <a href="/">Lobby</a>
+  <a href="https://discord.com/invite/DkYTPDz4wM" target="_blank" rel="noopener">Discord</a>
+  <a href="https://economy.rebelants.io/shop" target="_blank" rel="noopener">Rebel Points shop</a>
+</div></footer>
+
+<script>
+// the contents follow the section on screen
+(() => {
+  const links = [...document.querySelectorAll('nav.toc a')], map = new Map(links.map((a) => [a.getAttribute('href').slice(1), a]));
+  if (!('IntersectionObserver' in window)) return;
+  const seen = new Map();
+  const io = new IntersectionObserver((es) => {
+    es.forEach((e) => seen.set(e.target.id, e.isIntersecting ? e.boundingClientRect.top : null));
+    let best = null, top = Infinity; for (const [id, t] of seen) if (t != null && t < top) { top = t; best = id; }
+    if (best) links.forEach((a) => a.classList.toggle('on', a === map.get(best)));
+  }, { rootMargin: '-80px 0px -55% 0px' });
+  document.querySelectorAll('main section').forEach((s) => io.observe(s));
+})();
+</script>
+</body>
+</html>

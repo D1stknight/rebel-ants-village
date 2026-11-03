@@ -1,8 +1,9 @@
 // The Free to play roster (Oct 20): forged characters anyone can play from the lobby (guests, wallets without a Rebel
 // and holders whose own Rebels are not forged yet), with real Rebel Points when signed in. The NPC Forge's Free to play
 // box ticks them.
-//   GET                      -> { ok, tokens: ['262', 'chumpz:1270', ...], saved, updatedAt, env }   (public; saved false = the default)
-//   POST { tokens: [...] }   -> save the roster (admin). Each one it adds needs a public forged character with a rig
+//   GET                      -> { ok, tokens: ['262', 'chumpz:1270', ...], hidden: ['1'?, 'chumpz:900001'?], saved, updatedAt, env }
+//                               (public; saved false = the default)
+//   POST { tokens: [...], hidden?: [...] } -> save the roster (admin). Each one it adds needs a public forged character with a rig
 //                               (the forge:active-character:v1:local_testing_wallet:<collection>:<token> record guests
 //                               load); ones already on it stay while they wait for theirs (answered as waiting)
 //   POST { reset: true }     -> back to the default (admin)
@@ -10,6 +11,9 @@
 // 'saints:1998'). Never #001 (the starter, always the first card; #893 joined Oct 24 with its Sept 27 rig) nor the
 // Chumpz Racer (chumpz:900001: its own lobby card). Production and the previews keep their own copy (like the ticker),
 // so trying a roster on a preview never changes the live lobby.
+// Nov 2 (Miguel: "001 and the chumpz ... dont have a tick to turn off"): those two lobby cards show unless switched off:
+// hidden = the ones switched off (only these two; a wallet that holds #001 still sees its own card). A save without
+// `hidden` keeps the one saved before.
 import { isAdminRequest } from './_admin-auth.mjs';
 import { redis } from './_wallet.mjs';
 
@@ -19,6 +23,8 @@ const COL = 'battle_for_colony';
 // the friend collections forged in the Rebel Forge (assets/friend-collections.json; the lobby's FRIEND_LABELS)
 const FRIENDS = { chumpz: 'Chumpz', saints: 'Saint' };
 export const NEVER = new Set(['1', 'chumpz:900001']);
+export const BUILTIN = ['1', 'chumpz:900001'];
+const hiddenOf = (d) => (Array.isArray(d?.hidden) ? d.hidden.map(String).filter((h) => BUILTIN.includes(h)) : []);
 // the lobby's showcase until a roster is saved (index.html VILLAGE_RIGGED)
 export const DEFAULT_TOKENS = ['262', '469', '1555', '4998', '1738', '3421', '609', '4722', '4', '893'];
 const MAX = 40;
@@ -53,12 +59,12 @@ export default async function handler(req, res) {
       let d = null; try { d = r?.result ? JSON.parse(r.result) : null; } catch (e) {}
       res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=20, stale-while-revalidate=60');
       const saved = Array.isArray(d?.tokens);
-      return res.status(200).json({ ok: true, tokens: (saved ? d.tokens : DEFAULT_TOKENS).filter((t) => !NEVER.has(t)), saved, updatedAt: d?.updatedAt || null, env: ENV });
+      return res.status(200).json({ ok: true, tokens: (saved ? d.tokens : DEFAULT_TOKENS).filter((t) => !NEVER.has(t)), hidden: hiddenOf(d), saved, updatedAt: d?.updatedAt || null, env: ENV });
     }
     if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
     if (!isAdminRequest(req)) return res.status(401).json({ ok: false, error: 'Admin authentication required' });
     const b = req.body && typeof req.body === 'object' ? req.body : JSON.parse(req.body || '{}');
-    if (b.reset) { await redis([['DEL', KEY]]); return res.status(200).json({ ok: true, tokens: DEFAULT_TOKENS, saved: false, updatedAt: null, env: ENV }); }
+    if (b.reset) { await redis([['DEL', KEY]]); return res.status(200).json({ ok: true, tokens: DEFAULT_TOKENS, hidden: [], saved: false, updatedAt: null, env: ENV }); }
     const tokens = [...new Set((Array.isArray(b.tokens) ? b.tokens : []).map((t) => String(t).trim()))];
     if (tokens.length > MAX) return res.status(400).json({ ok: false, error: `At most ${MAX} on the roster` });
     const bad = tokens.filter((t) => !parseEntry(t));
@@ -66,6 +72,10 @@ export default async function handler(req, res) {
     const entries = tokens.map(parseEntry);
     const never = entries.filter((p) => NEVER.has(p.key));
     if (never.length) return res.status(400).json({ ok: false, error: `${never.map(label).join(', ')} can't be on the roster (#001 is the starter, the Chumpz Racer has its own card)` });
+    if (b.hidden !== undefined && !Array.isArray(b.hidden)) return res.status(400).json({ ok: false, error: 'hidden is a list' });
+    const hide = b.hidden === undefined ? null : [...new Set(b.hidden.map((h) => String(h).trim()))];
+    const notBuiltin = (hide || []).filter((h) => !BUILTIN.includes(h));
+    if (notBuiltin.length) return res.status(400).json({ ok: false, error: `Only #001 and the Chumpz Racer can be switched off here (not ${notBuiltin.join(', ')})` });
     // Oct 25 (Miguel ticked Chumpz #1270: "No public forged character with a rig for #893"): a tick saves the whole
     // list, so only what it adds needs its public character; entries already on the roster (the saved list, or the
     // showcase while none is saved) stay and wait for theirs
@@ -76,7 +86,7 @@ export default async function handler(req, res) {
     const missing = entries.filter((p) => !rigs.has(p.key) && !onRoster.has(p.key));
     if (missing.length) return res.status(400).json({ ok: false, code: 'no_public_rig', missing: missing.map((p) => p.key), error: `No public forged character with a rig for ${missing.map(label).join(', ')}: make one in the Forge as admin first ("Make this my Rebel / Chumpz / Saint")` });
     const waiting = entries.filter((p) => !rigs.has(p.key)).map((p) => p.key);
-    const out = { tokens, updatedAt: new Date().toISOString() };
+    const out = { tokens, hidden: hide || hiddenOf(was), updatedAt: new Date().toISOString() };
     await redis([['SET', KEY, JSON.stringify(out)]]);
     return res.status(200).json({ ok: true, ...out, saved: true, env: ENV, ...(waiting.length ? { waiting } : {}) });
   } catch (e) {

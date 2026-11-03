@@ -9,7 +9,8 @@
   const GOLD = '#e8c56a', TEAL = '#5ecfca', GREEN = '#7be38a';
   let scene = null, opts = {}, cv = null, ctx = null, map = null, zoomR = 60, frame = 0, dpr = 1, built = false, dot = false, lastQuest = '';
   // phones (Oct 28, Miguel: "make the mission pop up something that you can click open ... another small circle under
-  // your icon on the top", then "make it pop open when the mission changes"): the quest line folds into a gold circle
+  // your icon on the top", then "make it pop open when the mission changes"), computers too since Nov 2 (a bigger card:
+  // "needs to be a little bigger so people can read it"): the quest line folds into a gold circle
   // under the Rebel button. A tap opens or folds it. A new mission (or progress on one, and the mission shown first in a
   // visit: sessionStorage) pops it open for a few seconds, waiting while a talk box, a card or a game is up; a red dot
   // on the circle until it has been seen.
@@ -27,10 +28,16 @@
 #rebelHudBtn .econ{position:absolute;right:-3px;bottom:-3px;width:23px;height:23px;border-radius:50%;background:#5865f2;border:2px solid #5865f2;
   box-shadow:0 0 0 2px rgba(5,10,28,.92);overflow:hidden;display:none}
 #rebelHudBtn .econ img{position:static;width:100%;height:100%;border:none;border-radius:50%;object-fit:cover;background:#5865f2}
-#questLine{position:fixed;top:90px;left:100px;max-width:212px;padding:6px 11px 7px;background:rgba(5,10,28,.72);border:1px solid rgba(232,197,106,.28);
-  border-radius:8px;z-index:12;pointer-events:none;font-family:'Cinzel',serif;display:none}
-#questLine b{display:block;color:${GOLD};font-size:10px;letter-spacing:.6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#questLine span{display:block;color:#dce6e6;font-size:9.5px;line-height:1.35;margin-top:2px;max-height:2.7em;overflow:hidden}
+#questLine{position:fixed;top:144px;left:90px;width:max-content;max-width:min(330px,calc(100vw - 106px));box-sizing:border-box;padding:9px 14px 10px;
+  background:rgba(5,10,28,.86);border:1px solid rgba(232,197,106,.42);border-radius:10px;z-index:12;pointer-events:none;display:none;
+  box-shadow:0 4px 18px rgba(0,0,0,.42);transform-origin:0 50%;transform:translateX(-46px) scale(.3);opacity:0;
+  transition:transform .22s cubic-bezier(.2,.9,.3,1.2),opacity .16s ease}
+#questLine.open{transform:none;opacity:1;pointer-events:auto;cursor:pointer}
+#questLine b{display:block;color:${GOLD};font:700 12.5px/1.25 'Cinzel Decorative',Georgia,serif;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#questLine span{display:block;color:#e8eeee;font:400 14px/1.45 'Noto Serif JP',Georgia,serif;margin-top:4px;max-height:4.35em;overflow:hidden}
+html.vt-touch #questLine{max-width:min(300px,calc(100vw - 104px));padding:8px 12px 9px}
+html.vt-touch #questLine b{font-size:11.5px}
+html.vt-touch #questLine span{font-size:13px}
 body:not(.rebel-panel-open) #selectedRebelPanel{display:none}
 body.rebel-panel-open #selectedRebelPanel{top:152px}
 body.rebel-panel-open #questLine{display:none!important}
@@ -43,9 +50,7 @@ body.rebel-panel-open #questLine{display:none!important}
 #questBtn.open{background:rgba(232,197,106,.3);border-color:#ffe08a}
 #questBtn .dot{position:absolute;right:-1px;top:-1px;width:13px;height:13px;box-sizing:border-box;border-radius:50%;background:#f0503c;border:2px solid #0a0d16;display:none}
 #questBtn.has-news .dot{display:block}
-html.vt-touch #questLine{top:146px;left:90px;transform-origin:0 50%;transform:translateX(-46px) scale(.3);opacity:0;transition:transform .22s cubic-bezier(.2,.9,.3,1.2),opacity .16s ease}
-html.vt-touch #questLine.open{transform:none;opacity:1;pointer-events:auto;cursor:pointer}
-body.rebel-panel-open #questBtn,body.in-game #questBtn,body.vc-open #questBtn,html.vt-touch body.vc-open #questLine{display:none!important}
+body.rebel-panel-open #questBtn,body.in-game #questBtn,html.vt-touch body.vc-open #questBtn,html.vt-touch body.vc-open #questLine{display:none!important}
 `;
 
   HUD.init = function (s, o = {}) {
@@ -69,7 +74,7 @@ body.rebel-panel-open #questBtn,body.in-game #questBtn,body.vc-open #questBtn,ht
       const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
       e.preventDefault(); HUD.togglePanel();
     });
-    if (window.VillageTouch?.on) {
+    { // every screen (computers since Nov 2: "like the phone, where there is a little diamond under the players circle")
       MIS.on = true;
       const m = document.createElement('button'); m.id = 'questBtn'; m.type = 'button'; m.title = 'Your mission'; m.setAttribute('aria-label', 'Mission'); m.setAttribute('aria-expanded', 'false');
       m.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 21.5 12 12 21.5 2.5 12z"/></svg><span class="dot"></span>';
@@ -106,7 +111,8 @@ body.rebel-panel-open #questBtn,body.in-game #questBtn,body.vc-open #questBtn,ht
   }
   // nothing in front of the card's corner and the player is walking: the stick and buttons show (village.html hides them
   // for talk boxes, reading cards, the Rebel panel, the chat, board games, dance-offs), and no quest or badge card is up
-  const clearView = () => !!document.getElementById('vtouch')?.classList.contains('on')
+  // (computers: walking, and village.html's covered(): a talk box, a card, a panel, the chat, a board game or a dance-off)
+  const clearView = () => (window.VillageTouch?.on ? !!document.getElementById('vtouch')?.classList.contains('on') : !!opts.isWalking?.() && !opts.covered?.())
     && !['questCelebration', 'badgeUnlockPopup'].some(id => document.getElementById(id)?.classList.contains('on'));
   function missionTick(shown, text, changed, first) {
     if (changed) {

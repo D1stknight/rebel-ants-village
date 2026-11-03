@@ -327,9 +327,14 @@ body.in-game #clipRec{left:12px;top:50%;transform:translateY(-50%)}
 #xhair::after{width:2px;height:16px;top:3px;left:10px}
 #wb{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:rgba(5,10,28,.92);border:1px solid rgba(232,197,106,.55);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:11px;letter-spacing:3px;padding:13px 32px;cursor:pointer;z-index:10;transition:all .25s;backdrop-filter:blur(12px)}
 #wb:hover{background:rgba(232,197,106,.18)}
-#wb.on{top:82px;bottom:auto;left:340px;width:92px;min-height:31px;transform:none;padding:7px 8px;background:rgba(5,10,28,.95);border-color:rgba(94,207,202,.62);color:#5ecfca;font-size:8px;letter-spacing:1.5px;z-index:14;box-shadow:0 0 18px rgba(94,207,202,.12)}
-#wb.on:hover{background:rgba(94,207,202,.14);border-color:#5ecfca}
-@media (max-width:480px){#wb.on{left:auto;right:16px;top:auto;bottom:16px}}
+#wb.on{top:auto;left:auto;right:147px;bottom:21px;width:46px;height:46px;min-height:0;transform:none;padding:0;border-radius:50%;background:rgba(5,10,28,.92);border:2px solid rgba(94,207,202,.75);color:#5ecfca;z-index:14;box-shadow:0 0 14px rgba(0,0,0,.45);display:grid;place-items:center;letter-spacing:0}
+#wb.on svg{width:24px;height:24px}
+#wb.on .wb-label{position:absolute;right:54px;top:50%;transform:translateY(-50%);white-space:nowrap;font:700 10px/1 'Cinzel Decorative',Georgia,serif;letter-spacing:1px;color:#5ecfca;background:rgba(5,10,28,.92);border:1px solid rgba(94,207,202,.5);border-radius:6px;padding:6px 9px;opacity:0;pointer-events:none;transition:opacity .15s}
+#wb.on:hover .wb-label,#wb.on:focus-visible .wb-label{opacity:1}
+#wb.on:hover{background:rgba(94,207,202,.18);border-color:#5ecfca}
+#wb:not(.on) .wb-label{display:none}
+@media (max-width:480px){#wb.on{right:101px;bottom:55px;width:44px;height:44px}}
+html.vt-touch #wb.on .wb-label{display:none}
 /* narrow screens (phones, tablets held upright) have no room for Enter Village beside Back to Lobby: it sat under it.
    Enter Village goes above Back to Lobby, both centred, the same width */
 @media (max-width:920px){#wb:not(.on){bottom:80px;width:min(300px,calc(100vw - 56px))}body:has(#wb:not(.on)) #backToLobbyBtn{left:50%;transform:translateX(-50%)}}
@@ -754,7 +759,7 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
       <button class="ctrl-btn full" onclick="resetPlayerOnboardingForAdmin()" style="width:100%">Reset Player Onboarding</button>
     </div>
     <div class="ap-section">Buildings</div>
-    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('dojo_5')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_5</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_6')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_6</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_7')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_7</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_9')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_9</span></div><div class="ap-card" onclick="spawnAssetFromPanel('hub_inner_door')"><span class="ap-icon">🚪</span><span class="ap-name">Inner Door</span></div><div class="ap-card" onclick="spawnAssetFromPanel('hub_comedy_club')"><span class="ap-icon">🎤</span><span class="ap-name">Comedy Club</span></div><div class="ap-card" onclick="spawnAssetFromPanel('shrine_2')"><span class="ap-icon">⛩️</span><span class="ap-name">shrine_2</span></div><div class="ap-card" onclick="spawnAssetFromPanel('village_gate')"><span class="ap-icon">🌀</span><span class="ap-name">Village Gate</span></div><div class="ap-card" onclick="spawnAssetFromPanel('fence_1')"><span class="ap-icon">🪵</span><span class="ap-name">fence_1</span></div></div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('dojo_5')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_5</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_6')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_6</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_7')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_7</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_9')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_9</span></div><div class="ap-card" onclick="spawnAssetFromPanel('hub_inner_door')"><span class="ap-icon">🚪</span><span class="ap-name">Inner Door</span></div><div class="ap-card" onclick="spawnAssetFromPanel('hub_comedy_club')"><span class="ap-icon">🎤</span><span class="ap-name">Comedy Club</span></div><div class="ap-card" onclick="spawnAssetFromPanel('hub_anthony_house')"><span class="ap-icon">🏠</span><span class="ap-name">Ant-Thony's House</span></div><div class="ap-card" onclick="spawnAssetFromPanel('shrine_2')"><span class="ap-icon">⛩️</span><span class="ap-name">shrine_2</span></div><div class="ap-card" onclick="spawnAssetFromPanel('village_gate')"><span class="ap-icon">🌀</span><span class="ap-name">Village Gate</span></div><div class="ap-card" onclick="spawnAssetFromPanel('fence_1')"><span class="ap-icon">🪵</span><span class="ap-name">fence_1</span></div></div>
     <div class="ap-section">Samurai Buildings</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('sam_great_dojo')"><span class="ap-icon">🏯</span><span class="ap-name">Great Dojo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_library')"><span class="ap-icon">📚</span><span class="ap-name">Library</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_forge')"><span class="ap-icon">🔥</span><span class="ap-name">Forge</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_market_stall')"><span class="ap-icon">🏮</span><span class="ap-name">Market Stall</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_house')"><span class="ap-icon">🏠</span><span class="ap-name">House</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_gate')"><span class="ap-icon">⛩️</span><span class="ap-name">Gatehouse</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_palisade')"><span class="ap-icon">🪵</span><span class="ap-name">Palisade Wall</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_watchtower')"><span class="ap-icon">🗼</span><span class="ap-name">Watchtower</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_well')"><span class="ap-icon">🪣</span><span class="ap-name">Well</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_burrow')"><span class="ap-icon">🕳️</span><span class="ap-name">Ant Burrow</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_banner_pole')"><span class="ap-icon">🚩</span><span class="ap-name">Banner Pole</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_training_post')"><span class="ap-icon">🥋</span><span class="ap-name">Training Post</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_weapon_rack')"><span class="ap-icon">⚔️</span><span class="ap-name">Weapon Rack</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_stone_lantern')"><span class="ap-icon">🏮</span><span class="ap-name">Stone Lantern</span></div></div>
     <div class="ap-section">Wokou Harbour</div>
@@ -1937,6 +1942,7 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
 <script src="assets/village-chat.js"></script>
 <script src="assets/village-groups.js"></script>
 <script src="assets/village-voice.js"></script>
+<script src="assets/golden-ticket.js"></script>
 <script src="assets/village-stage.js"></script>
 <script src="assets/village-anthony.js"></script>
 <script type="module">
@@ -1962,6 +1968,24 @@ const storyEarlyRun = (async () => {
   storyCommit(res, d);
   return { account:d.account, ver:d.ver, upload:res.upload, changed:res.changed };
 })();
+// Nothing picked in the lobby (a link straight to Universe): Rebel #262, the lobby's first card for guests (Nov 2). Its
+// public Forge character is read here, beside the story, and kept as the pick, so it plays like a Free to play card (the
+// starter ant when it can't be read in 3 s).
+const GUEST_START_REBEL = { id:'rebel_262', rebelId:'rebel_262', name:'Rebel #262', tokenId:'262', collectionKey:'battle_for_colony', free:true, image:'/api/nft-image?c=battle_for_colony&t=262&s=thumb' };
+let guestStartRebel = null;
+const guestStartRun = (async () => {
+  try { const raw = localStorage.getItem('selectedRebel'); if (raw && JSON.parse(raw)?.id) return null; } catch (e) {}
+  const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 3000);
+  try {
+    const r = await fetch('/api/forge-active-character-get?collectionKey=battle_for_colony&tokenId=' + GUEST_START_REBEL.tokenId, { cache:'no-store', signal:ctl.signal });
+    const d = await r.json().catch(() => null);
+    const c = r.ok && d?.ok && d.hasActiveCharacter ? d.activeCharacter : null;
+    if (!c || String(c.tokenId) !== GUEST_START_REBEL.tokenId) return null;
+    guestStartRebel = { ...GUEST_START_REBEL, activeForgeCharacter:c, activeGlbUrl:c.activeGlbUrl || null, characterSource:'forge_glb' };
+    try { localStorage.setItem('selectedRebel', JSON.stringify(guestStartRebel)); } catch (e) {}
+    return guestStartRebel;
+  } catch (e) { return null; } finally { clearTimeout(tm); }
+})();
 // New terrain (Oct 2026): villages with a terrain recipe (hub, ronin, samurai) get the Terrain Lab ground: eroded hills, painted
 // ground, far mountains, grass, trees, rocks (the hub also has its river and waterfall). ?terrain=old shows the previous
 // ground. Villages without a recipe keep the old ground.
@@ -1970,6 +1994,7 @@ const NEW_TERRAIN_MODULE = new URLSearchParams(location.search).get('terrain') !
   : null;
 const STORY_EARLY = await Promise.race([storyEarlyRun, new Promise(r => setTimeout(() => r(null), 3000))]);
 storyEarly.late = true;
+await Promise.race([guestStartRun, new Promise(r => setTimeout(() => r(null), 3000))]);
 const canvas=document.getElementById('c');
 const setSt=t=>{const el=document.getElementById('ldst'); if(el) el.textContent=t;};
 // the dashboard (assets/site-report.js): a start still going after 90 s on screen says where it stopped
@@ -2321,9 +2346,9 @@ const QUEST_DEFINITIONS = {
   },
   'hub-arcade-doorway': {
     questId:'hub-arcade-doorway',
-    title:'Arcade Doorway',
+    title:'Every Room Connects',   // was 'Arcade Doorway' (Nov 2): it asks for a link in any room, the Library's book too
     steps:[
-      { id:'use-interior-link', objective:'Use one interior link hotspot, display, or arcade cabinet link.' },
+      { id:'use-interior-link', objective:'Use a link inside any room: an arcade cabinet, a display, a sign or a book.' },
       { id:'complete', objective:'Completed: You learned that rooms connect to the Rebel ecosystem.' }
     ]
   },
@@ -6794,6 +6819,7 @@ war_cellar_door: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 }
 war_armory_door: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
 hub_inner_door: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
 hub_comedy_club: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+hub_anthony_house: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
 cc_hall_door: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
 chz_lounge_door: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
 chz_casino_door: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
@@ -11170,11 +11196,15 @@ function updateInteractionPrompt() {
   if (window._danceOff?.on || window._danceOff?.choosing) { setInteractionPrompt('', false); return; } // the dance panel is up
   if (walkMode && document.getElementById('panel')?.classList.contains('on')) { setInteractionPrompt('', false); return; } // a sign / reading card is open (O closes it)
 
+  if (Seat.on) { setInteractionPrompt(window.VillageTouch?.on ? 'Press O to Stand up' : 'Seated \u00b7 1 Clap \u00b7 2 Laugh \u00b7 E More \u00b7 O Stand up', true); return; }
   if (ActiveInterior && getNearestInteriorExitInRange()) {
     setInteractionPrompt('Exit', true);
     return;
   }
 
+  if (ActiveInterior && seatWins()) { setInteractionPrompt('Press O to Sit', true); return; }
+  if (ActiveInterior && nearestSeat() == null && goldenSeatHint()) { setInteractionPrompt('\u2726 Golden seat: ticket holders', true); return; }
+  if (ActiveInterior && walkMode && !adminMode) { const ap = window.VillageAnthony?.homePrompt?.(); if (ap) { setInteractionPrompt(ap, true); return; } } // (his house: wake him, or his note)
   if (ActiveInterior && getNearestInteriorNftFrameInRange()) {
     setInteractionPrompt('Press O to Inspect', true);
     return;
@@ -11190,6 +11220,7 @@ function updateInteractionPrompt() {
     setInteractionPrompt('Press O to Interact', true);
     return;
   }
+
 
   if (getNearbyQuestTalkNpc()) {
     setInteractionPrompt('Press O to Talk', true);
@@ -13336,9 +13367,13 @@ html.vt-touch #emoteBar .em i{display:none}
 }
 function openEmoteBar() {
   if (emoteBlocked()) return false;
-  const el = buildEmoteBar(), kind = emoteKind();
+  const el = buildEmoteBar(), kind = emoteKind(), list = Seat.on ? SIT_EMOTES : EMOTES;
+  if (Emote.list !== list) { // (on a chair: Clap, Laugh, Relax)
+    Emote.list = list;
+    el.innerHTML = `<div class="eh">${Seat.on ? 'In your seat' : 'Emotes'}</div>` + list.map((m, i) => `<button type="button" tabindex="-1" class="em" data-id="${m.id}" role="menuitem" aria-label="${m.name}"><i>${i + 1}</i><svg viewBox="0 0 40 40" aria-hidden="true">${m.svg}</svg>${m.name}</button>`).join('');
+  }
   el.querySelectorAll('.em').forEach(b => {
-    const m = EMOTES.find(x => x.id === b.dataset.id), off = kind === 'starter' && !m.once;
+    const m = list.find(x => x.id === b.dataset.id), off = !Seat.on && kind === 'starter' && !m.once;
     b.classList.toggle('off', off); b.title = off ? 'Dances come with a forged Rebel' : '';
     b.classList.toggle('on', Emote.on === m.id);
   });
@@ -13348,6 +13383,7 @@ function openEmoteBar() {
 }
 function closeEmoteBar() { Emote.open = false; Emote.el?.classList.remove('on'); }
 async function playEmote(id) {
+  if (Seat.on) { closeEmoteBar(); return seatMove(id); } // (on a chair: clap, laugh, relax)
   const m = EMOTES.find(x => x.id === id); closeEmoteBar();
   if (!m || emoteBlocked()) return false;
   stopEmote();
@@ -13388,6 +13424,117 @@ function emoteFrame() {
   if (animState !== Emote.slot) { Emote.on = null; Emote.slot = null; } // the cheer ended, or a jump / kick took over
 }
 window._emote = { state:Emote, play:playEmote, open:openEmoteBar, close:closeEmoteBar, stop:stopEmote }; // tests
+// ── Seats (Nov 2): a kit room lists its chairs (SamuraiKit.rooms[type].seats: [x, z, facing] in the room; the Comedy Club's
+// 24). Near a free one: Press O to Sit: the games pack's stand_to_sit (rigger 2.43), held on its last pose, then sit_idle.
+// Seated: 1 claps, 2 laughs, 3 sits back (E: the same as a row of emotes; phones: the Emote button); O, a walking key or
+// Space stands up (stand_to_sit backwards) a step behind the chair. Other players see it: the move's name goes in the room
+// state ('sit_up' = standing up) and their copy of this Rebel plays it from the same pack, on the same chair. A chair with
+// another player on it is taken. Rebels whose games pack has no sitting moves yet (packs from before 2.43), the starter ant
+// and kit apes are told so.
+var Seat = { on:null, anim:'', busy:false, tried:0 };
+const SEAT_R = 2.3, SEAT_TAKEN_R = .6, SEAT_STEP = 1.6;
+const SIT_EMOTES = [
+  { id:'sit_clap', name:'Clap', svg:'<path d="M12 27c-3-5-2-11 3-15l7-5c1-1 3 0 2 2l-4 4 7-5c1-1 3 0 2 2l-6 5"/><path d="M28 13c3 5 2 11-3 15l-7 5c-1 1-3 0-2-2l4-4-7 5c-1 1-3 0-2-2l6-5"/><path d="M7 9l2 2M33 31l-2-2M6 16h3M34 24h-3"/>' },
+  { id:'sit_laugh', name:'Laugh', svg:'<circle cx="20" cy="20" r="12"/><path d="M13.5 22.5q6.5 8 13 0zM14 16l3 1.5-3 1.5M26 16l-3 1.5 3 1.5"/>' },
+  { id:'sit_idle', name:'Relax', svg:'<path d="M12 10v14h16M12 24v8M28 24v8M16 18h14"/><circle cx="21" cy="9" r="3.4"/>' }
+];
+function seatList() { const t = ActiveInterior?.root?.metadata?.kitRoom; return (t && window.SamuraiKit?.rooms?.[t]?.seats) || null; }
+function seatTaken(sx, sz) {
+  try { for (const p of window.VillageMP?.peers?.values?.() || []) { const h = p.holder; if (h?.isEnabled?.() && Math.hypot(h.position.x - sx, h.position.z - sz) < SEAT_TAKEN_R) return true; } } catch (e) {}
+  return false;
+}
+// golden tickets (Nov 2): while an event with golden tickets is on in this room, its golden seats (the front row: a seat's
+// 4th field) are the ticket holders' (the stage module knows what this player holds)
+function goldenRow() { const g = window.VillageStage?.golden?.(); return g && g.active && g.room && g.room === ActiveInterior?.targetInteriorId ? g : null; }
+function nearestSeat(skipGold = true) {
+  if (Seat.on || !walkMode || adminMode || !charMesh || !ActiveInterior || (ActiveInterior._deckY || 0) > .3) return null;
+  const list = seatList(); if (!list) return null;
+  const g = skipGold ? goldenRow() : null, locked = g && !g.holds;
+  let best = null, bd = SEAT_R;
+  for (let i = 0; i < list.length; i++) { const [x, z, , gold] = list[i], d = Math.hypot(charMesh.position.x - x, charMesh.position.z - z); if (d < bd && !seatTaken(x, z) && !(locked && gold)) { bd = d; best = i; } }
+  return best;
+}
+// near a golden seat without a ticket: say so (the prompt line, once in a while a toast)
+function goldenSeatHint() {
+  const g = goldenRow(); if (!g || g.holds || Seat.on) return false;
+  const i = nearestSeat(false), s = i != null ? seatList()[i] : null; if (!s || !s[3]) return false;
+  if (!goldenSeatHint.at || performance.now() - goldenSeatHint.at > 12000) { goldenSeatHint.at = performance.now(); showToast('\u2726 The front row is for golden ticket holders: \u2726 Ticket in the event bar.', 4200); }
+  return true;
+}
+// a chair within reach wins over a picture or a hotspot that is farther away (the wall of fame hangs beside the side tables)
+function seatWins() {
+  const i = nearestSeat(); if (i == null) return false;
+  const s = seatList()[i], px = charMesh.position.x, pz = charMesh.position.z, ds = Math.hypot(px - s[0], pz - s[1]);
+  for (const n of [getNearestInteriorNftFrameInRange(), getNearestInteriorHotspotInRange(), getNearestInteriorVideoScreenInRange?.(), getNearestInteriorDisplayInRange?.()]) {
+    const p = n?.getAbsolutePosition?.(); if (p && Math.hypot(px - p.x, pz - p.z) < ds) return false;
+  }
+  return true;
+}
+const seatSlot = name => GamesPack.slots?.[name];
+async function sitDown(i) {
+  const list = seatList(), s = list?.[i]; if (!s || Seat.busy || Seat.on) return false;
+  if (seatTaken(s[0], s[1])) { showToast('Someone is sitting there.', 2400); return true; }
+  if (emoteKind() !== 'rig') { showToast('Sitting comes with a forged Rebel.', 3200); return true; }
+  Seat.busy = true;
+  try {
+    if (!GamesPack.slots) { const t = loadGamesPack(), slow = setTimeout(() => showToast('Getting the moves…', 2600), 700); await Promise.race([t, new Promise(r => setTimeout(r, 9000))]); clearTimeout(slow); }
+    const down = seatSlot('stand_to_sit'), idle = seatSlot('sit_idle');
+    if (down == null || idle == null) { showToast("This Rebel's moves don't have sitting yet (a newer games pack does).", 4200); return true; }
+    if (!walkMode || ActiveInterior?.root?.metadata?.kitRoom == null || seatTaken(s[0], s[1])) return true;
+    stopEmote(); closeEmoteBar();
+    moveForward = moveBackward = turnLeft = turnRight = runKey = false; charMesh._vel = 0;
+    charMesh.position.x = s[0]; charMesh.position.z = s[1]; charMesh.rotation.y = s[2];
+    try { snapWalkCameraBehindPlayer(); } catch (e) {}
+    Seat.on = { i, x:s[0], z:s[1], yaw:s[2], from:{ x:charMesh.position.x, z:charMesh.position.z } };
+    seatPlay('stand_to_sit', false);
+    const g = animGroups[down], ms = Math.max(400, ((g.to - g.from) / 60) * 1000 / (g.speedRatio || 1) - 60);
+    clearTimeout(Seat.timer); Seat.timer = setTimeout(() => { if (Seat.on && Seat.anim === 'stand_to_sit') seatPlay('sit_idle', true); }, ms);
+    badgeStat('seats', CURRENT_VILLAGE_ID + ':' + (ActiveInterior?.root?.metadata?.kitRoom || ''));
+    return true;
+  } finally { Seat.busy = false; }
+}
+// play one of the sitting moves on this Rebel (the slot's group; backwards for standing up)
+function seatPlay(name, loop, back) {
+  const slot = seatSlot(name === 'sit_up' ? 'stand_to_sit' : name), g = slot != null ? animGroups[slot] : null; if (!g) return false;
+  const prev = animGroups[animState]; if (prev && prev !== g && prev.isPlaying) prev.stop();
+  if (g.isPlaying) g.stop();
+  animState = slot; Seat.anim = name;
+  if (name === 'sit_up') g.start(false, 1, g.to, g.from); else g.start(!!loop, 1, g.from, g.to);
+  return true;
+}
+function seatMove(name) { if (!Seat.on || Seat.anim === 'sit_up' || Seat.anim === 'stand_to_sit') return false; return seatPlay(name, true); }
+// stand up: the sit backwards, then a step behind the chair (the first free spot behind, beside or in front), idle again
+function standUp() {
+  if (!Seat.on || Seat.anim === 'sit_up') return false;
+  const s = Seat.on; clearTimeout(Seat.timer);
+  seatPlay('sit_up', false);
+  const slot = seatSlot('stand_to_sit'), g = slot != null ? animGroups[slot] : null, ms = g ? Math.max(400, ((g.to - g.from) / 60) * 1000 - 60) : 400;
+  Seat.timer = setTimeout(() => {
+    const b = getActiveInteriorBounds(), fx = Math.sin(s.yaw), fz = Math.cos(s.yaw);
+    const spots = [[-fx, -fz], [fz, -fx], [-fz, fx], [fx, fz]].map(([dx, dz]) => [s.x + dx * SEAT_STEP * 1.05, s.z + dz * SEAT_STEP * 1.05]);
+    const free = spots.find(([x, z]) => !(b?.blockers?.length && interiorPointBlocked(b.blockers, x, z, INTERIOR_PLAYER_COLLISION_RADIUS, 0, 0))) || spots[0];
+    charMesh.position.x = free[0]; charMesh.position.z = free[1];
+    Seat.on = null; Seat.anim = '';
+    if (slot != null && animState === slot) { animGroups[slot].stop(); animState = -1; }
+    switchAnim(0, true);
+  }, ms);
+  return true;
+}
+// a seated Rebel's keys: 1 / 2 / 3 the moves, O / walking keys / Space stand up; true = used
+function seatKey(key) {
+  if (!Seat.on) return false;
+  const n = { '1':'sit_clap', '2':'sit_laugh', '3':'sit_idle' }[key];
+  if (n) { seatMove(n); return true; }
+  if (['o', 'w', 'a', 's', 'd', ' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'r', 'f', 'q', 't', 'v'].includes(key)) { standUp(); return true; }
+  return false;
+}
+// every frame: a Rebel that left the room or the walk (or went into a game) is up again at once; it stays on its chair
+function seatFrame() {
+  if (!Seat.on) return;
+  if (!walkMode || !ActiveInterior || adminMode || MiniGames.on) { clearTimeout(Seat.timer); Seat.on = null; Seat.anim = ''; return; }
+  if (Seat.anim !== 'sit_up') { charMesh.position.x = Seat.on.x; charMesh.position.z = Seat.on.z; charMesh.rotation.y = Seat.on.yaw; charMesh._vel = 0; }
+}
+window._seat = { state:Seat, near:nearestSeat, sit:sitDown, stand:standUp, move:seatMove, list:seatList }; // tests
 function miniGameClipSlot(name) { return MiniGames.weapon?.slots?.[name] ?? GamesPack.slots?.[name] ?? (window._forgeClipSlots || {})[name]; }
 // a move a game held on one pose (ctx.player.pose: paused) stops before the next move plays; stopping keeps the pose, so
 // the next move blends from it
@@ -15337,7 +15484,7 @@ const WEATHER_THUNDER_AUDIO = '/assets/audio/weather/thunder-1.mp3';
 const VILLAGE_AMBIENCE_PROFILES = {
   hub: {
     loops: [{ id:'ambience-hub-day', path:'/assets/audio/ambience/hub-day.mp3', volume:.46 }],
-    events: ['hubBirds','templeBell','bambooCreak','windGust']
+    events: ['hubBirds','templeBell','windGust']   // bambooCreak gone (Nov 2): its creak sounded like a pig
   },
   ronin: {
     loops: [{ id:'ambience-ronin-wind', path:'/assets/audio/ambience/ronin-wind.mp3', volume:.52 }],
@@ -15345,7 +15492,7 @@ const VILLAGE_AMBIENCE_PROFILES = {
   },
   samurai: {
     loops: [{ id:'ambience-samurai-courtyard', path:'/assets/audio/ambience/samurai-courtyard.mp3', volume:.42 }],
-    events: ['softChime','templeBell','bambooCreak']
+    events: ['softChime','templeBell']
   }
 };
 const DEFAULT_VILLAGE_AMBIENCE = { loops:[{ id:'ambience-hub-day', path:'/assets/audio/ambience/hub-day.mp3', volume:.24 }], events:['windGust','templeBell'] };
@@ -15366,7 +15513,6 @@ const INTERACTION_AUDIO = {
   hubBirds: { id:'env-hub-birds', path:'/assets/audio/ambience/birds.mp3', volume:.28, cooldownMs:12000 },
   distantCrow: { id:'env-distant-crow', path:'/assets/audio/ambience/distant-crow.mp3', volume:.34, cooldownMs:14000 },
   templeBell: { id:'env-temple-bell', path:'/assets/audio/ambience/temple-bell.mp3', volume:.28, cooldownMs:16000 },
-  bambooCreak: { id:'env-bamboo-creak', path:'/assets/audio/ambience/bamboo-creak.mp3', volume:.24, cooldownMs:9000 },
   windGust: { id:'env-wind-gust', path:'/assets/audio/ambience/wind-gust.mp3', volume:.3, cooldownMs:10000 },
   distantThunder: { id:'env-distant-thunder', path:'/assets/audio/ambience/distant-thunder.mp3', volume:.32, cooldownMs:15000 },
   lanternCreak: { id:'env-lantern-creak', path:'/assets/audio/ambience/lantern-creak.mp3', volume:.24, cooldownMs:10000 },
@@ -16353,16 +16499,16 @@ window.PlayerSound = { get: playerSound, set: setPlayerSound, get levels() { pla
 // buttons, from the game's own key handling (keydown below, assets/village-touch.js, village-chat.js, village-voice.js)
 const CK = (...k) => k.map(x => x.startsWith('~') ? `<kbd class="m">${x.slice(1)}</kbd>` : `<kbd>${x}</kbd>`).join('');
 const CONTROLS_DESK = [
-  ['Move', [[CK('W', 'A', 'S', 'D'), 'Walk, the way the camera looks <small>(or the arrow keys)</small>'], [CK('R'), 'Run <small>(hold)</small>'], [CK('Space'), 'Jump'], [CK('~Drag'), 'Look around <small>(hold a mouse button and move)</small>'], [CK('Esc'), 'Close a window · again: stop walking, see the village from above']]],
+  ['Move', [[CK('W', 'A', 'S', 'D'), 'Walk, the way the camera looks <small>(or the arrow keys)</small>'], [CK('R'), 'Run <small>(hold)</small>'], [CK('Space'), 'Jump'], [CK('~Drag'), 'Look around <small>(hold a mouse button and move)</small>'], [CK('Esc'), 'Close a window · again: aerial view <small>(the village from above)</small>']]],
   ['Do', [[CK('O'), 'Use: talk, open, enter, read, play <small>(the prompt on screen says which)</small>'], [CK('E'), 'Emotes, then <kbd>1</kbd>-<kbd>5</kbd> to pick one'], [CK('P'), 'Take a photo'], [CK('Shift', 'P'), 'Record a clip <small>(up to a minute; again to stop)</small>'], [CK('Tab'), 'Your Rebel: Journal, Sound, Gloves, Back to Lobby'], [CK('Q'), 'Draw or put away your weapon <small>(Rebels that carry one)</small>']]],
   ['Fight moves', [[CK('F'), 'Kicks <small>(press again for the next one)</small>'], [CK('G'), 'Punches <small>(press again for the next one)</small>'], [CK('T'), 'Fight stance on / off'], [CK('C', 'B', 'V'), 'Cartwheel · backflip · front flip'], [CK('H', 'K'), 'Get hit · get knocked down']]],
   ['Players', [[CK('Enter'), 'Chat: type, <kbd>Enter</kbd> sends, <kbd>Enter</kbd> again for the next line, <kbd>Esc</kbd> closes'], [CK('X'), 'Talk with your voice <small>(hold; or hold the 🎤 button, bottom left; signed in)</small>'], [CK('~Click'), 'A name in the chat: whisper, mute, block, report'], [CK('~Click'), 'A chat bubble over a head: answer in the chat']]],
-  ['On the screen', [[CK('~Click'), 'The round button, top left: your Rebel <small>(same as Tab)</small>'], [CK('~Click'), 'The ◆ line beside it: your mission'], [CK('~Click'), 'The map, bottom right: zoom in or out'], [CK('~Click'), 'The 📷 above the map: take a photo · the 🎥 over it: record a clip']]]
+  ['On the screen', [[CK('~Click'), 'The round button, top left: your Rebel <small>(same as Tab)</small>'], [CK('~Click'), 'The ◆ circle under it: your mission <small>(it opens by itself when the mission changes)</small>'], [CK('~Click'), 'The map, bottom right: zoom in or out'], [CK('~Click'), 'The eye at the map\'s lower left: aerial view'], [CK('~Click'), 'The 📷 above the map: take a photo · the 🎥 over it: record a clip']]]
 ];
 const CONTROLS_TOUCH = [
   ['Move', [[CK('~Stick'), 'Walk: the stick, bottom left <small>(push it to the rim to run)</small>'], [CK('~Drag'), 'Look around: drag anywhere else on the screen']]],
   ['Do', [[CK('~Use'), 'Talk, open, enter, read, play <small>(the button says which)</small>'], [CK('~•••'), 'More: Jump, Hit, Talk, Emote, Photo, Clip <small>(a video, up to half a minute)</small>']]],
-  ['Your Rebel', [[CK('~Round'), 'The round button, top left: Journal, Sound, Gloves, Controls, Back to Lobby'], [CK('~◆'), 'The gold circle under it: your mission'], [CK('~Map'), 'Tap the map to zoom in or out']]],
+  ['Your Rebel', [[CK('~Round'), 'The round button, top left: Journal, Sound, Gloves, Controls, Back to Lobby'], [CK('~◆'), 'The gold circle under it: your mission'], [CK('~Map'), 'Tap the map to zoom in or out'], [CK('~Eye'), 'The eye at the map\'s lower left: aerial view']]],
   ['Players', [[CK('~💬'), 'Chat: the button at the top right'], [CK('~Talk'), 'Talk with your voice: hold Talk, under ••• <small>(signed in)</small>'], [CK('~Tap'), 'A name in the chat: whisper, mute, block, report']]]
 ];
 function paintControlsCard() {
@@ -22881,19 +23027,9 @@ function getSelectedRebel() {
   try {
     const raw = localStorage.getItem('selectedRebel');
     const rebel = raw ? JSON.parse(raw) : null;
-    return rebel && rebel.id ? rebel : {
-      id: 'ant_1',
-      name: 'Rebel #001',
-      image: 'assets/lobby/ant_1.JPG',
-      tokenId: null
-    };
+    return rebel && rebel.id ? rebel : (guestStartRebel || { ...GUEST_START_REBEL });
   } catch(e) {
-    return {
-      id: 'ant_1',
-      name: 'Rebel #001',
-      image: 'assets/lobby/ant_1.JPG',
-      tokenId: null
-    };
+    return guestStartRebel || { ...GUEST_START_REBEL };
   }
 }
 
@@ -26952,6 +27088,8 @@ function rigFallbackToStarter(err) {
   courtyardLight.intensity = 1.2;
   courtyardLight.range = 28;
   window.followLight.intensity = 2.8; window.followLight.range = 22;
+  // the stream, river, pool and pond don't take the walking light (Nov 3: at night it lit a bright green disc on the water)
+  (window._newTerrain?.waterMeshes || []).forEach(m => { if (m.metadata?.walkLightOff) window.followLight.excludedMeshes.push(m); });
    setSt("Character: ready.");
 
      if (activeCharacter.activeGlbUrl) {
@@ -27986,7 +28124,7 @@ let _heldSmallAntLayoutItems = [];
 // correctly. Each object is raised by (new ground − old ground) at its spot when the layout loads, and lowered by the
 // same amount whenever the layout is collected (saves, undo, backups, export); the round trip is exact. Collision boxes move with their owner. Buildings outside the
 // courtyard get a flat yard in the new ground first.
-const NEW_TERRAIN_PAD_TYPES = /^(dojo_|shrine_|torii|village_gate|temple|house|tower|hut|altar|hub_comedy_club|sam_(great_dojo|library|forge|market_stall|house|gate|palisade|watchtower|well|burrow))/;
+const NEW_TERRAIN_PAD_TYPES = /^(dojo_|shrine_|torii|village_gate|temple|house|tower|hut|altar|hub_comedy_club|hub_anthony_house|sam_(great_dojo|library|forge|market_stall|house|gate|palisade|watchtower|well|burrow))/;
 function newTerrainFlatGroundAt(x, z, isNew) {
   let y = -Infinity;
   const pathHalf = isNew ? 110 : 150;
@@ -28006,7 +28144,7 @@ function newTerrainDeltaAt(x, z) {
 // Building footprints in metres at scale 1 (measured from the GLBs), so a yard never depends on load timing.
 const NEW_TERRAIN_FOOTPRINTS = { dojo_9: [33.0, 23.5], dojo_5: [12.09, 8.05], shrine_2: [3.19, 1.075],
   sam_great_dojo: [24, 20], sam_library: [14.4, 12.7], sam_forge: [11, 9], sam_market_stall: [6, 3.6], sam_house: [10, 9.6],
-  sam_gate: [14, 5], sam_palisade: [8, 1.3], sam_watchtower: [4.8, 4.8], sam_well: [3, 2.5], sam_burrow: [8.4, 7], hub_comedy_club: [22, 18] };
+  sam_gate: [14, 5], sam_palisade: [8, 1.3], sam_watchtower: [4.8, 4.8], sam_well: [3, 2.5], sam_burrow: [8.4, 7], hub_comedy_club: [22, 18], hub_anthony_house: [11, 9] };
 function newTerrainFootprintRadius(item) {
   const base = NEW_TERRAIN_FOOTPRINTS[item.type];
   if (!base) return /^(torii|village_gate)/.test(item.type) ? 6 : 10;
@@ -28923,6 +29061,11 @@ function configureInteriorEditCamera() {
   return true;
 }
 
+// walking, the Enter Village button is the round Aerial view button at the minimap's lower-left (Nov 2, Miguel: "the exit
+// walk button should be called aerial view and placed on the left bottom corner of the map"): a camera looking down
+const AERIAL_VIEW_BTN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18.5 8.5 12l3.5 4 2.5-3 6.5 5.5z" fill="currentColor" opacity=".55"/>'
+  + '<path d="M12 3.2c-3.3 0-6 2.2-7.2 4.6 1.2 2.4 3.9 4.6 7.2 4.6s6-2.2 7.2-4.6C18 5.4 15.3 3.2 12 3.2zm0 7.2a2.6 2.6 0 1 1 0-5.2 2.6 2.6 0 0 1 0 5.2z" fill="currentColor"/></svg>'
+  + '<span class="wb-label">Aerial view</span>';
 function toggleWalk() {
   walkMode = !walkMode;
   const wb = document.getElementById('wb'), xh = document.getElementById('xhair');
@@ -28937,7 +29080,7 @@ function toggleWalk() {
     walk.setTarget(new BABYLON.Vector3(charMesh.position.x, _eyeY, charMesh.position.z));
     }
     scene.activeCamera = walk; walk.detachControl(); orbit.detachControl();
-    wb.textContent = 'EXIT WALK'; wb.classList.add('on'); xh.classList.remove('on');
+    wb.innerHTML = AERIAL_VIEW_BTN; wb.title = 'Aerial view: see the village from above'; wb.setAttribute('aria-label', 'Aerial view'); wb.classList.add('on'); xh.classList.remove('on');
     runVillagePerformancePass(true);
     buildVillageHudMap();
     if (PendingRoomRestore) enterPendingRoomRestore();
@@ -28947,7 +29090,7 @@ function toggleWalk() {
     if (!configureInteriorEditCamera()) {
       scene.activeCamera = orbit; orbit.attachControl(canvas, true); walk.detachControl();
     }
-    wb.textContent = '⚔️  ENTER VILLAGE'; wb.classList.remove('on'); xh.classList.remove('on');
+    wb.textContent = '⚔️  ENTER VILLAGE'; wb.removeAttribute('title'); wb.removeAttribute('aria-label'); wb.classList.remove('on'); xh.classList.remove('on');
     runVillagePerformancePass(true);
   }
 }
@@ -28980,11 +29123,14 @@ document.addEventListener('keydown', async e => {
 
   // the emote bar: 1-5 plays one, E / Esc closes it; any other key closes it and goes on as usual. E opens it
   if (Emote.open) {
-    const n = '12345'.indexOf(key);
-    if (n >= 0 && key) { e.preventDefault(); if (!Emote.el?.querySelectorAll('.em')[n]?.classList.contains('off')) playEmote(EMOTES[n].id); return; }
+    const n = '12345'.indexOf(key), list = Emote.list || EMOTES;
+    if (n >= 0 && key && list[n]) { e.preventDefault(); if (!Emote.el?.querySelectorAll('.em')[n]?.classList.contains('off')) playEmote(list[n].id); return; }
     if (key === 'e' || key === 'escape') { e.preventDefault(); closeEmoteBar(); return; }
     closeEmoteBar();
   } else if (key === 'e' && !adminMode && walkMode && !e.repeat) { e.preventDefault(); openEmoteBar(); return; }
+  // on a chair: 1 claps, 2 laughs, 3 sits back; O, a walking key or Space stands up
+  if (Seat.on && !adminMode && !e.repeat && seatKey(key)) { e.preventDefault(); return; }
+  if (Seat.on && !adminMode && ['w', 'a', 's', 'd', ' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) { e.preventDefault(); return; } // (held keys while getting up)
 
   if (key === 'escape' && pendingAdminPlacement) {
     clearAdminPlacement();
@@ -29111,7 +29257,7 @@ document.addEventListener('keydown', async e => {
     enterInterior(selectedObject);
     return;
   }
-  if (!adminMode && key === 'o' && ((ActiveInterior && getNearestInteriorNftFrameInRange() && inspectInteriorNftFrame(getNearestInteriorNftFrameInRange())) || (ActiveInterior && getNearestInteriorHotspotInRange() && interactInteriorHotspot(getNearestInteriorHotspotInRange())) || (ActiveInterior && getNearestInteriorVideoScreenInRange() && interactInteriorVideoScreen(getNearestInteriorVideoScreenInRange())) || (ActiveInterior && getNearestInteriorDisplayInRange() && interactInteriorDisplay(getNearestInteriorDisplayInRange())) || (ActiveInterior && getNearestInteriorExitInRange() && returnToVillageFromInterior()) || tryObserveTimeWeatherQuest() || tryTalkToNearbyQuestNpc() || tryEnterNearbyInterior() || tryOpenNearbyVillageGate() || tryUseNearbyQuestSpot() || tryTalkToNearbySmallAnt() || (walkMode && !!window.VillageAnthony?.talk?.()) || tryTalkToNearbyNPC() || tryOpenNearbySign() || tryOpenNearbyTreasureChest())) {
+  if (!adminMode && key === 'o' && ((Seat.on && standUp()) || (ActiveInterior && seatWins() && (sitDown(nearestSeat()), true)) || (ActiveInterior && walkMode && !!window.VillageAnthony?.homeUse?.()) || (ActiveInterior && getNearestInteriorNftFrameInRange() && inspectInteriorNftFrame(getNearestInteriorNftFrameInRange())) || (ActiveInterior && getNearestInteriorHotspotInRange() && interactInteriorHotspot(getNearestInteriorHotspotInRange())) || (ActiveInterior && getNearestInteriorVideoScreenInRange() && interactInteriorVideoScreen(getNearestInteriorVideoScreenInRange())) || (ActiveInterior && getNearestInteriorDisplayInRange() && interactInteriorDisplay(getNearestInteriorDisplayInRange())) || (ActiveInterior && getNearestInteriorExitInRange() && returnToVillageFromInterior()) || tryObserveTimeWeatherQuest() || tryTalkToNearbyQuestNpc() || tryEnterNearbyInterior() || tryOpenNearbyVillageGate() || tryUseNearbyQuestSpot() || tryTalkToNearbySmallAnt() || (walkMode && !!window.VillageAnthony?.talk?.()) || tryTalkToNearbyNPC() || tryOpenNearbySign() || tryOpenNearbyTreasureChest())) {
     e.preventDefault();
     return;
   }
@@ -31164,6 +31310,7 @@ engine.runRenderLoop(()=>{
       // Slope tilt removed — character stays upright
     }
     emoteFrame(); // (a dance stops as the Rebel moves, so the walk below takes over)
+    seatFrame(); // (on a chair: held there, facing the stage)
     // a roam game's own walk (ctx.player.walkAs: the sneak walk) takes the walk's place; running stays the run
     const _ws = MiniGames.on ? MiniGames.walkSlot : null;
     if (SWIM.on && SWIM.slot != null && !MiniGames.on) playPlayerSwimClip(moveForward||moveBackward||turnLeft||turnRight||runKey);
@@ -31475,6 +31622,7 @@ setInterval(() => window.VillageTouch?.update({ walking: !!walkMode && !adminMod
 // Step 3: the text chat (assets/village-chat.js), through the same room.
 const MP_ANIMS = ['idle', 'walk', 'run', 'kick', 'jump'];
 function mpAnimName() {
+  if (Seat.on && Seat.anim) return Seat.anim; // (on a chair: their copy sits too)
   if (Emote.on) return Emote.on; // (an emote: their copy of this Rebel plays it)
   if (animState < 0) return 'idle';
   if (animState === 0 && window._forgeFightStance) return 'fight_idle';
@@ -31505,6 +31653,17 @@ function startVillageAnthony() {
     viaSite: u => (window.viaSite ? window.viaSite(u) : u),
     shadows: () => shadows,
     light: CRASH_LIGHT || 0, // (the lightest after-crash level: no model for him)
+    // (on stage at the Comedy Club while a live event there has a show: off his rounds)
+    busy: () => (window.VillageStage?.antOnStage?.() ? "On stage \u00b7 Antthony's Comedy Club" : null),
+    // his house (Nov 2): the kit room the player is in (its holder, the player's place), acting in a room, the reading card, a door
+    room: () => {
+      if (!ActiveInterior || !walkMode || adminMode || !charMesh) return null;
+      const holder = scene.transformNodes.find(n => n.metadata?.kitRoom && n.parent?.name === 'activeInteriorRoot');
+      return holder ? { kit: holder.metadata.kitRoom, holder, me: { x: charMesh.position.x, z: charMesh.position.z } } : null;
+    },
+    canActRoom: () => walkMode && !adminMode && !!ActiveInterior && !(MiniGames.on && !MiniGames.roam) && !DanceOff.on && !DanceOff.choosing && !Seat.on && !document.getElementById('panel')?.classList.contains('on'),
+    read: o => openReadingPanel(o),
+    doorOf: id => { const d = scene.transformNodes.find(n => n.metadata?.type === 'interior_entrance' && n.metadata.targetInteriorId === id); return d ? { x: d.position.x, z: d.position.z } : null; },
     toast: m => showToast(m, 7000)
   });
 }
@@ -31567,6 +31726,7 @@ function startVillageMultiplayer() {
     villageName: id => VILLAGE_REGISTRY[id]?.displayName || id,
     player: () => charMesh && walkMode && !adminMode ? { x: charMesh.position.x, z: charMesh.position.z, interior: ActiveInterior ? String(ActiveInterior.targetInteriorId || ActiveInterior.interiorType || 'room') : null } : null,
     signedIn: () => !!Econ.on,
+    signIn: () => { activeJournalTab = 'overview'; openProgressionJournal(); }, // (the journal's account card: golden tickets)
     ticket: () => window.VillageMP.ticket(),
     travel: id => selectVillageGateDestination(id),
     doorOf: id => { const d = scene.transformNodes.find(n => n.metadata?.type === 'interior_entrance' && n.metadata.targetInteriorId === id); return d ? { x: d.position.x, z: d.position.z } : null; },
@@ -31591,6 +31751,9 @@ function initVillageHud() {
   try {
     window.VillageHud?.init(scene, {
       isWalking: () => walkMode && !adminMode,
+      // something in front of the mission card's corner (computers; phones read the touch layer): it pops open after
+      covered: () => (MiniGames.on && !MiniGames.roam) || DanceOff.on || DanceOff.choosing || touchCovers.some(id => document.getElementById(id)?.classList.contains('on'))
+        || document.body.classList.contains('rebel-panel-open'),
       inInterior: () => !!ActiveInterior,
       friends: () => { try { const a = window.VillageGroup?.dots?.() || [], b = window.VillageStage?.dots?.() || [], c = window.VillageAnthony?.dots?.() || []; return a.length || b.length || c.length ? a.concat(b, c) : null; } catch (e) { return null; } },
       questTarget: () => {

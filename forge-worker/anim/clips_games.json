@@ -212,5 +212,36 @@
   "t1": 0.87,
   "pack": "games",
   "loop": true
+ },
+ {
+  "name": "sit_idle",
+  "file": "mixamo/gm_sit_idle.npz",
+  "t0": 0.0,
+  "t1": 4.3,
+  "pack": "games",
+  "loop": true
+ },
+ {
+  "name": "sit_clap",
+  "file": "mixamo/gm_sit_clap.npz",
+  "t0": 0.0,
+  "t1": 4.17,
+  "pack": "games",
+  "loop": true
+ },
+ {
+  "name": "sit_laugh",
+  "file": "mixamo/gm_sit_laugh.npz",
+  "t0": 0.0,
+  "t1": 8.33,
+  "pack": "games",
+  "loop": true
+ },
+ {
+  "name": "stand_to_sit",
+  "file": "mixamo/gm_stand_to_sit.npz",
+  "t0": 0.0,
+  "t1": 2.2,
+  "pack": "games"
  }
 ]

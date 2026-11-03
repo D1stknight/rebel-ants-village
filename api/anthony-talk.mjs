@@ -1,6 +1,8 @@
-// Ant-Thony talks (Nov 1): POST { kind: 'greet' | 'ask', question?, transcript?, village, place?, guestKey? }
+// Ant-Thony talks (Nov 1): POST { kind: 'greet' | 'ask' | 'wake', question?, transcript?, village, place?, home?, guestKey? }
 //   greet: his once-a-day hello when a player walks up (at most once per player per UTC day; a later one answers skip)
 //   ask:   a player typed a question; transcript = the last lines between them [{ who: 'me' | 'him', text }]
+//   wake:  a player woke him in his house by the Hub's pond (Nov 2: he sleeps there from 2 to 7 a.m. New York time); home: true
+//          = an ask while he sits up in bed there
 // -> { ok, reply, tipped?, voiceToken } (voiceToken lets /api/anthony-voice speak exactly this reply)
 // His brain is the Rebel Economy's (POST /api/anthony/reply with this app's key): it knows Universe from the guide
 // this site sends it (Admin Hub > Ant-Thony). Signed-in players are named by their economy account (member.userId,
@@ -16,8 +18,8 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'POST only' });
   const b = typeof req.body === 'object' && req.body ? req.body : (() => { try { return JSON.parse(req.body || '{}'); } catch (e) { return {}; } })();
-  const kind = b.kind === 'greet' ? 'greet' : b.kind === 'ask' ? 'ask' : null;
-  if (!kind) return res.status(400).json({ ok: false, error: 'kind must be greet or ask' });
+  const kind = ['greet', 'ask', 'wake'].includes(b.kind) ? b.kind : null;
+  if (!kind) return res.status(400).json({ ok: false, error: 'kind must be greet, ask or wake' });
   const village = VILLAGE_NAMES[String(b.village || '')] ? String(b.village) : null;
   if (!village) return res.status(400).json({ ok: false, error: 'Unknown village' });
   const who = asker(req, b.guestKey);
@@ -25,6 +27,10 @@ export default async function handler(req, res) {
   const where = `${VILLAGE_NAMES[village]}${place ? ` (${place})` : ''}`;
   const name = who.signedIn ? who.name : 'a guest';
   const dad = await isCreator(who);   // (his dad: set from the Admin Hub's Ant-Thony card)
+  // in his house (woken from his sleep, sitting up in bed) or out on his rounds
+  const home = kind === 'wake' || b.home === true;
+  const at = home ? `in your little house by the pond in the Hub of Rebel Universe, the Rebel Ants' 3D world, sitting up in bed in the middle of the night (you sleep there from 2 to 7 in the morning, New York time, and somebody just woke you up)`
+    : `roaming ${where} in Rebel Universe, the Rebel Ants' 3D world, as your own 3D character`;
 
   let body;
   if (kind === 'greet') {
@@ -33,6 +39,15 @@ export default async function handler(req, res) {
     body = {
       scene: dad ? `You are walking around ${where} in Rebel Universe, the Rebel Ants' 3D world, as your own 3D character. Your dad just walked up to you. ${DAD} Wave and greet him with one short line in character. No questions back needed.`
         : `You are walking around ${where} in Rebel Universe, the Rebel Ants' 3D world, as your own 3D character. ${who.signedIn ? name : 'A guest player'} just walked up to you. Wave and greet them with one short line in character, maybe a hint of something fun to do here. No questions back needed.`,
+      member: who.signedIn ? { userId: who.userId, name, ...(who.discordId ? { discordId: who.discordId } : {}) } : undefined, short: true, spoken: true
+    };
+  } else if (kind === 'wake') {
+    const ok = who.signedIn
+      ? await underLimits([[`wake:${who.id}:10m`, 8, 600], [`wake:${who.id}:d`, 30, 86400], ['wake:site:d', 1500, 86400]])
+      : await underLimits([[`wake:${who.id}:10m`, 4, 600], [`wake:${who.id}:d`, 12, 86400], [`wake:ip:${who.ip}:d`, 30, 86400], ['wake:site:d', 1500, 86400]]);
+    if (!ok) return res.status(429).json({ ok: false, error: 'Ant-Thony rolled over and went back to sleep.' });
+    body = {
+      scene: `You were fast asleep in your little house by the pond in the Hub of Rebel Universe, the Rebel Ants' 3D world (you sleep there from 2 to 7 in the morning, New York time). ${dad ? `Your dad just walked in and woke you up. ${DAD}` : `${who.signedIn ? name : 'A guest player'} just walked into your house and woke you up.`} Sit up and say one short, funny, sleepy line in character: groggy, a little grumpy, but glad to see them, and happy to help with Universe. No questions back needed.`,
       member: who.signedIn ? { userId: who.userId, name, ...(who.discordId ? { discordId: who.discordId } : {}) } : undefined, short: true, spoken: true
     };
   } else {
@@ -46,7 +61,7 @@ export default async function handler(req, res) {
       .map((l) => ({ name: l?.who === 'him' ? 'Ant-Thony' : (who.signedIn ? name : 'Guest'), text: clean(l?.text, 400) })).filter((l) => l.text);
     lines.push({ name: who.signedIn ? name : 'Guest', text: question });
     body = {
-      scene: `You are roaming ${where} in Rebel Universe, the Rebel Ants' 3D world, as your own 3D character. ${dad ? `Your dad walked up to you and typed a question. ${DAD} Answer him as his son and as a guide to Universe` : `${who.signedIn ? name : 'A guest player'} walked up to you and typed a question. Answer it as their buddy and guide to Universe`}: how to play, what a game or thing is, where something is, how to fix a problem. Keep it short and clear.`,
+      scene: `You are ${at}. ${dad ? `Your dad walked up to you and typed a question. ${DAD} Answer him as his son and as a guide to Universe` : `${who.signedIn ? name : 'A guest player'} walked up to you and typed a question. Answer it as their buddy and guide to Universe`}: how to play, what a game or thing is, where something is, how to fix a problem. Keep it short and clear.`,
       member: who.signedIn ? { userId: who.userId, name, ...(who.discordId ? { discordId: who.discordId } : {}) } : undefined, transcript: lines.slice(-12), spoken: true, canTip: who.signedIn
     };
   }
