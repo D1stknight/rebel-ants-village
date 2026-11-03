@@ -18,6 +18,11 @@
 // of the triangles, a 256 px picture, 22 joints, the moves seen from afar and the emotes: api/forge-light.mjs makes one
 // per rig the first time anyone asks; the starter ant's is assets/character/lite/ant_light.glb), so a busy village shows
 // everyone as their own character instead of grey stand-ins. Kit apes beyond the nearest few stay stand-ins.
+// Crowds (Nov 3, 44 bots round Miguel's iPhone: the page started again once as they all came, then ran in its light mode
+// with grey stand-ins and a wall of names):
+//   - one file downloads at a time on a phone (4 on a computer) and one copy is made a frame (3); the light copy comes
+//     first, and on a phone the full model once a player has stood among the nearest few for 5 s, only within 10 m,
+//     kept to 18 m and for at least 15 s (a walking crowd swapped full models all the time, each a new download);
 (function () {
   'use strict';
   const PROTOCOL = 'rebel-universe.v1', FULL_R = 80, TAG_R = 45, SEND_MS = 150, BEAT_MS = 12000, PING_MS = 25000;
@@ -31,6 +36,10 @@
   // sitting (Nov 2, the Comedy Club's chairs): 'stand_to_sit' sits down, 'sit_up' is the same move backwards (standing up)
   const SIT_ONCE = new Set(['stand_to_sit', 'sit_up']);
   let H = null, B = null, root = null, ws = null, connecting = false, you = 0, room = null, closedFor = null, retry = 0, retryAt = 0, maxFull = 8, maxLite = 24, wantCopy = 0;
+  // loads (Nov 3): files downloading at once, new copies a frame, how long a player stands among the nearest few before
+  // their full model loads (phones: 1, 1, 5 s; computers: 4, 3, none). A crowd that came at once had a phone download
+  // and unpack a dozen characters together, and the page ran out of memory and started again
+  let busy = 0, peakBusy = 0, maxLoads = 4, perFrame = 3, fullWait = 0;
   let voiceOn = false, spkTex = null; // (the rooms say whether voice is on: village-voice.js)
   const VC = () => window.VillageChat;
   const tell = (kind, d) => { try { VC()?.room?.(kind, d); } catch (e) { log('chat', e); } };
@@ -233,12 +242,13 @@
   function container(url) {
     let f = files.get(url);
     if (!f) {
-      f = { url, users: 0, idle: 0, c: null };
-      f.p = B.SceneLoader.LoadAssetContainerAsync('', H.viaSite(url), H.scene).then(c => { f.c = c; f.idle = performance.now(); return c; }, e => { if (files.get(url) === f) files.delete(url); throw e; });
+      f = { url, users: 0, idle: 0, c: null }; loading(1);
+      f.p = B.SceneLoader.LoadAssetContainerAsync('', H.viaSite(url), H.scene).then(c => { loading(-1); f.c = c; f.idle = performance.now(); return c; }, e => { loading(-1); if (files.get(url) === f) files.delete(url); throw e; });
       files.set(url, f);
     }
     return f.p;
   }
+  function loading(n) { busy = Math.max(0, busy + n); peakBusy = Math.max(peakBusy, busy); }
   // a copy of a file's model made: the file stays until the copy goes (list: the copy's files)
   function useFile(url, list) { const f = files.get(url); if (f) { f.users++; list.push(f); } }
   function dropFiles(list) { const now = performance.now(); for (const f of list) if (--f.users <= 0) { f.users = 0; f.idle = now; } list.length = 0; }
@@ -249,12 +259,13 @@
   }
   // the starter ant's other moves: each of their files holds the whole ant again, so only the move is kept (its keys)
   function starterClip(file) {
-    if (!clips.has(file)) clips.set(file, B.SceneLoader.LoadAssetContainerAsync('', H.viaSite(STARTER.base + file), H.scene).then(c => {
+    if (!clips.has(file)) { loading(1); clips.set(file, B.SceneLoader.LoadAssetContainerAsync('', H.viaSite(STARTER.base + file), H.scene).then(c => {
+      loading(-1);
       const g = c.animationGroups[0] || null;
       if (g) c.animationGroups = c.animationGroups.filter(x => x !== g);
       try { c.dispose(); } catch (e) {}
       return g;
-    }, e => { clips.delete(file); throw e; }));
+    }, e => { loading(-1); clips.delete(file); throw e; })); }
     return clips.get(file);
   }
   // a Rebel's games pack (its rig's games.glb) for the emotes: the file's other moves (the games') go as it loads; kept
@@ -267,13 +278,14 @@
   function packFile(url) {
     let f = files.get(url);
     if (!f) {
-      f = { url, users: 0, idle: 0, c: null };
+      f = { url, users: 0, idle: 0, c: null }; loading(1);
       f.p = B.SceneLoader.LoadAssetContainerAsync('', H.viaSite(url), H.scene).then(c => {
+        loading(-1);
         // (a copy of the list first: a group's dispose takes itself out of its container's list, under a filter's feet)
         const all = [...c.animationGroups]; c.animationGroups = all.filter(g => PACK_MOVES.has(g.name));
         for (const g of all) if (!PACK_MOVES.has(g.name)) { try { g.dispose(); } catch (e) {} }
         f.c = c; f.idle = performance.now(); return c;
-      }, e => { if (files.get(url) === f) files.delete(url); throw e; });
+      }, e => { loading(-1); if (files.get(url) === f) files.delete(url); throw e; });
       files.set(url, f);
     }
     return f.p;
@@ -330,6 +342,12 @@
     }
     return { inst, meshes, groups, joints };
   }
+  // the file a player's full model comes from (null: a kit ape, built here)
+  const fullUrl = p => {
+    const look = p.look || {};
+    if (look.t === 'kit' && window.SamuraiKit?.types?.includes(look.type)) return null;
+    return look.t === 'rig' && typeof look.url === 'string' && STORE.test(look.url) ? look.url : STARTER.base + STARTER.idle;
+  };
   async function loadModel(p) {
     if (p.loading || p.model) return;
     p.loading = true;
@@ -340,7 +358,7 @@
         window.SamuraiKit.build(kit, look.type, H.scene, H.shadows?.() || null, false);
         const meshes = kit.getChildMeshes(false);
         meshes.forEach(m => { markPeer(m); delete m._editRoot; if (!/player/i.test(m.name)) m.name = prefix + m.name; }); // (the minimap leaves players out by name)
-        p.model = { kind: 'kit', node: kit, groups: {}, meshes, extra: [] };
+        p.model = { kind: 'kit', node: kit, groups: {}, meshes, extra: [], at: performance.now() };
       } else {
         const rig = look.t === 'rig' && typeof look.url === 'string' && STORE.test(look.url), url = rig ? look.url : STARTER.base + STARTER.idle;
         const c = await container(url);
@@ -356,18 +374,20 @@
             const k = keep && ta.target ? ta.animation.getKeys()[0]?.value : null; if (k && ta.target.position) ta.target.position.copyFrom(k);
             g.targetedAnimations.splice(j, 1); } } };
           if (inst.animationGroups[0]) { groups.idle = inst.animationGroups[0]; noHipTravel(groups.idle, true); }
-          await Promise.all(Object.entries(STARTER.clips).map(async ([name, file]) => {
+          const clip = async ([name, file]) => {
             try {
               const src = await starterClip(file); if (!src || !peers.has(p.id)) return;
               const g = src.clone(prefix + name, t => nodes.get(t.name) || null);
               noHipTravel(g); g.stop(); groups[name] = g; extra.push(g);
             } catch (e) {}
-          }));
+          };
+          // (each of these files holds the whole ant again: a phone takes them one after another)
+          if (H.lite) { for (const e of Object.entries(STARTER.clips)) await clip(e); } else await Promise.all(Object.entries(STARTER.clips).map(clip));
         }
         if (!peers.has(p.id)) { inst.dispose(); extra.forEach(g => g.dispose()); dropFiles(used); return; }
         p.holder.scaling.setAll(rig ? RIG_SCALE : STARTER_SCALE);
         const sh = H.shadows?.(); if (sh) meshes.forEach(m => { try { sh.addShadowCaster(m); } catch (e) {} });
-        p.model = { kind: rig ? 'rig' : 'starter', inst, groups, meshes, extra, files: used, joints: rig ? joints : null, pack: null };
+        p.model = { kind: rig ? 'rig' : 'starter', inst, groups, meshes, extra, files: used, joints: rig ? joints : null, pack: null, at: performance.now() };
       }
       disposeLite(p); // (the light copy that stood in meanwhile)
       placeTag(p);
@@ -430,13 +450,19 @@
     return lites.get(rig);
   }
   const liteAble = p => !p.liteFailed && (p.look?.t === 'starter' || (p.look?.t === 'rig' && typeof p.look.url === 'string' && STORE.test(p.look.url)));
-  async function loadLite(p) {
+  // a player's light copy file: undefined while it is looked up (no download lane needed for that), null when there is none
+  const liteSrc = new Map();
+  function liteSrcOf(p) {
+    if (p.look?.t !== 'rig') return STARTER_LITE;
+    const rig = p.look.url;
+    if (!liteSrc.has(rig)) { liteSrc.set(rig, undefined); liteUrl(rig).then(u => liteSrc.set(rig, u || null), () => liteSrc.set(rig, null)); }
+    return liteSrc.get(rig);
+  }
+  async function loadLite(p, url) {
     if (p.liteLoading || p.lite || p.model) return;
     p.liteLoading = true;
     const rig = p.look?.t === 'rig', used = [];
     try {
-      const url = rig ? await liteUrl(p.look.url) : STARTER_LITE;
-      if (!url) { p.liteFailed = true; return; }
       const c = await container(url);
       if (!peers.has(p.id) || p.model || !p.wantLite) return; // (not wanted any more: their full model came, or they went)
       useFile(url, used);
@@ -542,7 +568,7 @@
       const inCam = !!(cam && p.pos && Math.hypot(cam.x - p.pos.x, cam.z - p.pos.z) < 1.3 && cam.y > p.pos.y - .5 && cam.y < p.pos.y + 4.2);
       p.holder.setEnabled(same && !hidden && !inCam);
       // in another place (a room) its model goes too: it is not drawn there, and kept it would add to the nearest few
-      if (!same || hidden) { p.once = null; p.d = same ? p.d : null; if (!same) { disposeModel(p); disposeLite(p); continue; } }
+      if (!same || hidden) { p.once = null; p.nearAt = 0; p.d = same ? p.d : null; if (!same) { disposeModel(p); disposeLite(p); continue; } }
       const tx = p.s[0], ty = p.s[1], tz = p.s[2];
       if (Math.hypot(tx - p.pos.x, tz - p.pos.z) > 10 || Math.abs(ty - p.pos.y) > 6) p.pos.set(tx, ty, tz); // a teleport (a door, a gate jump)
       else { p.pos.x += (tx - p.pos.x) * k; p.pos.y += (ty - p.pos.y) * k; p.pos.z += (tz - p.pos.z) * k; }
@@ -565,16 +591,10 @@
     // distance don't swap back and forth (each swap made a new copy, and loaded the file again once it had gone)
     const able = p => p.look?.t !== 'capsule', edge = list.length ? list[Math.min(list.length, maxFull) - 1].d : 0;
     let free = maxFull;
-    list.forEach((p, i) => { if (!p.model && !p.loading) return; if (able(p) && p.d < FULL_R + 8 && (i < maxFull + 2 || p.d < edge + 4)) free--; else if (p.model) disposeModel(p); });
-    list.forEach((p, i) => {
-      if (i >= maxFull || p.d >= FULL_R || p.model || p.loading || !able(p)) return;
-      if (free <= 0) {
-        let far = null; for (const q of list) if (q.model && q !== p) far = q; // (the farthest drawn)
-        if (!far || far.d < p.d + 3) return;
-        disposeModel(far); free++;
-      }
-      free--; loadModel(p);
-    });
+    // (phones: only within 10 m, kept to 18 m whatever their place in the order and for at least 15 s, until someone 4 m
+    // nearer needs it: in a walking crowd the order changes all the time, and each change downloaded a full model again)
+    const fullIn = H.lite ? 10 : FULL_R, keep = (p, i) => H.lite ? p.d < 18 : p.d < FULL_R + 8 && (i < maxFull + 2 || p.d < edge + 4);
+    list.forEach((p, i) => { if (!p.model && !p.loading) return; if (able(p) && keep(p, i)) free--; else if (p.model) disposeModel(p); });
     // the next ones (up to maxLite within LITE_R) as their light copy; one drawn keeps its place until someone 10 m nearer
     // needs it. A player whose full model is on its way shows its light copy meanwhile
     let liteFree = maxLite;
@@ -582,20 +602,47 @@
       p.wantLite = false; if (!p.lite && !p.liteLoading) continue;
       if (!p.model && liteAble(p) && p.d < LITE_R + 8 && liteFree > 0) { liteFree--; p.wantLite = true; } else disposeLite(p);
     }
-    for (const p of list) {
-      if (p.model || p.lite || p.liteLoading || !liteAble(p) || p.d >= LITE_R) continue;
+    // what loads next, a few at a time (phones: one file downloading at once and one new copy a frame). The nearest few
+    // first: their light copy (small and quick: no grey stand-in), then their full model (on a phone once they have stood
+    // among the nearest few for a moment, so a crowd walking past doesn't start a download for each); then the light
+    // copies of the rest, nearest first. A copy of a file already here needs no download
+    let starts = perFrame;
+    const lane = url => starts > 0 && (!url || files.has(url) || busy < maxLoads);
+    const startLite = p => {
+      if (p.model || p.lite || p.liteLoading || !liteAble(p) || p.d >= LITE_R) return;
+      if (p.loading) { const u = fullUrl(p); if (!u || files.get(u)?.c) return; } // (their full model is a moment away)
+      const url = liteSrcOf(p);
+      if (url === undefined) return; // (being looked up)
+      if (!url) { p.liteFailed = true; return; }
+      if (!lane(url)) return;
       if (liteFree <= 0) {
         let far = null; for (const q of list) if (q.wantLite) far = q; // (the farthest one with a light copy)
-        if (!far || far.d < p.d + 10) break;
+        if (!far || far.d < p.d + 10) return;
         far.wantLite = false; disposeLite(far); liteFree++;
       }
-      liteFree--; p.wantLite = true; loadLite(p);
-    }
+      liteFree--; starts--; p.wantLite = true; loadLite(p, url);
+    };
+    list.forEach((p, i) => {
+      if (i >= maxFull || p.d >= fullIn || !able(p)) { p.nearAt = 0; return; }
+      if (!p.nearAt) p.nearAt = now;
+      if (p.model || p.loading) return;
+      // its light copy first (quick; one still being made holds the full model up only a moment); a kit ape is built here
+      const url = fullUrl(p), here = !url || !!files.get(url)?.c, waited = now - p.nearAt;
+      if (!here && (waited < fullWait || (liteAble(p) && !p.lite && waited < (H.lite ? 8000 : 3000)) || !lane(url))) { startLite(p); return; }
+      if (!lane(url)) return;
+      if (free <= 0) {
+        let far = null; for (const q of list) if (q.model && q !== p && !(H.lite && now - q.model.at < 15000)) far = q; // (the farthest drawn)
+        if (!far || far.d < p.d + (H.lite ? 4 : 3)) return;
+        disposeModel(far); free++;
+      }
+      free--; starts--; loadModel(p);
+    });
+    for (const p of list) startLite(p);
     list.forEach(p => {
       const v = view(p);
       if (!v) capsuleOf(p).setEnabled(true); else if (p.capsule) p.capsule.setEnabled(false);
       if (v) {
-        if (p.model?.kind === 'rig' && !p.model.pack && (PACK_MOVES.has(p.s[4]) || PACK_MOVES.has(p.once))) loadPack(p); // they emote: their moves
+        if (p.model?.kind === 'rig' && !p.model.pack && (PACK_MOVES.has(p.s[4]) || PACK_MOVES.has(p.once)) && starts > 0 && busy < maxLoads) { starts--; loadPack(p); } // they emote: their moves
         if (p.once) playOnce(p, p.once, true);
         const a = p.s[4] || 'idle', held = p.hold && now < p.hold.until && (a === 'idle' || (p.hold.over && !ONCE.has(a)));
         playAnim(p, held ? p.hold.a : a);
@@ -615,6 +662,7 @@
     if (H || !host || !window.BABYLON) return;
     H = host; B = window.BABYLON; maxFull = H.maxFull > 0 ? H.maxFull : H.lite ? 4 : 8; maxLite = H.maxLite >= 0 ? H.maxLite : H.lite ? 10 : 24;
     keepIdle = H.lite ? 1 : 4; keepMs = H.lite ? 20000 : 60000;
+    maxLoads = H.lite ? 1 : 4; perFrame = H.lite ? 1 : 3; fullWait = H.lite ? 5000 : 0;
     root = new B.TransformNode('mpPlayersRoot', H.scene); root.metadata = { keepInInteriors: true }; // rooms hide the village, not the players (each is shown in its own place)
     setInterval(() => { if (send('{"t":"ping"}')) pf.pingAt = document.hidden ? 0 : performance.now(); }, PING_MS); // (timers, not frames: a hidden tab draws nothing)
     document.addEventListener('visibilitychange', () => { const me = H.player(); if (document.hidden && me && H.canSend()) sendState(me, 1, performance.now()); });
@@ -636,5 +684,5 @@
   const near = r => [...peers.values()].filter(p => p.d != null && p.d <= r && p.holder?.isEnabled?.());
   window.VillageMP = { start, tick, reconnect, emote, peers, chat, voice: voiceLink, speaking, near, ticket: () => (H && enabled ? ticket() : Promise.resolve(null)), joinCopy,
     get perf() { return { ...pf, gaps: pf.gaps.length, rtt: pf.rtt.slice(), dev: { ...DEV, d: H?.phone?.() ? 'p' : 'd' } }; }, pfSend: () => pfSend(performance.now()),
-    get state() { const v = [...peers.values()]; return { enabled, open: !!ws && ws.readyState === 1, you, room, peers: peers.size, closedFor, files: files.size, full: v.filter(p => p.model).length, lite: v.filter(p => p.lite).length }; }, stop() { enabled = false; const s = ws; ws = null; try { s?.close(1000); } catch (e) {} dropAll(); sweepFiles(Infinity); tell('closed'); } };
+    get state() { const v = [...peers.values()]; return { enabled, open: !!ws && ws.readyState === 1, you, room, peers: peers.size, closedFor, files: files.size, full: v.filter(p => p.model).length, lite: v.filter(p => p.lite).length, busy, peakBusy }; }, stop() { enabled = false; const s = ws; ws = null; try { s?.close(1000); } catch (e) {} dropAll(); sweepFiles(Infinity); tell('closed'); } };
 })();
