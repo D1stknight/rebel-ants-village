@@ -58,8 +58,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
    centred button column reaches under it, so the scrolling area ends above it (its last 18 px fade: more below;
    Enter Village kept clear of the fade by a slightly smaller logo where that is enough: the LIVE NOW script's place());
    830-919 px wide: the button row reaches it, so the row ends higher (clear when centred and at the end of a scroll) */
-@media (max-width:463px){#ui{bottom:84px;padding-bottom:22px;-webkit-mask-image:linear-gradient(#000 calc(100% - 18px),transparent);mask-image:linear-gradient(#000 calc(100% - 18px),transparent);}}
-@media (min-width:830px) and (max-width:919px){#ui{padding-bottom:88px;}}
+@media (max-width:463px){#ui{bottom:114px;padding-bottom:22px;-webkit-mask-image:linear-gradient(#000 calc(100% - 18px),transparent);mask-image:linear-gradient(#000 calc(100% - 18px),transparent);}}
+@media (min-width:830px) and (max-width:919px){#ui{padding-bottom:118px;}}
 @media (max-height:860px){#ui{gap:24px;}}
 @media (max-height:600px){#char-row{max-height:116px;}}
 
@@ -739,8 +739,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 <script src="assets/golden-ticket.js"></script>
 <script src="assets/lobby-tour.js"></script>
 <!-- Rebel Support (Nov 2): the help bubble every Rebel Ants app has, served by the economy (lobby only, not in the 3D world).
-     async, so a slow or blocked economy never holds the lobby (it starts on DOMContentLoaded); #ui keeps the buttons clear of it -->
-<script src="https://economy.rebelants.io/support/bubble.js" data-app="universe" async></script>
+     async, so a slow or blocked economy never holds the lobby (it starts on DOMContentLoaded); #ui keeps the buttons clear of it.
+     data-bottom 48 (Nov 3, Miguel: "the support bubble is on top of the scrolling message"): above the news ticker (39 px) -->
+<script src="https://economy.rebelants.io/support/bubble.js" data-app="universe" data-bottom="48" async></script>
 <script>
 // ── NFT CONFIG ──
 const NFT_CONTRACT = '0x96C1469c1C76E3Bb0e37c23a830d0Eea6BCf9221';
