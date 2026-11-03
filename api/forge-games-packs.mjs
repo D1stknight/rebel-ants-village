@@ -4,10 +4,13 @@
 // the NPC Forge lists them and runs the missing ones.
 //   GET -> { ok, rebels: [{ buildId, collectionKey, tokenId, name, rigUrl, games, gamesClips, moves, job, publicRig }] }
 // v2.30 gamesClips = the moves that pack holds (null: made before 2.30, the first 16)
+// Nov 3 (rigger 2.44) rigWorker / rigAt / rigStatus / rigError and rigger = the rigger version that made the live rig
+// (forge-worker/manifest.json at its job's worker commit; commits never change, so it is kept), so the NPC Forge can
+// re-rig the characters made on an older rigger; mended = the neck / head snaps mended in its live rig (forge-rig-headsnap)
 // Oct 20 publicRig = the Rebel has a public forged character with a rig (what guests load), so it can be on the Free to
 // play roster (api/free-roster.mjs)
 import { isAdminRequest } from './_admin-auth.mjs';
-import { redis, buildKey } from './_forge-rig.mjs';
+import { redis, buildKey, REPO } from './_forge-rig.mjs';
 
 const BLOB = /^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\//;
 async function scan(match) {
@@ -22,6 +25,23 @@ async function getMany(keys) {
   const out = [];
   for (let i = 0; i < keys.length; i += 100) out.push(...(await redis(keys.slice(i, i + 100).map((k) => ['GET', k]))));
   return out.map((r) => { try { return r?.result ? JSON.parse(r.result) : null; } catch (e) { return r?.result || null; } });
+}
+
+async function riggerVersions(commits) {
+  const out = {}; if (!commits.length) return out;
+  const kept = await redis(commits.map((c) => ['GET', `forge:rigger-version:v1:${c}`]));
+  await Promise.all(commits.map(async (c, i) => {
+    let v = kept[i]?.result || null;
+    if (!v) {
+      try {
+        const r = await fetch(`https://raw.githubusercontent.com/${REPO}/${c}/forge-worker/manifest.json`, { signal: AbortSignal.timeout(4000) });
+        const m = r.ok ? (await r.json())?.version : null; v = typeof m === 'string' && /^\d+\.\d+$/.test(m) ? m : null;
+      } catch (e) { v = null; }
+      if (v) { try { await redis([['SET', `forge:rigger-version:v1:${c}`, v]]); } catch (e) {} }
+    }
+    out[c] = v;
+  }));
+  return out;
 }
 
 export default async function handler(req, res) {
@@ -41,8 +61,13 @@ export default async function handler(req, res) {
       const b = builds[i] && typeof builds[i] === 'object' ? builds[i] : {}, a = byBuild.get(id);
       const rigUrl = b.output?.forgeRigGlbUrl || b.forgeRig?.forgeRigGlbUrl || a.forgeRigGlbUrl || null;
       const collectionKey = b.collectionKey || a.collectionKey || '', tokenId = String(b.tokenId || a.tokenId || '');
-      return { buildId: id, collectionKey, tokenId, name: a.name || b.name || '', rigUrl: BLOB.test(rigUrl || '') ? rigUrl : null, publicRig: pub.has(`${collectionKey}:${tokenId}`) };
+      const fr = b.forgeRig || {}, wc = /^[0-9a-f]{7,40}$/.test(fr.workerCommit || '') ? fr.workerCommit : null;
+      return { buildId: id, collectionKey, tokenId, name: a.name || b.name || '', rigUrl: BLOB.test(rigUrl || '') ? rigUrl : null, publicRig: pub.has(`${collectionKey}:${tokenId}`),
+        rigWorker: wc, rigAt: fr.finishedAt || null, rigStatus: fr.status || null, rigError: fr.status === 'failed' ? String(fr.error || '').slice(0, 160) : null,
+        mended: fr.headsnap ? { at: fr.headsnap.at || null, keys: fr.headsnap.keys || 0 } : null };   // (api/forge-rig-headsnap.mjs)
     }).filter((r) => r.rigUrl);
+    const vers = await riggerVersions([...new Set(rebels.map((r) => r.rigWorker).filter(Boolean))]);
+    rebels.forEach((r) => { r.rigger = r.rigWorker ? vers[r.rigWorker] || null : null; });
     const st = await redis(rebels.flatMap((r) => [['GET', `forge:games:v1:${r.rigUrl}`], ['GET', `forge:moves:v1:${r.rigUrl}`], ['GET', `forge:moves-job:v1:${r.buildId}`], ['GET', `forge:games-clips:v1:${r.rigUrl}`]]));
     rebels.forEach((r, i) => {
       r.games = st[i * 4]?.result || null; r.moves = st[i * 4 + 1]?.result || null;

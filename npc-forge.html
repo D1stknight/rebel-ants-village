@@ -1027,6 +1027,38 @@ const packMoves = (r) => r.gamesClips || GAMES_V1;
 const anthonyOld = (r) => is001(r) && anthonyReady() && !!anthonyMoves && anthonyMoves.some((n) => !packMoves(r).includes(n));
 const packOld = (r) => !!r.games && ((!!gamesMoves && gamesMoves.some((n) => !packMoves(r).includes(n))) || anthonyOld(r));
 const packTodo = (r) => !r.games || packOld(r);
+// Nov 3 (rigger 2.44: no neck / head turn-round in the jump or the roundhouse). Rigs made on an older rigger keep the
+// snaps (#001's and #609's jump, every roundhouse kick, some weapon moves): /api/forge-rig-headsnap mends them in the
+// live rig file (only those keys change: hands, gloves, jaw and every other move stay exactly) and links the new file,
+// so saved characters follow it. Rigs made on 2.44 or later have the fix built in.
+const MEND_BEFORE = '2.44';
+const mendRun = { on: false, active: new Map() };
+const mendTodo = (r) => !r.mended && r.rigStatus !== 'running' && (!r.rigger || verNewer(MEND_BEFORE, r.rigger));
+function rigLine(r) {
+  if (mendRun.active.has(r.buildId)) return ' · <b>mending</b>';
+  const v = r.rigger ? `rigger ${esc(r.rigger)}` : '<span style="opacity:.6">rigger ?</span>';
+  if (r.rigStatus === 'running') return ` · ${v} · re-rigging`;
+  if (r.mended) return ` · ${v} · ${r.mended.keys ? `snaps mended (${r.mended.keys} keys) ✓` : 'no snaps ✓'}`;
+  return mendTodo(r) ? ` · <span class="bad">${v}: snaps not mended</span>` : ` · ${v}`;
+}
+async function mendSnaps() {
+  if (mendRun.on || gamesRun.on || !gamesList) return;
+  const todo = gamesList.filter(mendTodo); if (!todo.length) return;
+  if (!confirm(`Mend the neck / head snaps in ${todo.length} rig${todo.length > 1 ? 's' : ''} made before rigger ${MEND_BEFORE}?\n\nOnly the frames where the neck or head turned round (the jump, the roundhouse kick, some weapon moves) change; everything else in each rig stays exactly as it is. A few seconds each. Saved characters follow the mended rigs.`)) return;
+  mendRun.on = true; paintGames();
+  const one = async (r) => {
+    mendRun.active.set(r.buildId, 1); paintGames();
+    try { const d = await twice(() => api('/api/forge-rig-headsnap', { buildId: r.buildId })); r.mended = { at: d.report?.at || new Date().toISOString(), keys: d.report?.keys || 0 }; if (d.url) r.rigUrl = d.url; }
+    catch (e) { r.mendError = e.message; }
+    mendRun.active.delete(r.buildId); paintGames();
+  };
+  const queue = todo.slice();
+  await Promise.all([0, 1, 2].map(async () => { while (queue.length) await one(queue.shift()); }));
+  mendRun.on = false;
+  const done = todo.filter((r) => r.mended).length, fixed = todo.filter((r) => r.mended?.keys).length;
+  toast(done === todo.length ? `Done: ${fixed} rig${fixed === 1 ? '' : 's'} mended, ${done - fixed} had no snaps. Players get them on their next visit.` : `Mended ${done} of ${todo.length}: ${todo.find((r) => r.mendError)?.mendError || ''}`, 9000);
+  loadGamesPacks();
+}
 // Oct 20 the Free to play roster (api/free-roster.mjs): forged characters anyone can play from the lobby; ticked in
 // its own box (Oct 24: it was inside the Rig worker box's games packs list, behind a button). Oct 25 Chumpz and Saints
 // too: a Rebel's entry is its number ('262'), a friend's '<collection>:<token>' ('chumpz:1270')
@@ -1104,6 +1136,11 @@ async function loadGamesPacks() {
   const running = gamesList.filter((r) => packTodo(r) && r.job?.status === 'running');
   if (running.length && !gamesRun.on) runGamesJobs(running);
 }
+function rerigBlock() {
+  const todo = gamesList.filter(mendTodo).length, mended = gamesList.filter((r) => r.mended?.keys).length;
+  return `<div class="state" style="margin-top:6px"><b>Neck / head snaps</b> (jump, roundhouse, weapon moves; fixed in rigger ${MEND_BEFORE}): ${todo ? `<span class="bad">${todo} rig${todo > 1 ? 's' : ''} made before it not mended yet</span>` : 'every rig mended or made on it ✓'}${mended ? ` · ${mended} mended` : ''}${mendRun.on ? ` · mending ${mendRun.active.size} now` : ''}</div>
+    <div class="row" style="margin-top:4px"><button class="teal" onclick="mendSnaps()" ${mendRun.on || gamesRun.on || !todo ? 'disabled' : ''}>${mendRun.on ? 'Mending…' : todo ? `Mend the snaps in ${todo} rig${todo > 1 ? 's' : ''}` : 'All rigs mended ✓'}</button></div>`;
+}
 function paintGames() {
   paintFree();
   const box = $('#gamesBox'); if (!box) return;
@@ -1123,12 +1160,13 @@ function paintGames() {
   const what = old ? (old === todo.length ? `the ${old} older` : `${todo.length}`) : `the missing ${todo.length}`;
   const label = gamesRun.on ? (gamesRun.note ? 'Rebuilding the worker…' : 'Making…') : gamesReady() ? `Make ${what}` : `Rebuild worker, then make ${what}`;
   box.innerHTML = `<div class="state"><b>Games packs</b>: ${have} of ${gamesList.length} Rebels in play${old ? ` · ${old} older (without the new moves)` : ''}${gamesRun.note ? ` · ${esc(gamesRun.note)}` : gamesRun.on ? ` · making ${gamesRun.active.size} now` : ''}</div>
-    <div style="max-height:180px;overflow:auto;margin-top:4px">${gamesList.map((r) => `<div class="state">${esc(r.name || '#' + r.tokenId)} <span style="opacity:.6">${esc(r.collectionKey)} ${esc(r.tokenId)}</span> · ${line(r)}</div>`).join('') || '<div class="state">No Rebels with a Forge rig in play.</div>'}</div>
-    <div class="row" style="margin-top:6px"><button class="teal" onclick="makeGamesPacks()" ${gamesRun.on || !todo.length ? 'disabled' : ''}>${label}</button><button onclick="loadGamesPacks()" ${gamesRun.on ? 'disabled' : ''}>Refresh</button></div>
+    <div style="max-height:180px;overflow:auto;margin-top:4px">${gamesList.map((r) => `<div class="state">${esc(r.name || '#' + r.tokenId)} <span style="opacity:.6">${esc(r.collectionKey)} ${esc(r.tokenId)}</span> · ${line(r)}${rigLine(r)}</div>`).join('') || '<div class="state">No Rebels with a Forge rig in play.</div>'}</div>
+    ${rerigBlock()}
+    <div class="row" style="margin-top:6px"><button class="teal" onclick="makeGamesPacks()" ${gamesRun.on || mendRun.on || !todo.length ? 'disabled' : ''}>${label}</button><button onclick="loadGamesPacks()" ${gamesRun.on || mendRun.on ? 'disabled' : ''}>Refresh</button></div>
     <div class="state" style="margin-top:4px">Each one re-runs the Rigger on that Rebel's own sculpt (about 4 minutes, two at a time) and keeps only the games moves; the rig and its weapon moves are not changed. Keep this page open while they run.</div>`;
 }
 async function makeGamesPacks() {
-  if (gamesRun.on || !gamesList) return;
+  if (gamesRun.on || mendRun.on || !gamesList) return;
   const todo = gamesList.filter(packTodo); if (!todo.length) return;
   // Oct 16: never on a worker image without the games moves (the Oct 16 runs were made on an image built before the upload)
   const gmiss = GAMES_PACK.filter((p) => !packUploaded.has(p));
