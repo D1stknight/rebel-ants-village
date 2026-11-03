@@ -2662,8 +2662,9 @@ function rrProgressUI() {
   if (st) st.textContent = RR.wearing ? 'Putting on the new rig' : rrStage(RR_AT[RR.step] ?? 0);
   if (e) e.textContent = RR.wearing ? 'done in a moment' : `${(left => left < 60 ? 'under a minute' : `about ${fmtMin(left)}`)(Math.max(15, RR_EST * (1 - p / 100)))} left · you can close this page`;
 }
+// Nov 3 (rigger 2.44): every Rebel too, not only friends and #001 (the head / neck fix reaches a rig only through a re-rig)
 function rrBoxHTML() {
-  if (!(FRIEND || isM1()) || !state.own?.admin || !state.assets?.buildId || !state.assets?.glb) return '';
+  if (!state.own?.admin || !state.assets?.buildId || !state.assets?.glb) return '';
   return `<div class="gbox" id="rrBox"><div class="sep"></div><div class="eyebrow">ADMIN · RIGGER</div><div id="rrIn"></div></div>`;
 }
 // Oct 26 (rigger 2.40): Rebel #001 on the Forge Rigger. #001 plays the starter ant; an admin rigs its own body from the

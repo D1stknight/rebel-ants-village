@@ -290,8 +290,10 @@ export default async function handler(req, res) {
       workerCommit: worker.commit || null,
       sourceGlbUrl: src,
       options: { skirtfix: !!skirtfix, headUp: up || 0, headUrl: headUrl || null, armorUrl: armorUrl || null, anchorsUrl: anchorsUrl || null, cutBridges: !!cutBridges, headScale: hs, headAuto, npc: !!npc, handFit: hf, species: npcSpecies || null, friend: friend || null, ...(withJaw ? { jaw: true } : {}) },
-      // #001: the rig a re-rig replaces leads to the new one (forge-rig-status links rigHistory), so its saved character follows it
-      ...(isMaster(rec) && BLOB.test(rec.output?.forgeRigGlbUrl || '') ? { rigHistory: [...new Set([...(cur.rigHistory || []), rec.output.forgeRigGlbUrl])].filter((u) => BLOB.test(u || '')).slice(-20) } : {}),
+      // #001 (and, Nov 3, any admin re-rig of a player character: rigger 2.44's head / neck fix): the rig a re-rig replaces
+      // leads to the new one (forge-rig-status links rigHistory), so saved characters follow it. NPCs keep their own
+      // approvals (the NPC Forge approves a new rig).
+      ...((isMaster(rec) || (force && admin && !npc)) && BLOB.test(rec.output?.forgeRigGlbUrl || '') ? { rigHistory: [...new Set([...(cur.rigHistory || []), rec.output.forgeRigGlbUrl])].filter((u) => BLOB.test(u || '')).slice(-20) } : {}),
       startedAt: new Date().toISOString(),
       finishedAt: null,
       error: null
