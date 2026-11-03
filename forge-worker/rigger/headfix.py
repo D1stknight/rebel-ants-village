@@ -24,6 +24,19 @@ SKIP = set(os.environ.get('FORGE_HEAD_SKIP', 'cartwheel,backflip,front_flip,flip
 # and head turned round for three frames (the "360" of the head). Same yaw as before while the bone is upright-ish
 # (idle / walk / run within 0.5-4 deg). Rebels keep the facing yaw.
 NPCM = bool(os.environ.get('FORGE_NPC') or os.environ.get('FORGE_NPC_BODY'))   # v2.36 + Chumpz / Saints players
+# v2.44 Rebels: the same turn-round, in the mocap jump of a Rebel (#001: the neck pitched past vertical in the take-off
+# crouch and turned 158 deg for three keys, his head "spinning" on Miguel's phone; the roundhouse kick: 93 deg in one
+# key). The facing yaw is kept wherever it is trustworthy, so those keys stay byte-identical: within YAW_SAFE of the
+# twist yaw while the bone's forward still points well out (its ground heading at least FXY_OK of its length). Past
+# YAW_FLIP apart, or with the forward nearly vertical (FXY_FLIP), the twist yaw takes over; in between, a blend.
+YAW_SAFE, YAW_FLIP = math.radians(30), math.radians(60)
+FXY_OK, FXY_FLIP = 0.45, 0.25
+# v2.44 every rig: the levelled neck / head never turns faster than the mocap's own turn there plus MARGIN, or RATE, a
+# frame (30 fps). In the roundhouse kick the chest leans ~70 deg while the body spins, and the "never tip back against
+# the chest line" floor dropped the head onto it in one key (Rebels, Chumpz and Saints alike: 85-130 deg). Such a key now
+# eases there over the next keys; keys within the limit (every other clip of the 12 live rigs) stay exactly as levelled.
+RATE = math.radians(float(os.environ.get('FORGE_HEAD_RATE', '30')))
+MARGIN = math.radians(float(os.environ.get('FORGE_HEAD_RATE_MARGIN', '15')))
 bpy.ops.wm.open_mainfile(filepath=src)
 arm = bpy.data.objects['Armature']; P = 'mixamorig_'; sc = bpy.context.scene
 Aw = arm.matrix_world
@@ -114,13 +127,19 @@ def level(bone, follow, keep, clamp, frames_out):
     if not all(fcs): return None
     nk = len(fcs[0].keyframe_points)
     frames = [int(round(kp.co[0])) for kp in fcs[0].keyframe_points]
-    out = np.zeros((nk, 4)); before = []; after = []
+    qin = [Quaternion([fcs[i].keyframe_points[k].co[1] for i in range(4)]).normalized() for k in range(nk)]   # the mocap's own keys
+    out = np.zeros((nk, 4)); before = []; after = []; guarded = []
     for k, fi in enumerate(frames):
         sc.frame_set(fi)
         Mw = Aw @ pb.matrix
         D = Mw.to_quaternion() @ Rrest.inverted()
         if NPCM: yaw = 2 * math.atan2(D.z, D.w)    # v2.19 NPCs: the twist about world up (see NPCM)
-        else: f = D @ FWD; yaw = math.atan2(f.y, f.x) - math.atan2(FWD.y, FWD.x)
+        else:
+            f = D @ FWD; yaw = math.atan2(f.y, f.x) - math.atan2(FWD.y, FWD.x)
+            # v2.44 the guard (see YAW_SAFE): w = how far to go from the facing yaw to the twist yaw
+            yt = 2 * math.atan2(D.z, D.w); dd = math.atan2(math.sin(yt - yaw), math.cos(yt - yaw)); fxy = math.hypot(f.x, f.y)
+            w = max(min(1.0, (abs(dd) - YAW_SAFE) / (YAW_FLIP - YAW_SAFE)), min(1.0, (FXY_OK - fxy) / (FXY_OK - FXY_FLIP)))
+            if w > 0: yaw += w * dd; guarded.append(fi)
         Y = Quaternion(Z, yaw); F = Y @ FWD
         c = lean(Aw @ pc.matrix, F) - CHEST_REST     # chest lean from world vertical (rest chest bones often tip back)
         h = lean(Mw, F) - RLEAN[bone]
@@ -136,6 +155,21 @@ def level(bone, follow, keep, clamp, frames_out):
         q = pb.rotation_quaternion.copy()
         if k and np.dot(out[k - 1], [q.w, q.x, q.y, q.z]) < 0: q = -q
         out[k] = [q.w, q.x, q.y, q.z]
+    if guarded: print(f'headfix {act.name} {bone}: yaw from the twist at {len(guarded)} of {nk} keys (frames {guarded[0]}-{guarded[-1]})')
+    # v2.44 the rate limit (see RATE): a key the levelling turns too fast from the one before eases toward it
+    ang = lambda p, q: 2 * math.acos(min(1.0, abs(p.dot(q))))
+    limited = []; prev = Quaternion(out[0])
+    for k in range(1, nk):
+        allowed = max(ang(qin[k - 1], qin[k]) + MARGIN * max(1, frames[k] - frames[k - 1]), RATE * max(1, frames[k] - frames[k - 1]))
+        tgt = Quaternion(out[k]); a = ang(prev, tgt)
+        if a > allowed:
+            if prev.dot(tgt) < 0: tgt.negate()
+            q = prev.slerp(tgt, allowed / a); out[k] = [q.w, q.x, q.y, q.z]; limited.append(frames[k])
+        prev = Quaternion(out[k])
+    if limited:
+        for k in range(1, nk):
+            if np.dot(out[k - 1], out[k]) < 0: out[k] = -out[k]
+        print(f'headfix {act.name} {bone}: eased {len(limited)} of {nk} keys (frames {limited[0]}-{limited[-1]})')
     for i in range(4):
         co = np.zeros(nk * 2); fcs[i].keyframe_points.foreach_get('co', co); co = co.reshape(-1, 2)
         co[:, 1] = out[:, i]; fcs[i].keyframe_points.foreach_set('co', co.ravel()); fcs[i].update()
