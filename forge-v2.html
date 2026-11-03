@@ -1130,8 +1130,10 @@ const REF = /^\/assets\/forge\/sources\/[\w.-]+\.(png|jpe?g|webp)$/.test(Q.get('
 // Oct 20 friend collections (assets/friend-collections.json): their holders forge from their NFT like Rebels: the
 // concept step paints the full-body realistic render of their species (it is the clean reference too), then the back,
 // the sides, the sculpts and a player rig with the species' body fixes (rigger 2.36). No weapon and no glove refits.
-const FRIEND_COLS = { chumpz: { species: 'ape', name: 'Chumpz', one: 'Chumpz' }, saints: { species: 'human', name: 'Saints of LA', one: 'Saint' } };
-const FRIEND = REF ? null : FRIEND_COLS[COL] || null;
+// Nov 3: universe = Universe's own characters (no NFT; Vicky's dolls), forged only by an admin from a reference render, so
+// that forge shows them as the friends they are (no weapon, the friends' gloves and re-rig boxes)
+const FRIEND_COLS = { chumpz: { species: 'ape', name: 'Chumpz', one: 'Chumpz' }, saints: { species: 'human', name: 'Saints of LA', one: 'Saint' }, universe: { species: 'human', name: 'Rebel Universe', one: 'Character' } };
+const FRIEND = REF && COL !== 'universe' ? null : FRIEND_COLS[COL] || null;
 const NOUN = FRIEND ? FRIEND.one : 'Rebel';
 const SPECIES = REF ? (/^[a-z]{2,20}$/.test(Q.get('species') || '') ? Q.get('species') : 'ape') : FRIEND ? FRIEND.species : null;
 const REF_NAME = REF ? String(Q.get('name') || '').slice(0, 60) : '';
@@ -2001,7 +2003,7 @@ function renderInk(prev, quiet) {
   renderCard(`
     <div class="eyebrow">STEP 2 / 5</div>
     <h1>${title}<span class="tag">${past ? 'Accepted' : waiting ? 'Your call' : 'The brush runs'}</span></h1>
-    <p class="lead">${FRIEND ? `The forge's brush paints your ${NOUN} from its NFT as a full-body 3D character, standing ready for the smith.` : "The forge's brush paints your Rebel as a full warrior from its traits and colony, then inks a clean, simple version the smith can build from."}</p>
+    <p class="lead">${REF ? 'The reference render is the concept: the smith builds from it.' : FRIEND ? `The forge's brush paints your ${NOUN} from its NFT as a full-body 3D character, standing ready for the smith.` : "The forge's brush paints your Rebel as a full warrior from its traits and colony, then inks a clean, simple version the smith can build from."}</p>
     <div class="note live" id="liveStatus"></div>
     ${errBox()}
     <div class="sep"></div>

@@ -38,8 +38,11 @@ async function headAutoFor(rec) {
     return !gear;
   } catch (e) { return false; }
 }
-// a friend collection's species (ape / human) for its players' rigs, '' for the Rebels
+// a friend collection's species (ape / human) for its players' rigs, '' for the Rebels; Universe's own characters (no NFT,
+// forged by an admin from their artist's turnaround: Vicky's dolls, Nov 3) rig like the Saints
+const OWN_COLLECTIONS = { universe: 'human' };
 async function friendSpeciesOf(rec) {
+  if (OWN_COLLECTIONS[rec?.collectionKey]) return OWN_COLLECTIONS[rec.collectionKey];
   try { const c = await getCollection(rec?.collectionKey || 'battle_for_colony'); return c?.friend ? c.species : ''; } catch (e) { return ''; }
 }
 const DAILY_LIMIT = parseInt(process.env.FORGE_RIG_DAILY_LIMIT || '200', 10);

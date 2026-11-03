@@ -12,7 +12,7 @@
   const seen = (id) => !!seenAll()[id];
   const markSeen = (id) => { try { const s = seenAll(); s[id] = 1; localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {} };
   const col = new URLSearchParams(location.search).get('col');
-  const NOUN = col === 'chumpz' ? 'Chumpz' : col === 'saints' ? 'Saint' : 'Rebel';
+  const NOUN = col === 'chumpz' ? 'Chumpz' : col === 'saints' ? 'Saint' : col === 'universe' ? 'Character' : 'Rebel';
   const $ = (s) => document.querySelector(s);
   // on screen: drawn, not hidden, and inside the window (the moves dock and the version chooser wait below it); inside the
   // card, which scrolls, a part below its fold counts too (the tips scroll it into view)
