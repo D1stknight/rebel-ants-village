@@ -134,6 +134,12 @@
     },
     {
       "source": "/blob/:path*",
+      "missing": [
+        {
+          "type": "header",
+          "key": "range"
+        }
+      ],
       "headers": [
         {
           "key": "x-vercel-enable-rewrite-caching",
