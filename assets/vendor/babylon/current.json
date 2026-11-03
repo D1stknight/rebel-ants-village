@@ -1,8 +1,8 @@
 {
-  "version": "9.31.3",
-  "since": "2026-10-22",
-  "previous": null,
-  "folder": "/assets/vendor/babylon/9.31.3/",
+  "version": "9.33.2",
+  "since": "2026-11-03",
+  "previous": "9.31.3",
+  "folder": "/assets/vendor/babylon/9.33.2/",
   "files": [
     "babylon.js",
     "babylonjs.loaders.min.js",
