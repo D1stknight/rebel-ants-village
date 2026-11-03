@@ -999,16 +999,18 @@ function carveWater(H, W) {
   if (drop > 0) for (let i = iPool + 1; i <= last; i++) pts[i].w -= drop * (1 - smooth(0, run, pts[last].s - pts[i].s));
   pool.w = wPool; pond.w = pts[last].w;
   const wet = new Float32Array(N * N), dist = new Float32Array(N * N).fill(255);
-  const cut = (k, target) => { if (target < H[k]) H[k] = target; };
+  let G = H, marking = true; // (the array cut, and whether the wet mask is marked: see Hdecor below)
+  const cut = (k, target) => { if (target < G[k]) G[k] = target; };
   const bank = (d, w, halfW, depth, slope) => w + .25 - (depth + .25) * (1 - smooth(halfW * .4, halfW + 1.2, d)) + Math.max(0, d - (halfW + 1.2)) * slope;
   // the river comes down to the pond's own level where it meets the pond's shoreline (Nov 3, Miguel's shots: once the
   // pond was lowered to its rim, the river still came down to it only at the pond's middle, so its last 30 m hung up
   // to 3.7 m over the pond's bowl and over its water): from the shoreline back up the river its level rises at most
   // .15 a metre (gentler than the banks, so nothing below cuts them), never above where it was (a river that already
   // meets its pond at its level, e.g. Samurai's, stays as it was)
-  let iShore = -1;
+  let iShore = -1, wOld = null;
   for (let i = iPool + 1; i <= last && iShore < 0; i++) { const p = pts[i]; if (Math.hypot(p.x - pond.x, p.z - pond.z) < shoreAt(pond, Math.atan2(p.z - pond.z, p.x - pond.x), 4.1)) iShore = i; }
   if (iShore > 0 && pts[iShore].w - pond.w > .5) {
+    wOld = pts.map(p => p.w);
     for (let i = iShore; i < last; i++) pts[i].w = pond.w + .05;
     for (let i = iShore - 1; i > iPool; i--) { const w = pts[i + 1].w + .15 * (pts[i + 1].s - pts[i].s); if (w >= pts[i].w) break; pts[i].w = w; }
   } else iShore = -1;
@@ -1017,29 +1019,41 @@ function carveWater(H, W) {
     const j0 = Math.max(0, Math.floor((cz - R + SIZE / 2) / CELL)), j1 = Math.min(N - 1, Math.ceil((cz + R + SIZE / 2) / CELL));
     for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const d = Math.hypot(i * CELL - SIZE / 2 - cx, j * CELL - SIZE / 2 - cz); if (d <= R) fn(j * N + i, d); }
   };
-  const mark = (k, d, edge) => { if (d < dist[k]) dist[k] = d; const wv = 1 - smooth(edge, edge + 5, d); if (wv > wet[k]) wet[k] = wv; };
+  const mark = (k, d, edge) => { if (!marking) return; if (d < dist[k]) dist[k] = d; const wv = 1 - smooth(edge, edge + 5, d); if (wv > wet[k]) wet[k] = wv; };
   const bankW = 12, lipP = pts[iLip];
   // cells behind the lip line (within 40 m of it) belong to the upper stream; nothing below may cut them
   const aboveLip = k => { const x = (k % N) * CELL - SIZE / 2 - lipP.x, z = ((k / N) | 0) * CELL - SIZE / 2 - lipP.z; return x * x + z * z < 1600 && x * lipP.dx + z * lipP.dz < .4; };
-  for (const p of pts) {
-    const steep = p.kind !== 'river' ? 2.2 : .6;
-    visit(p.x, p.z, W.halfW + 1.2 + bankW, (k, d) => {
-      if (p.kind !== 'stream' && aboveLip(k)) return; // only the upper stream shapes the ground behind the lip: a cliff
-      cut(k, bank(d, p.w, W.halfW, p.inPool ? 0 : p.kind === 'fall' ? 1.8 : W.depth, steep)); mark(k, d - W.halfW, 0);
-    });
-  }
   // pool and pond: irregular shorelines (radius wobbles with the angle)
   const shore = (c, k, seed, amp = 1) => { const i = k % N, j = (k / N) | 0, a = Math.atan2(j * CELL - SIZE / 2 - c.z, i * CELL - SIZE / 2 - c.x); return c.r * (1 + amp * (.22 * Math.sin(3 * a + seed) + .12 * Math.sin(5 * a + seed * 2.3) + .06 * Math.sin(9 * a + seed * .7))); };
   // plunge pool: a near-vertical rock bowl
   // steep only on the fall side; open and gentle downstream so the fall can be seen
   const upX = (lipP.x - pool.x) / Math.hypot(lipP.x - pool.x, lipP.z - pool.z), upZ = (lipP.z - pool.z) / Math.hypot(lipP.x - pool.x, lipP.z - pool.z);
-  visit(pool.x, pool.z, pool.r * 1.3 + 1.5 + 22, (k, d) => {
-    if (aboveLip(k)) return;
-    const x = (k % N) * CELL - SIZE / 2 - pool.x, z = ((k / N) | 0) * CELL - SIZE / 2 - pool.z, c = d > .01 ? (x * upX + z * upZ) / d : 1;
-    const r = shore(pool, k, 1.3, .5); cut(k, bank(d, pool.w, r, W.depth + .5, .45 + 4.5 * smooth(-.1, .6, c))); mark(k, d - r, 0);
-  });
-  visit(pond.x, pond.z, pond.r * 1.45 + 1.5 + 16, (k, d) => { const r = shore(pond, k, 4.1); cut(k, bank(d, pond.w, r, W.depth + .6, .45)); mark(k, d - r, 0); });
-  return { pts, iLip, iPool, iShore, pool, pond, halfW: W.halfW, wet, dist };
+  const carveAll = () => {
+    for (const p of pts) {
+      const steep = p.kind !== 'river' ? 2.2 : .6;
+      visit(p.x, p.z, W.halfW + 1.2 + bankW, (k, d) => {
+        if (p.kind !== 'stream' && aboveLip(k)) return; // only the upper stream shapes the ground behind the lip: a cliff
+        cut(k, bank(d, p.w, W.halfW, p.inPool ? 0 : p.kind === 'fall' ? 1.8 : W.depth, steep)); mark(k, d - W.halfW, 0);
+      });
+    }
+    visit(pool.x, pool.z, pool.r * 1.3 + 1.5 + 22, (k, d) => {
+      if (aboveLip(k)) return;
+      const x = (k % N) * CELL - SIZE / 2 - pool.x, z = ((k / N) | 0) * CELL - SIZE / 2 - pool.z, c = d > .01 ? (x * upX + z * upZ) / d : 1;
+      const r = shore(pool, k, 1.3, .5); cut(k, bank(d, pool.w, r, W.depth + .5, .45 + 4.5 * smooth(-.1, .6, c))); mark(k, d - r, 0);
+    });
+    visit(pond.x, pond.z, pond.r * 1.45 + 1.5 + 16, (k, d) => { const r = shore(pond, k, 4.1); cut(k, bank(d, pond.w, r, W.depth + .6, .45)); mark(k, d - r, 0); });
+  };
+  // the ground as it was before the river's run-down, for the scattered trees, rocks and grass to decide where they go
+  // (they come one after another from one random sequence, so one choice changed near the river moved every tree in
+  // the Hub): they stay where they were, standing on the ground as it is
+  let Hdecor = null;
+  if (wOld) {
+    const wNew = pts.map(p => p.w); pts.forEach((p, i) => { p.w = wOld[i]; });
+    Hdecor = new Float32Array(H); G = Hdecor; marking = false; carveAll();
+    pts.forEach((p, i) => { p.w = wNew[i]; }); G = H; marking = true;
+  }
+  carveAll();
+  return { pts, iLip, iPool, iShore, pool, pond, halfW: W.halfW, wet, dist, Hdecor };
 }
 
 // Height read from a CreateGround-style vertex grid, triangle by triangle (exactly what is drawn).
@@ -1135,13 +1149,13 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   if (Number.isFinite(c.rocks)) recipe.rocks.count = c.rocks;
   const hm = buildHeightmap(recipe, opts.heightmapBase || null);
   const H0 = hm.H, H = new Float32Array(H0), path0 = hm.path, path = new Uint8Array(path0);
+  const HD0 = hm.water?.Hdecor || null, HD = HD0 && new Float32Array(HD0); // (the decor's ground: carveWater)
   const ground = BABYLON.MeshBuilder.CreateGround('gnd', { width: SIZE, height: SIZE, subdivisions: SUBDIV, updatable: true }, scene);
   let pos = ground.getVerticesData(BABYLON.VertexBuffer.PositionKind);
-  let sampler = null;
+  let sampler = null, decorSampler = null;
   const VS = recipe.village ? makeVillageShape(recipe.village, (x, z) => hBil(hm.Hb, x, z)) : null;
-  function writeHeights() {
-    pos = ground.getVerticesData(BABYLON.VertexBuffer.PositionKind, true, true) || pos;
-    for (let row = 0; row <= SUBDIV; row++) for (let col = 0; col <= SUBDIV; col++) pos[(col + row * (SUBDIV + 1)) * 3 + 1] = H[(SUBDIV - row) * 2 * N + col * 2];
+  function fillHeights(Hx, pos) {
+    for (let row = 0; row <= SUBDIV; row++) for (let col = 0; col <= SUBDIV; col++) pos[(col + row * (SUBDIV + 1)) * 3 + 1] = Hx[(SUBDIV - row) * 2 * N + col * 2];
     // under the village's own fine ground the big mesh is pushed down out of sight
     // (kept below the lowest point of the fine ground around each vertex, so it never shows through a step or the sea bed)
     // (within one cell of the edge only just under it: a deep dip there showed as a dark groove along the village's edge)
@@ -1151,10 +1165,15 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
         const edge = Math.min(pos[k] - X0, X1 - pos[k], pos[k + 2] - Z0, Z1 - pos[k + 2]);
         pos[k + 1] = edge < cell * 1.05 ? Math.min(pos[k + 1], lo) - .12 : Math.min(-2, lo - 1.5);
       } }
+  }
+  function writeHeights() {
+    pos = ground.getVerticesData(BABYLON.VertexBuffer.PositionKind, true, true) || pos;
+    fillHeights(H, pos);
     ground.updateVerticesData(BABYLON.VertexBuffer.PositionKind, pos);
     ground.createNormals(true);
     ground.refreshBoundingInfo();
     sampler = makeGridSampler(pos.slice(), SUBDIV, SIZE);
+    if (HD) { const pd = pos.slice(); fillHeights(HD, pd); decorSampler = makeGridSampler(pd, SUBDIV, SIZE); }
   }
   writeHeights();
 
@@ -1243,6 +1262,8 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
       const y = T.heightAt(x, z); return Math.max(Math.abs(T.heightAt(x + .5, z) - y), Math.abs(T.heightAt(x, z + .5) - y)) / .5 > 1.1;
     },
     heightAt: (x, z) => (VS && VS.inside(x, z)) ? VS.h(x, z) : sampler(x, z),
+    // the ground the scattered decor decides by (carveWater's Hdecor), else none: the ground itself
+    decorGroundAt: HD ? (x, z) => (VS && VS.inside(x, z)) ? VS.h(x, z) : decorSampler(x, z) : null,
     oldHeightAt: opts.oldHeightAt || null,
     pads: [], decor: null, decorBlockers: null, water: hm.water, waterMeshes, waterDepth,
     // 0..1 loudness of running water heard at (x, z): the fall carries ~120 m, the stream ~35 m
@@ -1302,19 +1323,19 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
       return hm.water.dist[j * N + i];
     },
     // Height of the flat yard a building of this footprint gets at (x, z): the average untouched ground under it.
-    padHeightAt(x, z, radius) {
+    padHeightAt(x, z, radius, from = H0) {
       if (VS && VS.inside(x, z)) return VS.h(x, z); // the village's terraces are already flat
       const rIn = radius + 2;
       let sum = 0, cnt = 0;
       const i0 = Math.max(0, Math.floor((x - rIn + SIZE / 2) / CELL)), i1 = Math.min(N - 1, Math.ceil((x + rIn + SIZE / 2) / CELL));
       const j0 = Math.max(0, Math.floor((z - rIn + SIZE / 2) / CELL)), j1 = Math.min(N - 1, Math.ceil((z + rIn + SIZE / 2) / CELL));
-      for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { if (Math.hypot(i * CELL - SIZE / 2 - x, j * CELL - SIZE / 2 - z) <= rIn * .7) { sum += H0[j * N + i]; cnt++; } }
+      for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { if (Math.hypot(i * CELL - SIZE / 2 - x, j * CELL - SIZE / 2 - z) <= rIn * .7) { sum += from[j * N + i]; cnt++; } }
       return cnt ? sum / cnt : null;
     },
     // Flat yards under buildings. pads: [{x, z, radius}] (radius = building footprint). Rebuilt from the untouched map
     // each time, so loading the layout again gives the same ground.
     applyPads(pads) {
-      H.set(H0); path.set(path0);
+      H.set(H0); path.set(path0); if (HD) HD.set(HD0);
       const kept = [];
       for (const p of pads) {
         const rIn = p.radius + 2, rOut = rIn + 14;
@@ -1323,9 +1344,10 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
         const y = T.padHeightAt(p.x, p.z, p.radius);
         if (y === null) continue;
         if (VS && VS.inside(p.x, p.z)) { kept.push({ ...p, y, rIn, rOut }); continue; } // no yard inside the village
+        const yd = HD ? T.padHeightAt(p.x, p.z, p.radius, HD0) : 0;
         for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
           const d = Math.hypot(i * CELL - SIZE / 2 - p.x, j * CELL - SIZE / 2 - p.z), k = j * N + i;
-          const w = 1 - smooth(rIn, rOut, d); if (w > 0) H[k] = H[k] * (1 - w) + y * w;
+          const w = 1 - smooth(rIn, rOut, d); if (w > 0) { H[k] = H[k] * (1 - w) + y * w; if (HD) HD[k] = HD[k] * (1 - w) + yd * w; }
           const yard = (1 - smooth(rIn - 1, rIn + 4, d)) * 190; if (yard > path[k]) path[k] = yard;
         }
         kept.push({ ...p, y, rIn, rOut });
@@ -1552,8 +1574,8 @@ async function buildDecor(scene, T, avoid) {
   const R = T.recipe, rnd = rng(R.seed * 7 + 3), { fbm } = makeNoise(R.seed + 11);
   const meshes = [], blockers = new Map(), cullTiles = []; // cullTiles: map tiles switched off beyond a distance
   const addBlocker = (x, z, r) => { const key = Math.floor((x + 400) / 20) * 1000 + Math.floor((z + 400) / 20); if (!blockers.has(key)) blockers.set(key, []); blockers.get(key).push({ x, z, r }); };
-  const h = T.heightAt;
-  const slopeAt = (x, z) => { const y = h(x, z); return Math.hypot(h(x + 2, z) - y, h(x, z + 2) - y) / 2; };
+  const h = T.heightAt, dh = T.decorGroundAt || h; // (where to go is decided on dh, the height to stand at read from h)
+  const slopeAt = (x, z) => { const y = dh(x, z); return Math.hypot(dh(x + 2, z) - y, dh(x, z + 2) - y) / 2; };
   // avoid grid: placed objects and building yards
   const av = new Map();
   const addAvoid = (x, z, r) => { for (let a = Math.floor((x - r + 400) / 20); a <= Math.floor((x + r + 400) / 20); a++) for (let b = Math.floor((z - r + 400) / 20); b <= Math.floor((z + r + 400) / 20); b++) { const k = a * 1000 + b; if (!av.has(k)) av.set(k, []); av.get(k).push({ x, z, r }); } };
@@ -1569,7 +1591,7 @@ async function buildDecor(scene, T, avoid) {
     if (p.rr) { const r = p.rr, w = r[4]; return x > r[0] - m && x < r[2] + m && z > r[1] - m && z < r[3] + m && !(x > r[0] + w + m && x < r[2] - w - m && z > r[1] + w + m && z < r[3] - w - m); }
     const r = p.r; return x > r[0] - m && x < r[2] + m && z > r[1] - m && z < r[3] + m;
   });
-  const dry = (x, z, m = .8) => T.seaY === null || T.seaY === undefined || h(x, z) > T.seaY + m; // above the sea
+  const dry = (x, z, m = .8) => T.seaY === null || T.seaY === undefined || dh(x, z) > T.seaY + m; // above the sea
   const m4 = new BABYLON.Matrix(), q = new BABYLON.Quaternion(), S = new BABYLON.Vector3(), P = new BABYLON.Vector3();
 
   function fillTiles(protoParts, buffers, counts, name) {
@@ -1620,7 +1642,7 @@ async function buildDecor(scene, T, avoid) {
       if (sq(x, z) < R.flatHalf + 2 || roadD(x, z) < 5 || T.waterEdgeDist(x, z) < 1.2 || !dry(x, z)) continue;
       if (fbm(x * .02, z * .02, 3) < -.12 + rnd() * .1) continue;
       if (!clear(x, z, -1)) continue;
-      const y = h(x, z), sl = Math.abs(h(x + 1, z) - y) + Math.abs(h(x, z + 1) - y); if (sl > .8) continue;
+      const y = h(x, z), y0 = dh(x, z), sl = Math.abs(dh(x + 1, z) - y0) + Math.abs(dh(x, z + 1) - y0); if (sl > .8) continue;
       const t = tileOf(x, z); if (cnt[t] >= per) continue;
       const s = .8 + rnd() * .8; BABYLON.Quaternion.FromEulerAnglesToRef(0, rnd() * 6.28, 0, q);
       S.set(s, s * (.8 + rnd() * .6), s); P.set(x, y - .02, z);
