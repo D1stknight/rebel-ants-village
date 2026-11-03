@@ -23,6 +23,9 @@
 //   - one file downloads at a time on a phone (4 on a computer) and one copy is made a frame (3); the light copy comes
 //     first, and on a phone the full model once a player has stood among the nearest few for 5 s, only within 10 m,
 //     kept to 18 m and for at least 15 s (a walking crowd swapped full models all the time, each a new download);
+//   - up to 40 light copies on a phone (computers 45: a full room copy of 50 shows hardly a stand-in; fewer after a
+//     crash), their files kept a while after use, and a player's light copy stays (hidden, no slot) under their full
+//     model, so it shows at once when the full one goes;
 (function () {
   'use strict';
   const PROTOCOL = 'rebel-universe.v1', FULL_R = 80, TAG_R = 45, SEND_MS = 150, BEAT_MS = 12000, PING_MS = 25000;
@@ -35,7 +38,7 @@
   const PACK_MOVES = new Set(['game_cheer', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam', 'sit_idle', 'sit_clap', 'sit_laugh', 'stand_to_sit']);
   // sitting (Nov 2, the Comedy Club's chairs): 'stand_to_sit' sits down, 'sit_up' is the same move backwards (standing up)
   const SIT_ONCE = new Set(['stand_to_sit', 'sit_up']);
-  let H = null, B = null, root = null, ws = null, connecting = false, you = 0, room = null, closedFor = null, retry = 0, retryAt = 0, maxFull = 8, maxLite = 24, wantCopy = 0;
+  let H = null, B = null, root = null, ws = null, connecting = false, you = 0, room = null, closedFor = null, retry = 0, retryAt = 0, maxFull = 8, maxLite = 45, wantCopy = 0;
   // loads (Nov 3): files downloading at once, new copies a frame, how long a player stands among the nearest few before
   // their full model loads (phones: 1, 1, 5 s; computers: 4, 3, none). A crowd that came at once had a phone download
   // and unpack a dozen characters together, and the page ran out of memory and started again
@@ -44,7 +47,7 @@
   const VC = () => window.VillageChat;
   const tell = (kind, d) => { try { VC()?.room?.(kind, d); } catch (e) { log('chat', e); } };
   const peers = new Map(), files = new Map(), clips = new Map();
-  let keepIdle = 4, keepMs = 60000, lastSweep = 0; // (phones: 1 file, 20 s)
+  let keepIdle = 4, keepMs = 60000, keepIdleLite = 24, lastSweep = 0; // (phones: 1 file, 20 s; 12 light copy files)
   let last = null, lastSent = 0, lastBeat = 0, moving = false, stillSince = 0, enabled = true, capsuleSrc = null;
   const log = (...a) => { if (window._mpDebug) console.log('[mp]', ...a); };
   const q = new URLSearchParams(location.search), override = q.get('mp');
@@ -252,10 +255,15 @@
   // a copy of a file's model made: the file stays until the copy goes (list: the copy's files)
   function useFile(url, list) { const f = files.get(url); if (f) { f.users++; list.push(f); } }
   function dropFiles(list) { const now = performance.now(); for (const f of list) if (--f.users <= 0) { f.users = 0; f.idle = now; } list.length = 0; }
-  // the files no one here wears: the newest keepIdle stay keepMs, the others go
+  // the files no one here wears: the newest keepIdle stay keepMs, the others go (light copies' files, small: the newest
+  // keepIdleLite stay 90 s, as players walk in and out of their range)
   function sweepFiles(now) {
     const idle = [...files.values()].filter(f => f.c && f.users <= 0).sort((a, b) => b.idle - a.idle);
-    idle.forEach((f, i) => { if (i < keepIdle && now - f.idle < keepMs) return; files.delete(f.url); try { f.c.dispose(); } catch (e) {} log('file released', f.url.split('/').pop()); });
+    let nf = 0, nl = 0;
+    for (const f of idle) {
+      if (f.lite ? nl++ < keepIdleLite && now - f.idle < 90000 : nf++ < keepIdle && now - f.idle < keepMs) continue;
+      files.delete(f.url); try { f.c.dispose(); } catch (e) {} log('file released', f.url.split('/').pop());
+    }
   }
   // the starter ant's other moves: each of their files holds the whole ant again, so only the move is kept (its keys)
   function starterClip(file) {
@@ -389,7 +397,7 @@
         const sh = H.shadows?.(); if (sh) meshes.forEach(m => { try { sh.addShadowCaster(m); } catch (e) {} });
         p.model = { kind: rig ? 'rig' : 'starter', inst, groups, meshes, extra, files: used, joints: rig ? joints : null, pack: null, at: performance.now() };
       }
-      disposeLite(p); // (the light copy that stood in meanwhile)
+      liteShown(p, false); // (the light copy that stood in meanwhile stays, hidden: it comes back at once if the full one goes)
       placeTag(p);
       p.anim = ''; p.cur = null; log('model', p.id, p.model.kind);
     } catch (e) { log('model failed', p.id, e?.message); p.look = { t: 'capsule' }; if (!p.model) dropFiles(used); }
@@ -416,8 +424,15 @@
   function disposeModel(p) {
     const m = p.model; if (!m) return; p.model = null; p.cur = null; p.anim = '';
     disposeCopy(m);
-    if (!p.lite) p.holder.scaling.setAll(1);
+    if (!p.lite) p.holder.scaling.setAll(1); else liteShown(p, true);
     placeTag(p);
+  }
+  // a light copy kept under a full model is hidden (its moves stopped); when the full model goes it shows again at once:
+  // no grey stand-in, no new download
+  function liteShown(p, on) {
+    const l = p.lite; if (!l || l.shown === on) return; l.shown = on;
+    for (const m of l.meshes) { try { m.setEnabled(on); } catch (e) {} }
+    if (!on) for (const g of Object.values(l.groups)) { try { g.stop(); } catch (e) {} }
   }
   function disposeLite(p) {
     const m = p.lite; if (!m) return; p.lite = null;
@@ -464,11 +479,12 @@
     const rig = p.look?.t === 'rig', used = [];
     try {
       const c = await container(url);
+      const f = files.get(url); if (f) f.lite = true;
       if (!peers.has(p.id) || p.model || !p.wantLite) return; // (not wanted any more: their full model came, or they went)
       useFile(url, used);
       const { inst, meshes, groups } = copyOf(p, c, 'mpPlayer_' + p.id + '_l_', rig);
       p.holder.scaling.setAll(rig ? RIG_SCALE : STARTER_SCALE);
-      p.lite = { kind: 'lite', starter: !rig, inst, groups, meshes, extra: [], files: used };
+      p.lite = { kind: 'lite', starter: !rig, inst, groups, meshes, extra: [], files: used, shown: true };
       p.anim = ''; p.cur = null; placeTag(p); log('lite', p.id);
     } catch (e) { p.liteFailed = true; dropFiles(used); log('lite failed', p.id, e?.message); }
     finally { p.liteLoading = false; }
@@ -600,7 +616,7 @@
     let liteFree = maxLite;
     for (const p of list) {
       p.wantLite = false; if (!p.lite && !p.liteLoading) continue;
-      if (!p.model && liteAble(p) && p.d < LITE_R + 8 && liteFree > 0) { liteFree--; p.wantLite = true; } else disposeLite(p);
+      if (liteAble(p) && p.d < LITE_R + 8 && (p.model || liteFree > 0)) { if (!p.model) liteFree--; p.wantLite = true; } else disposeLite(p); // (under a full model: its fallback, no slot)
     }
     // what loads next, a few at a time (phones: one file downloading at once and one new copy a frame). The nearest few
     // first: their light copy (small and quick: no grey stand-in), then their full model (on a phone once they have stood
@@ -616,7 +632,7 @@
       if (!url) { p.liteFailed = true; return; }
       if (!lane(url)) return;
       if (liteFree <= 0) {
-        let far = null; for (const q of list) if (q.wantLite) far = q; // (the farthest one with a light copy)
+        let far = null; for (const q of list) if (q.wantLite && !q.model) far = q; // (the farthest one with a light copy shown)
         if (!far || far.d < p.d + 10) return;
         far.wantLite = false; disposeLite(far); liteFree++;
       }
@@ -660,8 +676,8 @@
 
   function start(host) {
     if (H || !host || !window.BABYLON) return;
-    H = host; B = window.BABYLON; maxFull = H.maxFull > 0 ? H.maxFull : H.lite ? 4 : 8; maxLite = H.maxLite >= 0 ? H.maxLite : H.lite ? 10 : 24;
-    keepIdle = H.lite ? 1 : 4; keepMs = H.lite ? 20000 : 60000;
+    H = host; B = window.BABYLON; maxFull = H.maxFull > 0 ? H.maxFull : H.lite ? 4 : 8; maxLite = H.maxLite >= 0 ? H.maxLite : H.lite ? 40 : 45;
+    keepIdle = H.lite ? 1 : 4; keepMs = H.lite ? 20000 : 60000; keepIdleLite = H.lite ? 12 : 24;
     maxLoads = H.lite ? 1 : 4; perFrame = H.lite ? 1 : 3; fullWait = H.lite ? 5000 : 0;
     root = new B.TransformNode('mpPlayersRoot', H.scene); root.metadata = { keepInInteriors: true }; // rooms hide the village, not the players (each is shown in its own place)
     setInterval(() => { if (send('{"t":"ping"}')) pf.pingAt = document.hidden ? 0 : performance.now(); }, PING_MS); // (timers, not frames: a hidden tab draws nothing)
