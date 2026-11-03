@@ -64,6 +64,9 @@
     "api/forge-rig-headcloth.mjs": {
       "maxDuration": 120
     },
+    "api/forge-rig-headsnap.mjs": {
+      "maxDuration": 60
+    },
     "api/forge-weapon.mjs": {
       "maxDuration": 300
     },

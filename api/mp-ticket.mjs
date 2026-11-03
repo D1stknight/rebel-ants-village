@@ -51,6 +51,13 @@ export function signTicket(payload, site = siteOf()) {
 const parse = raw => { try { return raw ? JSON.parse(raw) : null; } catch (e) { return null; } };
 const rigOf = r => { const u = r && (r.forgeRigGlbUrl || r.characterBundle?.forgeRigGlbUrl); return typeof u === 'string' && STORE.test(u) ? u : null; };
 const matches = (r, col, tok) => r && r.collectionKey === col && String(r.tokenId) === tok && !r.appearanceSource;
+// Nov 3 the rig's latest file (forge:rig-latest: glove forges, admin re-rigs, mended neck / head snaps), as the village
+// and the Forge load it: the others see the rig the player plays
+async function latestRig(u) {
+  let cur = u;
+  try { for (let i = 0; i < 4; i++) { const [r] = await redis([['GET', `forge:rig-latest:v1:${cur}`]]); const n = r?.result; if (typeof n !== 'string' || !STORE.test(n) || n === cur) break; cur = n; } } catch (e) {}
+  return cur;
+}
 // what the player looks like to the others (see the top)
 export async function lookOf(req, col, tok) {
   if (!col || !tok) return { t: 'starter' };
@@ -60,9 +67,9 @@ export async function lookOf(req, col, tok) {
   try { const out = await redis([['MGET', ...keys]]); rows = Array.isArray(out?.[0]?.result) ? out[0].result : []; } catch (e) { rows = []; }
   const pub = parse(rows[0]), own = parse(rows[1]);
   if (own && matches(own, col, tok) && own.walletAddress === wallet && rigOf(own)) {
-    try { if ((await holderOf(col, tok, wallet)).holder) return { t: 'rig', url: rigOf(own), col, tok }; } catch (e) {}
+    try { if ((await holderOf(col, tok, wallet)).holder) return { t: 'rig', url: await latestRig(rigOf(own)), col, tok }; } catch (e) {}
   }
-  if (pub && matches(pub, col, tok) && !pub.walletAddress && rigOf(pub)) return { t: 'rig', url: rigOf(pub), col, tok };
+  if (pub && matches(pub, col, tok) && !pub.walletAddress && rigOf(pub)) return { t: 'rig', url: await latestRig(rigOf(pub)), col, tok };
   return FRIEND_KITS[col] ? { t: 'kit', type: FRIEND_KITS[col], col, tok } : { t: 'starter', col, tok };
 }
 function avatarOf(s) {
