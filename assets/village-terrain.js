@@ -1172,7 +1172,8 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   far.material = material; far.isPickable = false; far.metadata = { type: 'visual_backdrop', visualOnly: true };
   far.freezeWorldMatrix();
 
-  const waterMeshes = hm.water ? buildWater(scene, hm.water) : [];
+  const waterDepth = hm.water ? waterDepthMap(scene, hm.water, (x, z) => sampler(x, z)) : null;
+  const waterMeshes = hm.water ? buildWater(scene, hm.water, waterDepth) : [];
   if (recipe.village?.pools) waterMeshes.push(...buildPools(scene, recipe.village.pools));
   const seaY = recipe.sea ? (recipe.sea.y ?? -3) : null;
   const sea = recipe.sea ? buildSea(scene, recipe.sea, H0, seaY) : null;
@@ -1232,7 +1233,7 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
     },
     heightAt: (x, z) => (VS && VS.inside(x, z)) ? VS.h(x, z) : sampler(x, z),
     oldHeightAt: opts.oldHeightAt || null,
-    pads: [], decor: null, decorBlockers: null, water: hm.water, waterMeshes,
+    pads: [], decor: null, decorBlockers: null, water: hm.water, waterMeshes, waterDepth,
     // 0..1 loudness of running water heard at (x, z): the fall carries ~120 m, the stream ~35 m
     waterSoundAt(x, z) {
       let v = 0;
@@ -1319,7 +1320,7 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
         kept.push({ ...p, y, rIn, rOut });
       }
       T.pads = kept;
-      writeHeights(); writeMask(); maskTex.update(mask);
+      writeHeights(); writeMask(); maskTex.update(mask); waterDepth?.refresh();
       return kept;
     },
     // grass, pines and rocks, away from the courtyard, roads, building yards and placed objects
@@ -1780,7 +1781,95 @@ function softDotTex(scene) {
   const g = c.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.5, 'rgba(255,255,255,.45)'); g.addColorStop(1, 'rgba(255,255,255,0)');
   c.fillStyle = g; c.fillRect(0, 0, 64, 64); t.update(); t.hasAlpha = true; return t;
 }
-function buildWater(scene, Wt) {
+// The water's depth under its own surface, from the ground as drawn (Nov 3): one small texture over the stream, river, pool
+// and pond, so the water fades out where it gets shallow instead of ending in a hard sheet over the ground. Each cell takes
+// the level of the water nearest it (a stream or river point's; the pool's and pond's inside their shores), stored as
+// (level - ground + 1) / 4 (-1 .. 3 m in 1.6 cm steps). refresh() works it out again when the ground changes (yards).
+function waterDepthMap(scene, Wt, groundAt) {
+  const S = .6, P = Wt.pts.filter(p => p.kind !== 'fall'), reach = Wt.halfW + 4;
+  let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
+  const grow = (x, z, r) => { x0 = Math.min(x0, x - r); z0 = Math.min(z0, z - r); x1 = Math.max(x1, x + r); z1 = Math.max(z1, z + r); };
+  P.forEach(p => grow(p.x, p.z, reach)); for (const c of [Wt.pool, Wt.pond]) grow(c.x, c.z, c.r * 1.45 + 3);
+  const nx = Math.ceil((x1 - x0) / S) + 1, nz = Math.ceil((z1 - z0) / S) + 1, lev = new Float32Array(nx * nz).fill(NaN), best = new Float32Array(nx * nz).fill(Infinity);
+  const stamp = (cx, cz, r, w, from) => {
+    const i0 = Math.max(0, Math.floor((cx - r - x0) / S)), i1 = Math.min(nx - 1, Math.ceil((cx + r - x0) / S));
+    const j0 = Math.max(0, Math.floor((cz - r - z0) / S)), j1 = Math.min(nz - 1, Math.ceil((cz + r - z0) / S));
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const d = Math.hypot(x0 + i * S - cx, z0 + j * S - cz), k = j * nx + i; if (d <= r && d - from < best[k]) { best[k] = d - from; lev[k] = w; } }
+  };
+  P.forEach(p => stamp(p.x, p.z, reach, p.w, 0));
+  for (const c of [Wt.pool, Wt.pond]) stamp(c.x, c.z, c.r * 1.45 + 3, c.w, c.r);
+  const data = new Uint8Array(nx * nz * 4);
+  const tex = new BABYLON.RawTexture(data, nx, nz, BABYLON.Engine.TEXTUREFORMAT_RGBA, scene, false, false, BABYLON.Texture.BILINEAR_SAMPLINGMODE);
+  tex.wrapU = tex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
+  const refresh = () => {
+    for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+      const k = j * nx + i, g = Number.isNaN(lev[k]) ? null : groundAt(x0 + i * S, z0 + j * S);
+      data[k * 4] = g == null ? 0 : Math.round(255 * Math.min(1, Math.max(0, (lev[k] - g + 1) / 4))); data[k * 4 + 3] = 255;
+    }
+    tex.update(data);
+  };
+  refresh();
+  return { tex, box: new BABYLON.Vector4(x0 - S / 2, z0 - S / 2, nx * S, nz * S), refresh, at: (x, z) => { const i = Math.round((x - x0) / S), j = Math.round((z - z0) / S); return i < 0 || j < 0 || i >= nx || j >= nz ? null : data[(j * nx + i) * 4] / 255 * 4 - 1; } };
+}
+// Soft ripples for the stream, river, pool and pond: tileable value noise (four octaves) as a normal map, so the light
+// breaks into small glints instead of the long streaks of a few crossing sine waves.
+function makeNoiseNormalTex(scene) {
+  const S = 256, h = new Float32Array(S * S); let seed = 1013904223;
+  const rnd = () => (seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296;
+  for (const [cells, amp] of [[6, 1], [12, .5], [24, .26], [48, .13]]) {
+    const g = Float32Array.from({ length: cells * cells }, rnd), at = (i, j) => g[(j % cells) * cells + (i % cells)];
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+      const fx = x / S * cells, fy = y / S * cells, i = fx | 0, j = fy | 0, u = fx - i, v = fy - j, su = u * u * (3 - 2 * u), sv = v * v * (3 - 2 * v);
+      h[y * S + x] += amp * ((at(i, j) * (1 - su) + at(i + 1, j) * su) * (1 - sv) + (at(i, j + 1) * (1 - su) + at(i + 1, j + 1) * su) * sv);
+    }
+  }
+  const data = new Uint8Array(S * S * 4), k = 9;
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const nx = -(h[y * S + (x + 1) % S] - h[y * S + (x + S - 1) % S]) * k, ny = -(h[((y + 1) % S) * S + x] - h[((y + S - 1) % S) * S + x]) * k, l = Math.hypot(nx, ny, 1), o = (y * S + x) * 4;
+    data[o] = (nx / l * .5 + .5) * 255; data[o + 1] = (ny / l * .5 + .5) * 255; data[o + 2] = (1 / l * .5 + .5) * 255; data[o + 3] = 255;
+  }
+  const t = new BABYLON.RawTexture(data, S, S, BABYLON.Engine.TEXTUREFORMAT_RGBA, scene, true, false, BABYLON.Texture.TRILINEAR_SAMPLINGMODE);
+  t.wrapU = t.wrapV = BABYLON.Texture.WRAP_ADDRESSMODE;
+  return t;
+}
+// The stream, river, pool and pond (Nov 3, Miguel: "the water looks really fake and it also looks like its floating in the
+// air"): clear where it is shallow and gone at its edge, darker as it deepens, the sky's colour off it at a glancing look
+// (uSky follows the fog colour: dark at night), soft ripples (the noise normal map drifting with the flow, a second, bigger
+// layer drifting with the wind), small sun and moon glints kept over the alpha. One depth read and one more noise read per
+// water pixel.
+function makeWaterMaterial(scene, name, depth, noiseTex, flow) {
+  const m = new BABYLON.CustomMaterial(name, scene), sky = new BABYLON.Color3(.5, .6, .7);
+  m.diffuseColor = new BABYLON.Color3(1, 1, 1); m.emissiveColor = new BABYLON.Color3(0, 0, 0);
+  m.specularColor = new BABYLON.Color3(.75, .78, .75); m.specularPower = 320; m.useSpecularOverAlpha = true;
+  m.alpha = .999; m.backFaceCulling = false;
+  const b = noiseTex.clone(); b.level = .35; m.bumpTexture = b;
+  m.AddUniform('uWDepth', 'sampler2D', depth.tex); m.AddUniform('uWNoise', 'sampler2D', noiseTex); m.AddUniform('uWBox', 'vec4', depth.box);
+  m.AddUniform('uSky', 'vec3', sky); m.AddUniform('uWTime', 'float', 0);
+  m.Fragment_Definitions(`float wDepth(vec2 p){ return texture2D(uWDepth, clamp((p - uWBox.xy) / uWBox.zw, 0.0, 1.0)).r * 4.0 - 1.0; }`);
+  m.Fragment_Before_Lights(`
+    { float fadeR = 1.0 / (1.0 + length(vEyePosition.xyz - vPositionW) * 0.025);
+      vec3 n2 = texture2D(uWNoise, vPositionW.xz / 17.0 + vec2(uWTime * 0.011, -uWTime * 0.008)).xyz * 2.0 - 1.0;
+      normalW = normalize(normalW + vec3(n2.x, 0.0, n2.y) * 0.3 * fadeR); }
+  `);
+  m.Fragment_Custom_Diffuse(`diffuseColor = mix(vec3(0.2, 0.31, 0.27), vec3(0.05, 0.15, 0.18), smoothstep(0.1, 1.5, wDepth(vPositionW.xz)));`);
+  m.Fragment_Custom_Alpha(`alpha = 0.9 * smoothstep(0.02, 1.2, wDepth(vPositionW.xz));`);
+  m.Fragment_Before_Fog(`
+    { vec3 eW = normalize(vEyePosition.xyz - vPositionW), rW = reflect(-eW, normalW);
+      float fr = 0.05 + 0.95 * pow(1.0 - clamp(dot(normalW, eW), 0.0, 1.0), 5.0), edge = smoothstep(0.0, 0.1, wDepth(vPositionW.xz));
+      vec3 skyR = mix(uSky, uSky * vec3(0.72, 0.86, 1.08) + vec3(0.0, 0.015, 0.04), smoothstep(0.0, 0.7, rW.y));
+      color.rgb = mix(color.rgb, skyR, fr * 0.85);
+      color.a = max(color.a, fr * 0.9 * edge); }
+  `);
+  m.metadata = { perfKeepLive: true };
+  scene.onBeforeRenderObservable.add(() => {
+    const dt = Math.min(.05, scene.getEngine().getDeltaTime() / 1000);
+    b.vOffset -= dt * flow; sky.copyFrom(scene.fogColor);
+    if (m._newUniformInstances) m._newUniformInstances['float-uWTime'] = performance.now() / 1000;
+  });
+  m.onBindObservable.add(() => m.getEffect()?.setFloat('uWTime', performance.now() / 1000));
+  return m;
+}
+function buildWater(scene, Wt, depth) {
   const meshes = [], normalTex = makeRippleNormalTex(scene);
   const mk = (name, diffuse, emissive, alpha, scale) => {
     const m = new BABYLON.StandardMaterial(name, scene);
@@ -1790,7 +1879,7 @@ function buildWater(scene, Wt) {
     m.backFaceCulling = false;
     return m;
   };
-  const waterMat = mk('waterMat', [.07, .19, .2], [.01, .03, .035], .86, [1, 1]);
+  const noiseTex = makeNoiseNormalTex(scene), waterMat = makeWaterMaterial(scene, 'waterMat', depth, noiseTex, .12), pondMat = makeWaterMaterial(scene, 'pondWaterMat', depth, noiseTex, .02);
   const fallMat = mk('waterfallMat', [.5, .64, .7], [.13, .18, .21], .9, [1, 1]);
   // ribbon between two sample indices; uv: u across (metres / 6), v along (metres / 6)
   function ribbon(name, i0, i1, mat, widen = .8) {
@@ -1810,6 +1899,8 @@ function buildWater(scene, Wt) {
   function disc(name, c, mat) {
     const m = BABYLON.MeshBuilder.CreateDisc(name, { radius: c.r * (c === Wt.pool ? 1.2 : 1.45) + 1.4, tessellation: 48 }, scene); // the bank draws the shoreline
     m.rotation.x = Math.PI / 2; m.position.set(c.x, c.w, c.z); m.material = mat;
+    const p = m.getVerticesData(BABYLON.VertexBuffer.PositionKind), uv = []; for (let i = 0; i < p.length; i += 3) uv.push(p[i] / 6, p[i + 1] / 6); // ripples in metres, like the river's
+    m.setVerticesData(BABYLON.VertexBuffer.UVKind, uv);
     return m;
   }
   const P = Wt.pts, last = P.length - 1;
@@ -1822,14 +1913,14 @@ function buildWater(scene, Wt) {
   let iRiver0 = Wt.iPool; while (iRiver0 < last && near(P[iRiver0], Wt.pool, .85)) iRiver0++;
   let iRiver1 = last; while (iRiver1 > iRiver0 && near(P[iRiver1], Wt.pond, .35)) iRiver1--;
   meshes.push(ribbon('waterRiver', Math.max(Wt.iPool, iRiver0 - 1), Math.min(last, iRiver1 + 1), waterMat));
-  meshes.push(disc('waterPool', Wt.pool, waterMat));
-  meshes.push(disc('waterPond', Wt.pond, waterMat));
-  meshes.forEach(m => { m.isPickable = false; m.receiveShadows = true; m.metadata = { type: 'terrain_water', visualOnly: true }; m.alphaIndex = 10; m.freezeWorldMatrix(); });
+  meshes.push(disc('waterPool', Wt.pool, pondMat));
+  meshes.push(disc('waterPond', Wt.pond, pondMat));
+  meshes.forEach(m => { m.isPickable = false; m.receiveShadows = true; m.metadata = { type: 'terrain_water', visualOnly: true, walkLightOff: m.material !== fallMat }; m.alphaIndex = 10; m.freezeWorldMatrix(); });
   // flow: the stream ripples drift downstream, the fall pours
-  const wb = waterMat.bumpTexture, fb = fallMat.bumpTexture; fb.uScale = 3.5; fb.vScale = .45; fb.level = 1.6;
+  const fb = fallMat.bumpTexture; fb.uScale = 3.5; fb.vScale = .45; fb.level = 1.6;
   scene.onBeforeRenderObservable.add(() => {
     const dt = Math.min(.05, scene.getEngine().getDeltaTime() / 1000);
-    wb.vOffset -= dt * .12; fb.vOffset -= dt * 1.4;
+    fb.vOffset -= dt * 1.4;
   });
   // spray + mist where the fall hits the pool
   const tex = softDotTex(scene), hit = P[Math.max(Wt.iLip, iFallEnd - 1)];

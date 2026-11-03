@@ -27088,6 +27088,8 @@ function rigFallbackToStarter(err) {
   courtyardLight.intensity = 1.2;
   courtyardLight.range = 28;
   window.followLight.intensity = 2.8; window.followLight.range = 22;
+  // the stream, river, pool and pond don't take the walking light (Nov 3: at night it lit a bright green disc on the water)
+  (window._newTerrain?.waterMeshes || []).forEach(m => { if (m.metadata?.walkLightOff) window.followLight.excludedMeshes.push(m); });
    setSt("Character: ready.");
 
      if (activeCharacter.activeGlbUrl) {
