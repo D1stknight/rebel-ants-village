@@ -990,6 +990,13 @@ function carveWater(H, W) {
     else if (i < iPool) { p.w = wPool; p.kind = 'fall'; p.inPool = true; }
     else { p.w = i === iPool ? wPool : Math.min(pts[i - 1].w - .015, cross(p) - .7); p.kind = 'river'; }
   }
+  // the pond sits below all the ground its water covers outside its shoreline (Nov 3: on the Hub pond's low south-west side
+  // the ground was a metre under the water, so the water hung over it); the river's last stretch runs down to it
+  const shoreAt = (c, a, seed) => c.r * (1 + .22 * Math.sin(3 * a + seed) + .12 * Math.sin(5 * a + seed * 2.3) + .06 * Math.sin(9 * a + seed * .7));
+  let wRim = Infinity;
+  for (let a = 0; a < 6.283; a += .05) for (let d = shoreAt(pond, a, 4.1); d <= pond.r * 1.45 + 1.4; d += .5) wRim = Math.min(wRim, hBil(H, pond.x + Math.cos(a) * d, pond.z + Math.sin(a) * d) - .3);
+  const drop = pts[last].w - wRim, run = Math.max(30, drop / .04);
+  if (drop > 0) for (let i = iPool + 1; i <= last; i++) pts[i].w -= drop * (1 - smooth(0, run, pts[last].s - pts[i].s));
   pool.w = wPool; pond.w = pts[last].w;
   const wet = new Float32Array(N * N), dist = new Float32Array(N * N).fill(255);
   const cut = (k, target) => { if (target < H[k]) H[k] = target; };
