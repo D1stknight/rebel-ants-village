@@ -435,6 +435,9 @@ html.vt-touch #wb.on .wb-label{display:none}
 #ld{position:fixed;inset:0;background:#020818;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;transition:opacity .9s}
 #ld h1{font-family:'Cinzel Decorative',serif;font-size:30px;color:#e8c56a;letter-spacing:5px;margin-bottom:10px;text-shadow:0 0 40px rgba(232,197,106,.6)}
 #ld .sub{font-size:10px;color:#5ecfca;letter-spacing:7px;text-transform:uppercase;margin-bottom:48px;animation:pulse 2s infinite}
+/* the title and its line wait for their own fonts (else they showed in the fallback serif, then blinked): #ld gets .fonts once
+   both are in, or after 3 s (fonts blocked or slow) */
+#ld h1{transition:opacity .35s}#ld:not(.fonts) h1{opacity:0;transition:none}#ld:not(.fonts) .sub{visibility:hidden}/* .sub's pulse animates its opacity */
 #ldst{font-size:10px;color:rgba(232,197,106,.45);letter-spacing:2px;margin-top:18px;text-transform:uppercase;text-align:center}
 #ldProblem{box-sizing:border-box;width:min(520px,calc(100vw - 32px));margin-top:22px;padding:18px 20px;border:1px solid rgba(232,197,106,.35);border-radius:14px;background:rgba(10,16,32,.9);color:#e9e2cc;font-size:14px;line-height:1.5;text-align:left}
 #ldProblem h2{margin:0 0 8px;font-size:17px;color:#e8c56a;letter-spacing:.5px}
@@ -749,6 +752,20 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
 </head>
 <body>
 <div id="ld"><h1>REBEL ANTS</h1><div class="sub">Building the Hidden Village...</div><div class="lb"><div class="lf"></div></div><div id="ldst">Initializing...</div></div>
+<script>
+(function () {
+  var ld = document.getElementById('ld'), done = false;
+  function show() { if (!done) { done = true; ld.classList.add('fonts'); } }
+  try {
+    var F = document.fonts, a = "700 30px 'Cinzel Decorative'", b = "400 10px 'Noto Serif JP'", t = 'BUILDING THE HIDDEN VILLAGE...';
+    if (!F || !F.load) return show();
+    if (F.check(a, 'REBEL ANTS') && F.check(b, t)) return show();
+    setTimeout(show, 3000);
+    var n = 2; function one() { if (--n === 0) show(); } // both settled (a font that fails doesn't cut the other's wait short)
+    F.load(a, 'REBEL ANTS').then(one, one); F.load(b, t).then(one, one);
+  } catch (e) { show(); }
+})();
+</script>
 <div id="assetPanel">
   <div class="ap-header"><span>Assets</span><kbd>M</kbd></div>
   <div class="ap-search-wrap">
