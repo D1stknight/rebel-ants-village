@@ -14,10 +14,11 @@
   const col = new URLSearchParams(location.search).get('col');
   const NOUN = col === 'chumpz' ? 'Chumpz' : col === 'saints' ? 'Saint' : 'Rebel';
   const $ = (s) => document.querySelector(s);
-  // on screen: drawn, not hidden, and inside the window (the moves dock and the version chooser wait below it)
+  // on screen: drawn, not hidden, and inside the window (the moves dock and the version chooser wait below it); inside the
+  // card, which scrolls, a part below its fold counts too (the tips scroll it into view)
   const shown = (el) => {
     if (!el) return null; const r = el.getBoundingClientRect(); if (r.width < 4 || r.height < 4) return null;
-    if (r.bottom < 2 || r.top > innerHeight - 2 || r.right < 2 || r.left > innerWidth - 2) return null;
+    if (!el.closest('#card') && (r.bottom < 2 || r.top > innerHeight - 2 || r.right < 2 || r.left > innerWidth - 2)) return null;
     for (let e = el; e && e !== document.body; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < .05) return null; }
     return el;
   };
@@ -73,7 +74,7 @@
       { el: '#card .kthumbs', title: 'Your paintings', text: 'Tap an earlier painting to use it instead.' }
     ] },
     { id: 'painting', label: 'Step 2 · Ink', when: () => step() === 2 && !vis('#acceptBtn') && !vis('#nextBtn') && !vis('#retryBtn'), steps: [
-      { el: () => first('#center .inkframe', '#center'), title: 'The brush is painting', text: `Your ${NOUN} is being painted from its traits: a few minutes. Keep this page open until the painting shows; once the sculpting starts you can leave.` }
+      { el: () => first('#center .inkframe', '#center'), orMiddle: true, title: 'The brush is painting', text: `Your ${NOUN} is being painted from its traits: a few minutes. Keep this page open until the painting shows; once the sculpting starts you can leave.` }
     ] },
     { id: 'summon', label: 'Step 1 · Summon', when: () => step() === 1 && !vis('#npForm') && (cta() || vis('#awakenOld')), steps: [
       { title: 'Welcome to the Rebel Forge', text: `It turns your ${NOUN}’s picture into a 3D character that walks, fights and dances in Universe. Here’s where to press, in {n} quick steps.` },
@@ -117,6 +118,8 @@
 #ftBub .arw{position:absolute;width:14px;height:14px;background:#1b1520;border:1px solid rgba(255,181,71,.55);transform:rotate(45deg)}
 #ftBub .arw.up{top:-8px;border-right:0;border-bottom:0}
 #ftBub .arw.down{bottom:-8px;border-left:0;border-top:0;background:#110d16}
+#ftBub .arw.left{left:-8px;border-top:0;border-right:0}
+#ftBub .arw.right{right:-8px;border-bottom:0;border-left:0}
 #forgeHelp{font:700 16px/1 Cinzel,Georgia,serif;color:var(--washi,#F4EEE2);cursor:pointer;padding:0}`;
     document.head.appendChild(s);
   }
@@ -128,7 +131,7 @@
   function start(id) {
     id = id || screen() || 'summon'; const sc = byId(id); if (!sc) return;
     style(); close(false);
-    const list = sc.steps.filter((st) => !st.el || target(st));
+    const list = sc.steps.filter((st) => !st.el || st.orMiddle || target(st));
     if (!list.length) return;
     const wrap = document.createElement('div'); wrap.id = 'ftWrap'; wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-modal', 'true'); wrap.setAttribute('aria-label', 'How the Forge works');
     wrap.innerHTML = '<div id="ftShade"></div><div id="ftRing"></div><div id="ftBub"><button class="x" type="button" aria-label="Close the tips">✕</button><div class="lk"></div><h3></h3><p></p><div class="la"></div><div class="arw"></div></div>';
@@ -183,11 +186,20 @@
     Object.assign(S.ring.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
     const roomBelow = H - 8 - (y + h + 14), roomAbove = y - 14 - 8;
     let below = roomBelow >= bh || (roomBelow >= roomAbove && roomAbove < bh), top = below ? y + h + 14 : y - 14 - bh;
-    if (top + bh > H - 8 || top < 8) { below = null; top = Math.max(8, Math.min(H - bh - 8, top)); }   // a big target: the bubble goes over it
+    if (top + bh > H - 8 || top < 8) {
+      const roomR = W - 16 - (x + w + 14), roomL = x - 14 - 16;
+      if (roomR >= bw || roomL >= bw) { // beside it (right first), level with its middle
+        const lx = roomR >= bw ? x + w + 14 : x - 14 - bw, ty = Math.round(Math.max(8, Math.min(H - bh - 8, r.top + r.height / 2 - bh / 2)));
+        S.bub.style.left = Math.round(lx) + 'px'; S.bub.style.top = ty + 'px';
+        arw.style.display = ''; arw.className = 'arw ' + (roomR >= bw ? 'left' : 'right'); arw.style.left = ''; arw.style.top = Math.round(Math.min(bh - 26, Math.max(12, r.top + r.height / 2 - ty - 7))) + 'px';
+        return;
+      }
+      below = null; top = Math.max(8, Math.min(H - bh - 8, top)); // a big target and no room beside it: the bubble goes over it
+    }
     const left = Math.min(W - bw - 16, Math.max(16, r.left + r.width / 2 - bw / 2));
     S.bub.style.left = Math.round(left) + 'px'; S.bub.style.top = Math.round(top) + 'px';
     if (below === null) { arw.style.display = 'none'; return; }
-    arw.style.display = ''; arw.className = 'arw ' + (below ? 'up' : 'down'); arw.style.left = Math.round(Math.min(bw - 26, Math.max(12, r.left + r.width / 2 - left - 7))) + 'px';
+    arw.style.display = ''; arw.style.top = ''; arw.className = 'arw ' + (below ? 'up' : 'down'); arw.style.left = Math.round(Math.min(bw - 26, Math.max(12, r.left + r.width / 2 - left - 7))) + 'px';
   }
   // the ? in the header, before the sound button
   function button() {
