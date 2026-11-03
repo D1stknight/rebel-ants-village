@@ -12608,7 +12608,7 @@ window._skillBar = SkillBar; // tests
 // TikTok save the picture, copy the caption and open their site. More = the share sheet where there is one, else the
 // picture copied, else saved. Save saves the style picked. Messages show in the card (the page's toasts sit under it).
 const VillagePhoto = { url:null, blob:null, caption:'', busy:false, gen:0, pol:null, polFailed:false, style:null };
-const VillageClip = { on:false, busy:false, res:null, max:60, timer:0 }; // (the clips, after the photo's code)
+const VillageClip = { on:false, busy:false, res:null, max:60, timer:0, calm:false }; // (the clips, after the photo's code)
 const PHOTO_STYLE_KEY = 'rebelAntsPhotoStyle:v1';
 const PHOTO_APPS = { x: 'X', instagram: 'Instagram', tiktok: 'TikTok', discord: 'Discord' };
 // Discord (Nov 1): phones share through the sheet like the others; computers copy the picture and open the Rebel Ants
@@ -12641,7 +12641,15 @@ async function takeVillagePhoto(caption) {
   } catch (e) { console.warn('photo failed', e); showToast('The camera jammed. Try again.'); return false; }
   finally { if (guide) guide.setEnabled(guideOn); VillagePhoto.busy = false; }
 }
-function closeVillagePhoto() { document.getElementById('photoOverlay')?.classList.remove('on'); photoMsg(''); dropVillageClip(); }
+function closeVillagePhoto() { document.getElementById('photoOverlay')?.classList.remove('on'); photoMsg(''); dropVillageClip(); clipCalmOff(); }
+// a phone recording a clip (and showing it after) draws the 3D at 1x and loads no new full models of other players
+// (startVillageClip); back to normal once the clip's card closes: its own resolution at once, other players' full models
+// 3 s later (Nov 3: an iPhone in a crowd of 44 started the page again the moment a clip stopped, when the 3D went back to
+// full size, the nearest players' full models began loading and the clip's video started playing, all at once)
+function clipCalmOff() {
+  if (window._clipLowRes) { window._clipLowRes = false; try { window._villageLook?.applyRes?.(); } catch (e) {} }
+  if (VillageClip.calm) { VillageClip.calm = false; setTimeout(() => { if (!VillageClip.on && !VillageClip.calm) { try { window.VillageMP?.hold?.(false); } catch (e) {} } }, 3000); }
+}
 // the style to share: the player's pick (Polaroid unless they chose Photo), Photo when the polaroid can't be made
 function villagePhotoStyle() {
   if (!VillagePhoto.style) { let s = null; try { s = localStorage.getItem(PHOTO_STYLE_KEY); } catch (e) {} VillagePhoto.style = s === 'photo' ? 'photo' : 'polaroid'; }
@@ -12817,6 +12825,7 @@ async function startVillageClip() {
   // started the page again recording in a crowd of 44)
   const lowRes = photoOnPhone() && engine.getHardwareScalingLevel() < 1;
   if (lowRes) { window._clipLowRes = true; engine.setHardwareScalingLevel(1); }
+  if (photoOnPhone()) { VillageClip.calm = true; try { window.VillageMP?.hold?.(true); } catch (e) {} } // (no new full models of other players)
   let r = null;
   try {
     r = await CR.start({
@@ -12830,9 +12839,8 @@ async function startVillageClip() {
     });
   } catch (e) { r = { ok: false, reason: 'error', error: String(e?.message || e) }; }
   VillageClip.busy = false;
-  if (!r?.ok) { if (lowRes) { window._clipLowRes = false; window._villageLook?.applyRes?.(); } console.warn('clip did not start', r); showToast('The clip did not start: try again.'); return false; }
+  if (!r?.ok) { clipCalmOff(); console.warn('clip did not start', r); showToast('The clip did not start: try again.'); return false; }
   VillageClip.on = true; VillageClip.max = clipMaxSec();
-  try { window.VillageMP?.hold?.(true); } catch (e) {} // (phones: no new full models of other players while it records)
   clearInterval(VillageClip.timer); VillageClip.timer = setInterval(paintVillageClip, 250);
   paintVillageClip();
   return true;
@@ -12842,8 +12850,7 @@ async function startVillageClip() {
 async function stopVillageClip(why) {
   if (!VillageClip.on || VillageClip.busy) return null;
   VillageClip.on = false; VillageClip.busy = true; clearInterval(VillageClip.timer); paintVillageClip();
-  try { window.VillageMP?.hold?.(false); } catch (e) {}
-  if (window._clipLowRes) { window._clipLowRes = false; try { window._villageLook?.applyRes?.(); } catch (e) {} } // (the phone's own resolution again)
+  // (a phone stays as it recorded until the clip's card closes: closeVillagePhoto -> clipCalmOff)
   // (a clip that is dropped anyway (under 1.5 s, leaving the page) doesn't wait for the encoder; a slow encoder gets a
   // word while it finishes)
   const quick = why === 'leave' || window.ClipRecorder.seconds < 1.5;
@@ -12856,10 +12863,11 @@ async function stopVillageClip(why) {
   VillageClip.busy = false;
   if (quick) {
     if (res) URL.revokeObjectURL(res.url);
+    clipCalmOff();
     if (why !== 'leave') showToast('Too short for a clip: keep it going a little longer.');
     return null;
   }
-  if (!res?.bytes) { showToast('The clip came out empty: try again.'); return null; }
+  if (!res?.bytes) { clipCalmOff(); showToast('The clip came out empty: try again.'); return null; }
   badgeStat('clips');
   openVillageClipCard(res, why);
   return res;
