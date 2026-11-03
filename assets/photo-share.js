@@ -241,7 +241,10 @@
       g.drawImage(over, 0, 0);
       return true;
     }
-    return { W: w, H: h, L, ys, frame };
+    // free(): the stage's canvases let go at once when the clip ends (an iPhone keeps a canvas's memory until it is
+    // collected: clips one after another piled it up, and the fourth restarted the page)
+    const free = () => { for (const c of [under, over, back, shot]) { c.width = 0; c.height = 0; } };
+    return { W: w, H: h, L, ys, frame, free };
   }
 
   window.PhotoShare = { compose, clipStage, TEXT, LINK, size: { W, H }, clipSize: { W: CLIP.W, H: CLIP.H } };

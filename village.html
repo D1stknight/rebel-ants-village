@@ -12877,7 +12877,8 @@ function openVillageClipCard(res, why) {
   VillageClip.res = res;
   const ov = document.getElementById('photoOverlay'), v = document.getElementById('clipVideo');
   ov.classList.add('clip');
-  if (v) { v.src = res.url; v.muted = true; v.play?.()?.catch?.(() => {}); }
+  // (a phone starts the clip's video a moment later: the recorder has just let go of its encoder and canvases)
+  if (v) { v.src = res.url; v.muted = true; const play = () => { if (VillageClip.res === res) v.play?.()?.catch?.(() => {}); }; if (photoOnPhone()) setTimeout(play, 800); else play(); }
   document.querySelector('#photoOverlay .ph-cap').textContent = `${villagePhotoCaption()} · ${clipTime(res.ms / 1000)} · ${clipSize(res.bytes)}`;
   photoMsg(`${why === 'max' ? `That's ${clipTime(VillageClip.max)}, as long as a clip goes. ` : why === 'hidden' ? 'The clip stopped when Universe went to the background. ' : ''}This clip is only on this page: save or share it before you close.`);
   paintVillagePhotoShare();

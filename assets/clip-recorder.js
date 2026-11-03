@@ -167,6 +167,10 @@
     if (rec.vis) document.removeEventListener('visibilitychange', rec.vis);
     try { rec.vtrack?.stop(); } catch (e) {}
     try { rec.mix?.close(); } catch (e) {}
+    // the clip's canvases let go at once (an iPhone keeps a canvas's memory until it is collected: clips one after
+    // another piled it up, and the fourth restarted the page); the size is kept for the result
+    try { rec.stage?.free?.(); } catch (e) {}
+    try { if (rec.out && rec.out.width) { rec.w = rec.out.width; rec.h = rec.out.height; rec.out.width = 0; rec.out.height = 0; } } catch (e) {}
   }
   // o.quick: no waiting for the encoder (a clip the page drops anyway: too short)
   async function stop(o = {}) {
@@ -210,7 +214,7 @@
     const blob = new Blob(rec.chunks, { type }); rec.chunks = [];
     // (a file with no picture in it, only the container's own bits: a 720 x 1280 frame is tens of KB)
     if (blob.size < 4096) return null;
-    return { blob, url: URL.createObjectURL(blob), type, ext: /mp4/.test(type) ? 'mp4' : 'webm', ms, bytes: blob.size, w: rec.out.width, h: rec.out.height, frames: rec.frames };
+    return { blob, url: URL.createObjectURL(blob), type, ext: /mp4/.test(type) ? 'mp4' : 'webm', ms, bytes: blob.size, w: rec.w || rec.out.width, h: rec.h || rec.out.height, frames: rec.frames };
   }
 
   window.ClipRecorder = {
