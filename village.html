@@ -57,6 +57,9 @@ html.vt-touch #ctrlPanelBtn{display:block}
   backdrop-filter:blur(12px);
   z-index:12;
 }
+/* folded until the player opens it (the HUD's own copy of this rule only arrives once the HUD starts, after the village
+   is ready: until then the panel showed open, then closed) */
+body:not(.rebel-panel-open) #selectedRebelPanel{display:none}
 #selectedRebelImage{
   width:56px;
   height:56px;
@@ -432,6 +435,9 @@ html.vt-touch #wb.on .wb-label{display:none}
 #ld{position:fixed;inset:0;background:#020818;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;transition:opacity .9s}
 #ld h1{font-family:'Cinzel Decorative',serif;font-size:30px;color:#e8c56a;letter-spacing:5px;margin-bottom:10px;text-shadow:0 0 40px rgba(232,197,106,.6)}
 #ld .sub{font-size:10px;color:#5ecfca;letter-spacing:7px;text-transform:uppercase;margin-bottom:48px;animation:pulse 2s infinite}
+/* the title and its line wait for their own fonts (else they showed in the fallback serif, then blinked): #ld gets .fonts once
+   both are in, or after 3 s (fonts blocked or slow) */
+#ld h1{transition:opacity .35s}#ld:not(.fonts) h1{opacity:0;transition:none}#ld:not(.fonts) .sub{visibility:hidden}/* .sub's pulse animates its opacity */
 #ldst{font-size:10px;color:rgba(232,197,106,.45);letter-spacing:2px;margin-top:18px;text-transform:uppercase;text-align:center}
 #ldProblem{box-sizing:border-box;width:min(520px,calc(100vw - 32px));margin-top:22px;padding:18px 20px;border:1px solid rgba(232,197,106,.35);border-radius:14px;background:rgba(10,16,32,.9);color:#e9e2cc;font-size:14px;line-height:1.5;text-align:left}
 #ldProblem h2{margin:0 0 8px;font-size:17px;color:#e8c56a;letter-spacing:.5px}
@@ -746,6 +752,20 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
 </head>
 <body>
 <div id="ld"><h1>REBEL ANTS</h1><div class="sub">Building the Hidden Village...</div><div class="lb"><div class="lf"></div></div><div id="ldst">Initializing...</div></div>
+<script>
+(function () {
+  var ld = document.getElementById('ld'), done = false;
+  function show() { if (!done) { done = true; ld.classList.add('fonts'); } }
+  try {
+    var F = document.fonts, a = "700 30px 'Cinzel Decorative'", b = "400 10px 'Noto Serif JP'", t = 'BUILDING THE HIDDEN VILLAGE...';
+    if (!F || !F.load) return show();
+    if (F.check(a, 'REBEL ANTS') && F.check(b, t)) return show();
+    setTimeout(show, 3000);
+    var n = 2; function one() { if (--n === 0) show(); } // both settled (a font that fails doesn't cut the other's wait short)
+    F.load(a, 'REBEL ANTS').then(one, one); F.load(b, t).then(one, one);
+  } catch (e) { show(); }
+})();
+</script>
 <div id="assetPanel">
   <div class="ap-header"><span>Assets</span><kbd>M</kbd></div>
   <div class="ap-search-wrap">
@@ -1921,11 +1941,11 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
 
 <script src="assets/site-report.js"></script>
 <script src="assets/audio-unlock.js"></script>
-<script src="assets/vendor/babylon/9.31.3/babylon.js"></script>
-<script src="assets/vendor/babylon/9.31.3/babylonjs.loaders.min.js"></script>
-<script src="assets/vendor/babylon/9.31.3/babylonjs.materials.min.js"></script>
+<script src="assets/vendor/babylon/9.33.2/babylon.js"></script>
+<script src="assets/vendor/babylon/9.33.2/babylonjs.loaders.min.js"></script>
+<script src="assets/vendor/babylon/9.33.2/babylonjs.materials.min.js"></script>
 <script src="assets/site-files.js"></script>
-<script>if (window.BABYLON) BABYLON.Tools.ScriptBaseUrl = window.BABYLON_BASE = new URL('assets/vendor/babylon/9.31.3/', location.href).href; // Babylon's own extra downloads (Draco, ...) come from the same copy (tools/babylon-upgrade.mjs)</script>
+<script>if (window.BABYLON) BABYLON.Tools.ScriptBaseUrl = window.BABYLON_BASE = new URL('assets/vendor/babylon/9.33.2/', location.href).href; // Babylon's own extra downloads (Draco, ...) come from the same copy (tools/babylon-upgrade.mjs)</script>
 <script src="assets/forge-core.js"></script>
 <script src="assets/village-hud.js"></script>
 <script src="assets/village-weather.js"></script>
@@ -12588,7 +12608,7 @@ window._skillBar = SkillBar; // tests
 // TikTok save the picture, copy the caption and open their site. More = the share sheet where there is one, else the
 // picture copied, else saved. Save saves the style picked. Messages show in the card (the page's toasts sit under it).
 const VillagePhoto = { url:null, blob:null, caption:'', busy:false, gen:0, pol:null, polFailed:false, style:null };
-const VillageClip = { on:false, busy:false, res:null, max:60, timer:0 }; // (the clips, after the photo's code)
+const VillageClip = { on:false, busy:false, res:null, max:60, timer:0, calm:false }; // (the clips, after the photo's code)
 const PHOTO_STYLE_KEY = 'rebelAntsPhotoStyle:v1';
 const PHOTO_APPS = { x: 'X', instagram: 'Instagram', tiktok: 'TikTok', discord: 'Discord' };
 // Discord (Nov 1): phones share through the sheet like the others; computers copy the picture and open the Rebel Ants
@@ -12621,7 +12641,15 @@ async function takeVillagePhoto(caption) {
   } catch (e) { console.warn('photo failed', e); showToast('The camera jammed. Try again.'); return false; }
   finally { if (guide) guide.setEnabled(guideOn); VillagePhoto.busy = false; }
 }
-function closeVillagePhoto() { document.getElementById('photoOverlay')?.classList.remove('on'); photoMsg(''); dropVillageClip(); }
+function closeVillagePhoto() { document.getElementById('photoOverlay')?.classList.remove('on'); photoMsg(''); dropVillageClip(); clipCalmOff(); }
+// a phone recording a clip (and showing it after) draws the 3D at 1x and loads no new full models of other players
+// (startVillageClip); back to normal once the clip's card closes: its own resolution at once, other players' full models
+// 3 s later (Nov 3: an iPhone in a crowd of 44 started the page again the moment a clip stopped, when the 3D went back to
+// full size, the nearest players' full models began loading and the clip's video started playing, all at once)
+function clipCalmOff() {
+  if (window._clipLowRes) { window._clipLowRes = false; try { window._villageLook?.applyRes?.(); } catch (e) {} }
+  if (VillageClip.calm) { VillageClip.calm = false; setTimeout(() => { if (!VillageClip.on && !VillageClip.calm) { try { window.VillageMP?.hold?.(false); } catch (e) {} } }, 3000); }
+}
 // the style to share: the player's pick (Polaroid unless they chose Photo), Photo when the polaroid can't be made
 function villagePhotoStyle() {
   if (!VillagePhoto.style) { let s = null; try { s = localStorage.getItem(PHOTO_STYLE_KEY); } catch (e) {} VillagePhoto.style = s === 'photo' ? 'photo' : 'polaroid'; }
@@ -12792,18 +12820,26 @@ async function startVillageClip() {
   const CR = window.ClipRecorder;
   if (!CR?.supported()) { showToast("This browser can't record clips: take a photo instead (P)."); return false; }
   VillageClip.busy = true;
+  // phones: the 3D draws at the CSS pixels while it records (a quarter of the pixels at 2x; the clip's picture is smaller
+  // than that): each clip frame copies the whole 3D picture, slow on a phone (Nov 3: an iPhone lagged recording alone and
+  // started the page again recording in a crowd of 44)
+  const lowRes = photoOnPhone() && engine.getHardwareScalingLevel() < 1;
+  if (lowRes) { window._clipLowRes = true; engine.setHardwareScalingLevel(1); }
+  if (photoOnPhone()) { VillageClip.calm = true; try { window.VillageMP?.hold?.(true); } catch (e) {} } // (no new full models of other players)
   let r = null;
   try {
     r = await CR.start({
-      canvas: engine.getRenderingCanvas(), caption: villagePhotoCaption(), maxSec: clipMaxSec(), light: CRASH_LIGHT > 0,
-      bitrate: photoOnPhone() ? 2000000 : 2500000, elements: villageAudioElements,
+      // phones: 540 x 960 without the blur filter, at most 24 frames a second and fewer while the game is slow (an iPhone in
+      // a crowd of 44 lagged, then started the page again while recording)
+      canvas: engine.getRenderingCanvas(), caption: villagePhotoCaption(), maxSec: clipMaxSec(), light: CRASH_LIGHT > 0 || photoOnPhone(),
+      fps: photoOnPhone() ? 24 : 30, adaptive: photoOnPhone(), bitrate: photoOnPhone() ? 1500000 : 2500000, elements: villageAudioElements,
       // each frame the game has just drawn (its picture is still there to copy)
       onFrame: (fn) => { const o = engine.onEndFrameObservable.add(fn); return () => engine.onEndFrameObservable.remove(o); },
       onAuto: (why) => { stopVillageClip(why); }
     });
   } catch (e) { r = { ok: false, reason: 'error', error: String(e?.message || e) }; }
   VillageClip.busy = false;
-  if (!r?.ok) { console.warn('clip did not start', r); showToast('The clip did not start: try again.'); return false; }
+  if (!r?.ok) { clipCalmOff(); console.warn('clip did not start', r); showToast('The clip did not start: try again.'); return false; }
   VillageClip.on = true; VillageClip.max = clipMaxSec();
   clearInterval(VillageClip.timer); VillageClip.timer = setInterval(paintVillageClip, 250);
   paintVillageClip();
@@ -12814,6 +12850,7 @@ async function startVillageClip() {
 async function stopVillageClip(why) {
   if (!VillageClip.on || VillageClip.busy) return null;
   VillageClip.on = false; VillageClip.busy = true; clearInterval(VillageClip.timer); paintVillageClip();
+  // (a phone stays as it recorded until the clip's card closes: closeVillagePhoto -> clipCalmOff)
   // (a clip that is dropped anyway (under 1.5 s, leaving the page) doesn't wait for the encoder; a slow encoder gets a
   // word while it finishes)
   const quick = why === 'leave' || window.ClipRecorder.seconds < 1.5;
@@ -12826,10 +12863,11 @@ async function stopVillageClip(why) {
   VillageClip.busy = false;
   if (quick) {
     if (res) URL.revokeObjectURL(res.url);
+    clipCalmOff();
     if (why !== 'leave') showToast('Too short for a clip: keep it going a little longer.');
     return null;
   }
-  if (!res?.bytes) { showToast('The clip came out empty: try again.'); return null; }
+  if (!res?.bytes) { clipCalmOff(); showToast('The clip came out empty: try again.'); return null; }
   badgeStat('clips');
   openVillageClipCard(res, why);
   return res;
@@ -12839,7 +12877,8 @@ function openVillageClipCard(res, why) {
   VillageClip.res = res;
   const ov = document.getElementById('photoOverlay'), v = document.getElementById('clipVideo');
   ov.classList.add('clip');
-  if (v) { v.src = res.url; v.muted = true; v.play?.()?.catch?.(() => {}); }
+  // (a phone starts the clip's video a moment later: the recorder has just let go of its encoder and canvases)
+  if (v) { v.src = res.url; v.muted = true; const play = () => { if (VillageClip.res === res) v.play?.()?.catch?.(() => {}); }; if (photoOnPhone()) setTimeout(play, 800); else play(); }
   document.querySelector('#photoOverlay .ph-cap').textContent = `${villagePhotoCaption()} · ${clipTime(res.ms / 1000)} · ${clipSize(res.bytes)}`;
   photoMsg(`${why === 'max' ? `That's ${clipTime(VillageClip.max)}, as long as a clip goes. ` : why === 'hidden' ? 'The clip stopped when Universe went to the background. ' : ''}This clip is only on this page: save or share it before you close.`);
   paintVillagePhotoShare();
@@ -31207,6 +31246,7 @@ refreshQuestBuilderOptions();
   const dpr = Math.max(1, LITE_GRAPHICS ? Math.min([2, 1.5, 1][CRASH_LIGHT], window.devicePixelRatio || 1) : (window.devicePixelRatio || 1));
   const levels = [1 / dpr]; if (dpr >= 1.75) levels.push(1 / 1.5); if (dpr > 1.01) levels.push(1);
   let li = 0, low = 0, high = 0;
+  window._villageLook.applyRes = () => engine.setHardwareScalingLevel(levels[li]); // (after a clip on a phone: startVillageClip)
   const pinned = qs.get('res') === 'native';
   // Each sharper level remembers how often it was too slow. It used to bounce forever:
   // 2x drops to 1.5x at ~40 fps, 1.5x hits 60, climbs back to 2x after 6 s, drops again (FPS readout swinging 35-60).
@@ -31215,7 +31255,7 @@ refreshQuestBuilderOptions();
   const lastDropAt = levels.map(() => 0);
   const RETRY_AFTER_MS = 30000, MAX_FAILS = 2;
   setInterval(() => {
-    if (document.visibilityState !== 'visible') { low = high = 0; return; }
+    if (document.visibilityState !== 'visible' || window._clipLowRes) { low = high = 0; return; } // (a phone recording a clip draws at 1x meanwhile)
     const fps = engine.getFps();
     if (fps < 42) { low++; high = 0; } else if (fps > 57) { high++; low = 0; } else { low = high = 0; }
     if (low >= 2) {
@@ -31271,8 +31311,16 @@ engine.runRenderLoop(()=>{
     // angle) instead of steering round in a wide arc. R alone runs straight ahead.
     const inF = (moveForward ? 1 : 0) - (moveBackward ? 1 : 0), inR = (turnRight ? 1 : 0) - (turnLeft ? 1 : 0);
     let dirX = 0, dirZ = 0;
-    const _keysNow = inF + ',' + inR;
-    if (inF || inR) {
+    const _keysNow = inF + ',' + inR, _ax = (inF || inR) ? window.VillageTouch?.axis : null;
+    if (_ax) {
+      // Nov 3 the phone stick walks at its own angle (VillageTouch.axis), always from the screen as it is: up is away
+      // from the camera, right is to the screen's right, wherever the thumb goes (no 8 directions, no jumps). The
+      // camera follows behind only gently while the stick is used (below), so holding it to a side walks a straight
+      // line instead of circling round the swinging camera.
+      const fx = -Math.sin(_orbitAngleH), fz = -Math.cos(_orbitAngleH), ca = Math.cos(_ax.a), sa = Math.sin(_ax.a);
+      const dx = fx * ca + fz * sa, dz = fz * ca - fx * sa, l = Math.hypot(dx, dz) || 1;
+      dirX = dx / l; dirZ = dz / l; _moveRefKeys = '';
+    } else if (inF || inR) {
       // the direction is taken from the camera when the keys change (or while the mouse turns it), then kept
       if (_keysNow !== _moveRefKeys || _moveRefYaw === null || performance.now() < _camManualUntil) { _moveRefYaw = _orbitAngleH; _moveRefKeys = _keysNow; }
       const fx = -Math.sin(_moveRefYaw), fz = -Math.cos(_moveRefYaw); // the camera's forward on the ground; its right is (fz, -fx)
@@ -31319,9 +31367,12 @@ engine.runRenderLoop(()=>{
     if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8*(window._walkLightK??1)*(MiniGames.on?(MiniGames.walkLight??1):1);updateSandFootprints(SWIM.on ? NaN : _terrainY);}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
     // the camera swings round behind the character while it moves (about two seconds for a half turn at a walk, quicker
     // running), unless the mouse just turned it: walking out of a doorway toward the camera, it comes round behind
+    // (the phone stick: gently, most when it points away from the camera and not at all from its sides on: a walk to the
+    // side goes straight on, a diagonal curves slowly, a walk away from the camera brings it round behind)
     if (hasDir && Math.abs(charMesh._vel) > .01 && performance.now() > _camManualUntil && !DanceOff.on) {
       const _d = charMesh.rotation.y + Math.PI - _orbitAngleH, da = Math.atan2(Math.sin(_d), Math.cos(_d));
-      _orbitAngleH += da * (1 - Math.exp(-(runKey ? 2.4 : 1.5) * dt));
+      const _sk = _ax ? (runKey ? 0.7 : 0.45) * Math.max(0, Math.cos(_ax.a)) ** 2 : (runKey ? 2.4 : 1.5);
+      _orbitAngleH += da * (1 - Math.exp(-_sk * dt));
     }
     // the camera keeps its distance when running (it used to back out to 13.5 m, so the character looked a third smaller)
     _orbitDist+=(9-_orbitDist)*0.06;
@@ -31671,7 +31722,7 @@ function startVillageMultiplayer() {
   if (!window.VillageMP || startVillageMultiplayer.on) return;
   startVillageMultiplayer.on = true;
   window.VillageMP.start({
-    scene, village: CURRENT_VILLAGE_ID, lite: LITE_GRAPHICS, maxFull: CRASH_LIGHT ? [4, 2, 1][CRASH_LIGHT] : undefined, maxLite: CRASH_LIGHT ? [10, 4, 0][CRASH_LIGHT] : undefined,
+    scene, village: CURRENT_VILLAGE_ID, lite: LITE_GRAPHICS, maxFull: CRASH_LIGHT ? [4, 2, 1][CRASH_LIGHT] : undefined, maxLite: CRASH_LIGHT ? [40, 20, 10][CRASH_LIGHT] : undefined,
     shadows: () => shadows,
     player: () => charMesh ? { x: charMesh.position.x, y: charMesh.position.y, z: charMesh.position.z, yaw: charMesh.rotation.y, anim: mpAnimName(),
       interior: ActiveInterior ? String(ActiveInterior.targetInteriorId || ActiveInterior.interiorType || 'room') : null } : null,

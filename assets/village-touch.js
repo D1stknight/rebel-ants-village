@@ -94,6 +94,10 @@ html.vt-touch #photoBtn{display:none!important}
     [...next].filter((k) => !held.has(k)).sort((a, b) => order(a) - order(b)).forEach((k) => press(k, true));
     held = next;
   }
+  // Nov 3 (Miguel: "make the joystick on phone smoother"): the walk takes the stick's own angle (VT.axis, read by
+  // village.html's walk), not one of 8 directions; the keys still go down for everything that asks whether the Rebel
+  // walks or runs. Run comes on past 82 % of the rim and goes off under 74 % (no flicker at the edge).
+  VT.axis = null;
   function stickAt(clientX, clientY) {
     const r = stick.getBoundingClientRect(), R = r.width / 2;
     let dx = clientX - (r.left + R), dy = clientY - (r.top + R);
@@ -106,13 +110,14 @@ html.vt-touch #photoBtn{display:none!important}
       const sector = Math.round(a / (Math.PI / 4));
       const keys = { 0: 'w', 1: 'wd', 2: 'd', 3: 'sd', 4: 's', '-4': 's', '-3': 'sa', '-2': 'a', '-1': 'wa' }[sector] || '';
       for (const k of keys) next.add(k);
-      if (d > R * 0.82) next.add('r');
-    }
+      if (d > R * (held.has('r') ? 0.74 : 0.82)) next.add('r');
+      VT.axis = { a, m: Math.min(1, d / max) };
+    } else VT.axis = null;
     stick.classList.toggle('run', next.has('r'));
     hold(next);
   }
   function stickEnd() {
-    stickId = null; knob.style.transform = ''; stick.classList.remove('run'); hold(new Set());
+    stickId = null; VT.axis = null; knob.style.transform = ''; stick.classList.remove('run'); hold(new Set());
   }
   stick.addEventListener('pointerdown', (e) => { e.preventDefault(); stickId = e.pointerId; try { stick.setPointerCapture(e.pointerId); } catch (_) {} stickAt(e.clientX, e.clientY); });
   stick.addEventListener('pointermove', (e) => { if (e.pointerId === stickId) { e.preventDefault(); stickAt(e.clientX, e.clientY); } });

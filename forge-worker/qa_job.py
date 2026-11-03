@@ -197,7 +197,14 @@ if NPC or FRIEND:   # friend players: strays, arms fused, head snaps (their clip
         lim = {'idle': 6, 'talking': 6, 'walk': 9}.get(c)                    # the master walk leans ~6 deg on every Rebel
         if lim and max(abs(q['lean'][0]), abs(q['lean'][1])) > lim: reasons.append(f"{c}: body leans {q['lean']} deg from its rest pose")
         if q['floorCm'] < -3: reasons.append(f"{c}: sinks {-q['floorCm']} cm into the floor")
+# v2.44 Rebels too: a neck / head that turns more than 45 deg in one frame in a clip headfix levels (the mocap jump turned
+# #001's neck round 158 deg, the roundhouse dropped every Rebel's head onto the chest) is a review, never a pass
+snaps = {}
+if not (NPC or FRIEND):
+    HSKIP = set(os.environ.get('FORGE_HEAD_SKIP', 'cartwheel,backflip,front_flip,flip_kick,spin_flip_kick,knockdown,get_up').split(','))
+    snaps = {a_.name: round(p_, 1) for a_ in bpy.data.actions if a_.name not in HSKIP and a_.layers for p_ in [head_pop(a_)] if p_ > 45}
+    for c, v in snaps.items(): reasons.append(f"{c}: head snaps {v} deg in one frame")
 reasons = fails + reasons
-res = {'verdict': 'fail' if fails else ('review' if reasons else 'pass'), 'reasons': reasons, 'stretch': stretch, 'glb': glbinfo, 'rig': rig, 'rest': {'width': round(Wd / H, 3), 'depth': round(Dp / H, 3)}, **({'npc': npc} if NPC or FRIEND else {})}
+res = {'verdict': 'fail' if fails else ('review' if reasons else 'pass'), 'reasons': reasons, 'stretch': stretch, 'glb': glbinfo, 'rig': rig, 'rest': {'width': round(Wd / H, 3), 'depth': round(Dp / H, 3)}, **({'npc': npc} if NPC or FRIEND else {'headSnaps': snaps})}
 json.dump(res, open(out, 'w'), indent=1)
 print('qa', res['verdict'], reasons)

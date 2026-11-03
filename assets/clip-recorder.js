@@ -6,7 +6,9 @@
 // browser's own video encoder (MediaRecorder: H.264 in an MP4 where the browser has it, else WebM) records that canvas
 // with the game's sound. Only the 3D view goes in, never the page's buttons, chat or other players' voices. The clip is
 // a Blob in this page's memory: nothing is uploaded or stored; the page drops it when the card closes.
-//   ClipRecorder.start({ canvas, onFrame(fn) -> off, caption, maxSec, light, bitrate, elements() -> [audio], onAuto(why) })
+//   ClipRecorder.start({ canvas, onFrame(fn) -> off, caption, maxSec, light, fps, adaptive, bitrate, elements() -> [audio], onAuto(why) })
+//   light: 540 x 960 and no blur filter (phones); fps: at most (30); adaptive: fewer frames while the game itself is slow
+//   (Nov 3: Miguel's iPhone started the page again while recording in a crowd of 44: it lagged, then restarted)
 //     -> { ok, reason }; ClipRecorder.stop() -> { blob, url, type, ext, ms, bytes, w, h } | null
 // Sound: assets/audio-unlock.js taps every AudioContext's way to the speakers (the voices' context stays out); this
 // mixes those taps, plus the page's <audio> elements that play outside Web Audio (computers: the music and ambience;
@@ -88,9 +90,9 @@
     const mix = o.audio === false ? null : openMix(o.elements);
     rec.mix = mix;
     try {
-      const stage = await window.PhotoShare.clipStage({ srcW: src.width, srcH: src.height, caption: o.caption || '' });
+      const stage = await window.PhotoShare.clipStage({ srcW: src.width, srcH: src.height, caption: o.caption || '', plain: !!o.light });
       if (R !== rec) { mix?.close(); return { ok: false, reason: 'stopped' }; }
-      const k = o.light ? 0.75 : 1; // (a phone that ran out of memory: 540 x 960)
+      const k = o.light ? 0.75 : 1; // (phones: 540 x 960)
       const out = document.createElement('canvas'); out.width = Math.round(stage.W * k); out.height = Math.round(stage.H * k);
       const g = out.getContext('2d', { alpha: false }); if (k !== 1) g.setTransform(k, 0, 0, k, 0, 0);
       // the first frame is drawn before the video starts, so the clip never opens on a blank picture (a video's first
@@ -132,10 +134,14 @@
       mr.start(); // (one piece at the end: Safari's MP4 pieces don't always join into a playable file)
       firstAgain();
       const gap = 1000 / Math.min(30, o.fps || 30) - 4;
+      // adaptive: a clip frame at most every 1.6 game frames while the game is slow (its own frames over the gap), so a
+      // struggling phone isn't also asked to copy and encode every frame it barely draws
+      let prev = 0, avg = 0;
       rec.off = o.onFrame(() => {
         if (rec.stopping) return;
         const now = performance.now();
-        if (now - rec.last < gap) return;
+        if (prev) { const d = Math.min(500, now - prev); avg = avg ? avg * 0.9 + d * 0.1 : d; } prev = now;
+        if (now - rec.last < (o.adaptive ? Math.max(gap, avg * 1.6 - 4) : gap)) return;
         rec.last = now;
         try { if (!stage.frame(g, src)) return; } catch (e) { return; }
         if (!rec.t0) rec.t0 = now;
@@ -161,6 +167,10 @@
     if (rec.vis) document.removeEventListener('visibilitychange', rec.vis);
     try { rec.vtrack?.stop(); } catch (e) {}
     try { rec.mix?.close(); } catch (e) {}
+    // the clip's canvases let go at once (an iPhone keeps a canvas's memory until it is collected: clips one after
+    // another piled it up, and the fourth restarted the page); the size is kept for the result
+    try { rec.stage?.free?.(); } catch (e) {}
+    try { if (rec.out && rec.out.width) { rec.w = rec.out.width; rec.h = rec.out.height; rec.out.width = 0; rec.out.height = 0; } } catch (e) {}
   }
   // o.quick: no waiting for the encoder (a clip the page drops anyway: too short)
   async function stop(o = {}) {
@@ -204,7 +214,7 @@
     const blob = new Blob(rec.chunks, { type }); rec.chunks = [];
     // (a file with no picture in it, only the container's own bits: a 720 x 1280 frame is tens of KB)
     if (blob.size < 4096) return null;
-    return { blob, url: URL.createObjectURL(blob), type, ext: /mp4/.test(type) ? 'mp4' : 'webm', ms, bytes: blob.size, w: rec.out.width, h: rec.out.height, frames: rec.frames };
+    return { blob, url: URL.createObjectURL(blob), type, ext: /mp4/.test(type) ? 'mp4' : 'webm', ms, bytes: blob.size, w: rec.w || rec.out.width, h: rec.h || rec.out.height, frames: rec.frames };
   }
 
   window.ClipRecorder = {

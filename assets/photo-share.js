@@ -213,7 +213,9 @@
     // stretched over the clip; that canvas is big enough that browsers keep it on the graphics card (a smaller one
     // lives in memory, and drawing the game's frame into it reads the whole frame back every time)
     const back = canvas(w / 6, h / 6), bg = back.getContext('2d', { alpha: false });
-    const soft = typeof CanvasRenderingContext2D !== 'undefined' && 'filter' in CanvasRenderingContext2D.prototype;
+    // (opts.plain: no canvas filter, phones: on a busy phone a blur filter on every frame of a clip cost too much; the
+    // small canvas stretched with smoothing is soft anyway)
+    const soft = !opts.plain && typeof CanvasRenderingContext2D !== 'undefined' && 'filter' in CanvasRenderingContext2D.prototype;
     function backdropOf(g, src, iw, ih) {
       const bw = back.width, bh = back.height, s = Math.max(bw / iw, bh / ih) * 1.08, dw = iw * s, dh = ih * s;
       bg.imageSmoothingEnabled = true; bg.imageSmoothingQuality = 'medium';
@@ -222,16 +224,27 @@
       g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'low';
       g.drawImage(back, 0, 0, w, h);
     }
+    // the game's frame is copied once a clip frame, at most 960 px tall, and the backdrop and the print are drawn from that
+    // copy: each draw of the 3D canvas makes the browser copy its whole picture off the graphics card, slow on a phone
+    // (Nov 3: the backdrop and the print copied it twice, at the phone's full resolution)
+    const shot = canvas(2, 2), sg = shot.getContext('2d', { alpha: false });
     function frame(g, src) {
       const iw = src.videoWidth || src.width, ih = src.videoHeight || src.height;
       if (!iw || !ih) return false;
-      backdropOf(g, src, iw, ih);
+      const k = Math.min(1, 960 / ih), sw = Math.max(1, Math.round(iw * k)), sh = Math.max(1, Math.round(ih * k));
+      if (shot.width !== sw || shot.height !== sh) { shot.width = sw; shot.height = sh; }
+      sg.imageSmoothingEnabled = true; sg.imageSmoothingQuality = 'medium';
+      sg.drawImage(src, 0, 0, sw, sh);
+      backdropOf(g, shot, sw, sh);
       g.drawImage(under, 0, 0);
-      picture(g, L, src, crop(L, iw, ih), 'medium');
+      picture(g, L, shot, crop(L, sw, sh), 'medium');
       g.drawImage(over, 0, 0);
       return true;
     }
-    return { W: w, H: h, L, ys, frame };
+    // free(): the stage's canvases let go at once when the clip ends (an iPhone keeps a canvas's memory until it is
+    // collected: clips one after another piled it up, and the fourth restarted the page)
+    const free = () => { for (const c of [under, over, back, shot]) { c.width = 0; c.height = 0; } };
+    return { W: w, H: h, L, ys, frame, free };
   }
 
   window.PhotoShare = { compose, clipStage, TEXT, LINK, size: { W, H }, clipSize: { W: CLIP.W, H: CLIP.H } };

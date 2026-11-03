@@ -169,7 +169,7 @@ step cleanup;    run "$R/fixarm.py" -- "$O/anim6_ma.blend" "$O/anim6_fix.blend"
                  run "$R/smoothfix.py" -- "$O/anim6_ff1.blend" "$O/anim6_ff2.blend"
                  run "$R/layerfix.py" -- "$O/anim6_ff2.blend" "$O/anim6_ff2.blend"
 if [ -n "$FRIEND" ]; then run "$R/humanspine.py" -- "$O/anim6_ff2.blend" "$O/anim6_ff2.blend"; fi   # v2.38 Saints players (v2.39 Chumpz too): the guard leans from the waist
-                 run "$R/headfix.py" -- "$O/anim6_ff2.blend" "$O/anim6_ff.blend"   # v1.8 head carriage; v2.19 NPCs: yaw from the twist (no turn-round in the jump)
+                 run "$R/headfix.py" -- "$O/anim6_ff2.blend" "$O/anim6_ff.blend"   # v1.8 head carriage; v2.19 NPCs: yaw from the twist (no turn-round in the jump); v2.44 Rebels too where the facing flips, and no levelled key turns faster than the mocap + 15 deg (30 deg a frame at least)
                  run "$R/armpitfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v1.9c no shards under the arms
                  run "$R/armorfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # re-assert after the cloth cleanups
                  run "$R/seamfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v1.9d cut fingertips fused to the thigh
