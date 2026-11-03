@@ -4,6 +4,7 @@
 //   - polls the Meshy sculpt and stores the finished GLB in our Blob,
 //   - collects a finished rig job (rigged GLB, portrait, QA) so the result is saved even if nobody is watching.
 // When the player comes back the Forge picks up where it is (the versions wait to be picked; a finished rig awakens).
+import crypto from 'node:crypto';
 import { isAdminRequest, createAdminSessionToken } from './_admin-auth.mjs';
 import { redis } from './_wallet.mjs';
 import { FORGE_PRICE, settleDue } from './_forge-charge.mjs';
@@ -65,10 +66,12 @@ async function sweepOne(buildId) {
 export default async function handler(req, res) {
   res.setHeader?.('Cache-Control', 'no-store');
   const bearer = String(req.headers?.authorization || '');
-  // Vercel cron sends "Bearer CRON_SECRET" when that env var is set; without it, the cron user agent is accepted.
-  // A spoofed call can only make pending forges finish sooner, and one sweep runs at a time (lock below).
-  const ua = String(req.headers?.['user-agent'] || '');
-  const cronOk = process.env.CRON_SECRET ? bearer === `Bearer ${process.env.CRON_SECRET}` : /vercel-cron/i.test(ua);
+  // Vercel cron sends "Bearer CRON_SECRET" (set in the project). Without CRON_SECRET only a signed-in admin runs it:
+  // the cron's user agent alone is never enough (anyone can send it).
+  const secret = process.env.CRON_SECRET || '';
+  if (!secret) console.warn('[forge-sweep] CRON_SECRET is not set: the cron is refused (admins can still run it)');
+  const want = Buffer.from(`Bearer ${secret}`), got = Buffer.from(bearer);
+  const cronOk = !!secret && got.length === want.length && crypto.timingSafeEqual(got, want);
   if (!cronOk && !isAdminRequest(req)) return res.status(401).json({ ok: false, error: 'Cron or admin only' });
   try {
     const [lock] = await redis([['SET', 'forge:sweep:lock:v1', '1', 'NX', 'EX', 240]]);

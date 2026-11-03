@@ -34009,46 +34009,52 @@ function getSafeInteriorUploadPath(path) {
   return clean;
 }
 
-async function getInteriorGitHubUploadAuth() {
-  const tokenResponse = await fetch('/api/github-upload-token', { cache:'no-store' });
-  const tokenRaw = await tokenResponse.text().catch(() => '');
-  let tokenResult = {};
+// Admin uploads go through the site (/api/admin-upload, Nov 2): the server commits the file to dev with its own GitHub
+// key, the file sent in pieces of up to 3 MB (a request to the site takes 4.5 MB at most). The browser never sees the key.
+async function adminUploadCall(body) {
+  const response = await fetch('/api/admin-upload', {
+    method:'POST',
+    credentials:'same-origin',
+    cache:'no-store',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify(body)
+  });
+  const raw = await response.text().catch(() => '');
+  let result = {};
   try {
-    tokenResult = tokenRaw ? JSON.parse(tokenRaw) : {};
+    result = raw ? JSON.parse(raw) : {};
   } catch(e) {
-    tokenResult = { error: tokenRaw || tokenResponse.statusText || 'Could not prepare GitHub upload' };
+    result = { error: raw.slice(0, 200) || response.statusText || 'Upload failed' };
   }
-  if (!tokenResponse.ok || !tokenResult.ok || !tokenResult.token) {
-    throw new Error(tokenResult.error || ('Could not prepare GitHub upload. Status: ' + tokenResponse.status));
+  if (!response.ok || !result.ok) throw new Error(result.error || ('Upload failed. Status: ' + response.status));
+  return result;
+}
+
+// kind: room | music | video | poster; label: the toast's words ('interior GLB'); returns the file's site path
+async function uploadAdminFileToRepo(file, kind, folder, label) {
+  const start = await adminUploadCall({ op:'start', kind, fileName: file.name, size: file.size, folder });
+  const pieces = start.chunks, step = start.chunkBytes;
+  for (let i = 0; i < pieces; i++) {
+    const data = await readFileAsBase64(file.slice(i * step, Math.min(file.size, (i + 1) * step)));
+    for (let tries = 1; ; tries++) {
+      try { await adminUploadCall({ op:'chunk', uploadId: start.uploadId, index: i, data }); break; }
+      catch(error) {
+        if (tries >= 3) throw error;
+        await new Promise(resolve => setTimeout(resolve, 1500 * tries));
+      }
+    }
+    if (pieces > 1) showToast('Uploading ' + label + '... ' + Math.round(100 * (i + 1) / pieces) + '%', 30000);
   }
-  return tokenResult;
+  showToast('Saving ' + label + ' to GitHub...', 60000);
+  const done = await adminUploadCall({ op:'finish', uploadId: start.uploadId });
+  return done.path;
 }
 
 async function deleteInteriorUploadFromGitHub(path) {
   const safePath = getSafeInteriorUploadPath(path);
   if (!safePath) return false;
-  const auth = await getInteriorGitHubUploadAuth();
-  const headers = {
-    Authorization:'Bearer ' + auth.token,
-    Accept:'application/vnd.github+json',
-    'Content-Type':'application/json'
-  };
-  const readResponse = await fetch(`https://api.github.com/repos/${auth.repo}/contents/${safePath}?ref=${auth.branch || 'dev'}`, { headers });
-  if (readResponse.status === 404) return false;
-  const current = await readResponse.json().catch(() => ({}));
-  if (!readResponse.ok || !current.sha) throw new Error(current.message || 'Could not find uploaded file in GitHub');
-  const deleteResponse = await fetch(`https://api.github.com/repos/${auth.repo}/contents/${safePath}`, {
-    method:'DELETE',
-    headers,
-    body: JSON.stringify({
-      message:'delete interior upload: ' + safePath,
-      sha: current.sha,
-      branch: auth.branch || 'dev'
-    })
-  });
-  const deleted = await deleteResponse.json().catch(() => ({}));
-  if (!deleteResponse.ok) throw new Error(deleted.message || 'Could not delete uploaded file from GitHub');
-  return true;
+  const result = await adminUploadCall({ op:'delete', path: safePath });
+  return !!result.deleted;
 }
 
 async function removeCustomInteriorUpload(kind) {
@@ -34309,34 +34315,7 @@ async function uploadInteriorFileToGitHub(file, kind) {
     : makeCustomInteriorId(document.getElementById('customInteriorName')?.value || file.name);
   const idInput = document.getElementById('customInteriorId');
   if (idInput) idInput.value = interiorId;
-  const tokenResult = await getInteriorGitHubUploadAuth();
-
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-  const path = `assets/interiors/custom/${interiorId}/${kind}-${Date.now()}-${safeName}`;
-  const uploadResponse = await fetch(`https://api.github.com/repos/${tokenResult.repo}/contents/${path}`, {
-    method:'PUT',
-    headers: {
-      Authorization:'Bearer ' + tokenResult.token,
-      Accept:'application/vnd.github+json',
-      'Content-Type':'application/json'
-    },
-    body: JSON.stringify({
-      message:'upload interior ' + kind + ': ' + file.name,
-      content: await readFileAsBase64(file),
-      branch: tokenResult.branch || 'dev'
-    })
-  });
-  const uploadRaw = await uploadResponse.text().catch(() => '');
-  let uploadResult = {};
-  try {
-    uploadResult = uploadRaw ? JSON.parse(uploadRaw) : {};
-  } catch(e) {
-    uploadResult = { message: uploadRaw || uploadResponse.statusText || 'GitHub upload failed' };
-  }
-  if (!uploadResponse.ok) {
-    throw new Error(uploadResult.message || ('GitHub upload failed. Status: ' + uploadResponse.status));
-  }
-  return '/' + path;
+  return uploadAdminFileToRepo(file, kind, interiorId, kind === 'music' ? 'interior music' : 'interior GLB');
 }
 
 function getInteriorVideoUploadFolderKey() {
@@ -34363,7 +34342,7 @@ function getInteriorVideoUploadStatus(file, kind = 'video') {
       { max:20, label:'Good', color:'#5ecfca', recommendation:'Good for one room video.' },
       { max:45, label:'Warning', color:'#ffca6a', recommendation:'Compress if possible before production.' },
       { max:95, label:'Large', color:'#ff9f6a', recommendation:'May upload, but expect slower deploy/load.' },
-      { max:Infinity, label:'Too Large', color:'#ff8b8b', recommendation:'GitHub browser uploads may fail above this size.' }
+      { max:Infinity, label:'Too Large', color:'#ff8b8b', recommendation:'Too large to upload: 95 MB at most.' }
     ];
   const status = limits.find(item => mb <= item.max) || limits[limits.length - 1];
   return { mb, ...status };
@@ -34379,35 +34358,8 @@ function renderInteriorVideoUploadStatus(elementId, file, kind = 'video', path =
 
 async function uploadInteriorVideoAssetToGitHub(file, kind) {
   if (!file) return '';
-  const tokenResult = await getInteriorGitHubUploadAuth();
-  const folderKey = getInteriorVideoUploadFolderKey();
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-  const prefix = kind === 'poster' ? 'poster' : 'video';
-  const path = `assets/video/interiors/${folderKey}/${prefix}-${Date.now()}-${safeName}`;
-  const uploadResponse = await fetch(`https://api.github.com/repos/${tokenResult.repo}/contents/${path}`, {
-    method:'PUT',
-    headers: {
-      Authorization:'Bearer ' + tokenResult.token,
-      Accept:'application/vnd.github+json',
-      'Content-Type':'application/json'
-    },
-    body: JSON.stringify({
-      message:'upload interior ' + prefix + ': ' + file.name,
-      content: await readFileAsBase64(file),
-      branch: tokenResult.branch || 'dev'
-    })
-  });
-  const uploadRaw = await uploadResponse.text().catch(() => '');
-  let uploadResult = {};
-  try {
-    uploadResult = uploadRaw ? JSON.parse(uploadRaw) : {};
-  } catch(e) {
-    uploadResult = { message: uploadRaw || uploadResponse.statusText || 'GitHub upload failed' };
-  }
-  if (!uploadResponse.ok) {
-    throw new Error(uploadResult.message || ('GitHub upload failed. Status: ' + uploadResponse.status));
-  }
-  return '/' + path;
+  const isPoster = kind === 'poster';
+  return uploadAdminFileToRepo(file, isPoster ? 'poster' : 'video', getInteriorVideoUploadFolderKey(), isPoster ? 'interior poster' : 'interior MP4');
 }
 
 async function handleInteriorVideoUpload(event) {
