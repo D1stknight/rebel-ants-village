@@ -1001,20 +1001,17 @@ function carveWater(H, W) {
   const wet = new Float32Array(N * N), dist = new Float32Array(N * N).fill(255);
   const cut = (k, target) => { if (target < H[k]) H[k] = target; };
   const bank = (d, w, halfW, depth, slope) => w + .25 - (depth + .25) * (1 - smooth(halfW * .4, halfW + 1.2, d)) + Math.max(0, d - (halfW + 1.2)) * slope;
-  // the river never stands over the pond's bowl (Nov 3, Miguel's shots: once the pond was lowered to its rim, its bowl cut
-  // the ground 0.1-3.7 m under the river's last 28 m and the water hung in the air): inside the bowl its level stays .3 m
-  // under the bowl's ground where it runs and over the pond's own level, still descending; its steep part is drawn as a
-  // cascade (buildWater)
-  // (only where the pond was lowered: a pond that held keeps its river as it was)
-  const bowlR = pond.r * 1.45 + 1.5 + 16, bowlAt = (x, z) => { const d = Math.hypot(x - pond.x, z - pond.z); return d < bowlR ? bank(d, pond.w, shoreAt(pond, Math.atan2(z - pond.z, x - pond.x), 4.1), W.depth + .6, .45) : Infinity; };
-  let iBowl = -1;
-  if (drop > 0) for (let i = iPool + 1; i < last; i++) {
-    const p = pts[i], o = W.halfW + 1.3; // (its middle and both sides: the shoreline wobbles, so the bowl does across it)
-    const cap = Math.min(bowlAt(p.x, p.z), bowlAt(p.x - p.dz * o, p.z + p.dx * o), bowlAt(p.x + p.dz * o, p.z - p.dx * o)) - .3;
-    if (cap === Infinity) continue;
-    if (iBowl < 0) iBowl = i;
-    p.inBowl = true; p.w = Math.max(pond.w + .05, Math.min(p.w, pts[i - 1].w - .015, cap));
-  }
+  // the river comes down to the pond's own level where it meets the pond's shoreline (Nov 3, Miguel's shots: once the
+  // pond was lowered to its rim, the river still came down to it only at the pond's middle, so its last 30 m hung up
+  // to 3.7 m over the pond's bowl and over its water): from the shoreline back up the river its level rises at most
+  // .15 a metre (gentler than the banks, so nothing below cuts them), never above where it was (a river that already
+  // meets its pond at its level, e.g. Samurai's, stays as it was)
+  let iShore = -1;
+  for (let i = iPool + 1; i <= last && iShore < 0; i++) { const p = pts[i]; if (Math.hypot(p.x - pond.x, p.z - pond.z) < shoreAt(pond, Math.atan2(p.z - pond.z, p.x - pond.x), 4.1)) iShore = i; }
+  if (iShore > 0 && pts[iShore].w - pond.w > .5) {
+    for (let i = iShore; i < last; i++) pts[i].w = pond.w + .05;
+    for (let i = iShore - 1; i > iPool; i--) { const w = pts[i + 1].w + .15 * (pts[i + 1].s - pts[i].s); if (w >= pts[i].w) break; pts[i].w = w; }
+  } else iShore = -1;
   const visit = (cx, cz, R, fn) => {
     const i0 = Math.max(0, Math.floor((cx - R + SIZE / 2) / CELL)), i1 = Math.min(N - 1, Math.ceil((cx + R + SIZE / 2) / CELL));
     const j0 = Math.max(0, Math.floor((cz - R + SIZE / 2) / CELL)), j1 = Math.min(N - 1, Math.ceil((cz + R + SIZE / 2) / CELL));
@@ -1024,22 +1021,11 @@ function carveWater(H, W) {
   const bankW = 12, lipP = pts[iLip];
   // cells behind the lip line (within 40 m of it) belong to the upper stream; nothing below may cut them
   const aboveLip = k => { const x = (k % N) * CELL - SIZE / 2 - lipP.x, z = ((k / N) | 0) * CELL - SIZE / 2 - lipP.z; return x * x + z * z < 1600 && x * lipP.dx + z * lipP.dz < .4; };
-  // a river point in the pond's bowl carves its banks (16.6 m round it) with the level the river has at the cell's place
-  // along it where that differs from its own by more than .3 m: at the foot of the cascade into the bowl the points at
-  // the pond's level cut the cascade's banks a metre under its water, and the points on it the ones below
-  const s0 = pts[iPool].s, s1 = pts[last].s;
-  const levelAt = (s) => {
-    s = Math.min(s1, Math.max(s0, s)); let lo = iPool, hi = last;
-    while (hi - lo > 1) { const m = (lo + hi) >> 1; if (pts[m].s <= s) lo = m; else hi = m; }
-    const a = pts[lo], b = pts[hi]; return a.w + (b.w - a.w) * Math.min(1, Math.max(0, (s - a.s) / Math.max(1e-6, b.s - a.s)));
-  };
   for (const p of pts) {
     const steep = p.kind !== 'river' ? 2.2 : .6;
     visit(p.x, p.z, W.halfW + 1.2 + bankW, (k, d) => {
       if (p.kind !== 'stream' && aboveLip(k)) return; // only the upper stream shapes the ground behind the lip: a cliff
-      let w = p.w;
-      if (p.inBowl) { const wl = levelAt(p.s + ((k % N) * CELL - SIZE / 2 - p.x) * p.dx + (((k / N) | 0) * CELL - SIZE / 2 - p.z) * p.dz); if (Math.abs(wl - p.w) > .3) w = wl; }
-      cut(k, bank(d, w, W.halfW, p.inPool ? 0 : p.kind === 'fall' ? 1.8 : W.depth, steep)); mark(k, d - W.halfW, 0);
+      cut(k, bank(d, p.w, W.halfW, p.inPool ? 0 : p.kind === 'fall' ? 1.8 : W.depth, steep)); mark(k, d - W.halfW, 0);
     });
   }
   // pool and pond: irregular shorelines (radius wobbles with the angle)
@@ -1053,7 +1039,7 @@ function carveWater(H, W) {
     const r = shore(pool, k, 1.3, .5); cut(k, bank(d, pool.w, r, W.depth + .5, .45 + 4.5 * smooth(-.1, .6, c))); mark(k, d - r, 0);
   });
   visit(pond.x, pond.z, pond.r * 1.45 + 1.5 + 16, (k, d) => { const r = shore(pond, k, 4.1); cut(k, bank(d, pond.w, r, W.depth + .6, .45)); mark(k, d - r, 0); });
-  return { pts, iLip, iPool, iBowl, pool, pond, halfW: W.halfW, wet, dist };
+  return { pts, iLip, iPool, iShore, pool, pond, halfW: W.halfW, wet, dist };
 }
 
 // Height read from a CreateGround-style vertex grid, triangle by triangle (exactly what is drawn).
@@ -1933,22 +1919,13 @@ function buildWater(scene, Wt, depth) {
   const iFallEnd = Math.min(Wt.iPool, P.findIndex((p, i) => i > Wt.iLip && p.inPool) + 1 || Wt.iPool);
   Wt.iFallEnd = iFallEnd;
   meshes.push(ribbon('waterFall', Wt.iLip, iFallEnd, fallMat, 1.0));
-  // the river ribbon starts at the pool's edge and ends inside the pond (less double-layered water); a river that runs
-  // down into a lowered pond's bowl ends at the shoreline (it comes down to the pond's level there, and over the pond's
-  // water it would lie on it, layer over layer)
-  const near = (p, c, f) => Math.hypot(p.x - c.x, p.z - c.z) < c.r * f, bowl = Wt.iBowl >= 0;
+  // the river ribbon starts at the pool's edge and ends inside the pond (less double-layered water); a river brought
+  // down to its pond's level ends just past the shoreline (over the pond's water it would lie on it, layer over layer)
+  const near = (p, c, f) => Math.hypot(p.x - c.x, p.z - c.z) < c.r * f;
   let iRiver0 = Wt.iPool; while (iRiver0 < last && near(P[iRiver0], Wt.pool, .85)) iRiver0++;
-  let iRiver1 = last; while (iRiver1 > iRiver0 && near(P[iRiver1], Wt.pond, bowl ? .95 : .35)) iRiver1--;
-  const r0 = Math.max(Wt.iPool, iRiver0 - 1), r1 = Math.min(last, iRiver1 + 1);
-  // where it drops steeply into the bowl, a cascade like the waterfall's; calm water before and after
-  const steep = (i) => (P[i - 1].w - P[i].w) / Math.max(.2, Math.hypot(P[i].x - P[i - 1].x, P[i].z - P[i - 1].z)) > .15;
-  let c0 = -1, c1 = -1; if (bowl) for (let i = Math.max(r0, Wt.iBowl) + 1; i <= r1; i++) if (steep(i)) { if (c0 < 0) c0 = i - 1; c1 = i; }
-  if (c0 < 0) meshes.push(ribbon('waterRiver', r0, r1, waterMat));
-  else {
-    if (c0 > r0) meshes.push(ribbon('waterRiver', r0, c0, waterMat));
-    meshes.push(ribbon('waterRapids', c0, c1, fallMat, 1.0));
-    if (c1 < r1) meshes.push(ribbon('waterRiverEnd', c1, r1, waterMat));
-  }
+  let iRiver1 = last; while (iRiver1 > iRiver0 && near(P[iRiver1], Wt.pond, .35)) iRiver1--;
+  if (Wt.iShore > iRiver0) iRiver1 = Math.min(iRiver1, Wt.iShore);
+  meshes.push(ribbon('waterRiver', Math.max(Wt.iPool, iRiver0 - 1), Math.min(last, iRiver1 + 1), waterMat));
   meshes.push(disc('waterPool', Wt.pool, pondMat));
   meshes.push(disc('waterPond', Wt.pond, pondMat));
   meshes.forEach(m => { m.isPickable = false; m.receiveShadows = true; m.metadata = { type: 'terrain_water', visualOnly: true, walkLightOff: m.material !== fallMat }; m.alphaIndex = 10; m.freezeWorldMatrix(); });
