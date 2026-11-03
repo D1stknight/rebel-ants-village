@@ -1135,6 +1135,11 @@ const FRIEND = REF ? null : FRIEND_COLS[COL] || null;
 const NOUN = FRIEND ? FRIEND.one : 'Rebel';
 const SPECIES = REF ? (/^[a-z]{2,20}$/.test(Q.get('species') || '') ? Q.get('species') : 'ape') : FRIEND ? FRIEND.species : null;
 const REF_NAME = REF ? String(Q.get('name') || '').slice(0, 60) : '';
+// Nov 3 (Vicky's dolls): a reference forge can bring its own back and side views (&back= &left= &right=, files beside the
+// front render; left / right = the character's own side, facing that edge of the image, as the forge draws them): Meshy
+// gets them as drawn instead of views the image model draws from the front
+const refView = (k) => (REF && /^\/assets\/forge\/sources\/[\w.-]+\.(png|jpe?g|webp)$/.test(Q.get(k) || '') ? Q.get(k) : null);
+const REF_VIEWS = { back: refView('back'), left: refView('left'), right: refView('right') };
 // Oct 26: ?art=/assets/forge/sources/<file> (admins): the brush paints the Rebel from that artwork instead of its NFT
 // picture and the NFT's traits are left out (Rebel #001's NFT art is another character; Miguel's drawing is #001).
 // &gang=<Colony> picks the costume brief, &leave=quiver,arrows what every drawing leaves out (the API keeps only its
@@ -1410,12 +1415,14 @@ const RUN = {
     S.prodUrl = await upload('prod', d.productionImage?.dataUrl);
   },
   async back() {
+    if (REF_VIEWS.back) { S.backUrl = await upload('prod_back', await dataUrlOf(REF_VIEWS.back)); return; }
     try {
       const d = await twice(() => api('/api/forge-generate-back-reference', { generationInput: GI(), productionImageUrl: S.prodUrl }));
       S.backUrl = await upload('prod_back', d.backImage?.dataUrl);
     } catch (e) { if (e.status === 429) throw e; console.warn('back view skipped', e); S.backUrl = null; }
   },
   async sides() {
+    if (REF_VIEWS.left || REF_VIEWS.right) { S.sideUrls = await Promise.all(['left', 'right'].map(async (side) => (REF_VIEWS[side] ? upload(`prod_${side}`, await dataUrlOf(REF_VIEWS[side])) : null))); return; }
     try {
       // v7: a profile drawn facing the wrong way is left out (null); Meshy gets only the views that are right
       S.sideUrls = await Promise.all(['left', 'right'].map(async (side) => {
