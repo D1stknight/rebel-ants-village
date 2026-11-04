@@ -30,6 +30,10 @@ header a{margin-left:auto;color:var(--teal);text-decoration:none;font-size:12px}
 #viewBar>*{pointer-events:auto}
 #dock{border-top:1px solid var(--line);padding:10px 12px;display:grid;grid-template-columns:1fr minmax(260px,360px);gap:12px;max-height:46vh;overflow:auto}
 h2{font:700 12px Cinzel,serif;letter-spacing:2px;color:var(--gold);margin:14px 0 8px;text-transform:uppercase}
+/* where a change goes (the Admin Hub's Where changes go page): this site only, or both sites at once */
+h2 .wtag{margin-left:8px;font:600 9px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em;border-radius:999px;padding:2px 7px;border:1px solid;text-decoration:none;vertical-align:1px;white-space:nowrap}
+h2 .wtag.live{color:#7fd67f;border-color:#1d4d24;background:#0b170c}
+h2 .wtag.both{color:#f5b46a;border-color:#5c4410;background:#1d1608}
 h2:first-child{margin-top:0}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px}
 .card.sel{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal) inset}
@@ -133,11 +137,11 @@ small{color:var(--dim)}
     <h2>NPCs</h2>
     <div class="row" style="margin-bottom:8px"><button class="teal" id="forgeAllBtn" onclick="forgeAll()">Forge all ready</button></div>
     <div id="npcList"></div>
-    <h2>Approved (in the village)</h2>
+    <h2>Approved (in the village)<a class="wtag both" href="admin.html#saving" title="Where changes go: one copy for both sites">Both sites</a></h2>
     <div id="approvedList" class="state">Loading...</div>
-    <h2 id="freeHead">Free to play (lobby)</h2>
+    <h2 id="freeHead">Free to play (lobby)<a class="wtag live" href="admin.html#saving" title="Where changes go: this site's own list">This site only</a></h2>
     <div class="card" id="freeBox"><div class="state">Loading...</div></div>
-    <h2>Rig worker</h2>
+    <h2>Rig worker<a class="wtag both" href="admin.html#saving" title="Where changes go: one worker for both sites">Both sites</a></h2>
     <div class="card" id="workerBox"><div class="state">Loading...</div></div>
   </aside>
   <section id="main">

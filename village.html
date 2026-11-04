@@ -703,6 +703,13 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
 #rebelPointsPop em{font-style:normal;font-size:11px;color:rgba(255,255,255,.75);letter-spacing:1px}
 .journal-row{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);border-radius:6px;padding:10px;color:rgba(255,255,255,.74);font-size:12px;line-height:1.35}
 .journal-row.locked{opacity:.52}
+.story-over{border-color:rgba(232,197,106,.34);background:rgba(232,197,106,.05)}
+.story-over strong{color:#e8c56a}
+.story-over p{margin:6px 0 0;font-size:12px;color:rgba(255,255,255,.76);line-height:1.45}
+.story-over p.keep{color:#f1d58c}
+.story-over .so-acts{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.story-over .econ-btn.so-go{background:#a8432e;border-color:#c9573f;color:#fff}
+.story-over .econ-btn.so-go:hover{background:#8f3725}
 .journal-row b{color:#e8c56a;font-family:'Cinzel Decorative',serif;letter-spacing:1px}
 /* shared game leaderboards (GameBoard): the result card and the journal's Games tab */
 .gb-head{font:600 11px/1.3 Georgia,serif;letter-spacing:.2em;text-transform:uppercase;color:#5ecfca;text-align:center;margin-bottom:6px}
@@ -1751,7 +1758,7 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
       <button class="ctrl-btn" onclick="restorePreviousLocalBackup()">Restore Backup</button>
       <button class="ctrl-btn" onclick="exportCurrentVillageLayout()">Export JSON</button>
       <button class="ctrl-btn" onclick="document.getElementById('layoutImportInput').click()">Import JSON</button>
-      <button class="ctrl-btn danger full" style="grid-column:1/-1" onclick="resetHubTutorialQuest()">Reset Hub Tutorial Chain</button>
+      <button class="ctrl-btn danger full" style="grid-column:1/-1" onclick="adminStartStoryOver()">Start the Story Over</button>
       <button class="ctrl-btn danger full" style="grid-column:1/-1" onclick="resetLocalProgression()">Reset Local Progression</button>
     </div>
     <input type="file" id="layoutImportInput" accept="application/json,.json" style="display:none" onchange="importVillageLayoutJSON(event)">
@@ -1972,7 +1979,9 @@ a.econ-btn{display:inline-block;text-decoration:none;white-space:nowrap}
 // done on either is lost. A device remembers whose story it holds: another account signing in gets its own story (the
 // device's is kept aside under rebelAntsStoryAside:<account>). A playtest save never goes to an account.
 const StorySave = await import('./assets/story-save.js').catch(e => { console.warn('Story save did not load', e); return null; });
-const STORY_LS = { owner:'rebelAntsStoryOwner:v1', signed:'rebelAntsEconSignedIn:v1', sync:'rebelAntsStorySync:v1', aside:'rebelAntsStoryAside:' };
+// again: the account whose start over (a replace) has not reached it yet; startedOver: the time this browser last
+// started the story over (another tab of it reloads, so its old story is never saved again)
+const STORY_LS = { owner:'rebelAntsStoryOwner:v1', signed:'rebelAntsEconSignedIn:v1', sync:'rebelAntsStorySync:v1', aside:'rebelAntsStoryAside:', again:'rebelAntsStoryStartOver:v1', startedOver:'rebelAntsStoryStartedOver:v1' };
 const storyEarly = { late:false };
 const storyEarlyRun = (async () => {
   if (!StorySave || storyPlaytest() || storyLsGet(STORY_LS.signed) !== '1') return null;
@@ -1987,7 +1996,7 @@ const storyEarlyRun = (async () => {
   const res = storyAdopt(d, storyLocal());
   if (storyEarly.late) return null;   // too late: the game has read its save (the sync after sign-in takes over)
   storyCommit(res, d);
-  return { account:d.account, ver:d.ver, upload:res.upload, changed:res.changed };
+  return { account:d.account, ver:d.ver, upload:res.upload, changed:res.changed, replace:!!res.replace };
 })();
 // Nothing picked in the lobby (a link straight to Universe): Rebel #262, the lobby's first card for guests (Nov 2). Its
 // public Forge character is read here, beside the story, and kept as the pick, so it plays like a Free to play card (the
@@ -3921,6 +3930,7 @@ function loadSideQuestState() {
 }
 
 function saveSideQuestState() {
+  if (StorySync?.frozen) return;   // (the story was started over elsewhere: this page's is the old one)
   try { localStorage.setItem(SIDE_QUEST_KEY, JSON.stringify(SideQuestState)); } catch(e) {}
   storySoon();
   try { updateQuestTracker(); } catch(e) {}
@@ -5616,6 +5626,7 @@ function processProgressionAudioQueue() {
 }
 
 function saveProgressionState() {
+  if (StorySync?.frozen) return;   // (the story was started over elsewhere: this page's is the old one)
   if (!Array.isArray(ProgressionState.journalEntriesUnlocked)) ProgressionState.journalEntriesUnlocked = [];
   if (!ProgressionState.customJournalEntries || typeof ProgressionState.customJournalEntries !== 'object') ProgressionState.customJournalEntries = {};
   ProgressionState.updatedAt = new Date().toISOString();
@@ -5960,7 +5971,7 @@ function renderProgressionJournal() {
       ...getBook1StoryJournalEntries(),
       ...customEntries
     ];
-    grid.innerHTML = entries.map(([title, unlocked, text]) => `<div class="journal-row ${unlocked ? '' : 'locked'}"><b>${unlocked ? title : 'Unknown Entry'}</b><br>${unlocked ? text : 'Locked story memory.'}</div>`).join('');
+    grid.innerHTML = entries.map(([title, unlocked, text]) => `<div class="journal-row ${unlocked ? '' : 'locked'}"><b>${unlocked ? title : 'Unknown Entry'}</b><br>${unlocked ? text : 'Locked story memory.'}</div>`).join('') + storyOverCard();
     return;
   }
   if (activeJournalTab === 'villages') {
@@ -6010,7 +6021,7 @@ function closeProgressionJournal() {
 }
 
 function resetLocalProgression() {
-  const ok = window.confirm('Reset local progression, badges, collected collectibles, and ecosystem actions? This will not delete collectible placements or village layout.');
+  const ok = window.confirm('Testing: reset this browser\'s chests, finds, secrets, badges, game scores and XP?\n\nRebel Points and what your account already claimed stay: signed in, opened chests stay opened and nothing pays twice. Village layouts are not touched. To start the quests over, use Start the Story Over.');
   if (!ok) return;
   ProgressionState = getDefaultProgressionState();
   localStorage.setItem(PROGRESSION_KEY, JSON.stringify(ProgressionState));
@@ -6040,6 +6051,68 @@ function resetHubTutorialQuest() {
   storyStartOver();
   if (activeJournalTab === 'story' || activeJournalTab === 'badges') renderProgressionJournal();
   showToast('Hub Journey reset');
+}
+
+// ── Start over (Nov 4) ── the story begins again from its first quest: the quest chain (the Hub Journey and Book One), the
+// side quests and the quest series (Moon Tales, Chumpz Cove, Saints of LA), the quest spots used and the items the
+// quests ask for. Only the story: Rebel Points, badges, opened chests, game scores, secrets, riddles and XP stay, and
+// nothing pays twice (quests pay no points; a chest, a first clear or a place riddle pays once per account, on the
+// server). Signed in, the account's story is replaced (storyStartOver) and a device or tab that still holds the old
+// story takes the new one (the story's restart time). The player's button is at the end of the journal's Story tab, the
+// admin's in Backup / Restore. Both go to the Hub, where the first quest starts.
+let StoryOverAsk = false;
+const STORY_OVER_KEEP = 'Only your story starts over. Your Rebel Points, badges, opened chests and game scores stay, and nothing pays twice.';
+function storyOverCard() {
+  return `<div class="journal-card full story-over"><strong>Start your story over</strong>`
+    + `<p>Every quest starts again from the first step, and the items the quests ask for come back.</p>`
+    + `<p class="keep">${STORY_OVER_KEEP}</p>`
+    + (StoryOverAsk
+      ? `<div class="so-acts"><span>Start over now?</span><button type="button" class="econ-btn so-go" onclick="confirmStoryOver()">Yes, start over</button><button type="button" class="econ-link" onclick="askStoryOver(false)">Cancel</button></div>`
+      : `<div class="so-acts"><button type="button" class="econ-btn" onclick="askStoryOver(true)">Start over</button></div>`)
+    + `</div>`;
+}
+function askStoryOver(on) { StoryOverAsk = !!on; renderProgressionJournal(); }
+// the quest steps' targets of one kind: [{ want (an id or id prefix), village }]
+function storyQuestTargets(action) {
+  const out = [];
+  for (const quest of Object.values(QUEST_DEFINITIONS)) for (const step of quest?.steps || []) {
+    if (normalizeQuestObjectiveAction(step.objectiveType) !== action) continue;
+    const want = String(step.targetObjectId || '').toLowerCase();
+    if (want) out.push({ want, village:step.villageId || null });
+  }
+  return out;
+}
+function startStoryOver() {
+  const items = storyQuestTargets('collectCollectible'), spots = storyQuestTargets('useQuestSpot');
+  const questItem = key => { const k = String(key), i = k.indexOf(':'), v = k.slice(0, i), id = k.slice(i + 1).toLowerCase(); return items.some(t => id.includes(t.want) && (!t.village || t.village === v)); };
+  const questSpot = id => { const s = String(id).toLowerCase(); return spots.some(t => s.includes(t.want)); };
+  QuestState = getDefaultQuestState();
+  for (const k of [QUEST_RETURN_HUB_KEY, QUEST_LEFT_HUB_FOR_RONIN_KEY, HUB_TUTORIAL_TRAVEL_AWAY_KEY, ACTIVE_INTERIOR_SESSION_KEY]) { try { localStorage.removeItem(k); } catch (e) {} }
+  saveQuestState();
+  SideQuestState = { active:{}, done:[] };
+  saveSideQuestState();
+  ProgressionState.completedQuests = [];
+  ProgressionState.journalEntriesUnlocked = [];
+  ProgressionState.spotsUsed = (ProgressionState.spotsUsed || []).filter(id => !questSpot(id));
+  ProgressionState.collectiblesFound = (ProgressionState.collectiblesFound || []).filter(key => !questItem(key));
+  saveProgressionState();
+  try { localStorage.setItem(STORY_LS.startedOver, String(Date.now())); } catch (e) {}   // other tabs of this browser load it
+  storyStartOver();
+}
+async function startStoryOverAndGo() {
+  if (startStoryOverAndGo.busy) return;
+  startStoryOverAndGo.busy = true;
+  StoryOverAsk = false;
+  startStoryOver();
+  closeProgressionJournal();
+  showToast('Your story starts over. Off to the Hub, where it begins…', 3200);
+  await Promise.race([storyReplaceNow(), new Promise(r => setTimeout(r, 4000))]);   // the account's copy (else with the next load)
+  leavePage(() => { window.location.href = VILLAGE_REGISTRY.hub.route; });
+}
+function confirmStoryOver() { startStoryOverAndGo(); }
+function adminStartStoryOver() {
+  const ok = window.confirm('Start the whole story over?\n\nEvery quest starts again from the first step: the Hub Journey, Book One, the side quests, Moon Tales, Chumpz Cove and Saints of LA, with the items they ask for.\n\n' + STORY_OVER_KEEP + '\n\nPlayers have the same button at the end of the journal\'s Story tab.');
+  if (ok) startStoryOverAndGo();
 }
 
 function makeSafeBadgeId(value) {
@@ -9953,21 +10026,30 @@ const Econ = { checked:false, configured:false, on:false, kind:'', name:'', avat
 // Signed in, the story goes to the account: a few seconds after something is saved, every 30 s while it changes, and when
 // the page is left. A sign-in on the lobby or in the journal joins the account's story to this browser's (a reload when
 // the account's had more). StorySync is a var: the save functions call storySoon() from the start.
-var StorySync = { account:STORY_EARLY?.account || null, pending:!!STORY_EARLY?.upload, busy:false, timer:0, lastPut:0, savedAt:STORY_EARLY ? Date.now() : 0, attaching:false };
+// replaceNext: a start over still to reach the account; stale: this page's story was started over elsewhere (never sent
+// again); frozen: nor saved again in this browser (another tab started over, or this page is loading the new story)
+var StorySync = { account:STORY_EARLY?.account || null, pending:!!STORY_EARLY?.upload, busy:false, timer:0, lastPut:0, savedAt:STORY_EARLY ? Date.now() : 0, attaching:false, replaceNext:!!STORY_EARLY?.replace, stale:false, frozen:false };
 function storyLsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 function storyLsSet(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
 function storyPlaytest() { return !!storyLsGet('rebelAntsPlaytestBackup') || new URLSearchParams(location.search).has('play'); }
 function storyHash(s) { if (s == null) return '-'; let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return (h >>> 0).toString(36) + ':' + s.length; }
-function storyReadSnap() { try { const v = JSON.parse(storyLsGet(STORY_LS.sync) || 'null'); if (v && typeof v === 'object') return { hashes:v.hashes || {}, t:v.t || {}, account:v.account || null }; } catch (e) {} return { hashes:{}, t:{}, account:null }; }
+function storyReadSnap() { try { const v = JSON.parse(storyLsGet(STORY_LS.sync) || 'null'); if (v && typeof v === 'object') return { hashes:v.hashes || {}, t:v.t || {}, account:v.account || null, restart:Number(v.restart) || 0 }; } catch (e) {} return { hashes:{}, t:{}, account:null, restart:0 }; }
 function storyLocal(snap = storyReadSnap()) { const keys = {}; for (const k of StorySave.STORY_KEYS) keys[k] = storyLsGet(k); return { keys, t:{ ...snap.t } }; }
 // what to do with the account's story: { next (the story this browser keeps), changed (next differs from it), upload }
 function storyAdopt(d, local) {
   const owner = storyLsGet(STORY_LS.owner), cloud = d.story || null;
+  const differs = next => StorySave.STORY_KEYS.some(k => (next.keys[k] ?? null) !== (local.keys[k] ?? null));
   if (owner && owner !== d.account) {   // another account's story is on this device: kept aside, this account gets its own
     storyLsSet(STORY_LS.aside + owner, JSON.stringify(local.keys));
+    storyLsSet(STORY_LS.again, null);   // (that account's start over stays with its own story)
     const next = cloud || { keys:{}, t:{} };
-    return { next, changed:StorySave.STORY_KEYS.some(k => (next.keys[k] ?? null) !== (local.keys[k] ?? null)), upload:false };
+    return { next, changed:differs(next), upload:false };
   }
+  // this browser started the story over and the account hasn't had it yet: this story replaces the account's
+  if (storyLsGet(STORY_LS.again) === d.account) return { next:local, changed:false, upload:true, replace:true };
+  // the story was started over on another device since this browser last had it: its copy is the old story (joined, it
+  // would come back), so this browser takes the account's
+  if (owner === d.account && cloud && Number(d.restart || 0) > storyReadSnap().restart) return { next:cloud, changed:differs(cloud), upload:false, restart:true };
   if (!cloud) return { next:local, changed:false, upload:true };   // a guest's story becomes the account's
   const adds = StorySave.storyAdds(local, cloud), next = adds ? StorySave.mergeStory(local, cloud) : local;
   return { next, changed:adds, upload:StorySave.storyAdds(cloud, next) };
@@ -9978,9 +10060,28 @@ function storyCommit(res, d) {
   const snap = storyReadSnap();
   // what the account holds now (an upload still to go keeps the device's own changes marked)
   snap.hashes = Object.fromEntries(StorySave.STORY_KEYS.map(k => [k, storyHash((d.story || { keys:{} }).keys[k] ?? null)]));
-  snap.t = { ...(d.story?.t || {}), ...res.next.t }; snap.account = d.account;
+  snap.t = { ...(d.story?.t || {}), ...res.next.t }; snap.account = d.account; snap.restart = Number(d.restart) || 0;
   storyLsSet(STORY_LS.sync, JSON.stringify(snap));
 }
+// the story was started over elsewhere while this page had the old one: never sent or saved again here; the account's
+// story is written just before the page loads again (nothing of the old one can get in between)
+function storyRestartedElsewhere(d, why = 'on another device') {
+  if (StorySync.frozen) return;
+  StorySync.stale = StorySync.frozen = true; clearTimeout(StorySync.timer);
+  showToast(`Your story was started over ${why}: loading it…`, 3200);
+  setTimeout(() => leavePage(() => {
+    if (d?.story) {
+      const story = d.story;
+      for (const k of StorySave.STORY_KEYS) storyLsSet(k, story.keys?.[k] ?? null);
+      storyLsSet(STORY_LS.owner, d.account);
+      storyLsSet(STORY_LS.sync, JSON.stringify({ hashes:Object.fromEntries(StorySave.STORY_KEYS.map(k => [k, storyHash(story.keys?.[k] ?? null)])), t:{ ...(story.t || {}) }, account:d.account, restart:Number(d.restart) || 0 }));
+      storyLsSet(STORY_LS.startedOver, String(Date.now()));   // this browser's other tabs load it too
+    }
+    location.reload();
+  }), 1400);
+}
+// another tab of this browser started the story over (or took a new one): this tab's story is the old one
+window.addEventListener('storage', e => { if (e.key === STORY_LS.startedOver && e.newValue) storyRestartedElsewhere(null, 'in another tab'); });
 async function storyAttach() {
   if (!StorySave || StorySync.attaching || storyPlaytest()) return;
   StorySync.attaching = true;
@@ -9989,8 +10090,10 @@ async function storyAttach() {
     const d = await r.json().catch(() => null);
     if (!r.ok || !d?.ok || !d.account) return;
     const res = storyAdopt(d, storyLocal());
+    if (res.restart) { StorySync.account = d.account; storyRestartedElsewhere(d); return; }
     storyCommit(res, d);
     Object.assign(StorySync, { account:d.account, pending:res.upload, savedAt:Date.now() });
+    if (res.replace) StorySync.replaceNext = true;
     if (res.changed) {   // the account's story had more than this browser: the game reads it again
       let again = false; try { again = Date.now() - Number(sessionStorage.getItem('rebelAntsStoryReload') || 0) < 60000; sessionStorage.setItem('rebelAntsStoryReload', String(Date.now())); } catch (e) {}
       if (!again) { showToast('Loading your story from your account…', 3000); setTimeout(() => leavePage(() => location.reload()), 1400); return; }
@@ -10010,27 +10113,43 @@ function storySoon(ms = 4000) {
   StorySync.timer = setTimeout(() => storyPut(), Math.max(ms, 12000 - (Date.now() - StorySync.lastPut)));
 }
 async function storyPut(opt = {}) {
-  if (!StorySave || !StorySync?.account || StorySync.busy || storyPlaytest()) return;
+  if (!StorySave || !StorySync?.account || StorySync.busy || StorySync.stale || storyPlaytest()) return;
   const snap = storyReadSnap(), local = storyLocal(snap);
   const changed = StorySave.STORY_KEYS.filter(k => storyHash(local.keys[k]) !== snap.hashes[k]);
   const replace = !!(opt.replace || StorySync.replaceNext);
   if (!changed.length && !StorySync.pending && !replace) return;
   for (const k of changed) snap.t[k] = Date.now();
   local.t = { ...snap.t };
-  const body = JSON.stringify({ story:local, replace });
+  const body = JSON.stringify({ story:local, replace, since:snap.restart || 0 });
   StorySync.busy = true; StorySync.lastPut = Date.now();
   try {
     const r = await fetch('/api/story-save', { method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json' }, body, keepalive:!!opt.leaving && body.length < 60000 });
     const d = await r.json().catch(() => null);
     if (r.status === 401) { StorySync.account = null; storyLsSet(STORY_LS.signed, null); return; }
+    if (d?.code === 'restarted' && !replace) { storyRestartedElsewhere(d); return; }
     if (!d?.ok) { StorySync.pending = true; return; }
     snap.hashes = Object.fromEntries(StorySave.STORY_KEYS.map(k => [k, storyHash(local.keys[k])])); snap.account = StorySync.account;
+    if (d.restart != null) snap.restart = Number(d.restart) || 0;
     storyLsSet(STORY_LS.sync, JSON.stringify(snap));
-    StorySync.pending = false; StorySync.savedAt = Date.now(); if (replace) StorySync.replaceNext = false;
+    StorySync.pending = false; StorySync.savedAt = Date.now();
+    if (replace) { StorySync.replaceNext = false; if (storyLsGet(STORY_LS.again) === StorySync.account) storyLsSet(STORY_LS.again, null); }
   } catch (e) { StorySync.pending = true; } finally { StorySync.busy = false; }
 }
-// an admin reset starts the story over on purpose: the account's copy is replaced, not joined (else it comes back)
-function storyStartOver() { if (!StorySync?.account) return; StorySync.replaceNext = true; storySoon(500); }
+// a start over (Start over, an admin reset): the account's copy is replaced, not joined (else it comes back); kept as
+// pending in this browser until the account has it (a reload on the way sends it then)
+function storyStartOver() {
+  // (signed in but not attached yet: the account whose story this browser holds)
+  const account = StorySync?.account || (storyLsGet(STORY_LS.signed) === '1' ? storyLsGet(STORY_LS.owner) : null);
+  if (!account) return;
+  storyLsSet(STORY_LS.again, account);
+  if (StorySync?.account) { StorySync.replaceNext = true; storySoon(500); }
+}
+async function storyReplaceNow() {
+  if (!StorySave || !StorySync?.account || storyPlaytest()) return;
+  for (let i = 0; i < 40 && StorySync.busy; i++) await new Promise(r => setTimeout(r, 100));
+  clearTimeout(StorySync.timer);
+  await storyPut({ replace:true });
+}
 setInterval(() => { if (StorySync.account) storyPut(); }, 30000);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') storyPut({ leaving:true }); });
 window.addEventListener('pagehide', () => storyPut({ leaving:true }));
@@ -11286,12 +11405,22 @@ function updateInteractionPrompt() {
   }
 
   const chest = window._nearestTreasureChest;
+  if (chest && chest.metadata?.opened === true && storyChestStep()) { setInteractionPrompt('Press O to Look in the Chest', true); return; }
   setInteractionPrompt('Press O to Open', Boolean(chest && chest.metadata?.opened !== true));
 }
+// the Hub Journey asks for a chest (The Hidden Chest): after Start over the chests opened before stay opened, so one of
+// them counts for it (looked in, it pays nothing twice)
+function storyChestStep() { return QuestState?.questId === 'hub-hidden-chest' && QuestState.completed !== true && QuestState.step === 'open-chest'; }
 
 function openTreasureChest(chest) {
   if (!chest || chest.metadata?.type !== 'treasure_chest') return false;
   if (chest.metadata.opened === true) {
+    if (storyChestStep()) {
+      const key = chest.metadata.chestId || chest.name;
+      showToast('Opened before: it pays nothing twice, but it counts for the Hub Journey.', 4200);
+      advanceHubTutorialObjective('openChest', { chestId:key, targetObjectId:key });
+      return true;
+    }
     showToast('Chest already opened');
     return false;
   }
@@ -16974,6 +17103,7 @@ function loadQuestState() {
 }
 
 function saveQuestState() {
+  if (StorySync?.frozen) return;   // (the story was started over elsewhere: this page's is the old one)
   if (!Array.isArray(QuestState.completedQuestIds)) QuestState.completedQuestIds = [];
   if (!QuestState.objectiveProgress || typeof QuestState.objectiveProgress !== 'object') QuestState.objectiveProgress = {};
   localStorage.setItem(QUEST_STATE_KEY, JSON.stringify(QuestState));
@@ -40011,6 +40141,7 @@ window.showBadgeUnlockPopup = showBadgeUnlockPopup; // tests (the badge card)
 window.fillBadgeArt = fillBadgeArt; // the journal's sections (ontoggle)
 window.closeBadgeUnlockPopup = closeBadgeUnlockPopup;
 window.resetLocalProgression = resetLocalProgression;
+Object.assign(window, { askStoryOver, confirmStoryOver, adminStartStoryOver, startStoryOver });
 window.renderBadgeBuilderList = renderBadgeBuilderList;
 window.selectBadgeBuilderBadge = selectBadgeBuilderBadge;
 window.loadBadgeBuilderSelection = loadBadgeBuilderSelection;

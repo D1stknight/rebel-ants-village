@@ -768,6 +768,15 @@ function selLabel(rebel) {
   const n = getRebelCardNumber(rebel);
   return rebel.friendLabel && n ? `${rebel.friendLabel} #${n}` : rebel.name || (n ? `Rebel #${n}` : '');
 }
+// the row scrolls (it wraps under a set height): the picked card in view, in the middle when it can be
+function revealSelectedCard() {
+  const row = document.getElementById('char-row'), card = row && row.querySelector('.ant-card.selected');
+  if (!row || !card || row.scrollHeight <= row.clientHeight + 2) return;
+  const r = row.getBoundingClientRect(), c = card.getBoundingClientRect();
+  if (c.top >= r.top && c.bottom <= r.bottom) return;
+  row.scrollTop += (c.top - r.top) - Math.max(0, (row.clientHeight - c.height) / 2);
+}
+
 function markSelectedCard() {
   const row = document.getElementById('char-row'), r = ownedRebels.find((x) => x.id === selectedAnt);
   if (row) row.classList.toggle('has-sel', !!r && ownedRebels.length > 1);
@@ -1436,23 +1445,22 @@ async function loadNFTs(walletAddress) {
     const savedForgePlayables = await loadSavedForgePlayableCards();
     const walletIds = new Set(walletRebels.map((rebel) => rebel.id));
     const walletTokens = new Set(walletRebels.map(cardKey));
-    // Forged Rebels first (Ready, then Forged), then the rest in wallet order. Saved Forge playables for a
-    // token that is already in the wallet are duplicates of that card, so they are dropped.
-    ownedRebels = sortRebelsByForgeStatus([
+    // The wallet's own cards, forged first (Ready, then Forged), then the rest in wallet order. Saved Forge playables for
+    // a token that is already in the wallet are duplicates of that card, so they are dropped.
+    const own = sortRebelsByForgeStatus([
       ...walletRebels,
       ...dedupeForgePlayablesByToken(savedForgePlayables.filter((rebel) => !walletIds.has(rebel.id) && !walletTokens.has(cardKey(rebel))))
     ]);
-
-    // the friend playables sit after the wallet's ready Rebels; they are never picked by default
-    const firstNotReady = ownedRebels.findIndex((rebel) => getRebelForgeStatus(rebel) !== 'ready');
-    const walletReady = firstNotReady !== 0 && ownedRebels.length > 0;
+    // Nov 4 (Miguel): every free character first, as a guest sees them (Rebel #262 leading, the Chumpz Racer, Sanguira and
+    // Elaria, the rest of the Free to play list), then the wallet's Rebel Ants, then its Chumpz and Saints. A Free card
+    // of a token the wallet holds is left out (its own card is there). Free cards are never picked by default.
+    const ownRebels = own.filter((rebel) => (rebel.collectionKey || 'battle_for_colony') === 'battle_for_colony');
+    const ownFriends = own.filter((rebel) => !ownRebels.includes(rebel));
+    const held = new Set(own.map(cardKey));
     const rosterTokens = await loadFreeRoster();   // (also the switched-off lobby cards)
-    ownedRebels.splice(firstNotReady < 0 ? ownedRebels.length : firstNotReady, 0, ...(await friendPlayablesShown()));
-    // none of the wallet's Rebels is forged yet: the Free to play roster comes after them (never picked by default)
-    if (!walletReady) {
-      const held = new Set(ownedRebels.filter((rebel) => !rebel.playerModel).map(cardKey));   // its own Rebels, Chumpz and Saints
-      ownedRebels.push(...(await freeRosterCards(rosterTokens.filter((e) => { const p = freeEntry(e); return !held.has(`${p.col}:${p.tok}`); }))));
-    }
+    const roster = await freeRosterCards(rosterTokens.filter((e) => { const p = freeEntry(e); return !held.has(`${p.col}:${p.tok}`); }));
+    const lead = roster.find((rebel) => sameCollection(rebel, {}) && String(rebel.tokenId) === GUEST_START_TOKEN);
+    ownedRebels = [...(lead ? [lead] : []), ...(await friendPlayablesShown()), ...roster.filter((rebel) => rebel !== lead), ...ownRebels, ...ownFriends];
     const forgedReadyRebel = ownedRebels.find((rebel) => {
       if (rebel.playerModel || rebel.free) return false;
       return Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl) || getRebelForgeStatus(rebel) === 'ready';
@@ -1467,12 +1475,13 @@ async function loadNFTs(walletAddress) {
     const storedCard = storedSel.playerModel ? ownedRebels.find((rebel) => rebel.id === storedSel.id) : storedSel.tokenId ? ownedRebels.find((rebel) => String(rebel.tokenId || '') === String(storedSel.tokenId) && sameCollection(rebel, storedSel)) : null;
     const serverChoice = savedForgePlayables.find(r => r.activeForgeCharacter?.appearanceSource && r.activeForgeCharacter?.walletAddress === walletAddress.toLowerCase());
     const serverCard = serverChoice && walletRebels.find(r => String(r.tokenId) === String(serverChoice.tokenId) && sameCollection(r, serverChoice));
-    selectedAnt = serverCard ? serverCard.id : storedCard ? storedCard.id : forgedReadyRebel ? forgedReadyRebel.id : (ownedRebels.find((rebel) => !rebel.playerModel) || ownedRebels[0]).id;
+    selectedAnt = serverCard ? serverCard.id : storedCard ? storedCard.id : forgedReadyRebel ? forgedReadyRebel.id : (own[0] || ownedRebels.find((rebel) => !rebel.playerModel) || ownedRebels[0]).id;
 
     charRow.innerHTML = '';
     ownedRebels.forEach(r => buildCard(r));
 
     await selectAnt(selectedAnt);
+    revealSelectedCard();   // (the free characters come first: the picked card can be further down the row)
 
     setStatus(
       ownCount +

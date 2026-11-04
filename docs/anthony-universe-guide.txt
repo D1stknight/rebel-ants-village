@@ -85,6 +85,7 @@ No sound on a phone: tap the screen once, check the silent switch and the volume
 Voice not working: both players signed in, allow the microphone, stand within about 40 m in the same village, hold X or the mic. With AirPods, pick them as the input; the meter moves when the mic hears you.
 Points or badges missing: sign in. Guests' points are practice points on that device. Each chest, first game clear and place riddle pays once per account.
 Story progress lost: signed-in players' story is saved to their account; a guest's lives on that one browser, and iPhone Safari can clear it after a week without a visit.
+Starting the story over: Journal > Story > Start over, at the bottom. Every quest starts again from its first step and the items the quests ask for come back. Rebel Points, badges, opened chests and game scores stay, and nothing pays twice. It only starts over the player's own story; nobody can do it for someone else.
 A chest will not open: you already opened it with this account, or stand closer on the same floor.
 Stuck in a room or a wall: walk back to the exit, press O, or use Return to Hub.
 Can't find the next quest step: follow the gold diamond and the beam, read the mission line, talk to the giver again; some steps need night, dawn or a storm.
