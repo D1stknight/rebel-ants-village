@@ -13,6 +13,9 @@
 // A dropped connection to the hall (Nov 4: a phone's network, a screen that slept; he vanished near the end and came
 // back) no longer stops the show: it plays on from the page's own copy while the page knocks again (GRACE_MS), and a
 // phone's screen is kept on while a show plays (the Screen Wake Lock), so watching without touching doesn't lock it.
+// Captions (Nov 4, Miguel's iPhone: "the caption is in the way of seeing him"): at most two lines at a time (a long
+// line is shown in parts, each for its share of the time), and placed clear of the performer: phones at the top in the
+// logo's place (the stick and the buttons fill the bottom), computers at the bottom; the other side when he is there.
 // window.VillageStage.start(host) from village.html, host = { scene, village, villageName(id), player() -> { x, z, interior }
 //   | null, signedIn(), ticket() -> Promise<{ ticket, url }|null>, travel(villageId), doorOf(roomId) -> { x, z } | null,
 //   roomHolder() -> the shown room's node | null, enterRoom(roomId) -> bool (through its door), sound(name), viaSite(url),
@@ -157,6 +160,11 @@ html.vt-touch #vsLive,html.vt-touch #vsBar{top:calc(max(12px,env(safe-area-inset
 html.vt-touch #vsHost{top:calc(max(12px,env(safe-area-inset-top,0px)) + 242px)}
 html.vt-touch body:has(#vsLive.on,#vsBar.on) #interactionPrompt{top:262px}
 html.vt-touch #vsCap{bottom:calc(max(18px,env(safe-area-inset-bottom,0px)) + 236px);font-size:15px}
+#vsCap.top{top:104px;bottom:auto}
+@media (max-width:900px){html:not(.vt-touch) #vsCap.top{top:200px}}
+html.vt-touch #vsCap.top{top:calc(max(12px,env(safe-area-inset-top,0px)) + 2px);bottom:auto;left:max(12px,env(safe-area-inset-left,0px));right:calc(max(12px,env(safe-area-inset-right,0px)) + 52px);transform:none;max-width:none;padding:7px 12px;font-size:15px}
+html.vt-touch #vsCap.top b{display:none}
+html.vt-touch body.vs-cap-top #logo,html.vt-touch body.vs-cap-top #td{opacity:0;transition:opacity .3s}
 body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!important}
 @media (min-width:901px) and (max-width:1459px){html:not(.vt-touch) #vsLive,html:not(.vt-touch) #vsBar,html:not(.vt-touch) #vsHost{left:446px;transform:none}html:not(.vt-touch) #vsLive,html:not(.vt-touch) #vsBar{max-width:calc(100vw - 600px)}}
 @media (max-width:900px){html:not(.vt-touch) #vsLive,html:not(.vt-touch) #vsBar{top:152px}html:not(.vt-touch) #vsHost{top:200px}}`; // (desktop: clear of Exit Walk (left 340, top 82) and the quest line)
@@ -309,7 +317,7 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     if (!SH) return;
     wakeOff(); stopSrc(); try { SH.an?.disconnect(); } catch (e) {}
     for (const o of SH.syl) try { o.stop(); } catch (e) {}
-    SH = null; el && el.cap.classList.remove('on'); performerIdle(); jaw(0);
+    SH = null; if (el) { el.cap.classList.remove('on'); document.body.classList.remove('vs-cap-top'); } performerIdle(); jaw(0);
     if (PF) PF.holder.setEnabled(false);
   }
   // a line with no audio: a babbling voice (an animal-crossing murmur through two vowel formants), a syllable every ~0.14 s
@@ -337,6 +345,54 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     return plan;
   }
   const CAP_MIN = 2.6;
+  const isTouch = () => document.documentElement.classList.contains('vt-touch');
+  // a caption's most characters: two lines of its box (phones: the box at the top, 15 px; computers: up to 680 px, 17 px)
+  function capMax() {
+    const vw = window.innerWidth || 800, w = isTouch() ? vw - 24 - 52 - 24 : Math.min(680, vw - 32) - 32;
+    return Math.max(44, 2 * Math.floor(w / (isTouch() ? 7.4 : 8.4)));
+  }
+  // a line in parts of at most max characters: whole sentences, else at a comma, else between words
+  function capParts(text, max) {
+    const s = String(text || '').replace(/\s+/g, ' ').trim(); if (s.length <= max) return [s];
+    const sen = s.match(/[^.!?…]+(?:[.!?…]+["')\]]*|$)\s*/g)?.map(x => x.trim()).filter(Boolean) || [s], bits = [];
+    for (const x of sen) {
+      if (x.length <= max) { bits.push(x); continue; }
+      for (const y of x.match(/[^,;:]+(?:[,;:]+|$)\s*/g)?.map(z => z.trim()).filter(Boolean) || [x]) {
+        if (y.length <= max) { bits.push(y); continue; }
+        let line = ''; for (const w of y.split(' ')) { if (line && (line + ' ' + w).length > max) { bits.push(line); line = w; } else line = line ? line + ' ' + w : w; }
+        if (line) bits.push(line);
+      }
+    }
+    const out = []; for (const b of bits) { if (out.length && (out[out.length - 1] + ' ' + b).length <= max) out[out.length - 1] += ' ' + b; else out.push(b); }
+    return out;
+  }
+  // where the performer is on the screen (CSS px): a box round him, 3.9 m tall and a metre either side of his spot
+  function performerRect() {
+    if (!PF || !PF.holder.isEnabled(false)) return null;
+    const sc = H.scene, cam = sc.activeCamera, eng = sc.getEngine(); if (!cam) return null;
+    const cv = eng.getRenderingCanvas(), cr = cv.getBoundingClientRect(), W = eng.getRenderWidth(), Hh = eng.getRenderHeight();
+    const vp = cam.viewport.toGlobal(W, Hh), tm = sc.getTransformMatrix(), id = B.Matrix.Identity(), p = PF.holder.getAbsolutePosition();
+    let l = 1e9, r = -1e9, t = 1e9, b = -1e9, n = 0;
+    for (const dx of [-1.1, 1.1]) for (const dz of [-1.1, 1.1]) for (const dy of [0, 3.9]) {
+      const v = B.Vector3.Project(new B.Vector3(p.x + dx, p.y + dy, p.z + dz), id, tm, vp); if (!(v.z > 0 && v.z < 1)) continue;
+      const x = cr.left + v.x * cr.width / W, y = cr.top + v.y * cr.height / Hh; n++;
+      l = Math.min(l, x); r = Math.max(r, x); t = Math.min(t, y); b = Math.max(b, y);
+    }
+    return n ? { l, r, t, b } : null;
+  }
+  // the caption's side: phones at the top, computers at the bottom, the other side when he is under it (less of him hidden)
+  let capAt = 0;
+  function placeCap() {
+    const now = performance.now(); if (!el || now - capAt < 250) return; capAt = now;
+    const pref = isTouch() ? 'top' : 'bottom', other = pref === 'top' ? 'bottom' : 'top', pr = performerRect();
+    const set = k => el.cap.classList.toggle('top', k === 'top');
+    let slot = pref;
+    if (pr && el.cap.classList.contains('on')) {
+      const over = k => { set(k); const r = el.cap.getBoundingClientRect(); return Math.max(0, Math.min(r.right, pr.r) - Math.max(r.left, pr.l)) * Math.max(0, Math.min(r.bottom, pr.b) - Math.max(r.top, pr.t)); };
+      const a = over(pref); if (a > 0 && over(other) < a) slot = other;
+    }
+    set(slot); document.body.classList.toggle('vs-cap-top', !!SH && slot === 'top' && isTouch() && settings.captions);
+  }
   function runShow() {
     const sh = S.show, inPlace = S.ev && inHall() && atPlace(S.ev);
     const t = showTime();
@@ -358,7 +414,10 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
       if (late > 1.5 && !c.say) continue;
       if (c.say) {
         const until = (SH.cues.slice(SH.next).find(x => x.say)?.t ?? sh.len) - c.t;
-        SH.cap = c.say; SH.capUntil = performance.now() + 1000 * Math.max(CAP_MIN, Math.min(until, 2 + c.say.length * .07)) - late * 1000;
+        const dur = 1000 * Math.max(CAP_MIN, Math.min(until, 2 + c.say.length * .07)), parts = capParts(c.say, capMax());
+        const total = parts.reduce((n, x) => n + x.length, 0) || 1; let at = performance.now() - late * 1000;
+        SH.capQ = parts.map(x => { const q = { a: at, b: at + dur * x.length / total, x }; at = q.b; return q; });
+        SH.cap = c.say; SH.capUntil = at;
         if (!voiced && ac) SH.plan = (SH.plan || []).concat(babble(c.say, ac.currentTime - Math.min(late, 0)));
       }
       if (c.clip) performerMove(c.clip);
@@ -368,9 +427,10 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     if (PF && t >= 0 && PF.groups.game_standup && (PF.cur === PF.groups.idle || PF.cur === PF.groups.fight_idle || !PF.cur)) performerIdle();
     // captions
     if (el) {
-      const showCap = settings.captions && SH.cap && performance.now() < SH.capUntil;
-      el.cap.classList.toggle('on', !!showCap);
-      if (showCap && el.cap.dataset.t !== SH.cap) { el.cap.dataset.t = SH.cap; el.cap.innerHTML = '<b>' + esc(S.ev?.show?.title || 'The show') + '</b>' + esc(SH.cap); }
+      const now = performance.now(), part = settings.captions && SH.cap && now < SH.capUntil ? SH.capQ?.find(q => now >= q.a && now < q.b)?.x || '' : '';
+      el.cap.classList.toggle('on', !!part);
+      if (part && el.cap.dataset.t !== part) { el.cap.dataset.t = part; el.cap.innerHTML = '<b>' + esc(S.ev?.show?.title || 'The show') + '</b>' + esc(part); }
+      placeCap();
     }
     // the voice's level: the audio's loudness, or the babble's syllables
     let lv = 0;
@@ -605,6 +665,7 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     on: f => { listeners.add(f); return () => listeners.delete(f); },
     settings, set: (k, v) => { settings[k] = v; save(SET_KEY, settings); if (k === 'show' && !v) stopShow(); },
     _mic: performerMic, // (tests)
+    _capRects: () => { const r = el?.cap?.getBoundingClientRect(); return { cap: r && el.cap.classList.contains('on') ? { l: r.left, r: r.right, t: r.top, b: r.bottom } : null, pf: performerRect(), top: !!el?.cap?.classList.contains('top'), text: el?.cap?.classList.contains('on') ? el.cap.dataset.t : '', max: capMax() }; }, // (tests)
     get state() { return { live: S.live.slice(), next: S.next.slice(), ev: S.ev, host: S.host, you: S.you, speakers: S.speakers.slice(), hands: S.hands.slice(), hand: S.hand, show: S.show, n: S.n, cfg: S.cfg, open: !!ws && ws.readyState === 1, hall, grace: graceUntil > performance.now(), wake: !!WAKE.lock, goal: S.goal, stopped, t: showTime(), playing: !!SH, cap: SH?.cap || '', level: SH?.level || 0, performer: !!PF, shown: !!PF?.holder?.isEnabled(false), jaw: !!PF?.jaw, pfMove: PF?.cur?.name || null, pfMoves: PF ? PF.log.slice() : [],
       mic: PF?.mic ? { r: +PF.mic.r.toFixed(3), tilt: PF.mic.tilt } : null,
       audio: { url: AUD.url, ready: !!AUD.buf, len: AUD.buf ? +AUD.buf.duration.toFixed(2) : 0, loading: AUD.loading, failed: AUD.failed, ctx: actx?.state || null, rate: actx?.sampleRate || 0, on: !!SH?.src, pos: SH?.src && actx ? +(actx.currentTime - SH.srcAt).toFixed(2) : null } }; }
