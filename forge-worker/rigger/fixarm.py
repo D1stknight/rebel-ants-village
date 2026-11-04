@@ -96,7 +96,7 @@ for side in ('Left', 'Right'):
             for g in me.data.vertices[gi].groups: acc[g.group] = acc.get(g.group, 0) + g.weight
         tot = sum(acc.values()) or 1
         v = me.data.vertices[vi]
-        for g in list(v.groups): me.vertex_groups[g.group].remove([vi])
+        for gi in [g.group for g in v.groups]: me.vertex_groups[gi].remove([vi])  # (indices first: removing one frees the vertex's list, list(v.groups) went stale: v2.45)
         for gidx, w in sorted(acc.items(), key=lambda x: -x[1])[:4]: me.vertex_groups[gidx].add([vi], float(w / tot), 'REPLACE')
     report[side] = (int(len(bad)), int(len(isl)))
 print('fixarm reassigned', report)

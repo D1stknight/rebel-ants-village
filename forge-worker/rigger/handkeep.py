@@ -70,7 +70,7 @@ for side in ('Left', 'Right'):
     hand = me.vertex_groups.get(hn) or me.vertex_groups.new(name=hn)
     for i in take:
         v = me.data.vertices[i]
-        for g in list(v.groups): me.vertex_groups[g.group].remove([i])
+        for gi in [g.group for g in v.groups]: me.vertex_groups[gi].remove([i])  # (indices first: see fixarm.py, v2.45)
         hand.add([i], 1.0, 'REPLACE')
     total[side] = len(take)
     print(f'handkeep {side}: {islands} loose pieces on the hand, hand surface {len(seen)} verts from {len(seeds)} at the wrist; {len(take)} verts moved onto the hand')
