@@ -1542,7 +1542,7 @@ async function runPipeline() {
     running = false; state.forging = active(); refreshStep(); forgeTick();
   }
 }
-function retry() { if (!S) return; S.err = null; if (S.t[S.phase]) S.t[S.phase].a = Date.now(); S._f = 0; saveS(); runPipeline(); }
+function retry() { if (!S) return; S.err = null; S.held = false; if (S.t[S.phase]) S.t[S.phase].a = Date.now(); S._f = 0; saveS(); runPipeline(); }
 function onPhase(prev, next) {
   const from = PH[prev].seg, to = PH[next].seg;
   if (next === 'done') { finishForge(); return; }
@@ -1774,15 +1774,23 @@ async function loadAssets(t) {
   return out;
 }
 // No local session (other device, cleared storage): pick up a Meshy/rig run from the last 3 hours on the server.
+// Nov 4: ?resume=1 (admins) also finds a forge whose rig failed, for 14 days, on any device (a forge lives in the browser
+// that started it; other browsers only find one for 3 hours: Sanguira's, rigged on a phone after the rigger fix). It
+// waits on its error card (held): TRY AGAIN rigs it again.
 function recoverSession(assets) {
-  const cutoff = Date.now() - 3 * 3600e3;
+  const resume = Q.get('resume') === '1' && !!state.own?.admin;
+  const cutoff = Date.now() - (resume ? 14 * 86400e3 : 3 * 3600e3);
   const recent = (assets.builds || []).filter((b) => b.engine?.taskId && Date.parse(b.createdAt || 0) > cutoff && /^fv2_/.test(b.sourceConceptId || ''));
   if (!recent.length) return null;
   const sid = recent[0].sourceConceptId.replace(/_prod$/, '');
   const group = recent.filter((b) => b.sourceConceptId === recent[0].sourceConceptId).reverse();
   const rigged = group.find((b) => b.forgeRig?.status === 'succeeded' && b.output?.forgeRigGlbUrl);
   if (rigged) return null;   // finished runs are shown as the Rebel's forged model instead
-  const running = group.find((b) => b.forgeRig?.status === 'running' || b.forgeRig?.status === 'failed');
+  // a running rig, else the failed one rigged first (the player's own pick: the forge moved on to the others after it)
+  const failed = group.filter((b) => b.forgeRig?.status === 'failed').sort((a, b) => (Date.parse(a.forgeRig.startedAt || 0) || 0) - (Date.parse(b.forgeRig.startedAt || 0) || 0));
+  const running = group.find((b) => b.forgeRig?.status === 'running') || failed[0];
+  const old = Math.max(...group.map((b) => Date.parse(b.createdAt || 0) || 0)) <= Date.now() - 3 * 3600e3;
+  if (old && running?.forgeRig?.status !== 'failed') return null;   // an older forge only to rig it again
   const t0 = Date.parse(group[0].createdAt) || Date.now();
   const s = {
     v: 1, token: state.token, id: sid, recovered: true, startedAt: t0 - 6 * 60e3,
@@ -1790,7 +1798,10 @@ function recoverSession(assets) {
     builds: group.map((b) => ({ id: b.buildId, started: true, p: b.output?.glbUrl ? 100 : 0, glb: b.output?.glbUrl || null, stored: b.output?.rebelGlbUrl || null, thumb: b.engine?.response?.thumbnail_url || null })),
     t: {}, approved: true, variants: group.length
   };
-  if (running) { s.picked = running.buildId; s.rigStarted = running.forgeRig.status === 'running'; s.phase = 'rig'; }
+  if (running) {
+    s.picked = running.buildId; s.rigStarted = running.forgeRig.status === 'running'; s.phase = 'rig';
+    if (old) { s.held = true; s.err = running.forgeRig.error || 'Rigging failed'; }
+  }
   else if (s.builds.every((b) => b.stored)) s.phase = 'pick';
   else if (s.builds.every((b) => b.glb)) s.phase = 'store';
   else s.phase = 'meshy';
@@ -1928,7 +1939,7 @@ async function selectToken(t) {
   state.meta = withArt(await loadToken(t)); updateTokPill(); renderSummon();
   state.assets = await loadAssets(t);
   if (!S) S = recoverSession(state.assets);
-  refreshStep(); if (active()) runPipeline();
+  refreshStep(); if (active() && !S.held) runPipeline();
 }
 async function summon() {
   if (state.summoned) return; const btn = $('#summonBtn'); btn.disabled = true;
@@ -3060,7 +3071,7 @@ function updateTokPill() { const g = FRIEND ? FRIEND.name : traitVal('Gang Names
   gsap.to('#loader', { opacity: 0, duration: 1, delay: 0.4, onComplete: () => $('#loader').remove() });
   if (active()) {
     gsap.killTweensOf(U); state.summoned = true; U.uBuild = 1.05; state.maxStep = liveStep();
-    layoutTrail(); go(liveStep()); runPipeline();
+    layoutTrail(); go(liveStep()); if (S.held) { saveS(); refreshStep(); forgeTick(); } else runPipeline();
   } else {
     go(0);
     if (Q.get('step') === 'awaken' && state.assets?.glb) setTimeout(awakenExisting, 900);   // review deep link
