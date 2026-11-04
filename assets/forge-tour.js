@@ -87,10 +87,16 @@
     ] }
   ];
   const byId = (id) => SCREENS.find((s) => s.id === id);
+  // Nov 4, upright phones: the card can peek (only its title and buttons). A screen is read as if it were open (the class
+  // is off only while this runs: nothing is drawn in between), and its tips open the card while they show
+  function unpeeked(fn) {
+    const p = $('#panel'), pk = !!(p && p.classList.contains('peek'));
+    if (pk) p.classList.remove('peek');
+    try { return fn(); } finally { if (pk) p.classList.add('peek'); }
+  }
   function screen() {
     if ($('#loader') || vis('#npForm')) return null;
-    for (const s of SCREENS) { try { if (s.when()) return s.id; } catch (e) {} }
-    return null;
+    return unpeeked(() => { for (const s of SCREENS) { try { if (s.when()) return s.id; } catch (e) {} } return null; });
   }
   const target = (st) => (typeof st.el === 'function' ? st.el() : st.el ? vis(st.el) : null);
   const val = (v) => (typeof v === 'function' ? v() : v);
@@ -124,19 +130,22 @@
     document.head.appendChild(s);
   }
   function close(mark = true) {
-    if (!S) return; const id = S.id;
+    if (!S) return; const id = S.id, repeek = S.repeek;
     document.removeEventListener('keydown', S.key, true); window.removeEventListener('resize', S.place); clearInterval(S.tick);
     S.wrap.remove(); S = null; if (mark) markSeen(id);
+    if (repeek && window.ForgeSheet) window.ForgeSheet.set(true);
   }
   function start(id) {
     id = id || screen() || 'summon'; const sc = byId(id); if (!sc) return;
     style(); close(false);
+    const repeek = !!(window.ForgeSheet && window.ForgeSheet.peek() && unpeeked(() => sc.steps.some((st) => { const e = st.el && target(st); return e && e.closest('#card'); })));
+    if (repeek) window.ForgeSheet.set(false);
     const list = sc.steps.filter((st) => !st.el || st.orMiddle || target(st));
-    if (!list.length) return;
+    if (!list.length) { if (repeek) window.ForgeSheet.set(true); return; }
     const wrap = document.createElement('div'); wrap.id = 'ftWrap'; wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-modal', 'true'); wrap.setAttribute('aria-label', 'How the Forge works');
     wrap.innerHTML = '<div id="ftShade"></div><div id="ftRing"></div><div id="ftBub"><button class="x" type="button" aria-label="Close the tips">✕</button><div class="lk"></div><h3></h3><p></p><div class="la"></div><div class="arw"></div></div>';
     document.body.appendChild(wrap);
-    S = { id, sc, wrap, list, i: 0, ring: wrap.querySelector('#ftRing'), bub: wrap.querySelector('#ftBub') };
+    S = { id, sc, wrap, list, i: 0, repeek, ring: wrap.querySelector('#ftRing'), bub: wrap.querySelector('#ftBub') };
     S.bub.querySelector('.x').onclick = () => close();
     // the Forge behind does nothing while the tips are up: a click on the dim area goes on to the next bubble
     wrap.addEventListener('click', (e) => { if (!S.bub.contains(e.target)) go(1); });
