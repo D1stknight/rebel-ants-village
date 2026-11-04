@@ -164,6 +164,28 @@ a.tile:hover{border-color:#343846;color:var(--fg)}
 .card button,.card a.btn{min-height:34px;padding:0 14px;background:var(--card2);border:1px solid var(--line2);border-radius:8px;color:var(--fg);font:500 13px var(--sans);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .card button:hover,.card a.btn:hover{border-color:#3a3e4a}
 .card button.primary{background:var(--gold);border-color:var(--gold);color:var(--bg);font-weight:600}
+/* ---- Where changes go (#saving): three kinds of change, a tag each; the same tags on the pages they apply to ---- */
+.wtag{display:inline-flex;align-items:center;gap:6px;font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:3px 10px;border:1px solid;white-space:nowrap;text-decoration:none}
+.wtag::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.wtag.after{color:#8fb8f0;border-color:#24406a;background:#0c1626}
+.wtag.live{color:var(--ok-text);border-color:#1d4d24;background:#0b170c}
+.wtag.both{color:var(--amber);border-color:var(--amber-line);background:var(--amber-bg)}
+a.wtag:hover{filter:brightness(1.2)}
+.phead .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.card h2 .wtag{margin-left:10px;vertical-align:3px}
+#where-now{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:14px 18px;border-radius:12px;border:1px solid var(--gold);background:#17130a;font-size:15px}
+#where-now b{color:var(--gold2)}
+.where{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.where .card{gap:10px}
+.where .card h2{font:400 30px/1 var(--display);letter-spacing:.02em}
+.where .card .say{color:var(--fg);font-size:14px;line-height:1.55}
+.where ul{display:flex;flex-direction:column;gap:6px;padding-left:18px;color:var(--fg);font-size:14px;line-height:1.45}
+.where ul li::marker{color:var(--dim)}
+.where .do{border-top:1px solid var(--line);padding-top:10px;font-size:14px;color:var(--fg)}
+.where .do b{color:var(--gold2)}
+.where .small{color:var(--muted);font-size:13px;line-height:1.6}
+.restart ul{display:flex;flex-direction:column;gap:8px;padding-left:18px;font-size:14px;line-height:1.5;color:var(--fg)}
+.restart .keep{border:1px solid var(--line2);background:var(--card2);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--fg);line-height:1.55}
 .card button.primary:hover{background:var(--gold2);border-color:var(--gold2)}
 .card button.bad{border-color:var(--red-line);color:var(--red)}
 .card button.sm{min-height:28px;padding:0 9px;font-size:12px;border-radius:6px}
@@ -287,6 +309,7 @@ a.tile:hover{border-color:#343846;color:var(--fg)}
       <a href="forge-collections.html"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v11h14V9M10 13h4"/></svg><span class="t">Collections</span><span class="ext" aria-hidden="true">↗</span></a>
     </div>
     <div class="grp"><span class="lbl">SYSTEM</span>
+      <a href="#saving" data-go="saving"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17.5v.01"/></svg><span class="t">Where changes go</span></a>
       <a href="#babylon" data-go="babylon"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg><span class="t">Babylon updates</span><span class="nb" id="nb-bjs"></span></a>
     </div>
     <div class="foot"><a href="index.html">Lobby</a><span aria-hidden="true" style="color:var(--line2)">·</span><button type="button" onclick="logoutAdmin()">Log out</button></div>
@@ -390,7 +413,7 @@ a.tile:hover{border-color:#343846;color:var(--fg)}
 
     <!-- ===== Players and chat (the Multiplayer tools) ===== -->
     <section class="page" id="pg-players" aria-labelledby="h-players">
-      <header class="phead"><div><span class="k">The rooms: who is in, the chat, reports, events</span><h1 id="h-players">Players and chat</h1></div></header>
+      <header class="phead"><div><span class="k">The rooms: who is in, the chat, reports, events</span><h1 id="h-players">Players and chat</h1><div class="tags"><a class="wtag live" href="#saving" title="Where changes go">Live right away · this site only</a></div></div></header>
       <section id="mpa" class="card">
         <p>Who is in Universe right now, the chat (every message, with the words as typed beside the ones the filter starred), the players' reports, and the tools: mute, kick or ban an account, delete a message, clear a village's chat, the chat and voice settings, and the Colony Stage's events (a LIVE NOW in the lobby, hosts heard by everyone there, a show at the Comedy Club's mic). Signed-in players write; guests read. These are this site's rooms only (the dev preview has its own).</p>
         <div class="ver">
@@ -416,7 +439,7 @@ a.tile:hover{border-color:#343846;color:var(--fg)}
     <section class="page" id="pg-content" aria-labelledby="h-content">
       <header class="phead"><div><span class="k">What players see on the landing page and the Badge Wall</span><h1 id="h-content">Content</h1></div></header>
       <section id="ann" class="card">
-        <h2>Announcements</h2>
+        <h2>Announcements<a class="wtag live" href="#saving" title="Where changes go">Live right away · this site only</a></h2>
         <p>The line scrolling along the bottom of the landing page (where players connect their wallet). One announcement per line, up to 12; each shows after a ✦. Saved here, it shows to everyone within a minute.</p>
         <textarea id="ann-lines" spellcheck="true" placeholder="Season 1 Now Live&#10;New dojos coming soon"></textarea>
         <div class="row"><label for="ann-speed">Speed: one loop in <b id="ann-sec">30</b> s</label><input id="ann-speed" type="range" min="12" max="120" step="1" value="30"></div>
@@ -454,8 +477,63 @@ a.tile:hover{border-color:#343846;color:var(--fg)}
     </section>
 
     <!-- ===== Babylon ===== -->
+    <!-- ===== Where changes go: what saves where (Nov 4, Miguel: "so i dont forget them") ===== -->
+    <section class="page" id="pg-saving" aria-labelledby="h-saving">
+      <header class="phead"><div><span class="k">Read this before you change something</span><h1 id="h-saving">Where changes go</h1></div></header>
+      <div id="where-now"><span id="where-now-text">…</span></div>
+      <div class="where">
+        <section class="card">
+          <span><span class="wtag after">After push to main</span></span>
+          <h2>World changes</h2>
+          <p class="say">Saved to dev. Players on rebeluniverse.io see them after the next push to main.</p>
+          <ul>
+            <li>Village Builder: in Universe press M, move or add things, NPCs, chests, rooms, signs, then Hard Save</li>
+            <li>Uploads: room models, music, videos, posters</li>
+            <li>Babylon updates (Put it on dev)</li>
+          </ul>
+          <p class="do">Do it in the <b>dev admin</b>. Check it on the dev preview, then ask Claude to push to main.</p>
+          <p class="small">Hard Save in the live admin also saves to dev. Signed in there, Universe shows you dev's villages; players still see the live ones.</p>
+        </section>
+        <section class="card">
+          <span><span class="wtag live">Live right away · this site only</span></span>
+          <h2>Live settings</h2>
+          <p class="say">Live within a minute, on this site only. The dev admin keeps its own copy that players never see.</p>
+          <ul>
+            <li>Colony Stage: events, tickets, set maker shows</li>
+            <li>Announcements on the landing page</li>
+            <li>Free to play list (NPC Forge)</li>
+            <li>Chat settings, mutes and bans</li>
+            <li>Ant-Thony's guide (send it on each site)</li>
+          </ul>
+          <p class="do">Do it in the <b>live admin</b> for players.</p>
+        </section>
+        <section class="card">
+          <span><span class="wtag both">Both sites at once</span></span>
+          <h2>Shared</h2>
+          <p class="say">One copy for both sites: a change in either admin changes the live site right away.</p>
+          <ul>
+            <li>NPC Forge approvals (which model the villagers wear)</li>
+            <li>Forge characters: Make this my Rebel, re-rigs, gloves</li>
+            <li>Rebuild worker (the rigger every forge uses)</li>
+            <li>Ant-Thony: I'm his dad, How he says words</li>
+          </ul>
+          <p class="do">Either admin works. <b>Careful:</b> players see it right away.</p>
+        </section>
+      </div>
+      <section class="card restart">
+        <h2>Starting the story over</h2>
+        <ul>
+          <li><b>Players:</b> Journal → Story → Start over (at the bottom). Only their own story, on their account.</li>
+          <li><b>You:</b> the same button, or in Universe press M → Backup / Restore → Start the Story Over.</li>
+          <li>Nobody can start over for another player.</li>
+        </ul>
+        <div class="keep">Only the story starts over: every quest from its first step, and the items the quests ask for come back. Rebel Points, badges, opened chests and game scores stay, so nothing pays twice.</div>
+        <p class="small">To test with every chest closed again, use a private window as a guest (practice points only).</p>
+      </section>
+    </section>
+
     <section class="page" id="pg-babylon" aria-labelledby="h-bjs">
-      <header class="phead"><div><span class="k">The 3D engine and its weekly robot</span><h1 id="h-bjs">Babylon updates</h1></div></header>
+      <header class="phead"><div><span class="k">The 3D engine and its weekly robot</span><h1 id="h-bjs">Babylon updates</h1><div class="tags"><a class="wtag after" href="#saving" title="Where changes go">After push to main</a></div></div></header>
       <section id="bjs" class="card">
         <p>The site keeps its own copy of Babylon, so it never changes by itself. Babylon puts out a new version most weeks and you don't need each one. Every Tuesday (five days after Babylon's weekly release, so its quick fixes are in) a robot tests the newest on all 15 villages, the Rebel Forge, the NPC Forge and the terrain lab, and says here whether it is safe.</p>
         <div class="ver">
@@ -1284,7 +1362,7 @@ const BRN = { safari: 'Safari', chrome: 'Chrome', firefox: 'Firefox', edge: 'Edg
 
 // ---- pages: the address's #name picks one (#overview, #performance, #issues, #services, #players, #chat, #events,
 // #announcements, #badges, #babylon)
-const ROUTES = { overview: ['overview'], performance: ['performance'], issues: ['issues'], services: ['services'], players: ['players', 'online'], chat: ['players', 'log'], reports: ['players', 'reports'], events: ['players', 'events'], announcements: ['content', 'ann'], badges: ['content', 'bdg'], anthony: ['content', 'ant'], babylon: ['babylon'] };
+const ROUTES = { overview: ['overview'], performance: ['performance'], issues: ['issues'], services: ['services'], players: ['players', 'online'], chat: ['players', 'log'], reports: ['players', 'reports'], events: ['players', 'events'], announcements: ['content', 'ann'], badges: ['content', 'bdg'], anthony: ['content', 'ant'], babylon: ['babylon'], saving: ['saving'] };
 let PAGE = 'overview', mpaReady = false;
 function route() {
   const key = (location.hash || '').slice(1), r = ROUTES[key] || ROUTES.overview, pg = r[0];
@@ -1298,6 +1376,14 @@ function route() {
   hideTip(); dashRender();
 }
 function toggleMenu() { const s = $('side'), on = !s.classList.contains('open'); s.classList.toggle('open', on); $('menu-btn').setAttribute('aria-expanded', String(on)); }
+// Where changes go: which admin this is, by its address (the live site's, the dev preview's, or another copy)
+(function whereNow() {
+  const h = location.hostname, el = $('where-now-text');
+  if (!el) return;
+  if (/^(www\.)?rebeluniverse\.io$/.test(h) || h === 'rebel-ants-village.vercel.app') el.innerHTML = 'You are in the <b>live admin</b> (rebeluniverse.io). World changes saved here still go to dev; live settings change the live site now.';
+  else if (/-git-dev-/.test(h)) el.innerHTML = 'You are in the <b>dev admin</b> (the dev preview). Live settings here change only the dev preview; shared things change both sites.';
+  else el.innerHTML = `You are in a <b>test copy</b> of the admin (${h.replace(/[<>&"]/g, '')}). Its live settings stay here; shared things still change both sites.`;
+})();
 addEventListener('hashchange', route);
 
 // ---- reading
