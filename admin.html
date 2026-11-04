@@ -1160,9 +1160,13 @@ async function goldLine(ev, el) {
     const r = await fetch('/api/golden-ticket?event=' + encodeURIComponent(ev.id) + '&list=1', { cache: 'no-store' }), d = await r.json().catch(() => ({}));
     const g = d.golden, c = d.cfg || null; GOLD_CFG[ev.id] = c;
     if (!c) { el.textContent = ''; return; }
-    el.textContent = g ? `\u2726 Golden: ${g.sold} of ${g.buy} sold at ${Number(g.price).toLocaleString()} pts · raffle ${g.drawn ? `${g.winners} drawn of ${g.entries}` : `${g.raffle} to draw · ${g.entries} in`}` : `\u2726 Golden: ${c.buy} sold at ${Number(c.price).toLocaleString()} pts, ${c.raffle} drawn (this time is not on the list yet)`;
+    const kind = c.entry ? '\ud83c\udf9f Tickets' : '\u2726 Golden', many = n => (c.entry && n >= 100000 ? '' : ' of ' + n);
+    el.textContent = g ? `${kind}: ${g.sold}${many(g.buy)} sold at ${Number(g.price).toLocaleString()} pts · raffle ${g.drawn ? `${g.winners} drawn of ${g.entries}` : `${g.raffle} to draw · ${g.entries} in`}` : `${kind}: ${c.buy >= 100000 ? 'no limit' : c.buy} at ${Number(c.price).toLocaleString()} pts, ${c.raffle} drawn (this time is not on the list yet)`;
+    // the link to post (Discord, X): the lobby opens this event's ticket card
+    const link = location.origin + '/?tickets=' + encodeURIComponent(ev.id);
+    el.append(' ', btn('Copy the ticket link', async () => { try { await navigator.clipboard.writeText(link); mpaStatus('Copied: ' + link); } catch (err) { mpaStatus(link); } }, 'sm'));
     if (g?.holders?.some(h => h.how === 'bought')) el.append(' ', btn('Pay the tickets back', async () => {
-      if (!confirm(`Pay back every golden ticket bought for ${ev.title}? (Use it when the event is called off.)`)) return;
+      if (!confirm(`Pay back every ticket bought for ${ev.title}? (Use it when the event is called off.)`)) return;
       const rr = await fetch('/api/golden-ticket', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: ev.id, action: 'refund' }) }), dd = await rr.json().catch(() => ({}));
       mpaStatus(rr.ok && dd.ok ? `Paid back ${dd.refunded} ticket${dd.refunded === 1 ? '' : 's'}${dd.failed ? ` (${dd.failed} failed: try again)` : ''}` : (dd.error || 'Refund failed'), !(rr.ok && dd.ok)); goldLine(ev, el);
     }, 'sm bad'));
@@ -1190,11 +1194,20 @@ function eventForm(e) {
   const script = row('Script', mk('textarea')); script.value = e.script || ''; script.placeholder = 'One line each: 0:05 Good evening, Colony! [applause]\n[rimshot] [laugh] [applause] [drumroll] [cheer] = sounds after the line, <cartwheel> = a move';
   const tools = mk('div', 'row'); tools.append(btn('Use the demo set (Antthony)', async () => { script.value = DEMO_SET; if (!stitle.value) stitle.value = "Antthony: Opening Night"; }), mk('span', 'dim', 'Without audio each line gets a babbling voice and a caption; the performer at the Comedy Club\'s mic is Rebel #001.'));
   f.append(mk('span'), tools);
-  const gw = mk('div', 'row'), gnum = (v, max, ph) => { const i = mk('input'); i.type = 'number'; i.min = 0; i.max = max; i.value = v ?? 0; i.style.width = '92px'; i.placeholder = ph; return i; };
-  const gBuy = gnum(e.golden?.buy, 8, 'sold'), gPrice = gnum(e.golden?.price ?? 2500, 1000000, 'points'), gRaffle = gnum(e.golden?.raffle, 8, 'drawn');
-  gBuy.id = 'ev-gbuy'; gPrice.id = 'ev-gprice'; gRaffle.id = 'ev-graffle'; gPrice.style.width = '110px';
-  gw.append(mk('span', 'dim', 'Sold:'), gBuy, mk('span', 'dim', 'at'), gPrice, mk('span', 'dim', 'Rebel Points · free raffle:'), gRaffle, mk('span', 'dim', '(the 8 front-row seats at the Comedy Club; 0 / 0 = none)'));
-  row('Golden tickets', gw);
+  // tickets (Nov 4, Miguel: "the tickets should be for the entire show"): free to watch, a ticket to get in (bought with
+  // Rebel Points, or won in a free raffle: only holders see the show), or free with the golden front row (8 seats)
+  const gMode = mk('select'); gMode.id = 'ev-gmode';
+  for (const [v, l] of [['', 'Free to watch'], ['entry', 'A ticket to get in (Rebel Points)'], ['golden', 'Free, with a golden front row (8 seats)']]) gMode.append(new Option(l, v));
+  gMode.value = e.golden?.entry ? 'entry' : e.golden && (e.golden.buy || e.golden.raffle) ? 'golden' : '';
+  const gw = mk('div', 'row'), gnum = (v, max, ph) => { const i = mk('input'); i.type = 'number'; i.min = 0; i.max = max; i.value = v ?? ''; i.style.width = '100px'; i.placeholder = ph; return i; };
+  const gPrice = gnum(e.golden?.price ?? 2500, 1000000, 'points'), gBuy = gnum(e.golden?.entry && e.golden.buy >= 100000 ? '' : e.golden?.buy, 100000, 'no limit'), gRaffle = gnum(e.golden?.raffle || 0, 1000, '0');
+  gBuy.id = 'ev-gbuy'; gPrice.id = 'ev-gprice'; gRaffle.id = 'ev-graffle';
+  const gHint = mk('span', 'dim');
+  gw.append(gMode, mk('span', 'dim', 'Price'), gPrice, mk('span', 'dim', 'Rebel Points · how many'), gBuy, mk('span', 'dim', '· free by raffle'), gRaffle, gHint);
+  const gPaint = () => { const on = !!gMode.value; for (const x of [gPrice, gBuy, gRaffle]) x.disabled = !on; gBuy.max = gMode.value === 'golden' ? 8 : 100000; gRaffle.max = gMode.value === 'golden' ? 8 : 1000;
+    gHint.textContent = gMode.value === 'entry' ? '(no ticket, no show: the stage stays dark; the hosts and you get in free)' : gMode.value === 'golden' ? '(everyone watches; the 8 front-row seats are for holders)' : ''; };
+  gMode.onchange = gPaint; gPaint();
+  row('Tickets', gw);
   const autoL = mk('label', 'tg'), auto = mk('input'); auto.type = 'checkbox'; auto.checked = !!e.auto; auto.id = 'ev-auto';
   autoL.append(auto, mk('span', '', 'The show starts by itself a minute after the doors open (every time it repeats; Stop the show stops it for that time)'));
   f.append(mk('span'), autoL);
@@ -1203,15 +1216,21 @@ function eventForm(e) {
     const p = EVENT_PLACES.find(x => x.key === place.value) || EVENT_PLACES[0], starts = new Date(when.value).getTime(), len = Math.max(10, +mins.value || 60) * 60000;
     let show = null;
     if (stitle.value.trim() || script.value.trim()) { const sh = parseShow(script.value); show = { title: stitle.value.trim() || 'The show', len: sh.len, audio: audio.value.trim() || null, cues: sh.cues, script: script.value }; }
-    const args = { ...(e.id ? { id: e.id } : {}), title: title.value, place: { village: p.village, room: p.room, label: p.label || VILLAGE_NAMES[p.village] }, starts, ends: starts + len, show, repeat: rep.value, auto: auto.checked };
+    const entry = gMode.value === 'entry';
+    const args = { ...(e.id ? { id: e.id } : {}), title: title.value, place: { village: p.village, room: p.room, label: p.label || VILLAGE_NAMES[p.village] }, starts, ends: starts + len, show, repeat: rep.value, auto: auto.checked, tix: entry };
+    // the tickets (kept by this site: api/golden-ticket.mjs): set before the event says it needs them, so its hall never
+    // asks for a ticket nobody can buy yet
+    const gb = !gMode.value ? 0 : entry ? (gBuy.value === '' ? 100000 : Math.max(0, Math.min(100000, +gBuy.value || 0))) : Math.max(0, Math.min(8, +gBuy.value || 0));
+    const gr = !gMode.value ? 0 : entry ? Math.max(0, Math.min(1000, +gRaffle.value || 0)) : Math.max(0, Math.min(8 - gb, +gRaffle.value || 0));
+    const putTickets = async (id) => {
+      if (!(gb || gr || e.golden)) return;
+      const gr2 = await fetch('/api/golden-ticket', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: id, action: 'config', buy: gb, price: +gPrice.value || 0, raffle: gr, entry }) });
+      const gd = await gr2.json().catch(() => ({})); if (!gr2.ok || !gd.ok) throw new Error('Saved the event, but not its tickets: ' + (gd.error || gr2.status));
+      GOLD_CFG[id] = gd.cfg;
+    };
+    if (e.id) await putTickets(e.id);
     const d = await mpaCmd('event-save', args);
-    // golden tickets: kept by this site for the event (api/golden-ticket.mjs)
-    const gb = Math.max(0, Math.min(8, +gBuy.value || 0)), gr = Math.max(0, Math.min(8 - gb, +gRaffle.value || 0));
-    if (gb || gr || e.golden) {
-      const gr2 = await fetch('/api/golden-ticket', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: d.ev.id, action: 'config', buy: gb, price: +gPrice.value || 0, raffle: gr }) });
-      const gd = await gr2.json().catch(() => ({})); if (!gr2.ok || !gd.ok) throw new Error('Saved the event, but not its golden tickets: ' + (gd.error || gr2.status));
-      GOLD_CFG[d.ev.id] = gd.cfg;
-    }
+    if (!e.id) await putTickets(d.ev.id);
     mpa.edit = null; mpaStatus((e.id ? 'Saved: ' : 'Made: ') + d.ev.title); await mpaShow('events');
   }, 'primary'), btn('Cancel', async () => { mpa.edit = null; await mpaShow('events'); }));
   f.append(mk('span'), save);

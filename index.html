@@ -1855,6 +1855,7 @@ function enterVillage(url) {
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const VN = { hub: 'Hub', ronin: 'Ronin', samurai: 'Samurai', shogun: 'Shogun', bushi: 'Bushi', buke: 'Buke', ashigaru: 'Ashigaru', kenshi: 'Kenshi', yamabushi: 'Yamabushi', sohei: 'Sohei', wokou: 'Wokou', warrior: 'Warrior', 'cute-creepy': 'Cute & Creepy', chumpz: 'Chumpz', 'saints-la': 'Saints of LA' };
   const where = ev => esc(ev.place?.label || '') + (ev.place?.room && ev.place.label ? ', ' + (VN[ev.place.village] || ev.place.village) : '');
+  let wantTix = /^[A-Za-z0-9_-]{10}$/.test(new URLSearchParams(location.search).get('tickets') || '') ? new URLSearchParams(location.search).get('tickets') : '';
   async function look() {
     try {
       const d = await (await fetch('/api/mp-events', { cache: 'no-store' })).json(); if (!d?.ok) return;
@@ -1869,16 +1870,19 @@ function enterVillage(url) {
         const when = new Date(next.starts).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
         el.innerHTML = `<span class="dot"></span><span class="tx"><b>NEXT EVENT</b> · ${esc(next.title)} <small>· ${esc(when)} · ${where(next)}</small></span>`;
       }
-      // golden tickets (Nov 2): the front row at the event, a free raffle and tickets for Rebel Points
+      // tickets (Nov 2: the golden front row; Nov 4: a ticket to get in, the whole show): a free raffle, tickets for Rebel Points
       const ev = live || next;
       if (ev && window.GoldenTicket) window.GoldenTicket.state(ev.id).then(g => {
         if (!g || !el.isConnected || el.querySelector('.gold')) return;
         const holds = g.mine === 'bought' || g.mine === 'won', b = document.createElement('button'); b.type = 'button'; b.className = 'gold';
-        b.textContent = holds ? '\u2726 Front row' : '\u2726 Ticket';
+        b.textContent = g.entry ? (holds ? '\ud83c\udf9f Your ticket' : '\ud83c\udf9f Tickets') : holds ? '\u2726 Front row' : '\u2726 Ticket';
         b.onclick = () => window.GoldenTicket.open({ event: ev.id, title: ev.title, signIn: () => { const m = document.getElementById('econMenu'); if (m && !m.classList.contains('open')) lobbyEconChip(); }, onChange: () => look() });
         el.appendChild(b); place();
       });
       place();
+      // a ticket link (rebeluniverse.io/?tickets=<event id>: posted on Discord, X...): that event's ticket card, once
+      if (wantTix && window.GoldenTicket) { const t = [...(d.live || []), ...(d.next || [])].find(e => e.id === wantTix); wantTix = '';
+        if (t) window.GoldenTicket.open({ event: t.id, title: t.title, signIn: () => { const m = document.getElementById('econMenu'); if (m && !m.classList.contains('open')) lobbyEconChip(); }, onChange: () => look() }); }
     } catch (e) {}
   }
   // between the account chip (top left) and the music button (top right): centred when it clears both, else in the gap

@@ -263,6 +263,28 @@ try {
   await sleep(500);
   ok((await events()).next.find(e => e.id === rep.ev.id)?.starts === rep.ev.starts + D, 'and it is on the list for tomorrow');
   for (const e of [daily, wk, fut, rep]) await admin('event-delete', { id: e.ev.id });
+
+  console.log('a show that needs a ticket (Nov 4)');
+  const hostT = who('Hosty');
+  const tx = await admin('event-save', { title: 'Ticketed Night', place: CLUB, starts: Date.now() - 1000, ends: Date.now() + 1800000, tix: true, show: { title: 'Set', len: 30, cues: [{ t: 1, say: 'Hi' }] } });
+  ok(tx.ok && tx.ev.tix === true, 'an event made with tix: it needs a ticket', tx.ev);
+  await admin('event-host', { id: tx.ev.id, sub: hostT.sub, u: hostT.u, n: 'Hosty' });
+  ok((await events()).live.find(e => e.id === tx.ev.id)?.tix === true, 'the public list says so (tix)');
+  const NoT = who('NoTicket'), Gst = who('GuestT', { k: 'guest', sub: 'g:' + crypto.randomBytes(6).toString('hex') }), Other = who('OtherShow', { tix: ['AAAAAAAAAA'] });
+  for (const P of [NoT, Gst, Other]) {
+    const s1 = await sock('/v1/stage?id=' + tx.ev.id, P.t()), m1 = await s1.next(m => m.t === 'stix' || m.t === 'shi', 5000).catch(() => null); await sleep(500);
+    ok(m1?.t === 'stix' && m1.id === tx.ev.id && s1.closed === 4005, `${P.n}: told a ticket is needed, closed 4005 (no hello, no show)`, [m1, s1.closed]);
+  }
+  // the show started while the hall was empty (the turned-away knocks left it a copy of the event the desk does not push to)
+  const sg = await admin('event-show', { id: tx.ev.id, go: true });
+  const Holder = who('Holder', { tix: [tx.ev.id] }); await enter(Holder, tx.ev.id);
+  ok(Holder.hi?.t === 'shi' && Holder.hi.ev.tix === true && !!Holder.hi.ev.show, 'a ticket holder (its id signed into the ticket) gets in, with the show');
+  ok(sg.ok && Holder.hi.show?.startAt === sg.ev.showAt, 'a show started while the hall was empty: the first one in gets it (the hall reads the event again)', [sg.ev?.showAt, Holder.hi.show]);
+  await enter(hostT, tx.ev.id); ok(hostT.hi?.host === true, 'its host gets in without a ticket');
+  const fr = await admin('event-save', { id: tx.ev.id, tix: false });
+  const Free = who('Free'); await enter(Free, tx.ev.id);
+  ok(fr.ok && fr.ev.tix === false && Free.hi?.t === 'shi', 'tickets switched off: anyone gets in');
+  await admin('event-delete', { id: tx.ev.id });
 } catch (e) { fail++; console.log('  FAIL (exception)', e.stack); }
 console.log(`\n${pass} passed, ${fail} failed`);
 stop(); process.exit(fail ? 1 : 0);

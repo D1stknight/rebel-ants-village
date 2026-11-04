@@ -99,7 +99,8 @@ const controlOf = env => env.CONTROL.get(env.CONTROL.idFromName((env.SITE || 'de
 async function uidOf(sub) { const d = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode('rebel-universe:uid:v1:' + sub))); return btoa(String.fromCharCode(...d)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '').slice(0, 16); }
 
 // who a ticket says the player is, as the rooms and groups keep it
-const identOf = async t => ({ sub: t.sub, u: await uidOf(t.sub), n: String(t.n || 'Rebel').slice(0, 40), k: ['discord', 'name', 'guest'].includes(t.k) ? t.k : 'guest', av: typeof t.av === 'string' && /^https:\/\/cdn\.discordapp\.com\//.test(t.av) ? t.av.slice(0, 160) : '', look: t.look && typeof t.look === 'object' ? t.look : { t: 'starter' } });
+const identOf = async t => ({ sub: t.sub, u: await uidOf(t.sub), n: String(t.n || 'Rebel').slice(0, 40), k: ['discord', 'name', 'guest'].includes(t.k) ? t.k : 'guest', av: typeof t.av === 'string' && /^https:\/\/cdn\.discordapp\.com\//.test(t.av) ? t.av.slice(0, 160) : '', look: t.look && typeof t.look === 'object' ? t.look : { t: 'starter' },
+  tix: Array.isArray(t.tix) ? t.tix.filter(x => EVENT_ID.test(String(x))).slice(0, 4) : [] }); // (the shows this player holds a ticket for: the site signs them in)
 const protocolsOf = req => String(req.headers.get('sec-websocket-protocol') || '').split(',').map(s => s.trim());
 // a group's socket: signed-in players only; 'new' makes one (its id here: 9 random bytes)
 async function openGroup(req, env, url) {

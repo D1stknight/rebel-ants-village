@@ -1,4 +1,4 @@
-// GET /api/mp-ticket?village=<id>&col=<collection>&tok=<token>&gk=<guest key>  -> { ok, ticket, url, site, exp, you: { name, kind } }
+// GET /api/mp-ticket?village=<id>&col=<collection>&tok=<token>&gk=<guest key>[&event=<id>]  -> { ok, ticket, url, site, exp, you: { name, kind } }
 // GET /api/mp-ticket?key=1                                     -> { ok, site, key, admin }
 // A ticket into the multiplayer rooms (realtime/: a Cloudflare Worker). The ticket = base64url(JSON) + '.' + base64url(an
 // Ed25519 signature); the key is worked out from VILLAGE_SESSION_SECRET and the site (prod / dev), so there is nothing new
@@ -11,6 +11,8 @@
 // What they look like: the Forge character of the Rebel they play (col + tok), as the server finds it: the wallet's own
 // forged character when the signed-in wallet holds that NFT, else its public character (the showcase / Free to play),
 // else the starter ant. Never a URL from the browser: nobody can show up as a character they don't have.
+// event (Nov 4): a ticket into that event's hall; when its show needs a ticket (api/golden-ticket.mjs entry) and this
+// account holds one (or an admin asks), the ticket says so (tix: [event id]); the hall lets in nobody else but its hosts.
 import crypto from 'node:crypto';
 import { enforceRateLimit, clientIp } from './_guard.mjs';
 import { econSessionOf, isNameSession } from './_econ.mjs';
@@ -95,6 +97,11 @@ export default async function handler(req, res) {
     const who = s ? { sub: 'u:' + s.u, n: String(s.n || s.un || 'Rebel').slice(0, 40), k: isNameSession(s) ? 'name' : 'discord', av: avatarOf(s) }
       : { sub: guestSub(String(q.gk || '')), n: 'Guest', k: 'guest', av: '' };
     const payload = { v: 1, site, ...who, look, village, iat: now, exp: now + TTL };
+    const ev = String(q.event || '');
+    if (/^[A-Za-z0-9_-]{10}$/.test(ev)) {
+      const { ticketClaim } = await import('./golden-ticket.mjs'), { isAdminRequest } = await import('./_admin-auth.mjs');
+      if (await ticketClaim(ev, s?.u || null, isAdminRequest(req)).catch(() => false)) payload.tix = [ev];
+    }
     await bump({ tickets: 1, ['village:' + village]: 1 }, { players: who.sub, [s ? 'signed' : 'guests']: who.sub }); // (the dashboard: players a day)
     return res.status(200).json({ ok: true, ticket: signTicket(payload, site), url, site, exp: payload.exp, you: { name: who.n, kind: who.k } });
   } catch (e) {

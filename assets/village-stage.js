@@ -16,6 +16,8 @@
 // Captions (Nov 4, Miguel's iPhone: "the caption is in the way of seeing him"): at most two lines at a time (a long
 // line is shown in parts, each for its share of the time), and placed clear of the performer: phones at the top in the
 // logo's place (the stick and the buttons fill the bottom), computers at the bottom; the other side when he is there.
+// Tickets (Nov 4): a show that needs one lets in only the players whose ticket the site signed (the hall says 'stix' and
+// closes, 4005, to anyone else): the stage stays dark for them and the bar sells them one (assets/golden-ticket.js).
 // window.VillageStage.start(host) from village.html, host = { scene, village, villageName(id), player() -> { x, z, interior }
 //   | null, signedIn(), ticket() -> Promise<{ ticket, url }|null>, travel(villageId), doorOf(roomId) -> { x, z } | null,
 //   roomHolder() -> the shown room's node | null, enterRoom(roomId) -> bool (through its door), sound(name), viaSite(url),
@@ -33,7 +35,7 @@
   const settings = load(SET_KEY, { show: true, captions: true });
   let H = null, B = null, ws = null, connecting = false, retryAt = 0, stopped = null, hall = null, pollAt = 0, offset = 0, listeners = new Set();
   // (a hall whose connection dropped: the event and its show stay on this page until it is back in, or this passes)
-  const GRACE_MS = 60000; let graceUntil = 0, graceTries = 0;
+  const GRACE_MS = 60000; let graceUntil = 0, graceTries = 0, locked = ''; // (locked: the event whose show needs a ticket this player has not got)
   const inHall = () => !!(S.ev && (hall || graceUntil > performance.now()));
   let wanted = new URLSearchParams(location.search).get('event'), wantedEv = null; // (the lobby's LIVE NOW: village.html?village=..&event=<id>)
   const S = { live: [], next: [], ev: null, host: false, you: null, speakers: [], hands: [], hand: false, show: null, n: 0, cfg: { chat: true, slow: 5, voice: false }, mute: 0, goal: null };
@@ -63,7 +65,7 @@
     if (ws || connecting || stopped) return;
     connecting = true;
     try {
-      const t = await H.ticket().catch(() => null);
+      const t = await H.ticket({ event: id }).catch(() => null);
       if (!t || !t.ticket || !t.url) { retryAt = performance.now() + 8000; return; }
       if (ws || stopped) return;
       let s; try { s = new WebSocket(t.url + '/v1/stage?id=' + encodeURIComponent(id), [PROTOCOL, 't.' + t.ticket]); } catch (e) { retryAt = performance.now() + 8000; return; }
@@ -74,6 +76,7 @@
         ws = null; const was = hall; hall = null;
         log('closed', e.code, e.reason);
         // dropped after it was in (the network, a phone that slept): the show plays on while the page knocks again
+        if (e.code === 4005) { graceUntil = 0; leaveHall(); locked = was || locked; retryAt = performance.now() + 120000; paint(); return; } // (no ticket: asked again in 2 minutes, or as soon as one is bought)
         if (S.ev && e.code !== 4001 && e.code !== 4003 && e.code !== 4004) {
           if (!graceUntil) { graceUntil = performance.now() + GRACE_MS; graceTries = 0; }
           voiceReset(); paint();
@@ -98,8 +101,9 @@
   const voiceReset = () => { try { window.VillageVoice?.reset?.('stage'); } catch (e) {} };
   function onMessage(m) {
     const t = m.t;
+    if (t === 'stix') { locked = m.id || hall || ''; return; }
     if (t === 'shi') {
-      graceUntil = 0; graceTries = 0; S.ev = m.ev; S.host = !!m.host; S.you = m.you; S.speakers = m.speakers || []; S.hands = m.hands || []; S.hand = !!m.hand; S.n = m.n || 1;
+      graceUntil = 0; graceTries = 0; locked = ''; S.ev = m.ev; S.host = !!m.host; S.you = m.you; S.speakers = m.speakers || []; S.hands = m.hands || []; S.hand = !!m.hand; S.n = m.n || 1;
       S.cfg = m.cfg || S.cfg; S.mute = m.mute || 0; S.show = m.show || null; offset = (+m.now || Date.now()) - Date.now();
       if (S.goal && S.goal.id === m.ev?.id) setGoal(null);
       try { if (m.ev?.id) { window.badgeStat?.('events', String(m.ev.id)); if (S.host) window.badgeStat?.('hosted', String(m.ev.id)); } } catch (e) {} // (the badges)
@@ -176,6 +180,13 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
   }
   const btn = (label, fn, cls) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; if (cls) b.className = cls; b.onclick = e => { e.stopPropagation(); fn(); }; return b; };
   let hostOpen = false, dismissed = '';
+  // the ticket card (assets/golden-ticket.js); a ticket bought there lets this page into the show at once
+  function openTickets(ev) {
+    window.GoldenTicket?.open({ event: ev.id, title: ev.title, signIn: H.signIn, onChange: (g) => {
+      GOLD.set(ev.id, g);
+      if (g && (g.mine === 'bought' || g.mine === 'won') && locked === ev.id) { locked = ''; retryAt = 0; }
+      paint(); } });
+  }
   function paint() {
     if (!el) return;
     const here = S.ev && inHall(), back = !hall; // (back: the connection dropped, the page is knocking again)
@@ -186,15 +197,24 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     if (away && el.live.dataset.k !== kLive) {
       el.live.dataset.k = kLive;
       el.live.innerHTML = `<span class="dot"></span><span class="tx"><b>LIVE</b> · ${esc(away.title)} <small>· ${esc(placeName(away))}</small></span>`;
-      el.live.append(btn(S.goal?.id === away.id ? '✓ Going' : 'Go there', () => goTo(away)), btn('✕', () => { dismissed = away.id; paint(); }, 'x'));
+      el.live.append(btn(S.goal?.id === away.id ? '✓ Going' : 'Go there', () => goTo(away)));
+      if (away.tix && window.GoldenTicket) el.live.append(btn('🎟 Tickets', () => openTickets(away)));
+      el.live.append(btn('✕', () => { dismissed = away.id; paint(); }, 'x'));
     }
     if (!away) el.live.dataset.k = '';
-    el.bar.classList.toggle('on', !!here);
+    // at a ticketed show without a ticket: the bar sells one (the stage stays dark)
+    const lockEv = !here && locked ? S.live.find(e => e.id === locked && atPlace(e)) : null;
+    if (lockEv) GOLD.want(lockEv.id);
+    el.bar.classList.toggle('on', !!here || !!lockEv);
+    if (lockEv) { const g = GOLD.of(lockEv.id), kL = ['lock', lockEv.id, lockEv.title, g ? g.price + ':' + g.mine : ''].join('|');
+      if (el.bar.dataset.k !== kL) { el.bar.dataset.k = kL;
+        el.bar.innerHTML = `<span class="dot"></span><span class="tx"><b>LIVE</b> · ${esc(lockEv.title)} <small>· 🎟 this show needs a ticket</small></span>`;
+        el.bar.append(btn(g?.price ? `🎟 Get a ticket · ${Number(g.price).toLocaleString('en-US')}` : '🎟 Get a ticket', () => openTickets(lockEv), 'on')); } }
     const speakingNow = here && S.speakers.some(s => s.u === S.you), showOn = !!(S.show && showTime() >= 0 && showTime() < S.show.len);
     const deaf = !!(showOn && actx && actx.state !== 'running' && settings.show); // (an iPhone's sound waits for a tap)
     const gold = here ? GOLD.of(S.ev.id) : null;
     const kBar = here ? [S.ev.id, S.ev.title, S.n, showOn, deaf, back, S.host, S.hands.length, hostOpen, speakingNow, S.hand, H.signedIn(), gold ? gold.mine + ':' + gold.left : ''].join('|') : '';
-    if (!here) el.bar.dataset.k = '';
+    if (!here && !lockEv) el.bar.dataset.k = '';
     if (here && el.bar.dataset.k !== kBar) {
       el.bar.dataset.k = kBar;
       el.bar.innerHTML = `<span class="dot"></span><span class="tx"><b>LIVE</b> · ${esc(S.ev.title)} <small>· ${S.n} here${showOn ? (deaf ? ' · 🔇 tap the screen to hear the show' : ' · the show is on') : ''}${back ? ' · reconnecting…' : ''}</small></span>`;
@@ -202,9 +222,9 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
       if (S.host) el.bar.append(btn('Host · ' + S.hands.length + ' ✋', () => { hostOpen = !hostOpen; paint(); }, hostOpen ? 'on' : ''));
       else if (speaking) el.bar.append(btn('On stage', () => send({ t: 'hand', on: false }), 'on'));
       else if (H.signedIn()) el.bar.append(btn(S.hand ? '✋ Lower' : '✋ Raise hand', () => send({ t: 'hand', on: !S.hand }), S.hand ? 'on' : ''));
-      // golden tickets (the front row): what this player holds, or the card to get one
+      // tickets: the one this player holds (a ticket to get in, or the golden front row), or the card to get one
       if (gold && window.GoldenTicket) { const holds = gold.mine === 'bought' || gold.mine === 'won';
-        el.bar.append(btn(holds ? '✦ Front row' : '✦ Ticket', () => window.GoldenTicket.open({ event: S.ev.id, title: S.ev.title, signIn: H.signIn, onChange: (g) => { GOLD.set(S.ev.id, g); paint(); } }), holds ? 'on' : '')); }
+        el.bar.append(btn(gold.entry ? (holds ? '🎟 Your ticket' : '🎟 Tickets') : holds ? '✦ Front row' : '✦ Ticket', () => openTickets(S.ev), holds ? 'on' : '')); }
     }
     el.host.classList.toggle('on', !!(here && S.host && hostOpen));
     const kHost = here && S.host && hostOpen ? JSON.stringify([S.hands.map(x => [x.u, x.n]), S.speakers.map(x => [x.u, x.n]), S.ev.show?.title || '', S.ev.show ? !!(S.show && showTime() < S.show.len) : 0]) : '';
@@ -658,7 +678,7 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
   window.VillageStage = {
     start, tick, poll, dots, goTo, close,
     // golden tickets at the event the page is at: { holds: front-row seat theirs, active: the event's front row is reserved }
-    golden: () => { const ev = S.ev && inHall() ? S.ev : null, g = ev ? GOLD.of(ev.id) : null; return g ? { active: (g.buy || 0) + (g.raffle || 0) > 0, holds: g.mine === 'bought' || g.mine === 'won', room: ev.place?.room || null } : null; },
+    golden: () => { const ev = S.ev && inHall() ? S.ev : null, g = ev ? GOLD.of(ev.id) : null; return g ? { active: !g.entry && (g.buy || 0) + (g.raffle || 0) > 0, holds: g.mine === 'bought' || g.mine === 'won', room: ev.place?.room || null } : null; },
     // a live event with a show at the Comedy Club: Ant-Thony is there (the roaming one steps off his rounds meanwhile)
     antOnStage: () => S.live.some(e => e.place?.village === 'hub' && e.place?.room === 'hub_comedy_club' && !!e.show),
     say: x => send({ t: 'sc', x: String(x || '') }), report: (i, why) => send({ t: 'rp', i: +i, why: why || 'other' }),
@@ -672,7 +692,7 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     settings, set: (k, v) => { settings[k] = v; save(SET_KEY, settings); if (k === 'show' && !v) stopShow(); },
     _mic: performerMic, // (tests)
     _capRects: () => { const r = el?.cap?.getBoundingClientRect(); return { cap: r && el.cap.classList.contains('on') ? { l: r.left, r: r.right, t: r.top, b: r.bottom } : null, pf: performerRect(), top: !!el?.cap?.classList.contains('top'), text: el?.cap?.classList.contains('on') ? el.cap.dataset.t : '', max: capMax() }; }, // (tests)
-    get state() { return { live: S.live.slice(), next: S.next.slice(), ev: S.ev, host: S.host, you: S.you, speakers: S.speakers.slice(), hands: S.hands.slice(), hand: S.hand, show: S.show, n: S.n, cfg: S.cfg, open: !!ws && ws.readyState === 1, hall, grace: graceUntil > performance.now(), wake: !!WAKE.lock, goal: S.goal, stopped, t: showTime(), playing: !!SH, cap: SH?.cap || '', level: SH?.level || 0, performer: !!PF, shown: !!PF?.holder?.isEnabled(false), jaw: !!PF?.jaw, pfMove: PF?.cur?.name || null, pfMoves: PF ? PF.log.slice() : [],
+    get state() { return { live: S.live.slice(), next: S.next.slice(), ev: S.ev, host: S.host, you: S.you, speakers: S.speakers.slice(), hands: S.hands.slice(), hand: S.hand, show: S.show, n: S.n, cfg: S.cfg, open: !!ws && ws.readyState === 1, hall, grace: graceUntil > performance.now(), wake: !!WAKE.lock, locked, goal: S.goal, stopped, t: showTime(), playing: !!SH, cap: SH?.cap || '', level: SH?.level || 0, performer: !!PF, shown: !!PF?.holder?.isEnabled(false), jaw: !!PF?.jaw, pfMove: PF?.cur?.name || null, pfMoves: PF ? PF.log.slice() : [],
       mic: PF?.mic ? { r: +PF.mic.r.toFixed(3), tilt: PF.mic.tilt } : null,
       audio: { url: AUD.url, ready: !!AUD.buf, len: AUD.buf ? +AUD.buf.duration.toFixed(2) : 0, loading: AUD.loading, failed: AUD.failed, ctx: actx?.state || null, rate: actx?.sampleRate || 0, on: !!SH?.src, pos: SH?.src && actx ? +(actx.currentTime - SH.srcAt).toFixed(2) : null } }; }
   };

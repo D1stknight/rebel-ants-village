@@ -1,6 +1,7 @@
 // Golden tickets (Nov 2): the card a player opens from an event (the lobby's LIVE NOW / NEXT EVENT, Universe's stage bar):
 // the front row for ticket holders, the free raffle (until the doors open) and the tickets sold for Rebel Points
-// (api/golden-ticket.mjs decides everything: this only shows it and asks).
+// (api/golden-ticket.mjs decides everything: this only shows it and asks). Tickets to get in (Nov 4, g.entry): one ticket is
+// the whole show (no front row); a player short of points gets the Rebel Points shop.
 //   GoldenTicket.state(eventId)               -> Promise<golden | null> (kept 20 s)
 //   GoldenTicket.open({ event, title, signIn, onChange })   a card over the page; Esc / ✕ / outside closes it
 (() => {
@@ -45,30 +46,33 @@ background:radial-gradient(120% 90% at 50% 0%,rgba(255,214,120,.22),rgba(0,0,0,0
   async function open({ event, title, signIn, onChange }) {
     style(); close();
     const wrap = document.createElement('div'); wrap.id = 'gtWrap';
-    wrap.innerHTML = '<div id="gtCard" role="dialog" aria-modal="true" aria-label="Golden ticket"><div class="k">Golden ticket</div><h3>Loading…</h3></div>';
+    wrap.innerHTML = '<div id="gtCard" role="dialog" aria-modal="true" aria-label="Tickets"><div class="k">Tickets</div><h3>Loading…</h3></div>';
     wrap.addEventListener('pointerdown', (e) => { if (e.target === wrap) close(); });
     document.body.appendChild(wrap); document.addEventListener('keydown', onKey, true);
-    let g = await state(event, true), busy = false, msg = '';
+    let g = await state(event, true), busy = false, msg = '', short = false;
     const paint = () => {
       const card = document.getElementById('gtCard'); if (!card) return;
-      if (!g) { card.innerHTML = `<button class="x" aria-label="Close">✕</button><div class="k">Golden ticket</div><h3>${esc(title || 'This event')}</h3><p class="ev">No golden tickets for this one.</p>`; card.querySelector('.x').onclick = close; return; }
-      const now = Date.now(), seats = (g.buy || 0) + (g.raffle || 0);
-      const mineTx = { bought: '✦ You hold a golden ticket: a front-row seat is yours.', won: '✦ You won a golden ticket in the raffle: a front-row seat is yours.', entered: 'You are in the raffle. Winners are drawn as the doors open.', lost: 'The raffle is drawn: not this time.', paying: 'Your ticket is being paid… press Buy again if it does not finish.' }[g.mine] || '';
-      card.innerHTML = `<button class="x" aria-label="Close">✕</button><div class="k">Golden ticket</div><h3>${esc(title || 'Colony Stage')}</h3>
+      const kick = g?.entry ? 'Ticket' : 'Golden ticket';
+      if (!g) { card.innerHTML = `<button class="x" aria-label="Close">✕</button><div class="k">Tickets</div><h3>${esc(title || 'This event')}</h3><p class="ev">No tickets for this one: it is free to watch.</p>`; card.querySelector('.x').onclick = close; return; }
+      const now = Date.now(), seats = (g.buy || 0) + (g.raffle || 0), many = g.buy >= 100000;
+      const mineTx = (g.entry ? { bought: '🎟 You have a ticket: you are in for the whole show.', won: '🎟 You won a free ticket in the raffle: you are in for the whole show.' } : { bought: '✦ You hold a golden ticket: a front-row seat is yours.', won: '✦ You won a golden ticket in the raffle: a front-row seat is yours.' })[g.mine]
+        || { entered: 'You are in the raffle. Winners are drawn as the doors open.', lost: 'The raffle is drawn: not this time.', paying: 'Your ticket is being paid… press Buy again if it does not finish.' }[g.mine] || '';
+      card.innerHTML = `<button class="x" aria-label="Close">✕</button><div class="k">${kick}</div><h3>${esc(title || 'Colony Stage')}</h3>
 <div class="ev">${now < g.starts ? 'Doors open ' + esc(when(g.starts)) : 'On now'}</div>
-<div class="tk"><b>✦</b><span>The front row: ${seats} golden seat${seats === 1 ? '' : 's'} at the Comedy Club, only for ticket holders.</span></div>
-${g.raffle ? `<div class="row"><span class="l">Free raffle${g.raffleOpen ? ' (until the doors open)' : ''}</span><span class="r">${g.drawn ? `${g.winners} drawn of ${g.entries}` : `${g.raffle} to win · ${g.entries} in`}</span></div>` : ''}
-${g.buy ? `<div class="row"><span class="l">Tickets</span><span class="r">${fmt(g.price)} Rebel Points · ${g.left} of ${g.buy} left</span></div>` : ''}
+<div class="tk"><b>${g.entry ? '🎟' : '✦'}</b><span>${g.entry ? 'One ticket gets you in for the whole show. No ticket, no show: the stage stays dark.' : `The front row: ${seats} golden seat${seats === 1 ? '' : 's'} at the Comedy Club, only for ticket holders.`}</span></div>
+${g.raffle ? `<div class="row"><span class="l">${g.entry ? 'Free tickets by raffle' + (g.raffleOpen ? ', until the doors open' : '') : 'Free raffle' + (g.raffleOpen ? ' (until the doors open)' : '')}</span><span class="r">${g.drawn ? `${g.winners} drawn of ${g.entries}` : `${g.raffle} to win · ${g.entries} in`}</span></div>` : ''}
+${g.buy ? `<div class="row"><span class="l">Tickets</span><span class="r">${fmt(g.price)} Rebel Points · ${many ? 'on sale' : `${fmt(g.left)} of ${fmt(g.buy)} left`}</span></div>` : ''}
 ${mineTx ? `<div class="mine${g.mine === 'lost' ? ' lost' : ''}">${esc(mineTx)}</div>` : ''}
 <div class="acts"></div><div class="msg">${esc(msg)}</div>
-<div class="fine">One ticket per player and time. Points paid for a ticket are paid back if the event is called off.</div>`;
+<div class="fine">${g.entry ? 'One ticket per player for this show, paid with Rebel Points. Points are paid back if the show is called off.' : 'One ticket per player and time. Points paid for a ticket are paid back if the event is called off.'}</div>`;
       card.querySelector('.x').onclick = close;
       const acts = card.querySelector('.acts'), add = (label, fn, p, off) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; if (p) b.className = 'p'; b.disabled = !!off || busy; b.onclick = fn; acts.appendChild(b); };
       const holds = g.mine === 'bought' || g.mine === 'won';
       if (!g.signedIn) add('Sign in for a ticket', () => { close(); setTimeout(() => signIn?.(), 0); }, true); // (after this click: menus that close on a click elsewhere)
       else if (!holds) {
         if (g.raffleOpen && g.mine !== 'entered') add('Enter the raffle (free)', () => act('enter'), !g.buyOpen || !g.left);
-        if (g.buyOpen && (g.left > 0 || g.mine === 'paying')) add(`Buy one · ${fmt(g.price)} pts`, () => act('buy'), true);
+        if (g.buyOpen && (g.left > 0 || g.mine === 'paying')) add(`Buy ${g.entry ? 'a ticket' : 'one'} · ${fmt(g.price)} pts`, () => act('buy'), true);
+        if (short) add('Get Rebel Points', () => window.open('/api/econ-shop?return=' + encodeURIComponent(location.pathname + location.search), '_blank'));
         if (!acts.children.length) add(g.buyOpen && !g.left ? 'Sold out' : 'Closed', () => {}, false, true);
       }
     };
@@ -78,7 +82,8 @@ ${mineTx ? `<div class="mine${g.mine === 'lost' ? ' lost' : ''}">${esc(mineTx)}<
         const r = await fetch('/api/golden-ticket', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ event, action }) });
         const d = await r.json().catch(() => ({}));
         if (d.golden) g = d.golden;
-        msg = d.ok ? (action === 'buy' ? 'Done: the front row is yours.' : 'You are in the raffle.') : d.code === 'sign_in' ? 'Sign in first.' : (d.error || 'That did not work');
+        msg = d.ok ? (action === 'buy' ? (g?.entry ? 'Done: you have a ticket. See you at the show!' : 'Done: the front row is yours.') : 'You are in the raffle.') : d.code === 'sign_in' ? 'Sign in first.' : (d.error || 'That did not work');
+        short = d.code === 'not_enough_points';
         cache.set(event, { g, at: Date.now() });
         if (d.ok) onChange?.(g);
       } catch (e) { msg = 'No answer: try again (you are never charged twice).'; }

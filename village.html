@@ -31778,8 +31778,8 @@ function startVillageMultiplayer() {
     villageName: id => VILLAGE_REGISTRY[id]?.displayName || id,
     player: () => charMesh && walkMode && !adminMode ? { x: charMesh.position.x, z: charMesh.position.z, interior: ActiveInterior ? String(ActiveInterior.targetInteriorId || ActiveInterior.interiorType || 'room') : null } : null,
     signedIn: () => !!Econ.on,
-    signIn: () => { activeJournalTab = 'overview'; openProgressionJournal(); }, // (the journal's account card: golden tickets)
-    ticket: () => window.VillageMP.ticket(),
+    signIn: () => { activeJournalTab = 'overview'; openProgressionJournal(); }, // (the journal's account card: tickets)
+    ticket: (o) => window.VillageMP.ticket(o), // (o.event: a ticket into that event's hall, with the show ticket it holds)
     travel: id => selectVillageGateDestination(id),
     doorOf: id => { const d = scene.transformNodes.find(n => n.metadata?.type === 'interior_entrance' && n.metadata.targetInteriorId === id); return d ? { x: d.position.x, z: d.position.z } : null; },
     roomHolder: () => ActiveInterior ? scene.transformNodes.find(n => n.metadata?.kitRoom && n.parent?.name === 'activeInteriorRoot') || null : null,
