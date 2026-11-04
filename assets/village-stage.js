@@ -17,8 +17,9 @@
 (function () {
   'use strict';
   const PROTOCOL = 'rebel-universe.v1', POLL_MS = 60000, GOTO_KEY = 'rebelAntsStageGoTo:v1', SET_KEY = 'rebelAntsStageSet:v1';
-  // where a performer stands in a room (room coordinates: x, floor height, z, facing): the Comedy Club's mic
-  const STAGE_SPOTS = { hub_comedy_club: [0, 1.1, -9.05, 0] };
+  // where a performer stands in a room (room coordinates: x, floor height, z, facing): the Comedy Club's mic (Nov 4: in
+  // front of its stand, now that he holds his own mic: behind it, the stand's mic hid his face and the mic in his hand)
+  const STAGE_SPOTS = { hub_comedy_club: [0, 1.1, -7.65, 0] };
   const PERFORMER = { col: 'battle_for_colony', tok: '1', scale: 1.9 }; // (Rebel #001, the master: his public character's rig)
   const log = (...a) => { if (window._mpDebug) console.log('[stage]', ...a); };
   const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v && typeof v === 'object' ? { ...d, ...v } : { ...d }; } catch (e) { return { ...d }; } };
@@ -351,6 +352,7 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     else if (SH.plan && ac) { const now = ac.currentTime; SH.plan = SH.plan.filter(p => p.b > now - .05); const s = SH.plan.find(p => p.a <= now && now <= p.b); if (s) { const u = (now - s.a) / (s.b - s.a); lv = Math.sin(Math.PI * Math.min(1, u * 1.2)); } }
     SH.level += (lv - SH.level) * .45;
     jaw(SH.level);
+    if (PF?.mic) PF.mic.hold();
   }
 
   // ---- the performer at the mic (the Comedy Club): Rebel #001's rig, its jaw opening with the voice ----
@@ -385,8 +387,10 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
       const jw = joints.get('mixamorig_Jaw');
       PF = { holder, inst, c, meshes, groups, joints, extra: [], log: [], jaw: jw || null, rest: jw ? (jw.rotationQuaternion || B.Quaternion.FromEulerVector(jw.rotation)).clone() : null, cur: null };
       if (jw && !jw.rotationQuaternion) jw.rotationQuaternion = PF.rest.clone();
+      try { PF.mic = performerMic(PF); } catch (e) { log('mic failed', e?.message); }
+      (parent.parent?.metadata?.interiorLights || []).forEach(l => { if (l.includedOnlyMeshes?.length && PF.mic) l.includedOnlyMeshes.push(...PF.mic.meshes); });
       performerIdle();
-      log('performer', url.split('/').pop(), !!jw);
+      log('performer', url.split('/').pop(), !!jw, PF.mic ? 'mic r ' + PF.mic.r.toFixed(3) : 'no mic');
       performerPack(url).catch(e => log('pack failed', e?.message));
     } catch (e) { log('performer failed', e?.message); }
     finally { pfLoading = false; }
@@ -404,8 +408,88 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
       g.stop(); g.enableBlending = true; g.blendingSpeed = .1; p.groups[src.name] = g; p.extra.push(g);
     }
     c.animationGroups.forEach(g => g.dispose()); c.dispose();
-    log('performer pack', PACK_MOVES.filter(n => p.groups[n]).join(','));
+    try { if (p.mic && p.groups.game_standup) { p.mic.aim(p.groups.game_standup); p.cur = null; } } catch (e) { log('mic aim', e?.message); }
+    log('performer pack', PACK_MOVES.filter(n => p.groups[n]).join(','), p.mic ? 'mic tilt ' + p.mic.tilt : '');
     performerIdle();
+  }
+  // ---- his handheld mic (Nov 4, Miguel: "a microphone in his hands"): made here (no file to load), closed in the hand the
+  // stand-up move keeps at his mouth (the rig's RightHand: the actor held a mic there), its fingers closed round the
+  // handle as his fist closes in the fight stance (the rig's own fight_idle), put on through the hand's own finger joints
+  // (assets/rebel-weapon.js's fist), so it fits him whatever his rig. Shown with him while the show runs.
+  const MIC_FINGERS = /^mixamorig_RightHand(Thumb|Index|Middle|Ring|Pinky)[123]$/;
+  function performerMic(p) {
+    const BB = window.BABYLON, V3 = BB.Vector3, sc = p.holder.getScene(), sm = p.meshes.find(m => m.skeleton), fist = window.RebelWeapon?._fist;
+    const fight = p.groups.fight_idle; if (!sm || !fist || !fight) return null;
+    // the fist: the first key of each right finger joint in the fight stance
+    const grip = [];
+    for (const ta of fight.targetedAnimations) {
+      const n = ta.target; if (!n || !MIC_FINGERS.test(String(n.name).replace(/^stagePf_/, '')) || ta.animation.targetProperty !== 'rotationQuaternion') continue;
+      const k = ta.animation.getKeys()[0]; if (k?.value) grip.push({ n, q: k.value.clone() });
+    }
+    if (grip.length < 10) return null;
+    const skel = sm.skeleton, bone = n => skel.bones.find(b => b.name && (b.name === n || b.name.endsWith('_' + n) || b.name.endsWith(':' + n))) || null; // ('RightHand' -> mixamorig_RightHand)
+    const saved = grip.map(g => g.n.rotationQuaternion ? g.n.rotationQuaternion.clone() : null);
+    const settle = () => { p.holder.computeWorldMatrix(true); p.holder.getDescendants(false).forEach(x => x.computeWorldMatrix && x.computeWorldMatrix(true)); skel.prepare(true); };
+    grip.forEach(g => { if (!g.n.rotationQuaternion) g.n.rotationQuaternion = g.q.clone(); else g.n.rotationQuaternion.copyFrom(g.q); });
+    settle();
+    const BW = b => b.getFinalMatrix().multiply(sm.getWorldMatrix()), bp = b => V3.TransformCoordinates(V3.Zero(), BW(b));
+    const fc = fist(bp, bone, 'Right');
+    grip.forEach((g, i) => { if (saved[i]) g.n.rotationQuaternion.copyFrom(saved[i]); }); settle();
+    if (!fc || !fc.fromJoints) return null;
+    // its size from the fist (a stage mic: the grip a fifth of the fist's width, the grille half as wide again, the
+    // handle out past both ends of the fist)
+    const r = Math.max(.022, Math.min(.05, Math.max(fc.hole, .2 * fc.span))), L = Math.max(7.2 * r, 2.5 * fc.span);
+    const mat = (k, d, spec, sp, em) => { const m = new BB.StandardMaterial('stagePfMic_' + k, sc); m.diffuseColor = BB.Color3.FromHexString(d); m.specularColor = new BB.Color3(spec, spec, spec); m.specularPower = sp; if (em) m.emissiveColor = BB.Color3.FromHexString(em); m.maxSimultaneousLights = 4; return m; };
+    const black = mat('body', '#141217', .35, 48, '#050407'), chrome = mat('chrome', '#c9ccd4', .9, 96, '#1c1d22'), gold = mat('band', '#d8b35c', .7, 64, '#3a2a0a');
+    // the grille: a fine mesh pattern on a canvas (one per page)
+    const tex = new BB.DynamicTexture('stagePfMicGrille', { width: 128, height: 128 }, sc, true), cx = tex.getContext();
+    cx.fillStyle = '#d4d7de'; cx.fillRect(0, 0, 128, 128); cx.strokeStyle = 'rgba(40,42,50,.75)'; cx.lineWidth = 1.6;
+    for (let i = -128; i < 256; i += 8) { cx.beginPath(); cx.moveTo(i, 0); cx.lineTo(i + 128, 128); cx.stroke(); cx.beginPath(); cx.moveTo(i, 128); cx.lineTo(i + 128, 0); cx.stroke(); }
+    tex.update(); tex.uScale = 3; tex.vScale = 2; tex.wrapU = tex.wrapV = BB.Texture.WRAP_ADDRESSMODE;
+    const grille = mat('grille', '#ffffff', .8, 80, '#151518'); grille.diffuseTexture = tex;
+    // along +y: the handle (the fist round its middle, at y 0), the gold band, the chrome collar, the ball grille
+    const parts = [], at = (m, y) => { m.position.y = y; parts.push(m); return m; };
+    const y0 = -.45 * L;
+    at(BB.MeshBuilder.CreateCylinder('stagePfMicHandle', { height: L, diameterBottom: 1.7 * r, diameterTop: 2.3 * r, tessellation: 18 }, sc), y0 + L / 2).material = black;
+    at(BB.MeshBuilder.CreateCylinder('stagePfMicBand', { height: .35 * r, diameter: 2.36 * r, tessellation: 18 }, sc), y0 + L - .9 * r).material = gold;
+    at(BB.MeshBuilder.CreateCylinder('stagePfMicCollar', { height: .7 * r, diameterBottom: 2.4 * r, diameterTop: 2.9 * r, tessellation: 18 }, sc), y0 + L + .3 * r).material = chrome;
+    const ball = at(BB.MeshBuilder.CreateSphere('stagePfMicBall', { diameter: 3.1 * r, segments: 12 }, sc), y0 + L + 1.75 * r); ball.scaling.y = 1.08; ball.material = grille;
+    at(BB.MeshBuilder.CreateCylinder('stagePfMicEnd', { height: .25 * r, diameter: 1.5 * r, tessellation: 12 }, sc), y0 - .1 * r).material = chrome;
+    // held at the hole's centre, along the fist (the ball on the thumb side), riding the hand's drawn bone
+    const pivot = new BB.TransformNode('stagePfMic', sc);
+    pivot.setPreTransformMatrix(BB.Matrix.Translation(fc.G.x, fc.G.y, fc.G.z).multiply(BB.Matrix.Invert(BW(fc.hb))));
+    pivot.attachToBone(fc.hb, sm); pivot.scalingDeterminant = 1;
+    const inner = new BB.TransformNode('stagePfMicInner', sc); inner.parent = pivot;
+    // its axis: across the fist, the grille on the thumb side (tilted toward his mouth once his stand-up move is in: aim)
+    const BW0 = BW(fc.hb).clone(), inv0 = BB.Matrix.Invert(BW0), G0 = V3.TransformCoordinates(fc.G, inv0);
+    const A0 = V3.TransformNormal(fc.A, inv0).normalize(), F0 = V3.TransformNormal(fc.F, inv0).normalize();
+    const setAxis = (upL) => { // (an axis in the hand's own frame -> the mic's frame at the reference pose)
+      const up = V3.TransformNormal(upL, BW0).normalize(), Fw = V3.TransformNormal(F0, BW0);
+      const fw = Fw.subtract(up.scale(V3.Dot(Fw, up))).normalize(), side = V3.Cross(up, fw).normalize();
+      inner.setPreTransformMatrix(BB.Matrix.FromValues(side.x, side.y, side.z, 0, up.x, up.y, up.z, 0, fw.x, fw.y, fw.z, 0, 0, 0, 0, 1));
+    };
+    setAxis(A0);
+    parts.forEach(m => { m.parent = inner; m.isPickable = false; m.alwaysSelectAsActiveMesh = true; m.metadata = { camSkip: true, interiorRuntime: true }; });
+    return { pivot, inner, meshes: parts, grip, r, L, span: fc.span, mats: [black, chrome, gold, grille], tex, tilt: 0,
+      // the grille toward his mouth through his stand-up move: the mean way from the fist to his jaw in the hand's frame,
+      // over the move, at most 50 degrees off the fist's own line (sampled once the move is in; his pose put back)
+      aim(g) {
+        const jawB = bone('Jaw') || bone('Head'), hb = fc.hb; if (!g || !jawB) return;
+        const sum = V3.Zero(); let n = 0, blend = g.enableBlending;
+        g.enableBlending = false; g.start(false, 1, g.from, g.to, false); g.pause(); // (blending would hold the pose it started in)
+        for (let i = 0; i < 12; i++) {
+          g.goToFrame(g.from + (g.to - g.from) * (i + .5) / 12); this.hold(); settle();
+          const inv = BB.Matrix.Invert(BW(hb)), J = V3.TransformCoordinates(bp(jawB), inv);
+          sum.addInPlace(J.subtract(G0).normalize()); n++;
+        }
+        g.stop(); g.enableBlending = blend;
+        if (!n) return;
+        let d = sum.scale(1 / n).normalize(); const cos = V3.Dot(d, A0), ang = Math.acos(Math.max(-1, Math.min(1, cos)));
+        if (ang > 50 / 57.3) { const k = Math.sin(50 / 57.3) / Math.max(1e-6, Math.sin(ang)); d = A0.scale(Math.cos(50 / 57.3) - cos * k).add(d.scale(k)).normalize(); }
+        setAxis(d); this.tilt = Math.round(Math.min(ang, 50 / 57.3) * 57.3);
+      },
+      hold() { for (const g of grip) { if (!g.n.rotationQuaternion) g.n.rotationQuaternion = g.q.clone(); else g.n.rotationQuaternion.copyFrom(g.q); } },
+      dispose() { try { parts.forEach(m => m.dispose(false, false)); inner.dispose(); pivot.dispose(); this.mats.forEach(m => m.dispose()); tex.dispose(); } catch (e) {} } };
   }
   function fixMaterial(mat) { // (as the village does for its own player: at most 4 lights, no emissive, both faces)
     if (!mat || mat._stFixed) return; mat._stFixed = true;
@@ -433,7 +517,7 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
   }
   function dropPerformer() {
     if (!PF) return; const p = PF; PF = null;
-    try { p.extra.forEach(g => g.dispose()); p.inst.animationGroups.forEach(g => g.dispose()); p.inst.skeletons?.forEach(s => s.dispose()); p.meshes.forEach(m => m.dispose(false, false)); p.holder.dispose(false, false); p.c.dispose(); } catch (e) {}
+    try { p.mic?.dispose(); p.extra.forEach(g => g.dispose()); p.inst.animationGroups.forEach(g => g.dispose()); p.inst.skeletons?.forEach(s => s.dispose()); p.meshes.forEach(m => m.dispose(false, false)); p.holder.dispose(false, false); p.c.dispose(); } catch (e) {}
   }
 
   // ---- golden tickets (Nov 2): the event at hand's (api/golden-ticket.mjs, read every minute while there) ----
@@ -489,7 +573,9 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     in: () => !!(ws && ws.readyState === 1 && S.ev),
     on: f => { listeners.add(f); return () => listeners.delete(f); },
     settings, set: (k, v) => { settings[k] = v; save(SET_KEY, settings); if (k === 'show' && !v) stopShow(); },
+    _mic: performerMic, // (tests)
     get state() { return { live: S.live.slice(), next: S.next.slice(), ev: S.ev, host: S.host, you: S.you, speakers: S.speakers.slice(), hands: S.hands.slice(), hand: S.hand, show: S.show, n: S.n, cfg: S.cfg, open: !!ws && ws.readyState === 1, hall, goal: S.goal, stopped, t: showTime(), playing: !!SH, cap: SH?.cap || '', level: SH?.level || 0, performer: !!PF, shown: !!PF?.holder?.isEnabled(false), jaw: !!PF?.jaw, pfMove: PF?.cur?.name || null, pfMoves: PF ? PF.log.slice() : [],
+      mic: PF?.mic ? { r: +PF.mic.r.toFixed(3), tilt: PF.mic.tilt } : null,
       audio: { url: AUD.url, ready: !!AUD.buf, len: AUD.buf ? +AUD.buf.duration.toFixed(2) : 0, loading: AUD.loading, failed: AUD.failed, ctx: actx?.state || null, rate: actx?.sampleRate || 0, on: !!SH?.src, pos: SH?.src && actx ? +(actx.currentTime - SH.srcAt).toFixed(2) : null } }; }
   };
 })();
