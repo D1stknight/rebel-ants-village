@@ -784,7 +784,7 @@ async function mpaShow(tab) {
       box.append(h, btn('Clear this chat', () => confirm(`Clear the chat in ${villageOf(r.room)} copy ${r.copy}? (The log keeps it.)`) && mpaAct('clear', { room: r.room }, 'Chat cleared'), 'sm'));
       for (const p of r.players) {
         const row = mk('div', 'who');
-        const lab = p.look?.col && p.look?.tok ? (p.look.col === 'battle_for_colony' ? 'Rebel #' : p.look.col === 'chumpz' ? 'Chumpz #' : p.look.col === 'saints' ? 'Saint #' : '#') + p.look.tok : p.k === 'guest' ? 'Visitor' : '';
+        const lab = p.look?.col && p.look?.tok ? (p.look.col === 'battle_for_colony' ? 'Rebel #' : p.look.col === 'chumpz' ? 'Chumpz #' : p.look.col === 'saints' ? 'Saint #' : p.look.col === 'universe' ? ({ 1: 'Sanguira ', 2: 'Elaria ' }[p.look.tok] || 'Character ') + '#' : '#') + p.look.tok : p.k === 'guest' ? 'Visitor' : '';
         row.append(mk('span', 'n k-' + p.k, p.n), mk('span', 'dim', [lab, p.k === 'guest' ? 'guest' : p.k === 'name' ? 'name account' : 'Discord', p.s ? (p.s[5] ? 'in ' + p.s[5] : `at ${Math.round(p.s[0])}, ${Math.round(p.s[2])}`) : 'not walking', 'since ' + mpaWhen(p.j)].filter(Boolean).join(' · ')));
         if (p.mute) row.append(mk('span', 'tag', 'muted until ' + mpaWhen(p.mute)));
         row.append(accountActs(p.sub, p.n, p.k));

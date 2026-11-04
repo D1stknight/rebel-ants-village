@@ -182,10 +182,11 @@
     p.s = s;
     if (!p.pos) { p.pos = new B.Vector3(s[0], s[1], s[2]); p.yaw = s[3]; }
   }
+  const UNIVERSE_NAMES = { 1: 'Sanguira', 2: 'Elaria' };   // Universe's own characters (index.html UNIVERSE_PLAYABLES)
   const label = look => {
     const c = look?.col, t = look?.tok;
     if (!c || !t) return '';
-    return c === 'battle_for_colony' ? 'Rebel #' + t : c === 'chumpz' ? 'Chumpz #' + t : c === 'saints' ? 'Saint #' + t : '#' + t;
+    return c === 'battle_for_colony' ? 'Rebel #' + t : c === 'chumpz' ? 'Chumpz #' + t : c === 'saints' ? 'Saint #' + t : c === 'universe' ? UNIVERSE_NAMES[t] || 'Character #' + t : '#' + t;
   };
   function makeTag(p) {
     const W = 512, Ht = 128, dt = new B.DynamicTexture('mpTagTex_' + p.id, { width: W, height: Ht }, H.scene, true), c = dt.getContext();

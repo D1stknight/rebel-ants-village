@@ -22,8 +22,9 @@ const KEY = `site:free-roster:v1:${ENV}`;
 const COL = 'battle_for_colony';
 // the friend collections forged in the Rebel Forge (assets/friend-collections.json; the lobby's FRIEND_LABELS)
 const FRIENDS = { chumpz: 'Chumpz', saints: 'Saint' };
-export const NEVER = new Set(['1', 'chumpz:900001']);
-export const BUILTIN = ['1', 'chumpz:900001'];
+// Nov 3 Universe's own characters (index.html UNIVERSE_PLAYABLES: Sanguira, Elaria) are built-in cards too
+export const NEVER = new Set(['1', 'chumpz:900001', 'universe:1', 'universe:2']);
+export const BUILTIN = ['1', 'chumpz:900001', 'universe:1', 'universe:2'];
 const hiddenOf = (d) => (Array.isArray(d?.hidden) ? d.hidden.map(String).filter((h) => BUILTIN.includes(h)) : []);
 // the lobby's showcase until a roster is saved (index.html VILLAGE_RIGGED)
 export const DEFAULT_TOKENS = ['262', '469', '1555', '4998', '1738', '3421', '609', '4722', '4', '893'];
@@ -75,7 +76,7 @@ export default async function handler(req, res) {
     if (b.hidden !== undefined && !Array.isArray(b.hidden)) return res.status(400).json({ ok: false, error: 'hidden is a list' });
     const hide = b.hidden === undefined ? null : [...new Set(b.hidden.map((h) => String(h).trim()))];
     const notBuiltin = (hide || []).filter((h) => !BUILTIN.includes(h));
-    if (notBuiltin.length) return res.status(400).json({ ok: false, error: `Only #001 and the Chumpz Racer can be switched off here (not ${notBuiltin.join(', ')})` });
+    if (notBuiltin.length) return res.status(400).json({ ok: false, error: `Only #001, the Chumpz Racer, Sanguira and Elaria can be switched off here (not ${notBuiltin.join(', ')})` });
     // Oct 25 (Miguel ticked Chumpz #1270: "No public forged character with a rig for #893"): a tick saves the whole
     // list, so only what it adds needs its public character; entries already on the roster (the saved list, or the
     // showcase while none is saved) stay and wait for theirs
