@@ -275,12 +275,18 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
   const dropAudio = () => { AUD.url = ''; AUD.buf = null; AUD.loading = false; AUD.failed = ''; };
   function stopSrc() { const s = SH?.src; if (!s) return; SH.src = null; try { s.onended = null; s.stop(); } catch (e) {} try { s.disconnect(); } catch (e) {} }
   // keep the buffer playing at the show's own second: started when it is ready and the sound is on (a page that joins
-  // late starts in the middle), started again where the show is when it drifted half a second (a stopped sound came back)
+  // late starts in the middle), started again where the show is when it drifts (a stopped sound came back, a late start)
   function audioTick(t) {
     const ac = actx, buf = SH.audioUrl && AUD.url === SH.audioUrl ? AUD.buf : null;
     if (!buf || !ac || ac.state !== 'running') return;
     if (t >= buf.duration - .05) { stopSrc(); return; }
-    if (SH.src) { if (Math.abs(ac.currentTime - SH.srcAt - t) <= .5) return; stopSrc(); }
+    // (more than a quarter second off for a second, or more than 0.6 s at once: started again where the show is)
+    if (SH.src) {
+      const off = Math.abs(ac.currentTime - SH.srcAt - t);
+      if (off <= .25) { SH.offSince = 0; return; }
+      if (off <= .6) { const n = performance.now(); if (!SH.offSince) SH.offSince = n; if (n - SH.offSince < 1000) return; }
+      SH.offSince = 0; stopSrc();
+    }
     if (t < -3) return;
     const s = ac.createBufferSource(); s.buffer = buf; s.connect(SH.an);
     const when = ac.currentTime + (t < 0 ? -t : .04), off = t < 0 ? 0 : t + .04;
