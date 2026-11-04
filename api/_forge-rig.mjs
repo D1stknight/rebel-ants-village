@@ -79,6 +79,12 @@ export function jointsEnv(o) {
 export const isRebel001 = (rec) => (rec?.collectionKey || 'battle_for_colony') === 'battle_for_colony' && /^0*1$/.test(String(rec?.tokenId || '')) && !rec?.forgeRig?.options?.npc;
 export const anthonyEnv = (rec) => (isRebel001(rec) ? { FORGE_ANTHONY: '1' } : {});
 
+// v2.45 Universe's own characters (collection universe: Vicky's dolls) are chibi: a big head, short legs. Every job of
+// such a build (the rig, re-rigs, glove fits, the moves / games packs) finds the neck and the crotch with landmarks.py's
+// chibi rules (FORGE_CHIBI), so they all make the same skeleton. Everyone else's jobs are unchanged.
+// (a Universe character painted grown from its artwork, bodyType 'universe_grown', has a normal body: the usual landmarks)
+export const chibiEnv = (rec) => (rec?.collectionKey === 'universe' && rec.bodyType !== 'universe_grown' ? { FORGE_CHIBI: '1' } : {});
+
 // Credentials: Vercel OIDC inside the deployment (default). If OIDC is off for the project, set
 // FORGE_SANDBOX_TOKEN (a Vercel access token) and the team/project ids are filled in from the system env.
 export function creds() {

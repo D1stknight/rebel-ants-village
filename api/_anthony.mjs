@@ -78,15 +78,52 @@ export function voiceTokenOk(text, token) {
 }
 
 // the economy's voice answers a WAV (or JSON on an error)
-export async function econVoice(text, ms = 85000) {
+// opts.temperature: how much he varies his delivery (the economy's 0.2-1.2; its own default 0.5 is steady)
+export async function econVoice(text, ms = 85000, opts = {}) {
   const base = env('REBEL_ECONOMY_URL').replace(/\/+$/, ''), key = env('REBEL_ECONOMY_SERVICE_KEY');
   if (!base || !key) return { ok: false, status: 503, error: 'The Rebel Economy link is not set up yet' };
+  const t = +opts.temperature, body = { text: await speakable(text), ...(t >= .2 && t <= 1.2 ? { temperature: Math.round(t * 100) / 100 } : {}) };
   let r;
-  try { r = await fetch(`${base}/api/anthony/voice`, { method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ text }), signal: AbortSignal.timeout(ms) }); }
+  try { r = await fetch(`${base}/api/anthony/voice`, { method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(ms) }); }
   catch (e) { return { ok: false, status: 504, error: 'His voice did not answer' }; }
   if (!r.ok || !/audio\//.test(r.headers.get('content-type') || '')) { const d = await r.json().catch(() => ({})); return { ok: false, status: r.status === 401 ? 503 : 502, error: d.error || `voice ${r.status}` }; }
   return { ok: true, wav: Buffer.from(await r.arrayBuffer()), ms: r.headers.get('x-voice-ms') || '' };
 }
+
+// ---- how he says words (Nov 4, Miguel after the first show: "some pronunciations are not right") ----
+// A list kept in the Admin Hub's set maker (one for every site: anthony:sayas:v1), [written, said] pairs, whole words,
+// any case, applied to every line before his voice says it (the captions keep the written words); the economy's own list
+// (LOL, NFT, Ant-Thony...) runs after it. Usernames written together are said as words (MetaLineman, 1stKnight, big_chain).
+export const SAY_AS_DEFAULT = [
+  ['Chumpz', 'Chumps'], ['Sohei', 'So-hay'], ['Yamabushi', 'Yah-mah-boo-shee'], ['Bushi', 'Boo-shee'], ['Buke', 'Boo-keh'],
+  ['Kenshi', 'Ken-shee'], ['Ashigaru', 'Ah-shee-gah-roo'], ['Wokou', 'Woh-koh'], ['C&C', 'C and C'], ['Cute & Creepy', 'Cute and Creepy'],
+  ['NPCs', 'N-P-Cs'], ['NPC', 'N-P-C'], ['XP', 'X-P'], ['UTC', 'U-T-C'], ['3D', 'three-D'], ['Hold Em', "Hold 'em"],
+  ['rebeluniverse.io', 'rebel universe dot I-O'], ['rebelants.io', 'rebel ants dot I-O'], ['#001', 'zero zero one']
+];
+const SAY_KEY = 'anthony:sayas:v1';
+let sayMem = { at: 0, v: null };
+export async function sayAsList(fresh) {
+  if (!fresh && Date.now() - sayMem.at < 60000 && sayMem.v) return sayMem.v;
+  try { const r = await redis([['GET', SAY_KEY]]); const v = r?.[0]?.result ? JSON.parse(r[0].result) : null; sayMem = { at: Date.now(), v: Array.isArray(v) ? v : SAY_AS_DEFAULT }; }
+  catch (e) { sayMem = { at: Date.now() - 50000, v: sayMem.v || SAY_AS_DEFAULT }; }
+  return sayMem.v;
+}
+export function cleanSayAs(list) {
+  return (Array.isArray(list) ? list : []).map((x) => [clean(x?.[0], 60), clean(x?.[1], 120)]).filter(([a, b]) => a && b && a.toLowerCase() !== b.toLowerCase()).slice(0, 200);
+}
+export async function setSayAs(list) { const v = cleanSayAs(list); await redis([['SET', SAY_KEY, JSON.stringify(v)]]); sayMem = { at: Date.now(), v }; return v; }
+const reEsc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+export function sayWith(list, text) {
+  let t = String(text || '');
+  // the longest first (Cute & Creepy before C&C); whole words (a written form that starts or ends with a symbol: as it is)
+  for (const [a, b] of [...list].sort((x, y) => y[0].length - x[0].length)) {
+    const pre = /^\w/.test(a) ? '\\b' : '(?<![\\w#&])', post = /\w$/.test(a) ? '\\b' : '(?![\\w])';
+    t = t.replace(new RegExp(pre + reEsc(a) + post, 'gi'), b);
+  }
+  // usernames written together: MetaLineman -> Meta Lineman, 1stKnight -> 1st Knight, big_chain -> big chain
+  return t.replace(/\b[\w]+\b/g, (w) => (/[a-z][A-Z]|\d[A-Z]|_/.test(w) ? w.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/(\d)([A-Z])/g, '$1 $2').replace(/_+/g, ' ') : w));
+}
+export async function speakable(text) { return sayWith(await sayAsList(), text); }
 
 // clean text from a page: one line, no control characters
 export const clean = (s, n) => String(s || '').replace(/[\u0000-\u001f\u007f-\u009f​-‏‪-‮]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, n);

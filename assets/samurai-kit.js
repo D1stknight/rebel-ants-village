@@ -488,6 +488,55 @@
       c.fillStyle = '#20263a'; c.font = "italic 700 25px 'Comic Sans MS', 'Segoe Print', cursive";
       c.fillText('Out on my', 44, 66); c.fillText('rounds!', 44, 92); c.fillText('Home 2-7 a.m.', 44, 118); c.fillText('- A.', 150, 162);
     }),
+    // Ant-Thony's star house (Nov 3): his name in lights over the porch, his star of fame at the foot of the steps, his ant farm
+    // (sand, tunnels, ants carrying crumbs) and its brass plaque
+    marquee_anthony: (cv, T) => cv('marquee_anthony', 1024, 256, (c, W, H) => {
+      const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#2a0f24'); g.addColorStop(1, '#120612'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      c.strokeStyle = '#d8b24e'; c.lineWidth = 6; c.strokeRect(8, 8, W - 16, H - 16);
+      const star = (x, y, r, col) => { c.save(); c.strokeStyle = col; c.lineWidth = 7; c.shadowColor = col; c.shadowBlur = 18; c.lineJoin = 'round'; c.beginPath();
+        for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? r * .45 : r; c.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } c.closePath(); c.stroke(); c.restore(); };
+      star(96, H / 2 + 4, 54, '#ff4fa3'); star(W - 96, H / 2 + 4, 54, '#ff4fa3');
+      T._neon(c, 'ANT-THONY', W / 2, H / 2 + 6, 134, '#ffc93a', W - 300);
+    }),
+    star_anthony: cv => cv('star_anthony', 512, 512, (c, W, H) => {
+      const r = rng(19); c.fillStyle = '#2b2a2e'; c.fillRect(0, 0, W, H);
+      for (let k = 0; k < 2600; k++) { c.fillStyle = r() < .5 ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.12)'; c.fillRect(r() * W, r() * H, 2, 2); }
+      c.strokeStyle = '#b08a3e'; c.lineWidth = 8; c.strokeRect(10, 10, W - 20, H - 20);
+      const cx = W / 2, cy = H * .47, R = 222;
+      c.beginPath(); for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? R * .43 : R; c.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); } c.closePath();
+      const g = c.createLinearGradient(0, 0, W, H); g.addColorStop(0, '#f2a5b8'); g.addColorStop(1, '#d9798f'); c.fillStyle = g; c.fill();
+      for (let k = 0; k < 1800; k++) { const x = r() * W, y = r() * H; if (c.isPointInPath(x, y)) { c.fillStyle = r() < .5 ? 'rgba(255,255,255,.2)' : 'rgba(120,40,60,.16)'; c.fillRect(x, y, 2, 2); } }
+      c.lineWidth = 8; c.strokeStyle = '#c9a046'; c.stroke();
+      c.fillStyle = '#c9a046'; c.strokeStyle = '#c9a046'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = "900 50px Georgia, 'Times New Roman', serif"; c.fillText('ANT-THONY', cx, cy - 2, 290);
+      c.lineWidth = 5; c.beginPath(); c.arc(cx, cy + 96, 30, 0, Math.PI * 2); c.stroke();
+      c.beginPath(); c.arc(cx, cy + 88, 10, Math.PI, 0); c.lineTo(cx + 10, cy + 98); c.arc(cx, cy + 98, 10, 0, Math.PI); c.closePath(); c.fill(); c.fillRect(cx - 2, cy + 108, 4, 10);
+    }),
+    antfarm: cv => cv('antfarm', 512, 320, (c, W, H) => {
+      const r = rng(41), top = H * .2;
+      const sky = c.createLinearGradient(0, 0, 0, top); sky.addColorStop(0, '#cfe3e6'); sky.addColorStop(1, '#e6efe2'); c.fillStyle = sky; c.fillRect(0, 0, W, top + 12);
+      c.beginPath(); c.moveTo(0, H); for (let x = 0; x <= W; x += 8) c.lineTo(x, top + Math.sin(x * .03) * 5 + Math.sin(x * .011 + 2) * 7); c.lineTo(W, H); c.closePath();
+      const sg = c.createLinearGradient(0, top, 0, H); sg.addColorStop(0, '#e2c38c'); sg.addColorStop(1, '#b38a55'); c.fillStyle = sg; c.fill();
+      for (let k = 0; k < 6000; k++) { const x = r() * W, y = top + 10 + r() * (H - top - 10); c.fillStyle = r() < .5 ? 'rgba(255,240,200,.25)' : 'rgba(90,60,30,.18)'; c.fillRect(x, y, 1.5, 1.5); }
+      c.strokeStyle = '#6a4524'; c.fillStyle = '#6a4524'; c.lineCap = 'round'; c.lineJoin = 'round';
+      const tunnel = (pts, w) => { c.lineWidth = w; c.beginPath(); pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.stroke(); };
+      tunnel([[90, top + 2], [96, 90], [84, 140], [110, 200], [104, 262]], 13); tunnel([[96, 120], [160, 132], [210, 118]], 11);
+      tunnel([[110, 200], [190, 214], [250, 232], [300, 228]], 11); tunnel([[330, top + 4], [324, 100], [346, 156], [330, 208], [356, 276]], 13);
+      tunnel([[346, 156], [410, 150], [452, 172]], 11); tunnel([[330, 208], [270, 196]], 11); tunnel([[452, 172], [470, 236], [440, 288]], 11);
+      for (const [x, y, rx, ry] of [[214, 116, 24, 14], [300, 228, 28, 16], [104, 266, 26, 15], [452, 176, 22, 13], [440, 290, 24, 13]]) { c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); c.fill(); }
+      c.fillStyle = '#fff8ea'; for (const [x, y] of [[296, 232], [306, 226], [300, 236], [100, 268], [109, 263]]) { c.beginPath(); c.ellipse(x, y, 3.2, 2.2, .4, 0, Math.PI * 2); c.fill(); } // eggs in the rooms
+      const ant = (x, y, a, crumb) => { c.save(); c.translate(x, y); c.rotate(a); c.fillStyle = '#160e09'; c.strokeStyle = '#160e09'; c.lineWidth = 1.6;
+        for (const [ox, rx] of [[-7, 4], [0, 2.9], [6, 3.3]]) { c.beginPath(); c.ellipse(ox, 0, rx, rx * .78, 0, 0, Math.PI * 2); c.fill(); }
+        for (const s of [-1, 1]) { for (const lx of [-2.2, 0, 2.2]) { c.beginPath(); c.moveTo(lx, 0); c.lineTo(lx + 2.4, s * 6.5); c.stroke(); } c.beginPath(); c.moveTo(8.5, s * 1); c.lineTo(12, s * 4.5); c.stroke(); }
+        if (crumb) { c.fillStyle = '#fff8ea'; c.beginPath(); c.arc(11.5, 0, 2.8, 0, Math.PI * 2); c.fill(); }
+        c.restore(); };
+      for (const [x, y, a, cr] of [[93, 62, 1.5, 0], [90, 118, 1.7, 1], [150, 130, .1, 0], [198, 121, -.3, 1], [106, 172, 1.2, 0], [168, 212, .2, 0], [238, 229, .3, 1], [292, 223, .1, 0],
+          [326, 72, 1.6, 0], [339, 140, 1.2, 1], [394, 151, -.1, 0], [446, 170, .4, 0], [344, 252, 1.4, 0], [462, 222, 1.7, 1], [446, 282, 2.4, 0], [212, 112, 3.1, 0], [60, top - 3, 0, 0], [384, top - 2, 3, 1]]) ant(x, y, a, cr);
+    }),
+    plaque_antfarm: cv => cv('plaque_antfarm', 512, 128, (c, W, H) => {
+      const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#f0cf7a'); g.addColorStop(.5, '#c9a040'); g.addColorStop(1, '#8a6a22'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      c.strokeStyle = '#5a4210'; c.lineWidth = 6; c.strokeRect(10, 10, W - 20, H - 20); c.fillStyle = '#2a1e08'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.font = "900 40px Georgia, serif"; c.fillText("ANT-THONY'S ANT FARM", W / 2, H * .42, W - 60); c.font = "italic 700 22px Georgia, serif"; c.fillText('my first fans', W / 2, H * .75, W - 60);
+    }),
     // Rebel Ants After Dark (the Hub's south-east courtyard dojo, Oct 26; after afterdark.rebelants.io): the neon sign with the
     // ant crest over the back wall, the colony's motto over the door, the Hold Em felt with the crest, the community cards and
     // the card backs, the Colony Clash bracket, the game signs, the Spinner reels, the Drop board, the wheel's hub, the points
@@ -1129,7 +1178,7 @@
     bulb: { col: [1, .9, .62], em: [1, .8, .45] }, popcorn: { col: [.98, .86, .48], em: [.16, .12, .04] }, candle_glass: { col: [.86, .26, .2], em: [.72, .2, .12], alpha: .8 }, shaft_spot: { shaft: [1, .84, .58], alpha: .1 },
     poster_neon: { img: 'assets/interiors/antthony/neon-sign.webp', em: [.3, .3, .3] }, poster_micdrop: { img: 'assets/interiors/antthony/mic-drop.webp', em: [.3, .3, .3] },
     // Ant-Thony's house (Hub, Nov 2)
-    futon: { col: [.92, .89, .82] }, quilt: { tex: 'seigaiha', tint: [.74, .52, 1] }, sign_anthony_home: { tex: 'sign_anthony_home', em: [.2, .16, .09] }, river_night: { tex: 'river_night', self: true },
+    futon: { col: [.92, .89, .82] }, quilt: { tex: 'seigaiha', tint: [.74, .52, 1] }, sign_anthony_home: { tex: 'sign_anthony_home', em: [.2, .16, .09] }, marquee_anthony: { tex: 'marquee_anthony', self: true }, star_anthony: { tex: 'star_anthony', em: [.06, .05, .05] }, antfarm: { tex: 'antfarm', em: [.16, .14, .1] }, plaque_antfarm: { tex: 'plaque_antfarm', em: [.12, .1, .05] }, plastic_green: { col: [.12, .5, .18], spec: [.6, .7, .6], power: 45 }, river_night: { tex: 'river_night', self: true },
     note_anthony: { tex: 'note_anthony', em: [.22, .21, .19] }, poster_spotlight: { img: 'assets/interiors/antthony/spotlight.webp', em: [.3, .3, .3] },
     poster_letcook: { img: 'assets/interiors/antthony/let-him-cook.webp', em: [.3, .3, .3] }, poster_receipts: { img: 'assets/interiors/antthony/receipts.webp', em: [.3, .3, .3] },
     poster_touchgrass: { img: 'assets/interiors/antthony/touch-grass.webp', em: [.3, .3, .3] },
@@ -2493,40 +2542,96 @@
         M.block('stone', x, y, 1.91, .9, .9, .16); M.cyl('stone', [x, y, 2.07], .14, .18, 6, .03);
       }
     },
-    // Ant-Thony's house by the Hub's pond (Nov 2): a little cottage of white plaster and dark wood on a low stone base, a covered
-    // porch at the front (a lean-to of tiles on two posts) with a bench looking at the water, the purple noren with his mic crest
-    // at the door, his name plate beside it, a paper lantern each side of the door, warm shoji windows, a stone lantern by the
-    // steps, a red mailbox, flower pots, a fishing rod against the wall; front faces -y (the room's door is a layout door in
-    // front of the recess)
+    // Ant-Thony's house (Hub, Nov 2; Nov 3 a star's house, Miguel: "make Antthonys house bigger, after all he is the star of the
+    // show", "fake lights on the outside", "his name is covered by the door"): two floors on a stone base, the porch with his
+    // name in lights over it (a marquee with bulbs round it), string lights along the porch and the eaves, lanterns, two stone
+    // lanterns and two spotlights at the steps, the red carpet up the steps between velvet ropes, his star of fame in front of
+    // them; the bench, the flower pots, the fishing rod and the mailbox as before. Front faces -y.
     hub_anthony_house(M) {
-      const W = 11, D = 9, Z = .5, WH = 3.4, wy = .7, ww = W - 2, wd = D - 3.4, yF = wy - wd / 2, yB = -D / 2; // yF: the front wall, yB: the base's front edge
-      M.block('stone', 0, 0, 0, W, D, Z);
-      steps(M, 0, yB, Z, 2.8, 2);
-      M.block('wood', 0, (yB + .12 + yF) / 2, Z, ww + .6, yF - yB - .12, .08); // the porch boards
+      const W = 15, D = 11.6, Z = .6, WH = 3.6, wy = 1, ww = W - 2.4, wd = 7.4, yF = wy - wd / 2, yB = -D / 2; // yF: the front wall, yB: the base's front edge
+      M.block('stone', 0, 0, -.3, W, D, Z + .3); // (from under the yard: where the ground dips a few cm at a corner, no gap shows)
+      steps(M, 0, yB, Z, 3.6, 3);
+      M.block('wood', 0, (yB + .12 + yF) / 2, Z, ww + .8, yF - yB - .12, .08); // the porch boards
       M.remap = { wood: 'darkwood', shoji: 'shoji_lit' };
-      walls(M, 0, wy, Z, ww, wd, WH, { door: [2, 2.7], windows: [['front', -2.9, Z + 1.05, 1.8, 1.3], ['left', -.6, Z + 1.05, 2, 1.3], ['right', -.6, Z + 1.05, 2, 1.3], ['back', -2, Z + 1.1, 1.8, 1.2], ['back', 2.2, Z + 1.1, 1.8, 1.2]] });
+      walls(M, 0, wy, Z, ww, wd, WH, { door: [2.4, 3], windows: [['front', -4.1, Z + 1.05, 2.6, 1.6], ['front', 4.1, Z + 1.05, 2.6, 1.6], ['left', -1.7, Z + 1.05, 2.2, 1.5], ['left', 1.9, Z + 1.05, 2.2, 1.5],
+        ['right', -1.7, Z + 1.05, 2.2, 1.5], ['right', 1.9, Z + 1.05, 2.2, 1.5], ['back', -3, Z + 1.1, 2, 1.4], ['back', 3, Z + 1.1, 2, 1.4]] });
+      // the upper floor, set back on the ground floor's low roof, its windows lit
+      const ww2 = 9.4, wd2 = 5.2, wy2 = 1.3, z2 = Z + WH + .3, WH2 = 2.8;
+      walls(M, 0, wy2, z2, ww2, wd2, WH2, { windows: [['front', -3.1, z2 + .75, 1.8, 1.3], ['front', 0, z2 + .75, 1.8, 1.3], ['front', 3.1, z2 + .75, 1.8, 1.3], ['left', 0, z2 + .75, 1.8, 1.3],
+        ['right', 0, z2 + .75, 1.8, 1.3], ['back', -2, z2 + .8, 1.6, 1.2], ['back', 2, z2 + .8, 1.6, 1.2]] });
       M.remap = null;
-      M.roof(0, wy, Z + WH + .22, ww + 1.6, wd + 1.6, 2.3, { lift: .5 });
-      // the porch roof: tiles from under the main eave out over the porch, a fascia beam and two posts at its front corners
-      const y0 = yF - .15, z0 = Z + WH - .05, y1 = yB + .05, z1 = Z + 2.78, len = Math.hypot(y0 - y1, z0 - z1), a = Math.atan2(z0 - z1, y0 - y1);
-      M.box('roof', [0, (y0 + y1) / 2, (z0 + z1) / 2], [ww + 1, len, .14], 0, a);
-      M.block('darkwood', 0, y1 + .12, z1 - .34, ww + 1, .22, .3);
-      for (const sd of [-1, 1]) M.block('darkwood', sd * (ww / 2 + .25), yB + .36, Z + .08, .24, .24, z1 - Z - .4);
-      // the door: the noren with his mic crest, his name plate, a paper lantern each side
-      noren(M, 0, yF - .22, Z + 2.6, 2.1, .8, 'noren_comedy');
-      M.block('darkwood', 2.4, yF - .17, Z + 1.98, 1.96, .06, .72); M.quad('sign_anthony_home', [[1.5, yF - .21, Z + 2.04], [3.3, yF - .21, Z + 2.04], [3.3, yF - .21, Z + 2.64], [1.5, yF - .21, Z + 2.64]]);
-      for (const sd of [-1, 1]) { M.rod('darkwood', [sd * 1.55, yF - .1, Z + 3.25], [sd * 1.55, yF - .45, Z + 3.25], .03, 4); lantern(M, sd * 1.55, yF - .45, Z + 2.75, .2); }
-      // the bench on the porch (it looks at the water), flower pots at its corners, a fishing rod leaning on the wall
-      const by = yB + .95, bz = Z + .08;
-      M.block('wood', -3.1, by, bz + .4, 1.9, .5, .07); for (const t of [-1, 1]) M.block('darkwood', -3.1 + t * .8, by, bz, .1, .42, .4);
-      for (const x of [-4.55, 4.55]) { M.cyl('clay', [x, yB + .45, bz], .17, .32, 10, .22); M.sphere('flower_purple', [x, yB + .45, bz + .46], .25, .75, 8, 4); M.sphere('leaves', [x, yB + .45, bz + .33], .27, .45, 8, 3); }
-      M.rod('bark', [4.15, yF - .22, bz + .05], [3.55, yF - .22, Z + 3.05], .025, 5); M.rod('rope', [3.55, yF - .24, Z + 3.05], [3.7, yF - .3, bz + 1.3], .006, 3);
-      // a stone lantern by the steps, the mailbox on its post
-      { const x = 2.4, y = yB - .7;
-        M.block('stone', x, y, 0, .7, .7, .3); M.block('stone', x, y, .3, .28, .28, .85); M.block('stone', x, y, 1.15, .6, .6, .12);
-        M.block('window_glow', x, y, 1.27, .38, .38, .36); for (const t of [-1, 1]) { M.block('stone', x + t * .21, y, 1.27, .07, .52, .36); M.block('stone', x, y + t * .21, 1.27, .52, .07, .36); }
-        M.block('stone', x, y, 1.63, .78, .78, .14); M.cyl('stone', [x, y, 1.77], .12, .16, 6, .03); }
-      M.block('darkwood', -2.4, yB - .7, 0, .1, .1, 1.1); M.block('lacquer_red', -2.4, yB - .7, 1.1, .34, .46, .28); M.block('gold', -2.4, yB - .94, 1.2, .14, .02, .03);
+      M.roof(0, wy, Z + WH + .22, ww + 1.8, wd + 1.8, 1.2, { lift: .45 });
+      M.roof(0, wy2, z2 + WH2 + .2, ww2 + 1.8, wd2 + 1.8, 2.4, { lift: .55 });
+      M.sphere('gold', [0, wy2, z2 + WH2 + 2.75], .22, 1.3, 10, 5); // a gold finial on the ridge
+      // the porch roof: tiles from under the low eave out over the porch, a fascia beam and four posts
+      const y0 = yF - .15, z0 = Z + WH - .05, y1 = yB + .05, z1 = Z + 3.05, len = Math.hypot(y0 - y1, z0 - z1), a = Math.atan2(z0 - z1, y0 - y1);
+      M.box('roof', [0, (y0 + y1) / 2, (z0 + z1) / 2], [ww + 1.2, len, .14], 0, a);
+      M.block('darkwood', 0, y1 + .12, z1 - .34, ww + 1.2, .22, .3);
+      const px = [-(ww / 2 + .35), -2.25, 2.25, ww / 2 + .35];
+      for (const x of px) M.block('darkwood', x, yB + .36, Z + .08, .26, .26, z1 - Z - .4);
+      // the door: the noren with his mic crest, red paper lanterns hanging from the porch beam beside it
+      noren(M, 0, yF - .22, Z + 2.9, 2.3, .85, 'noren_comedy');
+      for (const x of [-2.25, 2.25]) { M.rod('darkwood', [x, y1 + .25, z1 - .36], [x, y1 + .25, z1 - .62], .025, 4); lantern(M, x, y1 + .25, z1 - 1.05, .24); }
+      // his name in lights over the porch: the marquee on the porch beam, bulbs round it, struts back to the roof
+      const sw = 6.8, sh = 1.7, sy = y1 - .06, sz = z1 + .02;
+      M.block('lacquer_black', 0, sy + .14, sz - .12, sw + .45, .24, sh + .3);
+      M.quad('marquee_anthony', [[-sw / 2, sy - .02, sz], [sw / 2, sy - .02, sz], [sw / 2, sy - .02, sz + sh], [-sw / 2, sy - .02, sz + sh]]);
+      for (let k = 0; k <= 22; k++) { const x = -sw / 2 - .1 + k * (sw + .2) / 22; for (const z of [sz - .07, sz + sh + .09]) M.sphere('bulb', [x, sy - .08, z], .07, 1, 6, 3); }
+      for (let k = 1; k < 6; k++) for (const sd of [-1, 1]) M.sphere('bulb', [sd * (sw / 2 + .12), sy - .08, sz - .07 + k * (sh + .16) / 6], .07, 1, 6, 3);
+      for (const sd of [-1, 1]) M.rod('darkwood', [sd * 2.6, sy + .25, sz + 1], [sd * 2.6, yF - .5, Z + WH + .35], .07, 5);
+      // string lights: along the porch beam between the posts, down the porch's sides, along the low roof's side eaves
+      const garland = (a, b, sag, n) => {
+        const P = (t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t - sag * 4 * t * (1 - t)];
+        let prev = P(0); for (let k = 1; k <= 8; k++) { const q = P(k / 8); M.rod('lacquer_black', prev, q, .012, 3); prev = q; }
+        for (let k = 1; k < n; k++) { const q = P(k / n); M.sphere('bulb', [q[0], q[1], q[2] - .07], .065, 1.25, 6, 3); }
+      };
+      for (let i = 0; i < 3; i++) garland([px[i], y1 - .02, z1 - .36], [px[i + 1], y1 - .02, z1 - .36], .12, i === 1 ? 7 : 6); // (a shallow sag: lower bulbs stood in the walk's body band and walled the steps off)
+      for (const sd of [-1, 1]) {
+        garland([sd * (ww / 2 + .35), y1 + .2, z1 - .36], [sd * (ww / 2 + .35), yF - .2, Z + WH - .45], .2, 5);
+        const xe = sd * (ww / 2 + .82), ze = Z + WH + .12;
+        garland([xe, yF - .7, ze], [xe, wy, ze], .28, 6); garland([xe, wy, ze], [xe, wy + wd / 2 + .7, ze], .28, 6);
+      }
+      // violet lanterns at the upper floor's corners
+      M.remap = { lantern: 'lantern_violet' };
+      for (const sx of [-1, 1]) for (const sy2 of [-1, 1]) lantern(M, sx * (ww2 / 2 + .55), wy2 + sy2 * (wd2 / 2 + .55), z2 + WH2 - .15, .22);
+      M.remap = null;
+      // the red carpet from his star up the steps and across the porch to the door
+      for (let i = 0; i < 3; i++) {
+        const top = Z - i * Z / 3, ya = yB - i * .45 + (i ? 0 : .12), yb = yB - i * .45 - .45;
+        M.quad('runner', [[-1.3, yb, top + .012], [1.3, yb, top + .012], [1.3, ya, top + .012], [-1.3, ya, top + .012]], [[0, 0], [1, 0], [1, .07], [0, .07]]);
+        M.quad('runner', [[-1.3, yb - .012, top - Z / 3], [1.3, yb - .012, top - Z / 3], [1.3, yb - .012, top], [-1.3, yb - .012, top]], [[0, 0], [1, 0], [1, .05], [0, .05]]);
+      }
+      M.quad('runner', [[-1.3, yB + .108, Z + .012], [1.3, yB + .108, Z + .012], [1.3, yB + .108, Z + .092], [-1.3, yB + .108, Z + .092]], [[0, 0], [1, 0], [1, .02], [0, .02]]); // (the porch boards' front edge)
+      M.quad('runner', [[-1.3, yB + .12, Z + .092], [1.3, yB + .12, Z + .092], [1.3, yF - .15, Z + .092], [-1.3, yF - .15, Z + .092]], [[0, 0], [1, 0], [1, (yF - .15 - yB) / 6.4], [0, (yF - .15 - yB) / 6.4]]);
+      const ys0 = yB - 1.35, sc = ys0 - 1.25; // the foot of the steps, the middle of his star
+      M.quad('runner', [[-1.3, sc + .1, .012], [1.3, sc + .1, .012], [1.3, ys0, .012], [-1.3, ys0, .012]], [[0, 0], [1, 0], [1, (ys0 - sc - .1) / 6.4], [0, (ys0 - sc - .1) / 6.4]]);
+      // his star in the walk of fame: a charcoal square, the pink star with his name in brass
+      M.block('stone', 0, sc, -.15, 2.3, 2.3, .156); // a slab under it, so its far edge never floats where the ground falls a little
+      M.quad('star_anthony', [[-1.15, sc - 1.15, .018], [1.15, sc - 1.15, .018], [1.15, sc + 1.15, .018], [-1.15, sc + 1.15, .018]]);
+      // velvet ropes on brass posts either side of the carpet and the star
+      for (const sd of [-1, 1]) {
+        const x = sd * 1.75, ys = [ys0 - .25, sc + .3, sc - 1.1];
+        for (const y of ys) { M.cyl('brass', [x, y, -.12], .14, .17, 10); M.cyl('brass', [x, y, .05], .045, 1, 8); M.sphere('brass', [x, y, 1.1], .08, 1, 8, 4); }
+        for (let k = 0; k < 2; k++) { const p = ys[k], q = ys[k + 1], m = (p + q) / 2; M.rod('velvet_red', [x, p, .97], [x, m, .74], .04, 6); M.rod('velvet_red', [x, m, .74], [x, q, .97], .04, 6); }
+      }
+      // two stone lanterns at the steps, each with its pool of light on the ground; two spotlights washing the front
+      for (const sd of [-1, 1]) {
+        const x = sd * 3.3, y = yB - .75;
+        M.block('stone', x, y, 0, .74, .74, .32); M.block('stone', x, y, .32, .3, .3, .92); M.block('stone', x, y, 1.24, .64, .64, .13);
+        M.block('window_glow', x, y, 1.37, .4, .4, .38); for (const t of [-1, 1]) { M.block('stone', x + t * .23, y, 1.37, .07, .55, .38); M.block('stone', x, y + t * .23, 1.37, .55, .07, .38); }
+        M.block('stone', x, y, 1.75, .84, .84, .15); M.cyl('stone', [x, y, 1.9], .13, .17, 6, .03);
+        M.quad('glow', [[x - 1.7, y - 1.7, .03], [x + 1.7, y - 1.7, .03], [x + 1.7, y + 1.7, .03], [x - 1.7, y + 1.7, .03]]);
+        const gx = sd * 5.6, gy = yB - 1.1;
+        M.cyl('lacquer_black', [gx, gy, 0], .26, .12, 10); M.tube('lacquer_black', [gx, gy, .12], [gx - sd * .08, gy + .1, .5], .2, .24, 10); M.cyl('bulb', [gx - sd * .1, gy + .12, .5], .2, .02, 10);
+        M.tube('shaft_spot', [gx - sd * .1, gy + .14, .52], [sd * 3.6, yF - .25, Z + WH + .6], .2, 1.5, 14, false);
+      }
+      // the bench on the porch (it looks at the water), flower pots at the corners, the fishing rod leaning on the wall
+      const by = yB + 1.05, bz = Z + .08;
+      M.block('wood', -4.6, by, bz + .4, 2.1, .5, .07); for (const t of [-1, 1]) M.block('darkwood', -4.6 + t * .9, by, bz, .1, .42, .4);
+      for (const x of [-(ww / 2 + .35), ww / 2 + .35]) { M.cyl('clay', [x, yB + .85, bz], .18, .34, 10, .23); M.sphere('flower_purple', [x, yB + .85, bz + .48], .27, .75, 8, 4); M.sphere('leaves', [x, yB + .85, bz + .35], .29, .45, 8, 3); }
+      M.rod('bark', [5.2, yF - .22, bz + .05], [4.6, yF - .22, Z + 3.25], .025, 5); M.rod('rope', [4.6, yF - .24, Z + 3.25], [4.75, yF - .3, bz + 1.35], .006, 3);
+      // the mailbox on its post
+      M.block('darkwood', -5.4, yB - 2.2, -.3, .1, .1, 1.4); M.block('lacquer_red', -5.4, yB - 2.2, 1.1, .34, .46, .28); M.block('gold', -5.4, yB - 2.44, 1.2, .14, .02, .03);
     },
     // the game hall's back-room door (the Game Hall's): a purple arched door with a pumpkin lamp either side; front faces -y
     cc_hall_door(M) {
@@ -4385,11 +4490,14 @@
   // the front right (PT: x0, y0, y1), the community sign over its bench on the left wall (CM: y), the moon window (MW: y, z, r)
   const AD = { HX: 17, HY: 15, H: 9.5, DW: 4, DH: 4.8, TAB: [0, -2.5, 3, 1.45], T21: [-13.4, 6.4, 2.3], CL: [-4, 8], SP: [-8.4, -5.8, -3.2, -.6],
     WH: [-9.6, 4.4, 2.6], DR: [9.6, 4.3, 4.4, 5.6], PT: [9.4, 11.2, 12.7], CM: 11.4, MW: [7, 4.8, 1.9] };
-  // Ant-Thony's house (Hub, Nov 2): BED the low platform [x0, x1, y0, y1, platform height, futon], SLEEP where he lies in the
-  // games pack's sleep move [x, height, z (Babylon: kit y), yaw: feet toward +x], TABLE the low table, VAN the dressing table's y on
-  // the right wall, SHELF the book shelf's y range on the left wall, WIN the river window by the door [x, bottom, width, height]
-  const AH = { HX: 7, HY: 6, H: 4.6, DW: 2.4, DH: 3, BED: [-6.1, -1.7, -5.92, -3.92, .22, .12], SLEEP: [-3.75, .34, -4.95, Math.PI / 2],
-    TABLE: [2.3, -1.2], VAN: -3.2, SHELF: [1.2, 4.4], WIN: [-3.9, 1.1, 2.8, 1.8] };
+  // Ant-Thony's house (Hub, Nov 2; Nov 3 a star's home, Miguel: "his house should be much better in the inside, he is a star
+  // and the best of the best", "make him a fake ant farm"): BED the bed's platform [x0, x1, y0, y1, platform height, mattress],
+  // SLEEP where he lies in the games pack's sleep move [x, height, z (Babylon: kit y), yaw: feet toward +x], TABLE the low table
+  // in the lounge, COUCH the couch's middle, STAGE his practice stage [x, y, radius, height], VAN the dressing table's y on the
+  // right wall, TROPHY the trophy cabinet's y range on the right wall, SHELF the book shelf's y range on the left wall, FARM the
+  // ant farm's middle y on the left wall, WIN the river window by the door [x, bottom, width, height]
+  const AH = { HX: 10, HY: 8, H: 5.8, DW: 2.6, DH: 3.2, BED: [-8.6, -4, -7.75, -5.55, .3, .16], SLEEP: [-6.15, .46, -6.65, Math.PI / 2],
+    TABLE: [.6, .7], COUCH: [.6, -1.65], STAGE: [5.9, -5.3, 2.3, .25], VAN: -1, TROPHY: [1.7, 5.1], SHELF: [-4.5, -1.1], FARM: 3.3, WIN: [-5.6, 1.15, 3.2, 2] };
   // Shogun rooms (rebel scale: a Rebel stands 3.4 m, so chairs sit at .85 and tables at 1.45)
   // TS Throne Room: the long table (y0..y1, half width, height), the seats, the chairs' x, the banner poles' x, the dais and its
   // stairs, the throne's y, the canopy posts [x, yBack, yFront], the colonnade (x, ys)
@@ -4608,13 +4716,18 @@
     },
     room_hub_anthony_home: {
       bounds: [-AH.HX, AH.HX, -AH.HY, AH.HY + .2], spawn: [0, AH.HY - 4.1, Math.PI], exit: [0, AH.HY + .3], ceil: AH.H,
-      hemi: { i: .62, c: [1, .88, .74], g: [.32, .23, .18] },
-      lights: [{ p: [0, 3.5, -1], c: [1, .8, .54], i: 1.05, r: 13 }, { p: [-6.5, 1.15, -5.3], c: [1, .68, .38], i: .7, r: 6.5, flicker: .05 },
-        { p: [AH.HX - 1.2, 2.4, AH.VAN], c: [1, .9, .72], i: .45, r: 6 }, { p: [AH.WIN[0], 2.1, AH.HY - 1.1], c: [.55, .66, 1], i: .35, r: 7 }],
+      hemi: { i: .58, c: [1, .88, .74], g: [.3, .22, .18] },
+      lights: [{ p: [AH.TABLE[0], 4.4, (AH.TABLE[1] + AH.COUCH[1]) / 2], c: [1, .82, .58], i: 1.05, r: 15 }, { p: [AH.BED[0] + .4, 1.35, AH.BED[3] + .45], c: [1, .68, .38], i: .7, r: 6.5, flicker: .05 },
+        { p: [AH.STAGE[0], 4.6, AH.STAGE[1]], c: [1, .86, .62], i: 1, r: 8 }, { p: [AH.STAGE[0], 3.4, -AH.HY + 1.2], c: [1, .45, .3], i: .5, r: 7 },
+        { p: [AH.HX - 1.2, 2.4, AH.VAN], c: [1, .9, .72], i: .45, r: 6 }, { p: [AH.WIN[0], 2.2, AH.HY - 1.1], c: [.55, .66, 1], i: .35, r: 7 }],
       // where Ant-Thony sleeps (assets/village-anthony.js): [x, height, z, yaw], and the middle of his bed (his reach is measured from it)
       sleep: AH.SLEEP, bedMid: [(AH.BED[0] + AH.BED[1]) / 2, (AH.BED[2] + AH.BED[3]) / 2],
-      blockers: [{ box: [-AH.HX, -AH.HY, AH.BED[1] + .05, AH.BED[3] + .05] }, { circle: [AH.TABLE[0], AH.TABLE[1], 1.0] },
-        { box: [AH.HX - .75, AH.VAN - 1.45, AH.HX, AH.VAN + 1.45] }, { box: [-AH.HX, AH.SHELF[0] - .05, -AH.HX + .6, AH.SHELF[1] + .05] }, { circle: [AH.HX - .75, AH.HY - .75, .5] }]
+      decks: [{ circle: [AH.STAGE[0], AH.STAGE[1], AH.STAGE[2]], y: AH.STAGE[3] }],
+      blockers: [{ box: [-AH.HX, -AH.HY, AH.BED[1] + .05, AH.BED[3] + .05] }, { box: [AH.BED[0] + .1, AH.BED[3], AH.BED[0] + .7, AH.BED[3] + .75] },
+        { circle: [AH.TABLE[0], AH.TABLE[1], 1.05] }, { box: [AH.COUCH[0] - 2.05, AH.COUCH[1] - .6, AH.COUCH[0] + 2.05, AH.COUCH[1] + .55] },
+        { circle: [AH.STAGE[0], AH.STAGE[1], .35] }, { circle: [AH.STAGE[0] + 1.1, AH.STAGE[1] - .35, .3] },
+        { box: [AH.HX - .75, AH.VAN - 1.45, AH.HX, AH.VAN + 1.45] }, { box: [AH.HX - .7, AH.TROPHY[0] - .05, AH.HX, AH.TROPHY[1] + .05] },
+        { box: [-AH.HX, AH.SHELF[0] - .05, -AH.HX + .6, AH.SHELF[1] + .05] }, { box: [-AH.HX, AH.FARM - 1.7, -AH.HX + .85, AH.FARM + 1.7] }, { circle: [AH.HX - .75, AH.HY - .75, .5] }]
     },
     room_hub_afterdark: {
       bounds: [-AD.HX, AD.HX, -AD.HY, AD.HY + .2], spawn: [0, AD.HY - 4.6, Math.PI], exit: [0, AD.HY + .3], ceil: AD.H,
@@ -5892,35 +6005,91 @@
     // the window by the door; four of his posters; the Rebel emblem over the door; a paper lantern from the ceiling; a plant
     room_hub_anthony_home(M) {
       M.room = true;
-      const { HX, HY, H, DW, DH, BED, TABLE, VAN, SHELF, WIN } = AH;
-      hall(M, { HX, HY, H, DW, DH, floor: 'club_floor', wall: 'plaster_old', wain: 'darkwood', wainH: 1.05, rail: 'wood', post: 'darkwood', posts: [-HY, -1.6, 2.6, HY], beam: 'darkwood', ceil: 'wood', ceilBeam: 'darkwood', ceilEvery: 2.4 });
-      // the bed: the platform, the futon, a round pillow at the head end, the quilt over the foot end with its rolled hem
+      const { HX, HY, H, DW, DH, BED, TABLE, COUCH, STAGE, VAN, TROPHY, SHELF, FARM, WIN } = AH;
+      hall(M, { HX, HY, H, DW, DH, floor: 'club_floor', wall: 'plaster_old', wain: 'darkwood', wainH: 1.1, rail: 'gold', post: 'darkwood', posts: [-HY, -3.4, 1.4, HY], beam: 'darkwood', ceil: 'wood', ceilBeam: 'darkwood', ceilEvery: 2.6 });
+      // the bed: a black lacquer platform with a gold rim, the mattress, two pillows at the head end, the quilt over the foot end
+      // with its rolled hem (his legs stay under it lying and sitting), a padded red headboard with a gold top
       const [x0, x1, y0, y1, ph, fh] = BED, bx = (x0 + x1) / 2, by = (y0 + y1) / 2, top = ph + fh;
-      M.block('darkwood', bx, by, 0, x1 - x0, y1 - y0, ph - .04); M.block('tatami', bx, by, ph - .04, x1 - x0 - .06, y1 - y0 - .06, .04);
-      const fx0 = x0 + .25, fx1 = x1 - .2, fy0 = y0 + .2, fy1 = y1 - .18, fy = (fy0 + fy1) / 2;
-      M.block('futon', (fx0 + fx1) / 2, fy, ph, fx1 - fx0, fy1 - fy0, fh);
-      M.sphere('futon', [fx0 + .52, fy, top], .46, .2, 14, 5);
-      const qx0 = -3.65; M.block('quilt', (qx0 + fx1 + .06) / 2, fy, top - .02, fx1 + .06 - qx0, fy1 - fy0 + .1, .4); M.rod('quilt', [qx0, fy0 - .04, top + .27], [qx0, fy1 + .04, top + .27], .13, 8);
-      // his note pinned over the bed, the nightstand with a paper lamp, his phone and a glass of water
-      wallArt(M, 'back', bx - .2, 1.45, .5, .38, 'note_anthony', HX, HY, .05); M.sphere('lacquer_red', [bx - .2, -HY + .08, 1.8], .03, 1, 6, 3);
-      const nx = -6.5, ny = -5.3;
-      M.block('darkwood', nx, ny, 0, .56, .56, .5); M.block('darkwood', nx, ny, .5, .36, .36, .04); M.block('andon', nx, ny, .54, .3, .3, .44); M.block('darkwood', nx, ny, .98, .36, .36, .04);
-      M.block('glass_dark', nx + .19, ny + .2, .5, .09, .16, .015); M.cyl('glass', [nx - .2, ny + .19, .5], .045, .13, 10); M.cyl('water', [nx - .2, ny + .19, .51], .038, .09, 10);
-      // the low table on a round rug, cushions round it; on it his desk mic, a teapot and two cups, his notebook and a pen
-      const [tx, ty] = TABLE;
-      M.cyl('velvet', [tx, ty, 0], 2.05, .012, 36);
-      M.cyl('darkwood', [tx, ty, .3], .85, .06, 24); for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) M.block('darkwood', tx + a * .45, ty + b * .45, 0, .08, .08, .3);
-      for (const [dx, dy] of [[0, 1.3], [-1.3, 0], [1.3, 0], [0, -1.3]]) M.block('cushion', tx + dx, ty + dy, 0, .72, .72, .1);
-      M.cyl('iron', [tx - .32, ty - .22, .36], .12, .03, 12); M.rod('steel', [tx - .32, ty - .22, .39], [tx - .32, ty - .22, .64], .015, 6); M.sphere('chrome', [tx - .32, ty - .22, .72], .06, 1.25, 10, 5);
-      M.sphere('porcelain', [tx + .32, ty + .12, .36], .15, 1.25, 12, 6); M.rod('porcelain', [tx + .45, ty + .12, .46], [tx + .58, ty + .12, .56], .025, 5); M.cyl('porcelain', [tx + .32, ty + .12, .54], .04, .05, 8);
-      for (const [dx, dy] of [[.02, .5], [.5, -.3]]) M.cyl('porcelain', [tx + dx, ty + dy, .36], .055, .08, 10);
-      M.block('lacquer_red', tx - .08, ty + .3, .36, .38, .28, .04); M.block('paper', tx - .08, ty + .3, .37, .36, .26, .02); M.rod('lacquer_black', [tx + .16, ty + .14, .4], [tx + .3, ty + .44, .4], .012, 4);
-      // the dressing mirror with bulbs round it over the dressing table on the right wall; a little gold mic trophy on the table
+      M.block('lacquer_black', bx, by, 0, x1 - x0, y1 - y0, ph - .04); M.block('gold', bx, by, ph - .07, x1 - x0 + .05, y1 - y0 + .05, .04);
+      const fx0 = x0 + .1, fx1 = x1 - .12, fy0 = y0 + .12, fy1 = y1 - .12, fy = (fy0 + fy1) / 2;
+      M.block('futon', (fx0 + fx1) / 2, fy, ph - .04, fx1 - fx0, fy1 - fy0, fh + .04);
+      for (const d of [-.5, .5]) M.sphere('futon', [fx0 + .45, fy + d, top + .03], .34, .36, 12, 5);
+      const qx0 = AH.SLEEP[0] + .1; M.block('quilt', (qx0 + fx1 + .06) / 2, fy, top - .02, fx1 + .06 - qx0, fy1 - fy0 + .1, .42); M.rod('quilt', [qx0, fy0 - .04, top + .28], [qx0, fy1 + .04, top + .28], .14, 8);
+      M.block('velvet_red', x0 - .12, by, 0, .2, y1 - y0 + .3, 1.75); M.block('gold', x0 - .12, by, 1.75, .26, y1 - y0 + .38, .08);
+      for (const d of [-.6, 0, .6]) M.sphere('gold', [x0 - .01, by + d, 1.2], .045, 1, 6, 3);
+      // his note pinned over the bed; the nightstand by the head end with a paper lamp, his phone and a glass of water
+      wallArt(M, 'back', bx + .4, 1.9, .5, .38, 'note_anthony', HX, HY, .05); M.sphere('lacquer_red', [bx + .4, -HY + .08, 2.25], .03, 1, 6, 3);
+      const nx = x0 + .4, ny = y1 + .45;
+      M.block('darkwood', nx, ny, 0, .56, .56, .55); M.block('darkwood', nx, ny, .55, .36, .36, .04); M.block('andon', nx, ny, .59, .3, .3, .44); M.block('darkwood', nx, ny, 1.03, .36, .36, .04);
+      M.block('glass_dark', nx + .19, ny + .2, .55, .09, .16, .015); M.cyl('glass', [nx - .2, ny + .19, .55], .045, .13, 10); M.cyl('water', [nx - .2, ny + .19, .56], .038, .09, 10);
+      lantern(M, bx, by, H - .75, .38);
+      // his practice stage at the back: a round platform with bulbs round its edge, brick behind it with his neon, the mic on its
+      // stand, a stool, a spotlight from the ceiling and its cone of light
+      const [sx, sy, sr, sh] = STAGE;
+      M.cyl('darkwood', [sx, sy, 0], sr, sh - .03, 32); M.cyl('club_floor', [sx, sy, sh - .03], sr - .02, .03, 32); M.tube('gold', [sx, sy, sh - .06], [sx, sy, sh + .005], sr + .02, sr + .02, 32, false);
+      for (let k = 0; k < 18; k++) { const a = k / 18 * Math.PI * 2; M.sphere('bulb', [sx + Math.cos(a) * (sr + .04), sy + Math.sin(a) * (sr + .04), sh * .5], .05, 1, 6, 3); }
+      wallArt(M, 'back', sx, 0, 7, 5, 'club_brick', HX, HY, .04, [[0, 0], [3.5, 0], [3.5, 2.5], [0, 2.5]]);
+      wallArt(M, 'back', sx, 2.05, 5, 2.8, 'neon_antthony', HX, HY, .08);
+      M.cyl('iron', [sx, sy, sh], .16, .03, 12); M.rod('steel', [sx, sy, sh + .03], [sx, sy, sh + 1.45], .018, 6); M.rod('steel', [sx, sy, sh + 1.45], [sx, sy + .22, sh + 1.6], .014, 5);
+      M.sphere('chrome', [sx, sy + .27, sh + 1.66], .06, 1.3, 10, 5);
+      M.cyl('lacquer_black', [sx + 1.1, sy - .35, sh], .2, .02, 10); M.rod('steel', [sx + 1.1, sy - .35, sh], [sx + 1.1, sy - .35, sh + .78], .03, 6); M.cyl('velvet_red', [sx + 1.1, sy - .35, sh + .78], .24, .1, 14);
+      M.cyl('lacquer_black', [sx, sy + .4, H - .6], .22, .55, 10); M.tube('shaft_spot', [sx, sy + .25, H - .62], [sx, sy, sh + .02], .2, 1.6, 16, false);
+      // the lounge: a round rug, the red velvet couch facing the door, the low table with his desk mic, the teapot and cups, his
+      // notebook and pen; a gold chandelier over it
+      const [tx, ty] = TABLE, [cx, cy] = COUCH, tz = .42;
+      M.cyl('velvet', [tx, (ty + cy) / 2, 0], 3.1, .012, 40);
+      M.block('velvet_red', cx, cy, .22, 3.9, .95, .4); M.block('velvet_red', cx, cy - .38, .62, 3.9, .22, .62);
+      for (const sd of [-1, 1]) M.block('velvet_red', cx + sd * 1.92, cy, .22, .24, .95, .64);
+      M.block('gold', cx, cy, .16, 3.95, .97, .06); for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) M.cyl('gold', [cx + a * 1.8, cy + b * .38, 0], .05, .16, 6);
+      for (const d of [-1.15, 0, 1.15]) M.block('cushion', cx + d, cy - .2, .62, .72, .16, .5);
+      M.cyl('darkwood', [tx, ty, .36], .9, .06, 24); for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) M.block('darkwood', tx + a * .45, ty + b * .45, 0, .08, .08, .36);
+      M.cyl('iron', [tx - .32, ty - .22, tz], .12, .03, 12); M.rod('steel', [tx - .32, ty - .22, tz + .03], [tx - .32, ty - .22, tz + .28], .015, 6); M.sphere('chrome', [tx - .32, ty - .22, tz + .36], .06, 1.25, 10, 5);
+      M.sphere('porcelain', [tx + .32, ty + .12, tz], .15, 1.25, 12, 6); M.rod('porcelain', [tx + .45, ty + .12, tz + .1], [tx + .58, ty + .12, tz + .2], .025, 5); M.cyl('porcelain', [tx + .32, ty + .12, tz + .18], .04, .05, 8);
+      for (const [dx, dy] of [[.02, .5], [.5, -.3]]) M.cyl('porcelain', [tx + dx, ty + dy, tz], .055, .08, 10);
+      M.block('lacquer_red', tx - .08, ty + .3, tz, .38, .28, .04); M.block('paper', tx - .08, ty + .3, tz + .01, .36, .26, .02); M.rod('lacquer_black', [tx + .16, ty + .14, tz + .04], [tx + .3, ty + .44, tz + .04], .012, 4);
+      const chx = tx, chy = (ty + cy) / 2, chz = H - 1.2;
+      for (const r of [.95, .88]) M.tube('gold', [chx, chy, chz - .04], [chx, chy, chz + .04], r, r, 28, false);
+      for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2, x = chx + Math.cos(a) * .92, y = chy + Math.sin(a) * .92; M.cyl('gold', [x, y, chz + .04], .05, .08, 6); M.sphere('bulb', [x, y, chz + .2], .08, 1.3, 6, 3); }
+      for (let k = 0; k < 3; k++) { const a = k / 3 * Math.PI * 2 + .3; M.rod('gold', [chx + Math.cos(a) * .92, chy + Math.sin(a) * .92, chz + .04], [chx, chy, H - .05], .012, 3); }
+      M.sphere('gold', [chx, chy, chz - .08], .12, 1, 8, 4);
+      // the red runner from the door to the lounge
+      M.quad('runner', [[-.95, ty + 1.3, .014], [.95, ty + 1.3, .014], [.95, HY, .014], [-.95, HY, .014]], [[0, 0], [1, 0], [1, (HY - ty - 1.3) / 6.4], [0, (HY - ty - 1.3) / 6.4]]);
+      // the dressing mirror with bulbs round it over the dressing table on the right wall
       M.block('darkwood', HX - .36, VAN, 0, .68, 2.8, .84); M.block('lacquer_black', HX - .36, VAN, .84, .72, 2.86, .05);
       wallArt(M, 'right', VAN, 1.25, 2.1, 1.6, 'lacquer_black', HX, HY, .04); wallArt(M, 'right', VAN, 1.33, 1.86, 1.44, 'steel', HX, HY, .06);
       for (let k = 0; k <= 6; k++) M.sphere('bulb', [HX - .1, VAN - .95 + k * 1.9 / 6, 2.92], .07, 1, 6, 3);
       for (let k = 1; k < 4; k++) for (const sd of [-1, 1]) M.sphere('bulb', [HX - .1, VAN + sd * 1.07, 1.3 + k * 1.6 / 4], .07, 1, 6, 3);
-      M.cyl('lacquer_black', [HX - .4, VAN + .9, .89], .1, .05, 10); M.cyl('gold', [HX - .4, VAN + .9, .94], .03, .16, 8); M.sphere('gold', [HX - .4, VAN + .9, 1.14], .06, 1.2, 10, 5);
+      // the trophy cabinet on the right wall: gold mics and gold cups on gold shelves behind glass, two gold records over it
+      const [t0, t1] = TROPHY, tm = (t0 + t1) / 2, tl = t1 - t0;
+      M.block('lacquer_black', HX - .05, tm, 0, .1, tl, 2.6); M.block('lacquer_black', HX - .33, tm, 2.6, .66, tl + .06, .08); // its back and top
+      for (const y of [t0 + .03, t1 - .03]) M.block('lacquer_black', HX - .33, y, 0, .62, .06, 2.6); // its sides
+      for (const z of [.06, .86, 1.66]) M.block('gold', HX - .36, tm, z, .54, tl - .12, .04);
+      M.block('glass', HX - .65, tm, .06, .02, tl - .08, 2.5);
+      const micT = (x, y, z) => { M.block('lacquer_black', x, y, z, .22, .22, .1); M.cyl('gold', [x, y, z + .1], .035, .3, 8); M.sphere('gold', [x, y, z + .46], .075, 1.25, 10, 5); };
+      const cupT = (x, y, z) => { M.block('lacquer_black', x, y, z, .22, .22, .08); M.cyl('gold', [x, y, z + .08], .03, .12, 8); M.tube('gold', [x, y, z + .2], [x, y, z + .45], .06, .16, 12, true); for (const sd of [-1, 1]) M.rod('gold', [x, y + sd * .14, z + .4], [x, y + sd * .2, z + .3], .015, 4); };
+      for (const [s, z] of [[0, .1], [1, .9], [2, 1.7]]) for (let j = 0; j < 4; j++) (j + s) % 2 ? cupT(HX - .38, t0 + .45 + j * (tl - .9) / 3, z) : micT(HX - .38, t0 + .45 + j * (tl - .9) / 3, z);
+      for (const yr of [t0 + .95, t1 - .95]) {
+        wallArt(M, 'right', yr, 3.05, 1.05, 1.05, 'lacquer_black', HX, HY, .04);
+        M.tube('gold', [HX - .09, yr, 3.575], [HX - .06, yr, 3.575], .4, .4, 28, true); M.tube('lacquer_red', [HX - .095, yr, 3.575], [HX - .085, yr, 3.575], .12, .12, 16, true);
+      }
+      // his ant farm on the left wall (the kind kids got: two panes of glass in a green frame, sand with tunnels and ants, a farm on
+      // top), on a low cabinet with its brass plaque
+      const fw = 2.6, fhh = 1.45, fzb = .9, fxw = -HX + .58;
+      M.block('darkwood', -HX + .42, FARM, 0, .78, fw + .7, .86); M.block('lacquer_black', -HX + .42, FARM, .86, .82, fw + .76, .04);
+      M.block('plastic_green', fxw, FARM, fzb, .28, fw + .2, .16);
+      for (const sd of [-1, 1]) M.block('plastic_green', fxw, FARM + sd * (fw / 2 + .05), fzb + .16, .28, .1, fhh);
+      M.block('plastic_green', fxw, FARM, fzb + .16 + fhh, .28, fw + .2, .08);
+      wallArt(M, 'left', FARM, fzb + .16, fw, fhh, 'antfarm', HX, HY, .54);
+      wallArt(M, 'left', FARM, fzb + .16, fw, fhh, 'glass', HX, HY, .71);
+      const fz = fzb + .24 + fhh;
+      M.block('lacquer_red', fxw, FARM - .75, fz, .24, .56, .34);
+      for (const sd of [-1, 1]) M.box('darkwood', [fxw, FARM - .75 + sd * .15, fz + .43], [.26, .34, .04], 0, -sd * .62);
+      M.cyl('steel', [fxw, FARM - .2, fz], .11, .52, 10); M.sphere('steel', [fxw, FARM - .2, fz + .52], .11, .8, 10, 4);
+      M.rod('wood', [fxw, FARM + .5, fz], [fxw, FARM + .5, fz + .6], .025, 5);
+      for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; M.box('paper', [fxw + .05, FARM + .5 + Math.cos(a) * .13, fz + .6 + Math.sin(a) * .13], [.015, .2, .06], 0, a); } // a farm windmill's round fan
+      M.cyl('steel', [fxw + .04, FARM + .5, fz + .57], .035, .06, 8); M.box('paper', [fxw - .1, FARM + .5, fz + .6], [.18, .015, .12], 0, 0); // its hub, its tail vane
+      M.rod('wood', [fxw + .05, FARM + .85, fz + .14], [fxw + .05, FARM + 1.25, fz + .14], .012, 3); for (const y of [.85, 1.05, 1.25]) M.rod('wood', [fxw + .05, FARM + y, fz], [fxw + .05, FARM + y, fz + .2], .014, 3);
+      wallArt(M, 'left', FARM, .32, 1.7, .42, 'plaque_antfarm', HX, HY, .82);
       // the joke books on the left wall, three shelves
       M.block('darkwood', -HX + .27, (SHELF[0] + SHELF[1]) / 2, 0, .5, SHELF[1] - SHELF[0], 2.3);
       for (const z of [.12, .86, 1.6]) wallArt(M, 'left', (SHELF[0] + SHELF[1]) / 2, z, SHELF[1] - SHELF[0] - .2, .6, 'books', HX, HY, .53, [[0, 0], [(SHELF[1] - SHELF[0]) / 1.6, 0], [(SHELF[1] - SHELF[0]) / 1.6, 1], [0, 1]]);
@@ -5930,12 +6099,11 @@
       for (const k of [1, 2, 3]) M.block('darkwood', wu - ww / 2 + k * ww / 4, HY - .08, wz, .05, .04, wh);
       M.block('darkwood', wu, HY - .08, wz + wh / 2 - .025, ww, .04, .05); M.block('darkwood', wu, HY - .25, wz - .12, ww + .4, .34, .07);
       // four of his posters (gold liners), the Rebel emblem over the door
-      for (const [wall, u, mat] of [['back', 1.4, 'poster_letcook'], ['back', 4.3, 'poster_receipts'], ['right', 2.2, 'poster_spotlight'], ['left', -1.4, 'poster_touchgrass']]) {
-        wallArt(M, wall, u, 1.5, 1.66, 1.66, 'gold', HX, HY, .04); wallArt(M, wall, u, 1.58, 1.5, 1.5, mat, HX, HY, .06);
+      for (const [wall, u, mat] of [['back', -2.6, 'poster_letcook'], ['back', .4, 'poster_receipts'], ['front', 4.6, 'poster_spotlight'], ['front', -2.6, 'poster_touchgrass']]) {
+        wallArt(M, wall, u, 1.7, 1.66, 1.66, 'gold', HX, HY, .04); wallArt(M, wall, u, 1.78, 1.5, 1.5, mat, HX, HY, .06);
       }
-      wallArt(M, 'front', 0, DH + .35, .8, .8, 'emblem_rebel', HX, HY, .05);
-      // a paper lantern from the ceiling, a potted plant in the front right corner
-      lantern(M, 0, -1, H - .62, .42);
+      wallArt(M, 'front', 0, DH + .4, .9, .9, 'emblem_rebel', HX, HY, .05);
+      // a potted plant in the front right corner
       M.cyl('clay', [HX - .75, HY - .75, 0], .28, .5, 12, .36); M.sphere('leaves', [HX - .75, HY - .75, 1.05], .5, 1.1, 10, 6); M.rod('bark', [HX - .75, HY - .75, .45], [HX - .75, HY - .75, .8], .05, 5);
     },
     room_hub_afterdark(M) {

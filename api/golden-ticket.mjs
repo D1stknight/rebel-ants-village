@@ -10,6 +10,9 @@
 //   POST { event, action: 'refund' }          (admins) -> every ticket of its current time paid back
 //   GET  ?event=<id>&list=1                   (admins) -> + holders: [{ u, how }]
 // The event and its current time come from the rooms' public list (live now or within 30 days): nothing from the page.
+// Tickets to get in (Nov 4, Miguel: "the tickets should be for the entire show not just front seats"): cfg.entry = the
+// show needs a ticket (the event's hall lets in only holders: api/mp-ticket.mjs signs the claim, realtime/src/stage.js
+// checks it); then buy = how many are sold (up to 100,000) and raffle = how many are drawn free, with no front row.
 import { econSessionOf, econDebit, econCredit, redis } from './_econ.mjs';
 import { isAdminRequest } from './_admin-auth.mjs';
 import { siteOf, roomsUrl } from './mp-ticket.mjs';
@@ -34,9 +37,11 @@ export async function eventOf(id, fetchImpl = fetch) {
   return [...(d.live || []), ...(d.next || [])].find((e) => e.id === id) || null;
 }
 const cfgOf = (raw) => { try { const c = JSON.parse(raw || 'null'); return c && (c.buy > 0 || c.raffle > 0) ? c : null; } catch (e) { return null; } };
+export const MAX_TICKETS = 100000;
 export function cleanCfg(b) {
-  const price = Math.max(0, Math.min(1000000, Math.round(+b.price || 0))), buy = Math.max(0, Math.min(SEATS, Math.round(+b.buy || 0))), raffle = Math.max(0, Math.min(SEATS - buy, Math.round(+b.raffle || 0)));
-  return { price: buy ? Math.max(1, price) : 0, buy, raffle };
+  const entry = !!b.entry, price = Math.max(0, Math.min(1000000, Math.round(+b.price || 0)));
+  const buy = Math.max(0, Math.min(entry ? MAX_TICKETS : SEATS, Math.round(+b.buy || 0))), raffle = Math.max(0, Math.min(entry ? 1000 : SEATS - buy, Math.round(+b.raffle || 0)));
+  return { price: buy ? Math.max(1, price) : 0, buy, raffle, ...(entry ? { entry: true } : {}) };
 }
 
 // the raffle draws once its time has started (the first read after the doors open: HSETNX picks the one that draws)
@@ -73,21 +78,33 @@ async function stateOf(ev, cfg, u, { doDraw = true } = {}) {
     let buy = null; try { buy = v(4) ? JSON.parse(v(4)) : null; } catch (e) {}
     mine = buy ? (buy.status === 'bought' ? 'bought' : buy.status === 'refunded' ? null : 'paying') : v(5) ? 'won' : +v(6) ? (drawn ? 'lost' : 'entered') : null;
   }
-  return { price: cfg?.price || 0, buy: cfg?.buy || 0, raffle: cfg?.raffle || 0, sold, left: Math.max(0, (cfg?.buy || 0) - sold), entries: +v(3) || 0, drawn: !!drawn, winners: +v(2) || 0,
+  return { entry: !!cfg?.entry, price: cfg?.price || 0, buy: cfg?.buy || 0, raffle: cfg?.raffle || 0, sold, left: Math.max(0, (cfg?.buy || 0) - sold), entries: +v(3) || 0, drawn: !!drawn, winners: +v(2) || 0,
     starts: ev.starts, ends: ev.ends, live: !!ev.live, mine, raffleOpen: !!cfg?.raffle && now < ev.starts, buyOpen: !!cfg?.buy && now < ev.ends };
+}
+
+// may this account watch the show of a ticketed event? (api/mp-ticket.mjs: the claim it signs into the hall's ticket)
+// null = the event needs no ticket; admins always
+export async function ticketClaim(id, u, admin) {
+  const cfg = cfgOf((await redis([['GET', K.cfg(id)]]))[0]?.result);
+  if (!cfg?.entry) return null;
+  if (admin) return true;
+  if (!u) return false;
+  const ev = await eventOf(id); if (!ev) return false;
+  const st = await stateOf(ev, cfg, u); // (also draws the raffle once the doors are open)
+  return st.mine === 'bought' || st.mine === 'won';
 }
 
 async function pay(ev, cfg, s, rec, tk) {
   const key = `village:golden:${ev.id}:${ev.starts}:${s.u}`;
   try {
-    const d = await econDebit({ userId: s.u, amount: cfg.price, idempotencyKey: key, reason: `A golden ticket: ${String(ev.title || 'a Colony Stage event').slice(0, 80)}`,
+    const d = await econDebit({ userId: s.u, amount: cfg.price, idempotencyKey: key, reason: `${cfg.entry ? 'A ticket' : 'A golden ticket'}: ${String(ev.title || 'a Colony Stage event').slice(0, 80)}`,
       metadata: { kind: 'golden_ticket', eventId: ev.id, starts: ev.starts } });
     await redis([['HSET', tk, 'buy:' + s.u, JSON.stringify({ ...rec, status: 'bought', tx: d.transactionId, paidAt: Date.now() })]]);
     return { ok: true, balance: d.newBalance };
   } catch (e) {
     if (DEFINITE.has(e.code)) { // (nothing was taken: the ticket goes back)
       await redis([['HDEL', tk, 'buy:' + s.u], ['HINCRBY', tk, 'sold', '-1']]);
-      return { ok: false, status: e.code === 'insufficient_balance' ? 402 : 409, error: e.code === 'insufficient_balance' ? `A golden ticket takes ${cfg.price.toLocaleString('en-US')} Rebel Points.` : (e.message || 'The Rebel Economy did not take the points'), code: e.code === 'insufficient_balance' ? 'not_enough_points' : 'econ_refused' };
+      return { ok: false, status: e.code === 'insufficient_balance' ? 402 : 409, error: e.code === 'insufficient_balance' ? `${cfg.entry ? 'A ticket' : 'A golden ticket'} takes ${cfg.price.toLocaleString('en-US')} Rebel Points.` : (e.message || 'The Rebel Economy did not take the points'), code: e.code === 'insufficient_balance' ? 'not_enough_points' : 'econ_refused' };
     }
     return { ok: false, status: 502, error: 'The Rebel Economy did not answer. Try again: you are never charged twice.', code: 'econ_retry', retry: true };
   }

@@ -91,6 +91,7 @@ header{position:fixed;z-index:20;top:0;left:0;right:0;height:64px;display:flex;a
 .node.live .k{border-color:rgba(79,184,255,.7);color:var(--ice);box-shadow:0 0 16px rgba(79,184,255,.3)}
 
 /* ---------- panel ---------- */
+#sheetGrip,#sheetMore{display:none}
 #panel{position:fixed;z-index:15;right:28px;top:88px;bottom:28px;width:min(400px,34vw);display:flex;flex-direction:column;pointer-events:none}
 .card{pointer-events:auto;--mx:30%;--my:0%;background:linear-gradient(145deg,rgba(255,255,255,.06),rgba(255,255,255,.01) 40%,rgba(90,150,255,.03)),rgba(5,8,18,.72);backdrop-filter:blur(10px) saturate(1.2);-webkit-backdrop-filter:blur(10px) saturate(1.2);border:1px solid rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.30),inset 0 -1px 0 rgba(255,255,255,.06),inset 1px 0 0 rgba(255,255,255,.07),inset 0 0 30px rgba(90,150,255,.06),0 30px 70px -24px rgba(0,0,0,.75);border-radius:22px;padding:26px 26px 22px;position:relative;overflow:hidden;max-height:100%;overflow-y:auto;scrollbar-width:thin}
 .card::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(380px circle at var(--mx) var(--my),rgba(255,255,255,.065),rgba(140,190,255,.02) 35%,transparent 60%);mix-blend-mode:screen;transition:background .15s}
@@ -154,7 +155,7 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 .gl-cap{display:flex;justify-content:space-between;align-items:center;margin-top:16px;gap:10px}
 .gl-part{display:flex;gap:4px}
 .gl-part button{display:flex;align-items:center;gap:7px;padding:5px 10px 5px 6px;border-radius:999px;border:1px solid var(--line);font-family:Cinzel,serif;font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--washi-dim);white-space:nowrap;transition:all .2s}
-@media (max-width:480px){.gl-part button{padding:4px 8px 4px 5px;letter-spacing:.05em;gap:5px}.gl-cap span{letter-spacing:.14em}.gl-row{grid-template-columns:96px 1fr 42px}}
+@media (max-width:480px){.gl-part button{padding:4px 8px 4px 5px;letter-spacing:.05em;gap:5px}.gl-cap span{letter-spacing:.14em}.gl-row{grid-template-columns:106px 1fr 40px;gap:8px}.gl-row label{letter-spacing:.1em}}
 .gl-part button i{width:14px;height:14px;border-radius:50%;box-shadow:inset 0 1px 2px rgba(255,255,255,.3),inset 0 -2px 3px rgba(0,0,0,.35)}
 .gl-part button.on{color:var(--ice);border-color:var(--glow);background:rgba(79,184,255,.1)}
 .gl-cap span{font-family:Cinzel,serif;font-size:10.5px;font-weight:700;letter-spacing:.24em;color:var(--washi-dim)}
@@ -335,30 +336,118 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 .flyer{position:fixed;z-index:40;pointer-events:none;padding:6px 10px;border-radius:999px;background:rgba(79,184,255,.18);border:1px solid var(--jade);color:var(--jade);font-size:12px;font-weight:600;box-shadow:0 0 20px rgba(79,184,255,.5);white-space:nowrap}
 .hidden{display:none!important}
 
-@media (max-width:900px){
-  header{padding:0 14px;height:56px}
+/* ---------- phones (Nov 4, Miguel: "the NPC forge and Rebel Forge ... suck at phones") ----------
+   Upright: a slim header and a row of steps on top, the card a bottom sheet over the stage (peek = its title and its
+   buttons; the grip, MORE or a swipe opens all of it, scrolling, its buttons kept in view). Sideways: the steps a column
+   on the left, the card on the right, the 3D view drawn between them. The NFT, the drawings, the hold button and the
+   name sit in the free stage (--fl / --fr / --ft / --fb, layoutFree). */
+@media (max-width:900px),(max-height:500px){
   .hright{gap:6px}
   .logo span{display:none}
-  #trail{left:0;right:0;top:58px;bottom:auto;height:64px;width:auto}
+  .logo b{white-space:nowrap}
   #trail svg,#ant{display:none}
-  .nodes{display:flex;justify-content:center;gap:10px;height:100%;align-items:center}
+  .nodes{display:flex;justify-content:center;gap:12px;height:100%;align-items:center}
   .node{position:static;transform:none}
-  .node .k{width:40px;height:40px;font-size:18px}
   .node .t{display:none}
-  #panel{left:10px;right:10px;top:auto;bottom:10px;width:auto;max-height:46vh}
-  .card{padding:18px}
-  h1{font-size:22px}
-  #center{left:50%;top:38%;width:78vw}
-  #reveal{top:128px}   /* under the row of steps */
-  .scroll{width:88vw}
   #bigKanji{display:none}
-  #dock{left:10px;bottom:10px;width:calc(100vw - 20px)}
-  body:has(#dock.show) #panel{bottom:calc(var(--dockH,140px) + 18px);max-height:calc(58vh - var(--dockH,140px))}   /* the card above the moves */
-  .mv{width:92px}
-  #awakenBtn{bottom:50vh}
-  .nowplaying{bottom:170px}
+  .sep{margin:14px 0}
+  .card>.cta .btn{flex:1 1 140px;padding:13px 12px;letter-spacing:.1em}
+  .mv{width:100px}.mv .mn{font-size:12px}
+  .chT{font-size:15px;letter-spacing:.14em;text-align:center}
+  .chS{text-align:center}
+  #chGo{min-width:0;width:100%}
+  body:has(#chooser.show) #panel{display:none}   /* choosing a version: the chooser holds everything, the card steps aside */
 }
-@media (max-width:480px){#tokPill{display:none}.pill .lb{display:none}.hright{gap:6px}.pill{padding:6px 9px;white-space:nowrap}.logo b{font-size:15px;letter-spacing:.14em}}
+@media (max-width:900px) and (min-height:501px){
+  header{padding:0 12px;height:50px}
+  #trail{left:0;right:0;top:50px;bottom:auto;height:52px;width:auto}
+  .node .k{width:38px;height:38px;font-size:17px}
+  #panel{left:0;right:0;top:auto;bottom:0;width:auto;max-height:54vh}
+  .card{border-radius:22px 22px 0 0;border-bottom:0;padding:24px 16px calc(14px + env(safe-area-inset-bottom,0px))}
+  h1{font-size:22px;margin:6px 0 8px}
+  h1 .tag{font-size:11px;margin-top:6px}
+  #center{left:50%;top:calc((var(--ft,102px) + var(--fb,60vh)) / 2);width:92vw;max-height:calc(var(--fb,60vh) - var(--ft,102px) - 16px)}
+  #center .nftcard{width:min(380px,100%,calc(var(--fb,60vh) - var(--ft,102px) - 24px))}
+  .inkframe{height:calc(var(--fb,60vh) - var(--ft,102px) - 20px);width:auto;max-width:100%;max-height:none}
+  .scroll{width:94vw;margin-left:-47vw}
+  .bp-views.four{gap:6px}
+  .paper{padding:14px 12px 12px}
+  .bp-head{font-size:9px;letter-spacing:.14em}.bp-head .brush{font-size:16px}
+  .seal{width:46px;height:46px;font-size:8px;right:10px;bottom:10px}
+  #reveal{top:calc(var(--ft,102px) + 4px)}   /* under the row of steps */
+  @media (max-height:740px){#reveal .nm{font-size:28px}#reveal .mei{display:none}}
+  #toast{top:calc(var(--ft,102px) + 8px)}
+  #dock{left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));width:auto;padding:10px 10px 8px}
+  body:has(#dock.show) #panel{bottom:calc(var(--dockH,140px) + 14px + env(safe-area-inset-bottom,0px));max-height:calc(62vh - var(--dockH,140px))}   /* the card above the moves */
+  body:has(#dock.show) #panel .card{border-radius:22px;border-bottom:1px solid rgba(255,255,255,.16);margin:0 8px;padding-bottom:14px}
+  #awakenBtn{top:calc((var(--ft,102px) + var(--fb,100vh)) / 2);bottom:auto;margin-top:-69px}
+  .nowplaying{bottom:calc(var(--fbb,30vh) + 10px)}
+  .nowplaying b{font-size:26px}
+  .card>.cta{position:sticky;bottom:0;z-index:3;margin-left:-16px;margin-right:-16px;padding:12px 16px 2px;background:linear-gradient(180deg,rgba(6,9,20,0),rgba(6,9,20,.94) 22%)}
+  #sheetGrip{display:block;position:absolute;z-index:4;left:50%;top:0;transform:translateX(-50%);width:120px;height:26px;pointer-events:auto;touch-action:none}
+  #sheetGrip::before{content:"";position:absolute;left:50%;top:9px;width:40px;height:4px;margin-left:-20px;border-radius:4px;background:rgba(239,230,210,.38)}
+  #sheetGrip:active::before{background:var(--glow)}
+  #sheetMore{display:inline-flex;position:absolute;z-index:4;right:12px;top:12px;pointer-events:auto;align-items:center;gap:5px;padding:7px 11px;border-radius:999px;border:1px solid var(--line);font-family:Cinzel,serif;font-size:10px;font-weight:700;letter-spacing:.14em;color:var(--washi-dim);background:rgba(6,9,20,.7)}
+  body:has(#dock.show) #sheetMore{right:20px}
+  #panel.fixed #sheetGrip,#panel.fixed #sheetMore{display:none}
+  #panel.peek .card>:not(.eyebrow,h1,.cta,.errbox,.pct,.bar,.pk,.note.live){display:none}
+  #panel.peek h1 .tag{display:none}
+  #panel.peek .pct{font-size:40px}
+  #panel.peek .note.pk,#panel.peek .note.live{margin-top:6px}
+  #panel.peek .card>.cta{margin-top:8px}
+  #chooser{left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));transform:translateY(160%);padding:12px 12px 14px}
+  #chooser.show{transform:none}
+}
+@media (pointer:coarse) and (max-width:900px),(pointer:coarse) and (max-height:500px){
+  .ctl{height:38px;min-width:38px}
+  .gl-sw{gap:10px}
+  .gl-sw button,.gl-sw .any{width:34px;height:34px}
+  .gl-sw button.forged{height:34px}
+  .gl-sw button.forged i{top:7px;left:6px}
+  .gl-tools .ctl{height:36px}
+  .gl-seg button{padding:12px 6px}
+  .gl-part button{padding:8px 10px 8px 7px}
+  .chip{padding:9px 13px}
+  .pill{min-height:34px}
+}
+@media (pointer:coarse){.note.keys{display:none}}   /* no keyboard */
+@media (max-width:480px){#tokPill,#forgePill{display:none}.pill .lb{display:none}.hright{gap:5px}.pill{padding:6px 9px;white-space:nowrap}.logo b{font-size:15px;letter-spacing:.14em}.iconbtn{width:34px;height:34px}}
+@media (max-width:400px){.logo b{font-size:13px;letter-spacing:.1em}#lobbyExit .lbw{display:none}#lobbyExit{padding:6px 11px}.hright{gap:4px}}
+@media (max-height:500px){
+  header{height:44px;padding:0 12px}
+  .logo b{font-size:14px;letter-spacing:.14em}
+  #tokPill,#forgePill{display:none}.pill .lb{display:none}.pill{padding:5px 9px;white-space:nowrap}.iconbtn{width:32px;height:32px}
+  #trail,body:has(#dock.show) #trail{left:6px;right:auto;top:48px;bottom:8px;width:48px;height:auto}
+  .nodes{flex-direction:column;gap:8px}
+  .node .k{width:36px;height:36px;font-size:16px}
+  #stage{left:56px;right:auto;width:calc(100vw - 70px - min(380px,44vw))}   /* a canvas keeps its drawing size with width auto: say it */
+  #panel{left:auto;right:8px;top:48px;bottom:8px;width:min(380px,44vw)}
+  .card{border-radius:18px;padding:16px 14px 12px}
+  h1{font-size:19px;margin:6px 0 8px}
+  .card>.cta{position:sticky;bottom:0;z-index:3;margin-left:-14px;margin-right:-14px;padding:10px 14px 2px;background:linear-gradient(180deg,rgba(6,9,20,0),rgba(6,9,20,.94) 22%)}
+  #center{left:calc((var(--fl,56px) + var(--fr,60vw)) / 2);top:calc((var(--ft,48px) + var(--fb,100vh)) / 2);width:calc(var(--fr,60vw) - var(--fl,56px) - 16px);max-height:calc(var(--fb,100vh) - var(--ft,48px) - 12px)}
+  #center .nftcard{width:min(300px,100%,calc(var(--fb,100vh) - var(--ft,48px) - 16px))}
+  .inkframe{height:calc(var(--fb,100vh) - var(--ft,48px) - 16px);width:auto;max-width:100%;max-height:none}
+  .scroll{width:calc(var(--fr,60vw) - var(--fl,56px) - 24px);margin-left:calc((var(--fr,60vw) - var(--fl,56px) - 24px) / -2)}
+  .bp-views.four{gap:6px}
+  .paper{padding:12px 12px 10px}
+  .bp-head{font-size:9px;letter-spacing:.14em}.bp-head .brush{font-size:15px}
+  .seal{width:44px;height:44px;font-size:8px;right:10px;bottom:8px}
+  #reveal{left:calc((var(--fl,56px) + var(--fr,60vw)) / 2);top:46px}
+  #reveal .nm{font-size:22px}
+  #reveal .mei{display:none}
+  #awakenBtn{left:calc((var(--fl,56px) + var(--fr,60vw)) / 2);top:calc((var(--ft,48px) + var(--fb,100vh)) / 2);bottom:auto;width:116px;height:116px;margin-top:-58px}
+  #dock{left:64px;right:calc(min(380px,44vw) + 22px);bottom:8px;width:auto;padding:8px 10px 6px}
+  .dtop{margin-bottom:6px}
+  .mv{width:88px;padding:8px 8px 7px}.mv .mn{margin-top:12px}
+  #chooser{left:calc(var(--fl,56px) + 8px);right:8px;bottom:8px;width:auto;transform:translateY(160%);padding:10px 12px 12px;gap:6px}
+  #chooser.show{transform:none}
+  .chV{gap:8px;margin:2px 0}.chv{width:64px;height:84px}
+  .chS{display:none}
+  .nowplaying{left:calc((var(--fl,56px) + var(--fr,60vw)) / 2);bottom:calc(var(--fbb,30vh) + 8px)}
+  .nowplaying b{font-size:20px}
+  #toast{top:52px}
+}
 @media (prefers-reduced-motion:reduce){#grain{animation:none}}
 </style>
 </head>
@@ -373,7 +462,7 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 <header>
   <div class="logo"><b>REBEL FORGE</b></div>
   <div class="hright">
-    <button class="pill exitbtn" id="lobbyExit" title="Back to the lobby">← Lobby</button>
+    <button class="pill exitbtn" id="lobbyExit" title="Back to the lobby" aria-label="Back to the lobby">←<span class="lbw"> Lobby</span></button>
     <div class="pill hidden" id="forgePill"></div>
     <button class="pill pts hidden" id="ptsPill" type="button"><i>◆</i><strong></strong><span class="lb"></span></button>
     <div class="pill" id="tokPill">Rebel <strong>#—</strong></div>
@@ -392,7 +481,7 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 
 <div id="center"></div>
 
-<aside id="panel"><div class="card" id="card"></div></aside>
+<aside id="panel"><button id="sheetGrip" type="button" aria-label="Show more or less of the card"></button><button id="sheetMore" type="button">MORE ▴</button><div class="card" id="card"></div></aside>
 
 <div id="reveal"><div class="nm" id="rvName">REBEL #4998</div><div class="mei" id="rvMei">Shogun · Battle for the Colony</div></div>
 
@@ -449,7 +538,8 @@ const Q = new URLSearchParams(location.search);
 const PICKS = ['4998', '469', '1555', '262', '893', '910'];
 const PICKER = Q.has('pick');   // review only: a token picker on the Summon step
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const MOBILE = matchMedia('(max-width: 900px)').matches;
+const MOBILE = matchMedia('(max-width: 900px), (max-height: 500px)').matches;   // phones held sideways too (Nov 4)
+const PORTRAIT = matchMedia('(max-width: 900px) and (min-height: 501px)'), SIDEWAYS = matchMedia('(max-height: 500px)');
 const $ = (s, r = document) => r.querySelector(s);
 const el = (h) => { const t = document.createElement('template'); t.innerHTML = h.trim(); return t.content.firstElementChild; };
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1130,11 +1220,18 @@ const REF = /^\/assets\/forge\/sources\/[\w.-]+\.(png|jpe?g|webp)$/.test(Q.get('
 // Oct 20 friend collections (assets/friend-collections.json): their holders forge from their NFT like Rebels: the
 // concept step paints the full-body realistic render of their species (it is the clean reference too), then the back,
 // the sides, the sculpts and a player rig with the species' body fixes (rigger 2.36). No weapon and no glove refits.
-const FRIEND_COLS = { chumpz: { species: 'ape', name: 'Chumpz', one: 'Chumpz' }, saints: { species: 'human', name: 'Saints of LA', one: 'Saint' } };
-const FRIEND = REF ? null : FRIEND_COLS[COL] || null;
+// Nov 3: universe = Universe's own characters (no NFT; Vicky's dolls), forged only by an admin from a reference render, so
+// that forge shows them as the friends they are (no weapon, the friends' gloves and re-rig boxes)
+const FRIEND_COLS = { chumpz: { species: 'ape', name: 'Chumpz', one: 'Chumpz' }, saints: { species: 'human', name: 'Saints of LA', one: 'Saint' }, universe: { species: 'human', name: 'Rebel Universe', one: 'Character' } };
+const FRIEND = REF && COL !== 'universe' ? null : FRIEND_COLS[COL] || null;
 const NOUN = FRIEND ? FRIEND.one : 'Rebel';
 const SPECIES = REF ? (/^[a-z]{2,20}$/.test(Q.get('species') || '') ? Q.get('species') : 'ape') : FRIEND ? FRIEND.species : null;
 const REF_NAME = REF ? String(Q.get('name') || '').slice(0, 60) : '';
+// Nov 3 (Vicky's dolls): a reference forge can bring its own back and side views (&back= &left= &right=, files beside the
+// front render; left / right = the character's own side, facing that edge of the image, as the forge draws them): Meshy
+// gets them as drawn instead of views the image model draws from the front
+const refView = (k) => (REF && /^\/assets\/forge\/sources\/[\w.-]+\.(png|jpe?g|webp)$/.test(Q.get(k) || '') ? Q.get(k) : null);
+const REF_VIEWS = { back: refView('back'), left: refView('left'), right: refView('right') };
 // Oct 26: ?art=/assets/forge/sources/<file> (admins): the brush paints the Rebel from that artwork instead of its NFT
 // picture and the NFT's traits are left out (Rebel #001's NFT art is another character; Miguel's drawing is #001).
 // &gang=<Colony> picks the costume brief, &leave=quiver,arrows what every drawing leaves out (the API keeps only its
@@ -1357,6 +1454,9 @@ function GI() {
   if (REF) GI_CACHE = { ...GI_CACHE, species: SPECIES, name: state.meta?.name || GI_CACHE.name, referenceImage: true };
   if (FRIEND) GI_CACHE = { ...GI_CACHE, species: SPECIES, name: state.meta?.name || GI_CACHE.name, friendTraits: (state.meta?.traits || []).slice(0, 20) };
   if (art) GI_CACHE = { ...GI_CACHE, sourceArt: art.path };
+  // Nov 4: a Universe character painted from its (chibi doll) artwork is grown to normal proportions; its build carries it,
+  // so the rigger uses the usual landmarks (api/_forge-rig.mjs chibiEnv) and the back and sides keep its look
+  if (art && COL === 'universe') GI_CACHE = { ...GI_CACHE, bodyType: 'universe_grown' };
   if (S?.leave?.length) GI_CACHE = { ...GI_CACHE, leaveOut: S.leave };
   return GI_CACHE;
 }
@@ -1410,12 +1510,14 @@ const RUN = {
     S.prodUrl = await upload('prod', d.productionImage?.dataUrl);
   },
   async back() {
+    if (REF_VIEWS.back) { S.backUrl = await upload('prod_back', await dataUrlOf(REF_VIEWS.back)); return; }
     try {
       const d = await twice(() => api('/api/forge-generate-back-reference', { generationInput: GI(), productionImageUrl: S.prodUrl }));
       S.backUrl = await upload('prod_back', d.backImage?.dataUrl);
     } catch (e) { if (e.status === 429) throw e; console.warn('back view skipped', e); S.backUrl = null; }
   },
   async sides() {
+    if (REF_VIEWS.left || REF_VIEWS.right) { S.sideUrls = await Promise.all(['left', 'right'].map(async (side) => (REF_VIEWS[side] ? upload(`prod_${side}`, await dataUrlOf(REF_VIEWS[side])) : null))); return; }
     try {
       // v7: a profile drawn facing the wrong way is left out (null); Meshy gets only the views that are right
       S.sideUrls = await Promise.all(['left', 'right'].map(async (side) => {
@@ -1533,7 +1635,7 @@ async function runPipeline() {
     running = false; state.forging = active(); refreshStep(); forgeTick();
   }
 }
-function retry() { if (!S) return; S.err = null; if (S.t[S.phase]) S.t[S.phase].a = Date.now(); S._f = 0; saveS(); runPipeline(); }
+function retry() { if (!S) return; S.err = null; S.held = false; if (S.t[S.phase]) S.t[S.phase].a = Date.now(); S._f = 0; saveS(); runPipeline(); }
 function onPhase(prev, next) {
   const from = PH[prev].seg, to = PH[next].seg;
   if (next === 'done') { finishForge(); return; }
@@ -1740,6 +1842,9 @@ function markNodes() {
    Data
    ========================================================= */
 async function loadToken(t) {
+  // Nov 4: Universe's own characters have no NFT: an admin forges them from their artwork (?art=...&name=...)
+  if (COL === 'universe' && !REF) return { tokenId: t, name: String(Q.get('name') || '').slice(0, 60) || `${NOUN} #${t}`, img: ART || '', thumb: ART || '',
+    traits: [{ trait_type: 'Collection', value: COL }, { trait_type: 'Species', value: SPECIES }] };
   if (REF) return { tokenId: t, name: REF_NAME || `#${t}`, img: REF, thumb: REF,
     traits: [{ trait_type: 'Collection', value: COL }, { trait_type: 'Species', value: SPECIES }, { trait_type: 'Source', value: 'Reference render' }] };
   const out = { tokenId: t, name: `${NOUN} #${t}`, traits: [], img: `/api/nft-image?c=${COL}&t=${t}&s=full`, thumb: `/api/nft-image?c=${COL}&t=${t}&s=thumb` };
@@ -1765,15 +1870,23 @@ async function loadAssets(t) {
   return out;
 }
 // No local session (other device, cleared storage): pick up a Meshy/rig run from the last 3 hours on the server.
+// Nov 4: ?resume=1 (admins) also finds a forge whose rig failed, for 14 days, on any device (a forge lives in the browser
+// that started it; other browsers only find one for 3 hours: Sanguira's, rigged on a phone after the rigger fix). It
+// waits on its error card (held): TRY AGAIN rigs it again.
 function recoverSession(assets) {
-  const cutoff = Date.now() - 3 * 3600e3;
+  const resume = Q.get('resume') === '1' && !!state.own?.admin;
+  const cutoff = Date.now() - (resume ? 14 * 86400e3 : 3 * 3600e3);
   const recent = (assets.builds || []).filter((b) => b.engine?.taskId && Date.parse(b.createdAt || 0) > cutoff && /^fv2_/.test(b.sourceConceptId || ''));
   if (!recent.length) return null;
   const sid = recent[0].sourceConceptId.replace(/_prod$/, '');
   const group = recent.filter((b) => b.sourceConceptId === recent[0].sourceConceptId).reverse();
   const rigged = group.find((b) => b.forgeRig?.status === 'succeeded' && b.output?.forgeRigGlbUrl);
   if (rigged) return null;   // finished runs are shown as the Rebel's forged model instead
-  const running = group.find((b) => b.forgeRig?.status === 'running' || b.forgeRig?.status === 'failed');
+  // a running rig, else the failed one rigged first (the player's own pick: the forge moved on to the others after it)
+  const failed = group.filter((b) => b.forgeRig?.status === 'failed').sort((a, b) => (Date.parse(a.forgeRig.startedAt || 0) || 0) - (Date.parse(b.forgeRig.startedAt || 0) || 0));
+  const running = group.find((b) => b.forgeRig?.status === 'running') || failed[0];
+  const old = Math.max(...group.map((b) => Date.parse(b.createdAt || 0) || 0)) <= Date.now() - 3 * 3600e3;
+  if (old && running?.forgeRig?.status !== 'failed') return null;   // an older forge only to rig it again
   const t0 = Date.parse(group[0].createdAt) || Date.now();
   const s = {
     v: 1, token: state.token, id: sid, recovered: true, startedAt: t0 - 6 * 60e3,
@@ -1781,7 +1894,10 @@ function recoverSession(assets) {
     builds: group.map((b) => ({ id: b.buildId, started: true, p: b.output?.glbUrl ? 100 : 0, glb: b.output?.glbUrl || null, stored: b.output?.rebelGlbUrl || null, thumb: b.engine?.response?.thumbnail_url || null })),
     t: {}, approved: true, variants: group.length
   };
-  if (running) { s.picked = running.buildId; s.rigStarted = running.forgeRig.status === 'running'; s.phase = 'rig'; }
+  if (running) {
+    s.picked = running.buildId; s.rigStarted = running.forgeRig.status === 'running'; s.phase = 'rig';
+    if (old) { s.held = true; s.err = running.forgeRig.error || 'Rigging failed'; }
+  }
   else if (s.builds.every((b) => b.stored)) s.phase = 'pick';
   else if (s.builds.every((b) => b.glb)) s.phase = 'store';
   else s.phase = 'meshy';
@@ -1806,6 +1922,62 @@ function renderCard(html, quiet) {
   gsap.fromTo(card, { opacity: 0, x: 24 }, { opacity: 1, x: 0, duration: 0.6, ease: 'power3.out' });
   gsap.from(card.querySelectorAll('.eyebrow, h1, p.lead, .sep, .traits > *, .chips, .cta, .checks > *, .stages > *, .picker, .note, .vers'), { opacity: 0, y: 12, duration: 0.6, stagger: 0.04, ease: 'power3.out', delay: 0.1, clearProps: 'opacity,transform' });
 }
+/* ---- phones (Nov 4): the card as a bottom sheet when upright, the free stage in both ways ---- */
+// Upright the card peeks (its title and buttons) or opens (all of it). Each step starts at its own: the summon's traits
+// open; the drawings, the forge and the awakened character peek (they need the stage). The grip, MORE or a swipe on the
+// grip toggles it; the gloves card stays open. layoutFree puts the stage left free by the bars, the sheet, the moves and
+// the chooser into --fl / --fr / --ft / --fb (the NFT, the drawings, the hold button, the name and the framing use it).
+const panelEl = $('#panel');
+function sheetSet(peek) {
+  panelEl.classList.toggle('peek', !!peek);
+  $('#sheetMore').textContent = peek ? 'MORE ▴' : 'LESS ▾';
+  $('#sheetGrip').setAttribute('aria-expanded', peek ? 'false' : 'true');
+  layoutFree();
+}
+function sheetReset() { panelEl.classList.toggle('fixed', !!GL.open); sheetSet(PORTRAIT.matches && state.step !== 0 && !GL.open); }   // (only upright phones peek)
+try { PORTRAIT.addEventListener('change', () => sheetReset()); } catch (e) { try { PORTRAIT.addListener(() => sheetReset()); } catch (x) {} }   // turned upright or sideways
+function sheetToggle() {
+  if (GL.open) return;
+  sheetSet(!panelEl.classList.contains('peek')); Snd.play('select', { vol: 0.4 });
+  if (state.step === 4 && state.awakened && PORTRAIT.matches) camTo(awakenCam(), 0.6);
+}
+$('#sheetMore').onclick = sheetToggle;
+window.ForgeSheet = { set: (peek) => sheetSet(peek), peek: () => panelEl.classList.contains('peek') };   // (the tips open the card while they show)
+(() => {
+  const g = $('#sheetGrip'); let y0 = null, moved = false;
+  g.addEventListener('pointerdown', (e) => { y0 = e.clientY; moved = false; try { g.setPointerCapture(e.pointerId); } catch (x) {} });
+  g.addEventListener('pointermove', (e) => { if (y0 == null || moved) return; const dy = e.clientY - y0; if (Math.abs(dy) > 24) { moved = true; if ((dy > 0) !== panelEl.classList.contains('peek')) sheetToggle(); } });
+  g.addEventListener('pointerup', () => { if (y0 != null && !moved) sheetToggle(); y0 = null; });
+  g.addEventListener('pointercancel', () => { y0 = null; });
+})();
+function layoutFree() {
+  const H = innerHeight, W = innerWidth, R = document.documentElement.style;
+  const shown = (e) => !e.classList.contains('hidden') && getComputedStyle(e).display !== 'none' && e.offsetHeight > 0;
+  let ft = $('header').offsetHeight, fb = H, fl = 0, fr = W;
+  const d = $('#dock'), c = $('#chooser');
+  if (d.classList.contains('show')) R.setProperty('--dockH', d.offsetHeight + 'px');   // first: the card sits on the moves (the observer's copy can lag a frame)
+  const tr = $('#trail').getBoundingClientRect();
+  if (SIDEWAYS.matches) { fl = Math.round(tr.right) + 2; if (shown(panelEl)) fr = Math.round(panelEl.getBoundingClientRect().left) - 6; }
+  else if (PORTRAIT.matches) { ft = Math.round(tr.bottom); if (shown(panelEl)) fb = Math.round(panelEl.getBoundingClientRect().top) - 6; }
+  if (d.classList.contains('show')) fb = Math.min(fb, d.offsetTop - 8);
+  if (c.classList.contains('show')) fb = Math.min(fb, c.offsetTop - 8);
+  fb = Math.max(ft + 80, fb);
+  R.setProperty('--ft', ft + 'px'); R.setProperty('--fb', fb + 'px'); R.setProperty('--fl', fl + 'px'); R.setProperty('--fr', fr + 'px');
+  R.setProperty('--fbb', (H - fb) + 'px');   // the same edge from the bottom (100vh is the tallest viewport on iPhones, not this one)
+  return { ft, fb, fl, fr };
+}
+// when the stage changes under the awakened character (the card or the moves settle), it is framed again
+let freeQ = 0, freeFb = 0;
+const layoutFreeSoon = () => { cancelAnimationFrame(freeQ); freeQ = requestAnimationFrame(() => {
+  const f = layoutFree();
+  if (Math.abs(f.fb - freeFb) > 8 && state.step === 4 && state.awakened && !GL.open && (PORTRAIT.matches || SIDEWAYS.matches)) camTo(awakenCam(), 0.6);
+  freeFb = f.fb;
+}); };
+try {
+  const ro = new ResizeObserver(layoutFreeSoon); [panelEl, $('#dock'), $('#chooser'), $('#trail')].forEach((e) => ro.observe(e));
+  const mo = new MutationObserver(layoutFreeSoon); [panelEl, $('#dock'), $('#chooser')].forEach((e) => mo.observe(e, { attributes: true, attributeFilter: ['class'] }));
+} catch (e) { /* resize events only */ }
+addEventListener('resize', layoutFreeSoon);
 function go(i) {
   if (i > state.maxStep && !(active() && i <= liveStep())) { toast('The forge has not reached this step yet'); return; }
   const prev = state.step; state.step = i; state.maxStep = Math.max(state.maxStep, i);
@@ -1818,6 +1990,7 @@ function go(i) {
   if (i !== 3) clearPreview();
   setTimeout(renderChooser, 0);
   [renderSummon, renderInk, renderForm, renderForge, renderAwaken][i](prev);
+  sheetReset();
 }
 // re-render the current step in place when the pipeline moves (no card fly-in)
 let refreshQ = 0;
@@ -1842,7 +2015,7 @@ function bindErr() { const r = $('#retryBtn'); if (r) r.onclick = retry; }
 function artNoteHTML() {
   const a = shownArt(), leave = active() ? S.leave || [] : linkLeave();
   if (!a && !leave.length) return '';
-  return `<div class="note artnote">ADMIN · ${a ? `painting from <b>${esc(a.path.split('/').pop())}</b>, not the NFT picture or its traits${a.gang ? ` · costume: ${esc(a.gang)}` : ''}` : 'painting from the NFT'}${leave.length ? ` · leaving out: ${esc(leave.join(', '))}` : ''}</div>`;
+  return `<div class="note artnote">ADMIN · ${a ? `painting from <b>${esc(a.path.split('/').pop())}</b>, ${COL === 'universe' ? 'grown to normal proportions (not chibi)' : 'not the NFT picture or its traits'}${a.gang ? ` · costume: ${esc(a.gang)}` : ''}` : 'painting from the NFT'}${leave.length ? ` · leaving out: ${esc(leave.join(', '))}` : ''}</div>`;
 }
 
 /* ---- 1. SUMMON 召 ---- */
@@ -1919,7 +2092,7 @@ async function selectToken(t) {
   state.meta = withArt(await loadToken(t)); updateTokPill(); renderSummon();
   state.assets = await loadAssets(t);
   if (!S) S = recoverSession(state.assets);
-  refreshStep(); if (active()) runPipeline();
+  refreshStep(); if (active() && !S.held) runPipeline();
 }
 async function summon() {
   if (state.summoned) return; const btn = $('#summonBtn'); btn.disabled = true;
@@ -1929,13 +2102,15 @@ async function summon() {
   gsap.to(nc, { opacity: 0, duration: 0.8, delay: 1.2 + (state.meta.traits.length * 0.28) });
   const rows = [...card.querySelectorAll('.trait')];
   const n = Math.max(rows.length, 1);
-  const tx = innerWidth / 2, ty = innerHeight * 0.55;
+  const fs = PORTRAIT.matches || SIDEWAYS.matches ? layoutFree() : null;   // phones: the traits fly into the stage, not the card
+  const tx = fs ? (fs.fl + fs.fr) / 2 : innerWidth / 2, ty = fs ? (fs.ft + fs.fb) / 2 : innerHeight * 0.55;
+  const spread = fs ? Math.max(40, Math.min(160, (fs.fb - fs.ft) / 2 - 20)) : 160;
   for (let i = 0; i < rows.length; i++) {
     await new Promise((r) => setTimeout(r, i === 0 ? 700 : 280));
     const row = rows[i]; const rb = row.getBoundingClientRect();
     const f = el(`<div class="flyer">${esc(row.querySelector('.tv').textContent)}</div>`); document.body.appendChild(f);
     gsap.set(f, { left: rb.left + 10, top: rb.top + 6 }); row.classList.add('sent');
-    const yLane = ty + 160 - (i / n) * 320;
+    const yLane = ty + spread - (i / n) * spread * 2;
     gsap.to(f, { left: tx - 30 + (Math.random() - 0.5) * 60, top: yLane, scale: 0.6, duration: 0.8, ease: 'power2.in', onComplete: () => {
       gsap.to(f, { opacity: 0, scale: 0.1, duration: 0.25, onComplete: () => f.remove() });
       row.classList.remove('sent'); row.classList.add('locked');
@@ -1994,7 +2169,7 @@ function renderInk(prev, quiet) {
   renderCard(`
     <div class="eyebrow">STEP 2 / 5</div>
     <h1>${title}<span class="tag">${past ? 'Accepted' : waiting ? 'Your call' : 'The brush runs'}</span></h1>
-    <p class="lead">${FRIEND ? `The forge's brush paints your ${NOUN} from its NFT as a full-body 3D character, standing ready for the smith.` : "The forge's brush paints your Rebel as a full warrior from its traits and colony, then inks a clean, simple version the smith can build from."}</p>
+    <p class="lead">${REF ? 'The reference render is the concept: the smith builds from it.' : FRIEND ? `The forge's brush paints your ${NOUN} from its NFT as a full-body 3D character, standing ready for the smith.` : "The forge's brush paints your Rebel as a full warrior from its traits and colony, then inks a clean, simple version the smith can build from."}</p>
     <div class="note live" id="liveStatus"></div>
     ${errBox()}
     <div class="sep"></div>
@@ -2150,7 +2325,7 @@ function renderForge(prev, quiet) {
     <h1>${pick ? `Choose your ${NOUN}` : S?.done ? 'Forged' : 'Forging'}<span class="tag">${pick ? 'Three versions, one warrior' : 'The hammer sings'}</span></h1>
     <div class="pct" id="pct">0<small>%</small></div>
     <div class="bar"><i id="barI"></i></div>
-    <div class="note" id="eta">Heating the steel…</div>
+    <div class="note pk" id="eta">Heating the steel…</div>
     ${errBox()}
     ${versionsHTML()}
     ${pick ? `<div class="cta"><button class="btn fire wide" id="pickBtn" ${previewId ? '' : 'disabled'}>${previewId ? `FORGE V${S.builds.findIndex((b) => b.id === previewId) + 1} →` : 'TAP A VERSION TO SEE IT'}</button></div>` : ''}
@@ -2272,18 +2447,21 @@ function awaken() {
 function fitReveal() {
   const nm = $('#rvName'), mei = $('#rvMei'); nm.style.fontSize = ''; mei.style.fontSize = '';
   const cx = innerWidth / 2, p = $('#panel').getBoundingClientRect();
-  const room = 2 * (innerWidth > 900 && p.width && p.left > cx ? p.left - cx - 18 : innerWidth * 0.46);
+  const f = SIDEWAYS.matches ? layoutFree() : null;
+  const room = f ? f.fr - f.fl - 24 : 2 * (innerWidth > 900 && p.width && p.left > cx ? p.left - cx - 18 : innerWidth * 0.46);
   for (const el of [nm, mei]) { const w = el.scrollWidth; if (w > room) el.style.fontSize = (parseFloat(getComputedStyle(el).fontSize) * room / w).toFixed(1) + 'px'; }
 }
 // the awakened framing: the camera aims a little higher, or backs off, until the character's head (the top of its
 // 1.9 m) is under the name title, feet still on screen (they may stand behind the glass of the moves dock, as before)
 function awakenCam() {
   const b = STEPS[4].cam, H = innerHeight, tf = Math.tan(cam.fov / 2);
-  const R = $('#reveal'), top = (R.offsetHeight ? R.offsetTop + R.offsetHeight : 64) + 14, bot = H - 12;   // offsets: the fade-in's translate left out
+  const R = $('#reveal'), top = (R.offsetHeight ? R.offsetTop + R.offsetHeight : 64) + 14;   // offsets: the fade-in's translate left out
+  const bot = PORTRAIT.matches || SIDEWAYS.matches ? Math.min(H - 12, layoutFree().fb - 6) : H - 12;   // phones: the feet above the card and the moves
   const Y = (h, r, ty) => { const c = ty + r * Math.cos(b.b), a = Math.atan((h - c) / (r * Math.sin(b.b))) + Math.PI / 2 - b.b; return H / 2 * (1 - Math.tan(a) / tf); };   // screen y of height h
   const at = (h, want, r) => { let lo = -2, hi = 4; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (Y(h, r, m) < want) lo = m; else hi = m; } return lo; };   // the aim height that puts h at want
-  for (let r = b.r; r <= 8; r += 0.05) { const t1 = at(1.9, top, r), t2 = at(0, bot, r); if (t1 <= t2) return { ...b, r, y: Math.min(Math.max(b.y, t1), t2) }; }
-  return b;
+  const rMax = cam.upperRadiusLimit || 8;
+  for (let r = b.r; r <= rMax; r += 0.05) { const t1 = at(1.9, top, r), t2 = at(0, bot, r); if (t1 <= t2) return { ...b, r, y: Math.min(Math.max(b.y, t1), t2) }; }
+  return { ...b, r: rMax, y: at(1.9, top, rMax) };   // no room for all of it (a short phone): as far back as it goes, the head under the name
 }
 addEventListener('resize', () => { if (state.step !== 4) return; fitReveal(); if (!GL.open) camTo(awakenCam(), 0.6); });
 function showAwakened(instant) {
@@ -2304,14 +2482,14 @@ function showAwakened(instant) {
     ${glBoxHTML()}${rrBoxHTML()}
     <div class="cta">${canForge() ? `<button class="btn shu wide" id="makeMine">MAKE THIS MY ${NOUN.toUpperCase()}</button>` : ''}<button class="btn${canForge() ? '' : ' fire wide'}" id="enterV">ENTER VILLAGE →</button></div>
     ${canForge() ? '' : `<div class="note">Only the wallet that holds this ${NOUN} can make it its character. You can walk the village with it.</div>`}
-    <div class="note">Keys: ← → moves · Space pause · L loop · S speed · K perform all kata</div>
+    <div class="note keys">Keys: ← → moves · Space pause · L loop · S speed · K perform all kata</div>
   `);
   if ($('#makeMine')) $('#makeMine').onclick = makeMine;
   renderWeaponChips(); glBox(); glCheck(); rrBox();
   // Enter Village: for the holder this Rebel becomes their character (same as Make this my Rebel); anyone else walks
   // in with it for this visit. Either way the village opens with this Rebel.
   $('#enterV').onclick = async () => { const b = $('#enterV'); b.disabled = true; b.textContent = 'ENTERING…'; if (canForge()) { if (!state.mine) await makeMine(); } else rememberSelected(null); location.href = `/village.html`; };
-  buildDock(); $('#dock').classList.add('show');
+  buildDock(); $('#dock').classList.add('show'); sheetReset();
   camTo(awakenCam(), instant ? 0.8 : 2.2);   // v4 HD: frame the awakened Rebel close (he fills the view), clear of the title
   cam.useAutoRotationBehavior = true; cam.autoRotationBehavior.idleRotationSpeed = 0.18; cam.autoRotationBehavior.idleRotationWaitTime = 4000;
 }
@@ -2739,9 +2917,11 @@ function glCam(side, d = 1.2) {
   const P = [], V3 = BABYLON.Vector3;
   for (const s of side === 'both' ? ['Left', 'Right'] : [side]) { const n = GL.hands?.frames[s]?.node; if (n) { n.computeWorldMatrix(true); P.push(n.getAbsolutePosition()); } }
   const c = P.length ? P.reduce((a, p) => a.addInPlace(p), V3.Zero()).scale(1 / P.length) : new V3(0, 0.95, 0);
-  const one = side !== 'both', drop = MOBILE ? (one ? 0.24 : 0.32) : 0;   // phones: the card covers the lower half, so the hands sit higher in the view
+  const one = side !== 'both', r = one ? (PORTRAIT.matches ? 1.9 : 1.35) : (PORTRAIT.matches ? 3.1 : 2.35);
+  // upright phones: the card covers the lower part, so the hands go to the middle of the stage above it
+  const f = PORTRAIT.matches ? layoutFree() : null, drop = f ? Math.max(0, (innerHeight - f.ft - f.fb) / innerHeight * r * Math.tan(cam.fov / 2)) : 0;
   const a = one ? Math.PI / 2 + (c.x > 0 ? -0.6 : 0.6) : Math.PI / 2;
-  gsap.to(cam, { alpha: a, beta: one ? 1.36 : 1.4, radius: one ? (MOBILE ? 1.9 : 1.35) : (MOBILE ? 3.1 : 2.35), duration: d, ease: 'power3.inOut' });
+  gsap.to(cam, { alpha: a, beta: one ? 1.36 : 1.4, radius: r, duration: d, ease: 'power3.inOut' });
   gsap.to(cam.target, { x: one ? c.x : 0, y: c.y - drop, z: one ? c.z : 0, duration: d, ease: 'power3.inOut' });
 }
 function glOpen() {
@@ -2752,7 +2932,7 @@ function glOpen() {
   $('#dock').classList.remove('show'); gsap.to('#reveal', { opacity: 0, duration: 0.5 });   // the hands get the stage (poses are on the card)
   Snd.play('swish_light');
   if (!rebel.cur || !['idle', 'fight_idle'].includes(rebel.cur.name)) glPose('idle');
-  glRender(); glCam(GL.side);
+  glRender(); sheetReset(); glCam(GL.side);
   if (!GL.job) glPreview();
 }
 function glClose() {
@@ -3051,7 +3231,7 @@ function updateTokPill() { const g = FRIEND ? FRIEND.name : traitVal('Gang Names
   gsap.to('#loader', { opacity: 0, duration: 1, delay: 0.4, onComplete: () => $('#loader').remove() });
   if (active()) {
     gsap.killTweensOf(U); state.summoned = true; U.uBuild = 1.05; state.maxStep = liveStep();
-    layoutTrail(); go(liveStep()); runPipeline();
+    layoutTrail(); go(liveStep()); if (S.held) { saveS(); refreshStep(); forgeTick(); } else runPipeline();
   } else {
     go(0);
     if (Q.get('step') === 'awaken' && state.assets?.glb) setTimeout(awakenExisting, 900);   // review deep link

@@ -1,13 +1,17 @@
 // Ant-Thony's stand-up set maker (Nov 2, Admin Hub > Players > Events > Set maker). Admins only.
 //   GET                                                   -> { ok, styles: [{ id, label, inspiredBy }] }
-//   POST { action: 'write', minutes 1-5, style?, topic? } -> { ok, set: { title, bits, minutes, style } }
-//   POST { action: 'voice', text }                        -> audio/wav: one bit in his own voice
+//   POST { action: 'write', minutes 1-5, style?, topic?, part?, of?, before? } -> { ok, set: { title, bits, minutes, style } }
+//        (Nov 4: a long set in parts, 1..of, each up to 5 minutes, with what he already said; the economy's writer since
+//        rebel-economy-core claude/standup-parts: GET answers parts: true once it has it)
+//   POST { action: 'voice', text, temperature? }          -> audio/wav: one bit in his own voice (temperature 0.2-1.2: how
+//                                                            much his delivery varies; the economy's default 0.5 is steady)
+//   POST { action: 'sayas', list: [[written, said]...] }  -> { ok, sayAs }: how he says words (every site, every line he says)
 // The writer is the Rebel Economy's (POST /api/anthony/standup: his persona and rules, the colony's week) with Universe's
 // own week beside it; the voice is the economy's (POST /api/anthony/voice, his saved voice). A style is a way of telling
 // jokes inspired by a comic (long stories, high energy, crowd work...): the economy never puts the comic's name, jokes or
 // voice in the prompt. The Admin Hub joins the voiced bits into one MP3 for the show.
 import { isAdminRequest } from './_admin-auth.mjs';
-import { underLimits, econVoice, clean } from './_anthony.mjs';
+import { underLimits, econVoice, clean, sayAsList, setSayAs, SAY_AS_DEFAULT } from './_anthony.mjs';
 import { daily } from './_site-stats.mjs';
 
 const env = (k) => String(process.env[k] || '').trim();
@@ -48,14 +52,17 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     const r = await econ('/api/anthony/standup', { method: 'GET' }, 15000);
     if (r.status === 404) return res.status(503).json({ ok: false, error: 'The Rebel Economy has no set writer for apps yet (rebel-economy-core: merge claude/standup-for-apps)' });
-    return res.status(r.d?.ok ? 200 : r.status >= 400 ? r.status : 502).json(r.d?.ok ? { ok: true, styles: r.d.styles || [] } : { ok: false, error: r.d?.error || 'No styles' });
+    const sayAs = await sayAsList(true);
+    return res.status(r.d?.ok ? 200 : r.status >= 400 ? r.status : 502).json(r.d?.ok ? { ok: true, styles: r.d.styles || [], parts: !!r.d.parts, sayAs, sayAsDefault: SAY_AS_DEFAULT } : { ok: false, error: r.d?.error || 'No styles', sayAs, sayAsDefault: SAY_AS_DEFAULT });
   }
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'GET or POST' });
   const b = typeof req.body === 'object' && req.body ? req.body : (() => { try { return JSON.parse(req.body || '{}'); } catch (e) { return {}; } })();
   if (b.action === 'write') {
-    if (!(await underLimits([['standup:write:h', 30, 3600]]))) return res.status(429).json({ ok: false, error: 'Thirty sets an hour: try again in a while' });
+    if (!(await underLimits([['standup:write:h', 60, 3600]]))) return res.status(429).json({ ok: false, error: 'Sixty writes an hour (a long set is a few): try again in a while' });
     const minutes = Math.max(1, Math.min(5, Math.round(+b.minutes || 3)));
     const body = { minutes, extra: (await universeWeek()).slice(0, 3000) };
+    const of = Math.max(1, Math.min(6, Math.round(+b.of || 1))), part = Math.max(1, Math.min(of, Math.round(+b.part || 1)));
+    if (of > 1) { body.part = part; body.of = of; if (part > 1) body.before = String(b.before || '').slice(-20000); }
     const style = clean(b.style, 40), topic = clean(b.topic, 300);
     if (style) body.style = style;
     if (topic) body.topic = topic;
@@ -72,10 +79,14 @@ export default async function handler(req, res) {
     const text = clean(b.text, 900);
     if (!text) return res.status(400).json({ ok: false, error: 'Nothing to say' });
     if (!(await underLimits([['standup:voice:d', 400, 86400]]))) return res.status(429).json({ ok: false, error: 'His voice needs a rest (400 lines a day for sets)' });
-    const v = await econVoice(text, 120000);
+    const v = await econVoice(text, 120000, { temperature: +b.temperature || undefined });
     if (!v.ok) return res.status(v.status).json({ ok: false, error: v.error });
     res.setHeader('Content-Type', 'audio/wav');
     return res.status(200).send(v.wav);
+  }
+  if (b.action === 'sayas') {
+    try { return res.status(200).json({ ok: true, sayAs: await setSayAs(b.list) }); }
+    catch (e) { return res.status(503).json({ ok: false, error: 'Could not save the list' }); }
   }
   return res.status(400).json({ ok: false, error: 'Unknown action' });
 }

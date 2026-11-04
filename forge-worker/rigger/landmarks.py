@@ -8,6 +8,11 @@ NPCM = bool(os.environ.get('FORGE_NPC') or os.environ.get('FORGE_NPC_BODY'))   #
 # mid-forearm. Their wrist sits one hand length (of the body height) back from the fingertip along the arm's own centre line.
 SPECIES = os.environ.get('FORGE_NPC_SPECIES', '') if NPCM else ''
 HAND_LEN = {'human': 0.11, 'ape': 0.12}
+# v2.45 chibi characters (FORGE_CHIBI, Universe's own characters: Vicky's dolls): a head ~40 % of the height (with its hair
+# wider than the shoulders) and legs ~30 %. The neck was looked for only 8-30 % down the body (it is ~35-40 % down: the
+# arms were found in the hair's ends) and a crotch under 40 % of the height was taken for a robe's hem (the prior put it
+# at 44 %): the neck is looked for down to 48 %, the crotch trusted from 22 % (prior 30 %). Unset: exactly as before.
+CHIBI = os.environ.get('FORGE_CHIBI') == '1'
 # v2.28 bare arms (Chumpz in shorts): a sculpted hand can be far longer than that, so the wrist landed on the knuckles and
 # the palm stayed on the arm beside the glove. With the vertex colours (normalize, species only) the wrist moves up to
 # where the arm's colour (skin, fur, sleeve) turns into the hand's, when that is further up the arm.
@@ -108,11 +113,11 @@ def detect(V,F,VC=None):
     Hb=rows-1-top   # body height in rows (no antennae)
     # v1.2: robes / hakama / armour skirts hide the real crotch. The silhouette split is only trusted when it sits
     # at a plausible height (Forge concepts follow the master clay: crotch ~0.44 of body height from the floor).
-    CROTCH_PRIOR=0.44
-    if (rows-1-crotch)/Hb < 0.40: crotch=int(round(rows-1-CROTCH_PRIOR*Hb))
+    CROTCH_PRIOR=0.30 if CHIBI else 0.44
+    if (rows-1-crotch)/Hb < (0.22 if CHIBI else 0.40): crotch=int(round(rows-1-CROTCH_PRIOR*Hb))
     # v1.2: neck = narrowest centre run 8-30% down the body (head above, shoulders/armour below).
     # (v1.1 took the widest row first, which lands on the shoulders when the head is narrower than the sleeves)
-    a_,b_=top+int(0.08*Hb),top+int(0.30*Hb)
+    a_,b_=top+int(0.08*Hb),top+int((0.48 if CHIBI else 0.30)*Hb)
     neck=a_+int(np.argmin(cw[a_:b_]))
     shoulder=neck+int(np.argmax(cw[neck:crotch]>2.1*cw[neck]))+int(rows*0.01)
     # v1.4: wide A-pose (Meshy pose_mode a-pose, #4998 v3): the arms leave the torso right at the shoulder, so the centre run

@@ -230,6 +230,14 @@ a.tile:hover{border-color:#343846;color:var(--fg)}
 #mpa-body .sm .prog{height:6px;border-radius:999px;background:var(--line);overflow:hidden}
 #mpa-body .sm .prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),#ffe2a0);transition:width .3s}
 #mpa-body .sm audio{width:100%;max-width:520px}
+#mpa-body .sm .pieces{display:flex;flex-direction:column;gap:4px}
+#mpa-body .sm .bside{display:flex;gap:4px}
+#mpa-body .sm .bside button{min-width:34px;padding:0 8px}
+#mpa-body .sm .bside button.stale{opacity:.55}
+#mpa-body .sm details.say{border-top:1px solid var(--line);padding-top:8px}
+#mpa-body .sm details.say summary{cursor:pointer;font:600 13px var(--sans);color:var(--gold)}
+#mpa-body .sm details.say textarea{width:100%;min-height:150px;font:12.5px/1.5 var(--mono);margin:6px 0}
+#mpa-body .sm details.say input{flex:1;min-width:0}
 
 @media (max-width:900px){
   #admin-hub{flex-direction:column}
@@ -784,7 +792,7 @@ async function mpaShow(tab) {
       box.append(h, btn('Clear this chat', () => confirm(`Clear the chat in ${villageOf(r.room)} copy ${r.copy}? (The log keeps it.)`) && mpaAct('clear', { room: r.room }, 'Chat cleared'), 'sm'));
       for (const p of r.players) {
         const row = mk('div', 'who');
-        const lab = p.look?.col && p.look?.tok ? (p.look.col === 'battle_for_colony' ? 'Rebel #' : p.look.col === 'chumpz' ? 'Chumpz #' : p.look.col === 'saints' ? 'Saint #' : '#') + p.look.tok : p.k === 'guest' ? 'Visitor' : '';
+        const lab = p.look?.col && p.look?.tok ? (p.look.col === 'battle_for_colony' ? 'Rebel #' : p.look.col === 'chumpz' ? 'Chumpz #' : p.look.col === 'saints' ? 'Saint #' : p.look.col === 'universe' ? ({ 1: 'Sanguira ', 2: 'Elaria ' }[p.look.tok] || 'Character ') + '#' : '#') + p.look.tok : p.k === 'guest' ? 'Visitor' : '';
         row.append(mk('span', 'n k-' + p.k, p.n), mk('span', 'dim', [lab, p.k === 'guest' ? 'guest' : p.k === 'name' ? 'name account' : 'Discord', p.s ? (p.s[5] ? 'in ' + p.s[5] : `at ${Math.round(p.s[0])}, ${Math.round(p.s[2])}`) : 'not walking', 'since ' + mpaWhen(p.j)].filter(Boolean).join(' · ')));
         if (p.mute) row.append(mk('span', 'tag', 'muted until ' + mpaWhen(p.mute)));
         row.append(accountActs(p.sub, p.n, p.k));
@@ -914,11 +922,21 @@ async function mpaShow(tab) {
 // and a topic -> his set from the Rebel Economy's writer (his persona, the colony's week, Universe's week); each bit voiced
 // in his own voice (the economy's cloud voice), joined with room for the laughs into one MP3 (lamejs, the site's own copy),
 // uploaded like any show's audio; the script puts each bit's caption and the laughs on the audio's own times.
-const SM = { open: false, styles: null, style: '', minutes: 3, topic: '', set: null, busy: '', done: 0, total: 0, mp3: null, url: '', len: 0, script: '' };
-const SM_LEAD = 1.6, SM_GAP = 1.4, SM_END = 3;
+// Nov 4 (Miguel after the first show: "the voice at times feels robotic and some pronunciations are not right", "very
+// long pauses in between sentences"): a delivery to pick (how much his voice varies: the economy's own 0.5 is steady), the
+// words he says wrong in a list (How he says words: every line he says, on every site), each line played and voiced again
+// on its own, and the voice's silences cut down as the set is put together (a breath before and after a line, a pause
+// inside one at most 0.4 s, 0.9 s between lines, where the laughs go).
+const SM = { open: false, styles: null, style: '', minutes: 3, topic: '', set: null, busy: '', done: 0, total: 0, mp3: null, url: '', len: 0, script: '',
+  temp: .7, v: [], sayAs: null, sayDefault: [], sayOpen: false, trying: '', sayVer: 0 };
+const SM_LEAD = 1.6, SM_GAP = .9, SM_END = 3, SM_SR = 24000, SM_PIECE = 120; // (SM_PIECE: a long set's audio is cut between lines into pieces of at most this many seconds, each its own MP3)
+const SM_DELIVERY = [{ t: .5, label: 'Steady', sub: 'as at the first show' }, { t: .7, label: 'Natural', sub: 'more life in his voice' }, { t: .85, label: 'Lively', sub: 'bigger swings, can slip' }];
 const smApi = async (body) => { const r = await fetch('/api/anthony-standup', body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}); return r; };
 const smClean = t => String(t || '').replace(/[\[\]<>]/g, '').replace(/\s+/g, ' ').trim();
 const mmss = t => `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}`;
+const smFresh = k => { const v = SM.v[k]; return !!v && v.text === smClean(SM.set?.bits[k]) && v.temp === SM.temp && v.say === SM.sayVer; };
+const smSayText = list => (list || []).map(([a, b]) => `${a} = ${b}`).join('\n');
+const smSayParse = text => String(text || '').split('\n').map(l => l.split('=')).filter(p => p.length >= 2).map(p => [p[0].trim(), p.slice(1).join('=').trim()]).filter(([a, b]) => a && b);
 // (repaints only its own box: the events list is read from the rooms when the tab opens)
 function smPaint() { const old = document.getElementById('sm-box'); if (old && SM.open) old.replaceWith(setMaker()); }
 function setMaker() {
@@ -926,7 +944,7 @@ function setMaker() {
   box.append(mk('h3', '', "Ant-Thony's set maker"), mk('div', 'dim', 'Pick a style, a length and (if you want) a topic. He writes new material in his own voice about the colony, Universe and its players: the styles only borrow how a comic tells jokes, never their jokes, voice or name.'));
   if (!SM.styles) {
     box.append(mk('div', 'dim', 'Loading the styles…'));
-    smApi().then(async r => { const d = await r.json().catch(() => ({})); SM.styles = d.ok ? d.styles : []; if (!d.ok) mpaStatus(d.error || 'The set writer did not answer', true); smPaint(); });
+    smApi().then(async r => { const d = await r.json().catch(() => ({})); SM.styles = d.ok ? d.styles : []; SM.long = !!d.parts; SM.sayAs = d.sayAs || null; SM.sayDefault = d.sayAsDefault || []; if (!d.ok) mpaStatus(d.error || 'The set writer did not answer', true); smPaint(); });
     return box;
   }
   const chips = mk('div', 'chips');
@@ -938,9 +956,15 @@ function setMaker() {
   }
   box.append(mk('div', 'dim', 'Style'), chips);
   const len = mk('div', 'row'); len.append(mk('span', 'dim', 'Length'));
-  for (const m of [1, 3, 5]) { const b = mk('button', 'chip', m + (m === 1 ? ' minute' : ' minutes')); b.type = 'button'; b.setAttribute('aria-pressed', String(SM.minutes === m)); b.onclick = () => { SM.minutes = m; smPaint(); }; len.append(b); }
+  // (over 5 minutes: written in parts of 5 that carry on from each other, once the economy's writer has them)
+  for (const m of [1, 3, 5, 10, 15, 20]) { const b = mk('button', 'chip', m + (m === 1 ? ' minute' : ' minutes')); b.type = 'button'; b.setAttribute('aria-pressed', String(SM.minutes === m)); b.disabled = m > 5 && !SM.long; if (b.disabled) b.title = 'Needs the economy\'s writer update (rebel-economy-core: claude/standup-parts)'; b.onclick = () => { SM.minutes = m; smPaint(); }; len.append(b); }
+  if (!SM.long) len.append(mk('span', 'dim', '10 to 20 minutes once the economy\'s writer update is merged (rebel-economy-core: claude/standup-parts)'));
   const topic = mk('input'); topic.type = 'text'; topic.maxLength = 300; topic.value = SM.topic; topic.placeholder = 'Topic (optional): the Grand Relay, Chumpz Cove, the new seats, Monday mornings…'; topic.oninput = () => { SM.topic = topic.value; };
   box.append(len, topic);
+  // his delivery: how much his voice varies (lines voiced with another one are voiced again)
+  const del = mk('div', 'chips');
+  for (const d of SM_DELIVERY) { const c = mk('button', 'chip'); c.type = 'button'; c.setAttribute('aria-pressed', String(SM.temp === d.t)); c.append(document.createTextNode(d.label), mk('small', '', d.sub)); c.onclick = () => { SM.temp = d.t; smPaint(); }; del.append(c); }
+  box.append(mk('div', 'dim', 'Delivery'), del);
   const go = mk('div', 'row');
   go.append(btn(SM.set ? 'Write a new set' : 'Write the set', smWrite, 'primary'));
   if (SM.busy) go.append(mk('span', 'dim', SM.busy));
@@ -948,86 +972,196 @@ function setMaker() {
   if (SM.total) { const pr = mk('div', 'prog'), i = mk('i'); i.style.width = Math.round(100 * SM.done / SM.total) + '%'; pr.append(i); box.append(pr); }
   if (SM.set) {
     const title = mk('input'); title.type = 'text'; title.maxLength = 80; title.value = SM.set.title; title.oninput = () => { SM.set.title = title.value; SM.mp3 = null; SM.url = ''; };
-    box.append(mk('div', 'dim', `Title · ${SM.set.bits.length} bits${SM.set.style ? ' · style ' + SM.set.style : ''} · edit any line before voicing`), title);
+    const voiced = SM.set.bits.filter((t, k) => smFresh(k)).length;
+    box.append(mk('div', 'dim', `Title · ${SM.set.bits.length} bits${SM.set.style ? ' · style ' + SM.set.style : ''} · ${voiced} voiced · edit any line, ▶ to hear it, ↻ to voice it again`), title);
     const bits = mk('div', 'bits');
     SM.set.bits.forEach((t, k) => {
-      const row = mk('div', 'bit'), ta = mk('textarea');
+      const row = mk('div', 'bit'), ta = mk('textarea'), side = mk('div', 'bside');
       ta.value = t; ta.oninput = () => { SM.set.bits[k] = ta.value; SM.mp3 = null; SM.url = ''; };
-      row.append(mk('b', '', String(k + 1)), ta, btn('✕', async () => { SM.set.bits.splice(k, 1); SM.mp3 = null; SM.url = ''; smPaint(); }));
+      if (SM.v[k]) side.append(btn('▶', async () => smPlay(SM.v[k].pcm), smFresh(k) ? '' : 'stale'));
+      side.append(btn('↻', () => smVoiceLines([k]).then(smBuildSafe)), btn('✕', async () => { SM.set.bits.splice(k, 1); SM.v.splice(k, 1); SM.mp3 = null; SM.url = ''; smPaint(); }));
+      row.append(mk('b', '', String(k + 1)), ta, side);
       bits.append(row);
     });
     box.append(bits);
     const acts = mk('div', 'row');
-    acts.append(btn('+ Add a line', async () => { SM.set.bits.push(''); smPaint(); }), btn(SM.url ? 'Voice it again' : 'Voice it in his voice', smVoice, 'primary'));
+    const left = SM.set.bits.filter((t, k) => smClean(t) && !smFresh(k)).length;
+    acts.append(btn('+ Add a line', async () => { SM.set.bits.push(''); SM.v.push(null); smPaint(); }),
+      btn(left ? (SM.v.some(Boolean) ? `Voice the ${left} changed line${left === 1 ? '' : 's'}` : 'Voice it in his voice') : SM.url ? 'Build the show file again' : 'Build the show file', () => smVoiceLines(null).then(smBuildSafe), 'primary'));
+    if (voiced) acts.append(btn('Voice every line again', () => smVoiceLines(null, true).then(smBuildSafe)));
     box.append(acts);
   }
   if (SM.url) {
-    const au = mk('audio'); au.controls = true; au.src = SM.url; au.preload = 'metadata';
+    const au = mk('div', 'pieces');
+    for (const [k, p] of (SM.pieces || [{ audio: SM.url, at: 0 }]).entries()) { const a = mk('audio'); a.controls = true; a.src = p.audio; a.preload = 'metadata'; if (SM.pieces) au.append(mk('span', 'dim', `Piece ${k + 1} · from ${mmss(p.at)}`)); au.append(a); }
     const use = mk('div', 'row');
     use.append(btn('Put it in a new event at the Comedy Club', async () => {
       const club = EVENT_PLACES.find(x => x.room === 'hub_comedy_club') || EVENT_PLACES[0];
-      mpa.edit = { title: 'Ant-Thony: ' + SM.set.title, place: club, starts: Date.now() + 3600000, mins: Math.max(30, Math.ceil(SM.len / 60) + 20), show: { title: SM.set.title, audio: SM.url }, script: SM.script, repeat: '', auto: true };
+      mpa.edit = { title: 'Ant-Thony: ' + SM.set.title, place: club, starts: Date.now() + 3600000, mins: Math.max(30, Math.ceil(SM.len / 60) + 20), show: { title: SM.set.title, audio: SM.url, ...(SM.pieces ? { parts: SM.pieces } : {}) }, script: SM.script, repeat: '', auto: true };
       SM.open = false; await mpaShow('events'); requestAnimationFrame(() => document.querySelector('#mpa-body .evf')?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
-    }, 'primary'), mk('span', 'dim', `${mmss(SM.len)} · ${(SM.mp3?.size / 1048576 || 0).toFixed(1)} MB · his set starts by itself a minute after the doors open (you can change that)`));
+    }, 'primary'), mk('span', 'dim', `${mmss(SM.len)} · ${(SM.mp3?.size / 1048576 || 0).toFixed(1)} MB${SM.pieces ? ` in ${SM.pieces.length} pieces` : ''} · his set starts by itself a minute after the doors open (you can change that)`));
     box.append(mk('div', 'dim', 'Listen first:'), au, use);
   }
+  // how he says words: the list his voice reads every line through (on every site; the captions keep the written words)
+  const say = mk('details', 'say'); say.open = SM.sayOpen; say.ontoggle = () => { SM.sayOpen = say.open; };
+  const list = SM.sayAs || SM.sayDefault || [];
+  say.append(mk('summary', '', `How he says words · ${list.length}`));
+  const ta = mk('textarea'); ta.rows = 8; ta.value = smSayText(list); ta.spellcheck = false;
+  ta.placeholder = 'written = how he says it, one a line (Sohei = So-hay)';
+  const tryIn = mk('input'); tryIn.type = 'text'; tryIn.maxLength = 300; tryIn.value = SM.trying; tryIn.placeholder = 'Try a line in his voice (after saving the list)'; tryIn.oninput = () => { SM.trying = tryIn.value; };
+  const row1 = mk('div', 'row'), row2 = mk('div', 'row');
+  row1.append(btn('Save the list', async () => {
+    const r = await smApi({ action: 'sayas', list: smSayParse(ta.value) }), d = await r.json().catch(() => ({}));
+    if (r.ok && d.ok) { SM.sayAs = d.sayAs; SM.sayVer++; mpaStatus(`Saved: ${d.sayAs.length} words. Voice the set again to hear them.`); smPaint(); } else mpaStatus(d.error || 'Could not save the list', true);
+  }, 'primary'), btn('Back to the starting list', async () => { ta.value = smSayText(SM.sayDefault); }));
+  row2.append(tryIn, btn('Hear it', async () => smTry(SM.trying)));
+  say.append(mk('div', 'dim', 'Words his voice gets wrong: write each one as it should sound. Usernames written together are said as words (MetaLineman → Meta Lineman).'), ta, row1, row2);
+  box.append(say);
   return box;
 }
+// a set: one call, or (over 5 minutes) parts of 5 written one after the other, each with what he already said, in the
+// style the first part was written in (Surprise me picks one for the whole set)
 async function smWrite() {
-  SM.busy = 'Ant-Thony is writing… (about a minute)'; SM.total = 0; smPaint();
+  const of = SM.minutes > 5 ? Math.round(SM.minutes / 5) : 1, bits = []; let title = '', style = null;
+  SM.total = of > 1 ? of : 0; SM.done = 0;
   try {
-    const r = await smApi({ action: 'write', minutes: SM.minutes, style: SM.style, topic: SM.topic }); const d = await r.json().catch(() => ({}));
-    if (!r.ok || !d.ok) throw new Error(d.error || 'No set came back');
-    SM.set = { ...d.set, bits: d.set.bits.map(smClean) }; SM.mp3 = null; SM.url = ''; SM.busy = '';
-  } catch (e) { SM.busy = ''; mpaStatus(e.message, true); }
+    for (let part = 1; part <= of; part++) {
+      SM.busy = of > 1 ? `Ant-Thony is writing part ${part} of ${of}… (about a minute each)` : 'Ant-Thony is writing… (about a minute)'; smPaint();
+      const r = await smApi({ action: 'write', minutes: of > 1 ? 5 : SM.minutes, style: part > 1 && style ? style : SM.style, topic: SM.topic, ...(of > 1 ? { part, of, before: bits.join('\n') } : {}) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.ok) throw new Error((of > 1 ? `Part ${part} of ${of}: ` : '') + (d.error || 'No set came back'));
+      if (part === 1) { title = d.set.title; style = d.set.style || null; }
+      bits.push(...d.set.bits.map(smClean)); SM.done = part;
+    }
+    SM.set = { title, bits, minutes: SM.minutes, style }; SM.v = []; SM.mp3 = null; SM.url = ''; SM.pieces = null; SM.busy = ''; SM.total = 0;
+  } catch (e) { SM.busy = ''; SM.total = 0; mpaStatus(e.message, true); }
   smPaint();
 }
+// a bit's captions: its sentences, short ones joined, each at its share of the bit's time in the audio (a caption is
+// at most 200 characters on the stage; a whole bit at once was a wall of words, and a long one was cut off)
+function smCaptions(text, a, b) {
+  const sen = String(text).match(/[^.!?…]+(?:[.!?…]+["')\]]*|$)/g)?.map(x => x.trim()).filter(Boolean) || [String(text)];
+  const parts = [];
+  for (let x of sen) {
+    while (x.length > 150) { let cut = Math.max(x.lastIndexOf(', ', 150), x.lastIndexOf('; ', 150)); if (cut < 60) cut = x.lastIndexOf(' ', 150); if (cut < 1) cut = 150; parts.push(x.slice(0, cut + 1).trim()); x = x.slice(cut + 1).trim(); }
+    if (!x) continue;
+    if (parts.length && (parts[parts.length - 1].length < 40 || x.length < 25) && (parts[parts.length - 1] + ' ' + x).length <= 150) parts[parts.length - 1] += ' ' + x;
+    else parts.push(x);
+  }
+  const total = parts.reduce((n, x) => n + x.length, 0) || 1; let done = 0;
+  return parts.map(x => { const at = a + (b - a) * done / total; done += x.length; return { at, x }; });
+}
 function smScript(times) {
-  // each bit at its own time in the audio, a laugh (now and then a rimshot) as it ends, applause at both ends
+  // each bit at its own time in the audio (a caption per sentence), a laugh (now and then a rimshot) as it ends,
+  // applause at both ends
   const lines = ['0:00.0 [applause] <wave>'];
   times.forEach((t, k) => {
     const moves = ['', '', '', '<game_cheer>'], sfx = k % 3 === 2 ? '[rimshot]' : '[laugh]';
-    lines.push(`${mmss(t.a)} ${SM.set.bits[t.i]}`);
+    for (const c of smCaptions(SM.set.bits[t.i], t.a, t.b)) lines.push(`${mmss(c.at)} ${c.x}`);
     if (k < times.length - 1) lines.push(`${mmss(t.b + .15)} ${sfx} ${moves[k % 4]}`.trim());
   });
   const last = times[times.length - 1];
   lines.push(`${mmss(last.b + .2)} [applause] [cheer] <wave>`);
   return lines.join('\n');
 }
-async function smVoice() {
-  const bits = SM.set.bits.map((t, i) => ({ t: smClean(t), i })).filter(x => x.t);
-  if (!bits.length) return mpaStatus('No lines to voice', true);
-  SM.total = bits.length + 2; SM.done = 0; SM.busy = `Voicing 0 / ${bits.length}… (his cloud voice: a few seconds a line)`; SM.url = ''; smPaint();
+// a line's audio with the voice's silences cut down: a breath before the first word (40 ms) and after the last (160 ms),
+// a pause inside the line over 0.55 s made 0.4 s (cut in its middle, short fades at the cut); kept as 16-bit
+function smTighten(x, sr) {
+  const F = Math.max(1, Math.round(sr / 100)), n = Math.floor(x.length / F);
+  const toI16 = f => { const o = new Int16Array(f.length); for (let i = 0; i < f.length; i++) { const v = Math.max(-1, Math.min(1, f[i])); o[i] = v < 0 ? v * 32768 : v * 32767; } return o; };
+  if (n < 10) return toI16(x);
+  const rms = new Float32Array(n);
+  for (let i = 0; i < n; i++) { let e = 0; for (let j = i * F, J = j + F; j < J; j++) e += x[j] * x[j]; rms[i] = Math.sqrt(e / F); }
+  const srt = Float32Array.from(rms).sort(), th = Math.max(.003, srt[Math.floor(n * .9)] * .05);
+  let first = -1, last = -1; for (let i = 0; i < n; i++) if (rms[i] > th) { if (first < 0) first = i; last = i; }
+  if (first < 0) return new Int16Array(0);
+  const a = Math.max(0, first - 4), b = Math.min(n, last + 16), MAXQ = 55, HALF = 20, keep = [];
+  let seg = a;
+  for (let i = first; i <= last;) {
+    if (rms[i] > th) { i++; continue; }
+    let j = i; while (j <= last && rms[j] <= th) j++;
+    if (j - i > MAXQ) { keep.push([seg * F, (i + HALF) * F]); seg = j - HALF; }
+    i = j;
+  }
+  keep.push([seg * F, Math.min(x.length, b * F)]);
+  const out = new Float32Array(keep.reduce((s, [p, q]) => s + (q - p), 0)), fade = Math.round(sr * .004); let o = 0;
+  for (const [p, q] of keep) {
+    out.set(x.subarray(p, q), o);
+    for (let k = 0; k < fade && 2 * k < q - p; k++) { const g = k / fade; out[o + k] *= g; out[o + (q - p) - 1 - k] *= g; }
+    o += q - p;
+  }
+  return toI16(out);
+}
+let smDecCtx = null, smOut = null, smSrc = null;
+const smDecode = ab => { smDecCtx = smDecCtx || new OfflineAudioContext(1, 1, SM_SR); return new Promise((res, rej) => { const p = smDecCtx.decodeAudioData(ab, res, rej); if (p && p.then) p.then(res, rej); }); };
+function smPlay(i16) {
+  try { smSrc?.stop(); } catch (e) {}
+  if (!i16 || !i16.length) return;
+  smOut = smOut || new (window.AudioContext || window.webkitAudioContext)(); smOut.resume?.();
+  const b = smOut.createBuffer(1, i16.length, SM_SR), ch = b.getChannelData(0); for (let i = 0; i < i16.length; i++) ch[i] = i16[i] / 32768;
+  smSrc = smOut.createBufferSource(); smSrc.buffer = b; smSrc.connect(smOut.destination); smSrc.start();
+}
+async function smTry(text) {
+  const t = smClean(text); if (!t) return mpaStatus('Write a line to hear', true);
+  mpaStatus('His voice is saying it…');
+  const r = await smApi({ action: 'voice', text: t, temperature: SM.temp });
+  if (!r.ok) { const d = await r.json().catch(() => ({})); return mpaStatus(d.error || 'His voice did not answer', true); }
+  const buf = await smDecode(await r.arrayBuffer()); smPlay(smTighten(buf.getChannelData(0), SM_SR)); mpaStatus('');
+}
+// his voice for these lines (null: the ones not voiced yet, or changed since; all: every line again)
+async function smVoiceLines(ks, all) {
+  if (!SM.set) return false;
+  const list = (ks || SM.set.bits.map((t, k) => k)).filter(k => smClean(SM.set.bits[k]) && (ks || all || !smFresh(k)));
+  if (!list.length) return true;
+  SM.total = list.length + 2; SM.done = 0; SM.busy = `Voicing 0 / ${list.length}… (his cloud voice: a few seconds a line)`; SM.url = ''; smPaint();
   try {
-    const SR = 24000, dec = new OfflineAudioContext(1, 1, SR), bufs = [];
     let next = 0;
-    const one = async (x) => {
+    const one = async (k) => {
+      const text = smClean(SM.set.bits[k]), temp = SM.temp, say = SM.sayVer;
       for (let tries = 0; ; tries++) {
-        const r = await smApi({ action: 'voice', text: x.t });
-        if (r.ok) { bufs[x.k] = await dec.decodeAudioData(await r.arrayBuffer()); return; }
+        const r = await smApi({ action: 'voice', text, temperature: temp });
+        if (r.ok) { const buf = await smDecode(await r.arrayBuffer()); SM.v[k] = { text, temp, say, pcm: smTighten(buf.getChannelData(0), SM_SR) }; SM.v[k].dur = SM.v[k].pcm.length / SM_SR; return; }
         const d = await r.json().catch(() => ({}));
-        if (tries >= 1 || r.status === 429 || r.status === 503) throw new Error(`Line ${x.i + 1}: ${d.error || 'his voice did not answer'}`);
+        if (tries >= 1 || r.status === 429 || r.status === 503) throw new Error(`Line ${k + 1}: ${d.error || 'his voice did not answer'}`);
       }
     };
-    const list = bits.map((x, k) => ({ ...x, k }));
-    const worker = async () => { while (next < list.length) { const x = list[next++]; await one(x); SM.done++; SM.busy = `Voicing ${SM.done} / ${bits.length}…`; smPaint(); } };
-    await Promise.all([worker(), worker()]);
-    // one track: a lead for the applause, each line, room for the laugh after it, a tail for the last applause
-    const times = []; let t = SM_LEAD;
-    for (let k = 0; k < bufs.length; k++) { const d = bufs[k].duration; times.push({ a: t, b: t + d, i: bits[k].i }); t += d + (k < bufs.length - 1 ? SM_GAP : 0); }
-    const total = t + SM_END, pcm = new Float32Array(Math.ceil(total * SR));
-    bufs.forEach((b, k) => pcm.set(b.getChannelData(0), Math.round(times[k].a * SR)));
-    SM.busy = 'Making the MP3…'; smPaint();
-    await smLame();
-    const mp3 = smEncode(pcm, SR, 48);
-    SM.mp3 = mp3.size > 2.9 * 1048576 ? smEncode(pcm, SR, 32) : mp3;
-    if (SM.mp3.size > 2.9 * 1048576) throw new Error('The set is too long for one show file: take a few lines out');
-    SM.done++; SM.busy = 'Uploading…'; smPaint();
-    const data = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = rej; r.readAsDataURL(SM.mp3); });
-    const up = await fetch('/api/mp-show-upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: (SM.set.title || 'antthony-set').slice(0, 40) + '.mp3', type: 'audio/mpeg', data }) });
+    const worker = async () => { while (next < list.length) { const k = list[next++]; await one(k); SM.done++; SM.busy = `Voicing ${SM.done} / ${list.length}…`; smPaint(); } };
+    await Promise.all([worker(), worker(), worker()]);
+    return true;
+  } catch (e) { SM.busy = ''; SM.total = 0; mpaStatus(e.message, true); smPaint(); return false; }
+}
+// the show file: the voiced lines on one track (a lead for the applause, each line, room for the laugh after it, a tail
+// for the last applause), as an MP3, uploaded; the script puts the captions and the laughs on its own times
+async function smBuild() {
+  const list = SM.set.bits.map((t, k) => k).filter(k => smClean(SM.set.bits[k]) && smFresh(k));
+  if (!list.length) throw new Error('No voiced lines yet');
+  SM.total = SM.total || 2; SM.busy = 'Making the MP3…'; smPaint();
+  const times = []; let t = SM_LEAD;
+  list.forEach((k, n) => { times.push({ a: t, b: t + SM.v[k].dur, i: k }); t += SM.v[k].dur + (n < list.length - 1 ? SM_GAP : 0); });
+  const total = t + SM_END, pcm = new Float32Array(Math.ceil(total * SM_SR));
+  list.forEach((k, n) => { const s = SM.v[k].pcm, at = Math.round(times[n].a * SM_SR); for (let i = 0; i < s.length; i++) pcm[at + i] = s[i] / 32768; });
+  // the pieces: cut between lines (in the middle of a gap) so that each is at most SM_PIECE seconds; a short set is one
+  const gaps = times.slice(0, -1).map((x, n) => (x.b + times[n + 1].a) / 2), cuts = [0];
+  gaps.forEach((g, n) => { const end = n + 1 < gaps.length ? gaps[n + 1] : total; if (end - cuts[cuts.length - 1] > SM_PIECE) cuts.push(g); });
+  cuts.push(total);
+  await smLame();
+  const name = (SM.set.title || 'antthony-set').slice(0, 40), pieces = [];
+  for (let k = 0; k + 1 < cuts.length; k++) {
+    const a = Math.round(cuts[k] * SM_SR), b = Math.min(pcm.length, Math.round(cuts[k + 1] * SM_SR)), mp3 = smEncode(pcm.subarray(a, b), SM_SR, 48);
+    if (mp3.size > 2.9 * 1048576) throw new Error('A piece of the set is too big to upload');
+    SM.busy = cuts.length > 2 ? `Uploading piece ${k + 1} of ${cuts.length - 1}…` : 'Uploading…'; smPaint();
+    const data = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = rej; r.readAsDataURL(mp3); });
+    const up = await fetch('/api/mp-show-upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name + (cuts.length > 2 ? '-' + (k + 1) : '') + '.mp3', type: 'audio/mpeg', data }) });
     const u = await up.json().catch(() => ({})); if (!up.ok || !u.ok) throw new Error(u.error || 'Upload failed');
-    SM.url = u.url; SM.len = total; SM.script = smScript(times); SM.done = SM.total; SM.busy = 'Ready.';
-  } catch (e) { SM.busy = ''; SM.total = 0; mpaStatus(e.message, true); }
+    pieces.push({ audio: u.url, at: Math.round(a / SM_SR * 100) / 100, len: Math.round((b - a) / SM_SR * 100) / 100, size: mp3.size });
+  }
+  SM.mp3 = { size: pieces.reduce((n, p) => n + p.size, 0) };
+  SM.url = pieces[0].audio; SM.pieces = pieces.length > 1 ? pieces.map(({ audio, at, len }) => ({ audio, at, len })) : null;
+  SM.len = total; SM.script = smScript(times); SM.done = SM.total; SM.busy = 'Ready.';
+}
+async function smBuildSafe(ok) {
+  if (ok === false) return;
+  try { await smBuild(); } catch (e) { SM.busy = ''; SM.total = 0; mpaStatus(e.message, true); }
   smPaint();
 }
 function smLame() {
@@ -1048,9 +1182,13 @@ async function goldLine(ev, el) {
     const r = await fetch('/api/golden-ticket?event=' + encodeURIComponent(ev.id) + '&list=1', { cache: 'no-store' }), d = await r.json().catch(() => ({}));
     const g = d.golden, c = d.cfg || null; GOLD_CFG[ev.id] = c;
     if (!c) { el.textContent = ''; return; }
-    el.textContent = g ? `\u2726 Golden: ${g.sold} of ${g.buy} sold at ${Number(g.price).toLocaleString()} pts · raffle ${g.drawn ? `${g.winners} drawn of ${g.entries}` : `${g.raffle} to draw · ${g.entries} in`}` : `\u2726 Golden: ${c.buy} sold at ${Number(c.price).toLocaleString()} pts, ${c.raffle} drawn (this time is not on the list yet)`;
+    const kind = c.entry ? '\ud83c\udf9f Tickets' : '\u2726 Golden', many = n => (c.entry && n >= 100000 ? '' : ' of ' + n);
+    el.textContent = g ? `${kind}: ${g.sold}${many(g.buy)} sold at ${Number(g.price).toLocaleString()} pts · raffle ${g.drawn ? `${g.winners} drawn of ${g.entries}` : `${g.raffle} to draw · ${g.entries} in`}` : `${kind}: ${c.buy >= 100000 ? 'no limit' : c.buy} at ${Number(c.price).toLocaleString()} pts, ${c.raffle} drawn (this time is not on the list yet)`;
+    // the link to post (Discord, X): the lobby opens this event's ticket card
+    const link = location.origin + '/?tickets=' + encodeURIComponent(ev.id);
+    el.append(' ', btn('Copy the ticket link', async () => { try { await navigator.clipboard.writeText(link); mpaStatus('Copied: ' + link); } catch (err) { mpaStatus(link); } }, 'sm'));
     if (g?.holders?.some(h => h.how === 'bought')) el.append(' ', btn('Pay the tickets back', async () => {
-      if (!confirm(`Pay back every golden ticket bought for ${ev.title}? (Use it when the event is called off.)`)) return;
+      if (!confirm(`Pay back every ticket bought for ${ev.title}? (Use it when the event is called off.)`)) return;
       const rr = await fetch('/api/golden-ticket', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: ev.id, action: 'refund' }) }), dd = await rr.json().catch(() => ({}));
       mpaStatus(rr.ok && dd.ok ? `Paid back ${dd.refunded} ticket${dd.refunded === 1 ? '' : 's'}${dd.failed ? ` (${dd.failed} failed: try again)` : ''}` : (dd.error || 'Refund failed'), !(rr.ok && dd.ok)); goldLine(ev, el);
     }, 'sm bad'));
@@ -1078,11 +1216,20 @@ function eventForm(e) {
   const script = row('Script', mk('textarea')); script.value = e.script || ''; script.placeholder = 'One line each: 0:05 Good evening, Colony! [applause]\n[rimshot] [laugh] [applause] [drumroll] [cheer] = sounds after the line, <cartwheel> = a move';
   const tools = mk('div', 'row'); tools.append(btn('Use the demo set (Antthony)', async () => { script.value = DEMO_SET; if (!stitle.value) stitle.value = "Antthony: Opening Night"; }), mk('span', 'dim', 'Without audio each line gets a babbling voice and a caption; the performer at the Comedy Club\'s mic is Rebel #001.'));
   f.append(mk('span'), tools);
-  const gw = mk('div', 'row'), gnum = (v, max, ph) => { const i = mk('input'); i.type = 'number'; i.min = 0; i.max = max; i.value = v ?? 0; i.style.width = '92px'; i.placeholder = ph; return i; };
-  const gBuy = gnum(e.golden?.buy, 8, 'sold'), gPrice = gnum(e.golden?.price ?? 2500, 1000000, 'points'), gRaffle = gnum(e.golden?.raffle, 8, 'drawn');
-  gBuy.id = 'ev-gbuy'; gPrice.id = 'ev-gprice'; gRaffle.id = 'ev-graffle'; gPrice.style.width = '110px';
-  gw.append(mk('span', 'dim', 'Sold:'), gBuy, mk('span', 'dim', 'at'), gPrice, mk('span', 'dim', 'Rebel Points · free raffle:'), gRaffle, mk('span', 'dim', '(the 8 front-row seats at the Comedy Club; 0 / 0 = none)'));
-  row('Golden tickets', gw);
+  // tickets (Nov 4, Miguel: "the tickets should be for the entire show"): free to watch, a ticket to get in (bought with
+  // Rebel Points, or won in a free raffle: only holders see the show), or free with the golden front row (8 seats)
+  const gMode = mk('select'); gMode.id = 'ev-gmode';
+  for (const [v, l] of [['', 'Free to watch'], ['entry', 'A ticket to get in (Rebel Points)'], ['golden', 'Free, with a golden front row (8 seats)']]) gMode.append(new Option(l, v));
+  gMode.value = e.golden?.entry ? 'entry' : e.golden && (e.golden.buy || e.golden.raffle) ? 'golden' : '';
+  const gw = mk('div', 'row'), gnum = (v, max, ph) => { const i = mk('input'); i.type = 'number'; i.min = 0; i.max = max; i.value = v ?? ''; i.style.width = '100px'; i.placeholder = ph; return i; };
+  const gPrice = gnum(e.golden?.price ?? 2500, 1000000, 'points'), gBuy = gnum(e.golden?.entry && e.golden.buy >= 100000 ? '' : e.golden?.buy, 100000, 'no limit'), gRaffle = gnum(e.golden?.raffle || 0, 1000, '0');
+  gBuy.id = 'ev-gbuy'; gPrice.id = 'ev-gprice'; gRaffle.id = 'ev-graffle';
+  const gHint = mk('span', 'dim');
+  gw.append(gMode, mk('span', 'dim', 'Price'), gPrice, mk('span', 'dim', 'Rebel Points · how many'), gBuy, mk('span', 'dim', '· free by raffle'), gRaffle, gHint);
+  const gPaint = () => { const on = !!gMode.value; for (const x of [gPrice, gBuy, gRaffle]) x.disabled = !on; gBuy.max = gMode.value === 'golden' ? 8 : 100000; gRaffle.max = gMode.value === 'golden' ? 8 : 1000;
+    gHint.textContent = gMode.value === 'entry' ? '(no ticket, no show: the stage stays dark; the hosts and you get in free)' : gMode.value === 'golden' ? '(everyone watches; the 8 front-row seats are for holders)' : ''; };
+  gMode.onchange = gPaint; gPaint();
+  row('Tickets', gw);
   const autoL = mk('label', 'tg'), auto = mk('input'); auto.type = 'checkbox'; auto.checked = !!e.auto; auto.id = 'ev-auto';
   autoL.append(auto, mk('span', '', 'The show starts by itself a minute after the doors open (every time it repeats; Stop the show stops it for that time)'));
   f.append(mk('span'), autoL);
@@ -1090,16 +1237,25 @@ function eventForm(e) {
   save.append(btn(e.id ? 'Save the changes' : 'Make the event', async () => {
     const p = EVENT_PLACES.find(x => x.key === place.value) || EVENT_PLACES[0], starts = new Date(when.value).getTime(), len = Math.max(10, +mins.value || 60) * 60000;
     let show = null;
-    if (stitle.value.trim() || script.value.trim()) { const sh = parseShow(script.value); show = { title: stitle.value.trim() || 'The show', len: sh.len, audio: audio.value.trim() || null, cues: sh.cues, script: script.value }; }
-    const args = { ...(e.id ? { id: e.id } : {}), title: title.value, place: { village: p.village, room: p.room, label: p.label || VILLAGE_NAMES[p.village] }, starts, ends: starts + len, show, repeat: rep.value, auto: auto.checked };
-    const d = await mpaCmd('event-save', args);
-    // golden tickets: kept by this site for the event (api/golden-ticket.mjs)
-    const gb = Math.max(0, Math.min(8, +gBuy.value || 0)), gr = Math.max(0, Math.min(8 - gb, +gRaffle.value || 0));
-    if (gb || gr || e.golden) {
-      const gr2 = await fetch('/api/golden-ticket', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: d.ev.id, action: 'config', buy: gb, price: +gPrice.value || 0, raffle: gr }) });
-      const gd = await gr2.json().catch(() => ({})); if (!gr2.ok || !gd.ok) throw new Error('Saved the event, but not its golden tickets: ' + (gd.error || gr2.status));
-      GOLD_CFG[d.ev.id] = gd.cfg;
+    if (stitle.value.trim() || script.value.trim()) {
+      const sh = parseShow(script.value), au = audio.value.trim() || null, parts = e.show?.parts?.length && au === e.show.parts[0].audio ? e.show.parts : null; // (a long set's pieces: kept while its audio is)
+      show = { title: stitle.value.trim() || 'The show', len: Math.max(sh.len, parts ? Math.ceil(parts[parts.length - 1].at + parts[parts.length - 1].len) : 0), audio: au, ...(parts ? { parts } : {}), cues: sh.cues, script: script.value };
     }
+    const entry = gMode.value === 'entry';
+    const args = { ...(e.id ? { id: e.id } : {}), title: title.value, place: { village: p.village, room: p.room, label: p.label || VILLAGE_NAMES[p.village] }, starts, ends: starts + len, show, repeat: rep.value, auto: auto.checked, tix: entry };
+    // the tickets (kept by this site: api/golden-ticket.mjs): set before the event says it needs them, so its hall never
+    // asks for a ticket nobody can buy yet
+    const gb = !gMode.value ? 0 : entry ? (gBuy.value === '' ? 100000 : Math.max(0, Math.min(100000, +gBuy.value || 0))) : Math.max(0, Math.min(8, +gBuy.value || 0));
+    const gr = !gMode.value ? 0 : entry ? Math.max(0, Math.min(1000, +gRaffle.value || 0)) : Math.max(0, Math.min(8 - gb, +gRaffle.value || 0));
+    const putTickets = async (id) => {
+      if (!(gb || gr || e.golden)) return;
+      const gr2 = await fetch('/api/golden-ticket', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: id, action: 'config', buy: gb, price: +gPrice.value || 0, raffle: gr, entry }) });
+      const gd = await gr2.json().catch(() => ({})); if (!gr2.ok || !gd.ok) throw new Error('Saved the event, but not its tickets: ' + (gd.error || gr2.status));
+      GOLD_CFG[id] = gd.cfg;
+    };
+    if (e.id) await putTickets(e.id);
+    const d = await mpaCmd('event-save', args);
+    if (!e.id) await putTickets(d.ev.id);
     mpa.edit = null; mpaStatus((e.id ? 'Saved: ' : 'Made: ') + d.ev.title); await mpaShow('events');
   }, 'primary'), btn('Cancel', async () => { mpa.edit = null; await mpaShow('events'); }));
   f.append(mk('span'), save);

@@ -1212,7 +1212,15 @@ const FRIEND_PLAYABLES = [
   // the card plays the Forge rig; until then the kit ape (playerModel)
   { id: 'chumpz_racer', rebelId: 'chumpz_900001', tokenId: '900001', name: 'Chumpz Racer', image: 'assets/lobby/chumpz_racer.jpg', collectionKey: 'chumpz', playerModel: 'kit:chz_ape_racer', formLabel: 'Chumpz Ape' }
 ];
-const loadFriendPlayables = () => Promise.all(FRIEND_PLAYABLES.map((r) => attachActiveForgeCharacter({ ...r })));
+// Nov 3 Universe's own characters (Vicky's dolls; collection universe: no NFT, forged by an admin from her turnarounds and
+// rigged like the Saints): free for everyone, named (no number), her art on the card; a card only once the character's
+// public Forge character has a rig (the admin's Make this my Character); switched off like #001 in the NPC Forge
+const UNIVERSE_PLAYABLES = [
+  { id: 'universe_1', rebelId: 'universe_1', tokenId: '1', name: 'Sanguira', image: 'assets/lobby/sanguira.jpg', collectionKey: 'universe', free: true, named: true, keepArt: true, formLabel: 'Rebel Universe' },
+  { id: 'universe_2', rebelId: 'universe_2', tokenId: '2', name: 'Elaria', image: 'assets/lobby/elaria.jpg', collectionKey: 'universe', free: true, named: true, keepArt: true, formLabel: 'Rebel Universe' }
+];
+const loadFriendPlayables = async () => [...(await Promise.all(FRIEND_PLAYABLES.map((r) => attachActiveForgeCharacter({ ...r })))),
+  ...(await Promise.all(UNIVERSE_PLAYABLES.map((r) => attachActiveForgeCharacter({ ...r })))).filter((r) => getRebelForgeStatus(r) === 'ready')];
 // the friend collections a wallet can hold (assets/friend-collections.json): their cards' tag; the Forge door takes the
 // card's collection along so their holders forge them
 const FRIEND_LABELS = { chumpz: 'Chumpz', saints: 'Saint' };
@@ -1222,7 +1230,7 @@ const villageRigged = (rebel) => (sameCollection(rebel, {}) ? VILLAGE_RIGGED[Str
 // Oct 20 the Free to play roster (api/free-roster.mjs, ticked in the NPC Forge): forged characters anyone can play:
 // guests, wallets without a Rebel and holders whose own Rebels are not forged yet. An entry is a Rebel's number or, since
 // Oct 25, a Chumpz / Saint as '<collection>:<token>'. Never #001 (the starter card) nor the Racer (its own card).
-const FREE_NEVER = new Set(['1', 'chumpz:900001']);
+const FREE_NEVER = new Set(['1', 'chumpz:900001', 'universe:1', 'universe:2']);
 const GUEST_START_TOKEN = '262', GUEST_START_KEY = 'rebelAntsGuestStart:v1';   // guests' first Rebel (Nov 2)
 const freeEntry = (e) => { const m = /^([a-z_]+):(\d+)$/.exec(String(e)); return m ? { col: m[1], tok: m[2] } : { col: 'battle_for_colony', tok: String(e) }; };
 const cardKey = (r) => `${r?.collectionKey || 'battle_for_colony'}:${r?.tokenId || ''}`;   // a Chumpz #5 is not Rebel #5
@@ -1293,7 +1301,7 @@ function dedupeForgePlayablesByToken(list) {
   });
 }
 function getRebelCardNumber(rebel) {
-  if (rebel.playerModel) return '';
+  if (rebel.playerModel || rebel.named) return '';
   if (rebel.id === 'ant_1') return '001';
   if (rebel.tokenId) return String(rebel.tokenId);
   const m = /#\s*(\d+)/.exec(rebel.name || '');
@@ -1310,7 +1318,7 @@ function buildCard(rebel) {
   const hasForgeCharacter = Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl);
   const status = rebel.id === 'ant_1' ? '' : getRebelForgeStatus(rebel, hasForgeCharacter);   // #001's card looks as it always has
   const tokenNumber = getRebelCardNumber(rebel);
-  card.title = [rebel.name, rebel.free ? `Free to play: anyone can play this forged ${rebel.friendLabel || 'Rebel'}` : status === 'ready' ? 'Playable 3D character ready' : status === 'forged' ? (rebel.forgedBuild && !hasForgeCharacter ? '3D character forged: awaken it in the Forge and make it yours to play it' : '3D character forged') : ''].filter(Boolean).join(' · ');
+  card.title = [rebel.name, rebel.free ? `Free to play: anyone can play this forged ${rebel.friendLabel || (rebel.named ? 'character' : 'Rebel')}` : status === 'ready' ? 'Playable 3D character ready' : status === 'forged' ? (rebel.forgedBuild && !hasForgeCharacter ? '3D character forged: awaken it in the Forge and make it yours to play it' : '3D character forged') : ''].filter(Boolean).join(' · ');
   if (status) card.classList.add('is-' + status);
 
   const cardLabel = `
@@ -1318,7 +1326,7 @@ function buildCard(rebel) {
     ${rebel.free ? '<div class="ant-card-badge free">Free</div>' : status ? `<div class="ant-card-badge ${status}">${status === 'ready' ? 'Ready' : 'Forged'}</div>` : rebel.friendLabel ? `<div class="ant-card-badge friend">${rebel.friendLabel}</div>` : ''}
   `;
 
-  const forgeThumb = status === 'ready' ? getRebelForgeThumb(rebel) : '';
+  const forgeThumb = status === 'ready' && !rebel.keepArt ? getRebelForgeThumb(rebel) : '';
   if (forgeThumb) card.classList.add('has-forge-thumb');
   const cardImage = forgeThumb || rebel.image;
   const imageHtml = cardImage
@@ -1847,6 +1855,7 @@ function enterVillage(url) {
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const VN = { hub: 'Hub', ronin: 'Ronin', samurai: 'Samurai', shogun: 'Shogun', bushi: 'Bushi', buke: 'Buke', ashigaru: 'Ashigaru', kenshi: 'Kenshi', yamabushi: 'Yamabushi', sohei: 'Sohei', wokou: 'Wokou', warrior: 'Warrior', 'cute-creepy': 'Cute & Creepy', chumpz: 'Chumpz', 'saints-la': 'Saints of LA' };
   const where = ev => esc(ev.place?.label || '') + (ev.place?.room && ev.place.label ? ', ' + (VN[ev.place.village] || ev.place.village) : '');
+  let wantTix = /^[A-Za-z0-9_-]{10}$/.test(new URLSearchParams(location.search).get('tickets') || '') ? new URLSearchParams(location.search).get('tickets') : '';
   async function look() {
     try {
       const d = await (await fetch('/api/mp-events', { cache: 'no-store' })).json(); if (!d?.ok) return;
@@ -1861,16 +1870,19 @@ function enterVillage(url) {
         const when = new Date(next.starts).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
         el.innerHTML = `<span class="dot"></span><span class="tx"><b>NEXT EVENT</b> · ${esc(next.title)} <small>· ${esc(when)} · ${where(next)}</small></span>`;
       }
-      // golden tickets (Nov 2): the front row at the event, a free raffle and tickets for Rebel Points
+      // tickets (Nov 2: the golden front row; Nov 4: a ticket to get in, the whole show): a free raffle, tickets for Rebel Points
       const ev = live || next;
       if (ev && window.GoldenTicket) window.GoldenTicket.state(ev.id).then(g => {
         if (!g || !el.isConnected || el.querySelector('.gold')) return;
         const holds = g.mine === 'bought' || g.mine === 'won', b = document.createElement('button'); b.type = 'button'; b.className = 'gold';
-        b.textContent = holds ? '\u2726 Front row' : '\u2726 Ticket';
+        b.textContent = g.entry ? (holds ? '\ud83c\udf9f Your ticket' : '\ud83c\udf9f Tickets') : holds ? '\u2726 Front row' : '\u2726 Ticket';
         b.onclick = () => window.GoldenTicket.open({ event: ev.id, title: ev.title, signIn: () => { const m = document.getElementById('econMenu'); if (m && !m.classList.contains('open')) lobbyEconChip(); }, onChange: () => look() });
         el.appendChild(b); place();
       });
       place();
+      // a ticket link (rebeluniverse.io/?tickets=<event id>: posted on Discord, X...): that event's ticket card, once
+      if (wantTix && window.GoldenTicket) { const t = [...(d.live || []), ...(d.next || [])].find(e => e.id === wantTix); wantTix = '';
+        if (t) window.GoldenTicket.open({ event: t.id, title: t.title, signIn: () => { const m = document.getElementById('econMenu'); if (m && !m.classList.contains('open')) lobbyEconChip(); }, onChange: () => look() }); }
     } catch (e) {}
   }
   // between the account chip (top left) and the music button (top right): centred when it clears both, else in the gap

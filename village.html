@@ -36,6 +36,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #ctrlCard .cc-keys{display:flex;flex-wrap:wrap;gap:3px;justify-content:flex-end}
 #ctrlCard kbd{display:inline-block;min-width:20px;text-align:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);border-bottom-width:2px;border-radius:4px;padding:1px 6px;font:700 10px/1.5 ui-monospace,Menlo,monospace;color:#e8c56a;letter-spacing:.5px;white-space:nowrap}
 #ctrlCard kbd.m{color:#bff3ef;border-color:rgba(94,207,202,.4)}
+#ctrlCard kbd.a{font:700 13px/1.15 system-ui,-apple-system,'Segoe UI',sans-serif;padding:1px 5px}
 #ctrlCard .cc-what small{color:#8f9ab0}
 #ctrlCard .cc-close{position:absolute;top:10px;right:12px;background:none;border:0;color:#cfd8e6;font-size:18px;cursor:pointer;padding:4px}
 @media (max-width:640px){#ctrlCard .cc-grid{grid-template-columns:minmax(0,1fr)}#ctrlCard .cc-row{grid-template-columns:96px minmax(0,1fr)}}
@@ -16536,9 +16537,9 @@ window.PlayerSound = { get: playerSound, set: setPlayerSound, get levels() { pla
 
 // The controls guide (the circle at the top right; on a phone, Controls in the Rebel panel): every key, the mouse and the
 // buttons, from the game's own key handling (keydown below, assets/village-touch.js, village-chat.js, village-voice.js)
-const CK = (...k) => k.map(x => x.startsWith('~') ? `<kbd class="m">${x.slice(1)}</kbd>` : `<kbd>${x}</kbd>`).join('');
+const CK = (...k) => k.map(x => x.startsWith('~') ? `<kbd class="m">${x.slice(1)}</kbd>` : /^[←↑↓→]$/.test(x) ? `<kbd class="a">${x}</kbd>` : `<kbd>${x}</kbd>`).join('');
 const CONTROLS_DESK = [
-  ['Move', [[CK('W', 'A', 'S', 'D'), 'Walk, the way the camera looks <small>(or the arrow keys)</small>'], [CK('R'), 'Run <small>(hold)</small>'], [CK('Space'), 'Jump'], [CK('~Drag'), 'Look around <small>(hold a mouse button and move)</small>'], [CK('Esc'), 'Close a window · again: aerial view <small>(the village from above)</small>']]],
+  ['Move', [[CK('W', 'A', 'S', 'D'), 'Walk, the way the camera looks'], [CK('↑', '←', '↓', '→'), 'Walk with the arrow keys <small>(the same: away, left, toward, right)</small>'], [CK('R'), 'Run <small>(hold)</small>'], [CK('Space'), 'Jump'], [CK('~Drag'), 'Look around <small>(hold a mouse button and move)</small>'], [CK('Esc'), 'Close a window · again: aerial view <small>(the village from above)</small>']]],
   ['Do', [[CK('O'), 'Use: talk, open, enter, read, play <small>(the prompt on screen says which)</small>'], [CK('E'), 'Emotes, then <kbd>1</kbd>-<kbd>5</kbd> to pick one'], [CK('P'), 'Take a photo'], [CK('Shift', 'P'), 'Record a clip <small>(up to a minute; again to stop)</small>'], [CK('Tab'), 'Your Rebel: Journal, Sound, Gloves, Back to Lobby'], [CK('Q'), 'Draw or put away your weapon <small>(Rebels that carry one)</small>']]],
   ['Fight moves', [[CK('F'), 'Kicks <small>(press again for the next one)</small>'], [CK('G'), 'Punches <small>(press again for the next one)</small>'], [CK('T'), 'Fight stance on / off'], [CK('C', 'B', 'V'), 'Cartwheel · backflip · front flip'], [CK('H', 'K'), 'Get hit · get knocked down']]],
   ['Players', [[CK('Enter'), 'Chat: type, <kbd>Enter</kbd> sends, <kbd>Enter</kbd> again for the next line, <kbd>Esc</kbd> closes'], [CK('X'), 'Talk with your voice <small>(hold; or hold the 🎤 button, bottom left; signed in)</small>'], [CK('~Click'), 'A name in the chat: whisper, mute, block, report'], [CK('~Click'), 'A chat bubble over a head: answer in the chat']]],
@@ -31777,8 +31778,8 @@ function startVillageMultiplayer() {
     villageName: id => VILLAGE_REGISTRY[id]?.displayName || id,
     player: () => charMesh && walkMode && !adminMode ? { x: charMesh.position.x, z: charMesh.position.z, interior: ActiveInterior ? String(ActiveInterior.targetInteriorId || ActiveInterior.interiorType || 'room') : null } : null,
     signedIn: () => !!Econ.on,
-    signIn: () => { activeJournalTab = 'overview'; openProgressionJournal(); }, // (the journal's account card: golden tickets)
-    ticket: () => window.VillageMP.ticket(),
+    signIn: () => { activeJournalTab = 'overview'; openProgressionJournal(); }, // (the journal's account card: tickets)
+    ticket: (o) => window.VillageMP.ticket(o), // (o.event: a ticket into that event's hall, with the show ticket it holds)
     travel: id => selectVillageGateDestination(id),
     doorOf: id => { const d = scene.transformNodes.find(n => n.metadata?.type === 'interior_entrance' && n.metadata.targetInteriorId === id); return d ? { x: d.position.x, z: d.position.z } : null; },
     roomHolder: () => ActiveInterior ? scene.transformNodes.find(n => n.metadata?.kitRoom && n.parent?.name === 'activeInteriorRoot') || null : null,

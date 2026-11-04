@@ -98,7 +98,7 @@ Wn = (1 - COPY) * Wc + COPY * Wa
 Wn /= np.maximum(Wn.sum(1, keepdims=True), 1e-9)
 for j, v in enumerate(ci):
     top = np.argsort(Wn[j])[::-1][:4]
-    for gg in list(md.vertices[int(v)].groups): me.vertex_groups[gg.group].remove([int(v)])
+    for gi in [gg.group for gg in md.vertices[int(v)].groups]: me.vertex_groups[gi].remove([int(v)])  # (indices first: see fixarm.py, v2.45)
     s = Wn[j, top].sum()
     for t in top:
         if Wn[j, t] > 1e-4: me.vertex_groups[int(t)].add([int(v)], float(Wn[j, t] / s), 'REPLACE')

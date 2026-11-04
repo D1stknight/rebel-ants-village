@@ -253,6 +253,39 @@ Output: one single full-body front view. Not a collage, not a turnaround sheet, 
 `.trim();
 }
 
+// Nov 4 (Miguel, Vicky's second doll: "I don't want her to look so chibi"): Universe's own characters are drawn as chibi
+// dolls (a big head on a small body) and a sculpt copies that. An admin forge from the artwork paints the SAME character
+// grown to normal proportions first (generationInput.bodyType 'universe_grown'); the face, its finish and makeup, the hair,
+// the headdress and the whole outfit stay the artist's, only the body changes. The admin approves it (or paints again).
+function buildUniverseGrownPrompt(gi) {
+  const who = gi.name ? String(gi.name).slice(0, 60) : 'this character';
+  return `
+Image 1 is the artist's finished design of ${who}, one of Rebel Universe's own characters, drawn as a CHIBI DOLL: a very big head on a small, short body.
+Create ONE full-body FRONT view of THIS SAME character GROWN TO NORMAL PROPORTIONS. It is the reference a 3D sculptor builds a game character from; it is then rigged and animated in a game, so the character must be recognised at a glance.
+
+The proportions (the one thing to change):
+- A slim, graceful young adult body about 7 heads tall: the head at a natural size for the body, no wider than the shoulders; a real neck, a longer torso, long arms and long legs.
+- Not chibi, not a big-headed doll, not a child, not a baby face.
+
+Everything else stays EXACTLY as in Image 1:
+- The face: the same skin colour and finish (keep it porcelain pale if Image 1 has it), the same eye shape, eye colour and glow, the same makeup, markings and symbols on the face, the same lips. A more mature face, the same character.
+- The same hairstyle, fringe and hair colour; the same headdress, halo or crown with everything on it (skulls, flowers, beads), the same earrings and tassels.
+- The same outfit: the same coat, robe or dress with its colours, patterns, prints and trim; the same emblem or beast head on the chest; the same belt, trousers or skirt, socks and boots with their laces. Continue each piece naturally on the longer body.
+- The same polished, stylised 3D character render style as Image 1: not a photo of a real person, not a drawing, not line art.
+
+Render:
+- Plain light-grey background, soft even studio light, the whole body from the top of the headdress to the soles of the boots in frame and centred, nothing cropped.
+
+Pose (very important, the character will be rigged):
+- A clean A-pose facing the camera: both arms held about 40 degrees out from the body with the elbows almost straight, and the plain background shows between each arm and the torso all the way from the armpit down to the hand.
+- Hands open and relaxed, fingers together, palms facing the thighs, touching nothing.
+- Legs straight, feet hip-width apart and pointing straight forward.
+- Clothes fit the body: sleeves end at the wrists, nothing loose hanging from the elbows, wrists, knees or ankles.
+
+Output: one single full-body front view. Not a collage, not a turnaround sheet, no added text, no extra characters, nothing in the hands, no weapons.
+`.trim();
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -291,16 +324,18 @@ export default async function handler(req, res) {
     }
 
     // friend collections: their species' prompt, the NFT + (apes) the style render; never the Rebels' clay or outfits
-    const friend = (await getCollection(generationInput.collectionKey))?.friend ? generationInput.species : null;
-    const bodyReferenceKey = friend ? null : pickBodyReferenceKey(generationInput);
-    const outfit = friend ? { text: '', colony: null, variation: null } : buildOutfitDesignBlock(generationInput);
+    // Universe's own characters (artwork, grown): their own prompt and only the artwork (no ant clay, no style render)
+    const grown = generationInput.collectionKey === 'universe' && generationInput.bodyType === 'universe_grown';
+    const friend = grown ? null : (await getCollection(generationInput.collectionKey))?.friend ? generationInput.species : null;
+    const bodyReferenceKey = friend || grown ? null : pickBodyReferenceKey(generationInput);
+    const outfit = friend || grown ? { text: '', colony: null, variation: null } : buildOutfitDesignBlock(generationInput);
     const styleUrl = friend ? FORGE_REFERENCE_URLS.friendStyle?.[friend] || null : null;
-    const prompt = friend ? buildFriendFullBodyPrompt({ ...generationInput, species: friend }, { hasStyleRef: !!styleUrl })
+    const prompt = grown ? buildUniverseGrownPrompt(generationInput) : friend ? buildFriendFullBodyPrompt({ ...generationInput, species: friend }, { hasStyleRef: !!styleUrl })
       : buildFullBodyPreviewPrompt(generationInput, { hasBodyRef: !!bodyReferenceKey, outfitBlock: outfit.text });
     // the last image: the Rebels' clay proportions, or a friend species' style render
     const [sourceImageDataUrl, proportionsReferenceDataUrl, bodyReferenceDataUrl] = await Promise.all([
       resolveForgeSourceImage(generationInput.sourceImage).then(fetchImageAsDataUrl),
-      friend ? (styleUrl ? fetchImageAsDataUrl(styleUrl) : Promise.resolve(null)) : fetchImageAsDataUrl(FORGE_REFERENCE_URLS.proportions),
+      grown ? Promise.resolve(null) : friend ? (styleUrl ? fetchImageAsDataUrl(styleUrl) : Promise.resolve(null)) : fetchImageAsDataUrl(FORGE_REFERENCE_URLS.proportions),
       bodyReferenceKey ? fetchImageAsDataUrl(FORGE_REFERENCE_URLS.body[bodyReferenceKey]) : Promise.resolve(null)
     ]);
     const economyPlan = buildForgeEconomyPlan(generationInput);

@@ -184,6 +184,12 @@ try {
   ok((await G.s.next(m => m.t === 'sshow')).show?.startAt === as.ev.showAt, 'the pages get the desk\'s start');
   Aud.s.send({ t: 'show', go: 0 });
   ok(await G.s.none(m => m.t === 'sshow', 600), 'only hosts start or stop the show');
+  // (Nov 4) an event changed while live: its pages get the show with it (a page kept the old one: a new audio or start
+  // never reached a page already there)
+  const ed = await admin('event-save', { id, title: "Antthony's Opening Night: Late Show" });
+  const sv2 = await G.s.next(m => m.t === 'sev');
+  ok(ed.ok && sv2.ev.title === "Antthony's Opening Night: Late Show" && sv2.show?.startAt === as.ev.showAt && sv2.show.cues.length === 3 && sv2.now > 0, 'an event changed while live: its pages get its show with it (the start kept)', sv2);
+  await sleep(400); for (const x of [G, Host, Aud, Cy, Late]) x.s.msgs.length = 0; // (the change's shost / sev messages: not the next checks')
 
   console.log('the Admin Hub');
   ok((await admin('event-host', { id, sub: Cy.sub, u: Cy.u, n: 'Cy' })).ok, 'Cy made a host while there');
@@ -257,6 +263,39 @@ try {
   await sleep(500);
   ok((await events()).next.find(e => e.id === rep.ev.id)?.starts === rep.ev.starts + D, 'and it is on the list for tomorrow');
   for (const e of [daily, wk, fut, rep]) await admin('event-delete', { id: e.ev.id });
+
+  console.log('a show that needs a ticket (Nov 4)');
+  const hostT = who('Hosty');
+  const tx = await admin('event-save', { title: 'Ticketed Night', place: CLUB, starts: Date.now() - 1000, ends: Date.now() + 1800000, tix: true, show: { title: 'Set', len: 30, cues: [{ t: 1, say: 'Hi' }] } });
+  ok(tx.ok && tx.ev.tix === true, 'an event made with tix: it needs a ticket', tx.ev);
+  await admin('event-host', { id: tx.ev.id, sub: hostT.sub, u: hostT.u, n: 'Hosty' });
+  ok((await events()).live.find(e => e.id === tx.ev.id)?.tix === true, 'the public list says so (tix)');
+  const NoT = who('NoTicket'), Gst = who('GuestT', { k: 'guest', sub: 'g:' + crypto.randomBytes(6).toString('hex') }), Other = who('OtherShow', { tix: ['AAAAAAAAAA'] });
+  for (const P of [NoT, Gst, Other]) {
+    const s1 = await sock('/v1/stage?id=' + tx.ev.id, P.t()), m1 = await s1.next(m => m.t === 'stix' || m.t === 'shi', 5000).catch(() => null); await sleep(500);
+    ok(m1?.t === 'stix' && m1.id === tx.ev.id && s1.closed === 4005, `${P.n}: told a ticket is needed, closed 4005 (no hello, no show)`, [m1, s1.closed]);
+  }
+  // the show started while the hall was empty (the turned-away knocks left it a copy of the event the desk does not push to)
+  const sg = await admin('event-show', { id: tx.ev.id, go: true });
+  const Holder = who('Holder', { tix: [tx.ev.id] }); await enter(Holder, tx.ev.id);
+  ok(Holder.hi?.t === 'shi' && Holder.hi.ev.tix === true && !!Holder.hi.ev.show, 'a ticket holder (its id signed into the ticket) gets in, with the show');
+  ok(sg.ok && Holder.hi.show?.startAt === sg.ev.showAt, 'a show started while the hall was empty: the first one in gets it (the hall reads the event again)', [sg.ev?.showAt, Holder.hi.show]);
+  await enter(hostT, tx.ev.id); ok(hostT.hi?.host === true, 'its host gets in without a ticket');
+  const fr = await admin('event-save', { id: tx.ev.id, tix: false });
+  const Free = who('Free'); await enter(Free, tx.ev.id);
+  ok(fr.ok && fr.ev.tix === false && Free.hi?.t === 'shi', 'tickets switched off: anyone gets in');
+  await admin('event-delete', { id: tx.ev.id });
+
+  console.log('a long show in pieces (Nov 4)');
+  const PU = k => `https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/shows/long-${k}.mp3`;
+  const lng = await admin('event-save', { title: 'Long Night', place: CLUB, starts: Date.now() - 1000, ends: Date.now() + 3600000, show: { title: 'Long', len: 700, audio: PU(1), parts: [0, 1, 2, 3, 4, 5].map(k => ({ audio: PU(k + 1), at: k * 115, len: 115 })), cues: [{ t: 1, say: 'Hi' }] } });
+  ok(lng.ok && lng.ev.show.parts?.length === 6 && lng.ev.show.audio === PU(1), 'a show in 6 pieces is kept', lng.ev?.show);
+  const bad = await admin('event-save', { title: 'Bad Pieces', place: CLUB, starts: Date.now() - 1000, ends: Date.now() + 3600000, show: { title: 'Bad', len: 300, audio: PU(1), parts: [{ audio: PU(1), at: 0, len: 150 }, { audio: 'https://elsewhere.test/x.mp3', at: 150, len: 140 }] } });
+  ok(bad.ok && !bad.ev.show.parts && bad.ev.show.audio === PU(1), 'pieces from another site: the pieces dropped, the first file kept');
+  const LP = who('Lis'); await enter(LP, lng.ev.id); await admin('event-show', { id: lng.ev.id, go: true });
+  const sh2 = await LP.s.next(m => m.t === 'sshow');
+  ok(sh2.show?.parts?.length === 6 && sh2.show.startAt > 0, 'the page gets the pieces with the show');
+  for (const e of [lng, bad]) await admin('event-delete', { id: e.ev.id });
 } catch (e) { fail++; console.log('  FAIL (exception)', e.stack); }
 console.log(`\n${pass} passed, ${fail} failed`);
 stop(); process.exit(fail ? 1 : 0);

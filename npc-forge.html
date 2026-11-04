@@ -81,13 +81,54 @@ dialog::backdrop{background:#000a}
 dialog label{display:block;margin:8px 0 3px;color:var(--dim);font-size:11px}
 dialog input,dialog select{width:100%}
 small{color:var(--dim)}
-@media(max-width:860px){#app{grid-template-columns:1fr;grid-template-rows:auto auto 70vh}#side{border-right:0}#dock{grid-template-columns:1fr}}
+#mtabs{display:none}
+/* phones (Nov 4, Miguel: "the NPC forge ... suck[s] at phones"): the list and the viewer are two tabs under a slim header;
+   the viewer is the 3D view with its dock (moves, checks, hands, approve) scrolling under it, or beside it held sideways */
+@media(max-width:860px),(max-height:500px){
+  #app{grid-template-columns:1fr;grid-template-rows:auto auto minmax(0,1fr);height:100vh;height:100dvh}
+  header{flex-wrap:wrap;gap:8px 10px;padding:8px 12px}
+  header h1{font-size:16px;letter-spacing:2px}
+  header .sub{display:none}
+  #workerPill{margin-left:0;order:3;width:100%}
+  #freeJump{margin-left:auto}
+  #freeJump+a,header a{margin-left:10px;padding:8px 2px}
+  #mtabs{display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line);background:#0e1120;grid-column:1/-1}
+  #mtabs button{flex:1;padding:9px 10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #mtabs button.on{border-color:var(--teal);color:var(--teal);background:#10302f}
+  #side{border-right:0;min-height:0;padding:10px 10px calc(16px + env(safe-area-inset-bottom,0px))}
+  body:not(.mt-view) #main{display:none}
+  body.mt-view #side{display:none}
+  #main{grid-template-rows:minmax(240px,46vh) minmax(0,1fr);min-height:0}
+  #dock{grid-template-columns:1fr;max-height:none;min-height:0;padding:10px 10px calc(16px + env(safe-area-inset-bottom,0px))}
+  #viewBar{top:6px;left:6px;right:6px;gap:4px}
+  #viewBar button{padding:6px 8px}
+  #viewBar label{margin-left:0!important}
+  .hands label{width:100%}
+  .hands input[type=range]{flex:1;width:auto}
+  #qaBox{overflow-x:auto}
+  .card .row>input.grow{min-width:140px}
+}
+@media(max-height:500px){
+  header{flex-wrap:nowrap;padding:6px 12px}
+  #workerPill{order:0;width:auto;margin-left:auto}
+  #mtabs{padding:6px 12px}
+  #mtabs button{padding:6px 10px}
+  #main{grid-template-columns:minmax(0,1fr) minmax(300px,44vw);grid-template-rows:minmax(0,1fr)}
+  #dock{border-top:0;border-left:1px solid var(--line)}
+}
+@media(max-width:860px) and (pointer:coarse),(max-height:500px) and (pointer:coarse){
+  button{min-height:38px}
+  input,select,textarea{font-size:16px}
+  .hands input[type=range]{height:30px}
+  details.grp>summary{padding:10px 12px}
+}
 </style>
 </head>
 <body>
 <div id="gate">Checking admin access...</div>
 <div id="app">
   <header><h1>NPC FORGE</h1><span class="sub">Your renders → Rebel Forge sculpt → Forge Rigger (NPC clips) → test → approve · Cute &amp; Creepy: built in the kit</span><span id="workerPill"></span><button id="freeJump" class="teal" onclick="showFreeBox()" title="The lobby's Free to play roster">Free to play</button><a href="admin.html">← Admin Hub</a></header>
+  <nav id="mtabs"><button id="mtList" class="on" onclick="mTab('list')">NPCs &amp; worker</button><button id="mtView" onclick="mTab('view')">Viewer</button></nav>
   <aside id="side">
     <h2>NPCs</h2>
     <div class="row" style="margin-bottom:8px"><button class="teal" id="forgeAllBtn" onclick="forgeAll()">Forge all ready</button></div>
@@ -473,7 +514,15 @@ function card(n) {
       ${n.prevRefs && !busy ? `<button onclick="restoreRefs('${n.id}')" title="Put back the renders the last redraw replaced">Old renders</button>` : ''}
       <button class="red" style="margin-left:auto" onclick="removeNPC('${n.id}')" ${busy ? 'disabled' : ''}>Remove</button></div></div>`;
 }
-function select(id) { selId = id; selKit = null; renderList(); showNPC(id); }
+function select(id, quiet) { selId = id; selKit = null; renderList(); showNPC(id); const n = npc(id); mViewer(n?.name || n?.key, !quiet && !!(n?.rig?.url || isKit(n))); }
+// phones (Nov 4): the list and the viewer are two tabs; picking a forged NPC (or a kit one) opens the viewer
+const PHONE_NF = matchMedia('(max-width: 860px), (max-height: 500px)');
+function mTab(t) {
+  document.body.classList.toggle('mt-view', t === 'view');
+  $('#mtList').classList.toggle('on', t !== 'view'); $('#mtView').classList.toggle('on', t === 'view');
+  if (t === 'view') requestAnimationFrame(() => engine.resize());
+}
+function mViewer(name, open) { $('#mtView').textContent = 'Viewer' + (name ? ' · ' + name : ''); if (open && PHONE_NF.matches) mTab('view'); }
 
 /* ---------- Cute & Creepy: kit-built NPCs ---------- */
 function kitGroup(list) {
@@ -513,7 +562,7 @@ async function copyKitRequest(id) {
   const n = npc(id); if (!n) return; const txt = kitRequestText(n);
   try { await navigator.clipboard.writeText(txt); toast('Copied: paste it in the chat with Claude'); } catch (e) { window.prompt('Copy this for Claude:', txt); }
 }
-function selectKit(t) { selId = null; selKit = t; renderList(); viewKit(t); }
+function selectKit(t) { selId = null; selKit = t; renderList(); viewKit(t); mViewer(CC_KIT[t]?.name || t, true); }
 // the viewer builds the kit model with the village's own building kit (loaded on first use), so it is the same model
 let kitLoad = null, kitNightOn = false;
 function loadKit() {
@@ -635,7 +684,8 @@ const hemi = new BABYLON.HemisphericLight('h', new BABYLON.Vector3(0.2, 1, 0.3),
 const sun = new BABYLON.DirectionalLight('d', new BABYLON.Vector3(-0.4, -1, 0.7), scene); sun.intensity = 1.2;
 const ground = BABYLON.MeshBuilder.CreateDisc('g', { radius: 3, tessellation: 64 }, scene); ground.rotation.x = Math.PI / 2; const gm = new BABYLON.StandardMaterial('gm', scene); gm.diffuseColor = new BABYLON.Color3(0.22, 0.24, 0.3); gm.specularColor = BABYLON.Color3.Black(); ground.material = gm;
 for (let i = -6; i <= 6; i++) { const l1 = BABYLON.MeshBuilder.CreateLines('l', { points: [new BABYLON.Vector3(i * 0.5, 0.002, -3), new BABYLON.Vector3(i * 0.5, 0.002, 3)] }, scene); const l2 = BABYLON.MeshBuilder.CreateLines('l', { points: [new BABYLON.Vector3(-3, 0.002, i * 0.5), new BABYLON.Vector3(3, 0.002, i * 0.5)] }, scene); l1.color = l2.color = new BABYLON.Color3(0.3, 0.34, 0.45); }
-engine.runRenderLoop(() => scene.render()); addEventListener('resize', () => engine.resize());
+engine.runRenderLoop(() => { if (PHONE_NF.matches && !document.body.classList.contains('mt-view')) return; scene.render(); });   // phones: nothing drawn while the list tab is up
+addEventListener('resize', () => engine.resize());
 // the canvas box also changes when the dock fills (clip buttons, checks table): keep the drawing buffer at the box's
 // size, else the NPC is drawn for a taller box and shown squashed
 new ResizeObserver(() => engine.resize()).observe(canvas);
@@ -1063,9 +1113,10 @@ async function mendSnaps() {
 // its own box (Oct 24: it was inside the Rig worker box's games packs list, behind a button). Oct 25 Chumpz and Saints
 // too: a Rebel's entry is its number ('262'), a friend's '<collection>:<token>' ('chumpz:1270')
 let freeRoster = null, freeErr = null;   // { tokens: Set, hidden: Set, saved, env, busy }
-const FREE_COLS = [['battle_for_colony', 'Rebel', 'Rebels'], ['chumpz', 'Chumpz', 'Chumpz'], ['saints', 'Saint', 'Saints']];
+const FREE_COLS = [['battle_for_colony', 'Rebel', 'Rebels'], ['chumpz', 'Chumpz', 'Chumpz'], ['saints', 'Saint', 'Saints'], ['universe', 'Character', 'Characters']];
 // #001 and the Chumpz Racer are the lobby's own cards (never on the roster); Nov 2 their tick switches the card off
-const FREE_NEVER = { '1': 'the lobby\'s #001 card', 'chumpz:900001': 'the lobby\'s Chumpz Racer card' };
+const FREE_NEVER = { '1': 'the lobby\'s #001 card', 'chumpz:900001': 'the lobby\'s Chumpz Racer card', 'universe:1': 'the lobby\'s Sanguira card, once rigged', 'universe:2': 'the lobby\'s Elaria card, once rigged' };
+const UNIVERSE_NAMES = { 1: 'Sanguira', 2: 'Elaria' };   // Universe's own characters (index.html UNIVERSE_PLAYABLES)
 const freeKey = (col, tok) => (col === 'battle_for_colony' ? String(tok) : `${col}:${tok}`);
 const freeParse = (k) => { const m = /^([a-z_]+):(\d+)$/.exec(k); return m ? { col: m[1], tok: m[2] } : { col: 'battle_for_colony', tok: k }; };
 async function loadFreeRoster() {
@@ -1095,7 +1146,7 @@ function toggleBuiltin(key, on) {
   setFreeRoster({ tokens: [...freeRoster.tokens], hidden: next }, () => { freeRoster.hidden = was; });
 }
 function resetFree() { if (confirm('Put the Free to play roster back to the lobby\'s own showcase list?')) setFreeRoster({ reset: true }); }
-function showFreeBox() { $('#freeHead').scrollIntoView({ behavior: 'smooth', block: 'start' }); const b = $('#freeBox'); b.classList.add('sel'); setTimeout(() => b.classList.remove('sel'), 1600); }
+function showFreeBox() { mTab('list'); $('#freeHead').scrollIntoView({ behavior: 'smooth', block: 'start' }); const b = $('#freeBox'); b.classList.add('sel'); setTimeout(() => b.classList.remove('sel'), 1600); }
 function paintFree() {
   const box = $('#freeBox'); if (!box) return;
   if (!gamesList || !freeRoster) {
@@ -1112,7 +1163,7 @@ function paintFree() {
   const live = freeRoster.env === 'prod';
   const row = (r) => {
     const label = `${one[r.collectionKey]} #${esc(r.tokenId)}`;
-    if (FREE_NEVER[r.key]) { const shown = !freeRoster.hidden.has(r.key); return `<label class="state" style="display:flex;gap:7px;align-items:center;padding:2px 0;cursor:pointer;color:var(--txt)"><input type="checkbox" data-builtin="${esc(r.key)}" ${shown ? 'checked' : ''} ${freeRoster.busy ? 'disabled' : ''} onchange="toggleBuiltin('${esc(r.key)}', this.checked)"> ${r.key === '1' ? 'Rebel #001' : label} <span style="opacity:.8">(${FREE_NEVER[r.key]}${shown ? '' : ': switched off'})</span></label>`; }
+    if (FREE_NEVER[r.key]) { const shown = !freeRoster.hidden.has(r.key); return `<label class="state" style="display:flex;gap:7px;align-items:center;padding:2px 0;cursor:pointer;color:var(--txt)"><input type="checkbox" data-builtin="${esc(r.key)}" ${shown ? 'checked' : ''} ${freeRoster.busy ? 'disabled' : ''} onchange="toggleBuiltin('${esc(r.key)}', this.checked)"> ${r.key === '1' ? 'Rebel #001' : r.collectionKey === 'universe' ? esc(UNIVERSE_NAMES[r.tokenId] || label) : label} <span style="opacity:.8">(${FREE_NEVER[r.key]}${shown ? '' : ': switched off'})</span></label>`; }
     const on = freeRoster.tokens.has(r.key), can = r.publicRig || on;
     const why = r.gone ? 'no forged character in play' : r.publicRig ? '' : 'needs a public forged character';
     const nm = r.name && !r.name.includes('#' + r.tokenId) ? ` · ${esc(r.name)}` : '';
@@ -1122,7 +1173,7 @@ function paintFree() {
   box.innerHTML = `<div class="state"><b style="color:var(--gold)">${counts.join(' · ') || '0 Rebels'}</b> anyone can play from ${live ? '<b style="color:var(--txt)">the live lobby</b> (rebeluniverse.io)' : 'this preview\'s lobby <span class="warn">(the live lobby keeps its own list: tick it on rebeluniverse.io)</span>'}${freeRoster.saved ? '' : ' · <span class="warn">not saved yet: the lobby shows its showcase list (ticked below)</span>'}${freeRoster.busy ? ' · saving…' : ''}</div>
     <div style="max-height:360px;overflow:auto;margin-top:2px">${groups || '<div class="state">Nothing forged in play yet.</div>'}</div>
     <div class="row" style="margin-top:6px">${freeRoster.saved ? '<button onclick="resetFree()">Back to the showcase list</button>' : ''}<button onclick="loadGamesPacks()" ${freeRoster.busy ? 'disabled' : ''}>Refresh</button></div>
-    <div class="state" style="margin-top:4px">Each tick saves at once. A greyed one needs its public character first: Forge → it → Make this my Rebel / Chumpz / Saint (as admin). #001 and the Chumpz Racer are the lobby's own cards: untick one to take it out of the lobby (a wallet that holds #001 still sees its own).</div>`;
+    <div class="state" style="margin-top:4px">Each tick saves at once. A greyed one needs its public character first: Forge → it → Make this my Rebel / Chumpz / Saint (as admin). #001, the Chumpz Racer, Sanguira and Elaria are the lobby's own cards: untick one to take it out of the lobby (a wallet that holds #001 still sees its own).</div>`;
 }
 async function loadGamesPacks() {
   freeErr = null;
@@ -1240,7 +1291,7 @@ async function rebuildWorker(ask = true) {
   load(); renderList(); loadApproved(); loadWorker(); loadGamesPacks();
   // resume NPCs that were forging here when the page closed (ones forged on another computer show Continue)
   st.npcs.filter((n) => !isKit(n) && ['uploading', 'building', 'sculpting', 'storing', 'rigging'].includes(n.phase)).forEach((n) => forgeOne(n.id, { batch: true }));
-  if (st.npcs[0]) select(st.npcs[0].id);
+  if (st.npcs[0]) select(st.npcs[0].id, true);   // (phones stay on the list)
   await syncDown(); if (!selId && st.npcs[0]) select(st.npcs[0].id);
   fillRigInfo();
 })();

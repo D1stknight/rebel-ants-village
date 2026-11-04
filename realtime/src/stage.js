@@ -11,9 +11,10 @@
 //                 {t:'rp', i, why}             report a chat line
 //                 vp vs va vx                  voice (voice.js): hosts and speakers talk, everyone here hears them
 //   hall -> page  {t:'shi', ev, you, host, speakers, hands, hand, show, now, n, cfg, hist, mute}   the hello
+//   hall -> page  {t:'stix', id, title} then close 4005                 a show that needs a ticket this player has not got
 //                 {t:'sc', m}  {t:'scx', why}  {t:'scd', i}  {t:'scc'}   chat line, refused, deleted, cleared
 //                 {t:'shands', hands} (hosts)  {t:'shand', on} (mine)  {t:'sspk', speakers}  {t:'sn', n} (how many here)
-//                 {t:'sshow', show, now}  {t:'sev', ev}  {t:'scfg', chat, slow, voice}  {t:'scm', until}  vo / vp / vs
+//                 {t:'sshow', show, now}  {t:'sev', ev, show, now}  {t:'scfg', chat, slow, voice}  {t:'scm', until}  vo / vp / vs
 //                 {t:'send'} the event is over (then the socket closes, 4004)
 // ev = {id, title, place: {village, room|null, label}, starts, ends, hosts: [{u, n}], show: {title, len, audio|null, cues}|null}
 // show while it runs = ev.show + startAt (server time, ms)
@@ -80,9 +81,11 @@ export class StageHall {
     if (!force && now - this.nAt < 3000) { if (!this.nTimer) this.nTimer = setTimeout(() => { this.nTimer = null; this.count(true); }, 3000 - (now - this.nAt)); return; }
     this.nAt = now; this.all({ t: 'sn', n: this.socks.size });
   }
-  // the event as the desk has it (asked once, then kept; the desk pushes changes), and an alarm at its end
-  async load(id) {
-    if (this.kv('id') === id && this.ev()) return this.ev();
+  // the event as the desk has it (asked once, then kept; the desk pushes changes), and an alarm at its end. Asked again while
+  // the hall is empty (fresh): the desk pushes only to halls it knows (a player got in), so a copy kept from a knock that
+  // was turned away (not yet, no ticket) can be stale: a show started meanwhile, an edit
+  async load(id, fresh) {
+    if (!fresh && this.kv('id') === id && this.ev()) return this.ev();
     let d = null; try { d = await this.ask('/event', { id }); } catch (e) { return null; }
     if (!d?.ev) return null;
     this.kvSet('id', id); this.setEv(d.ev);
@@ -99,11 +102,18 @@ export class StageHall {
     if (url.pathname === '/ctl') return this.ctl(await req.json().catch(() => ({})));
     const ident = JSON.parse(req.headers.get('x-ru-ident') || 'null'), id = url.searchParams.get('id') || '';
     if (!ident || req.headers.get('upgrade') !== 'websocket' || !UID.test(ident.u || '') || !EVENT_ID.test(id)) return json({ ok: false }, 400);
-    const ev = await this.load(id);
+    const ev = await this.load(id, !this.socks.size);
     if (!ev) return json({ ok: false, error: 'no such event' }, 404);
     if (ev.ended || now >= ev.ends) return json({ ok: false, error: 'over' }, 410);
     const host = this.isHostSub(ident.sub);
     if (!isLive(ev, now) && !(host && ev.starts - now < EARLY)) return json({ ok: false, error: 'not yet', starts: ev.starts }, 403);
+    // a show that needs a ticket (Nov 4): its hosts and the players whose ticket the site signed get in; anyone else is
+    // told why (a socket that says so and closes, 4005: a refused upgrade reads as a dropped connection on the page)
+    if (ev.tix && !host && !(Array.isArray(ident.tix) && ident.tix.includes(ev.id))) {
+      const [client, server] = Object.values(new WebSocketPair()); server.accept();
+      server.send(JSON.stringify({ t: 'stix', id: ev.id, title: ev.title })); server.close(4005, 'ticket');
+      return new Response(null, { status: 101, webSocket: client, headers: { 'sec-websocket-protocol': PROTOCOL } });
+    }
     let chk = { ban: 0, mute: 0 };
     try { const d = await this.ask('/check', { room: this.room(), sub: ident.sub }); if (d.cfg) this.cfg = normCfg(d.cfg); chk = { ban: +d.ban || 0, mute: +d.mute || 0 }; } catch (e) {}
     if (chk.ban > now) return json({ ok: false, error: 'banned' }, 403);
@@ -203,7 +213,7 @@ export class StageHall {
     if (op.op === 'ev' && op.ev && op.ev.id === this.kv('id')) {
       this.setEv(op.ev);
       if (op.ev.ended || Date.now() >= op.ev.ends) { await this.end(); return json({ ok: true, hit: 1 }); }
-      this.all({ t: 'sev', ev: pubEvent(op.ev) });
+      this.all({ t: 'sev', ev: pubEvent(op.ev), show: showOf(op.ev), now: Date.now() }); // (the show too: it moves with the event)
       for (const [w, p] of this.socks) try { w.send(JSON.stringify({ t: 'shost', host: p.host, hands: p.host ? this.hands() : undefined })); } catch (e) {}
       hit = this.socks.size;
     }
