@@ -48246,9 +48246,36 @@
             "kicker": "Ant-Thony's House",
             "description": "THE JOKE NOTEBOOK (do not read)\n\nWhy don't Rebels ever get lost? Every road leads back to the Hub. I checked. Twice. I was lost.\n\nTold the Sohei monks a joke about silence. They loved it. Nobody said a word.\n\nMet the Ronin at night. Said \"nice handprint.\" He said nothing. Best crowd I ever had.\n\nMy doctor says I need more sleep. I sleep from 2 to 7 every night. He said that's five hours. I said that's why I'm the funny one.\n\nTried to roast the Shogun. Got a standing ovation. From the guards. On my way out.\n\n(Crossed out: anything about the Wokou. They know where I live. I live by the water.)",
             "position": {
-              "x": 2.22,
+              "x": 0.52,
               "y": 0.8,
-              "z": -0.9
+              "z": 1
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.3,
+              "y": 0.3,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "hub_anthony_home",
+            "hotspotId": "hotspot_hub_anthony_home_antfarm",
+            "linkName": "His Ant Farm",
+            "actionType": "showInfo",
+            "url": "",
+            "enabled": true,
+            "sound": "applause",
+            "prompt": "Press O to Look at His Ant Farm",
+            "kicker": "Ant-Thony's House",
+            "description": "ANT-THONY'S ANT FARM\n\nGot it when I was a little Rebel. Two panes of glass, one bag of sand, forty ants. My first audience.\n\nThey watch every show. They never heckle, never check their phones, never leave early. (They can't. That's the glass.)\n\nThe big one by the eggs is Gary. Gary has heard every joke in my notebook. Gary has laughed at none of them.\n\nMy first fans. Tough crowd. Love them anyway.",
+            "position": {
+              "x": -9.6,
+              "y": 0.9,
+              "z": 3.3
             },
             "rotation": {
               "x": 0,
@@ -48262,7 +48289,7 @@
             }
           }
         ],
-        "updatedAt": "2026-11-02T18:00:00.000Z"
+        "updatedAt": "2026-11-03T23:50:00.000Z"
       }
     }
   },
@@ -60782,9 +60809,9 @@
     "disableGroundSnap": false,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": 155.15,
-      "y": 1.8646,
-      "z": 138.434
+      "x": 155.475,
+      "y": 2.0146,
+      "z": 139.326
     },
     "rotation": {
       "x": 0,
@@ -60902,9 +60929,9 @@
     "disableGroundSnap": false,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": 141.564,
-      "y": 0.2969,
-      "z": 127.762
+      "x": 135.464,
+      "y": 0.0078,
+      "z": 124.329
     },
     "rotation": {
       "x": 0,
