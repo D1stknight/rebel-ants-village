@@ -37,7 +37,7 @@
   const settings = load(SET_KEY, { show: true, captions: true });
   let H = null, B = null, ws = null, connecting = false, retryAt = 0, stopped = null, hall = null, pollAt = 0, offset = 0, listeners = new Set();
   // (a hall whose connection dropped: the event and its show stay on this page until it is back in, or this passes)
-  const GRACE_MS = 60000; let graceUntil = 0, graceTries = 0, locked = ''; // (locked: the event whose show needs a ticket this player has not got)
+  const GRACE_MS = 60000; let graceUntil = 0, graceTries = 0, locked = '', lockRetry = 0; // (locked: the event whose show needs a ticket this player has not got)
   const inHall = () => !!(S.ev && (hall || graceUntil > performance.now()));
   let wanted = new URLSearchParams(location.search).get('event'), wantedEv = null; // (the lobby's LIVE NOW: village.html?village=..&event=<id>)
   const S = { live: [], next: [], ev: null, host: false, you: null, speakers: [], hands: [], hand: false, show: null, n: 0, cfg: { chat: true, slow: 5, voice: false }, mute: 0, goal: null };
@@ -661,6 +661,10 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     poll();
     if (S.ev && hall) GOLD.want(S.ev.id);
     const ev = S.live.find(atPlace) || null;
+    // turned away for a ticket the card says this player holds (bought on another page, or the site missed it once):
+    // knock again soon, not in 2 minutes (at most every 15 s)
+    if (locked && ev?.id === locked) { const g = GOLD.of(locked), n = performance.now();
+      if (g && (g.mine === 'bought' || g.mine === 'won') && n > lockRetry) { lockRetry = n + 15000; retryAt = Math.min(retryAt, n + 1000); } }
     // a dropped hall that did not come back in time, or a player who walked off meanwhile: out of it
     if (!ws && graceUntil && (performance.now() > graceUntil || !ev || ev.id !== S.ev?.id)) { graceUntil = 0; leaveHall(); }
     if (ev && !ws && !connecting && !stopped && performance.now() >= retryAt) connect(ev.id);
