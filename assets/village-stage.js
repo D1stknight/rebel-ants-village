@@ -5,6 +5,11 @@
 // channel in the chat (village-chat.js), the hosts' voices (village-voice.js, scope 'stage'), and the show: its audio, or
 // for each line a babbling voice with the words as captions, started at the same second on every page; in Antthony's
 // Comedy Club the performer stands at the mic (Rebel #001's rig: its jaw moves with the voice).
+// The show's audio (Nov 4) is fetched and decoded as the page joins the hall and played from that buffer in the stage's
+// own Web Audio: an <audio> made when the show starts never plays on an iPhone (WebKit starts a media element only
+// inside a tap, a click or a key, and a show starts on the server's clock), while the stage's sound starts on any finger
+// lift (assets/audio-unlock.js). A page whose sound was stopped (a call, the background) picks it up where the show is.
+// The performer is loaded as the page joins the hall too, and shows when the show starts.
 // window.VillageStage.start(host) from village.html, host = { scene, village, villageName(id), player() -> { x, z, interior }
 //   | null, signedIn(), ticket() -> Promise<{ ticket, url }|null>, travel(villageId), doorOf(roomId) -> { x, z } | null,
 //   roomHolder() -> the shown room's node | null, enterRoom(roomId) -> bool (through its door), sound(name), viaSite(url),
@@ -164,12 +169,13 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     if (!away) el.live.dataset.k = '';
     el.bar.classList.toggle('on', !!here);
     const speakingNow = here && S.speakers.some(s => s.u === S.you), showOn = !!(S.show && showTime() >= 0 && showTime() < S.show.len);
+    const deaf = !!(showOn && actx && actx.state !== 'running' && settings.show); // (an iPhone's sound waits for a tap)
     const gold = here ? GOLD.of(S.ev.id) : null;
-    const kBar = here ? [S.ev.id, S.ev.title, S.n, showOn, S.host, S.hands.length, hostOpen, speakingNow, S.hand, H.signedIn(), gold ? gold.mine + ':' + gold.left : ''].join('|') : '';
+    const kBar = here ? [S.ev.id, S.ev.title, S.n, showOn, deaf, S.host, S.hands.length, hostOpen, speakingNow, S.hand, H.signedIn(), gold ? gold.mine + ':' + gold.left : ''].join('|') : '';
     if (!here) el.bar.dataset.k = '';
     if (here && el.bar.dataset.k !== kBar) {
       el.bar.dataset.k = kBar;
-      el.bar.innerHTML = `<span class="dot"></span><span class="tx"><b>LIVE</b> · ${esc(S.ev.title)} <small>· ${S.n} here${S.show && showTime() >= 0 && showTime() < S.show.len ? ' · the show is on' : ''}</small></span>`;
+      el.bar.innerHTML = `<span class="dot"></span><span class="tx"><b>LIVE</b> · ${esc(S.ev.title)} <small>· ${S.n} here${showOn ? (deaf ? ' · 🔇 tap the screen to hear the show' : ' · the show is on') : ''}</small></span>`;
       const speaking = S.speakers.some(s => s.u === S.you);
       if (S.host) el.bar.append(btn('Host · ' + S.hands.length + ' ✋', () => { hostOpen = !hostOpen; paint(); }, hostOpen ? 'on' : ''));
       else if (speaking) el.bar.append(btn('On stage', () => send({ t: 'hand', on: false }), 'on'));
@@ -216,23 +222,57 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
 
   // ---- the show: the same second on every page ----
   const showTime = () => (S.show ? (Date.now() + offset - S.show.startAt) / 1000 : -1);
-  let SH = null; // { key, audio, src, an, buf, cues, next, babble: [{ at, len, env }], cap, capUntil, perf }
+  let SH = null; // { key, src, srcAt, an, buf, cues, next, cap, capUntil, level, syl, plan }
   let actx = null, master = null;
   function audioCtx() {
     if (actx) { if (actx.state === 'suspended') actx.resume().catch(() => {}); return actx; }
     const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
-    actx = new AC(); master = actx.createGain(); master.gain.value = 1; master.connect(actx.destination); return actx;
+    // (24 kHz: the sets are voiced at 24 kHz, and a decoded minute of them takes half the memory it would at 48)
+    try { actx = new AC({ sampleRate: 24000 }); } catch (e) { actx = new AC(); }
+    master = actx.createGain(); master.gain.value = 1; master.connect(actx.destination); return actx;
+  }
+  // the show's audio file: fetched and decoded once (by the hall's page, before the show starts), kept while there
+  const AUD = { url: '', buf: null, loading: false, failed: '' };
+  function showAudio(url) {
+    if (!url) return null;
+    if (AUD.url !== url) { AUD.url = url; AUD.buf = null; AUD.loading = false; AUD.failed = ''; }
+    if (AUD.buf || AUD.failed || AUD.loading) return AUD.buf;
+    const ac = audioCtx(); if (!ac) { AUD.failed = 'no Web Audio'; return null; }
+    AUD.loading = true;
+    (async () => {
+      try {
+        const r = await fetch(H.viaSite ? H.viaSite(url) : url); if (!r.ok) throw new Error('HTTP ' + r.status);
+        const data = await r.arrayBuffer(); if (AUD.url !== url) return;
+        const buf = await new Promise((res, rej) => { const p = ac.decodeAudioData(data, res, rej); if (p && p.then) p.then(res, rej); });
+        if (AUD.url === url) { AUD.buf = buf; log('show audio', url.split('/').pop(), buf.duration.toFixed(1) + ' s'); }
+      } catch (e) { if (AUD.url === url) { AUD.failed = String(e?.message || e || 'failed'); log('show audio failed', AUD.failed); } }
+      finally { if (AUD.url === url) AUD.loading = false; }
+    })();
+    return null;
+  }
+  const dropAudio = () => { AUD.url = ''; AUD.buf = null; AUD.loading = false; AUD.failed = ''; };
+  function stopSrc() { const s = SH?.src; if (!s) return; SH.src = null; try { s.onended = null; s.stop(); } catch (e) {} try { s.disconnect(); } catch (e) {} }
+  // keep the buffer playing at the show's own second: started when it is ready and the sound is on (a page that joins
+  // late starts in the middle), started again where the show is when it drifted half a second (a stopped sound came back)
+  function audioTick(t) {
+    const ac = actx, buf = SH.audioUrl && AUD.url === SH.audioUrl ? AUD.buf : null;
+    if (!buf || !ac || ac.state !== 'running') return;
+    if (t >= buf.duration - .05) { stopSrc(); return; }
+    if (SH.src) { if (Math.abs(ac.currentTime - SH.srcAt - t) <= .5) return; stopSrc(); }
+    if (t < -3) return;
+    const s = ac.createBufferSource(); s.buffer = buf; s.connect(SH.an);
+    const when = ac.currentTime + (t < 0 ? -t : .04), off = t < 0 ? 0 : t + .04;
+    s.start(when, off); SH.src = s; SH.srcAt = when - off;
+    s.onended = () => { if (SH && SH.src === s) SH.src = null; };
+    log('show audio from', off.toFixed(2));
   }
   function startShow() {
     stopShow();
     const sh = S.show; if (!sh) return;
-    SH = { key: sh.startAt, cues: sh.cues || [], next: 0, sfxNext: 0, cap: '', capUntil: 0, level: 0, syl: [] };
+    SH = { key: sh.startAt, cues: sh.cues || [], next: 0, sfxNext: 0, cap: '', capUntil: 0, level: 0, syl: [], src: null, srcAt: 0, audioUrl: sh.audio || '' };
     const ac = audioCtx();
-    if (sh.audio && ac) {
-      const a = new Audio(); a.crossOrigin = 'anonymous'; a.preload = 'auto'; a.src = H.viaSite ? H.viaSite(sh.audio) : sh.audio;
-      const src = ac.createMediaElementSource(a), an = ac.createAnalyser(); an.fftSize = 512; src.connect(an); an.connect(master);
-      SH.audio = a; SH.an = an; SH.buf = new Float32Array(an.fftSize);
-    }
+    if (ac) { const an = ac.createAnalyser(); an.fftSize = 512; an.connect(master); SH.an = an; SH.buf = new Float32Array(an.fftSize); }
+    if (sh.audio) showAudio(sh.audio);
     // skip what is already over (a late arrival comes in mid-show)
     const t = showTime(); while (SH.next < SH.cues.length && SH.cues[SH.next].t < t - .25) SH.next++;
     loadPerformer();
@@ -240,9 +280,10 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
   }
   function stopShow() {
     if (!SH) return;
-    try { SH.audio?.pause(); if (SH.audio) SH.audio.src = ''; } catch (e) {}
+    stopSrc(); try { SH.an?.disconnect(); } catch (e) {}
     for (const o of SH.syl) try { o.stop(); } catch (e) {}
     SH = null; el && el.cap.classList.remove('on'); performerIdle(); jaw(0);
+    if (PF) PF.holder.setEnabled(false);
   }
   // a line with no audio: a babbling voice (an animal-crossing murmur through two vowel formants), a syllable every ~0.14 s
   function babble(text, at) {
@@ -275,15 +316,15 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     if (!sh || !inPlace || !settings.show || t < -.5 || t >= sh.len + 1) { if (SH) stopShow(); return; }
     if (!SH || SH.key !== sh.startAt) startShow();
     if (!SH) return;
+    if (PF && !PF.holder.isEnabled(false)) PF.holder.setEnabled(true);
     // the badges: a show watched to its end (here for at least half of it, or its last minute)
     if (SH.seenFrom == null) SH.seenFrom = Math.max(0, t);
     if (!SH.seen && t >= sh.len - .5 && sh.len - SH.seenFrom >= Math.min(sh.len * .5, 60)) { SH.seen = true; try { window.badgeStat?.('shows'); } catch (e) {} }
     const ac = audioCtx();
-    // the audio, kept within a few tenths of a second of the show's time
-    if (SH.audio) {
-      if (t >= 0 && SH.audio.paused) { try { SH.audio.currentTime = Math.max(0, t); } catch (e) {} SH.audio.play().catch(() => {}); }
-      else if (t >= 0 && Math.abs(SH.audio.currentTime - t) > .45) { try { SH.audio.currentTime = t; } catch (e) {} }
-    }
+    // the audio at the show's own second (the player's Sound effects level, like the laughs and the rimshots)
+    if (master) { const v = Math.max(0, Math.min(1.5, +(window.PlayerSound?.get?.('effects') ?? 1))); if (Math.abs(master.gain.value - v) > .001) master.gain.value = v; }
+    if (SH.audioUrl) audioTick(t);
+    const voiced = !!(SH.audioUrl && !AUD.failed); // (a file that could not be read: the lines babble)
     // the cues that are due: a line (caption, babble when there is no audio), a move, a sound
     while (SH.next < SH.cues.length && SH.cues[SH.next].t <= t) {
       const c = SH.cues[SH.next++], late = t - c.t;
@@ -291,7 +332,7 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
       if (c.say) {
         const until = (SH.cues.slice(SH.next).find(x => x.say)?.t ?? sh.len) - c.t;
         SH.cap = c.say; SH.capUntil = performance.now() + 1000 * Math.max(CAP_MIN, Math.min(until, 2 + c.say.length * .07)) - late * 1000;
-        if (!sh.audio && ac) SH.plan = (SH.plan || []).concat(babble(c.say, ac.currentTime - Math.min(late, 0)));
+        if (!voiced && ac) SH.plan = (SH.plan || []).concat(babble(c.say, ac.currentTime - Math.min(late, 0)));
       }
       if (c.clip) performerMove(c.clip);
       if (c.sfx) { try { H.sound?.(c.sfx); } catch (e) {} }
@@ -306,7 +347,7 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     }
     // the voice's level: the audio's loudness, or the babble's syllables
     let lv = 0;
-    if (SH.an) { SH.an.getFloatTimeDomainData(SH.buf); let e = 0; for (let i = 0; i < SH.buf.length; i++) e += SH.buf[i] * SH.buf[i]; lv = Math.min(1, Math.sqrt(e / SH.buf.length) * 7); }
+    if (voiced && SH.an) { SH.an.getFloatTimeDomainData(SH.buf); let e = 0; for (let i = 0; i < SH.buf.length; i++) e += SH.buf[i] * SH.buf[i]; lv = Math.min(1, Math.sqrt(e / SH.buf.length) * 7); }
     else if (SH.plan && ac) { const now = ac.currentTime; SH.plan = SH.plan.filter(p => p.b > now - .05); const s = SH.plan.find(p => p.a <= now && now <= p.b); if (s) { const u = (now - s.a) / (s.b - s.a); lv = Math.sin(Math.PI * Math.min(1, u * 1.2)); } }
     SH.level += (lv - SH.level) * .45;
     jaw(SH.level);
@@ -322,15 +363,17 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     } catch (e) {}
     return pfUrl;
   }
+  // (wanted while this page is in the hall of an event with a show at a stage: loaded ahead, shown while the show runs)
+  const pfWanted = () => !!(S.ev && hall && S.ev.show && STAGE_SPOTS[S.ev.place?.room || ''] && atPlace(S.ev));
   async function loadPerformer() {
     const spot = STAGE_SPOTS[S.ev?.place?.room || ''], parent = H.roomHolder?.();
-    if (!spot || !parent || PF || pfLoading) return;
+    if (!spot || !parent || PF || pfLoading || !pfWanted()) return;
     pfLoading = true;
     try {
-      const url = await performerUrl(); if (!url || !SH) return;
+      const url = await performerUrl(); if (!url || !pfWanted()) return;
       const c = await B.SceneLoader.LoadAssetContainerAsync('', H.viaSite ? H.viaSite(url) : url, H.scene);
-      if (!SH || H.roomHolder?.() !== parent) { c.dispose(); return; }
-      const holder = new B.TransformNode('stagePerformer', H.scene); holder.parent = parent;
+      if (!pfWanted() || H.roomHolder?.() !== parent) { c.dispose(); return; }
+      const holder = new B.TransformNode('stagePerformer', H.scene); holder.parent = parent; holder.setEnabled(!!SH);
       holder.position.set(spot[0], spot[1], spot[2]); holder.rotation.y = spot[3]; holder.scaling.setAll(PERFORMER.scale);
       const inst = c.instantiateModelsToScene(n => 'stagePf_' + n, false, { doNotInstantiate: true }), meshes = [], groups = {}, joints = new Map();
       for (const r of inst.rootNodes) { if (r instanceof B.AbstractMesh) meshes.push(r); meshes.push(...r.getChildMeshes(false)); }
@@ -407,7 +450,15 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     if (ev && !ws && !connecting && !stopped && performance.now() >= retryAt) connect(ev.id);
     if (ws && hall && (!ev || ev.id !== hall)) close(); // (left the place, or the event is no longer on)
     try { runShow(); } catch (e) { log('show', e); } // (also here: a page drawing slowly still gets its cues on time)
-    if (PF && (!SH || H.roomHolder?.() !== PF.holder.parent)) dropPerformer();
+    // a show on in this village: the stage's sound is made now, so the taps that bring a player to it start it (an
+    // iPhone starts a page's sound only inside a tap; one made after the last tap would wait for the next)
+    if (!actx && S.live.some(ev => ev.show && ev.place?.village === H.village)) audioCtx();
+    // in the hall: the show's audio and its performer ready before it starts (he shows only while it runs)
+    const want = pfWanted();
+    if (want) { const au = S.show?.audio || S.ev.show?.audio; if (au) showAudio(au); loadPerformer(); }
+    else if (!S.ev && AUD.url) dropAudio();
+    if (PF && (!want || H.roomHolder?.() !== PF.holder.parent)) dropPerformer();
+    if (PF && PF.holder.isEnabled(false) !== !!SH) PF.holder.setEnabled(!!SH);
     // a page that travelled to the event's village: on with the mark (or into the hall)
     if (S.goal && S.goal.until < Date.now()) setGoal(null);
     // came from the lobby's Join: once walking, straight through the event's door (or the mark, when that can't be done)
@@ -438,6 +489,7 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     in: () => !!(ws && ws.readyState === 1 && S.ev),
     on: f => { listeners.add(f); return () => listeners.delete(f); },
     settings, set: (k, v) => { settings[k] = v; save(SET_KEY, settings); if (k === 'show' && !v) stopShow(); },
-    get state() { return { live: S.live.slice(), next: S.next.slice(), ev: S.ev, host: S.host, you: S.you, speakers: S.speakers.slice(), hands: S.hands.slice(), hand: S.hand, show: S.show, n: S.n, cfg: S.cfg, open: !!ws && ws.readyState === 1, hall, goal: S.goal, stopped, t: showTime(), playing: !!SH, cap: SH?.cap || '', level: SH?.level || 0, performer: !!PF, jaw: !!PF?.jaw, pfMove: PF?.cur?.name || null, pfMoves: PF ? PF.log.slice() : [] }; }
+    get state() { return { live: S.live.slice(), next: S.next.slice(), ev: S.ev, host: S.host, you: S.you, speakers: S.speakers.slice(), hands: S.hands.slice(), hand: S.hand, show: S.show, n: S.n, cfg: S.cfg, open: !!ws && ws.readyState === 1, hall, goal: S.goal, stopped, t: showTime(), playing: !!SH, cap: SH?.cap || '', level: SH?.level || 0, performer: !!PF, shown: !!PF?.holder?.isEnabled(false), jaw: !!PF?.jaw, pfMove: PF?.cur?.name || null, pfMoves: PF ? PF.log.slice() : [],
+      audio: { url: AUD.url, ready: !!AUD.buf, len: AUD.buf ? +AUD.buf.duration.toFixed(2) : 0, loading: AUD.loading, failed: AUD.failed, ctx: actx?.state || null, rate: actx?.sampleRate || 0, on: !!SH?.src, pos: SH?.src && actx ? +(actx.currentTime - SH.srcAt).toFixed(2) : null } }; }
   };
 })();
