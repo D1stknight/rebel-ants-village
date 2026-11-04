@@ -184,6 +184,12 @@ try {
   ok((await G.s.next(m => m.t === 'sshow')).show?.startAt === as.ev.showAt, 'the pages get the desk\'s start');
   Aud.s.send({ t: 'show', go: 0 });
   ok(await G.s.none(m => m.t === 'sshow', 600), 'only hosts start or stop the show');
+  // (Nov 4) an event changed while live: its pages get the show with it (a page kept the old one: a new audio or start
+  // never reached a page already there)
+  const ed = await admin('event-save', { id, title: "Antthony's Opening Night: Late Show" });
+  const sv2 = await G.s.next(m => m.t === 'sev');
+  ok(ed.ok && sv2.ev.title === "Antthony's Opening Night: Late Show" && sv2.show?.startAt === as.ev.showAt && sv2.show.cues.length === 3 && sv2.now > 0, 'an event changed while live: its pages get its show with it (the start kept)', sv2);
+  await sleep(400); for (const x of [G, Host, Aud, Cy, Late]) x.s.msgs.length = 0; // (the change's shost / sev messages: not the next checks')
 
   console.log('the Admin Hub');
   ok((await admin('event-host', { id, sub: Cy.sub, u: Cy.u, n: 'Cy' })).ok, 'Cy made a host while there');

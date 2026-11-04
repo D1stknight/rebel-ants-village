@@ -93,7 +93,11 @@
       voice({ t: 'vo', key: '', on: true }); paint(); return;
     }
     if (t === 'sshow') { S.show = m.show || null; offset = (+m.now || Date.now()) - Date.now(); stopShow(); paint(); return; }
-    if (t === 'sev') { S.ev = m.ev; paint(); return; }
+    if (t === 'sev') {
+      S.ev = m.ev;
+      if ('show' in m) { const was = S.show; S.show = m.show || null; if (m.now) offset = +m.now - Date.now(); if (!S.show || !was || was.startAt !== S.show.startAt || was.audio !== S.show.audio || was.len !== S.show.len) stopShow(); }
+      paint(); return;
+    }
     if (t === 'shost') { S.host = !!m.host; if (m.hands) S.hands = m.hands; paint(); return; }
     if (t === 'sn') { S.n = m.n || S.n; paint(); return; }
     if (t === 'scfg') { S.cfg = { chat: m.chat !== false, slow: m.slow || 5, voice: !!m.voice }; voice({ t: 'vcfg', on: !!m.voice }); paint(); return; }

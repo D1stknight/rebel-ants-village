@@ -13,7 +13,7 @@
 //   hall -> page  {t:'shi', ev, you, host, speakers, hands, hand, show, now, n, cfg, hist, mute}   the hello
 //                 {t:'sc', m}  {t:'scx', why}  {t:'scd', i}  {t:'scc'}   chat line, refused, deleted, cleared
 //                 {t:'shands', hands} (hosts)  {t:'shand', on} (mine)  {t:'sspk', speakers}  {t:'sn', n} (how many here)
-//                 {t:'sshow', show, now}  {t:'sev', ev}  {t:'scfg', chat, slow, voice}  {t:'scm', until}  vo / vp / vs
+//                 {t:'sshow', show, now}  {t:'sev', ev, show, now}  {t:'scfg', chat, slow, voice}  {t:'scm', until}  vo / vp / vs
 //                 {t:'send'} the event is over (then the socket closes, 4004)
 // ev = {id, title, place: {village, room|null, label}, starts, ends, hosts: [{u, n}], show: {title, len, audio|null, cues}|null}
 // show while it runs = ev.show + startAt (server time, ms)
@@ -203,7 +203,7 @@ export class StageHall {
     if (op.op === 'ev' && op.ev && op.ev.id === this.kv('id')) {
       this.setEv(op.ev);
       if (op.ev.ended || Date.now() >= op.ev.ends) { await this.end(); return json({ ok: true, hit: 1 }); }
-      this.all({ t: 'sev', ev: pubEvent(op.ev) });
+      this.all({ t: 'sev', ev: pubEvent(op.ev), show: showOf(op.ev), now: Date.now() }); // (the show too: it moves with the event)
       for (const [w, p] of this.socks) try { w.send(JSON.stringify({ t: 'shost', host: p.host, hands: p.host ? this.hands() : undefined })); } catch (e) {}
       hit = this.socks.size;
     }
