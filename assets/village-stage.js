@@ -18,6 +18,8 @@
 // logo's place (the stick and the buttons fill the bottom), computers at the bottom; the other side when he is there.
 // Tickets (Nov 4): a show that needs one lets in only the players whose ticket the site signed (the hall says 'stix' and
 // closes, 4005, to anyone else): the stage stays dark for them and the bar sells them one (assets/golden-ticket.js).
+// A long show's audio comes in pieces (show.parts: each file, where it starts, how long): a page decodes only the piece
+// playing and the next, and starts each piece as the show reaches it.
 // window.VillageStage.start(host) from village.html, host = { scene, village, villageName(id), player() -> { x, z, interior }
 //   | null, signedIn(), ticket() -> Promise<{ ticket, url }|null>, travel(villageId), doorOf(roomId) -> { x, z } | null,
 //   roomHolder() -> the shown room's node | null, enterRoom(roomId) -> bool (through its door), sound(name), viaSite(url),
@@ -273,46 +275,62 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     try { actx = new AC({ sampleRate: 24000 }); } catch (e) { actx = new AC(); }
     master = actx.createGain(); master.gain.value = 1; master.connect(actx.destination); return actx;
   }
-  // the show's audio file: fetched and decoded once (by the hall's page, before the show starts), kept while there
-  const AUD = { url: '', buf: null, loading: false, failed: '' };
+  // the show's audio: one file, or a long show's pieces (Nov 4: a 15-minute set is more than one file); each fetched and
+  // decoded once (by the hall's page, before the show starts), only the piece at the show's second and the next one kept
+  // (a decoded minute is 5.8 MB at 24 kHz: a phone never holds a whole long set)
+  const AUD = { m: new Map(), url: '', buf: null, loading: false, failed: '' }; // (url .. failed: the piece at the show's second)
+  const piecesOf = sh => (sh?.parts?.length ? sh.parts : sh?.audio ? [{ audio: sh.audio, at: 0, len: 1e9 }] : []);
+  const pieceAt = (list, t) => { let i = 0; while (i + 1 < list.length && t >= list[i + 1].at) i++; return i; };
   function showAudio(url) {
     if (!url) return null;
-    if (AUD.url !== url) { AUD.url = url; AUD.buf = null; AUD.loading = false; AUD.failed = ''; }
-    if (AUD.buf || AUD.failed || AUD.loading) return AUD.buf;
+    let a = AUD.m.get(url); if (a) return a.buf;
     const ac = audioCtx(); if (!ac) { AUD.failed = 'no Web Audio'; return null; }
-    AUD.loading = true;
+    a = { buf: null, loading: true, failed: '' }; AUD.m.set(url, a);
     (async () => {
       try {
         const r = await fetch(H.viaSite ? H.viaSite(url) : url); if (!r.ok) throw new Error('HTTP ' + r.status);
-        const data = await r.arrayBuffer(); if (AUD.url !== url) return;
+        const data = await r.arrayBuffer(); if (AUD.m.get(url) !== a) return;
         const buf = await new Promise((res, rej) => { const p = ac.decodeAudioData(data, res, rej); if (p && p.then) p.then(res, rej); });
-        if (AUD.url === url) { AUD.buf = buf; log('show audio', url.split('/').pop(), buf.duration.toFixed(1) + ' s'); }
-      } catch (e) { if (AUD.url === url) { AUD.failed = String(e?.message || e || 'failed'); log('show audio failed', AUD.failed); } }
-      finally { if (AUD.url === url) AUD.loading = false; }
+        if (AUD.m.get(url) === a) { a.buf = buf; log('show audio', url.split('/').pop(), buf.duration.toFixed(1) + ' s'); }
+      } catch (e) { if (AUD.m.get(url) === a) { a.failed = String(e?.message || e || 'failed'); log('show audio failed', a.failed); } }
+      finally { a.loading = false; }
     })();
     return null;
   }
-  const dropAudio = () => { AUD.url = ''; AUD.buf = null; AUD.loading = false; AUD.failed = ''; };
-  function stopSrc() { const s = SH?.src; if (!s) return; SH.src = null; try { s.onended = null; s.stop(); } catch (e) {} try { s.disconnect(); } catch (e) {} }
-  // keep the buffer playing at the show's own second: started when it is ready and the sound is on (a page that joins
-  // late starts in the middle), started again where the show is when it drifts (a stopped sound came back, a late start)
+  // the pieces wanted at second t: the one playing then and the next (the rest let go)
+  function audioWant(sh, t) {
+    const list = piecesOf(sh); if (!list.length) return null;
+    const i = pieceAt(list, Math.max(0, t)), want = new Set([list[i].audio, list[i + 1]?.audio].filter(Boolean));
+    for (const u of want) showAudio(u);
+    for (const u of [...AUD.m.keys()]) if (!want.has(u) && SH?.srcUrl !== u) AUD.m.delete(u);
+    const cur = AUD.m.get(list[i].audio); AUD.url = list[i].audio; AUD.buf = cur?.buf || null; AUD.loading = !!cur?.loading; AUD.failed = cur?.failed || '';
+    return list[i];
+  }
+  const dropAudio = () => { AUD.m.clear(); AUD.url = ''; AUD.buf = null; AUD.loading = false; AUD.failed = ''; };
+  function stopSrc() { const s = SH?.src; if (!s) return; SH.src = null; SH.srcUrl = ''; try { s.onended = null; s.stop(); } catch (e) {} try { s.disconnect(); } catch (e) {} }
+  // keep the piece at the show's second playing at that second: started when it is ready and the sound is on (a page that
+  // joins late starts in the middle), the next piece as the show reaches it, started again where the show is when it
+  // drifts (a stopped sound came back, a late start)
   function audioTick(t) {
-    const ac = actx, buf = SH.audioUrl && AUD.url === SH.audioUrl ? AUD.buf : null;
+    const ac = actx, p = audioWant(S.show, t); if (!p) return;
+    const buf = AUD.buf, local = t - p.at; // (the second within this piece)
     if (!buf || !ac || ac.state !== 'running') return;
-    if (t >= buf.duration - .05) { stopSrc(); return; }
+    if (local >= buf.duration - .05) { if (SH.srcUrl === p.audio) stopSrc(); return; }
     // (more than a quarter second off for a second, or more than 0.6 s at once: started again where the show is)
     if (SH.src) {
-      const off = Math.abs(ac.currentTime - SH.srcAt - t);
-      if (off <= .25) { SH.offSince = 0; return; }
-      if (off <= .6) { const n = performance.now(); if (!SH.offSince) SH.offSince = n; if (n - SH.offSince < 1000) return; }
+      if (SH.srcUrl === p.audio) {
+        const off = Math.abs(ac.currentTime - SH.srcAt - local);
+        if (off <= .25) { SH.offSince = 0; return; }
+        if (off <= .6) { const n = performance.now(); if (!SH.offSince) SH.offSince = n; if (n - SH.offSince < 1000) return; }
+      }
       SH.offSince = 0; stopSrc();
     }
-    if (t < -3) return;
+    if (local < -3) return;
     const s = ac.createBufferSource(); s.buffer = buf; s.connect(SH.an);
-    const when = ac.currentTime + (t < 0 ? -t : .04), off = t < 0 ? 0 : t + .04;
-    s.start(when, off); SH.src = s; SH.srcAt = when - off;
-    s.onended = () => { if (SH && SH.src === s) SH.src = null; };
-    log('show audio from', off.toFixed(2));
+    const when = ac.currentTime + (local < 0 ? -local : .04), off = local < 0 ? 0 : local + .04;
+    s.start(when, off); SH.src = s; SH.srcAt = when - off; SH.srcUrl = p.audio; SH.srcPieceAt = p.at;
+    s.onended = () => { if (SH && SH.src === s) { SH.src = null; SH.srcUrl = ''; } };
+    log('show audio from', p.audio.split('/').pop(), off.toFixed(2));
   }
   function startShow() {
     stopShow();
@@ -320,7 +338,7 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     SH = { key: sh.startAt, cues: sh.cues || [], next: 0, sfxNext: 0, cap: '', capUntil: 0, level: 0, syl: [], src: null, srcAt: 0, audioUrl: sh.audio || '' };
     const ac = audioCtx();
     if (ac) { const an = ac.createAnalyser(); an.fftSize = 512; an.connect(master); SH.an = an; SH.buf = new Float32Array(an.fftSize); }
-    if (sh.audio) showAudio(sh.audio);
+    if (sh.audio) audioWant(sh, showTime());
     // skip what is already over (a late arrival comes in mid-show)
     const t = showTime(); while (SH.next < SH.cues.length && SH.cues[SH.next].t < t - .25) SH.next++;
     loadPerformer(); wakeOn();
@@ -653,8 +671,8 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     if (!actx && S.live.some(ev => ev.show && ev.place?.village === H.village)) audioCtx();
     // in the hall: the show's audio and its performer ready before it starts (he shows only while it runs)
     const want = pfWanted();
-    if (want) { const au = S.show?.audio || S.ev.show?.audio; if (au) showAudio(au); loadPerformer(); }
-    else if (!S.ev && AUD.url) dropAudio();
+    if (want) { audioWant(S.show || S.ev.show, showTime()); loadPerformer(); }
+    else if (!S.ev && AUD.m.size) dropAudio();
     if (PF && (!want || H.roomHolder?.() !== PF.holder.parent)) dropPerformer();
     if (PF && PF.holder.isEnabled(false) !== !!SH) PF.holder.setEnabled(!!SH);
     // a page that travelled to the event's village: on with the mark (or into the hall)
@@ -694,6 +712,6 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     _capRects: () => { const r = el?.cap?.getBoundingClientRect(); return { cap: r && el.cap.classList.contains('on') ? { l: r.left, r: r.right, t: r.top, b: r.bottom } : null, pf: performerRect(), top: !!el?.cap?.classList.contains('top'), text: el?.cap?.classList.contains('on') ? el.cap.dataset.t : '', max: capMax() }; }, // (tests)
     get state() { return { live: S.live.slice(), next: S.next.slice(), ev: S.ev, host: S.host, you: S.you, speakers: S.speakers.slice(), hands: S.hands.slice(), hand: S.hand, show: S.show, n: S.n, cfg: S.cfg, open: !!ws && ws.readyState === 1, hall, grace: graceUntil > performance.now(), wake: !!WAKE.lock, locked, goal: S.goal, stopped, t: showTime(), playing: !!SH, cap: SH?.cap || '', level: SH?.level || 0, performer: !!PF, shown: !!PF?.holder?.isEnabled(false), jaw: !!PF?.jaw, pfMove: PF?.cur?.name || null, pfMoves: PF ? PF.log.slice() : [],
       mic: PF?.mic ? { r: +PF.mic.r.toFixed(3), tilt: PF.mic.tilt } : null,
-      audio: { url: AUD.url, ready: !!AUD.buf, len: AUD.buf ? +AUD.buf.duration.toFixed(2) : 0, loading: AUD.loading, failed: AUD.failed, ctx: actx?.state || null, rate: actx?.sampleRate || 0, on: !!SH?.src, pos: SH?.src && actx ? +(actx.currentTime - SH.srcAt).toFixed(2) : null } }; }
+      audio: { url: AUD.url, ready: !!AUD.buf, len: AUD.buf ? +AUD.buf.duration.toFixed(2) : 0, loading: AUD.loading, failed: AUD.failed, ctx: actx?.state || null, rate: actx?.sampleRate || 0, on: !!SH?.src, pos: SH?.src && actx ? +(actx.currentTime - SH.srcAt + (SH.srcPieceAt || 0)).toFixed(2) : null, pieces: piecesOf(S.show || S.ev?.show).length, kept: AUD.m.size } }; }
   };
 })();

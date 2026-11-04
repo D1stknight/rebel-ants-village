@@ -285,6 +285,17 @@ try {
   const Free = who('Free'); await enter(Free, tx.ev.id);
   ok(fr.ok && fr.ev.tix === false && Free.hi?.t === 'shi', 'tickets switched off: anyone gets in');
   await admin('event-delete', { id: tx.ev.id });
+
+  console.log('a long show in pieces (Nov 4)');
+  const PU = k => `https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/shows/long-${k}.mp3`;
+  const lng = await admin('event-save', { title: 'Long Night', place: CLUB, starts: Date.now() - 1000, ends: Date.now() + 3600000, show: { title: 'Long', len: 700, audio: PU(1), parts: [0, 1, 2, 3, 4, 5].map(k => ({ audio: PU(k + 1), at: k * 115, len: 115 })), cues: [{ t: 1, say: 'Hi' }] } });
+  ok(lng.ok && lng.ev.show.parts?.length === 6 && lng.ev.show.audio === PU(1), 'a show in 6 pieces is kept', lng.ev?.show);
+  const bad = await admin('event-save', { title: 'Bad Pieces', place: CLUB, starts: Date.now() - 1000, ends: Date.now() + 3600000, show: { title: 'Bad', len: 300, audio: PU(1), parts: [{ audio: PU(1), at: 0, len: 150 }, { audio: 'https://elsewhere.test/x.mp3', at: 150, len: 140 }] } });
+  ok(bad.ok && !bad.ev.show.parts && bad.ev.show.audio === PU(1), 'pieces from another site: the pieces dropped, the first file kept');
+  const LP = who('Lis'); await enter(LP, lng.ev.id); await admin('event-show', { id: lng.ev.id, go: true });
+  const sh2 = await LP.s.next(m => m.t === 'sshow');
+  ok(sh2.show?.parts?.length === 6 && sh2.show.startAt > 0, 'the page gets the pieces with the show');
+  for (const e of [lng, bad]) await admin('event-delete', { id: e.ev.id });
 } catch (e) { fail++; console.log('  FAIL (exception)', e.stack); }
 console.log(`\n${pass} passed, ${fail} failed`);
 stop(); process.exit(fail ? 1 : 0);

@@ -230,6 +230,7 @@ a.tile:hover{border-color:#343846;color:var(--fg)}
 #mpa-body .sm .prog{height:6px;border-radius:999px;background:var(--line);overflow:hidden}
 #mpa-body .sm .prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),#ffe2a0);transition:width .3s}
 #mpa-body .sm audio{width:100%;max-width:520px}
+#mpa-body .sm .pieces{display:flex;flex-direction:column;gap:4px}
 #mpa-body .sm .bside{display:flex;gap:4px}
 #mpa-body .sm .bside button{min-width:34px;padding:0 8px}
 #mpa-body .sm .bside button.stale{opacity:.55}
@@ -928,7 +929,7 @@ async function mpaShow(tab) {
 // inside one at most 0.4 s, 0.9 s between lines, where the laughs go).
 const SM = { open: false, styles: null, style: '', minutes: 3, topic: '', set: null, busy: '', done: 0, total: 0, mp3: null, url: '', len: 0, script: '',
   temp: .7, v: [], sayAs: null, sayDefault: [], sayOpen: false, trying: '', sayVer: 0 };
-const SM_LEAD = 1.6, SM_GAP = .9, SM_END = 3, SM_SR = 24000;
+const SM_LEAD = 1.6, SM_GAP = .9, SM_END = 3, SM_SR = 24000, SM_PIECE = 120; // (SM_PIECE: a long set's audio is cut between lines into pieces of at most this many seconds, each its own MP3)
 const SM_DELIVERY = [{ t: .5, label: 'Steady', sub: 'as at the first show' }, { t: .7, label: 'Natural', sub: 'more life in his voice' }, { t: .85, label: 'Lively', sub: 'bigger swings, can slip' }];
 const smApi = async (body) => { const r = await fetch('/api/anthony-standup', body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}); return r; };
 const smClean = t => String(t || '').replace(/[\[\]<>]/g, '').replace(/\s+/g, ' ').trim();
@@ -943,7 +944,7 @@ function setMaker() {
   box.append(mk('h3', '', "Ant-Thony's set maker"), mk('div', 'dim', 'Pick a style, a length and (if you want) a topic. He writes new material in his own voice about the colony, Universe and its players: the styles only borrow how a comic tells jokes, never their jokes, voice or name.'));
   if (!SM.styles) {
     box.append(mk('div', 'dim', 'Loading the styles…'));
-    smApi().then(async r => { const d = await r.json().catch(() => ({})); SM.styles = d.ok ? d.styles : []; SM.sayAs = d.sayAs || null; SM.sayDefault = d.sayAsDefault || []; if (!d.ok) mpaStatus(d.error || 'The set writer did not answer', true); smPaint(); });
+    smApi().then(async r => { const d = await r.json().catch(() => ({})); SM.styles = d.ok ? d.styles : []; SM.long = !!d.parts; SM.sayAs = d.sayAs || null; SM.sayDefault = d.sayAsDefault || []; if (!d.ok) mpaStatus(d.error || 'The set writer did not answer', true); smPaint(); });
     return box;
   }
   const chips = mk('div', 'chips');
@@ -955,7 +956,9 @@ function setMaker() {
   }
   box.append(mk('div', 'dim', 'Style'), chips);
   const len = mk('div', 'row'); len.append(mk('span', 'dim', 'Length'));
-  for (const m of [1, 3, 5]) { const b = mk('button', 'chip', m + (m === 1 ? ' minute' : ' minutes')); b.type = 'button'; b.setAttribute('aria-pressed', String(SM.minutes === m)); b.onclick = () => { SM.minutes = m; smPaint(); }; len.append(b); }
+  // (over 5 minutes: written in parts of 5 that carry on from each other, once the economy's writer has them)
+  for (const m of [1, 3, 5, 10, 15, 20]) { const b = mk('button', 'chip', m + (m === 1 ? ' minute' : ' minutes')); b.type = 'button'; b.setAttribute('aria-pressed', String(SM.minutes === m)); b.disabled = m > 5 && !SM.long; if (b.disabled) b.title = 'Needs the economy\'s writer update (rebel-economy-core: claude/standup-parts)'; b.onclick = () => { SM.minutes = m; smPaint(); }; len.append(b); }
+  if (!SM.long) len.append(mk('span', 'dim', '10 to 20 minutes once the economy\'s writer update is merged (rebel-economy-core: claude/standup-parts)'));
   const topic = mk('input'); topic.type = 'text'; topic.maxLength = 300; topic.value = SM.topic; topic.placeholder = 'Topic (optional): the Grand Relay, Chumpz Cove, the new seats, Monday mornings…'; topic.oninput = () => { SM.topic = topic.value; };
   box.append(len, topic);
   // his delivery: how much his voice varies (lines voiced with another one are voiced again)
@@ -989,13 +992,14 @@ function setMaker() {
     box.append(acts);
   }
   if (SM.url) {
-    const au = mk('audio'); au.controls = true; au.src = SM.url; au.preload = 'metadata';
+    const au = mk('div', 'pieces');
+    for (const [k, p] of (SM.pieces || [{ audio: SM.url, at: 0 }]).entries()) { const a = mk('audio'); a.controls = true; a.src = p.audio; a.preload = 'metadata'; if (SM.pieces) au.append(mk('span', 'dim', `Piece ${k + 1} · from ${mmss(p.at)}`)); au.append(a); }
     const use = mk('div', 'row');
     use.append(btn('Put it in a new event at the Comedy Club', async () => {
       const club = EVENT_PLACES.find(x => x.room === 'hub_comedy_club') || EVENT_PLACES[0];
-      mpa.edit = { title: 'Ant-Thony: ' + SM.set.title, place: club, starts: Date.now() + 3600000, mins: Math.max(30, Math.ceil(SM.len / 60) + 20), show: { title: SM.set.title, audio: SM.url }, script: SM.script, repeat: '', auto: true };
+      mpa.edit = { title: 'Ant-Thony: ' + SM.set.title, place: club, starts: Date.now() + 3600000, mins: Math.max(30, Math.ceil(SM.len / 60) + 20), show: { title: SM.set.title, audio: SM.url, ...(SM.pieces ? { parts: SM.pieces } : {}) }, script: SM.script, repeat: '', auto: true };
       SM.open = false; await mpaShow('events'); requestAnimationFrame(() => document.querySelector('#mpa-body .evf')?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
-    }, 'primary'), mk('span', 'dim', `${mmss(SM.len)} · ${(SM.mp3?.size / 1048576 || 0).toFixed(1)} MB · his set starts by itself a minute after the doors open (you can change that)`));
+    }, 'primary'), mk('span', 'dim', `${mmss(SM.len)} · ${(SM.mp3?.size / 1048576 || 0).toFixed(1)} MB${SM.pieces ? ` in ${SM.pieces.length} pieces` : ''} · his set starts by itself a minute after the doors open (you can change that)`));
     box.append(mk('div', 'dim', 'Listen first:'), au, use);
   }
   // how he says words: the list his voice reads every line through (on every site; the captions keep the written words)
@@ -1015,13 +1019,22 @@ function setMaker() {
   box.append(say);
   return box;
 }
+// a set: one call, or (over 5 minutes) parts of 5 written one after the other, each with what he already said, in the
+// style the first part was written in (Surprise me picks one for the whole set)
 async function smWrite() {
-  SM.busy = 'Ant-Thony is writing… (about a minute)'; SM.total = 0; smPaint();
+  const of = SM.minutes > 5 ? Math.round(SM.minutes / 5) : 1, bits = []; let title = '', style = null;
+  SM.total = of > 1 ? of : 0; SM.done = 0;
   try {
-    const r = await smApi({ action: 'write', minutes: SM.minutes, style: SM.style, topic: SM.topic }); const d = await r.json().catch(() => ({}));
-    if (!r.ok || !d.ok) throw new Error(d.error || 'No set came back');
-    SM.set = { ...d.set, bits: d.set.bits.map(smClean) }; SM.v = []; SM.mp3 = null; SM.url = ''; SM.busy = '';
-  } catch (e) { SM.busy = ''; mpaStatus(e.message, true); }
+    for (let part = 1; part <= of; part++) {
+      SM.busy = of > 1 ? `Ant-Thony is writing part ${part} of ${of}… (about a minute each)` : 'Ant-Thony is writing… (about a minute)'; smPaint();
+      const r = await smApi({ action: 'write', minutes: of > 1 ? 5 : SM.minutes, style: part > 1 && style ? style : SM.style, topic: SM.topic, ...(of > 1 ? { part, of, before: bits.join('\n') } : {}) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.ok) throw new Error((of > 1 ? `Part ${part} of ${of}: ` : '') + (d.error || 'No set came back'));
+      if (part === 1) { title = d.set.title; style = d.set.style || null; }
+      bits.push(...d.set.bits.map(smClean)); SM.done = part;
+    }
+    SM.set = { title, bits, minutes: SM.minutes, style }; SM.v = []; SM.mp3 = null; SM.url = ''; SM.pieces = null; SM.busy = ''; SM.total = 0;
+  } catch (e) { SM.busy = ''; SM.total = 0; mpaStatus(e.message, true); }
   smPaint();
 }
 // a bit's captions: its sentences, short ones joined, each at its share of the bit's time in the audio (a caption is
@@ -1127,15 +1140,24 @@ async function smBuild() {
   list.forEach((k, n) => { times.push({ a: t, b: t + SM.v[k].dur, i: k }); t += SM.v[k].dur + (n < list.length - 1 ? SM_GAP : 0); });
   const total = t + SM_END, pcm = new Float32Array(Math.ceil(total * SM_SR));
   list.forEach((k, n) => { const s = SM.v[k].pcm, at = Math.round(times[n].a * SM_SR); for (let i = 0; i < s.length; i++) pcm[at + i] = s[i] / 32768; });
+  // the pieces: cut between lines (in the middle of a gap) so that each is at most SM_PIECE seconds; a short set is one
+  const gaps = times.slice(0, -1).map((x, n) => (x.b + times[n + 1].a) / 2), cuts = [0];
+  gaps.forEach((g, n) => { const end = n + 1 < gaps.length ? gaps[n + 1] : total; if (end - cuts[cuts.length - 1] > SM_PIECE) cuts.push(g); });
+  cuts.push(total);
   await smLame();
-  const mp3 = smEncode(pcm, SM_SR, 48);
-  SM.mp3 = mp3.size > 2.9 * 1048576 ? smEncode(pcm, SM_SR, 32) : mp3;
-  if (SM.mp3.size > 2.9 * 1048576) throw new Error('The set is too long for one show file: take a few lines out');
-  SM.done = Math.max(SM.done, SM.total - 1); SM.busy = 'Uploading…'; smPaint();
-  const data = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = rej; r.readAsDataURL(SM.mp3); });
-  const up = await fetch('/api/mp-show-upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: (SM.set.title || 'antthony-set').slice(0, 40) + '.mp3', type: 'audio/mpeg', data }) });
-  const u = await up.json().catch(() => ({})); if (!up.ok || !u.ok) throw new Error(u.error || 'Upload failed');
-  SM.url = u.url; SM.len = total; SM.script = smScript(times); SM.done = SM.total; SM.busy = 'Ready.';
+  const name = (SM.set.title || 'antthony-set').slice(0, 40), pieces = [];
+  for (let k = 0; k + 1 < cuts.length; k++) {
+    const a = Math.round(cuts[k] * SM_SR), b = Math.min(pcm.length, Math.round(cuts[k + 1] * SM_SR)), mp3 = smEncode(pcm.subarray(a, b), SM_SR, 48);
+    if (mp3.size > 2.9 * 1048576) throw new Error('A piece of the set is too big to upload');
+    SM.busy = cuts.length > 2 ? `Uploading piece ${k + 1} of ${cuts.length - 1}…` : 'Uploading…'; smPaint();
+    const data = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = rej; r.readAsDataURL(mp3); });
+    const up = await fetch('/api/mp-show-upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name + (cuts.length > 2 ? '-' + (k + 1) : '') + '.mp3', type: 'audio/mpeg', data }) });
+    const u = await up.json().catch(() => ({})); if (!up.ok || !u.ok) throw new Error(u.error || 'Upload failed');
+    pieces.push({ audio: u.url, at: Math.round(a / SM_SR * 100) / 100, len: Math.round((b - a) / SM_SR * 100) / 100, size: mp3.size });
+  }
+  SM.mp3 = { size: pieces.reduce((n, p) => n + p.size, 0) };
+  SM.url = pieces[0].audio; SM.pieces = pieces.length > 1 ? pieces.map(({ audio, at, len }) => ({ audio, at, len })) : null;
+  SM.len = total; SM.script = smScript(times); SM.done = SM.total; SM.busy = 'Ready.';
 }
 async function smBuildSafe(ok) {
   if (ok === false) return;
@@ -1215,7 +1237,10 @@ function eventForm(e) {
   save.append(btn(e.id ? 'Save the changes' : 'Make the event', async () => {
     const p = EVENT_PLACES.find(x => x.key === place.value) || EVENT_PLACES[0], starts = new Date(when.value).getTime(), len = Math.max(10, +mins.value || 60) * 60000;
     let show = null;
-    if (stitle.value.trim() || script.value.trim()) { const sh = parseShow(script.value); show = { title: stitle.value.trim() || 'The show', len: sh.len, audio: audio.value.trim() || null, cues: sh.cues, script: script.value }; }
+    if (stitle.value.trim() || script.value.trim()) {
+      const sh = parseShow(script.value), au = audio.value.trim() || null, parts = e.show?.parts?.length && au === e.show.parts[0].audio ? e.show.parts : null; // (a long set's pieces: kept while its audio is)
+      show = { title: stitle.value.trim() || 'The show', len: Math.max(sh.len, parts ? Math.ceil(parts[parts.length - 1].at + parts[parts.length - 1].len) : 0), audio: au, ...(parts ? { parts } : {}), cues: sh.cues, script: script.value };
+    }
     const entry = gMode.value === 'entry';
     const args = { ...(e.id ? { id: e.id } : {}), title: title.value, place: { village: p.village, room: p.room, label: p.label || VILLAGE_NAMES[p.village] }, starts, ends: starts + len, show, repeat: rep.value, auto: auto.checked, tix: entry };
     // the tickets (kept by this site: api/golden-ticket.mjs): set before the event says it needs them, so its hall never

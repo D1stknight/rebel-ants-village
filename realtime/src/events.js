@@ -36,7 +36,7 @@ export function pubEvent(ev, now = Date.now()) {
   if (!ev) return null;
   const s = ev.show;
   return { id: ev.id, title: ev.title, place: ev.place, starts: ev.starts, ends: ev.ends, live: isLive(ev, now), over: !!ev.ended || now >= ev.ends,
-    hosts: (ev.hosts || []).map(h => ({ u: h.u, n: h.n })), show: s ? { title: s.title, len: s.len, audio: s.audio || null, cues: s.cues || [] } : null,
+    hosts: (ev.hosts || []).map(h => ({ u: h.u, n: h.n })), show: s ? { title: s.title, len: s.len, audio: s.audio || null, ...(s.parts ? { parts: s.parts } : {}), cues: s.cues || [] } : null,
     repeat: ev.repeat || null, auto: !!ev.auto, tix: !!ev.tix };
 }
 // the lobby's and the pages' list: what, where, when, who hosts it, whether a show is on
@@ -47,6 +47,11 @@ export function normShow(s) {
   if (!s || typeof s !== 'object') return null;
   const len = Math.min(3600, Math.max(5, Math.round(+s.len || 0) || 60));
   const audio = typeof s.audio === 'string' && AUDIO.test(s.audio) ? s.audio : null;
+  // a long show's audio in pieces (Nov 4: a 15-minute set is more than one file; pages decode only the piece playing and
+  // the next): each its file, where it starts in the show and how long it is, in order, not overlapping
+  let parts = (Array.isArray(s.parts) ? s.parts : []).slice(0, 60).map(p => p && typeof p.audio === 'string' && AUDIO.test(p.audio)
+    ? { audio: p.audio, at: Math.max(0, Math.round((+p.at || 0) * 100) / 100), len: Math.max(.5, Math.min(900, Math.round((+p.len || 0) * 100) / 100)) } : null);
+  parts = parts.every(Boolean) && parts.length > 1 && parts.every((p, i) => !i || p.at >= parts[i - 1].at + parts[i - 1].len - .05) ? parts : null;
   const cues = (Array.isArray(s.cues) ? s.cues : []).slice(0, 400).map(c => {
     if (!c || typeof c !== 'object' || !(+c.t <= len) && c.t != null) return null; // (a line past the show's end: dropped)
     const t = Math.max(0, Math.round((+c.t || 0) * 10) / 10), o = { t };
@@ -55,7 +60,7 @@ export function normShow(s) {
     if (SFX.includes(c.sfx)) o.sfx = c.sfx;
     return o.say || o.clip || o.sfx ? o : null;
   }).filter(Boolean).sort((a, b) => a.t - b.t);
-  return { title: label(s.title).slice(0, 80) || 'The show', len, audio, cues, script: typeof s.script === 'string' ? s.script.slice(0, 20000) : '' }; // (script: the Admin Hub's text, for editing)
+  return { title: label(s.title).slice(0, 80) || 'The show', len, audio: parts ? parts[0].audio : audio, ...(parts ? { parts } : {}), cues, script: typeof s.script === 'string' ? s.script.slice(0, 20000) : '' }; // (script: the Admin Hub's text, for editing)
 }
 // an event made or changed in the Admin Hub (args over the old one): checked, or { error }
 export function normEvent(a, old, now = Date.now()) {

@@ -1,6 +1,8 @@
 // Ant-Thony's stand-up set maker (Nov 2, Admin Hub > Players > Events > Set maker). Admins only.
 //   GET                                                   -> { ok, styles: [{ id, label, inspiredBy }] }
-//   POST { action: 'write', minutes 1-5, style?, topic? } -> { ok, set: { title, bits, minutes, style } }
+//   POST { action: 'write', minutes 1-5, style?, topic?, part?, of?, before? } -> { ok, set: { title, bits, minutes, style } }
+//        (Nov 4: a long set in parts, 1..of, each up to 5 minutes, with what he already said; the economy's writer since
+//        rebel-economy-core claude/standup-parts: GET answers parts: true once it has it)
 //   POST { action: 'voice', text, temperature? }          -> audio/wav: one bit in his own voice (temperature 0.2-1.2: how
 //                                                            much his delivery varies; the economy's default 0.5 is steady)
 //   POST { action: 'sayas', list: [[written, said]...] }  -> { ok, sayAs }: how he says words (every site, every line he says)
@@ -56,9 +58,11 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'GET or POST' });
   const b = typeof req.body === 'object' && req.body ? req.body : (() => { try { return JSON.parse(req.body || '{}'); } catch (e) { return {}; } })();
   if (b.action === 'write') {
-    if (!(await underLimits([['standup:write:h', 30, 3600]]))) return res.status(429).json({ ok: false, error: 'Thirty sets an hour: try again in a while' });
+    if (!(await underLimits([['standup:write:h', 60, 3600]]))) return res.status(429).json({ ok: false, error: 'Sixty writes an hour (a long set is a few): try again in a while' });
     const minutes = Math.max(1, Math.min(5, Math.round(+b.minutes || 3)));
     const body = { minutes, extra: (await universeWeek()).slice(0, 3000) };
+    const of = Math.max(1, Math.min(6, Math.round(+b.of || 1))), part = Math.max(1, Math.min(of, Math.round(+b.part || 1)));
+    if (of > 1) { body.part = part; body.of = of; if (part > 1) body.before = String(b.before || '').slice(-20000); }
     const style = clean(b.style, 40), topic = clean(b.topic, 300);
     if (style) body.style = style;
     if (topic) body.topic = topic;
