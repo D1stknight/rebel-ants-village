@@ -10,6 +10,9 @@
 // inside a tap, a click or a key, and a show starts on the server's clock), while the stage's sound starts on any finger
 // lift (assets/audio-unlock.js). A page whose sound was stopped (a call, the background) picks it up where the show is.
 // The performer is loaded as the page joins the hall too, and shows when the show starts.
+// A dropped connection to the hall (Nov 4: a phone's network, a screen that slept; he vanished near the end and came
+// back) no longer stops the show: it plays on from the page's own copy while the page knocks again (GRACE_MS), and a
+// phone's screen is kept on while a show plays (the Screen Wake Lock), so watching without touching doesn't lock it.
 // window.VillageStage.start(host) from village.html, host = { scene, village, villageName(id), player() -> { x, z, interior }
 //   | null, signedIn(), ticket() -> Promise<{ ticket, url }|null>, travel(villageId), doorOf(roomId) -> { x, z } | null,
 //   roomHolder() -> the shown room's node | null, enterRoom(roomId) -> bool (through its door), sound(name), viaSite(url),
@@ -26,6 +29,9 @@
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
   const settings = load(SET_KEY, { show: true, captions: true });
   let H = null, B = null, ws = null, connecting = false, retryAt = 0, stopped = null, hall = null, pollAt = 0, offset = 0, listeners = new Set();
+  // (a hall whose connection dropped: the event and its show stay on this page until it is back in, or this passes)
+  const GRACE_MS = 60000; let graceUntil = 0, graceTries = 0;
+  const inHall = () => !!(S.ev && (hall || graceUntil > performance.now()));
   let wanted = new URLSearchParams(location.search).get('event'), wantedEv = null; // (the lobby's LIVE NOW: village.html?village=..&event=<id>)
   const S = { live: [], next: [], ev: null, host: false, you: null, speakers: [], hands: [], hand: false, show: null, n: 0, cfg: { chat: true, slow: 5, voice: false }, mute: 0, goal: null };
   const emit = (kind, d) => { for (const f of listeners) try { f(kind, d); } catch (e) {} };
@@ -62,18 +68,25 @@
       s.onmessage = e => { if (ws !== s) return; let m; try { m = JSON.parse(e.data); } catch (err) { return; } try { onMessage(m); } catch (err) { log('bad message', err); } };
       s.onclose = e => {
         if (ws !== s) return;
-        ws = null; const was = hall; hall = null; leaveHall();
+        ws = null; const was = hall; hall = null;
         log('closed', e.code, e.reason);
+        // dropped after it was in (the network, a phone that slept): the show plays on while the page knocks again
+        if (S.ev && e.code !== 4001 && e.code !== 4003 && e.code !== 4004) {
+          if (!graceUntil) { graceUntil = performance.now() + GRACE_MS; graceTries = 0; }
+          voiceReset(); paint();
+          retryAt = performance.now() + Math.min(8000, 800 * 2 ** graceTries++) + Math.random() * 800; return;
+        }
+        graceUntil = 0; leaveHall();
         if (e.code === 4001) { stopped = 'dup'; return; }
         if (e.code === 4003) { stopped = 'kick'; return; }
-        if (e.code === 4004 || e.code === 1006 && !S.ev) { S.live = S.live.filter(x => x.id !== was); paint(); pollAt = 0; }
+        if (e.code === 4004 || e.code === 1006) { S.live = S.live.filter(x => x.id !== was); paint(); pollAt = 0; }
         retryAt = performance.now() + 4000 + Math.random() * 4000;
       };
       s.onerror = () => {};
     } finally { connecting = false; }
   }
   const send = o => { if (ws && ws.readyState === 1) { ws.send(JSON.stringify(o)); return true; } return false; };
-  function close() { const s = ws; ws = null; hall = null; try { s?.close(1000, 'left'); } catch (e) {} leaveHall(); }
+  function close() { const s = ws; ws = null; hall = null; graceUntil = 0; try { s?.close(1000, 'left'); } catch (e) {} leaveHall(); }
   function leaveHall() {
     S.ev = null; S.host = false; S.speakers = []; S.hands = []; S.hand = false; S.show = null; S.n = 0;
     stopShow(); voiceReset(); paint(); emit('left', {});
@@ -83,7 +96,7 @@
   function onMessage(m) {
     const t = m.t;
     if (t === 'shi') {
-      S.ev = m.ev; S.host = !!m.host; S.you = m.you; S.speakers = m.speakers || []; S.hands = m.hands || []; S.hand = !!m.hand; S.n = m.n || 1;
+      graceUntil = 0; graceTries = 0; S.ev = m.ev; S.host = !!m.host; S.you = m.you; S.speakers = m.speakers || []; S.hands = m.hands || []; S.hand = !!m.hand; S.n = m.n || 1;
       S.cfg = m.cfg || S.cfg; S.mute = m.mute || 0; S.show = m.show || null; offset = (+m.now || Date.now()) - Date.now();
       if (S.goal && S.goal.id === m.ev?.id) setGoal(null);
       try { if (m.ev?.id) { window.badgeStat?.('events', String(m.ev.id)); if (S.host) window.badgeStat?.('hosted', String(m.ev.id)); } } catch (e) {} // (the badges)
@@ -157,7 +170,7 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
   let hostOpen = false, dismissed = '';
   function paint() {
     if (!el) return;
-    const here = S.ev && hall;
+    const here = S.ev && inHall(), back = !hall; // (back: the connection dropped, the page is knocking again)
     // away: the first event on now that this page is not at
     const away = !here && S.live.find(ev => !atPlace(ev) && ev.id !== dismissed);
     el.live.classList.toggle('on', !!away && !!H.canAct?.());
@@ -172,11 +185,11 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     const speakingNow = here && S.speakers.some(s => s.u === S.you), showOn = !!(S.show && showTime() >= 0 && showTime() < S.show.len);
     const deaf = !!(showOn && actx && actx.state !== 'running' && settings.show); // (an iPhone's sound waits for a tap)
     const gold = here ? GOLD.of(S.ev.id) : null;
-    const kBar = here ? [S.ev.id, S.ev.title, S.n, showOn, deaf, S.host, S.hands.length, hostOpen, speakingNow, S.hand, H.signedIn(), gold ? gold.mine + ':' + gold.left : ''].join('|') : '';
+    const kBar = here ? [S.ev.id, S.ev.title, S.n, showOn, deaf, back, S.host, S.hands.length, hostOpen, speakingNow, S.hand, H.signedIn(), gold ? gold.mine + ':' + gold.left : ''].join('|') : '';
     if (!here) el.bar.dataset.k = '';
     if (here && el.bar.dataset.k !== kBar) {
       el.bar.dataset.k = kBar;
-      el.bar.innerHTML = `<span class="dot"></span><span class="tx"><b>LIVE</b> · ${esc(S.ev.title)} <small>· ${S.n} here${showOn ? (deaf ? ' · 🔇 tap the screen to hear the show' : ' · the show is on') : ''}</small></span>`;
+      el.bar.innerHTML = `<span class="dot"></span><span class="tx"><b>LIVE</b> · ${esc(S.ev.title)} <small>· ${S.n} here${showOn ? (deaf ? ' · 🔇 tap the screen to hear the show' : ' · the show is on') : ''}${back ? ' · reconnecting…' : ''}</small></span>`;
       const speaking = S.speakers.some(s => s.u === S.you);
       if (S.host) el.bar.append(btn('Host · ' + S.hands.length + ' ✋', () => { hostOpen = !hostOpen; paint(); }, hostOpen ? 'on' : ''));
       else if (speaking) el.bar.append(btn('On stage', () => send({ t: 'hand', on: false }), 'on'));
@@ -276,12 +289,25 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     if (sh.audio) showAudio(sh.audio);
     // skip what is already over (a late arrival comes in mid-show)
     const t = showTime(); while (SH.next < SH.cues.length && SH.cues[SH.next].t < t - .25) SH.next++;
-    loadPerformer();
+    loadPerformer(); wakeOn();
     log('show', sh.title, t.toFixed(1));
   }
+  // a phone's screen kept on while a show plays (asked again when the page comes back, and on a tap when refused)
+  const WAKE = { lock: null, want: false, asking: false, at: 0 };
+  async function wakeOn() {
+    WAKE.want = true;
+    if (WAKE.lock || WAKE.asking || !navigator.wakeLock || document.visibilityState !== 'visible' || performance.now() - WAKE.at < 3000) return;
+    WAKE.asking = true; WAKE.at = performance.now();
+    try {
+      const l = await navigator.wakeLock.request('screen');
+      if (!WAKE.want) { l.release().catch(() => {}); return; }
+      WAKE.lock = l; l.addEventListener('release', () => { if (WAKE.lock === l) WAKE.lock = null; }); log('screen kept on');
+    } catch (e) { log('wake lock', e?.name || e); } finally { WAKE.asking = false; }
+  }
+  function wakeOff() { WAKE.want = false; const l = WAKE.lock; WAKE.lock = null; if (l) l.release().catch(() => {}); }
   function stopShow() {
     if (!SH) return;
-    stopSrc(); try { SH.an?.disconnect(); } catch (e) {}
+    wakeOff(); stopSrc(); try { SH.an?.disconnect(); } catch (e) {}
     for (const o of SH.syl) try { o.stop(); } catch (e) {}
     SH = null; el && el.cap.classList.remove('on'); performerIdle(); jaw(0);
     if (PF) PF.holder.setEnabled(false);
@@ -312,7 +338,7 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
   }
   const CAP_MIN = 2.6;
   function runShow() {
-    const sh = S.show, inPlace = S.ev && hall && atPlace(S.ev);
+    const sh = S.show, inPlace = S.ev && inHall() && atPlace(S.ev);
     const t = showTime();
     if (!sh || !inPlace || !settings.show || t < -.5 || t >= sh.len + 1) { if (SH) stopShow(); return; }
     if (!SH || SH.key !== sh.startAt) startShow();
@@ -366,7 +392,7 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     return pfUrl;
   }
   // (wanted while this page is in the hall of an event with a show at a stage: loaded ahead, shown while the show runs)
-  const pfWanted = () => !!(S.ev && hall && S.ev.show && STAGE_SPOTS[S.ev.place?.room || ''] && atPlace(S.ev));
+  const pfWanted = () => !!(S.ev && inHall() && S.ev.show && STAGE_SPOTS[S.ev.place?.room || ''] && atPlace(S.ev));
   async function loadPerformer() {
     const spot = STAGE_SPOTS[S.ev?.place?.room || ''], parent = H.roomHolder?.();
     if (!spot || !parent || PF || pfLoading || !pfWanted()) return;
@@ -531,6 +557,8 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     poll();
     if (S.ev && hall) GOLD.want(S.ev.id);
     const ev = S.live.find(atPlace) || null;
+    // a dropped hall that did not come back in time, or a player who walked off meanwhile: out of it
+    if (!ws && graceUntil && (performance.now() > graceUntil || !ev || ev.id !== S.ev?.id)) { graceUntil = 0; leaveHall(); }
     if (ev && !ws && !connecting && !stopped && performance.now() >= retryAt) connect(ev.id);
     if (ws && hall && (!ev || ev.id !== hall)) close(); // (left the place, or the event is no longer on)
     try { runShow(); } catch (e) { log('show', e); } // (also here: a page drawing slowly still gets its cues on time)
@@ -557,11 +585,14 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     setInterval(tick, 500);
     poll(true);
     document.addEventListener('pointerdown', () => { if (actx) audioCtx(); }, true);
+    // (the screen's wake lock: asked again as the page comes back into view, and on a tap when it was refused)
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && WAKE.want && !WAKE.lock) { WAKE.at = 0; wakeOn(); } });
+    document.addEventListener('pointerup', () => { if (WAKE.want && !WAKE.lock) wakeOn(); }, true);
   }
   window.VillageStage = {
     start, tick, poll, dots, goTo, close,
     // golden tickets at the event the page is at: { holds: front-row seat theirs, active: the event's front row is reserved }
-    golden: () => { const ev = S.ev && hall ? S.ev : null, g = ev ? GOLD.of(ev.id) : null; return g ? { active: (g.buy || 0) + (g.raffle || 0) > 0, holds: g.mine === 'bought' || g.mine === 'won', room: ev.place?.room || null } : null; },
+    golden: () => { const ev = S.ev && inHall() ? S.ev : null, g = ev ? GOLD.of(ev.id) : null; return g ? { active: (g.buy || 0) + (g.raffle || 0) > 0, holds: g.mine === 'bought' || g.mine === 'won', room: ev.place?.room || null } : null; },
     // a live event with a show at the Comedy Club: Ant-Thony is there (the roaming one steps off his rounds meanwhile)
     antOnStage: () => S.live.some(e => e.place?.village === 'hub' && e.place?.room === 'hub_comedy_club' && !!e.show),
     say: x => send({ t: 'sc', x: String(x || '') }), report: (i, why) => send({ t: 'rp', i: +i, why: why || 'other' }),
@@ -574,7 +605,7 @@ body.in-game #vsLive,body.in-game #vsBar,body.in-game #vsHost{display:none!impor
     on: f => { listeners.add(f); return () => listeners.delete(f); },
     settings, set: (k, v) => { settings[k] = v; save(SET_KEY, settings); if (k === 'show' && !v) stopShow(); },
     _mic: performerMic, // (tests)
-    get state() { return { live: S.live.slice(), next: S.next.slice(), ev: S.ev, host: S.host, you: S.you, speakers: S.speakers.slice(), hands: S.hands.slice(), hand: S.hand, show: S.show, n: S.n, cfg: S.cfg, open: !!ws && ws.readyState === 1, hall, goal: S.goal, stopped, t: showTime(), playing: !!SH, cap: SH?.cap || '', level: SH?.level || 0, performer: !!PF, shown: !!PF?.holder?.isEnabled(false), jaw: !!PF?.jaw, pfMove: PF?.cur?.name || null, pfMoves: PF ? PF.log.slice() : [],
+    get state() { return { live: S.live.slice(), next: S.next.slice(), ev: S.ev, host: S.host, you: S.you, speakers: S.speakers.slice(), hands: S.hands.slice(), hand: S.hand, show: S.show, n: S.n, cfg: S.cfg, open: !!ws && ws.readyState === 1, hall, grace: graceUntil > performance.now(), wake: !!WAKE.lock, goal: S.goal, stopped, t: showTime(), playing: !!SH, cap: SH?.cap || '', level: SH?.level || 0, performer: !!PF, shown: !!PF?.holder?.isEnabled(false), jaw: !!PF?.jaw, pfMove: PF?.cur?.name || null, pfMoves: PF ? PF.log.slice() : [],
       mic: PF?.mic ? { r: +PF.mic.r.toFixed(3), tilt: PF.mic.tilt } : null,
       audio: { url: AUD.url, ready: !!AUD.buf, len: AUD.buf ? +AUD.buf.duration.toFixed(2) : 0, loading: AUD.loading, failed: AUD.failed, ctx: actx?.state || null, rate: actx?.sampleRate || 0, on: !!SH?.src, pos: SH?.src && actx ? +(actx.currentTime - SH.srcAt).toFixed(2) : null } }; }
   };
