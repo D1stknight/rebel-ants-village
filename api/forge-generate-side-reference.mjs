@@ -18,7 +18,9 @@ function buildSidePrompt(generationInput = {}, side = 'left', hasBack = false) {
   const HALF = side === 'right' ? 'LEFT' : 'RIGHT';
   const OTHER = side === 'right' ? 'RIGHT' : 'LEFT';
   const human = generationInput.species === 'human';
-  const kind = generationInput.species && generationInput.species !== 'ant' ? `realistic 3D-rendered ${generationInput.species} game character (same render style: real ${human ? 'skin' : 'fur'}, fabric and leather)` : 'stylised Rebel Ant game character';
+  // Nov 4: Universe's own characters (Vicky's dolls) keep their stylised look: their skin, makeup and render style
+  const kind = generationInput.collectionKey === 'universe' && generationInput.species ? `stylised 3D-rendered ${generationInput.species} game character (same render style as Image 1: the same skin colour and finish, hair, fabric and leather)`
+    : generationInput.species && generationInput.species !== 'ant' ? `realistic 3D-rendered ${generationInput.species} game character (same render style: real ${human ? 'skin' : 'fur'}, fabric and leather)` : 'stylised Rebel Ant game character';
   const friend = generationInput.species && generationInput.species !== 'ant';   // Chumpz / Saints (clothes, not armour)
   const headSide = friend ? `the profile of the head with its ear, ${human ? 'face' : 'muzzle'} and headwear` : 'the profile of the head and antennae';
   return `

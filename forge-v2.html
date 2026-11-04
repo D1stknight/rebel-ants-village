@@ -1454,6 +1454,9 @@ function GI() {
   if (REF) GI_CACHE = { ...GI_CACHE, species: SPECIES, name: state.meta?.name || GI_CACHE.name, referenceImage: true };
   if (FRIEND) GI_CACHE = { ...GI_CACHE, species: SPECIES, name: state.meta?.name || GI_CACHE.name, friendTraits: (state.meta?.traits || []).slice(0, 20) };
   if (art) GI_CACHE = { ...GI_CACHE, sourceArt: art.path };
+  // Nov 4: a Universe character painted from its (chibi doll) artwork is grown to normal proportions; its build carries it,
+  // so the rigger uses the usual landmarks (api/_forge-rig.mjs chibiEnv) and the back and sides keep its look
+  if (art && COL === 'universe') GI_CACHE = { ...GI_CACHE, bodyType: 'universe_grown' };
   if (S?.leave?.length) GI_CACHE = { ...GI_CACHE, leaveOut: S.leave };
   return GI_CACHE;
 }
@@ -1839,6 +1842,9 @@ function markNodes() {
    Data
    ========================================================= */
 async function loadToken(t) {
+  // Nov 4: Universe's own characters have no NFT: an admin forges them from their artwork (?art=...&name=...)
+  if (COL === 'universe' && !REF) return { tokenId: t, name: String(Q.get('name') || '').slice(0, 60) || `${NOUN} #${t}`, img: ART || '', thumb: ART || '',
+    traits: [{ trait_type: 'Collection', value: COL }, { trait_type: 'Species', value: SPECIES }] };
   if (REF) return { tokenId: t, name: REF_NAME || `#${t}`, img: REF, thumb: REF,
     traits: [{ trait_type: 'Collection', value: COL }, { trait_type: 'Species', value: SPECIES }, { trait_type: 'Source', value: 'Reference render' }] };
   const out = { tokenId: t, name: `${NOUN} #${t}`, traits: [], img: `/api/nft-image?c=${COL}&t=${t}&s=full`, thumb: `/api/nft-image?c=${COL}&t=${t}&s=thumb` };
@@ -2009,7 +2015,7 @@ function bindErr() { const r = $('#retryBtn'); if (r) r.onclick = retry; }
 function artNoteHTML() {
   const a = shownArt(), leave = active() ? S.leave || [] : linkLeave();
   if (!a && !leave.length) return '';
-  return `<div class="note artnote">ADMIN · ${a ? `painting from <b>${esc(a.path.split('/').pop())}</b>, not the NFT picture or its traits${a.gang ? ` · costume: ${esc(a.gang)}` : ''}` : 'painting from the NFT'}${leave.length ? ` · leaving out: ${esc(leave.join(', '))}` : ''}</div>`;
+  return `<div class="note artnote">ADMIN · ${a ? `painting from <b>${esc(a.path.split('/').pop())}</b>, ${COL === 'universe' ? 'grown to normal proportions (not chibi)' : 'not the NFT picture or its traits'}${a.gang ? ` · costume: ${esc(a.gang)}` : ''}` : 'painting from the NFT'}${leave.length ? ` · leaving out: ${esc(leave.join(', '))}` : ''}</div>`;
 }
 
 /* ---- 1. SUMMON 召 ---- */

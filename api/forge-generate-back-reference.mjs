@@ -40,13 +40,16 @@ Output: one single full-body back view. Not a collage, not a turnaround sheet, n
 // friend-collection characters (Chumpz apes, Saints humans): Image 1 is a finished, realistic 3D-rendered front view
 function buildSpeciesBackPrompt(generationInput = {}) {
   const sp = generationInput.species, human = sp === 'human';
+  // Nov 4: Universe's own characters (Vicky's dolls) keep their stylised look: their skin, makeup and render style
+  const own = generationInput.collectionKey === 'universe';
+  const style = own ? 'the same stylised 3D render style as Image 1 (the same skin colour and finish, the same hair, fabric and leather)' : `the same realistic 3D render style (real ${human ? 'skin, hair' : 'fur'}, fabric and leather)`;
   return `
-Image 1 is the FRONT view of a realistic 3D-rendered ${sp} game character (${generationInput.name || 'a ' + sp}), standing in a neutral pose.
+Image 1 is the FRONT view of a ${own ? 'stylised' : 'realistic'} 3D-rendered ${sp} game character (${generationInput.name || 'a ' + sp}), standing in a neutral pose.
 Draw the SAME character seen from DIRECTLY BEHIND (a 180-degree turn), for a 3D modelling turnaround.
 
 Match Image 1 exactly:
 - Same pose, same arm angles, same height, same scale, same framing, head-to-feet in frame.
-- Same outfit, colours, materials and the same realistic 3D render style (real ${human ? 'skin, hair' : 'fur'}, fabric and leather), same plain light-grey background, same soft even lighting.
+- Same outfit, colours, materials and ${style}, same plain light-grey background, same soft even lighting.
 - Mirror left and right correctly: the character's right side is now on the image's right.
 
 The back of the head (very important):
