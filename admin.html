@@ -982,12 +982,27 @@ async function smWrite() {
   } catch (e) { SM.busy = ''; mpaStatus(e.message, true); }
   smPaint();
 }
+// a bit's captions: its sentences, short ones joined, each at its share of the bit's time in the audio (a caption is
+// at most 200 characters on the stage; a whole bit at once was a wall of words, and a long one was cut off)
+function smCaptions(text, a, b) {
+  const sen = String(text).match(/[^.!?…]+(?:[.!?…]+["')\]]*|$)/g)?.map(x => x.trim()).filter(Boolean) || [String(text)];
+  const parts = [];
+  for (let x of sen) {
+    while (x.length > 150) { let cut = Math.max(x.lastIndexOf(', ', 150), x.lastIndexOf('; ', 150)); if (cut < 60) cut = x.lastIndexOf(' ', 150); if (cut < 1) cut = 150; parts.push(x.slice(0, cut + 1).trim()); x = x.slice(cut + 1).trim(); }
+    if (!x) continue;
+    if (parts.length && (parts[parts.length - 1].length < 40 || x.length < 25) && (parts[parts.length - 1] + ' ' + x).length <= 150) parts[parts.length - 1] += ' ' + x;
+    else parts.push(x);
+  }
+  const total = parts.reduce((n, x) => n + x.length, 0) || 1; let done = 0;
+  return parts.map(x => { const at = a + (b - a) * done / total; done += x.length; return { at, x }; });
+}
 function smScript(times) {
-  // each bit at its own time in the audio, a laugh (now and then a rimshot) as it ends, applause at both ends
+  // each bit at its own time in the audio (a caption per sentence), a laugh (now and then a rimshot) as it ends,
+  // applause at both ends
   const lines = ['0:00.0 [applause] <wave>'];
   times.forEach((t, k) => {
     const moves = ['', '', '', '<game_cheer>'], sfx = k % 3 === 2 ? '[rimshot]' : '[laugh]';
-    lines.push(`${mmss(t.a)} ${SM.set.bits[t.i]}`);
+    for (const c of smCaptions(SM.set.bits[t.i], t.a, t.b)) lines.push(`${mmss(c.at)} ${c.x}`);
     if (k < times.length - 1) lines.push(`${mmss(t.b + .15)} ${sfx} ${moves[k % 4]}`.trim());
   });
   const last = times[times.length - 1];
