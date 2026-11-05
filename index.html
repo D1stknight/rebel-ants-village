@@ -1589,6 +1589,18 @@ requestWalletProviderAnnouncements();
 setTimeout(requestWalletProviderAnnouncements, 250);
 setTimeout(requestWalletProviderAnnouncements, 1000);
 
+// Phones (Nov 5): Safari and Chrome on a phone have no wallet of their own, but a wallet app's own browser (Coinbase
+// Wallet, MetaMask, Trust...) puts its wallet in the page, so there Connect Wallet uses it without asking.
+function isPhoneBrowser() {
+  const ua = navigator.userAgent || '';
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1); // (iPads say Mac)
+}
+function walletAppProvider() {
+  if (!isPhoneBrowser()) return null;
+  const provider = getInjectedWalletProvider();
+  return provider && !provider.isBraveWallet ? provider : null; // (Brave's own wallet is in every Brave page, set up or not)
+}
+
 function getWalletProviderDiagnostics() {
   return {
     ethereum: typeof window.ethereum !== 'undefined',
@@ -1735,12 +1747,26 @@ async function connectWallet() {
     return;
   }
   openWalletModal();
+  if (walletAppProvider()) connectBrowserWallet(); // inside a wallet app's browser: its wallet, no question
+}
+
+// The Connect Wallet window's "open in your wallet app" links open /?connect=wallet in that app: it connects as soon
+// as the lobby shows (the tour waits for another visit: assets/lobby-tour.js)
+async function connectFromWalletLink() {
+  const q = new URLSearchParams(location.search);
+  if (q.get('connect') !== 'wallet') return;
+  q.delete('connect');
+  const rest = q.toString();
+  history.replaceState(null, '', location.pathname + (rest ? '?' + rest : '') + location.hash);
+  if (walletConnected || !walletAppProvider()) return;
+  const signedIn = window.RebelWallet ? await window.RebelWallet.session() : null;
+  if (!signedIn && !walletConnected) connectWallet();
 }
 
 async function connectBrowserWallet() {
   const btn = document.getElementById('btn-wallet');
   btn.textContent = 'Detecting Wallet...';
-  setWalletModalStatus('Looking for an unlocked browser wallet extension...');
+  setWalletModalStatus(isPhoneBrowser() ? 'Looking for your wallet...' : 'Looking for an unlocked browser wallet extension...');
   const provider = await waitForWalletProvider();
   if (!provider) {
     const diagnostics = getWalletProviderDiagnostics();
@@ -2221,6 +2247,7 @@ window.addEventListener('load', () => {
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('ui').style.opacity = '1';
         window.LobbyTour?.auto(); // (the ? button; the tour on a first visit: assets/lobby-tour.js)
+        connectFromWalletLink(); // (after the tour has read the address: it skips a visit that came to connect)
         if (landingUserInteracted) startMusic();
       }, 600);
     }, 800);
