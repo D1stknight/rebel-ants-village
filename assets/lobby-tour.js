@@ -132,7 +132,7 @@
   }
   function auto() {
     button();
-    if (seen() || /[?&](tour=0|ref=)/.test(location.search)) return;
+    if (seen() || /[?&](tour=0|ref=|connect=wallet)/.test(location.search)) return;
     setTimeout(() => { if (!S && !document.querySelector('#wallet-modal-backdrop.open, #admin-modal-backdrop.open')) start(); }, 1600);
   }
   window.LobbyTour = { start, auto, close, get open() { return !!S; } };
