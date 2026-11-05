@@ -31767,7 +31767,8 @@ async function loadForgeCollectionsConfig() {
   VillageStartupRuntime.forgeCollectionsStarted = true;
 
   try {
-    const resp = await fetch("https://raw.githubusercontent.com/D1stknight/rebel-ants-village/dev/assets/forge-collections.json", { cache: 'no-store' });
+    // Nov 5: the copy deployed with the site (GitHub's dev copy failed with the repository hidden)
+    const resp = await fetch("/assets/forge-collections.json", { cache: 'no-store' });
 
     if (resp.ok) {
       const forgeCollectionsConfig = await resp.json();
@@ -31776,12 +31777,12 @@ async function loadForgeCollectionsConfig() {
       window._forgeCollectionsConfig = forgeCollectionsConfig;
       localStorage.setItem("rebelAntsForgeCollections", jsonText);
 
-      console.log("Forge collections restored from GitHub:", Object.keys(forgeCollectionsConfig.collections || {}).length, "collections");
+      console.log("Forge collections loaded:", Object.keys(forgeCollectionsConfig.collections || {}).length, "collections");
     } else {
-      throw new Error("GitHub forge collections load failed. Status: " + resp.status);
+      throw new Error("Forge collections load failed. Status: " + resp.status);
     }
   } catch(e) {
-    console.warn("Could not load forge collections from GitHub", e);
+    console.warn("Could not load forge collections", e);
 
     try {
       const fallbackRaw = safeStorageGet(localStorage, "rebelAntsForgeCollections");
