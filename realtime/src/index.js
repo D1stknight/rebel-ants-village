@@ -15,11 +15,18 @@
 //                                                                         the village copy, or one player
 //                   {t:'rp', i:message id | id:player id, why:'spam'|'abuse'|'scam'|'other', note}            a report
 //                   {t:'gi', to:player id, g:groupId}   hand a player of this copy an invite to my group (signed-in players)
+//                   {t:'gx', u:their code, g:groupId}   the same for a player in another copy or village (found by name)
+//                   {t:'find', q:name}   find signed-in players by name in every village (the control desk)
+//                   {t:'pv', f:0|1}   let others find me by name (1, the default) or not (0)
 //                   {t:'pf', f, ft, sl, fr, s, rtt, rc, d, o, b, l, m, n, g}   how the page ran over the last minute (fps,
 //                                                 its slow frames, ping...): kept here and sent to the control desk once a
 //                                                 minute with who is here and how sockets closed (the Admin Hub's dashboard)
 //                   {"t":"ping"}  answered with {"t":"pong"} without waking the room (auto response)
-//   room -> client  {t:'hi', you:id, u, room:{village, copy, max}, peers:[peer], hist:[msg], cfg:{chat, slow}, mute}
+//   room -> client  {t:'hi', you:id, u, room:{village, copy, max}, peers:[peer], hist:[msg], cfg:{chat, slow}, mute,
+//                    say (the admins' message to everyone, while it is shown to newcomers), can:{find, far, say}}
+//                   {t:'found', q, list:[{u, n, k, v:village, i:in a room, look}], why}   who a search found
+//                   {t:'gxr', u, ok, why}   a far invite handed over or not (offline, hidden, slow)
+//                   {t:'say', say:{id, x, at, until}|null}   the admins' message to everyone (null: no longer shown)
 //                   {t:'j', ...peer}   someone came in      {t:'l', id}   someone left
 //                   {t:'u', id, s:[x,y,z,yaw,anim,interior]}   a state     {t:'e', id, e}   an emote
 //                   {t:'c', m:msg}   a chat message (the sender gets it back as it was shown)
@@ -47,7 +54,7 @@
 // Events (stage.js, events.js: the Colony Stage): the Admin Hub makes them on the control desk; GET /v1/events lists the
 // ones on now and next (public), /v1/stage?id=<event> opens an event's hall with the same tickets (guests too).
 import { MAX_CHARS, cleanText, charCount, filterText } from './chat.js';
-import { RoomControl, DEFAULT_CFG, normCfg, withTimeout } from './control.js';
+import { RoomControl, DEFAULT_CFG, normCfg, withTimeout, COPIES_DEFAULT, COPIES_MAX } from './control.js';
 import { PartyGroup } from './group.js';
 import { VILLAGES } from './villages.js';
 import { Voice, VOICE_R } from './voice.js';
@@ -59,7 +66,7 @@ const PROTOCOL = 'rebel-universe.v1';
 const EMOTES = new Set(['cheer', 'wave', 'bow', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam', 'jump', 'kick']);
 const ANIM = /^[a-z0-9_]{1,20}$/, INTERIOR = /^[A-Za-z0-9_-]{1,64}$/, GROUP_ID = /^[A-Za-z0-9_-]{12}$/;
 const VOICE_T = new Set(['vp', 'vs', 'va', 'vx']), BIG = /^\{"t":"v[pa]"/; // (voice offers and answers carry an SDP: up to 13 KB)
-const NEAR = 40, MID = 120, COPIES = 24, CHAT_NEAR = 30, HISTORY = 50, KEEP = 200;
+const NEAR = 40, MID = 120, CHAT_NEAR = 30, HISTORY = 50, KEEP = 200, UID = /^[A-Za-z0-9_-]{16}$/;
 
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', ...headers } });
 const b64u = s => { const t = String(s).replace(/-/g, '+').replace(/_/g, '/'); const bin = atob(t + '==='.slice((t.length + 3) % 4)); return Uint8Array.from(bin, c => c.charCodeAt(0)); };
@@ -95,6 +102,17 @@ export async function verifyAdmin(raw, env, now = Date.now()) {
   return a;
 }
 const controlOf = env => env.CONTROL.get(env.CONTROL.idFromName((env.SITE || 'dev') + ':control'));
+// how many copies a village opens (the Admin Hub's Limits page: the control desk's settings), read again every 30 s
+const copiesMemo = { n: COPIES_DEFAULT, at: 0, p: null };
+async function copiesOf(env) {
+  const now = Date.now(), keep = Math.max(1, +env.COPIES_CACHE_S || 30) * 1000;
+  if (now - copiesMemo.at < keep) return copiesMemo.n;
+  if (!copiesMemo.p) copiesMemo.p = (async () => {
+    try { const d = await (await withTimeout(controlOf(env).fetch('https://control/cfg'), 1500)).json(); const n = Math.round(+d?.cfg?.copies); if (n >= 1 && n <= COPIES_MAX) copiesMemo.n = n; } catch (e) {}
+    copiesMemo.at = Date.now(); copiesMemo.p = null; return copiesMemo.n;
+  })();
+  return copiesMemo.p;
+}
 // the account's own short code, the same in every room: what a player's Block remembers (never the account id itself)
 async function uidOf(sub) { const d = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode('rebel-universe:uid:v1:' + sub))); return btoa(String.fromCharCode(...d)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '').slice(0, 16); }
 
@@ -164,15 +182,15 @@ export default {
     if (req.headers.get('upgrade')?.toLowerCase() !== 'websocket') return json({ ok: false, error: 'websocket only' }, 426);
     if (!originAllowed(env, req.headers.get('origin'))) return json({ ok: false, error: 'origin' }, 403);
     const village = url.searchParams.get('village') || '', want = Math.floor(+url.searchParams.get('copy') || 0);
-    if (!VILLAGES.has(village) || want < 0 || want > COPIES) return json({ ok: false, error: 'village' }, 400);
+    if (!VILLAGES.has(village) || want < 0 || want > COPIES_MAX) return json({ ok: false, error: 'village' }, 400);
     const protos = protocolsOf(req);
     if (!protos.includes(PROTOCOL)) return json({ ok: false, error: 'protocol' }, 400);
     let t;
     try { t = await verifyTicket((protos.find(p => p.startsWith('t.')) || '').slice(2), env); } catch (e) { return json({ ok: false, error: e.code || 'ticket' }, 401); }
     if (t.village && t.village !== village) return json({ ok: false, error: 'ticket is for another village' }, 401);
     const ident = await identOf(t);
-    const site = env.SITE || 'dev';
-    for (let copy = want || 1; copy <= (want || COPIES); copy++) {
+    const site = env.SITE || 'dev', copies = want || await copiesOf(env); // (a copy asked for: a group member's, even past today's limit)
+    for (let copy = want || 1; copy <= copies; copy++) {
       const stub = env.ROOMS.get(env.ROOMS.idFromName(`${site}:${village}:${copy}`));
       const fwd = new Request(`https://room/join?village=${village}&copy=${copy}`, { headers: { upgrade: 'websocket', 'x-ru-ident': JSON.stringify(ident) } });
       const res = await stub.fetch(fwd);
@@ -188,7 +206,7 @@ export class RoomCopy {
     this.sql = ctx.storage.sql;
     this.sql.exec('CREATE TABLE IF NOT EXISTS chat (i INTEGER PRIMARY KEY AUTOINCREMENT, at INTEGER, ch TEXT, pid INTEGER, sub TEXT, n TEXT, k TEXT, u TEXT, x TEXT, tid INTEGER, tn TEXT, tsub TEXT, del INTEGER DEFAULT 0)');
     this.sql.exec('CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT)');
-    this.name = this.kv('name'); this.cfg = null;
+    this.name = this.kv('name'); this.cfg = null; this.say = undefined; // (the admins' message to everyone: from the desk)
     try { const c = this.kv('cfg'); if (c) this.cfg = normCfg(JSON.parse(c)); } catch (e) {}
     this.peers = new Map(); this.nextId = Math.max(1, +this.kv('next') || 1); // (ids never come back in a copy: old chat lines keep theirs)
     this.stale = Math.max(5, Math.min(3600, +env.STALE_S || 150)) * 1000; this.swept = 0;
@@ -213,8 +231,8 @@ export class RoomCopy {
   kvSet(k, v) { this.sql.exec('INSERT INTO kv (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v', k, String(v)); }
   byId(id) { for (const p of this.peers.values()) if (p.id === id) return p; return null; }
   sockOf(k) { for (const [ws, p] of this.peers) if (p.id === +k) return { ws, p }; return null; }
-  live(a) { return { mute: 0, ...a, last: new Map(), win: 0, cnt: 0, em: 0, said: 0, lastX: '', rep: 0, reps: 0, gi: 0 }; }
-  slim(p) { return { id: p.id, sub: p.sub, u: p.u, n: p.n, k: p.k, av: p.av, look: p.look, s: p.s, village: p.village, copy: p.copy, mute: p.mute || 0, j: p.j, seen: p.seen || 0 }; }
+  live(a) { return { mute: 0, ...a, last: new Map(), win: 0, cnt: 0, em: 0, said: 0, lastX: '', rep: 0, reps: 0, gi: 0, gx: 0, fd: 0 }; }
+  slim(p) { return { id: p.id, sub: p.sub, u: p.u, n: p.n, k: p.k, av: p.av, look: p.look, s: p.s, village: p.village, copy: p.copy, mute: p.mute || 0, j: p.j, seen: p.seen || 0, ...(p.nf ? { nf: 1 } : {}) }; }
   pub(p) { return { id: p.id, n: p.n, k: p.k, u: p.u, av: p.av, look: p.look, s: p.s, ...(this.voice?.isOn(p.id) ? { vo: 1 } : {}) }; }
   voiceOn(cfg) { return !!((cfg || this.cfg || normCfg(DEFAULT_CFG)).voice !== false && this.voice.on); }
   control() { return controlOf(this.env); }
@@ -230,6 +248,7 @@ export class RoomCopy {
       const r = await withTimeout(this.control().fetch('https://control/check', { method: 'POST', body: JSON.stringify({ room: this.name, sub }) }), 2500);
       const d = await r.json();
       if (d.cfg) this.setCfg(d.cfg);
+      if (d.say !== undefined) this.say = d.say || null;
       return { ban: +d.ban || 0, mute: +d.mute || 0 };
     } catch (e) { return { ban: 0, mute: 0 }; }
   }
@@ -263,7 +282,7 @@ export class RoomCopy {
     server.serializeAttachment(this.slim(p)); this.peers.set(server, p); this.joins++;
     const cfg = this.cfg || normCfg(DEFAULT_CFG);
     server.send(JSON.stringify({ t: 'hi', you: p.id, u: p.u, room: { village, copy, max: this.max }, peers: [...this.peers.values()].filter(q => q !== p).map(q => this.pub(q)),
-      hist: this.history(), cfg: { chat: cfg.chat, slow: cfg.slow, voice: this.voiceOn(cfg) }, mute: p.mute }));
+      hist: this.history(), cfg: { chat: cfg.chat, slow: cfg.slow, voice: this.voiceOn(cfg) }, mute: p.mute, ...(this.say && this.say.until > now ? { say: this.say } : {}), can: { find: 1, far: 1, say: 1 } }));
     const join = JSON.stringify({ t: 'j', ...this.pub(p) });
     for (const w of this.peers.keys()) if (w !== server) try { w.send(join); } catch (e) {}
     return new Response(null, { status: 101, webSocket: client, headers: { 'sec-websocket-protocol': PROTOCOL } });
@@ -283,6 +302,27 @@ export class RoomCopy {
     else if (m && m.t === 'rp') this.report(ws, p, m, now);
     else if (m && m.t === 'gi') this.groupInvite(p, m, now);
     else if (m && m.t === 'pf') this.perf(p, m, now);
+    else if (m && m.t === 'pv') { const nf = m.f === 0 || m.f === false; if (!!p.nf !== nf) { p.nf = nf; try { ws.serializeAttachment(this.slim(p)); } catch (e) {} } }
+    else if (m && m.t === 'find') await this.find(ws, p, m, now);
+    else if (m && m.t === 'gx') await this.farInvite(ws, p, m, now);
+  }
+  // find signed-in players by name in every village (one search every 2 s; the control desk keeps who is where)
+  async find(ws, p, m, now) {
+    const q = typeof m.q === 'string' ? m.q.slice(0, 60) : '', out = o => { try { ws.send(JSON.stringify({ t: 'found', q, ...o })); } catch (e) {} };
+    if (p.k === 'guest') return out({ list: [], why: 'guest' });
+    if (now - p.fd < 2000) return out({ list: [], why: 'slow' });
+    p.fd = now;
+    try { const d = await (await withTimeout(this.control().fetch('https://control/find', { method: 'POST', body: JSON.stringify({ q, sub: p.sub }) }), 6000)).json(); out({ list: Array.isArray(d.list) ? d.list : [], more: !!d.more, ...(d.ok ? {} : { why: d.why || 'error' }) }); }
+    catch (e) { out({ list: [], why: 'error' }); }
+  }
+  // an invite to my group for a player in another copy or village (one every 3 s; the group noted it first)
+  async farInvite(ws, p, m, now) {
+    const u = typeof m.u === 'string' && UID.test(m.u) ? m.u : '', out = o => { try { ws.send(JSON.stringify({ t: 'gxr', u, ...o })); } catch (e) {} };
+    if (p.k === 'guest' || !u || typeof m.g !== 'string' || !GROUP_ID.test(m.g)) return out({ ok: false, why: 'who' });
+    if (now - p.gx < 3000) return out({ ok: false, why: 'slow' });
+    p.gx = now;
+    try { const d = await (await withTimeout(this.control().fetch('https://control/invite', { method: 'POST', body: JSON.stringify({ from: { sub: p.sub, u: p.u, n: p.n, k: p.k }, to: u, g: m.g }) }), 8000)).json(); out({ ok: !!d.ok, ...(d.ok ? {} : { why: d.why || 'offline' }) }); }
+    catch (e) { out({ ok: false, why: 'error' }); }
   }
   // a page's minute report (village-multiplayer.js): numbers only, clamped; one every pfMin a player. Sent on to the
   // control desk with the others once a minute (on the next report after that: no timers, the room still sleeps)
@@ -388,9 +428,9 @@ export class RoomCopy {
   // from the control desk (an admin's command; nothing else can reach a room's own address)
   ctl(op) {
     const all = o => { const s = JSON.stringify(o); for (const w of this.peers.keys()) try { w.send(s); } catch (e) {} };
-    let hit = 0;
+    let hit = 0, hidden = 0;
     if (op.op === 'who') {
-      const players = [...this.peers.values()].map(p => ({ id: p.id, sub: p.sub, u: p.u, n: p.n, k: p.k, look: p.look ? { t: p.look.t, col: p.look.col, tok: p.look.tok } : null, s: p.s, mute: p.mute > Date.now() ? p.mute : 0, j: p.j }));
+      const players = [...this.peers.values()].map(p => ({ id: p.id, sub: p.sub, u: p.u, n: p.n, k: p.k, look: p.look ? { t: p.look.t, col: p.look.col, tok: p.look.tok } : null, s: p.s, mute: p.mute > Date.now() ? p.mute : 0, j: p.j, ...(p.nf ? { nf: 1 } : {}) }));
       return json({ ok: true, room: this.name, players, hit: players.length });
     }
     if (op.op === 'cfg') { const c = this.setCfg(op.cfg); if (c.voice === false) this.voice.muteAll(); all({ t: 'cfg', chat: c.chat, slow: c.slow, voice: this.voiceOn(c) }); hit = this.peers.size; }
@@ -398,7 +438,12 @@ export class RoomCopy {
     if (op.op === 'kick') for (const [w, p] of [...this.peers]) if (p.sub === op.sub) { hit++; this.part(w, JSON.stringify({ t: 'kick', why: op.why === 'banned' ? 'banned' : 'kick', until: +op.until || 0 }), 4003, 'kicked'); }
     if (op.op === 'del' && +op.i > 0) { this.sql.exec('UPDATE chat SET del = 1 WHERE i = ?', +op.i); all({ t: 'cd', i: +op.i }); hit = 1; }
     if (op.op === 'clear') { this.sql.exec('UPDATE chat SET del = 1'); all({ t: 'cc' }); hit = 1; }
-    return json({ ok: true, room: this.name, hit });
+    if (op.op === 'say') { this.say = op.say && op.say.x ? op.say : null; all({ t: 'say', say: this.say }); hit = this.peers.size; } // (the admins' message to everyone)
+    if (op.op === 'gi' && UID.test(String(op.u || '')) && typeof op.g === 'string' && GROUP_ID.test(op.g) && op.from) { // (a far invite: a player found by name)
+      const from = { id: 0, u: String(op.from.u || ''), n: String(op.from.n || 'A Rebel').slice(0, 40), k: op.from.k === 'name' ? 'name' : 'discord' };
+      for (const [w, q] of this.peers) if (q.u === op.u && q.k !== 'guest') { if (q.nf) { hidden++; continue; } hit++; try { w.send(JSON.stringify({ t: 'gi', g: op.g, from, far: 1 })); } catch (e) {} }
+    }
+    return json({ ok: true, room: this.name, hit, ...(hidden ? { hidden } : {}) });
   }
   // a player sent away (another tab, a kick or a ban): told why, its socket marked gone (a room waking from hibernation
   // must not take it back while the close is still under way) and closed
