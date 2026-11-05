@@ -187,6 +187,35 @@ a.wtag:hover{filter:brightness(1.2)}
 .restart ul{display:flex;flex-direction:column;gap:8px;padding-left:18px;font-size:14px;line-height:1.5;color:var(--fg)}
 .restart .keep{border:1px solid var(--line2);background:var(--card2);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--fg);line-height:1.55}
 .card button.primary:hover{background:var(--gold2);border-color:var(--gold2)}
+/* "How this works" (Nov 5, Miguel: "add all these explanations in its proper place in my admin so I don't forget") */
+details.how{border:1px solid var(--line2);background:var(--card2);border-radius:10px;padding:0 14px}
+details.how>summary{cursor:pointer;list-style:none;padding:12px 0;font:600 14px var(--sans);color:var(--gold2);display:flex;align-items:center;gap:8px}
+details.how>summary::-webkit-details-marker{display:none}
+details.how>summary::before{content:'›';display:inline-block;transition:transform .15s;font-size:16px;color:var(--gold)}
+details.how[open]>summary::before{transform:rotate(90deg)}
+details.how .hb{display:flex;flex-direction:column;gap:10px;padding:0 0 14px;font-size:14px;line-height:1.55;color:var(--fg);max-width:78ch} /* (lines short enough to read) */
+details.how h3{font:600 13px var(--sans);color:var(--gold2);margin-top:4px}
+details.how ul,details.how ol{display:flex;flex-direction:column;gap:5px;padding-left:20px}
+details.how li::marker{color:var(--dim)}
+details.how .dim2{color:var(--muted);font-size:13px}
+details.how b{color:var(--fg)}
+.lim{display:flex;flex-direction:column;gap:2px}
+.lim .lr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;align-items:center;border-top:1px solid var(--line);padding:12px 0}
+.lim .lr:first-child{border-top:0}
+.lim .lr .ln{font-weight:600;color:var(--fg)}
+.lim .lr .lp{color:var(--muted);font-size:12px}
+.lim .lr .lh{color:var(--muted);font-size:13px;line-height:1.5;grid-column:1/-1;max-width:78ch}
+.lim .lr .lv{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.lim .lr input{width:110px;text-align:right}
+.lim .lr .lt{font-size:11px;color:var(--dim);white-space:nowrap}
+.lim .lr .lt.ch{color:var(--gold2)}
+.lim .total{border:1px solid var(--line2);background:var(--card2);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--fg);line-height:1.55}
+.lim .total b{color:var(--gold2)}
+@media (max-width:560px){.lim .lr{grid-template-columns:1fr}.lim .lr .lv{justify-content:flex-start}}
+#mpa-body .say2{border:1px solid rgba(232,197,106,.45);background:#14110a;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+#mpa-body .say2 h3{font:600 14px var(--sans);color:var(--gold2)}
+#mpa-body .say2 .cur{border-left:3px solid var(--gold);padding:4px 10px;color:var(--fg);white-space:pre-line;overflow-wrap:anywhere;max-width:78ch}
+#mpa-body .say2 p,#mpa-body .say2 textarea{max-width:78ch}
 .card button.bad{border-color:var(--red-line);color:var(--red)}
 .card button.sm{min-height:28px;padding:0 9px;font-size:12px;border-radius:6px}
 .card button:disabled{opacity:.45;cursor:default}
@@ -291,6 +320,7 @@ a.wtag:hover{filter:brightness(1.2)}
       <a href="#performance" data-go="performance"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><span class="t">Performance</span><span class="nb" id="nb-perf"></span></a>
       <a href="#issues" data-go="issues"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/></svg><span class="t">Issues</span><span class="nb" id="nb-issues"></span></a>
       <a href="#services" data-go="services"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span class="t">Services</span><span class="nb" id="nb-svc"></span></a>
+      <a href="#limits" data-go="limits"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span class="t">Limits</span></a>
     </div>
     <div class="grp"><span class="lbl">LIVE</span>
       <a href="#players" data-go="players"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17 14.6c2.4.3 4 1.9 4.5 4.9"/></svg><span class="t">Players online</span><span class="nb" id="nb-online"></span></a>
@@ -366,6 +396,16 @@ a.wtag:hover{filter:brightness(1.2)}
     <section class="page" id="pg-performance" aria-labelledby="h-perf">
       <header class="phead"><div><span class="k">How the game runs on players' screens</span><h1 id="h-perf">Performance</h1></div><div class="ctrls"><div class="seg" role="group" aria-label="Time range"><button type="button" data-h="24" aria-pressed="true">24 hours</button><button type="button" data-h="168" aria-pressed="false">7 days</button><button type="button" data-h="336" aria-pressed="false">14 days</button></div><button class="ibtn" type="button" onclick="dashLoad(true)" aria-label="Refresh now">↻</button></div></header>
       <p class="note">Every Universe page that is in the rooms sends a short report once a minute while it is played: its frames a second, its slow frames (over 50 ms) and freezes (over a second), its ping to the rooms and dropped connections. Numbers only, no names. Under <b>30 fps</b> feels choppy; a ping of <b>200 ms</b> or more feels laggy.</p>
+      <details class="how"><summary>How many players fit without lag</summary><div class="hb">
+        <p><b>50 players in one place</b> (one copy of a village) play without lag. Past 50, Universe opens another copy of that village by itself.</p>
+        <ul>
+          <li>Tested: 48 bots in one tight crowd (the room server at about 17% of its power, every update delivered), and your iPhone with 44 bots in the Hub (no lag, no restart).</li>
+          <li>One copy would only start to struggle around 110 people all moving in one spot, so the 50 cap leaves about 2× room.</li>
+          <li>Each village opens up to the number of copies set on the <a href="#limits">Limits</a> page (24 to start: 1,200 players a village, 18,000 in all of Universe at once). Never tested at that size.</li>
+          <li>Watch this page during a big test: the frame rate, the share under 30 fps and the ping show lag as it happens.</li>
+        </ul>
+        <p class="dim2">More on the <a href="#limits">Limits</a> page: what each device draws, voice, cost, and what was not tested yet.</p>
+      </div></details>
       <div class="grid">
         <div class="tile"><span class="l">Computers</span><span class="v" id="p-fpsd">–</span><span class="s" id="p-fpsd-s">&nbsp;</span></div>
         <div class="tile"><span class="l">Phones</span><span class="v" id="p-fpsp">–</span><span class="s" id="p-fpsp-s">&nbsp;</span></div>
@@ -409,6 +449,44 @@ a.wtag:hover{filter:brightness(1.2)}
       <div class="svc" id="s-list"></div>
       <section class="cc"><div class="ch"><h2>This site</h2></div><div class="dt" id="s-site"></div>
         <p class="note">The multiplayer rooms run on Cloudflare (one set for the live site, one for the dev preview); the database is Upstash Redis; Rebel Points, accounts and the Badge Wall are the Rebel Economy. A red line here is also a red alert on the Dashboard.</p></section>
+    </section>
+
+    <!-- ===== Limits: what Universe allows, how many fit ===== -->
+    <section class="page" id="pg-limits" aria-labelledby="h-limits">
+      <header class="phead"><div><span class="k">What Universe allows, and how many players fit</span><h1 id="h-limits">Limits</h1><div class="tags"><a class="wtag live" href="#saving" title="Where changes go">Live right away · this site only</a></div></div><div class="ctrls"><button class="ibtn" type="button" onclick="limLoad(true)" aria-label="Read again">↻</button></div></header>
+      <details class="how" open><summary>How many players fit (read this first)</summary><div class="hb">
+        <h3>One place: 50 players</h3>
+        <ul>
+          <li>Each village fills <b>copies of up to 50 players</b>. Player 51 lands in copy 2 of that same village and doesn't see copy 1's players. Other villages count on their own.</li>
+          <li>Everyone is in the <b>same Universe</b>: accounts, Rebel Points, the story, badges, events and Ant-Thony are the same in every copy. A copy only decides who you see walking around.</li>
+          <li>Tested: 48 bots in one tight crowd (the room server at about 17% of its power, every update delivered), and your iPhone with 44 bots in the Hub (no lag, no restart). One copy would only struggle around 110 people moving in one spot.</li>
+        </ul>
+        <h3>What each player's device draws</h3>
+        <ul>
+          <li><b>Computers:</b> everyone in their copy as their real character (the nearest 8 as full models, the rest as lighter copies).</li>
+          <li><b>Phones:</b> 44 of 49 as their real character (the 4 nearest become full models once close, up to 40 lighter copies); the farthest few as grey stand-ins. Name tags on the nearest 8 (computers 12).</li>
+          <li>A phone that ran out of memory starts lighter for 3 days (fewer full models and lighter copies).</li>
+        </ul>
+        <h3>Talking</h3>
+        <ul>
+          <li>Nearby voice: the 10 nearest people within 40 m. Groups: up to 8, chat and voice across villages. Events: up to 6 on stage, heard by everyone at the event.</li>
+        </ul>
+        <h3>Cost</h3>
+        <ul><li>Not a limit: about $0.30 an hour for 1,000 players walking non-stop (the room server, from Cloudflare's prices).</li></ul>
+        <h3>Not tested yet</h3>
+        <ul><li>Hundreds of real players at once, a full village, an event with hundreds of people, voice with hundreds of listeners. Before launch: a few hundred bots run from Cloudflare (ask Claude), while you watch <a href="#performance">Performance</a>.</li></ul>
+      </div></details>
+      <section class="card lim" aria-labelledby="h-lim-rooms"><h2 id="h-lim-rooms">Players in each village</h2>
+        <div id="lim-rooms"><p class="dim">Reading the rooms…</p></div></section>
+      <section class="card lim" aria-labelledby="h-lim-net"><h2 id="h-lim-net">Per wifi (per internet connection)</h2>
+        <p>Everyone on one network shares these: a meetup's wifi, an office, a school. They stop a script on one connection from hammering the sign-ins and the rooms. Before an event where many people play on one wifi, raise them, then put them back after.</p>
+        <div id="lim-net"><p class="dim">Reading…</p></div></section>
+      <section class="card lim" aria-labelledby="h-lim-ant"><h2 id="h-lim-ant">Ant-Thony's day (the whole site)</h2>
+        <p>Each line he says costs the Rebel Economy's model and voice, so the site gives him a budget a day (UTC). When one runs out he goes quiet until the next day. 0 switches that part off.</p>
+        <div id="lim-ant"><p class="dim">Reading…</p></div>
+        <p class="note">The Rebel Economy has its own limits for him too (its settings, not this page): <b>4,000 answers a day</b> for Universe, and <b>600 spoken lines a day for every app together</b> (Discord, the casino, Universe and the set maker). Raising this page past those does nothing more; ask Claude to change the economy's.</p></section>
+      <div class="card"><div class="row"><button type="button" class="primary" id="lim-save" onclick="limSave()">Save changes</button><button type="button" onclick="limReset()">Back to the defaults</button><span id="lim-status" class="note"></span></div>
+        <p class="note">A change reaches the whole site within 30 seconds. The dev admin and the live admin each keep their own (this is <span id="lim-site">this site</span>).</p></div>
     </section>
 
     <!-- ===== Players and chat (the Multiplayer tools) ===== -->
@@ -503,6 +581,8 @@ a.wtag:hover{filter:brightness(1.2)}
             <li>Announcements on the landing page</li>
             <li>Free to play list (NPC Forge)</li>
             <li>Chat settings, mutes and bans</li>
+            <li>Message everyone (Players online)</li>
+            <li>Limits: per-wifi limits, Ant-Thony's day, copies per village</li>
             <li>Ant-Thony's guide (send it on each site)</li>
           </ul>
           <p class="do">Do it in the <b>live admin</b> for players.</p>
@@ -843,7 +923,7 @@ async function mpaAct(cmd, args, done) {
 async function mpaLoad(fresh) {
   try {
     const [on, rp, cfg, evs] = await Promise.all([mpaCmd('online'), mpaCmd('reports', { all: mpa.allReports }), mpaCmd('cfg-get'), mpaCmd('events').catch(() => ({ events: [] }))]);
-    mpa.online = on; mpa.reports = rp; mpa.cfg = cfg.cfg; mpa.events = evs.events || [];
+    mpa.online = on; mpa.reports = rp; mpa.cfg = cfg.cfg; mpa.say = cfg.say || null; mpa.events = evs.events || [];
     document.getElementById('mpa-online').textContent = on.total;
     document.getElementById('mpa-online-at').textContent = on.rooms.length ? `in ${on.rooms.length} village ${on.rooms.length === 1 ? 'copy' : 'copies'}` : 'nobody right now';
     document.getElementById('mpa-reports').textContent = rp.open;
@@ -858,11 +938,71 @@ async function mpaLoad(fresh) {
     return false;
   }
 }
+// the admins' message to everyone (the rooms' 'say'): every village and copy at once, and newcomers for a while
+function sayCard() {
+  const box = mk('div', 'say2'), cur = mpa.say && mpa.say.until > Date.now() ? mpa.say : null;
+  box.append(mk('h3', '', '📣 Message everyone in Universe'), mk('p', 'dim', 'Shows at once to every player in every village and copy (a card at the top of their screen and a line in their chat), and to anyone who comes in while it stays on. They close it with ✕. Plain words, 280 characters.'));
+  if (cur) box.append(mk('div', 'dim', `On now: sent ${mpaWhen(cur.at)}, newcomers see it until ${mpaWhen(cur.until)}`), mk('div', 'cur', cur.x));
+  const ta = mk('textarea'); ta.maxLength = 280; ta.rows = 3; ta.placeholder = 'Town hall in the Hub courtyard in 10 minutes. Come say hi!'; ta.setAttribute('aria-label', 'Message to everyone');
+  const cnt = mk('span', 'dim', '0 / 280'); ta.oninput = () => { cnt.textContent = [...ta.value].length + ' / 280'; };
+  const sel = mk('select'); for (const [m, l] of [[10, '10 minutes'], [30, '30 minutes'], [60, '1 hour'], [360, '6 hours'], [1440, '1 day']]) sel.append(new Option('Newcomers see it for ' + l, m)); sel.value = '30';
+  const say = async args => { try { return await mpaCmd('say', args); } catch (e) { throw new Error(/Unknown command/.test(e.message) ? "This site's rooms need their update to send messages (ask Claude to deploy the rooms)." : e.message); } };
+  const row = mk('div', 'row');
+  row.append(btn('Send to everyone', async () => {
+    const x = ta.value.trim(); if (!x) throw new Error('Write the message first');
+    if (!confirm('Send this to everyone in Universe now?\n\n' + x)) return;
+    const d = await say({ x, mins: +sel.value }); mpa.say = d.say;
+    await mpaShow('online'); mpaStatus(`Sent to ${d.reached} ${d.reached === 1 ? 'player' : 'players'} now (${d.rooms} village ${d.rooms === 1 ? 'copy' : 'copies'} open); newcomers see it for the time you picked.`);
+  }, 'primary'), sel, cnt);
+  if (cur) row.append(btn('Stop showing it', async () => { await say({ mins: 0 }); mpa.say = null; await mpaShow('online'); mpaStatus('Newcomers no longer see it (cards already up close by themselves).'); }));
+  box.append(ta, row);
+  return box;
+}
+// "How this works" on the tabs (Nov 5, Miguel: "add all these explanations in its proper place in my admin")
+function howBox(title, html) { const d = mk('details', 'how'); d.innerHTML = `<summary>${title}</summary><div class="hb">${html}</div>`; return d; }
+const copiesNow = () => Math.max(1, Math.min(99, +mpa.cfg?.copies || 24));
+function howCopies() {
+  const c = copiesNow();
+  return howBox('How villages, copies and talking work', `<ul>
+    <li>Each village fills <b>copies of up to 50 players</b>. Player 51 in a village lands in copy 2 of that same village and doesn't see copy 1's players. Other villages count on their own.</li>
+    <li>This site opens up to <b>${c} ${c === 1 ? 'copy' : 'copies'} a village</b>: ${(c * 50).toLocaleString()} players a village, ${(c * 750).toLocaleString()} in all of Universe at once. Change it on <a href="#limits">Limits</a>.</li>
+    <li>Everyone is in the <b>same Universe</b>: accounts, Rebel Points, the story, badges, events and Ant-Thony are the same in every copy. A copy only decides who you see walking around.</li></ul>
+    <h3>What players can do with each other</h3><ul>
+    <li><b>In their own copy:</b> see each other, Nearby chat (30 m), voice (the 10 nearest within 40 m), Village chat (that copy only), whispers.</li>
+    <li><b>Anywhere in Universe:</b> a <b>group</b> of up to 8: group chat and voice in any village, where each one is, and <b>Go to them</b>, which puts you in their exact copy.</li>
+    <li><b>Find a player:</b> 👥 Players → type a name → Invite. It shows the village they're in (never the copy or the spot); once they join the group, Go to them. Players can hide from it: ⚙ → Let others find me by name.</li>
+    <li><b>Events:</b> everyone at an event hears the hosts and the show and shares the Event chat, whatever their copy.</li></ul>
+    <h3>You, as admin</h3><ul>
+    <li>This tab lists everyone in every village and copy, with where they are and since when.</li>
+    <li><b>Message everyone</b> (above) reaches every village and copy at once.</li>
+    <li>To talk to everyone with your voice: hold an event and host it (the Events tab says how).</li></ul>`);
+}
+function howEvents() {
+  const c = copiesNow();
+  return howBox("How events work: town halls, Ant-Thony's shows, the club's seats", `<h3>Where you can hold one</h3><ul>
+    <li>Ant-Thony's Comedy Club (a stage and seats), Rebel Ants After Dark, the Hub courtyard (outdoors: everyone outside in the Hub counts as there), or outdoors in any other village.</li></ul>
+    <h3>Talking to everyone (a town hall)</h3><ol>
+    <li><b>+ New event</b> → pick the place → Save → <b>Go live now</b>.</li>
+    <li>Sign in to Universe yourself (Discord, or your name and PIN). Then <b>Online now</b> → find yourself → <b>Host of… → your event</b>.</li>
+    <li>Go to the place in Universe and <b>hold X</b> (or the 🎤 button): everyone at the event hears you, in every copy, guests too.</li>
+    <li>Raised hands show in your host panel; <b>Bring up</b> puts up to 6 people on stage (hosts included); Send down takes them off.</li></ol>
+    <ul><li>Players elsewhere see a LIVE banner with Go there; the lobby shows LIVE NOW. To tell everyone first, use Message everyone (Online now).</li>
+    <li>Voice with hundreds of listeners hasn't been tested yet (only a few so far).</li></ul>
+    <h3>Ant-Thony's shows</h3><ul>
+    <li>His set is a sound file each player's device plays, started at the same second for everyone at the event. It isn't a voice call, so there's no limit on how many hear it.</li>
+    <li>Everyone in the club hears him and sees him on stage with the captions, in every copy of the Hub, guests too. If the event needs a ticket, only ticket holders get in.</li>
+    <li>Each player sees only the other players in their own copy.</li></ul>
+    <h3>The club's seats</h3><ul>
+    <li><b>24 chairs</b> (12 tables × 2); the front 8 are the golden seats.</li>
+    <li>That's <b>per copy of the Hub</b>: each copy has its own club with its own 24 chairs and holds up to 50 people; everyone past 24 stands. 3 full Hub copies = 150 watching, 72 seated.</li>
+    <li>With ${c} ${c === 1 ? 'copy' : 'copies'}: up to ${(c * 24).toLocaleString()} seated and ${(c * 50).toLocaleString()} watching at once.</li></ul>`);
+}
 async function mpaShow(tab) {
   mpa.tab = tab;
   document.querySelectorAll('#mpa-tabs button[data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
   const body = document.getElementById('mpa-body'), out = [];
   if (tab === 'online') {
+    out.push(sayCard(), howCopies());
     const rooms = mpa.online?.rooms || [];
     if (!rooms.length) out.push(mk('p', 'dim', 'Nobody is in Universe right now.'));
     for (const r of rooms) {
@@ -939,7 +1079,7 @@ async function mpaShow(tab) {
     const top = mk('div', 'row');
     top.append(btn('+ New event', async () => { mpa.edit = { title: '', place: EVENT_PLACES[0], starts: now + 3600000, mins: 60, show: null, script: '' }; await mpaShow('events'); }, 'primary'),
       btn(SM.open ? 'Close the set maker' : '\u2728 Set maker: Ant-Thony writes a set', async () => { SM.open = !SM.open; await mpaShow('events'); }));
-    out.push(top);
+    out.push(top, howEvents());
     if (SM.open) out.push(setMaker());
     if (mpa.edit) out.push(eventForm(mpa.edit));
     if (!mpa.events.length) out.push(mk('p', 'dim', 'No events yet. Make one, pick its hosts in Online now (Host of…), and Go live: the lobby shows LIVE NOW and everyone at the place hears the hosts.'));
@@ -1360,9 +1500,68 @@ const PROBLEMS = { crash: 'Page closed on screen (most likely out of memory)', '
 const DEVN = { ios: 'iPhone / iPad', android: 'Android', mac: 'Mac', win: 'Windows', linux: 'Linux', cros: 'Chromebook', other: 'Other' };
 const BRN = { safari: 'Safari', chrome: 'Chrome', firefox: 'Firefox', edge: 'Edge', opera: 'Opera', other: 'Other' };
 
+// ---- the Limits page (api/admin-limits.mjs: per wifi, Ant-Thony's day; the rooms' copies per village: cfg-set) ----
+const LIM = { data: null, copies: null, roomsOld: false };
+function limStatus(text, err) { const s = $('lim-status'); s.textContent = text || ''; s.style.color = err ? 'var(--red)' : ''; }
+async function limLoad(fresh) {
+  const [r, cfg] = await Promise.all([fetch('/api/admin-limits', { cache: 'no-store' }).then(r => r.json().catch(() => ({ ok: false }))), mpaCmd('cfg-get').catch(e => ({ error: e.message }))]);
+  if (!r.ok) throw new Error(r.error || 'Could not read the limits');
+  LIM.data = r; LIM.copies = cfg?.cfg ? cfg.cfg.copies ?? null : null; LIM.roomsOld = !!cfg?.cfg && cfg.cfg.copies == null; LIM.roomsErr = cfg?.error || null;
+  $('lim-site').textContent = r.site === 'prod' ? 'the live site' : 'the dev preview or a test copy';
+  limRender(); if (fresh) limStatus('Read again ' + new Date().toLocaleTimeString());
+}
+function limRow(x) {
+  const row = mk('div', 'lr'), left = mk('div');
+  left.append(mk('div', 'ln', x.label), mk('div', 'lp', x.per + ' · default ' + x.def.toLocaleString() + ' · ' + x.min.toLocaleString() + '-' + x.max.toLocaleString()));
+  const v = mk('div', 'lv'), inp = mk('input'); inp.type = 'number'; inp.min = x.min; inp.max = x.max; inp.step = 1; inp.value = x.value; inp.dataset.key = x.key; inp.dataset.def = x.def; inp.setAttribute('aria-label', x.label);
+  const tag = mk('span', 'lt' + (x.saved ? ' ch' : ''), x.saved ? 'changed' : 'default');
+  inp.oninput = () => { const n = Math.round(+inp.value); tag.textContent = n === x.def ? 'default' : n === x.value ? 'changed' : 'not saved'; tag.className = 'lt' + (n !== x.def ? ' ch' : ''); };
+  v.append(inp, tag); row.append(left, v, mk('div', 'lh', x.help)); return row;
+}
+function limRender() {
+  const d = LIM.data; if (!d) return;
+  for (const [g, id] of [['net', 'lim-net'], ['ant', 'lim-ant']]) { const box = $(id); box.replaceChildren(...d.limits.filter(x => x.group === g).map(limRow)); }
+  const rooms = $('lim-rooms'), c = LIM.copies ?? 24, out = [];
+  const row = mk('div', 'lr'), left = mk('div');
+  left.append(mk('div', 'ln', 'Copies per village'), mk('div', 'lp', 'default 24 · 1-99 · each copy holds 50 players'));
+  const v = mk('div', 'lv'), inp = mk('input'); inp.type = 'number'; inp.min = 1; inp.max = 99; inp.step = 1; inp.value = c; inp.id = 'lim-copies'; inp.setAttribute('aria-label', 'Copies per village');
+  const total = mk('div', 'total');
+  const paint = () => { const n = Math.max(1, Math.min(99, Math.round(+inp.value) || 24)); total.innerHTML = `Up to <b>${(n * 50).toLocaleString()}</b> players in one village and <b>${(n * 50 * 15).toLocaleString()}</b> in all of Universe at once (15 villages). Players per copy: <b>50</b> (fixed: the tested number).`; };
+  inp.oninput = paint; paint();
+  if (LIM.roomsOld || LIM.roomsErr) inp.disabled = true;
+  v.append(inp); row.append(left, v, mk('div', 'lh', 'When a copy is full the next player opens the next copy. Lowering this moves nobody: copies past the new number fill no further and empty out as players leave. Going to a group member still puts you in their copy.'));
+  out.push(row, total);
+  if (LIM.roomsOld) out.push(mk('p', 'note', "This site's rooms don't have this setting yet: they need their update (ask Claude to deploy the rooms)."));
+  else if (LIM.roomsErr) out.push(mk('p', 'note', 'The rooms did not answer: ' + LIM.roomsErr));
+  rooms.replaceChildren(...out);
+}
+async function limSave() {
+  const set = {}, d = LIM.data; if (!d) return;
+  for (const inp of document.querySelectorAll('#pg-limits input[data-key]')) { const x = d.limits.find(l => l.key === inp.dataset.key), n = Math.round(+inp.value); if (x && n !== x.value) set[x.key] = inp.value === '' ? null : n; }
+  const ci = $('lim-copies'), copies = ci && !ci.disabled ? Math.round(+ci.value) : null, copiesChanged = copies != null && copies !== (LIM.copies ?? 24);
+  if (!Object.keys(set).length && !copiesChanged) return limStatus('Nothing changed.');
+  if (copiesChanged && !(copies >= 1 && copies <= 99)) return limStatus('Copies per village: 1-99.', true);
+  $('lim-save').disabled = true; limStatus('Saving…');
+  try {
+    if (Object.keys(set).length) { const r = await fetch('/api/admin-limits', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ set }) }).then(r => r.json().catch(() => ({ ok: false }))); if (!r.ok) throw new Error(r.error || 'Not saved'); LIM.data = r; }
+    if (copiesChanged) { const c = await mpaCmd('cfg-set', { copies }); if (c.cfg?.copies == null) throw new Error("The rooms don't have this setting yet: they need their update."); LIM.copies = c.cfg.copies; }
+    limRender(); limStatus('Saved ' + new Date().toLocaleTimeString() + ': on the whole site within 30 seconds.');
+  } catch (e) { limStatus(e.message, true); }
+  $('lim-save').disabled = false;
+}
+async function limReset() {
+  if (!confirm('Put every limit on this page back to its default?')) return;
+  limStatus('Saving…');
+  try {
+    const r = await fetch('/api/admin-limits', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reset: true }) }).then(r => r.json().catch(() => ({ ok: false }))); if (!r.ok) throw new Error(r.error || 'Not saved'); LIM.data = r;
+    if (!LIM.roomsOld && !LIM.roomsErr && (LIM.copies ?? 24) !== 24) { const c = await mpaCmd('cfg-set', { copies: 24 }); LIM.copies = c.cfg?.copies ?? 24; }
+    limRender(); limStatus('Back to the defaults.');
+  } catch (e) { limStatus(e.message, true); }
+}
+
 // ---- pages: the address's #name picks one (#overview, #performance, #issues, #services, #players, #chat, #events,
 // #announcements, #badges, #babylon)
-const ROUTES = { overview: ['overview'], performance: ['performance'], issues: ['issues'], services: ['services'], players: ['players', 'online'], chat: ['players', 'log'], reports: ['players', 'reports'], events: ['players', 'events'], announcements: ['content', 'ann'], badges: ['content', 'bdg'], anthony: ['content', 'ant'], babylon: ['babylon'], saving: ['saving'] };
+const ROUTES = { overview: ['overview'], performance: ['performance'], issues: ['issues'], services: ['services'], limits: ['limits'], players: ['players', 'online'], chat: ['players', 'log'], reports: ['players', 'reports'], events: ['players', 'events'], announcements: ['content', 'ann'], badges: ['content', 'bdg'], anthony: ['content', 'ant'], babylon: ['babylon'], saving: ['saving'] };
 let PAGE = 'overview', mpaReady = false;
 function route() {
   const key = (location.hash || '').slice(1), r = ROUTES[key] || ROUTES.overview, pg = r[0];
@@ -1371,6 +1570,7 @@ function route() {
   document.querySelectorAll('#side a[data-go]').forEach(a => { if (a.dataset.go === (ROUTES[key] ? key : 'overview')) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   $('side').classList.remove('open'); $('menu-btn').setAttribute('aria-expanded', 'false');
   if (pg === 'players' && r[1]) { if (mpaReady) mpaShow(r[1]).catch(e => mpaStatus(e.message, true)); else mpa.tab = r[1]; }
+  if (pg === 'limits') limLoad().catch(e => limStatus(e.message, true));
   if (pg === 'content' && r[1]) requestAnimationFrame(() => $(r[1]).scrollIntoView({ block: 'start' }));
   else window.scrollTo(0, 0);
   hideTip(); dashRender();
