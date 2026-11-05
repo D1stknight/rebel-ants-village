@@ -67,9 +67,10 @@
     // bubble or its buttons; it loads on its own (async), so it is looked for until it is there
     const sup = () => { const r = window.RebelSupport; if (S && r && !S.supHid) { r.hide(); S.supHid = true; } };
     S.sup = setInterval(sup, 300); sup();
-    S.bub.querySelector('.x').onclick = () => close();
-    // the page behind does nothing while the tour is up: a click on the dim area goes on to the next bubble
-    wrap.addEventListener('click', (e) => { if (!S.bub.contains(e.target)) go(1); });
+    S.bub.querySelector('.x').onclick = (e) => { e.stopPropagation(); close(); };
+    // the page behind does nothing while the tour is up: a click on the dim area goes on to the next bubble (once the tour
+    // is closed, a click on its way out does nothing: ✕ closed it and the same click then reached here, S null)
+    wrap.addEventListener('click', (e) => { if (S && !S.bub.contains(e.target)) go(1); });
     S.key = (e) => {
       if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
       else if (e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); go(1); }
