@@ -4,6 +4,8 @@
 // in a group and remembers the group (localStorage rebelAntsGroup:v1), so the next village's page goes straight back in.
 // Invites: the inviter's page notes the invite with the group, then hands it over through the room ({t:'gi'}); the other
 // page shows a card (Join / No thanks) and opens the group, which lets in only its members and the players invited lately.
+// A player found by name (the chat's 👥 Find a player) in another copy or village: the room hands the invite to the
+// control desk ({t:'gx'}), which passes it to the copy they are in; the answer ({t:'gxr'}) says whether it reached them.
 // window.VillageGroup.start(host) from village.html, host = { village, villageName(id), player() -> { x, z, interior } |
 //   null, signedIn(), ticket() -> Promise<{ ticket, url } | null>, travel(villageId), doorOf(interiorId) -> { x, z } | null,
 //   mp: window.VillageMP, isBlocked(u), toast(msg) }; what happens goes to the listeners (VillageGroup.on): the chat
@@ -15,6 +17,7 @@
   let card = null, cardTimer = 0, pending = null, goal = null;
   const G = { id: null, you: null, lead: null, max: 8, members: new Map(), cfg: { chat: true, slow: 2 }, mute: 0, hist: [] };
   const relay = new Map(); // u -> the room peer an invite is handed to, once the group has noted it
+  const farWait = new Map(); // u -> a far invite on its way through the rooms (its answer: onFarResult)
   const listeners = new Set();
   const emit = (kind, d) => { for (const f of listeners) try { f(kind, d); } catch (e) {} };
   const log = (...a) => { if (window._mpDebug) console.log('[group]', ...a); };
@@ -96,7 +99,8 @@
     if (m.t === 'gcx') { if (m.why === 'muted') G.mute = m.until || 0; emit('refused', m); return; }
     if (m.t === 'gi') { // the group noted an invite: now the room hands it over
       const r = relay.get(m.u); relay.delete(m.u);
-      if (m.ok && r) { const sent = H.mp?.chat?.groupInvite?.(r.id, G.id); emit('invited', { n: r.n, sent: !!sent }); }
+      if (m.ok && r && r.far) { if (H.mp?.chat?.farInvite?.(m.u, G.id)) farWait.set(m.u, { n: r.n, at: Date.now() }); else emit('invite-no', { n: r.n, why: 'error' }); } // (the rooms take it to their copy)
+      else if (m.ok && r) { const sent = H.mp?.chat?.groupInvite?.(r.id, G.id); emit('invited', { n: r.n, sent: !!sent }); }
       else if (!m.ok) emit('invite-no', { n: r?.n || 'them', why: m.why });
       return;
     }
@@ -111,7 +115,8 @@
   }
 
   // ---- what the page does ----
-  // invite a player of this room copy (a peer: id, u, n, k); a group is made first when there is none
+  // invite a player of this room copy (a peer: id, u, n, k), or one found by name elsewhere (far: true); a group is made
+  // first when there is none
   function invite(p) {
     if (!p || !p.u || p.k === 'guest' || !H.signedIn()) return false;
     if (stopped) { H.toast?.('Groups are off on this page.'); return false; }
@@ -119,13 +124,22 @@
     if (G.members.size >= G.max) { emit('invite-no', { n: p.n, why: 'full' }); return false; }
     if (!G.id) {
       if (pending || connecting) return false;
-      pending = { id: p.id, u: p.u, n: p.n, k: p.k }; emit('making', { n: p.n });
+      pending = { id: p.id, u: p.u, n: p.n, k: p.k, far: !!p.far }; emit('making', { n: p.n });
       connect(stored() || 'new');
       return true;
     }
-    relay.set(p.u, { id: p.id, n: p.n });
+    relay.set(p.u, { id: p.id, n: p.n, far: !!p.far });
     if (!send({ t: 'gi', u: p.u, n: p.n })) { relay.delete(p.u); emit('invite-no', { n: p.n, why: 'offline' }); return false; }
     return true;
+  }
+  // a far invite's answer from the rooms: handed to the copy they are in, or not (away, hidden, slow, error)
+  function onFarResult(m) {
+    if (!m || typeof m.u !== 'string') return;
+    const w = farWait.get(m.u); farWait.delete(m.u);
+    for (const [u, x] of farWait) if (Date.now() - x.at > 60000) farWait.delete(u);
+    const n = w?.n || 'them';
+    if (m.ok) emit('invited', { n, sent: true, far: true });
+    else emit('invite-no', { n, why: m.why === 'offline' ? 'away' : m.why || 'error' });
   }
   // an invite handed over by the room: the card (not from someone this player blocked; not for the group they are in)
   function onRoomInvite(m) {
@@ -139,7 +153,7 @@
     const t = document.createElement('div'); t.className = 'vgi-t'; t.textContent = 'Group invite';
     const b = document.createElement('div'); b.className = 'vgi-b';
     const name = document.createElement('b'); name.textContent = m.from.n || 'A Rebel';
-    b.append(name, document.createTextNode(G.id ? ' invites you to their group. Joining leaves yours.' : ' invites you to their group: see where they are in any village and chat together.'));
+    b.append(name, document.createTextNode((m.far ? ' (found you by name)' : '') + (G.id ? ' invites you to their group. Joining leaves yours.' : ' invites you to their group: see where they are in any village and chat together.')));
     const row = document.createElement('div'); row.className = 'vgi-r';
     const yes = document.createElement('button'); yes.type = 'button'; yes.textContent = 'Join';
     const no = document.createElement('button'); no.type = 'button'; no.className = 'no'; no.textContent = 'No thanks';
@@ -256,13 +270,14 @@
   function account() { hideCard(); pending = null; if (G.id || stored()) { close('account'); reset(); emit('gone', { why: 'account' }); } stopped = null; fails = 0; retryAt = 0; }
 
   const css = `
-#vgInvite{position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:72;width:min(340px,calc(100vw - 32px));background:rgba(5,10,28,.96);border:1px solid rgba(123,227,138,.7);box-shadow:0 10px 30px rgba(0,0,0,.5);color:#eef1f8;font:13px/1.4 -apple-system,'Segoe UI',Arial,sans-serif;padding:12px 14px;backdrop-filter:blur(10px)}
+#vgInvite{position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:72;box-sizing:border-box;width:min(340px,calc(100vw - 32px));background:rgba(5,10,28,.96);border:1px solid rgba(123,227,138,.7);box-shadow:0 10px 30px rgba(0,0,0,.5);color:#eef1f8;font:13px/1.4 -apple-system,'Segoe UI',Arial,sans-serif;padding:12px 14px;backdrop-filter:blur(10px)}
 #vgInvite .vgi-t{font:700 9px/1 'Cinzel Decorative',serif;letter-spacing:2px;color:#7be38a;text-transform:uppercase;margin-bottom:6px}
 #vgInvite .vgi-b b{color:#b9f5c2}
 #vgInvite .vgi-r{display:flex;gap:8px;margin-top:10px}
 #vgInvite button{flex:1;font:700 10px/1 'Cinzel Decorative',serif;letter-spacing:1.4px;background:rgba(123,227,138,.16);border:1px solid rgba(123,227,138,.7);color:#dfffe4;padding:10px;cursor:pointer;min-height:36px}
 #vgInvite button.no{background:transparent;border-color:rgba(255,255,255,.25);color:#cfd6e6}
 html.vt-touch #vgInvite{top:calc(max(12px,env(safe-area-inset-top,0px)) + 112px)}
+body:has(#vcSay) #vgInvite{top:252px}html.vt-touch body:has(#vcSay) #vgInvite{top:calc(max(12px,env(safe-area-inset-top,0px)) + 262px)} /* (under the admins' message to everyone) */
 body.in-game #vgInvite{display:none}`;
   function start(host) {
     if (H || !host) return;
@@ -273,7 +288,7 @@ body.in-game #vgInvite{display:none}`;
     log('start', stored());
   }
   window.VillageGroup = {
-    start, tick, invite, onRoomInvite, join, leave, kick, say, report, dots, goTo, whereOf, placeOf: x => (H ? placeOf(x) : null), stop, account,
+    start, tick, invite, onRoomInvite, onFarResult, join, leave, kick, say, report, dots, goTo, whereOf, placeOf: x => (H ? placeOf(x) : null), stop, account,
     on: f => { listeners.add(f); return () => listeners.delete(f); },
     inGroup: () => !!G.id, isMember: u => G.members.has(u), member: u => G.members.get(u) || null, members: () => [...G.members.values()],
     voice: { send: o => send(o), open: () => !!ws && ws.readyState === 1 && !!G.id && G.cfg?.voice === true, you: () => G.you },
