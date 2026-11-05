@@ -11,7 +11,8 @@ import { isAdminRequest } from './_admin-auth.mjs';
 import { siteOf, adminKey, roomsUrl } from './mp-ticket.mjs';
 
 const COMMANDS = new Set(['online', 'log', 'reports', 'report-state', 'mods', 'mute', 'unmute', 'ban', 'unban', 'kick', 'del', 'clear', 'cfg-get', 'cfg-set',
-  'events', 'event-save', 'event-live', 'event-end', 'event-show', 'event-host', 'event-delete']); // (the Colony Stage's events: realtime/src/events.js)
+  'events', 'event-save', 'event-live', 'event-end', 'event-show', 'event-host', 'event-delete', // (the Colony Stage's events: realtime/src/events.js)
+  'say']); // (a message to everyone in Universe: every village and copy, and newcomers for a while)
 
 export function signCommand(cmd, args, site = siteOf(), now = Date.now()) {
   const sec = Math.floor(now / 1000);

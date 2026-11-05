@@ -4,6 +4,7 @@
 // /api/internal/resolve and sets the ra_econ session cookie. A popup gets a page that tells the game tab and closes;
 // a full-page sign-in goes straight back to where it started. See api/_econ.mjs.
 import { enforceRateLimit } from './_guard.mjs';
+import { limitOf } from './_limits.mjs'; // (the Admin Hub's Limits page)
 import { readStateCookie, clearStateCookie, discordUserFromCode, econResolve, econSessionCookie, finishPage } from './_econ.mjs';
 import { bump } from './_site-stats.mjs';
 
@@ -21,7 +22,7 @@ export default async function handler(req, res) {
     if (!st) return page(400, false, 'This sign-in expired. Please try again from the village.');
     if (q.error) return page(200, false, q.error === 'access_denied' ? 'Discord sign-in was cancelled.' : 'Discord did not sign you in. Please try again.');
     if (!q.code) return page(400, false, 'Discord did not send a sign-in code. Please try again.');
-    if (!(await enforceRateLimit(req, res, 'econ-callback', 60, 3600, 'sign-in attempts'))) return;
+    if (!(await enforceRateLimit(req, res, 'econ-callback', await limitOf('discordIp'), 3600, 'sign-in attempts'))) return;
     const d = await discordUserFromCode(req, q.code);
     const acct = await econResolve({ discordId: d.id, username: d.username, displayName: d.global_name || d.username });
     const cookie = econSessionCookie({ u: acct.userId, d: d.id, un: d.username, n: acct.displayName || d.global_name || d.username, a: d.avatar });

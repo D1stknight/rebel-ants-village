@@ -10,6 +10,7 @@
 // page only shows it. Guests can talk too, without tips.
 import { econCall } from './_econ.mjs';
 import { asker, underLimits, firstGreetToday, voiceToken, clean, VILLAGE_NAMES, isCreator, DAD } from './_anthony.mjs';
+import { limitOf } from './_limits.mjs'; // (the Admin Hub's Limits page)
 
 const CASINO = /\b(bets?|betting|wager(s|ing)?|odds|luck|payouts?|jackpots?|cash(ing)? ?out|gambl(e|es|ing)|casinos?)\b/i;
 const HELD = "Ha, that one's not for me, buddy. Ask me about the villages, the games here, a quest, or a spot where you're stuck and I've got you.";
@@ -34,7 +35,7 @@ export default async function handler(req, res) {
 
   let body;
   if (kind === 'greet') {
-    if (!(await underLimits([[`greet:site:${new Date().toISOString().slice(0, 10)}`, 1500, 86400]]))) return res.status(200).json({ ok: true, skip: true, why: 'budget' });
+    if (!(await underLimits([[`greet:site:${new Date().toISOString().slice(0, 10)}`, await limitOf('antGreetDay'), 86400]]))) return res.status(200).json({ ok: true, skip: true, why: 'budget' });
     if (!(await firstGreetToday(who))) return res.status(200).json({ ok: true, skip: true, why: 'today' });
     body = {
       scene: dad ? `You are walking around ${where} in Rebel Universe, the Rebel Ants' 3D world, as your own 3D character. Your dad just walked up to you. ${DAD} Wave and greet him with one short line in character. No questions back needed.`
@@ -43,8 +44,8 @@ export default async function handler(req, res) {
     };
   } else if (kind === 'wake') {
     const ok = who.signedIn
-      ? await underLimits([[`wake:${who.id}:10m`, 8, 600], [`wake:${who.id}:d`, 30, 86400], ['wake:site:d', 1500, 86400]])
-      : await underLimits([[`wake:${who.id}:10m`, 4, 600], [`wake:${who.id}:d`, 12, 86400], [`wake:ip:${who.ip}:d`, 30, 86400], ['wake:site:d', 1500, 86400]]);
+      ? await underLimits([[`wake:${who.id}:10m`, 8, 600], [`wake:${who.id}:d`, 30, 86400], ['wake:site:d', await limitOf('antWakeDay'), 86400]])
+      : await underLimits([[`wake:${who.id}:10m`, 4, 600], [`wake:${who.id}:d`, 12, 86400], [`wake:ip:${who.ip}:d`, 30, 86400], ['wake:site:d', await limitOf('antWakeDay'), 86400]]);
     if (!ok) return res.status(429).json({ ok: false, error: 'Ant-Thony rolled over and went back to sleep.' });
     body = {
       scene: `You were fast asleep in your little house by the pond in the Hub of Rebel Universe, the Rebel Ants' 3D world (you sleep there from 2 to 7 in the morning, New York time). ${dad ? `Your dad just walked in and woke you up. ${DAD}` : `${who.signedIn ? name : 'A guest player'} just walked into your house and woke you up.`} Sit up and say one short, funny, sleepy line in character: groggy, a little grumpy, but glad to see them, and happy to help with Universe. No questions back needed.`,
@@ -54,8 +55,8 @@ export default async function handler(req, res) {
     const question = clean(b.question, 300);
     if (question.length < 2) return res.status(400).json({ ok: false, error: 'Type a question first' });
     const ok = who.signedIn
-      ? await underLimits([[`ask:${who.id}:10m`, 12, 600], [`ask:${who.id}:d`, 60, 86400], ['ask:site:d', 3000, 86400]])
-      : await underLimits([[`ask:${who.id}:10m`, 6, 600], [`ask:${who.id}:d`, 20, 86400], [`ask:ip:${who.ip}:d`, 40, 86400], ['ask:site:d', 3000, 86400]]);
+      ? await underLimits([[`ask:${who.id}:10m`, 12, 600], [`ask:${who.id}:d`, 60, 86400], ['ask:site:d', await limitOf('antAskDay'), 86400]])
+      : await underLimits([[`ask:${who.id}:10m`, 6, 600], [`ask:${who.id}:d`, 20, 86400], [`ask:ip:${who.ip}:d`, 40, 86400], ['ask:site:d', await limitOf('antAskDay'), 86400]]);
     if (!ok) return res.status(429).json({ ok: false, error: 'Ant-Thony needs a breather: ask again in a few minutes.' });
     const lines = (Array.isArray(b.transcript) ? b.transcript : []).slice(-10)
       .map((l) => ({ name: l?.who === 'him' ? 'Ant-Thony' : (who.signedIn ? name : 'Guest'), text: clean(l?.text, 400) })).filter((l) => l.text);

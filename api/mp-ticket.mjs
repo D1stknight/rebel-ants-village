@@ -15,6 +15,7 @@
 // account holds one (or an admin asks), the ticket says so (tix: [event id]); the hall lets in nobody else but its hosts.
 import crypto from 'node:crypto';
 import { enforceRateLimit, clientIp } from './_guard.mjs';
+import { limitOf } from './_limits.mjs'; // (the Admin Hub's Limits page)
 import { econSessionOf, isNameSession } from './_econ.mjs';
 import { walletOf, holderOf, redis } from './_wallet.mjs';
 import { bump } from './_site-stats.mjs';
@@ -91,8 +92,8 @@ export default async function handler(req, res) {
     const village = String(q.village || ''), col = String(q.col || ''), tok = String(q.tok || '');
     if (!VILLAGES.has(village) || (col && !/^[a-z0-9_]{1,64}$/.test(col)) || (tok && !/^(0|[1-9][0-9]{0,77})$/.test(tok))) return res.status(400).json({ ok: false, error: 'Bad request' });
     const s = econSessionOf(req);
-    if (!(await enforceRateLimit(req, res, `mp-ticket-ip:${clientIp(req)}`, 90, 600, 'room tickets'))) return;
-    if (s && !(await enforceRateLimit(req, res, `mp-ticket:${s.u}`, 240, 3600, 'room tickets'))) return;
+    if (!(await enforceRateLimit(req, res, `mp-ticket-ip:${clientIp(req)}`, await limitOf('mpJoinsIp'), 600, 'room tickets'))) return;
+    if (s && !(await enforceRateLimit(req, res, `mp-ticket:${s.u}`, await limitOf('mpJoinsAcct'), 3600, 'room tickets'))) return;
     const now = Math.floor(Date.now() / 1000), look = await lookOf(req, col, tok);
     const who = s ? { sub: 'u:' + s.u, n: String(s.n || s.un || 'Rebel').slice(0, 40), k: isNameSession(s) ? 'name' : 'discord', av: avatarOf(s) }
       : { sub: guestSub(String(q.gk || '')), n: 'Guest', k: 'guest', av: '' };

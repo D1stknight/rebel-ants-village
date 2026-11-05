@@ -5,6 +5,7 @@
 //                                                     | { ok: false, code, message }   (taken, unknown name, wrong PIN, locked...)
 // The player's address goes to the economy for its rate limits (every village player reaches it from this server).
 import { enforceRateLimit, clientIp } from './_guard.mjs';
+import { limitOf } from './_limits.mjs'; // (the Admin Hub's Limits page)
 import { econReady, econSessionCookie, econNameAuth, NAME_ID } from './_econ.mjs';
 import { bump } from './_site-stats.mjs';
 
@@ -16,8 +17,8 @@ export default async function handler(req, res) {
   try { body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {}); } catch (e) {}
   const action = body.action === 'register' || body.action === 'login' ? body.action : '';
   if (!action) return res.status(400).json({ ok: false, code: 'invalid_input', message: 'Sign in or make an account.' });
-  if (!(await enforceRateLimit(req, res, 'econ-name', 40, 600, 'sign-in attempts'))) return;
-  if (action === 'register' && !(await enforceRateLimit(req, res, 'econ-name-new', 10, 3600, 'new accounts'))) return;
+  if (!(await enforceRateLimit(req, res, 'econ-name', await limitOf('nameTriesIp'), 600, 'sign-in attempts'))) return;
+  if (action === 'register' && !(await enforceRateLimit(req, res, 'econ-name-new', await limitOf('nameNewIp'), 3600, 'new accounts'))) return;
 
   let r;
   try {

@@ -3,6 +3,7 @@
 // On another host of the same deploy (www, a commit URL) it first moves to the one origin this deploy signs in on, so
 // the session cookie lands where Discord sends the player back. See api/_econ.mjs.
 import { enforceRateLimit } from './_guard.mjs';
+import { limitOf } from './_limits.mjs'; // (the Admin Hub's Limits page)
 import { econEnv, newStateCookie, safeReturn, publicOrigin, hostOf, discordAuthorizeUrl, finishPage } from './_econ.mjs';
 
 export default async function handler(req, res) {
@@ -21,7 +22,7 @@ export default async function handler(req, res) {
       res.setHeader('Location', `${origin}${u.pathname}${u.search}`);
       return res.status(302).end();
     }
-    if (!(await enforceRateLimit(req, res, 'econ-login', 60, 3600, 'sign-in attempts'))) return;
+    if (!(await enforceRateLimit(req, res, 'econ-login', await limitOf('discordIp'), 3600, 'sign-in attempts'))) return;
     const { state, cookie } = newStateCookie({ ret, popup });
     res.setHeader('Set-Cookie', cookie);
     res.setHeader('Location', discordAuthorizeUrl(req, state));
