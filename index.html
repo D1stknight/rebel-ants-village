@@ -355,7 +355,29 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 }
 @media (max-width:640px){
   .wallet-option-grid{grid-template-columns:1fr;}
+  .wallet-option{min-height:0;padding:13px 16px;}
 }
+/* a tall window scrolls on short screens instead of losing its top and bottom */
+#wallet-modal-backdrop{overflow-y:auto;padding:max(16px,env(safe-area-inset-top,0px)) 0 max(16px,env(safe-area-inset-bottom,0px));}
+#wallet-modal{margin:auto;}
+/* phones: open Universe in the wallet app's own browser (Nov 5) */
+#wallet-phone{margin:16px 0 4px;padding:15px 16px 14px;border:1px solid rgba(213,170,70,0.45);background:rgba(28,22,10,0.55);
+  display:flex;flex-direction:column;gap:9px;}
+#wallet-phone[hidden],#wallet-or[hidden],#wallet-modal-intro[hidden]{display:none;}
+#wallet-phone strong{color:#f1d077;font-family:'Cinzel',serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;line-height:1.45;}
+#wallet-phone span{color:#c9bc98;font-size:11px;letter-spacing:1px;line-height:1.5;}
+.wp-apps{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:3px;}
+.wp-app{display:flex;align-items:center;justify-content:center;text-align:center;min-height:48px;padding:8px 10px;
+  border:1px solid rgba(213,170,70,0.7);background:linear-gradient(160deg,rgba(213,170,70,0.2),rgba(213,170,70,0.07));
+  color:#f6e3a8;font-family:'Cinzel',serif;font-size:11px;letter-spacing:1.4px;line-height:1.35;text-transform:uppercase;text-decoration:none;}
+.wp-app:active{background:rgba(213,170,70,0.32);}
+.wp-copy{min-height:44px;padding:9px 12px;border:1px solid rgba(94,207,202,0.45);background:rgba(7,12,24,0.72);color:#bfe9e6;
+  cursor:pointer;font-family:'Cinzel',serif;font-size:11px;letter-spacing:1.6px;text-transform:uppercase;}
+.wp-copy.done{border-color:rgba(94,207,202,0.9);color:#5ecfca;}
+#wallet-modal.guide .wallet-option-grid > :first-child{order:2;} /* (a phone's own browser has no wallet: WalletConnect first) */
+#wallet-or{margin:14px 0 -6px;color:#8a7a5a;font-size:10px;letter-spacing:3px;text-transform:uppercase;text-align:center;}
+@media (max-width:360px){ .wp-apps{grid-template-columns:1fr;} }
+@media (pointer:coarse){ .wallet-modal-close{min-height:46px;} } /* a full finger on phones */
 
 /* ── LIVE NOW: the Colony Stage's event on now (or the next one), top centre (Oct 28) ── */
 #liveNow{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:12;display:none;align-items:center;gap:10px;max-width:min(560px,calc(100vw - 150px));
@@ -671,7 +693,19 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 <div id="wallet-modal-backdrop" onclick="closeWalletModalFromBackdrop(event)">
   <div id="wallet-modal" role="dialog" aria-modal="true" aria-labelledby="wallet-modal-title">
     <h2 id="wallet-modal-title">Connect Wallet</h2>
-    <p>Using a browser extension? Choose Browser Wallet. Using mobile, Safari, or no extension? Choose WalletConnect.</p>
+    <p id="wallet-modal-intro">Using a browser extension? Choose Browser Wallet. Using mobile, Safari, or no extension? Choose WalletConnect.</p>
+    <!-- phones without a wallet in the page (Safari, Chrome): the wallet app's own browser is the easy way (Nov 5) -->
+    <div id="wallet-phone" hidden>
+      <strong>On a phone? Open Universe in your wallet app</strong>
+      <span>Wallet apps have their own browser. Universe opens there and connects in one tap.</span>
+      <div class="wp-apps">
+        <a class="wp-app" id="wp-coinbase" href="https://go.cb-w.com/dapp?cb_url=https%3A%2F%2Frebeluniverse.io%2F%3Fconnect%3Dwallet">Open in Coinbase Wallet</a>
+        <a class="wp-app" id="wp-metamask" href="https://link.metamask.io/dapp/rebeluniverse.io/?connect=wallet">Open in MetaMask</a>
+      </div>
+      <button class="wp-copy" id="wp-copy" type="button" onclick="copyWalletAppLink()">Another wallet? Copy the link</button>
+      <span id="wp-copy-note">Then open your wallet app's browser and paste it there.</span>
+    </div>
+    <div id="wallet-or" hidden>or connect from this browser</div>
     <div class="wallet-option-grid">
       <button class="wallet-option" type="button" onclick="connectBrowserWallet()">
         <strong>Browser Wallet</strong>
@@ -1630,15 +1664,53 @@ function setWalletModalStatus(message) {
   if (el) el.textContent = message || '';
 }
 
+// The page in a wallet app's own browser: Coinbase Wallet's and MetaMask's universal links (Coinbase's dapp browser
+// link, MetaMask's link.metamask.io; without the app they lead to its download page). connect=wallet: there it connects.
+function walletAppLink(app) {
+  const page = location.origin + '/?connect=wallet';
+  if (app === 'coinbase') return 'https://go.cb-w.com/dapp?cb_url=' + encodeURIComponent(page);
+  if (app === 'metamask') return 'https://link.metamask.io/dapp/' + page.replace(/^https?:\/\//, '');
+  return location.origin + '/';
+}
+
+function copyWalletAppLink() {
+  const link = walletAppLink(), btn = document.getElementById('wp-copy'), note = document.getElementById('wp-copy-note');
+  const done = (copied) => {
+    if (btn) { btn.textContent = copied ? 'Link copied' : 'Copy this link'; btn.classList.toggle('done', copied); }
+    if (note) note.textContent = copied ? 'Now open your wallet app\'s browser and paste it there: ' + link.replace(/^https?:\/\//, '')
+      : 'Open your wallet app\'s browser and type: ' + link.replace(/^https?:\/\//, '');
+  };
+  try { navigator.clipboard.writeText(link).then(() => done(true), () => done(false)); } catch (e) { done(false); }
+}
+
+let walletSupportHidden = false; // (the help bubble sits over the window's bottom on phones)
 function openWalletModal() {
   const backdrop = document.getElementById('wallet-modal-backdrop');
   if (backdrop) backdrop.classList.add('open');
-  setWalletModalStatus('Wallet not detected? Unlock your extension and refresh, or use WalletConnect.');
+  const phone = isPhoneBrowser(), inApp = !!walletAppProvider(), guide = phone && !inApp;
+  const intro = document.getElementById('wallet-modal-intro');
+  if (intro) {
+    intro.hidden = guide; // (phones without a wallet: the wallet app part says it)
+    intro.textContent = inApp ? 'You are in ' + getProviderLabel(walletAppProvider()) + '\'s own browser: approve the connection there.'
+      : 'Using a browser extension? Choose Browser Wallet. Using mobile, Safari, or no extension? Choose WalletConnect.';
+  }
+  document.getElementById('wallet-modal').classList.toggle('guide', guide);
+  document.getElementById('wallet-phone').hidden = !guide;
+  document.getElementById('wallet-or').hidden = !guide;
+  if (guide) {
+    document.getElementById('wp-coinbase').href = walletAppLink('coinbase');
+    document.getElementById('wp-metamask').href = walletAppLink('metamask');
+    const btn = document.getElementById('wp-copy'); btn.textContent = 'Another wallet? Copy the link'; btn.classList.remove('done');
+    document.getElementById('wp-copy-note').textContent = 'Then open your wallet app\'s browser and paste it there.';
+  }
+  setWalletModalStatus(phone ? '' : 'Wallet not detected? Unlock your extension and refresh, or use WalletConnect.');
+  try { if (phone && window.RebelSupport && !walletSupportHidden) { window.RebelSupport.hide(); walletSupportHidden = true; } } catch (e) {}
 }
 
 function closeWalletModal() {
   const backdrop = document.getElementById('wallet-modal-backdrop');
   if (backdrop) backdrop.classList.remove('open');
+  try { if (walletSupportHidden) { walletSupportHidden = false; window.RebelSupport?.show(); } } catch (e) {}
 }
 
 function closeWalletModalFromBackdrop(event) {
@@ -1767,11 +1839,12 @@ async function connectBrowserWallet() {
   const btn = document.getElementById('btn-wallet');
   btn.textContent = 'Detecting Wallet...';
   setWalletModalStatus(isPhoneBrowser() ? 'Looking for your wallet...' : 'Looking for an unlocked browser wallet extension...');
-  const provider = await waitForWalletProvider();
+  const provider = await waitForWalletProvider(isPhoneBrowser() ? 1500 : 8000); // (a phone's wallet app puts its wallet in at once)
   if (!provider) {
     const diagnostics = getWalletProviderDiagnostics();
     btn.textContent = 'No Wallet Found';
-    const message = 'No browser wallet detected. Open/unlock MetaMask, Coinbase Wallet, Rabby, or Brave Wallet, enable it for this site, then refresh — or use WalletConnect. ' + formatWalletDiagnostics(diagnostics);
+    const message = isPhoneBrowser() ? 'No wallet in this browser. Open Universe in your wallet app (above), or use WalletConnect.'
+      : 'No browser wallet detected. Open/unlock MetaMask, Coinbase Wallet, Rabby, or Brave Wallet, enable it for this site, then refresh — or use WalletConnect. ' + formatWalletDiagnostics(diagnostics);
     setStatus(message);
     setWalletModalStatus(message);
     console.info('Wallet provider diagnostics:', diagnostics);
