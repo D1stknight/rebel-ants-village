@@ -1877,9 +1877,14 @@ async function getWalletConnectProjectId() {
   }
 }
 
+// The WalletConnect window's wallet list (Nov 5): MetaMask first. Coinbase Wallet can't be in it: this library leaves
+// Coinbase out of every list (it expects Coinbase to open its own app), so phones get "Open in Coinbase Wallet" in the
+// Connect Wallet window instead. Ids: WalletConnect's wallet directory.
+const WALLETCONNECT_FIRST = ['c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96']; // MetaMask
+
 async function loadWalletConnectProviderModule() {
   if (!walletConnectModulePromise) {
-    walletConnectModulePromise = import('https://esm.sh/@walletconnect/ethereum-provider@2');
+    walletConnectModulePromise = import('https://esm.sh/@walletconnect/ethereum-provider@2.26.0'); // (pinned: what @2 gave on Nov 5)
   }
   const module = await walletConnectModulePromise;
   return module.default || module.EthereumProvider;
@@ -1906,6 +1911,7 @@ async function connectWalletConnect() {
       chains: [1],
       optionalChains: [1],
       showQrModal: true,
+      qrModalOptions: { explorerRecommendedWalletIds: WALLETCONNECT_FIRST },
       methods: ['eth_sendTransaction', 'personal_sign', 'eth_signTypedData', 'eth_requestAccounts'],
       events: ['accountsChanged', 'chainChanged', 'disconnect'],
       metadata: {
