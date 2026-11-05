@@ -2,6 +2,9 @@
 // Uses the Responses API image_generation tool and pins the image model to GPT Image 2.5.
 // Tries the best model first, then falls back so a model/param rejection never breaks Forge.
 
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+
 export const FORGE_RESPONSES_MODEL = process.env.FORGE_RESPONSES_MODEL || 'gpt-5.5';
 
 const PRIMARY_IMAGE_MODEL = process.env.FORGE_IMAGE_MODEL || 'gpt-image-2.5-sunburst';
@@ -29,6 +32,34 @@ export const FORGE_REFERENCE_URLS = {
   friendStyle: { ape: `${REPO_RAW}/assets/forge/sources/chumpz_racer_production_ref_v1.png` }
 };
 
+// Nov 5: the reference pictures ship with the site, so they are read from this deploy's own files (with GitHub
+// unreachable, Nov 5: the repository hidden, every painting failed on the GitHub address). The address stays each
+// picture's name and is fetched only when the file is missing. Literal paths: the bundler puts each picture in every
+// function that imports this module.
+const SITE_PICTURES = {
+  [FORGE_REFERENCE_URLS.body.armored]: new URL('../assets/forge-references/body/navy-wave-kimono.png', import.meta.url),
+  [FORGE_REFERENCE_URLS.body.gi]: new URL('../assets/forge-references/body/orange-shinobi-layered.png', import.meta.url),
+  [FORGE_REFERENCE_URLS.body.tactical]: new URL('../assets/forge-references/body/pale-pink-tactical-kimono.png', import.meta.url),
+  [FORGE_REFERENCE_URLS.body.robe]: new URL('../assets/forge-references/body/red-kimono-clean.png', import.meta.url),
+  [FORGE_REFERENCE_URLS.proportions]: new URL('../assets/forge-references/proportions-262-clay.jpg', import.meta.url),
+  [FORGE_REFERENCE_URLS.friendStyle.ape]: new URL('../assets/forge/sources/chumpz_racer_production_ref_v1.png', import.meta.url)
+};
+const PICTURE_TYPES = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp' };
+
+async function sitePictureAsDataUrl(imageUrl) {
+  const file = SITE_PICTURES[imageUrl];
+  if (!file) return null;
+  const type = PICTURE_TYPES[path.extname(file.pathname).toLowerCase()];
+  const rel = imageUrl.slice(REPO_RAW.length + 1);
+  for (const at of [file, path.join(process.cwd(), rel)]) {
+    try {
+      return `data:${type};base64,${(await readFile(at)).toString('base64')}`;
+    } catch (e) {}
+  }
+  console.warn('Forge reference picture: no site copy of', rel);
+  return null;
+}
+
 // Phase 0 SSRF guard: public https hosts only (no localhost / IP literals / internal names).
 function assertPublicImageUrl(imageUrl) {
   let u;
@@ -41,6 +72,8 @@ function assertPublicImageUrl(imageUrl) {
 }
 
 export async function fetchImageAsDataUrl(imageUrl) {
+  const site = await sitePictureAsDataUrl(imageUrl);
+  if (site) return site;
   assertPublicImageUrl(imageUrl);
   const response = await fetch(imageUrl, {
     headers: { Accept: 'image/png,image/jpeg,image/webp,image/gif' }
