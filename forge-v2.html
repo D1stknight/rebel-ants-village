@@ -677,7 +677,31 @@ function shake(px = 6) { if (REDUCED) return; gsap.fromTo('#stage', { x: -px }, 
    3D: Babylon scene — ember DNA helix (points shader) → body
    ========================================================= */
 const canvas = $('#stage');
-const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: false, stencil: false, antialias: true, alpha: false }, true);
+// no 3D in this browser (WebGL switched off or blocked, an old computer): a card says so, as in Universe, the dashboard
+// counts it as a startup problem (not a script error), and the Forge stops here (the 'STOP:' error is not reported)
+function forgeNoWebGL(why) {
+  window.SiteReport?.problem('webgl', 'the Forge: ' + String(why || '').slice(0, 120));
+  const card = document.createElement('div'); card.id = 'noGL'; card.setAttribute('role', 'alert');
+  card.innerHTML = '<div class="b"><h2>The Forge needs 3D graphics (WebGL)</h2><p>This browser has WebGL switched off or blocked, so the Forge can\'t draw your Rebel.</p><ul>'
+    + '<li>Chrome or Edge: Settings → System → turn on "Use graphics acceleration when available", then restart the browser.</li>'
+    + '<li>A work or school computer may block 3D graphics: try your own computer, phone or browser.</li>'
+    + '<li>Or open the Forge in another browser (Chrome, Edge, Firefox or Safari).</li></ul>'
+    + '<div class="r"><button type="button" onclick="location.reload()">Try again</button><a href="/">Back to the lobby</a></div></div>';
+  const st = document.createElement('style');
+  st.textContent = '#noGL{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:rgba(3,4,8,.92);padding:16px;font:15px/1.55 -apple-system,"Segoe UI",Arial,sans-serif;color:#eef1f8}'
+    + '#noGL .b{max-width:520px;border:1px solid rgba(232,197,106,.6);background:#0d0f16;padding:22px 24px;box-sizing:border-box;width:100%}'
+    + '#noGL h2{margin:0 0 10px;font:700 18px/1.3 "Cinzel Decorative",Georgia,serif;color:#e8c56a}#noGL p{margin:0 0 10px;color:#cfd6e6}'
+    + '#noGL ul{margin:0 0 16px;padding-left:20px;display:flex;flex-direction:column;gap:6px}#noGL .r{display:flex;gap:10px;flex-wrap:wrap}'
+    + '#noGL button,#noGL a{font:700 12px/1 "Cinzel Decorative",Georgia,serif;letter-spacing:1.2px;padding:12px 16px;border:1px solid rgba(232,197,106,.7);background:rgba(232,197,106,.14);color:#fff3cf;cursor:pointer;text-decoration:none}';
+  document.head.appendChild(st); document.body.appendChild(card);
+  throw new Error('STOP: no WebGL here');
+}
+const engine = (() => {
+  try { const c = document.createElement('canvas'), g = c.getContext('webgl2') || c.getContext('webgl'); if (!g) forgeNoWebGL('no WebGL context'); g.getExtension('WEBGL_lose_context')?.loseContext(); } // (the test context let go)
+  catch (e) { if (/^STOP:/.test(e.message)) throw e; forgeNoWebGL(e.message); }
+  try { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: false, stencil: false, antialias: true, alpha: false }, true); }
+  catch (e) { return forgeNoWebGL(e && e.message); }
+})();
 engine.setHardwareScalingLevel(1 / Math.min(window.devicePixelRatio || 1, MOBILE ? 1.5 : 2));
 const scene = new BABYLON.Scene(engine);
 // opaque sumi background (additive glow needs an opaque target); CSS atmosphere is screen-blended on top

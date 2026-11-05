@@ -36,8 +36,9 @@
     return String(stack || '').split('\n').map(l => { const m = l.match(/(?:\(|@|at )?((?:https?:|blob:|webpack:)?[^\s()@]*?\/[^\s()@/]+?:\d+(?::\d+)?)\)?\s*$/); return m ? short(m[1]) : ''; })
       .filter(Boolean).slice(0, 5);
   }
-  // noise that says nothing about Universe: browser extensions, the benign ResizeObserver note, a cross-site script
-  const NOISE = /^(ResizeObserver loop|Script error\.?$)|extension:\/\/|^Non-Error promise rejection captured/;
+  // noise that says nothing about Universe: browser extensions, the benign ResizeObserver note, a cross-site script, a page
+  // that stopped on purpose ('STOP: ...', e.g. the Forge without WebGL: reported as a startup problem instead)
+  const NOISE = /^(ResizeObserver loop|Script error\.?$|STOP:)|extension:\/\/|^Non-Error promise rejection captured/;
   function error(msg, src, stack) {
     if (off) return;
     msg = String(msg || '').slice(0, 400); if (!msg || NOISE.test(msg) || /extension:\/\//.test(String(src || '') + String(stack || ''))) return;
