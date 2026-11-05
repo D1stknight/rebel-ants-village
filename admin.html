@@ -102,6 +102,9 @@ a.tile:hover{border-color:#343846;color:var(--fg)}
 .al.red strong{color:var(--red)}
 .al.ok{background:#0b1a0e;border:1px solid #1d4d24;color:#a8e0a8}
 .al.ok strong{color:var(--ok-text)}
+/* under each alert: when it clears by itself, and what to do (api/admin-stats.mjs alertsOf clears / todo) */
+.al .alw{display:flex;flex-direction:column;gap:3px;margin-top:7px;padding-top:7px;border-top:1px solid rgba(255,255,255,.08);font-size:12.5px;line-height:1.45;opacity:.92}
+.al .alw b{font-weight:600}
 
 /* chart cards */
 .cc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0;position:relative}
@@ -1633,11 +1636,20 @@ const AREA_PAGE = { rooms: 'services', redis: 'services', economy: 'services', f
 const AREA_NAME = { rooms: 'Rooms', redis: 'Database', economy: 'Rebel Economy', fps: 'Frame rate', lag: 'Lag', drops: 'Connections', errors: 'Errors', start: 'Startup' };
 function renderAlerts() {
   const box = $('alerts'), out = [];
-  const chip = (cls, icon, head, text, href) => { const a = mk(href ? 'a' : 'div', 'al ' + cls); if (href) a.href = href; const i = document.createElement('span'); i.innerHTML = icon; const t = mk('span'); t.append(mk('strong', '', head + ' '), document.createTextNode(text)); a.append(i.firstChild, t); return a; };
+  const chip = (cls, icon, head, text, href, al) => {
+    const a = mk(href ? 'a' : 'div', 'al ' + cls); if (href) a.href = href; const i = document.createElement('span'); i.innerHTML = icon;
+    const t = mk('span'); t.append(mk('strong', '', head + ' '), document.createTextNode(text));
+    if (al?.clears || al?.todo) { // (when it clears by itself, what to do: from the alert's own rule)
+      const w = mk('span', 'alw');
+      for (const [k, v] of [['Clears: ', al.clears], ['What to do: ', al.todo]]) if (v) { const l = mk('span'); l.append(mk('b', '', k), document.createTextNode(v)); w.append(l); }
+      t.append(w);
+    }
+    a.append(i.firstChild, t); return a;
+  };
   if (D.err) out.push(chip('red', ICON_DOWN, 'The dashboard could not read.', D.err));
   const al = D.data?.alerts || [];
-  for (const a of al.filter(x => x.level === 'red')) out.push(chip('red', ICON_DOWN, AREA_NAME[a.area] ? AREA_NAME[a.area] + ':' : '', a.text, '#' + (AREA_PAGE[a.area] || 'services')));
-  for (const a of al.filter(x => x.level !== 'red')) out.push(chip('amber', ICON_WARN, AREA_NAME[a.area] ? AREA_NAME[a.area] + ':' : '', a.text, '#' + (AREA_PAGE[a.area] || 'overview')));
+  for (const a of al.filter(x => x.level === 'red')) out.push(chip('red', ICON_DOWN, AREA_NAME[a.area] ? AREA_NAME[a.area] + ':' : '', a.text, '#' + (AREA_PAGE[a.area] || 'services'), a));
+  for (const a of al.filter(x => x.level !== 'red')) out.push(chip('amber', ICON_WARN, AREA_NAME[a.area] ? AREA_NAME[a.area] + ':' : '', a.text, '#' + (AREA_PAGE[a.area] || 'overview'), a));
   if (!out.length && D.data) out.push(chip('ok', ICON_OK, 'All good.', 'Everything Universe needs is answering, and nothing on players\' screens needs a look right now.'));
   box.replaceChildren(...out);
 }

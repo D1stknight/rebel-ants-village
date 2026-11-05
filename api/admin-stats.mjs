@@ -34,39 +34,56 @@ async function redisPing() {
   return true;
 }
 
+// Each alert says when it clears by itself (clears) and what to do (todo): the dashboard shows both under it (Nov 5,
+// Miguel: "add the what clears it / what to do line under each alert"). The windows named are the ones its rule reads.
 export function alertsOf({ health, perf, telemetry, online, counters }) {
-  const out = [], red = (area, text) => out.push({ level: 'red', area, text }), amber = (area, text) => out.push({ level: 'amber', area, text });
-  for (const h of health) if (!h.ok) red(h.id, h.note || 'not answering'); // (the page names the service)
+  const out = [], add = (level, area, text, clears, todo) => out.push({ level, area, text, ...(clears ? { clears } : {}), ...(todo ? { todo } : {}) });
+  const red = (area, text, clears, todo) => add('red', area, text, clears, todo), amber = (area, text, clears, todo) => add('amber', area, text, clears, todo);
+  const ASK = 'If it stays, tell Claude.';
+  const down = { rooms: 'Multiplayer is off for everyone while the rooms are down (Universe still plays alone). Tell Claude at once.', redis: "Saves, limits and the dashboard's numbers need it: look at Upstash's status page, then tell Claude if it lasts more than a few minutes.", economy: "Rebel Points and sign-ins need it: look at the Rebel Economy's own admin (the Rebel Console), then tell Claude." };
+  for (const h of health) if (!h.ok) red(h.id, h.note || 'not answering', 'As soon as it answers again (the dashboard checks every 30 s).', down[h.id] || ASK);
   // a part the dashboard could not read (its service may still answer: rooms deployed before 'stats' answer 'Unknown command')
   const roomsUp = health.find(h => h.id === 'rooms')?.ok;
-  if (perf && !perf.ok && roomsUp) amber('rooms', /unknown command/i.test(perf.error || '') ? "the rooms don't keep the game's numbers yet: they need their update (a rooms deploy)" : `the game's numbers could not be read (${perf.error})`);
-  if (online && !online.ok && roomsUp) amber('rooms', `who is online could not be read (${online.error})`);
-  for (const [part, name] of [[telemetry, "players' errors"], [counters, "the site's days"]]) if (part && !part.ok) amber('redis', `${name} could not be read (${part.error})`);
-  for (const h of health) if (h.ok && h.ms > 3000) amber(h.id, `slow to answer (${(h.ms / 1000).toFixed(1)} s)`);
+  if (perf && !perf.ok && roomsUp) {
+    if (/unknown command/i.test(perf.error || '')) amber('rooms', "the rooms don't keep the game's numbers yet: they need their update (a rooms deploy)", 'Once the rooms run their update.', 'Ask Claude to deploy the live rooms.');
+    else amber('rooms', `the game's numbers could not be read (${perf.error})`, 'The next time they can be read (every 30 s).', 'Usually passes by itself. ' + ASK);
+  }
+  if (online && !online.ok && roomsUp) amber('rooms', `who is online could not be read (${online.error})`, 'The next time it can be read (every 30 s).', 'Usually passes by itself. ' + ASK);
+  for (const [part, name] of [[telemetry, "players' errors"], [counters, "the site's days"]]) if (part && !part.ok) amber('redis', `${name} could not be read (${part.error})`, 'The next time the database answers (every 30 s).', 'Usually passes by itself. ' + ASK);
+  for (const h of health) if (h.ok && h.ms > 3000) amber(h.id, `slow to answer (${(h.ms / 1000).toFixed(1)} s)`, 'When it answers in under 3 s again.', 'Usually passes by itself. If it stays slow for an hour, tell Claude.');
   const now = perf?.ok ? perf.now : null;
+  const BYWHERE = 'Performance → By village and By device show where and on what: send that page to Claude.';
   if (now && now.reports >= 3) {
-    if (now.slowPct >= 40) amber('fps', `${now.slowPct}% of players ran under 30 fps in the last 5 minutes`);
-    if (now.fpsP != null && now.fpsP < 25) amber('fps', `Phones average ${now.fpsP} fps right now`);
-    if (now.fpsD != null && now.fpsD < 30) amber('fps', `Computers average ${now.fpsD} fps right now`);
-    if (now.lagPct >= 25) amber('lag', `${now.lagPct}% of players have a ping of 200 ms or more`);
+    if (now.slowPct >= 40) amber('fps', `${now.slowPct}% of players ran under 30 fps in the last 5 minutes`, 'When fewer than 4 in 10 players run under 30 fps over the last 5 minutes.', BYWHERE);
+    if (now.fpsP != null && now.fpsP < 25) amber('fps', `Phones average ${now.fpsP} fps right now`, 'When phones average 25 fps or more over the last 5 minutes.', 'Often a crowd or a heavy village on older phones. ' + BYWHERE);
+    if (now.fpsD != null && now.fpsD < 30) amber('fps', `Computers average ${now.fpsD} fps right now`, 'When computers average 30 fps or more over the last 5 minutes.', 'Often older computers or laptops on battery. ' + BYWHERE);
+    if (now.lagPct >= 25) amber('lag', `${now.lagPct}% of players have a ping of 200 ms or more`, 'When fewer than 1 in 4 players have a ping of 200 ms or more (the last 5 minutes).', "Usually the players' own connections (far away, mobile data). If everyone has it at once, tell Claude to check the rooms.");
   }
   if (perf?.ok && perf.series?.length) {
     const last = perf.series.slice(-4), joins = last.reduce((a, s) => a + s.joins, 0), drops = last.reduce((a, s) => a + s.drops, 0);
-    if (joins >= 5 && drops / joins > .15) amber('drops', `${drops} dropped connections for ${joins} joins lately (${Math.round(drops / joins * 100)}%)`);
+    const mins = (perf.step || 15) * 4, lately = mins >= 120 ? `the last ${Math.round(mins / 60)} hours` : mins >= 60 ? 'the last hour' : `the last ${mins} minutes`;
+    if (joins >= 5 && drops / joins > .15) amber('drops', `${drops} dropped connections for ${joins} joins lately (${Math.round(drops / joins * 100)}%)`, `When ${lately} has 15% or fewer dropped connections (the time picked above changes "lately").`, 'Phones losing signal or going to sleep cause most of them; each page joins again by itself. If it stays with many players, send Performance → Dropped connections to Claude.');
     const fr = last.reduce((a, s) => a + s.freezes, 0), rep = last.reduce((a, s) => a + s.reports, 0);
-    if (rep >= 5 && fr / rep > .5) amber('fps', `Freezes over a second: ${fr} in ${rep} player-minutes lately`);
+    if (rep >= 5 && fr / rep > .5) amber('fps', `Freezes over a second: ${fr} in ${rep} player-minutes lately`, `When ${lately} has under one freeze every 2 player-minutes, or once those minutes pass with no more (the time picked above changes "lately").`, 'A few are normal while a village or another player\'s model loads, and one player on an old device is enough. ' + BYWHERE);
   }
   if (telemetry?.ok) {
     const t = telemetry, loads = t.totals.loads || 0, hours = t.hours;
-    if (loads >= 20 && t.totals.err / loads > .05) amber('errors', `${t.totals.err} script errors for ${loads} pages opened (${Math.round(t.totals.err / loads * 100)} per 100) in ${hours} h`);
+    if (loads >= 20 && t.totals.err / loads > .05) amber('errors', `${t.totals.err} script errors for ${loads} pages opened (${Math.round(t.totals.err / loads * 100)} per 100) in ${hours} h`, `When the last ${hours} h have 5 errors or fewer per 100 pages opened: more clean visits, or the errors getting older than ${hours} h.`, 'Issues → Most common errors shows each one (the message, the file and line, the device): send a screenshot to Claude to fix.');
     const dayAgo = Date.now() - 86400000;
-    for (const e of t.errors || []) if (e.first > dayAgo && e.n >= 5) amber('errors', `New error, ${e.n} times since ${new Date(e.first).toISOString().slice(11, 16)} UTC: ${String(e.m).slice(0, 90)}`);
+    for (const e of t.errors || []) if (e.first > dayAgo && e.n >= 5) amber('errors', `New error, ${e.n} times since ${new Date(e.first).toISOString().slice(11, 16)} UTC: ${String(e.m).slice(0, 90)}`, 'A day after it first showed up.', 'Send it to Claude: Issues → Most common errors has the file and line.');
     const P = t.problems || {}, say = { crash: 'pages that closed on screen (most likely out of memory)', 'gl-lost': 'times the 3D was lost (phones: memory)', 'slow-start': 'starts that took over 90 s', webgl: 'browsers without WebGL', rig: "Rebels' models that couldn't download" };
-    for (const [c, txt] of Object.entries(say)) if ((P[c]?.n || 0) >= 3) amber('start', `${P[c].n} ${txt} in ${hours} h`);
+    const fix = {
+      crash: 'Mostly phones running out of memory: that phone starts lighter for 3 days by itself. If there are many, send Issues to Claude.',
+      'gl-lost': 'Phones running out of memory (the 3D reset under the page). If there are many, send Issues to Claude.',
+      'slow-start': 'Slow connections or old devices. If one village shows up again and again, send Issues to Claude.',
+      webgl: "Usually the player's browser: 3D switched off, an old or work computer, or a bot opening the page. They see a card telling them how to turn it on. Issues → Startup problems shows which devices.",
+      rig: "A Rebel's model was blocked from downloading (a strict network): they play as the starter ant. If there are many, tell Claude."
+    };
+    for (const [c, txt] of Object.entries(say)) if ((P[c]?.n || 0) >= 3) amber('start', `${P[c].n} ${txt} in ${hours} h`, `When fewer than 3 are left in the last ${hours} h.`, fix[c]);
     const slow = (t.ready || []).filter(r => r.p === 'village' && r.n >= 3 && r.avgMs > (r.d === 'p' ? 45000 : 30000));
-    for (const r of slow.slice(0, 3)) amber('start', `${r.v || 'a village'} takes ${(r.avgMs / 1000).toFixed(0)} s to be ready on ${r.d === 'p' ? 'phones' : 'computers'} (${r.n} starts)`);
+    for (const r of slow.slice(0, 3)) amber('start', `${r.v || 'a village'} takes ${(r.avgMs / 1000).toFixed(0)} s to be ready on ${r.d === 'p' ? 'phones' : 'computers'} (${r.n} starts)`, `When its average over the last ${hours} h drops under ${r.d === 'p' ? 45 : 30} s.`, 'Send Issues → How long villages take to be ready to Claude.');
   }
-  if (online?.ok) for (const r of online.villages) if (r.copies > 1 && r.players >= 45 * r.copies) amber('rooms', `${r.v}: ${r.players} players in ${r.copies} copies (nearly full)`);
+  if (online?.ok) for (const r of online.villages) if (r.copies > 1 && r.players >= 45 * r.copies) amber('rooms', `${r.v}: ${r.players} players in ${r.copies} copies (nearly full)`, 'When that village has fewer than 45 players a copy.', 'If every copy fills, raise Copies per village on the Limits page.');
   return out;
 }
 
