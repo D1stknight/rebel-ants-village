@@ -31874,6 +31874,7 @@ function startVillageMultiplayer() {
     signedIn: () => !!Econ.on,
     signIn: () => { activeJournalTab = 'overview'; openProgressionJournal(); },
     playerNode: () => charMesh,
+    villageName: id => VILLAGE_REGISTRY[id]?.displayName || id,
     toast: m => showToast(m, 6000)
   });
   // step 4, groups (assets/village-groups.js): while in one, a second socket to the group (any village); its news goes

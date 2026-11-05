@@ -40,6 +40,7 @@
   // sitting (Nov 2, the Comedy Club's chairs): 'stand_to_sit' sits down, 'sit_up' is the same move backwards (standing up)
   const SIT_ONCE = new Set(['stand_to_sit', 'sit_up']);
   let H = null, B = null, root = null, ws = null, connecting = false, you = 0, room = null, closedFor = null, retry = 0, retryAt = 0, maxFull = 8, maxLite = 45, wantCopy = 0;
+  let can = null; // (what the room server can do beyond step 2: { find, far, say } from its hello)
   // loads (Nov 3): files downloading at once, new copies a frame, how long a player stands among the nearest few before
   // their full model loads (phones: 1, 1, 5 s; computers: 4, 3, none). A crowd that came at once had a phone download
   // and unpack a dozen characters together, and the page ran out of memory and started again
@@ -136,7 +137,7 @@
   }
   function onMessage(m) {
     if (m.t === 'pong') return pfPong();
-    if (m.t === 'hi') { you = m.you; room = m.room; retry = 0; voiceOn = !!m.cfg?.voice; for (const p of m.peers || []) addPeer(p); last = null; tell('hello', m); voice({ t: 'vcfg', on: voiceOn }); return; }
+    if (m.t === 'hi') { you = m.you; room = m.room; can = m.can || null; retry = 0; voiceOn = !!m.cfg?.voice; for (const p of m.peers || []) addPeer(p); last = null; tell('hello', m); voice({ t: 'vcfg', on: voiceOn }); return; }
     if (m.t === 'j') { addPeer(m); tell('join', m); return; }
     if (m.t === 'l') { tell('leave', m.id); return removePeer(m.id); }
     if (m.t === 'kick') return sentAway(m.why === 'banned' ? 'banned' : 'kick', m);
@@ -144,6 +145,8 @@
     if (m.t === 'cfg') { voiceOn = !!m.voice; voice({ t: 'vcfg', on: voiceOn }); }
     if (m.t === 'cm') voice({ t: 'vmute', until: m.until });
     if (m.t === 'c' || m.t === 'cx' || m.t === 'cd' || m.t === 'cc' || m.t === 'cfg' || m.t === 'cm' || m.t === 'rpok') return tell('msg', m);
+    if (m.t === 'found' || m.t === 'say') return tell('msg', m); // (a search's answer; the admins' message to everyone)
+    if (m.t === 'gxr') { try { window.VillageGroup?.onFarResult?.(m); } catch (e) { log('far invite', e); } return; } // (an invite to someone in another copy: handed over or not)
     if (m.t === 'vo') { const p = peers.get(+m.key); if (p) p.vo = !!m.on; return voice(m); } // (a voice on / off)
     if (m.t === 'vp' || m.t === 'vs') return voice(m);
     if (m.t === 'u') { const p = peers.get(m.id); if (p) setState(p, m.s); return; }
@@ -703,6 +706,11 @@
     send: (ch, x, to) => send({ t: 'c', ch, x: String(x || ''), ...(ch === 'w' ? { to: +to || 0 } : {}) }),
     report: o => send({ t: 'rp', ...(o.i ? { i: +o.i } : { id: +o.id || 0 }), why: o.why || 'other', ...(o.note ? { note: String(o.note).slice(0, 200) } : {}) }),
     groupInvite: (to, g) => send({ t: 'gi', to: +to || 0, g: String(g || '') }), // (the group noted it first: village-groups.js)
+    farInvite: (u, g) => !!can?.far && send({ t: 'gx', u: String(u || ''), g: String(g || '') }), // (a player found by name, in another copy or village)
+    find: q => !!can?.find && send({ t: 'find', q: String(q || '').slice(0, 60) }), // (signed-in players by name, every village)
+    privacy: findable => !!can?.find && send({ t: 'pv', f: findable ? 1 : 0 }), // (let others find me by name, or not)
+    can: () => can,
+    lookLabel: look => label(look),
     peers: () => [...peers.values()],
     peer: id => peers.get(+id) || null
   };

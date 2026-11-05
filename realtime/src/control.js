@@ -3,16 +3,24 @@
 //   who is muted or banned (by account), the chat log (every message, the words as typed beside what was shown),
 //   the players' reports, and which room copies have been open lately (to reach them).
 // The rooms (and groups: '<site>:group:<id>') ask it when a player joins (banned? muted? the settings; a new group: too
-// many made today?) and send it every message and report. The Admin Hub
+// many made today?) and send it every message and report. It also finds players for each other (/find: by name, from
+// who is in every room copy, read again at most every 15 s; signed-in players who let others find them) and hands an
+// invite to a player in another copy or village (/invite), and keeps the admins' message to everyone (say). The Admin Hub
 // reaches it through Universe: api/mp-admin.mjs signs each command, the worker checks the signature (index.js /v1/admin),
 // this desk runs it once (each command's nonce is kept 10 minutes) and passes it on to the rooms that need it.
 import { EVENT_ID, EVENT_ROOM, isLive, briefEvent, normEvent, newEventId, roll } from './events.js';
-export const DEFAULT_CFG = { chat: true, slow: 2, links: false, filter: true, words: [], voice: true };
+// copies: how many copies of ROOM_MAX players each village opens at most (the Admin Hub's Limits page)
+export const COPIES_DEFAULT = 24, COPIES_MAX = 99; // (room names carry the copy in at most two digits: ROOM)
+export const DEFAULT_CFG = { chat: true, slow: 2, links: false, filter: true, words: [], voice: true, copies: COPIES_DEFAULT };
 export function normCfg(c) {
   c = c && typeof c === 'object' ? c : {};
   const words = (Array.isArray(c.words) ? c.words : []).map(w => String(w).replace(/\s+/g, ' ').trim().slice(0, 40)).filter(w => w.length >= 2);
-  return { chat: c.chat !== false, slow: Math.min(120, Math.max(2, Math.round(+c.slow || 2))), links: c.links === true, filter: c.filter !== false, words: [...new Set(words)].slice(0, 200), voice: c.voice !== false };
+  return { chat: c.chat !== false, slow: Math.min(120, Math.max(2, Math.round(+c.slow || 2))), links: c.links === true, filter: c.filter !== false, words: [...new Set(words)].slice(0, 200), voice: c.voice !== false,
+    copies: Math.min(COPIES_MAX, Math.max(1, Math.round(+c.copies || COPIES_DEFAULT))) };
 }
+// the admins' message to everyone: its words, kept for newcomers until `until` (index.js shows it in each room's hello)
+export const SAY_MAX = 280, SAY_MINS = 1440;
+const cleanSay = x => String(x || '').replace(/[\u0000-\u0008\u000b-\u001f\u007f\u200b-\u200f\u202a-\u202e\u2066-\u2069]/g, '').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 export const withTimeout = (p, ms) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(new Error('timeout')), ms))]);
 const SUB = /^[ug]:[A-Za-z0-9_-]{4,64}$/, ROOM = /^[a-z]+:[a-z-]+:\d{1,2}$/, GROUP = /^[a-z]+:group:[A-Za-z0-9_-]{12}$/, UID = /^[A-Za-z0-9_-]{16}$/;
@@ -44,6 +52,61 @@ export class RoomControl {
       'CREATE TABLE IF NOT EXISTS devs (h INTEGER, d TEXT, o TEXT, b TEXT, n INTEGER DEFAULT 0, fsum REAL DEFAULT 0, slow INTEGER DEFAULT 0, rsum REAL DEFAULT 0, rn INTEGER DEFAULT 0, PRIMARY KEY (h, d, o, b))'
     ]) this.sql.exec(q);
     this.cfgCache = null;
+    this.rost = null; this.rostP = null; this.inv = new Map(); // (who is where, read from the rooms; far invites a player sent lately)
+  }
+  // the message to everyone, while it is still shown to newcomers (else null)
+  say(now = Date.now()) {
+    const r = this.sql.exec("SELECT v FROM kv WHERE k = 'say'").toArray()[0]; let v = null; try { v = r && JSON.parse(r.v); } catch (e) {}
+    return v && v.x && v.until > now ? v : null;
+  }
+  // who is in every room copy now (signed in or not; the rooms' 'who'), read again when older than maxAge; one read at a time.
+  // Empty copies are forgotten (as Online now does): a copy someone joins again tells the desk at once (/check)
+  roster(maxAge = 15000) {
+    const now = Date.now();
+    if (this.rost && now - this.rost.at < maxAge) return Promise.resolve(this.rost.list);
+    if (this.rostP) return this.rostP;
+    this.rostP = (async () => {
+      const rows = await this.each({ op: 'who' }), list = [];
+      for (const [room, r] of rows) {
+        if (!r) continue;
+        if (!r.players?.length) { this.sql.exec('DELETE FROM rooms WHERE name = ? AND at < ?', room, Date.now() - 60000); continue; }
+        for (const p of r.players) list.push({ room, sub: p.sub, u: p.u, n: String(p.n || ''), k: p.k, look: p.look || null, i: !!(p.s && p.s[5]), nf: !!p.nf });
+      }
+      this.rost = { at: Date.now(), list };
+      return list;
+    })().finally(() => { this.rostP = null; });
+    return this.rostP;
+  }
+  // a player's search: signed-in players who let others find them, by name (a part of it, any case); the village, not the
+  // copy or the spot (to be with them: a group, then Go to them)
+  async find(body) {
+    const q = String(body.q || '').replace(/\s+/g, ' ').trim().toLowerCase().slice(0, 40);
+    if ([...q].length < 2) return { ok: false, why: 'short', list: [] };
+    const seen = new Set(), list = [];
+    for (const p of await this.roster(Math.max(0, this.env.ROSTER_S != null ? +this.env.ROSTER_S : 15) * 1000)) {
+      if (p.k === 'guest' || p.nf || p.sub === body.sub || seen.has(p.u)) continue;
+      const n = p.n.toLowerCase(); if (!n.includes(q)) continue;
+      seen.add(p.u);
+      list.push({ u: p.u, n: p.n, k: p.k, v: p.room.split(':')[1], i: p.i, look: p.look ? { t: p.look.t, col: p.look.col, tok: p.look.tok } : null, rank: n === q ? 0 : n.startsWith(q) ? 1 : 2 });
+    }
+    list.sort((a, b) => a.rank - b.rank || a.n.localeCompare(b.n));
+    return { ok: true, list: list.slice(0, 10).map(({ rank, ...x }) => x), more: list.length > 10 };
+  }
+  // an invite to a group handed to a player in another copy or village (the group noted it first): to the copies they are
+  // in. A player sends at most 20 such invites in 10 minutes; players who don't let others find them get none
+  async invite(body, now) {
+    const from = body.from || {}, to = String(body.to || ''), g = String(body.g || '');
+    if (!SUB.test(String(from.sub || '')) || !/^u:/.test(from.sub) || !UID.test(String(from.u || '')) || !UID.test(to) || !/^[A-Za-z0-9_-]{12}$/.test(g)) return { ok: false, why: 'bad' };
+    const c = this.inv.get(from.sub); if (!c || now - c.at > 600000) this.inv.set(from.sub, { at: now, n: 1 }); else if (++c.n > 20) return { ok: false, why: 'slow' };
+    if (this.inv.size > 5000) for (const [k, v] of this.inv) if (now - v.at > 600000) this.inv.delete(k);
+    let here = (await this.roster(5000)).filter(p => p.u === to && p.k !== 'guest');
+    if (!here.length) here = (await this.roster(0)).filter(p => p.u === to && p.k !== 'guest'); // (they may have just moved)
+    if (!here.length) return { ok: false, why: 'offline' };
+    if (here.every(p => p.nf)) return { ok: false, why: 'hidden' };
+    const op = { op: 'gi', u: to, g, from: { u: from.u, n: label(from.n).slice(0, 40) || 'A Rebel', k: from.k === 'name' ? 'name' : 'discord' } };
+    let hit = 0, hidden = 0;
+    for (const room of new Set(here.map(p => p.room))) for (const [, r] of await this.each(op, room)) { hit += +r?.hit || 0; hidden += +r?.hidden || 0; }
+    return { ok: hit > 0, why: hit ? null : hidden ? 'hidden' : 'offline' }; // (the copy checks again: who hides now)
   }
   // (a repeating event is read at its current time: roll moves one that is over on to its next, kept at once)
   getEvent(id) {
@@ -72,7 +135,7 @@ export class RoomControl {
     if (url.pathname === '/check') {
       if (isRoom(body.room)) this.sql.exec('INSERT INTO rooms (name, at) VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET at = excluded.at', body.room, now);
       const m = typeof body.sub === 'string' ? this.sql.exec('SELECT mute, ban FROM mods WHERE sub = ?', body.sub).toArray()[0] : null;
-      const out = { cfg: this.cfg(), ban: m && m.ban > now ? m.ban : 0, mute: m && m.mute > now ? m.mute : 0 };
+      const out = { cfg: this.cfg(), ban: m && m.ban > now ? m.ban : 0, mute: m && m.mute > now ? m.mute : 0, say: this.say(now) };
       if (body.made && typeof body.sub === 'string' && SUB.test(body.sub)) { // a new group: counted per account and day
         const day = Math.floor(now / 86400000), n = this.sql.exec('INSERT INTO made (sub, day, n) VALUES (?, ?, 1) ON CONFLICT(sub, day) DO UPDATE SET n = n + 1 RETURNING n', body.sub, day).one().n;
         if (n === 1) this.sql.exec('DELETE FROM made WHERE day < ?', day - 1);
@@ -80,6 +143,9 @@ export class RoomControl {
       }
       return json(out);
     }
+    if (url.pathname === '/cfg') return json({ cfg: this.cfg() }); // (the worker: how many copies a village opens)
+    if (url.pathname === '/find') return json(await this.find(body));
+    if (url.pathname === '/invite') return json(await this.invite(body, now));
     if (url.pathname === '/forget') { // a group or an event's hall that ended
       if (typeof body.room === 'string' && (GROUP.test(body.room) || EVENT_ROOM.test(body.room))) this.sql.exec('DELETE FROM rooms WHERE name = ?', body.room);
       return json({ ok: true });
@@ -186,7 +252,8 @@ export class RoomControl {
   // a command to the rooms: every room copy and group open in the last three days, or only the one named (who is online:
   // the room copies only, group members are in rooms too)
   async each(op, only) {
-    const names = (only ? [only] : this.sql.exec('SELECT name FROM rooms WHERE at > ?', Date.now() - 3 * 86400000).toArray().map(r => r.name)).filter(n => op.op !== 'who' || ROOM.test(n));
+    const roomsOnly = op.op === 'who' || op.op === 'say'; // (room copies only: group members and event goers are in a room copy too)
+    const names = (only ? [only] : this.sql.exec('SELECT name FROM rooms WHERE at > ?', Date.now() - 3 * 86400000).toArray().map(r => r.name)).filter(n => !roomsOnly || ROOM.test(n));
     const out = await Promise.allSettled(names.map(async name => {
       const ns = GROUP.test(name) ? this.env.GROUPS : EVENT_ROOM.test(name) ? this.env.STAGES : this.env.ROOMS; if (!ns) return [name, null];
       const r = await withTimeout(ns.get(ns.idFromName(name)).fetch('https://room/ctl', { method: 'POST', body: JSON.stringify(op) }), 4000);
@@ -265,7 +332,18 @@ export class RoomControl {
         const only = isRoom(args.room) ? args.room : null;
         return { ok: true, reached: reached(await this.each({ op: 'clear' }, only)) };
       }
-      case 'cfg-get': return { ok: true, cfg: this.cfg() };
+      case 'cfg-get': return { ok: true, cfg: this.cfg(), say: this.say(now) };
+      // a message to everyone in Universe: every room copy shows it now, and to newcomers for `mins` minutes (0: stop
+      // showing it to newcomers; a card already up stays until it is closed)
+      case 'say': {
+        const x = cleanSay(args.x), mins = clamp(args.mins, 0, SAY_MINS, 30);
+        if (mins && !x) return { ok: false, error: 'Write the message first' };
+        if ([...x].length > SAY_MAX) return { ok: false, error: SAY_MAX + ' characters at most' };
+        const say = mins ? { id: crypto.randomUUID().slice(0, 8), x, at: now, until: now + mins * 60000 } : null;
+        this.sql.exec("INSERT INTO kv (k, v) VALUES ('say', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v", JSON.stringify(say || { x: '', until: 0 }));
+        const rows = (await this.each({ op: 'say', say })).filter(([name]) => ROOM.test(name));
+        return { ok: true, say, reached: reached(rows), rooms: rows.filter(([, r]) => r).length };
+      }
       case 'stats': return { ok: true, ...this.stats(args, now) };
       // the Colony Stage's events (events.js): the list (admins see everything), made or changed, live now, ended, the show,
       // a host added from Online now or taken off, deleted

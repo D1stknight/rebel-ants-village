@@ -3,24 +3,29 @@
 // room decides who may write (signed-in players; guests read), the limits (280 characters, one every 2 s or the admins'
 // slow mode) and the word filter, and keeps the last 200. Mute and Block are this device's own (by the player's account
 // code, so they hold in every village and visit); Report goes to the admins. Groups (village-groups.js): the Group channel,
-// Invite to your group / Go to them / Take off the group in the name menu, and the group's members in 👥.
+// Invite to your group / Go to them / Take off the group in the name menu, and the group's members in 👥. Find a player
+// (👥, signed-in players): signed-in players in every village by name (the ones who let others find them: ⚙), their
+// village, Invite (the rooms hand it to the copy they are in). The admins' message to everyone: a card at the top (once
+// a message on this device) and a line in the chat.
 // window.VillageChat.start(host) from village.html, host = { scene, mp: window.VillageMP, canChat(), signedIn(), signIn(),
-//   playerNode(), toast(msg) }; the room's news comes in through VillageChat.room(kind, data) (village-multiplayer.js).
+//   playerNode(), villageName(id), toast(msg) }; the room's news comes in through VillageChat.room(kind, data)
+//   (village-multiplayer.js).
 // Desktop: Enter opens the line (Enter sends, Esc closes); phones: the chat button at the top right.
 (function () {
   'use strict';
   const MAX = 280, KEEP = 200, SHOW_MS = 20000, BUBBLE_R = 45;
-  const SETTINGS_KEY = 'rebelAntsMpSettings:v1', BLOCK_KEY = 'rebelAntsMpBlocked:v1', MUTE_KEY = 'rebelAntsMpMuted:v1';
+  const SETTINGS_KEY = 'rebelAntsMpSettings:v1', BLOCK_KEY = 'rebelAntsMpBlocked:v1', MUTE_KEY = 'rebelAntsMpMuted:v1', SAID_KEY = 'rebelAntsMpSaid:v1';
   const CH_LABEL = { n: 'Nearby', v: 'Village', w: 'Whisper', g: 'Group', e: 'Event' };
   const GR = () => window.VillageGroup;
   const voiceHere = () => !!(window.VillageMP?.voice?.on || window.VillageGroup?.voice?.open?.() || window.VillageStage?.voice?.open?.()); // (the rooms, the group or the event have voice on: its controls show)
   const SG = () => window.VillageStage;
   const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v && typeof v === 'object' ? { ...d, ...v } : { ...d }; } catch (e) { return { ...d }; } };
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
-  const settings = load(SETTINGS_KEY, { players: true, names: true, bubbles: true, chat: true });
+  const settings = load(SETTINGS_KEY, { players: true, names: true, bubbles: true, chat: true, findable: true });
   const blocked = load(BLOCK_KEY, {}), muted = load(MUTE_KEY, {});
   let H = null, B = null, el = {}, started = false, live = false, me = { id: 0, u: '' }, cfg = { chat: true, slow: 2 }, mutedUntil = 0, banned = 0, kicked = false;
   let channel = 'n', whisperTo = null, lastSent = 0, open = false, unread = 0, hinted = false, seq = 0, histShown = false, panelMode = null, groupHist = null;
+  let can = {}, findQ = '', found = null, sayEl = null, sayTimer = 0, sayLater = null, sayLined = ''; // (Find a player; the admins' message)
   const bubbles = new Map();
 
   const css = `
@@ -90,6 +95,26 @@ html.vt-touch .vc-chip,html.vt-touch .vc-ico{min-height:34px;padding:9px 11px}
 html.vt-touch #vcPanel .grow .go,html.vt-touch #vcPanel .leave{min-height:36px}
 html.vt-touch #vcPanel{left:12px;right:12px;width:auto;bottom:auto;top:calc(max(12px,env(safe-area-inset-top,0px)) + 54px)}
 body.in-game #vcChat,body.in-game #vcBtn,body.in-game #vcPanel,body.in-game #vcMenu{display:none!important}
+#vcPanel .frow{display:flex;gap:6px;padding:0 14px 8px}
+#vcPanel .frow input{flex:1;min-width:0;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.18);color:#fff;padding:8px 9px;font:14px -apple-system,'Segoe UI',Arial,sans-serif;outline:none}
+#vcPanel .frow input:focus{border-color:#5ecfca}
+#vcPanel .frow button,#vcPanel .grow .inv{font:700 9px/1 'Cinzel Decorative',serif;letter-spacing:1.3px;background:rgba(94,207,202,.16);border:1px solid rgba(94,207,202,.6);color:#e9fffd;padding:7px 10px;cursor:pointer;min-height:30px}
+html.vt-touch #vcPanel .frow input{font-size:16px}
+#vcPanel .grow.found{padding-right:14px} /* (Invite / Go line up with Find) */
+#vcPanel .fr{flex:1;min-width:0;padding:7px 0 7px 14px;display:flex;flex-direction:column;gap:2px}
+#vcPanel .fr b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#vcPanel .fr small{color:#8b93a8;font-size:12px}
+html.vt-touch #vcPanel .frow button,html.vt-touch #vcPanel .grow .inv{min-height:36px}
+.vl.team .vt{color:#ffcf5a}.vl.team{color:#fff1cc}
+#vcSay{position:fixed;left:50%;top:118px;transform:translateX(-50%);z-index:73;box-sizing:border-box;width:min(440px,calc(100vw - 32px));background:rgba(28,20,4,.96);border:1px solid rgba(232,197,106,.85);box-shadow:0 10px 30px rgba(0,0,0,.55);color:#fff6dd;font:14px/1.45 -apple-system,'Segoe UI',Arial,sans-serif;padding:12px 44px 12px 14px;backdrop-filter:blur(10px)}
+#vcSay .t{font:700 9px/1 'Cinzel Decorative',serif;letter-spacing:2px;color:#e8c56a;text-transform:uppercase;margin-bottom:6px}
+#vcSay .x{white-space:pre-line;overflow-wrap:anywhere}
+#vcSay button{position:absolute;right:4px;top:4px;background:none;border:0;color:#e8c56a;font-size:18px;line-height:1;cursor:pointer;min-width:36px;min-height:36px}
+body:has(#vsLive.on,#vsBar.on) #vcSay{top:142px} /* (computers: under Return to Hub, and the event's banner) */
+html.vt-touch #vcSay{top:calc(max(12px,env(safe-area-inset-top,0px)) + 112px)}
+html.vt-touch body:has(#vsLive.on,#vsBar.on) #vcSay{top:calc(max(12px,env(safe-area-inset-top,0px)) + 250px)}
+html.vt-touch body.vc-open #vcSay{display:none} /* (phones: the chat open covers the top; its line says the same) */
+body.in-game #vcSay{display:none}
 /* computers: the voice bubble beside the chat bubble (Oct 31, Miguel: "a bubble for audio next to that ... it tells the
    person to press X to chat with voice"): hold it, or X, to talk; its tip says so; it lights while you talk and pulses
    while someone near you speaks. Phones keep Talk in the ••• buttons. */
@@ -263,6 +288,7 @@ body:has(#wb:not(.on)) #vcVoice,body:has(#wb:not(.on)) #vcVoiceTip,html.vt-touch
   function paintBtn() { el.btn.classList.toggle('unread', unread > 0); const i = el.btn.querySelector('i'); if (i) i.textContent = unread > 9 ? '9+' : String(unread || ''); }
   function tickLines() {
     const now = Date.now();
+    if (sayLater && !document.body.classList.contains('in-game')) { const s2 = sayLater; sayLater = null; showSay(s2); } // (a message that came during a game)
     for (const l of el.log?.children || []) if (!l.classList.contains('old') && now - (+l.dataset.at || 0) > SHOW_MS) l.classList.add('old');
     if (open && mutedUntil && mutedUntil <= now) { mutedUntil = 0; paintBar(); }
   }
@@ -279,7 +305,8 @@ body:has(#wb:not(.on)) #vcVoice,body:has(#wb:not(.on)) #vcVoiceTip,html.vt-touch
     if (m.u) row.dataset.u = m.u;
     row.title = m.at ? timeOf(m.at) : '';
     const tag = document.createElement('span'); tag.className = 'vt';
-    if (o.sys) { tag.textContent = 'Universe'; row.append(tag, document.createTextNode(m.x)); }
+    if (o.team) { row.classList.add('team', 'sys'); tag.textContent = '📣 Rebel Ants team'; row.append(tag, document.createTextNode(m.x)); }
+    else if (o.sys) { tag.textContent = 'Universe'; row.append(tag, document.createTextNode(m.x)); }
     else {
       const mine = m.id === me.id || (m.u && m.u === me.u);
       tag.textContent = m.ch === 'w' ? (mine ? 'To ' + (m.tn || '') : 'From') : CH_LABEL[m.ch] || '';
@@ -367,7 +394,10 @@ body:has(#wb:not(.on)) #vcVoice,body:has(#wb:not(.on)) #vcVoiceTip,html.vt-touch
   // ---- the people here, the settings ----
   function panelHead(title, mode) { panelMode = mode || null; el.panel.innerHTML = ''; const h = document.createElement('h4'); h.textContent = title; const x = document.createElement('button'); x.type = 'button'; x.textContent = '✕'; x.onclick = e => { e.stopPropagation(); el.panel.classList.remove('on'); }; h.appendChild(x); el.panel.appendChild(h); }
   function showPeople() {
+    const typing = document.activeElement?.id === 'vcFind', caret = typing ? document.activeElement.selectionStart : null; // (a repaint while typing keeps the field)
     panelHead('Players here', 'people');
+    findBox();
+    if (typing) { const f = document.getElementById('vcFind'); if (f) { f.focus(); try { f.setSelectionRange(caret ?? f.value.length, caret ?? f.value.length); } catch (e) {} } }
     groupRows();
     const list = H.mp.chat.peers().sort((a, b) => (a.d ?? 1e9) - (b.d ?? 1e9));
     const sub = document.createElement('div'); sub.className = 'sub'; sub.textContent = list.length ? 'Tap a name to whisper, mute, block or report.' : 'Nobody else is in this village copy right now.'; el.panel.appendChild(sub);
@@ -379,6 +409,48 @@ body:has(#wb:not(.on)) #vcVoice,body:has(#wb:not(.on)) #vcVoiceTip,html.vt-touch
       el.panel.appendChild(b);
     }
     el.panel.classList.add('on');
+  }
+  // Find a player (rooms that can: their hello says so): signed-in players in any village by name, the village they are in,
+  // Invite (or Go, for someone in your group); guests are told to sign in
+  const FIND_SAYS = { short: 'Type at least 2 letters of their name.', slow: 'One search every 2 seconds.', offline: 'Not connected to the rooms yet.', error: "Couldn't search right now: try again.", guest: 'Sign in to find players.' };
+  function findBox() {
+    if (!can.find) return;
+    const sep = () => el.panel.appendChild(Object.assign(document.createElement('div'), { className: 'sep' }));
+    if (!H.signedIn()) { const t = document.createElement('div'); t.className = 'sub'; t.textContent = 'Sign in to find friends in other villages and invite them to your group.'; el.panel.appendChild(t); sep(); return; }
+    const row = document.createElement('div'); row.className = 'frow';
+    const inp = document.createElement('input'); inp.id = 'vcFind'; inp.type = 'search'; inp.placeholder = 'Find a player by name'; inp.value = findQ; inp.maxLength = 40; inp.autocomplete = 'off'; inp.spellcheck = false; inp.setAttribute('enterkeyhint', 'search');
+    const go = document.createElement('button'); go.type = 'button'; go.textContent = 'Find';
+    const run = () => {
+      findQ = inp.value; const q = inp.value.trim();
+      found = [...q].length < 2 ? { q, list: [], why: 'short' } : H.mp.chat.find?.(q) ? { q, list: null } : { q, list: [], why: 'offline' };
+      showPeople();
+    };
+    inp.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); run(); } else if (e.key === 'Escape') { e.preventDefault(); el.panel.classList.remove('on'); } });
+    inp.addEventListener('keyup', e => e.stopPropagation());
+    inp.addEventListener('input', () => { findQ = inp.value; });
+    go.onclick = e => { e.stopPropagation(); run(); };
+    row.append(inp, go); el.panel.appendChild(row);
+    const note = x => { const t = document.createElement('div'); t.className = 'sub'; t.textContent = x; el.panel.appendChild(t); };
+    if (!found) note('Signed-in players in every village. Invite them to your group, then Go to them.');
+    else if (found.list === null) note('Looking…');
+    else if (found.why) note(FIND_SAYS[found.why] || FIND_SAYS.error);
+    else if (!found.list.length) note('Nobody called "' + found.q + '" is playing right now (or they keep their name hidden).');
+    else {
+      const gr = GR();
+      for (const r of found.list) {
+        const g = document.createElement('div'); g.className = 'grow found';
+        const b = document.createElement('div'); b.className = 'fr';
+        const n = document.createElement('b'); n.className = 'vn k-' + (r.k || 'name'); n.textContent = r.n;
+        const here = H.mp.chat.peers().find(p => p.u === r.u), member = !!gr?.isMember?.(r.u);
+        const sm = document.createElement('small'); sm.textContent = [H.mp.chat.lookLabel?.(r.look) || '', here ? 'in this village with you' : 'in ' + (H.villageName?.(r.v) || r.v) + (r.i ? ' · inside a room' : ''), member ? 'in your group' : blocked[r.u] ? 'blocked' : ''].filter(Boolean).join(' · ');
+        b.append(n, sm); g.appendChild(b);
+        if (member) { const x = document.createElement('button'); x.type = 'button'; x.className = 'go'; x.textContent = 'Go'; x.onclick = e => { e.stopPropagation(); el.panel.classList.remove('on'); close(); gr.goTo(r.u); }; g.appendChild(x); }
+        else if (gr && !blocked[r.u]) { const x = document.createElement('button'); x.type = 'button'; x.className = 'inv'; x.textContent = 'Invite'; x.onclick = e => { e.stopPropagation(); x.disabled = true; x.textContent = 'Sent'; gr.invite(here ? { id: here.id, u: here.u, n: here.n, k: here.k } : { u: r.u, n: r.n, k: r.k, far: true }); }; g.appendChild(x); }
+        el.panel.appendChild(g);
+      }
+      if (found.more) note('More players match: type more of the name.');
+    }
+    sep();
   }
   // the group at the top of 👥: each member, where they are, Go; the leader's star; Leave the group
   function groupRows() {
@@ -410,6 +482,11 @@ body:has(#wb:not(.on)) #vcVoice,body:has(#wb:not(.on)) #vcVoiceTip,html.vt-touch
     panelHead('Chat settings', 'settings');
     const tog = (key, label) => { const l = document.createElement('label'); const s = document.createElement('span'); s.textContent = label; const c = document.createElement('input'); c.type = 'checkbox'; c.checked = settings[key] !== false; c.onchange = () => { settings[key] = c.checked; save(SETTINGS_KEY, settings); refreshHidden(); }; l.append(s, c); el.panel.appendChild(l); };
     tog('players', 'Show other players'); tog('names', 'Name tags'); tog('bubbles', 'Chat bubbles over heads'); tog('chat', 'Chat on the screen');
+    if (can.find && H.signedIn()) { // (who may find this player by name: 👥 Find a player)
+      const l = document.createElement('label'); const sp = document.createElement('span'); sp.textContent = 'Let others find me by name'; const c = document.createElement('input'); c.type = 'checkbox'; c.checked = settings.findable !== false;
+      c.onchange = () => { settings.findable = c.checked; save(SETTINGS_KEY, settings); H.mp.chat.privacy?.(c.checked); }; l.append(sp, c); el.panel.appendChild(l);
+      const t = document.createElement('div'); t.className = 'sub'; t.textContent = 'Signed-in players can find your name and see which village you are in (never where in it), then invite you to their group.'; el.panel.appendChild(t);
+    }
     const VV = window.VillageVoice;
     if (VV && voiceHere()) { // voice (when it is on here): hear the others, how loud (village-voice.js keeps these)
       const l = document.createElement('label'); const s = document.createElement('span'); s.textContent = 'Hear voices'; const c = document.createElement('input'); c.type = 'checkbox'; c.checked = VV.settings.hear !== false; c.onchange = () => VV.set('hear', c.checked); l.append(s, c); el.panel.appendChild(l);
@@ -518,6 +595,9 @@ body:has(#wb:not(.on)) #vcVoice,body:has(#wb:not(.on)) #vcVoiceTip,html.vt-touch
       // a room server without the chat (step 2's: its hello has no settings) gets no chat window, nothing typed goes nowhere
       if (!d.cfg) { live = false; if (open) close(); el.box.classList.remove('on'); el.btn.classList.remove('on'); return; }
       live = true; me = { id: d.you, u: d.u || '' }; cfg = { chat: d.cfg?.chat !== false, slow: d.cfg?.slow || 2 }; mutedUntil = d.mute || 0; kicked = false; banned = 0;
+      can = d.can || {};
+      if (can.find && H.signedIn()) H.mp.chat.privacy?.(settings.findable !== false); // (the room learns whether this player may be found)
+      if (d.say) showSay(d.say);
       el.box.classList.add('on'); el.btn.classList.add('on');
       if (!histShown) { histShown = true; for (const m of d.hist || []) if (!(m.u && (blocked[m.u] || muted[m.u]))) addLine(m, { earlier: true }); }
       if (!hinted) { hinted = true; sys(window.VillageTouch?.on ? (H.signedIn() ? 'Tap 💬 to chat with the players here.' : 'Tap 💬 to read the chat. Sign in to write.') : (H.signedIn() ? 'Press Enter to chat with the players here.' : 'Press Enter to read the chat. Sign in to write.')); }
@@ -538,6 +618,8 @@ body:has(#wb:not(.on)) #vcVoice,body:has(#wb:not(.on)) #vcVoiceTip,html.vt-touch
     }
     if (m.t === 'cx') { const f = SAYS[m.why]; if (m.why === 'muted') { mutedUntil = m.until || 0; paintBar(); } if (f) sys(f(m)); return; }
     if (m.t === 'rpok') { sys('Thanks. An admin will look at your report.'); return; }
+    if (m.t === 'found') { if (found && found.list === null) { found = { q: found.q, list: m.list || [], more: !!m.more, why: m.why || null }; if (panelMode === 'people' && el.panel.classList.contains('on')) showPeople(); } return; }
+    if (m.t === 'say') { if (m.say) showSay(m.say); else hideSay(); return; }
     if (m.t === 'cd') { el.log.querySelectorAll('.vl[data-i="' + (+m.i) + '"]').forEach(l => l.remove()); for (const [k, b] of [...bubbles]) if (b.i === +m.i) dropBubble(k); return; }
     if (m.t === 'cc') { el.log.querySelectorAll('.vl:not(.sys)').forEach(l => l.remove()); for (const k of [...bubbles.keys()]) dropBubble(k); sys('An admin cleared the chat.'); return; }
     if (m.t === 'cfg') { const was = cfg; cfg = { chat: m.chat !== false, slow: m.slow || 2 }; if (was.chat !== cfg.chat) sys(cfg.chat ? 'Chat is back on.' : 'An admin switched the chat off.'); else if (was.slow !== cfg.slow) sys(cfg.slow > 2 ? 'Slow mode: one message every ' + cfg.slow + ' s.' : 'Slow mode is off.'); if (open) paintBar(); return; }
@@ -549,10 +631,31 @@ body:has(#wb:not(.on)) #vcVoice,body:has(#wb:not(.on)) #vcVoiceTip,html.vt-touch
     }
   }
 
+  // ---- the admins' message to everyone: a card at the top (once a message on this device), a line in the chat ----
+  function showSay(x) {
+    if (!x || !x.x || !x.id) return;
+    if (sayLined !== x.id) { sayLined = x.id; addLine({ x: x.x }, { team: true }); if (!open) { unread++; paintBtn(); } }
+    let seen = []; try { seen = JSON.parse(localStorage.getItem(SAID_KEY) || '[]'); } catch (e) {} if (!Array.isArray(seen)) seen = [];
+    if (seen.includes(x.id) || sayEl?.dataset.id === x.id) return;
+    if (document.body.classList.contains('in-game')) { sayLater = x; return; } // (shown once the game is over)
+    hideSay();
+    sayEl = document.createElement('div'); sayEl.id = 'vcSay'; sayEl.setAttribute('role', 'alert'); sayEl.dataset.id = x.id;
+    const t = document.createElement('div'); t.className = 't'; t.textContent = '📣 From the Rebel Ants team';
+    const b = document.createElement('div'); b.className = 'x'; b.textContent = x.x;
+    const c = document.createElement('button'); c.type = 'button'; c.setAttribute('aria-label', 'Close'); c.textContent = '✕';
+    c.onclick = e => { e.stopPropagation(); hideSay(); };
+    c.addEventListener('pointerdown', e => e.stopPropagation());
+    sayEl.append(t, b, c); document.body.appendChild(sayEl);
+    try { localStorage.setItem(SAID_KEY, JSON.stringify([...seen, x.id].slice(-20))); } catch (e) {}
+    clearTimeout(sayTimer); sayTimer = setTimeout(hideSay, 60000);
+  }
+  function hideSay() { clearTimeout(sayTimer); if (sayEl) { sayEl.remove(); sayEl = null; } }
+
   // ---- the group's news (village-groups.js) ----
   const GSAYS = {
     member: d => d.n + ' is in your group already.', full: () => 'Your group is full (' + (GR()?.state.max || 8) + ').', slow: () => 'One invite every 2 seconds.',
-    who: () => "You can't invite them.", offline: () => 'Not connected to your group yet.'
+    who: () => "You can't invite them.", offline: () => 'Not connected to your group yet.',
+    away: d => d.n + " isn't playing right now.", hidden: d => d.n + " isn't taking invites right now.", error: () => "Couldn't reach the rooms: try again.", bad: () => "Couldn't invite them."
   };
   function groupEvent(kind, d) {
     if (!started) return;
@@ -586,7 +689,7 @@ body:has(#wb:not(.on)) #vcVoice,body:has(#wb:not(.on)) #vcVoiceTip,html.vt-touch
     }
     if (kind === 'making') { sys('Making a group to invite ' + d.n + '…'); return; }
     if (kind === 'failed') { sys("Couldn't make a group right now (an account makes 30 a day at most)."); return; }
-    if (kind === 'invited') { sys(d.sent ? 'Invited ' + d.n + ': they get a card to join.' : d.n + " isn't in this village copy any more."); return; }
+    if (kind === 'invited') { sys(d.sent ? 'Invited ' + d.n + (d.far ? ': they get a card to join, wherever they are. Once they join, Go to them.' : ': they get a card to join.') : d.n + " isn't in this village copy any more."); return; }
     if (kind === 'invite-no') { const f = GSAYS[d.why]; sys(f ? f(d) : "Couldn't invite " + d.n + '.'); return; }
     if (kind === 'join-no') { sys("Couldn't join " + d.n + "'s group: the invite may have run out (10 minutes), or the group is full."); return; }
     if (kind === 'refused') { const f = SAYS[d.why]; if (f) sys(f(d)); return; }
@@ -637,7 +740,8 @@ body:has(#wb:not(.on)) #vcVoice,body:has(#wb:not(.on)) #vcVoiceTip,html.vt-touch
     start, room, group: groupEvent, stage: stageEvent, isBlocked: u => !!(u && blocked[u]),
     hidePeer: p => settings.players === false || !!(p.u && blocked[p.u]),
     namesOn: () => settings.names !== false,
-    get state() { return { live, open, me, cfg, mutedUntil, banned, kicked, channel, whisperTo, lines: el.log ? el.log.children.length : 0, bubbles: [...bubbles.keys()], settings, blocked: Object.keys(blocked), muted: Object.keys(muted) }; },
+    get state() { return { live, open, me, cfg, can, found, say: sayEl ? sayEl.dataset.id : null, mutedUntil, banned, kicked, channel, whisperTo, lines: el.log ? el.log.children.length : 0, bubbles: [...bubbles.keys()], settings, blocked: Object.keys(blocked), muted: Object.keys(muted) }; },
+    people: () => showPeople(), settingsPanel: () => showSettings(),
     open: openChat, close, send: (x, ch, to) => { if (ch) channel = ch; if (to) whisperTo = to; el.input.value = x; return sendLine(); }
   };
 })();
