@@ -1,0 +1,56 @@
+# Copies every Rebel Ants repo (all branches, tags, full history) to GitLab, so the code is safe and
+# Vercel can deploy from GitLab if GitHub is ever unreachable again (the Nov 5-26, 2026 suspension).
+#
+# Settings (this repo -> Settings -> Secrets and variables -> Actions):
+#   secret   GITLAB_TOKEN         GitLab personal access token (write_repository, read_api)
+#   variable GITLAB_GROUP         the GitLab group the copies go to (rebel-ants-backup)
+#   secret   MIRROR_SOURCE_TOKEN  a GitHub token that can READ every repo below (fine-grained: all repositories,
+#                                 Contents read-only). Without it only the public repos are copied.
+# A repo that is missing on GitLab is created there (private) by the first push.
+name: Mirror to GitLab
+
+on:
+  schedule:
+    - cron: '17 * * * *'      # every hour
+  push:
+    branches: ['**']           # and on every push to this repo
+  workflow_dispatch:
+
+concurrency:
+  group: mirror-gitlab
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Copy each repo to GitLab
+        env:
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          GITLAB_GROUP: ${{ vars.GITLAB_GROUP }}
+          SOURCE_TOKEN: ${{ secrets.MIRROR_SOURCE_TOKEN || github.token }}
+        run: |
+          set -u
+          if [ -z "$GITLAB_TOKEN" ] || [ -z "$GITLAB_GROUP" ]; then echo "::error::GITLAB_TOKEN or GITLAB_GROUP is not set"; exit 1; fi
+          REPOS="rebel-ants-village rebel-economy-core rebelants-playground raap-core rebel-ants-tracker rebel-underground
+                 rebel-ants-sticker-hub battle-for-the-colony rebel-ants-library rebel-ants-trait-builder love-bites 3d-auto-splitter"
+          ok=0; bad=""
+          for r in $REPOS; do
+            echo "::group::$r"
+            rm -rf "work/$r"; mkdir -p work
+            if ! git clone --quiet --mirror "https://x-access-token:${SOURCE_TOKEN}@github.com/D1stknight/$r.git" "work/$r"; then
+              echo "::warning::$r: could not read it on GitHub (private repo without MIRROR_SOURCE_TOKEN?)"; bad="$bad $r"; echo "::endgroup::"; continue
+            fi
+            # branches and tags only (GitHub's pull-request refs are refused by GitLab); deleted branches deleted there too
+            if git -C "work/$r" push --quiet --prune --force "https://oauth2:${GITLAB_TOKEN}@gitlab.com/${GITLAB_GROUP}/$r.git" \
+                 '+refs/heads/*:refs/heads/*' '+refs/tags/*:refs/tags/*'; then
+              ok=$((ok + 1)); echo "$r: copied"
+            else
+              echo "::warning::$r: the push to GitLab failed"; bad="$bad $r"
+            fi
+            rm -rf "work/$r"
+            echo "::endgroup::"
+          done
+          echo "Copied $ok repos to gitlab.com/${GITLAB_GROUP}"
+          if [ -n "$bad" ]; then echo "::error::Not copied:$bad"; exit 1; fi
