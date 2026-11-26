@@ -76,7 +76,9 @@ async function readJson(url) {
 }
 
 async function readSiteJson(fileUrl) {
-  const places = [fileUrl, path.join(process.cwd(), 'assets', path.basename(fileUrl.pathname))];
+  // only the module-relative URL: a process.cwd() fallback built from a variable made the bundler copy the whole assets
+  // folder into every function that imports this module (the build ran out of memory)
+  const places = [fileUrl];
   let last;
   for (const at of places) {
     try { return JSON.parse(await readFile(at, 'utf8')); } catch (e) { last = e; }

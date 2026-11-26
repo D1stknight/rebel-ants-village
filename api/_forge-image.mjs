@@ -51,7 +51,7 @@ async function sitePictureAsDataUrl(imageUrl) {
   if (!file) return null;
   const type = PICTURE_TYPES[path.extname(file.pathname).toLowerCase()];
   const rel = imageUrl.slice(REPO_RAW.length + 1);
-  for (const at of [file, path.join(process.cwd(), rel)]) {
+  for (const at of [file]) {   // no process.cwd() fallback: built from a variable, it made the bundler copy the whole repo into the function
     try {
       return `data:${type};base64,${(await readFile(at)).toString('base64')}`;
     } catch (e) {}
